@@ -6,6 +6,17 @@ The goal is to establish clear domain boundaries early.
 
 ---
 
+```mermaid
+flowchart LR
+    Deck["Deck<br/>Context"] -->|"deck definitions"| Play["Play<br/>Context"]
+    Play -->|"domain events"| Analytics["Analytics<br/>Context"]
+    
+    Play -.->|"produces events"| Events((Domain<br/>Events))
+    Events -.->|"subscribes"| Analytics
+```
+
+---
+
 # Bounded Contexts
 
 The system is divided into three primary bounded contexts:
@@ -148,3 +159,13 @@ This design supports:
 * replayability
 * observability
 * loose coupling between concerns
+
+---
+
+## Maintenance note
+
+If the bounded contexts or their relationships change, update both:
+- the textual description
+- the Mermaid diagram below
+
+The text and diagram must remain consistent.

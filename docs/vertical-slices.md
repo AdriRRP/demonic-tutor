@@ -30,3 +30,19 @@ See `docs/slices/` for detailed slice specifications.
 - Slices must be implemented in order
 - Each slice introduces only the minimum rule subset required
 - No slice implies broader rules support than explicitly implemented
+
+## Slice Evolution Rule
+
+Slices extend the existing domain model incrementally.
+
+A slice may:
+
+- introduce commands
+- introduce domain events
+- extend validation rules
+
+A slice must not:
+
+- introduce new aggregates without explicit ADR
+- introduce infrastructure concerns
+- imply support for rules not explicitly modeled

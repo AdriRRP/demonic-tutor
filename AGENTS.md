@@ -110,3 +110,15 @@ When proposing code or structure:
 ## Implementation state
 
 See `docs/current-state.md` for the current slice implementation status.
+
+## Documentation synchronization rules
+
+If a task changes bounded contexts or their relationships, update `docs/context-map.md`.
+
+This includes:
+- the textual description
+- the Mermaid diagram
+
+Do not leave them out of sync.
+
+Operational rules for agents are defined in `agents/core-agent.md`.
