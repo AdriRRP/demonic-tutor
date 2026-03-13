@@ -18,12 +18,17 @@ The project is designed as a practical laboratory for:
 
 This repository is in active development.
 
-Five vertical slices have been implemented:
+Six vertical slices have been implemented:
 1. **StartGame** — Initialize a game with two players
 2. **DrawOpeningHands** — Deal opening hands to players
 3. **PlayLand** — Play a land from hand to battlefield
 4. **AdvanceTurn** — Advance to the next player's turn
 5. **DrawCard** — Draw a card from library to hand
+6. **Mulligan** — Redraw opening hand during setup phase
+
+## Version
+
+See `CHANGELOG.md` for release history and current version.
 
 ## Guiding idea
 

@@ -111,6 +111,18 @@ When proposing code or structure:
 
 See `docs/current-state.md` for the current slice implementation status.
 
+## Versioning and Changelog
+
+This project follows Semantic Versioning (MAJOR.MINOR.PATCH).
+
+- **Version**: Check `Cargo.toml` for current version
+- **Changelog**: See `CHANGELOG.md` for release history
+
+When making changes:
+1. Do NOT modify version in `Cargo.toml` unless explicitly requested
+2. Do NOT manually update `CHANGELOG.md` - it is generated at release time
+3. Focus on implementing the feature correctly; release process handles versioning
+
 ## Documentation synchronization rules
 
 If a task changes bounded contexts or their relationships, update `docs/context-map.md`.

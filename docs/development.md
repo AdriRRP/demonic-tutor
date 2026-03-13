@@ -9,6 +9,18 @@ All code must pass:
 
 Quick check: `./scripts/check-all.sh`
 
+## Versioning
+
+This project follows Semantic Versioning (MAJOR.MINOR.PATCH).
+
+- **Version**: Check `Cargo.toml` for current version
+- **Changelog**: See `CHANGELOG.md` for release history
+
+When making changes:
+- Do NOT modify version in `Cargo.toml` unless explicitly requested
+- Do NOT manually update `CHANGELOG.md` - it is generated at release time
+- Focus on implementing the feature correctly; release process handles versioning
+
 ## Panic-Free Policy
 
 Production code (`src/`) must not contain:
