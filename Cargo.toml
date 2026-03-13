@@ -1,0 +1,12 @@
+[package]
+name = "demonictutor"
+version = "0.1.0"
+edition = "2021"
+description = "A client-side Magic: The Gathering deck playtesting and analysis application"
+repository = "https://github.com/anomalyco/demonictutor"
+license = "MIT"
+keywords = ["magic", "gathering", "mtg", "game", "playtesting"]
+categories = ["game", "game-engines", "simulation"]
+authors = ["DemonicTutor Contributors"]
+
+[dependencies]

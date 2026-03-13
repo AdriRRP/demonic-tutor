@@ -1,0 +1,35 @@
+# Build artifacts
+/target/
+**/target/
+
+# Cargo lock - optional, often kept in small projects but can be ignored for binary-focused projects
+# We'll keep it for now as this is a library/application
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+
+# Debug
+*.pdb
+
+# Profiling
+*.prof
+
+# Coverage
+*.lcov
+coverage/
+llvm-cov/
+
+# Tooling
+.opencode/
