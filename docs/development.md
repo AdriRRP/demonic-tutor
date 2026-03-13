@@ -1,39 +1,26 @@
 # Development Guidelines
 
-## Quality standard
+## Quality Standard
 
 All code must pass:
-
 - `cargo fmt --check`
 - `cargo test`
-- `cargo clippy --all-targets --all-features -- -W clippy::all -W clippy::pedantic -W clippy::nursery -W clippy::perf -W clippy::cargo -A clippy::multiple_crate_versions -D warnings`
+- `cargo clippy --all-targets --all-features -- -W clippy::all -W clippy::pedantic -W clippy::nursery -W clippy::perf -W clippy::cargo -W clippy::unwrap_used -W clippy::expect_used -W clippy::panic -W clippy::todo -W clippy::unimplemented -W clippy::unreachable -A clippy::multiple_crate_versions -D warnings`
+
+Quick check: `./scripts/check-all.sh`
+
+## Panic-Free Policy
+
+Production code (`src/`) must not contain:
+- `unwrap()`, `expect()`, `panic!`, `todo!`, `unimplemented!`, `unreachable!`
+
+Use `Result` for error handling.
+
+Test code (`tests/`) may use `unwrap()` where appropriate.
 
 ## Style
 
-- Prefer explicit code over clever abstractions.
-- Keep the domain core small and deterministic.
-- Introduce new concepts only when required by the active slice.
-- Avoid speculative infrastructure.
-
-## Slice policy
-
-Each slice should be:
-- small
-- testable
-- reviewable
-- explicit about supported behavior and non-goals
-
-## Panic-free production code policy
-
-Code under `src/` must not contain:
-
-- `unwrap()`
-- `expect()`
-- `panic!`
-- `todo!`
-- `unimplemented!`
-- `unreachable!`
-
-Production code must pass strict clippy checks enforcing this rule.
-
-Test code under `tests/` may still use `unwrap()` where appropriate.
+- Prefer explicit code over clever abstractions
+- Keep domain core small and deterministic
+- Introduce new concepts only for the active slice
+- Avoid speculative infrastructure

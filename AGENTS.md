@@ -95,12 +95,6 @@ When proposing code or structure:
 * `deck`
 * `analytics`
 
-## Current implementation priority
+## Implementation state
 
-Implement slices in this order:
-
-1. `StartGame`
-2. `DrawOpeningHand`
-3. `PlayLand`
-
-Do not jump ahead unless explicitly instructed.
+See `docs/current-state.md` for the current slice implementation status.

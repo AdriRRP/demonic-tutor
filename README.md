@@ -50,35 +50,6 @@ Breadth, advanced UX and richer rules support come later.
 
 ## Development
 
-### Local checks
+See `docs/development.md` for quality commands and panic-free policy.
 
-Run the complete quality check suite:
-
-```bash
-./scripts/check-all.sh
-```
-
-Individual checks:
-
-```bash
-./scripts/fmt.sh       # Format check
-./scripts/test.sh      # Run tests
-./scripts/clippy.sh    # Strict clippy
-./scripts/security.sh  # Dependency security audit
-./scripts/coverage.sh  # Generate coverage report
-```
-
-### CI
-
-GitHub Actions runs:
-- Format check
-- Strict clippy
-- Tests
-- Security audit (cargo-audit)
-- Coverage (cargo-llvm-cov)
-
-### Dependencies
-
-- Rust stable channel (pinned via `rust-toolchain.toml`)
-- `cargo-audit` for security vulnerability scanning
-- `cargo-llvm-cov` for coverage reporting
+Quick check: `./scripts/check-all.sh`
