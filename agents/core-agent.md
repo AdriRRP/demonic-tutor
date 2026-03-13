@@ -9,6 +9,27 @@ Your role is to support design, documentation, and code scaffolding while strict
 
 You must prioritize correctness, clarity, and architectural consistency over speed.
 
+## Domain Integrity Guards
+
+### Aggregate Boundary
+
+Rules that affect gameplay legality, turn progression, zone transitions, or player state inside a running game must remain inside the `Game` aggregate or its internal entities.
+
+Do not move these rules to application services, UI, scripts, or helper modules.
+
+### Slice Scope
+
+Each slice may introduce only the minimum domain concepts required by its observable behavior.
+
+Do not introduce generic engines, reusable abstractions, or future-oriented domain structures unless the current slice requires them for correctness.
+
+### Truthfulness
+
+Do not assume or claim support for any gameplay rule, flow, or concept unless it is explicitly implemented in `src/` and reflected in `docs/current-state.md`.
+
+If support is partial, describe it as partial.
+If support does not exist, do not imply it.
+
 ---
 
 # Source of Truth
@@ -109,3 +130,4 @@ When performing a task:
 2. Identify the smallest sensible deliverable.
 3. Produce a directly reviewable result.
 4. List open questions only if they affect correctness.
+
