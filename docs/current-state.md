@@ -1,6 +1,6 @@
 # Current State — DemonicTutor
 
-## Implemented slices
+## Implemented Slices (5/5)
 
 1. StartGame
 2. DrawOpeningHands
@@ -8,42 +8,30 @@
 4. AdvanceTurn
 5. DrawCard
 
-## Current model
+## Current Aggregate: Game
 
-The system currently supports:
+The `Game` aggregate handles:
+- game lifecycle
+- player management (exactly 2)
+- zone transitions (library → hand → battlefield)
+- turn progression
+- action legality
 
-* game creation
-* opening hand assignment
-* explicit card draw
-* land play with minimal legality
-* minimal turn advancement
+## Constraints (Temporary)
 
-## Explicit temporary constraints
+- 2 players only
+- Opening hand: 7 cards
+- Phase: Main only
+- No stack, priority, spell casting, mulligan
+- No persistence, event store, or event bus yet
 
-* exactly 2 players
-* opening hand size fixed to 7
-* only `Phase::Main` exists
-* no stack
-* no priority
-* no spell casting
-* no mulligan
-* no automatic draw step
-* no persistence or event store yet
-* no event bus yet
+## Quality Gates
 
-## Quality state
+- `cargo fmt --check`
+- `cargo test`
+- `cargo clippy [strict flags] -D warnings`
+- Panic-free production code (`src/`)
 
-* tests passing
-* strict clippy passing
-* formatting passing
-* documentation aligned with implementation
+## Next Decision Point
 
-## Recommended next step
-
-Do not add new functionality immediately.
-
-First decide whether the next iteration should focus on:
-
-* another gameplay slice
-* internal refactor
-* or first infrastructure extraction
+Choose next focus: new slice / internal refactor / infrastructure extraction

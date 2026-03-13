@@ -16,6 +16,18 @@ Always treat the following files as the primary source of truth for this reposit
 
 If a proposal conflicts with these files, these files win.
 
+## Source of Truth Priority
+
+When reasoning about the project, use this precedence:
+
+1. **Rust code** (`src/`) — actual implementation
+2. **ADRs** (`docs/adr/*.md`) — architectural decisions
+3. **`docs/current-state.md`** — implementation snapshot
+4. **`DOMAIN_GLOSSARY.md`** — ubiquitous language
+5. **Other documentation** — context and rationale
+
+This order prevents contradictions between documentation and code.
+
 ## Project intent
 
 DemonicTutor is:
