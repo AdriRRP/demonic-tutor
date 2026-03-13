@@ -1,4 +1,7 @@
 use crate::domain::{cards::CardInstance, ids::CardInstanceId};
+use rand::rngs::StdRng;
+use rand::seq::SliceRandom;
+use rand::SeedableRng;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Library(Vec<CardInstance>);
@@ -25,6 +28,15 @@ impl Library {
     #[must_use]
     pub const fn is_empty(&self) -> bool {
         self.0.is_empty()
+    }
+
+    pub fn receive(&mut self, cards: Vec<CardInstance>) {
+        self.0.extend(cards);
+    }
+
+    pub fn shuffle(&mut self) {
+        let mut rng = StdRng::from_entropy();
+        self.0.shuffle(&mut rng);
     }
 }
 

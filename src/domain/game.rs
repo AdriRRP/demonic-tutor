@@ -1,17 +1,18 @@
 use crate::domain::{
     cards::{CardInstance, CardType},
     commands::{
-        AdvanceTurnCommand, DealOpeningHandsCommand, DrawCardCommand, PlayLandCommand,
-        StartGameCommand,
+        AdvanceTurnCommand, DealOpeningHandsCommand, DrawCardCommand, MulliganCommand,
+        PlayLandCommand, StartGameCommand,
     },
     errors::DomainError,
-    events::{CardDrawn, GameStarted, LandPlayed, OpeningHandDealt, TurnAdvanced},
+    events::{CardDrawn, GameStarted, LandPlayed, MulliganTaken, OpeningHandDealt, TurnAdvanced},
     ids::{CardInstanceId, DeckId, GameId, PlayerId},
     zones::{Battlefield, Hand, Library},
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Phase {
+    Setup,
     Main,
 }
 
@@ -26,6 +27,7 @@ mod player {
         hand: Hand,
         battlefield: Battlefield,
         lands_played_this_turn: usize,
+        mulligan_used: bool,
     }
 
     impl Player {
@@ -38,6 +40,7 @@ mod player {
                 hand: Hand::new(),
                 battlefield: Battlefield::new(),
                 lands_played_this_turn: 0,
+                mulligan_used: false,
             }
         }
 
@@ -89,6 +92,16 @@ mod player {
         #[allow(clippy::missing_const_for_fn)]
         pub fn lands_played_this_turn_mut(&mut self) -> &mut usize {
             &mut self.lands_played_this_turn
+        }
+
+        #[must_use]
+        pub const fn mulligan_used(&self) -> bool {
+            self.mulligan_used
+        }
+
+        #[allow(clippy::missing_const_for_fn)]
+        pub fn mulligan_used_mut(&mut self) -> &mut bool {
+            &mut self.mulligan_used
         }
     }
 }
@@ -174,7 +187,7 @@ impl Game {
         let game = Self {
             id: cmd.game_id,
             active_player,
-            phase: Phase::Main,
+            phase: Phase::Setup,
             players,
         };
 
@@ -271,6 +284,62 @@ impl Game {
         }
 
         Ok(events)
+    }
+
+    /// Performs a mulligan for a player.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if:
+    /// - The player is not found
+    /// - The player has already used mulligan
+    /// - The current phase is not Setup
+    /// - The library has fewer than 7 cards
+    pub fn mulligan(&mut self, cmd: MulliganCommand) -> Result<MulliganTaken, DomainError> {
+        if !matches!(self.phase, Phase::Setup) {
+            return Err(DomainError::InvalidPhaseForMulligan);
+        }
+
+        let player_idx = self
+            .players
+            .iter()
+            .position(|p| p.id() == &cmd.player_id)
+            .ok_or_else(|| DomainError::PlayerNotFound(cmd.player_id.clone()))?;
+
+        let player = &mut self.players[player_idx];
+
+        if player.mulligan_used() {
+            return Err(DomainError::MulliganAlreadyUsed {
+                player_id: cmd.player_id,
+            });
+        }
+
+        let hand_size = 7;
+        if player.library().len() < hand_size {
+            return Err(DomainError::NotEnoughCardsInLibrary {
+                player_id: cmd.player_id,
+                available: player.library().len(),
+                requested: hand_size,
+            });
+        }
+
+        let hand_cards: Vec<CardInstance> = player.hand().cards().to_vec();
+        player.hand_mut().receive(Vec::new());
+        player.library_mut().receive(hand_cards);
+        player.library_mut().shuffle();
+
+        let drawn_cards = player.library_mut().draw(hand_size).ok_or_else(|| {
+            DomainError::NotEnoughCardsInLibrary {
+                player_id: cmd.player_id.clone(),
+                available: player.library().len(),
+                requested: hand_size,
+            }
+        })?;
+
+        player.hand_mut().receive(drawn_cards);
+        *player.mulligan_used_mut() = true;
+
+        Ok(MulliganTaken::new(self.id.clone(), cmd.player_id))
     }
 
     /// Plays a land card from the player's hand to the battlefield.
@@ -378,7 +447,7 @@ impl Game {
             });
         }
 
-        if !matches!(self.phase, Phase::Main) {
+        if !matches!(self.phase, Phase::Main | Phase::Setup) {
             return Err(DomainError::InvalidPhaseForDraw {
                 phase: self.phase.clone(),
             });

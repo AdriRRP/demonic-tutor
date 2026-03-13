@@ -36,6 +36,10 @@ pub enum DomainError {
     AlreadyPlayedLandThisTurn {
         player_id: PlayerId,
     },
+    MulliganAlreadyUsed {
+        player_id: PlayerId,
+    },
+    InvalidPhaseForMulligan,
     InternalInvariantViolation {
         message: String,
     },
@@ -90,6 +94,12 @@ impl std::fmt::Display for DomainError {
             }
             Self::AlreadyPlayedLandThisTurn { player_id } => {
                 write!(f, "player {player_id} already played a land this turn")
+            }
+            Self::MulliganAlreadyUsed { player_id } => {
+                write!(f, "player {player_id} has already used mulligan")
+            }
+            Self::InvalidPhaseForMulligan => {
+                write!(f, "cannot perform mulligan in current phase")
             }
             Self::InternalInvariantViolation { message } => {
                 write!(f, "internal invariant violated: {message}")

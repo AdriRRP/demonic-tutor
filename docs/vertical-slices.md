@@ -13,6 +13,7 @@ Vertical slices are the primary evolution mechanism. Each slice delivers one coh
 | 3 | PlayLand | `docs/slices/play-land.md` |
 | 4 | AdvanceTurn | `docs/slices/advance-turn.md` |
 | 5 | DrawCard | `docs/slices/draw-card.md` |
+| 6 | Mulligan | `docs/slices/mulligan.md` |
 
 ## Future Slices
 

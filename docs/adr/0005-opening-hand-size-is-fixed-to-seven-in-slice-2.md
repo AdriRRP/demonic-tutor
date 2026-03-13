@@ -29,3 +29,7 @@ For slice 2, the opening hand size is fixed to 7 cards.
 ## Notes
 
 This decision is intentionally temporary.
+
+## Update (Slice 6)
+
+Mulligan is now implemented. The opening hand size of 7 remains, but players can now perform a mulligan during `Phase::Setup` to redraw their hand.

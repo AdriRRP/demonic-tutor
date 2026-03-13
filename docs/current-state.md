@@ -1,12 +1,13 @@
 # Current State — DemonicTutor
 
-## Implemented Slices (5/5)
+## Implemented Slices (6/6)
 
 1. StartGame
 2. DrawOpeningHands
 3. PlayLand
 4. AdvanceTurn
 5. DrawCard
+6. Mulligan
 
 ## Current Aggregate: Game
 
@@ -21,8 +22,8 @@ The `Game` aggregate handles:
 
 - 2 players only
 - Opening hand: 7 cards
-- Phase: Main only
-- No stack, priority, spell casting, mulligan
+- Phase: Setup → Main
+- No stack, priority, spell casting
 - No persistence, event store, or event bus yet
 
 ## Quality Gates

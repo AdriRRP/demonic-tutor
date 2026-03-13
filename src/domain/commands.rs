@@ -88,3 +88,15 @@ impl DrawCardCommand {
         Self { player_id }
     }
 }
+
+#[derive(Debug, Clone)]
+pub struct MulliganCommand {
+    pub player_id: PlayerId,
+}
+
+impl MulliganCommand {
+    #[must_use]
+    pub const fn new(player_id: PlayerId) -> Self {
+        Self { player_id }
+    }
+}

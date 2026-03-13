@@ -1,9 +1,9 @@
 #![allow(clippy::unwrap_used)]
 
 use demonictutor::{
-    CardDefinitionId, CardInstanceId, CardType, DealOpeningHandsCommand, DeckId, DomainError,
-    GameId, GameService, PlayLandCommand, PlayerDeck, PlayerDeckContents, PlayerId,
-    StartGameCommand,
+    AdvanceTurnCommand, CardDefinitionId, CardInstanceId, CardType, DealOpeningHandsCommand,
+    DeckId, DomainError, GameId, GameService, PlayLandCommand, PlayerDeck, PlayerDeckContents,
+    PlayerId, StartGameCommand,
 };
 
 fn player_deck(player: &str, deck: &str) -> PlayerDeck {
@@ -30,22 +30,39 @@ fn create_game_with_land_in_hand() -> (demonictutor::Game, CardInstanceId) {
     ))
     .unwrap();
 
-    let land_card_id = CardInstanceId::new("game-1-player-1-0");
+    let land_card_id = CardInstanceId::new("game-1-player-2-0");
 
-    let cmd = DealOpeningHandsCommand::new(vec![player_deck_contents(
-        "player-1",
-        vec![
-            (String::from("forest"), CardType::Land),
-            (String::from("card-2"), CardType::NonLand),
-            (String::from("card-3"), CardType::NonLand),
-            (String::from("card-4"), CardType::NonLand),
-            (String::from("card-5"), CardType::NonLand),
-            (String::from("card-6"), CardType::NonLand),
-            (String::from("card-7"), CardType::NonLand),
-        ],
-    )]);
+    let cmd = DealOpeningHandsCommand::new(vec![
+        player_deck_contents(
+            "player-1",
+            vec![
+                (String::from("forest"), CardType::Land),
+                (String::from("card-2"), CardType::NonLand),
+                (String::from("card-3"), CardType::NonLand),
+                (String::from("card-4"), CardType::NonLand),
+                (String::from("card-5"), CardType::NonLand),
+                (String::from("card-6"), CardType::NonLand),
+                (String::from("card-7"), CardType::NonLand),
+            ],
+        ),
+        player_deck_contents(
+            "player-2",
+            vec![
+                (String::from("mountain"), CardType::Land),
+                (String::from("card-2"), CardType::NonLand),
+                (String::from("card-3"), CardType::NonLand),
+                (String::from("card-4"), CardType::NonLand),
+                (String::from("card-5"), CardType::NonLand),
+                (String::from("card-6"), CardType::NonLand),
+                (String::from("card-7"), CardType::NonLand),
+            ],
+        ),
+    ]);
 
     GameService::deal_opening_hands(&mut game, &cmd).unwrap();
+
+    let advance_cmd = AdvanceTurnCommand::new();
+    GameService::advance_turn(&mut game, advance_cmd).unwrap();
 
     (game, land_card_id)
 }
@@ -54,27 +71,27 @@ fn create_game_with_land_in_hand() -> (demonictutor::Game, CardInstanceId) {
 fn play_land_moves_card_from_hand_to_battlefield() {
     let (mut game, land_card_id) = create_game_with_land_in_hand();
 
-    let cmd = PlayLandCommand::new(PlayerId::new("player-1"), land_card_id.clone());
+    let cmd = PlayLandCommand::new(PlayerId::new("player-2"), land_card_id.clone());
     let result = GameService::play_land(&mut game, cmd);
 
     assert!(result.is_ok());
 
-    let p1_battlefield = game.players()[0].battlefield().cards();
-    assert_eq!(p1_battlefield.len(), 1);
-    assert_eq!(p1_battlefield[0].id(), &land_card_id);
+    let p2_battlefield = game.players()[1].battlefield().cards();
+    assert_eq!(p2_battlefield.len(), 1);
+    assert_eq!(p2_battlefield[0].id(), &land_card_id);
 }
 
 #[test]
 fn play_land_emits_event() {
     let (mut game, land_card_id) = create_game_with_land_in_hand();
 
-    let cmd = PlayLandCommand::new(PlayerId::new("player-1"), land_card_id.clone());
+    let cmd = PlayLandCommand::new(PlayerId::new("player-2"), land_card_id.clone());
     let result = GameService::play_land(&mut game, cmd);
 
     assert!(result.is_ok());
     let event = result.unwrap();
     assert_eq!(event.card_id, land_card_id);
-    assert_eq!(event.player_id.0, "player-1");
+    assert_eq!(event.player_id.0, "player-2");
 }
 
 #[test]
@@ -82,7 +99,7 @@ fn play_land_fails_when_card_not_in_hand() {
     let (mut game, _) = create_game_with_land_in_hand();
 
     let cmd = PlayLandCommand::new(
-        PlayerId::new("player-1"),
+        PlayerId::new("player-2"),
         CardInstanceId::new("nonexistent-card"),
     );
     let result = GameService::play_land(&mut game, cmd);
@@ -95,8 +112,8 @@ fn play_land_fails_when_card_is_not_a_land() {
     let (mut game, _) = create_game_with_land_in_hand();
 
     let cmd = PlayLandCommand::new(
-        PlayerId::new("player-1"),
-        CardInstanceId::new("game-1-player-1-1"),
+        PlayerId::new("player-2"),
+        CardInstanceId::new("game-1-player-2-1"),
     );
     let result = GameService::play_land(&mut game, cmd);
 
@@ -107,7 +124,7 @@ fn play_land_fails_when_card_is_not_a_land() {
 fn play_land_fails_when_not_player_turn() {
     let (mut game, land_card_id) = create_game_with_land_in_hand();
 
-    let cmd = PlayLandCommand::new(PlayerId::new("player-2"), land_card_id);
+    let cmd = PlayLandCommand::new(PlayerId::new("player-1"), land_card_id);
     let result = GameService::play_land(&mut game, cmd);
 
     assert!(matches!(result, Err(DomainError::NotYourTurn { .. })));
@@ -117,12 +134,12 @@ fn play_land_fails_when_not_player_turn() {
 fn play_land_fails_when_land_already_played_this_turn() {
     let (mut game, land_card_id) = create_game_with_land_in_hand();
 
-    let cmd = PlayLandCommand::new(PlayerId::new("player-1"), land_card_id);
+    let cmd = PlayLandCommand::new(PlayerId::new("player-2"), land_card_id);
     let result = GameService::play_land(&mut game, cmd);
     assert!(result.is_ok());
 
-    let second_land_id = CardInstanceId::new("game-1-player-1-5");
-    let cmd2 = PlayLandCommand::new(PlayerId::new("player-1"), second_land_id);
+    let second_land_id = CardInstanceId::new("game-1-player-2-5");
+    let cmd2 = PlayLandCommand::new(PlayerId::new("player-2"), second_land_id);
     let result2 = GameService::play_land(&mut game, cmd2);
 
     assert!(matches!(

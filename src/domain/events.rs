@@ -82,3 +82,16 @@ impl CardDrawn {
         }
     }
 }
+
+#[derive(Debug, Clone)]
+pub struct MulliganTaken {
+    pub game_id: GameId,
+    pub player_id: PlayerId,
+}
+
+impl MulliganTaken {
+    #[must_use]
+    pub const fn new(game_id: GameId, player_id: PlayerId) -> Self {
+        Self { game_id, player_id }
+    }
+}

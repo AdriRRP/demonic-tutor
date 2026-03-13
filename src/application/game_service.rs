@@ -1,10 +1,10 @@
 use crate::domain::{
     commands::{
-        AdvanceTurnCommand, DealOpeningHandsCommand, DrawCardCommand, PlayLandCommand,
-        StartGameCommand,
+        AdvanceTurnCommand, DealOpeningHandsCommand, DrawCardCommand, MulliganCommand,
+        PlayLandCommand, StartGameCommand,
     },
     errors::DomainError,
-    events::{CardDrawn, LandPlayed, OpeningHandDealt, TurnAdvanced},
+    events::{CardDrawn, LandPlayed, MulliganTaken, OpeningHandDealt, TurnAdvanced},
     game::Game,
 };
 
@@ -62,5 +62,14 @@ impl GameService {
     /// Returns an error if the command is invalid.
     pub fn draw_card(game: &mut Game, cmd: DrawCardCommand) -> Result<CardDrawn, DomainError> {
         game.draw_card(cmd)
+    }
+
+    /// Performs a mulligan for a player.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the command is invalid.
+    pub fn mulligan(game: &mut Game, cmd: MulliganCommand) -> Result<MulliganTaken, DomainError> {
+        game.mulligan(cmd)
     }
 }

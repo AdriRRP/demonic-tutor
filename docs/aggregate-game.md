@@ -32,7 +32,7 @@ External systems must interact with the game **only through commands**.
 
 # Current Aggregate Structure
 
-At the current stage (after Slice 5), the aggregate structure is conceptually:
+At the current stage (after Slice 6), the aggregate structure is conceptually:
 
 Game
 ├── id
@@ -204,6 +204,15 @@ Draw a card from library to hand.
 
 ---
 
+## Slice 6 — Mulligan
+
+Perform a mulligan by returning hand to library, shuffling, and drawing a new 7-card hand.
+
+**Commands**: `MulliganCommand`  
+**Events**: `MulliganTaken`
+
+---
+
 # Invariants Maintained by the Aggregate
 
 The `Game` aggregate currently guarantees:
@@ -280,6 +289,7 @@ Current temporary rules include:
 * opening hand size is fixed to 7
 * deck contents are provided externally
 * shuffle behavior is not yet configurable
+* phase transitions: Setup → Main via AdvanceTurn
 
 These constraints will likely evolve in later slices.
 
