@@ -1,34 +1,10 @@
-
 # Core Agent — DemonicTutor
 
 ## Mission
 
-You are the project assistant responsible for helping evolve DemonicTutor incrementally.
+You assist the incremental evolution of DemonicTutor.
 
-Your role is to support design, documentation, and code scaffolding while strictly respecting the documented project context.
-
-You must prioritize correctness, clarity, and architectural consistency over speed.
-
-## Domain Integrity Guards
-
-### Aggregate Boundary
-
-Rules that affect gameplay legality, turn progression, zone transitions, or player state inside a running game must remain inside the `Game` aggregate or its internal entities.
-
-Do not move these rules to application services, UI, scripts, or helper modules.
-
-### Slice Scope
-
-Each slice may introduce only the minimum domain concepts required by its observable behavior.
-
-Do not introduce generic engines, reusable abstractions, or future-oriented domain structures unless the current slice requires them for correctness.
-
-### Truthfulness
-
-Do not assume or claim support for any gameplay rule, flow, or concept unless it is explicitly implemented in `src/` and reflected in `docs/current-state.md`.
-
-If support is partial, describe it as partial.
-If support does not exist, do not imply it.
+Your role is to support design, documentation, and code scaffolding while strictly respecting the documented project context and architecture.
 
 ---
 
@@ -40,9 +16,31 @@ When reasoning about the project, use this precedence:
 2. Architectural decisions (`docs/adr/*.md`)
 3. Current implementation snapshot (`docs/current-state.md`)
 4. Domain language (`DOMAIN_GLOSSARY.md`)
-5. Project documentation
+5. Other documentation
 
 If documentation contradicts the code, the code wins.
+
+---
+
+# Domain Integrity Guards
+
+### Aggregate Boundary
+
+Rules affecting gameplay legality, turn progression, zone transitions, or player state must live inside the `Game` aggregate or its internal entities.
+
+Do not move these rules to UI, services, scripts, or helpers.
+
+### Slice Scope
+
+A slice may introduce only the domain concepts required by its observable behavior.
+
+Do not introduce engines, generic abstractions, or future-oriented structures unless required for correctness.
+
+### Truthfulness
+
+Do not assume or claim support for gameplay rules unless they are implemented in `src/` and reflected in `docs/current-state.md`.
+
+If support is partial, describe it as partial.
 
 ---
 
@@ -91,7 +89,7 @@ You must not:
 - introduce new aggregates without justification
 - move domain logic to UI or infrastructure
 - mix analytics with gameplay domain logic
-- introduce distributed or actor-heavy architecture unless requested
+- introduce distributed or actor-heavy patterns unless requested
 
 ---
 
@@ -104,7 +102,7 @@ A slice may:
 - introduce commands
 - introduce domain events
 - extend validation rules
-- extend the Game aggregate behavior
+- extend `Game` aggregate behavior
 
 A slice must not:
 
@@ -116,9 +114,67 @@ A slice must not:
 
 # Context Map Maintenance
 
-Whenever bounded contexts, responsibilities, or relationships between contexts change, update `docs/context-map.md`.
+If bounded contexts, responsibilities, or relationships change, update `docs/context-map.md`.
 
 Both the textual description and the Mermaid diagram must remain consistent with the architecture.
+
+---
+
+# Anti-Hallucination Protocol
+
+### API Existence
+
+Do not assume the existence of functions, types, commands, or events.
+
+If a symbol does not exist in `src/`, do not reference it as if it already exists.
+Propose it explicitly if required.
+
+### Domain Behavior
+
+Do not infer gameplay behavior that is not explicitly modeled.
+
+If a rule or mechanic is not implemented in the domain model, treat it as unsupported.
+
+### Design vs Implementation
+
+Always distinguish between:
+
+- existing implementation
+- proposed design
+
+Never describe proposed behavior as already implemented.
+
+---
+
+# Safe Change Protocol
+
+### Change Scope
+
+Before modifying code, identify the change scope:
+
+- domain model
+- application logic
+- infrastructure
+- documentation
+- tests
+
+If multiple layers are affected, ensure they remain consistent.
+
+### Domain Consistency
+
+If a domain type changes (aggregate, event, command, value object), verify whether the following must also change:
+
+- event definitions
+- command handlers
+- projections
+- tests
+- `docs/current-state.md`
+
+### Minimal Diff
+
+Prefer the smallest change that solves the task.
+
+Do not refactor unrelated modules unless required for correctness.
 
 ---
 
@@ -127,7 +183,7 @@ Both the textual description and the Mermaid diagram must remain consistent with
 When performing a task:
 
 1. Restate the task in repository terms.
-2. Identify the smallest sensible deliverable.
+2. Identify the smallest meaningful deliverable.
 3. Produce a directly reviewable result.
 4. List open questions only if they affect correctness.
 
