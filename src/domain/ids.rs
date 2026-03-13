@@ -13,6 +13,12 @@ impl From<String> for GameId {
     }
 }
 
+impl std::fmt::Display for GameId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct PlayerId(pub String);
 

@@ -1,0 +1,62 @@
+use crate::domain::events::DomainEvent;
+use std::sync::RwLock;
+
+#[derive(Debug, Default)]
+pub struct GameLogProjection {
+    logs: RwLock<Vec<String>>,
+}
+
+impl GameLogProjection {
+    #[must_use]
+    pub const fn new() -> Self {
+        Self {
+            logs: RwLock::new(Vec::new()),
+        }
+    }
+
+    #[must_use]
+    pub fn logs(&self) -> Vec<String> {
+        self.logs
+            .read()
+            .map(|logs| logs.clone())
+            .unwrap_or_default()
+    }
+
+    pub fn handle(&self, event: &DomainEvent) {
+        let log_entry = match event {
+            DomainEvent::GameStarted(e) => {
+                format!(
+                    "Game {} started with players: {:?}",
+                    e.game_id,
+                    e.players
+                        .iter()
+                        .map(ToString::to_string)
+                        .collect::<Vec<_>>()
+                )
+            }
+            DomainEvent::OpeningHandDealt(e) => {
+                format!(
+                    "Player {} received opening hand with {} cards",
+                    e.player_id,
+                    e.cards.len()
+                )
+            }
+            DomainEvent::LandPlayed(e) => {
+                format!("Player {} played land {}", e.player_id, e.card_id)
+            }
+            DomainEvent::TurnAdvanced(e) => {
+                format!("Turn advanced to {}", e.new_active_player)
+            }
+            DomainEvent::CardDrawn(e) => {
+                format!("Player {} drew a card", e.player_id)
+            }
+            DomainEvent::MulliganTaken(e) => {
+                format!("Player {} took a mulligan", e.player_id)
+            }
+        };
+
+        if let Ok(mut logs) = self.logs.write() {
+            logs.push(log_entry);
+        }
+    }
+}

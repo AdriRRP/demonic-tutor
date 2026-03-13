@@ -1,6 +1,6 @@
 # Current State — DemonicTutor
 
-## Implemented Slices (6/6)
+## Implemented Slices (7/7)
 
 1. StartGame
 2. DrawOpeningHands
@@ -8,6 +8,7 @@
 4. AdvanceTurn
 5. DrawCard
 6. Mulligan
+7. Infrastructure (EventBus, EventStore, GameLogProjection)
 
 ## Current Aggregate: Game
 
@@ -24,7 +25,8 @@ The `Game` aggregate handles:
 - Opening hand: 7 cards
 - Phase: Setup → Main
 - No stack, priority, spell casting
-- No persistence, event store, or event bus yet
+- In-memory event store (future: persistence)
+- In-memory event bus (future: distributed)
 
 ## Quality Gates
 
