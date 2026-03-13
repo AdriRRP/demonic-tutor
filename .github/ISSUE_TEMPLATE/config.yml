@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security Issues
+    url: https://github.com/AdriRRP/demonic-tutor/security/advisories/new
+    about: Report security vulnerabilities privately
+  - name: Discussions
+    url: https://github.com/AdriRRP/demonic-tutor/discussions
+    about: Ask questions and discuss the project
