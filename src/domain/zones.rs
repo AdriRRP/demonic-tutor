@@ -1,7 +1,5 @@
 use crate::domain::{cards::CardInstance, ids::CardInstanceId};
-use rand::rngs::StdRng;
 use rand::seq::SliceRandom;
-use rand::SeedableRng;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Library(Vec<CardInstance>);
@@ -35,7 +33,7 @@ impl Library {
     }
 
     pub fn shuffle(&mut self) {
-        let mut rng = StdRng::from_entropy();
+        let mut rng = rand::make_rng::<rand::rngs::StdRng>();
         self.0.shuffle(&mut rng);
     }
 }

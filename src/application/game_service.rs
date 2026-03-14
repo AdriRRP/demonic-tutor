@@ -1,25 +1,55 @@
+use crate::application::{EventBus, EventStore};
 use crate::domain::{
     commands::{
         AdvanceTurnCommand, DealOpeningHandsCommand, DrawCardCommand, MulliganCommand,
         PlayLandCommand, StartGameCommand,
     },
     errors::DomainError,
-    events::{CardDrawn, LandPlayed, MulliganTaken, OpeningHandDealt, TurnAdvanced},
+    events::{
+        CardDrawn, DomainEvent, GameStarted, LandPlayed, MulliganTaken, OpeningHandDealt,
+        TurnAdvanced,
+    },
     game::Game,
 };
 
-pub struct GameService;
+pub struct GameService<E, B>
+where
+    E: EventStore,
+    B: EventBus,
+{
+    event_store: E,
+    event_bus: B,
+}
 
-impl GameService {
+impl<E, B> GameService<E, B>
+where
+    E: EventStore,
+    B: EventBus,
+{
+    #[must_use]
+    pub const fn new(event_store: E, event_bus: B) -> Self {
+        Self {
+            event_store,
+            event_bus,
+        }
+    }
+
     /// Starts a new game.
     ///
     /// # Errors
     ///
     /// Returns an error if the command is invalid.
-    pub fn start_game(
-        cmd: StartGameCommand,
-    ) -> Result<(Game, crate::domain::events::GameStarted), DomainError> {
-        Game::start(cmd)
+    pub fn start_game(&self, cmd: StartGameCommand) -> Result<(Game, GameStarted), DomainError> {
+        let (game, event) = Game::start(cmd)?;
+        let domain_event: DomainEvent = event.clone().into();
+
+        let game_id = game.id().0.clone();
+        let _ = self
+            .event_store
+            .append(&game_id, std::slice::from_ref(&domain_event));
+        self.event_bus.publish(&domain_event);
+
+        Ok((game, event))
     }
 
     /// Deals opening hands to all players.
@@ -28,10 +58,22 @@ impl GameService {
     ///
     /// Returns an error if the command is invalid.
     pub fn deal_opening_hands(
+        &self,
         game: &mut Game,
         cmd: &DealOpeningHandsCommand,
     ) -> Result<Vec<OpeningHandDealt>, DomainError> {
-        game.deal_opening_hands(cmd)
+        let events = game.deal_opening_hands(cmd)?;
+
+        if !events.is_empty() {
+            let game_id = game.id().0.clone();
+            let domain_events: Vec<DomainEvent> = events.iter().cloned().map(Into::into).collect();
+            let _ = self.event_store.append(&game_id, &domain_events);
+            for event in &domain_events {
+                self.event_bus.publish(event);
+            }
+        }
+
+        Ok(events)
     }
 
     /// Plays a land card.
@@ -39,8 +81,21 @@ impl GameService {
     /// # Errors
     ///
     /// Returns an error if the command is invalid.
-    pub fn play_land(game: &mut Game, cmd: PlayLandCommand) -> Result<LandPlayed, DomainError> {
-        game.play_land(cmd)
+    pub fn play_land(
+        &self,
+        game: &mut Game,
+        cmd: PlayLandCommand,
+    ) -> Result<LandPlayed, DomainError> {
+        let event = game.play_land(cmd)?;
+        let domain_event: DomainEvent = event.clone().into();
+
+        let game_id = game.id().0.clone();
+        let _ = self
+            .event_store
+            .append(&game_id, std::slice::from_ref(&domain_event));
+        self.event_bus.publish(&domain_event);
+
+        Ok(event)
     }
 
     /// Advances the turn to the next player.
@@ -49,10 +104,20 @@ impl GameService {
     ///
     /// Returns an error if the active player cannot be found.
     pub fn advance_turn(
+        &self,
         game: &mut Game,
         cmd: AdvanceTurnCommand,
     ) -> Result<TurnAdvanced, DomainError> {
-        game.advance_turn(cmd)
+        let event = game.advance_turn(cmd)?;
+        let domain_event: DomainEvent = event.clone().into();
+
+        let game_id = game.id().0.clone();
+        let _ = self
+            .event_store
+            .append(&game_id, std::slice::from_ref(&domain_event));
+        self.event_bus.publish(&domain_event);
+
+        Ok(event)
     }
 
     /// Draws a card from the player's library.
@@ -60,8 +125,21 @@ impl GameService {
     /// # Errors
     ///
     /// Returns an error if the command is invalid.
-    pub fn draw_card(game: &mut Game, cmd: DrawCardCommand) -> Result<CardDrawn, DomainError> {
-        game.draw_card(cmd)
+    pub fn draw_card(
+        &self,
+        game: &mut Game,
+        cmd: DrawCardCommand,
+    ) -> Result<CardDrawn, DomainError> {
+        let event = game.draw_card(cmd)?;
+        let domain_event: DomainEvent = event.clone().into();
+
+        let game_id = game.id().0.clone();
+        let _ = self
+            .event_store
+            .append(&game_id, std::slice::from_ref(&domain_event));
+        self.event_bus.publish(&domain_event);
+
+        Ok(event)
     }
 
     /// Performs a mulligan for a player.
@@ -69,7 +147,20 @@ impl GameService {
     /// # Errors
     ///
     /// Returns an error if the command is invalid.
-    pub fn mulligan(game: &mut Game, cmd: MulliganCommand) -> Result<MulliganTaken, DomainError> {
-        game.mulligan(cmd)
+    pub fn mulligan(
+        &self,
+        game: &mut Game,
+        cmd: MulliganCommand,
+    ) -> Result<MulliganTaken, DomainError> {
+        let event = game.mulligan(cmd)?;
+        let domain_event: DomainEvent = event.clone().into();
+
+        let game_id = game.id().0.clone();
+        let _ = self
+            .event_store
+            .append(&game_id, std::slice::from_ref(&domain_event));
+        self.event_bus.publish(&domain_event);
+
+        Ok(event)
     }
 }

@@ -2,8 +2,8 @@
 
 use demonictutor::{
     AdvanceTurnCommand, CardDefinitionId, CardInstanceId, CardType, DealOpeningHandsCommand,
-    DeckId, DomainError, GameId, GameService, PlayLandCommand, PlayerDeck, PlayerDeckContents,
-    PlayerId, StartGameCommand,
+    DeckId, DomainError, GameId, GameService, InMemoryEventBus, InMemoryEventStore,
+    PlayLandCommand, PlayerDeck, PlayerDeckContents, PlayerId, StartGameCommand,
 };
 
 fn player_deck(player: &str, deck: &str) -> PlayerDeck {
@@ -20,15 +20,21 @@ fn player_deck_contents(player: &str, cards: Vec<(String, CardType)>) -> PlayerD
     )
 }
 
+fn create_service() -> GameService<InMemoryEventStore, InMemoryEventBus> {
+    GameService::new(InMemoryEventStore::new(), InMemoryEventBus::new())
+}
+
 fn create_game_with_land_in_hand() -> (demonictutor::Game, CardInstanceId) {
-    let (mut game, _) = GameService::start_game(StartGameCommand::new(
-        GameId::new("game-1"),
-        vec![
-            player_deck("player-1", "deck-1"),
-            player_deck("player-2", "deck-2"),
-        ],
-    ))
-    .unwrap();
+    let service = create_service();
+    let (mut game, _) = service
+        .start_game(StartGameCommand::new(
+            GameId::new("game-1"),
+            vec![
+                player_deck("player-1", "deck-1"),
+                player_deck("player-2", "deck-2"),
+            ],
+        ))
+        .unwrap();
 
     let land_card_id = CardInstanceId::new("game-1-player-2-0");
 
@@ -59,10 +65,10 @@ fn create_game_with_land_in_hand() -> (demonictutor::Game, CardInstanceId) {
         ),
     ]);
 
-    GameService::deal_opening_hands(&mut game, &cmd).unwrap();
+    service.deal_opening_hands(&mut game, &cmd).unwrap();
 
     let advance_cmd = AdvanceTurnCommand::new();
-    GameService::advance_turn(&mut game, advance_cmd).unwrap();
+    service.advance_turn(&mut game, advance_cmd).unwrap();
 
     (game, land_card_id)
 }
@@ -70,9 +76,10 @@ fn create_game_with_land_in_hand() -> (demonictutor::Game, CardInstanceId) {
 #[test]
 fn play_land_moves_card_from_hand_to_battlefield() {
     let (mut game, land_card_id) = create_game_with_land_in_hand();
+    let service = create_service();
 
     let cmd = PlayLandCommand::new(PlayerId::new("player-2"), land_card_id.clone());
-    let result = GameService::play_land(&mut game, cmd);
+    let result = service.play_land(&mut game, cmd);
 
     assert!(result.is_ok());
 
@@ -84,9 +91,10 @@ fn play_land_moves_card_from_hand_to_battlefield() {
 #[test]
 fn play_land_emits_event() {
     let (mut game, land_card_id) = create_game_with_land_in_hand();
+    let service = create_service();
 
     let cmd = PlayLandCommand::new(PlayerId::new("player-2"), land_card_id.clone());
-    let result = GameService::play_land(&mut game, cmd);
+    let result = service.play_land(&mut game, cmd);
 
     assert!(result.is_ok());
     let event = result.unwrap();
@@ -97,12 +105,13 @@ fn play_land_emits_event() {
 #[test]
 fn play_land_fails_when_card_not_in_hand() {
     let (mut game, _) = create_game_with_land_in_hand();
+    let service = create_service();
 
     let cmd = PlayLandCommand::new(
         PlayerId::new("player-2"),
         CardInstanceId::new("nonexistent-card"),
     );
-    let result = GameService::play_land(&mut game, cmd);
+    let result = service.play_land(&mut game, cmd);
 
     assert!(matches!(result, Err(DomainError::CardNotInHand { .. })));
 }
@@ -110,12 +119,13 @@ fn play_land_fails_when_card_not_in_hand() {
 #[test]
 fn play_land_fails_when_card_is_not_a_land() {
     let (mut game, _) = create_game_with_land_in_hand();
+    let service = create_service();
 
     let cmd = PlayLandCommand::new(
         PlayerId::new("player-2"),
         CardInstanceId::new("game-1-player-2-1"),
     );
-    let result = GameService::play_land(&mut game, cmd);
+    let result = service.play_land(&mut game, cmd);
 
     assert!(matches!(result, Err(DomainError::NotALand { .. })));
 }
@@ -123,9 +133,10 @@ fn play_land_fails_when_card_is_not_a_land() {
 #[test]
 fn play_land_fails_when_not_player_turn() {
     let (mut game, land_card_id) = create_game_with_land_in_hand();
+    let service = create_service();
 
     let cmd = PlayLandCommand::new(PlayerId::new("player-1"), land_card_id);
-    let result = GameService::play_land(&mut game, cmd);
+    let result = service.play_land(&mut game, cmd);
 
     assert!(matches!(result, Err(DomainError::NotYourTurn { .. })));
 }
@@ -133,14 +144,15 @@ fn play_land_fails_when_not_player_turn() {
 #[test]
 fn play_land_fails_when_land_already_played_this_turn() {
     let (mut game, land_card_id) = create_game_with_land_in_hand();
+    let service = create_service();
 
     let cmd = PlayLandCommand::new(PlayerId::new("player-2"), land_card_id);
-    let result = GameService::play_land(&mut game, cmd);
+    let result = service.play_land(&mut game, cmd);
     assert!(result.is_ok());
 
     let second_land_id = CardInstanceId::new("game-1-player-2-5");
     let cmd2 = PlayLandCommand::new(PlayerId::new("player-2"), second_land_id);
-    let result2 = GameService::play_land(&mut game, cmd2);
+    let result2 = service.play_land(&mut game, cmd2);
 
     assert!(matches!(
         result2,

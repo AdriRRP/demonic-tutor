@@ -1,15 +1,21 @@
 #![allow(clippy::unwrap_used)]
 
 use demonictutor::{
-    DeckId, DomainError, GameId, GameService, PlayerDeck, PlayerId, StartGameCommand,
+    DeckId, DomainError, GameId, GameService, InMemoryEventBus, InMemoryEventStore, PlayerDeck,
+    PlayerId, StartGameCommand,
 };
 
 fn player_deck(player: &str, deck: &str) -> PlayerDeck {
     PlayerDeck::new(PlayerId::new(player), DeckId::new(deck))
 }
 
+fn create_service() -> GameService<InMemoryEventStore, InMemoryEventBus> {
+    GameService::new(InMemoryEventStore::new(), InMemoryEventBus::new())
+}
+
 #[test]
 fn start_game_creates_valid_game() {
+    let service = create_service();
     let cmd = StartGameCommand::new(
         GameId::new("game-1"),
         vec![
@@ -18,7 +24,7 @@ fn start_game_creates_valid_game() {
         ],
     );
 
-    let result = GameService::start_game(cmd);
+    let result = service.start_game(cmd);
 
     assert!(result.is_ok());
     let (game, event) = result.unwrap();
@@ -28,21 +34,24 @@ fn start_game_creates_valid_game() {
 
 #[test]
 fn start_game_rejects_single_player() {
+    let service = create_service();
     let cmd = StartGameCommand::new(
         GameId::new("game-1"),
         vec![player_deck("player-1", "deck-1")],
     );
 
-    let result = GameService::start_game(cmd);
+    let result = service.start_game(cmd);
 
-    assert!(matches!(
-        result,
-        Err(DomainError::NotEnoughPlayers { actual: 1 })
-    ));
+    assert!(result.is_err());
+    assert_eq!(
+        result.unwrap_err(),
+        DomainError::NotEnoughPlayers { actual: 1 }
+    );
 }
 
 #[test]
 fn start_game_rejects_too_many_players() {
+    let service = create_service();
     let cmd = StartGameCommand::new(
         GameId::new("game-1"),
         vec![
@@ -52,16 +61,18 @@ fn start_game_rejects_too_many_players() {
         ],
     );
 
-    let result = GameService::start_game(cmd);
+    let result = service.start_game(cmd);
 
-    assert!(matches!(
-        result,
-        Err(DomainError::TooManyPlayers { actual: 3 })
-    ));
+    assert!(result.is_err());
+    assert_eq!(
+        result.unwrap_err(),
+        DomainError::TooManyPlayers { actual: 3 }
+    );
 }
 
 #[test]
 fn start_game_rejects_duplicate_players() {
+    let service = create_service();
     let cmd = StartGameCommand::new(
         GameId::new("game-1"),
         vec![
@@ -70,7 +81,11 @@ fn start_game_rejects_duplicate_players() {
         ],
     );
 
-    let result = GameService::start_game(cmd);
+    let result = service.start_game(cmd);
 
-    assert!(matches!(result, Err(DomainError::DuplicatePlayer(_))));
+    assert!(result.is_err());
+    assert_eq!(
+        result.unwrap_err(),
+        DomainError::DuplicatePlayer(PlayerId::new("player-1"))
+    );
 }

@@ -35,4 +35,8 @@ echo "=== Security Audit ==="
 cargo audit
 
 echo ""
+echo "=== Dependency Update Check ==="
+./scripts/deps.sh
+
+echo ""
 echo "=== All checks passed ==="

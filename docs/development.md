@@ -21,6 +21,13 @@ When making changes:
 - Do NOT manually update `CHANGELOG.md` - it is generated at release time
 - Focus on implementing the feature correctly; release process handles versioning
 
+## Dependencies
+
+Use exact versions (major.minor.patch) in `Cargo.toml` to track precise versions:
+```toml
+rand = "0.10.0"  # NOT "0.10"
+```
+
 ## Panic-Free Policy
 
 Production code (`src/`) must not contain:
@@ -31,6 +38,22 @@ Use `Result` for error handling.
 Test code (`tests/`) may use `unwrap()` where appropriate.
 
 ## Style
+
+### Imports
+
+- Use compact/grouped imports to minimize code size:
+  ```rust
+  use crate::domain::{
+      commands::{Cmd1, Cmd2, Cmd3},
+      errors::DomainError,
+      events::Event,
+  };
+  ```
+- Only use fully qualified paths when they provide semantic distinction:
+  - Appropriate: `std::io::Result`, `std::result::Result`
+  - Avoid: `std::sync::Arc` unless disambiguating from another `Arc`
+
+### Code
 
 - Prefer explicit code over clever abstractions
 - Keep domain core small and deterministic

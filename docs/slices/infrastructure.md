@@ -6,6 +6,7 @@ Add basic event-driven infrastructure to support:
 - EventBus for pub/sub of domain events
 - EventStore for persistence (in-memory)
 - GameLogProjection for human-readable game event log
+- Generic GameService that uses EventStore and EventBus
 
 ## Supported behavior
 
@@ -23,6 +24,12 @@ Add basic event-driven infrastructure to support:
 - Maintains a `Vec<String>` with human-readable event descriptions
 - Updates on each published event
 - Inspectable for debugging or future serialization
+
+### GameService (updated)
+- Generic over `EventStore` and `EventBus` traits
+- Persists events after each command execution
+- Publishes events to the bus for subscribers
+- Returns domain events to callers
 
 ## Architecture
 

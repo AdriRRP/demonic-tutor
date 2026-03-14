@@ -2,8 +2,8 @@
 
 use demonictutor::{
     AdvanceTurnCommand, CardDefinitionId, CardInstanceId, CardType, DealOpeningHandsCommand,
-    DeckId, GameId, GameService, PlayLandCommand, PlayerDeck, PlayerDeckContents, PlayerId,
-    StartGameCommand,
+    DeckId, GameId, GameService, InMemoryEventBus, InMemoryEventStore, PlayLandCommand, PlayerDeck,
+    PlayerDeckContents, PlayerId, StartGameCommand,
 };
 
 fn player_deck(player: &str, deck: &str) -> PlayerDeck {
@@ -20,15 +20,21 @@ fn player_deck_contents(player: &str, cards: Vec<(String, CardType)>) -> PlayerD
     )
 }
 
+fn create_service() -> GameService<InMemoryEventStore, InMemoryEventBus> {
+    GameService::new(InMemoryEventStore::new(), InMemoryEventBus::new())
+}
+
 fn create_game_with_land_in_hand() -> demonictutor::Game {
-    let (mut game, _) = GameService::start_game(StartGameCommand::new(
-        GameId::new("game-1"),
-        vec![
-            player_deck("player-1", "deck-1"),
-            player_deck("player-2", "deck-2"),
-        ],
-    ))
-    .unwrap();
+    let service = create_service();
+    let (mut game, _) = service
+        .start_game(StartGameCommand::new(
+            GameId::new("game-1"),
+            vec![
+                player_deck("player-1", "deck-1"),
+                player_deck("player-2", "deck-2"),
+            ],
+        ))
+        .unwrap();
 
     let cmd = DealOpeningHandsCommand::new(vec![
         player_deck_contents(
@@ -57,51 +63,70 @@ fn create_game_with_land_in_hand() -> demonictutor::Game {
         ),
     ]);
 
-    GameService::deal_opening_hands(&mut game, &cmd).unwrap();
+    service.deal_opening_hands(&mut game, &cmd).unwrap();
 
     game
 }
 
 #[test]
 fn advance_turn_changes_active_player() {
-    let mut game = create_game_with_land_in_hand();
+    let service = create_service();
+    let (mut game, _) = service
+        .start_game(StartGameCommand::new(
+            GameId::new("game-1"),
+            vec![
+                player_deck("player-1", "deck-1"),
+                player_deck("player-2", "deck-2"),
+            ],
+        ))
+        .unwrap();
 
     assert_eq!(game.active_player().0, "player-1");
 
     let cmd = AdvanceTurnCommand::new();
-    let result = GameService::advance_turn(&mut game, cmd).unwrap();
+    service.advance_turn(&mut game, cmd).unwrap();
 
-    assert_eq!(result.new_active_player.0, "player-2");
+    assert_eq!(game.active_player().0, "player-2");
 }
 
 #[test]
 fn advance_turn_emits_event() {
-    let mut game = create_game_with_land_in_hand();
+    let service = create_service();
+    let (mut game, _) = service
+        .start_game(StartGameCommand::new(
+            GameId::new("game-1"),
+            vec![
+                player_deck("player-1", "deck-1"),
+                player_deck("player-2", "deck-2"),
+            ],
+        ))
+        .unwrap();
 
     let cmd = AdvanceTurnCommand::new();
-    let result = GameService::advance_turn(&mut game, cmd).unwrap();
+    let result = service.advance_turn(&mut game, cmd);
 
-    assert_eq!(result.game_id.0, "game-1");
-    assert_eq!(result.new_active_player.0, "player-2");
+    assert!(result.is_ok());
+    assert_eq!(result.unwrap().new_active_player.0, "player-2");
 }
 
 #[test]
 fn advance_turn_resets_lands_played() {
     let mut game = create_game_with_land_in_hand();
 
+    let service = create_service();
     let advance_cmd = AdvanceTurnCommand::new();
-    GameService::advance_turn(&mut game, advance_cmd).unwrap();
+    service.advance_turn(&mut game, advance_cmd).unwrap();
 
     let land_cmd = PlayLandCommand::new(
         PlayerId::new("player-2"),
         CardInstanceId::new("game-1-player-2-0"),
     );
-    GameService::play_land(&mut game, land_cmd).unwrap();
+    service.play_land(&mut game, land_cmd).unwrap();
 
     assert_eq!(game.players()[1].lands_played_this_turn(), 1);
 
     let advance_cmd2 = AdvanceTurnCommand::new();
-    GameService::advance_turn(&mut game, advance_cmd2).unwrap();
+    service.advance_turn(&mut game, advance_cmd2).unwrap();
 
     assert_eq!(game.players()[0].lands_played_this_turn(), 0);
     assert_eq!(game.players()[1].lands_played_this_turn(), 0);
@@ -111,25 +136,26 @@ fn advance_turn_resets_lands_played() {
 fn advance_turn_allows_playing_land_after_turn_change() {
     let mut game = create_game_with_land_in_hand();
 
+    let service = create_service();
     let advance_cmd = AdvanceTurnCommand::new();
-    GameService::advance_turn(&mut game, advance_cmd).unwrap();
+    service.advance_turn(&mut game, advance_cmd).unwrap();
 
     let land_cmd = PlayLandCommand::new(
         PlayerId::new("player-2"),
         CardInstanceId::new("game-1-player-2-0"),
     );
-    let result = GameService::play_land(&mut game, land_cmd);
+    let result = service.play_land(&mut game, land_cmd);
 
     assert!(result.is_ok());
 
     let advance_cmd2 = AdvanceTurnCommand::new();
-    GameService::advance_turn(&mut game, advance_cmd2).unwrap();
+    service.advance_turn(&mut game, advance_cmd2).unwrap();
 
     let land_cmd_player2 = PlayLandCommand::new(
         PlayerId::new("player-1"),
         CardInstanceId::new("nonexistent"),
     );
-    let result2 = GameService::play_land(&mut game, land_cmd_player2);
+    let result2 = service.play_land(&mut game, land_cmd_player2);
 
     assert!(result2.is_err());
 }

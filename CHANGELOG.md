@@ -7,7 +7,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ---
 
-## [0.1.0] - 2026-03-13
+## [0.1.0] - 2026-03-14
 
 ### Added
 
@@ -21,11 +21,18 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - **AdvanceTurn Command**: Advance to next player's turn
 - **DrawCard Command**: Draw cards from library to hand
 - **Mulligan Command**: Return hand to library, shuffle, and draw new 7-card hand
+- **EventStore Trait**: Abstraction for persisting domain events
+- **EventBus Trait**: Abstraction for publishing domain events to subscribers
+- **InMemoryEventStore**: In-memory implementation of EventStore
+- **InMemoryEventBus**: In-memory implementation of EventBus
+- **GameLogProjection**: Projection that accumulates human-readable event logs
+- **Generic GameService**: Application service parameterized by EventStore and EventBus
 
 ### Changed
 
 - **Setup Flow**: Opening hands are dealt during `Phase::Setup`, allowing mulligan before game begins
 - **Phase Transition**: `Phase::Main` is now reached via `AdvanceTurn` command instead of automatic transition
+- **GameService**: Now generic over EventStore and EventBus traits, persists and publishes events after each command
 
 ### Documentation
 
@@ -34,10 +41,11 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Architectural decision records (ADRs)
 - Agent entrypoint documentation for AI assistants
 - Context map showing bounded contexts
+- Aggregate documentation for Game
 
 ### Testing
 
-- 29 integration tests covering all implemented slices
+- 35 integration tests covering all implemented slices
 - Test coverage for:
   - StartGame validation (duplicate players, player count)
   - DealOpeningHands (card movement, event emission, error cases)
@@ -45,6 +53,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   - AdvanceTurn (player rotation, land reset)
   - DrawCard (phase validation, library management)
   - Mulligan (setup phase validation, one-time use)
+  - Infrastructure (EventStore, EventBus, GameLogProjection)
 
 ### Quality
 

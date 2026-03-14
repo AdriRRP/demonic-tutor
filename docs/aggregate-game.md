@@ -32,7 +32,7 @@ External systems must interact with the game **only through commands**.
 
 # Current Aggregate Structure
 
-At the current stage (after Slice 6), the aggregate structure is conceptually:
+At the current stage (after Slice 7), the aggregate structure is conceptually:
 
 Game
 ├── id

@@ -2,8 +2,9 @@
 
 use demonictutor::{
     AdvanceTurnCommand, CardDefinitionId, CardInstanceId, CardType, DealOpeningHandsCommand,
-    DeckId, DomainError, DrawCardCommand, GameId, GameService, PlayLandCommand, PlayerDeck,
-    PlayerDeckContents, PlayerId, StartGameCommand,
+    DeckId, DomainError, DrawCardCommand, GameId, GameService, InMemoryEventBus,
+    InMemoryEventStore, PlayLandCommand, PlayerDeck, PlayerDeckContents, PlayerId,
+    StartGameCommand,
 };
 
 fn player_deck(player: &str, deck: &str) -> PlayerDeck {
@@ -20,15 +21,21 @@ fn player_deck_contents(player: &str, cards: Vec<(String, CardType)>) -> PlayerD
     )
 }
 
+fn create_service() -> GameService<InMemoryEventStore, InMemoryEventBus> {
+    GameService::new(InMemoryEventStore::new(), InMemoryEventBus::new())
+}
+
 fn create_game_with_library_cards() -> demonictutor::Game {
-    let (mut game, _) = GameService::start_game(StartGameCommand::new(
-        GameId::new("game-1"),
-        vec![
-            player_deck("player-1", "deck-1"),
-            player_deck("player-2", "deck-2"),
-        ],
-    ))
-    .unwrap();
+    let service = create_service();
+    let (mut game, _) = service
+        .start_game(StartGameCommand::new(
+            GameId::new("game-1"),
+            vec![
+                player_deck("player-1", "deck-1"),
+                player_deck("player-2", "deck-2"),
+            ],
+        ))
+        .unwrap();
 
     let cmd = DealOpeningHandsCommand::new(vec![
         player_deck_contents(
@@ -62,98 +69,268 @@ fn create_game_with_library_cards() -> demonictutor::Game {
         ),
     ]);
 
-    GameService::deal_opening_hands(&mut game, &cmd).unwrap();
+    service.deal_opening_hands(&mut game, &cmd).unwrap();
 
     game
 }
 
 #[test]
-fn draw_card_moves_card_from_library_to_hand() {
-    let mut game = create_game_with_library_cards();
+fn draw_card_works_in_main_phase() {
+    let service = create_service();
+    let (mut game, _) = service
+        .start_game(StartGameCommand::new(
+            GameId::new("game-1"),
+            vec![
+                player_deck("player-1", "deck-1"),
+                player_deck("player-2", "deck-2"),
+            ],
+        ))
+        .unwrap();
 
-    let hand_before = game.players()[0].hand().cards().len();
-    let library_before = game.players()[0].library().len();
+    let cmd = DealOpeningHandsCommand::new(vec![
+        player_deck_contents(
+            "player-1",
+            vec![
+                (String::from("forest"), CardType::Land),
+                (String::from("card-2"), CardType::NonLand),
+                (String::from("card-3"), CardType::NonLand),
+                (String::from("card-4"), CardType::NonLand),
+                (String::from("card-5"), CardType::NonLand),
+                (String::from("card-6"), CardType::NonLand),
+                (String::from("card-7"), CardType::NonLand),
+                (String::from("card-8"), CardType::NonLand),
+                (String::from("card-9"), CardType::NonLand),
+                (String::from("card-10"), CardType::NonLand),
+            ],
+        ),
+        player_deck_contents(
+            "player-2",
+            vec![
+                (String::from("mountain"), CardType::Land),
+                (String::from("card-2"), CardType::NonLand),
+                (String::from("card-3"), CardType::NonLand),
+                (String::from("card-4"), CardType::NonLand),
+                (String::from("card-5"), CardType::NonLand),
+                (String::from("card-6"), CardType::NonLand),
+                (String::from("card-7"), CardType::NonLand),
+                (String::from("card-8"), CardType::NonLand),
+            ],
+        ),
+    ]);
 
-    let cmd = DrawCardCommand::new(PlayerId::new("player-1"));
-    let result = GameService::draw_card(&mut game, cmd);
+    service.deal_opening_hands(&mut game, &cmd).unwrap();
+
+    let advance_cmd = AdvanceTurnCommand::new();
+    service.advance_turn(&mut game, advance_cmd).unwrap();
+
+    let draw_cmd = DrawCardCommand::new(PlayerId::new("player-2"));
+    let result = service.draw_card(&mut game, draw_cmd);
 
     assert!(result.is_ok());
+}
 
-    let hand_after = game.players()[0].hand().cards().len();
-    let library_after = game.players()[0].library().len();
+#[test]
+fn draw_card_moves_card_from_library_to_hand() {
+    let service = create_service();
+    let (mut game, _) = service
+        .start_game(StartGameCommand::new(
+            GameId::new("game-1"),
+            vec![
+                player_deck("player-1", "deck-1"),
+                player_deck("player-2", "deck-2"),
+            ],
+        ))
+        .unwrap();
+
+    let cmd = DealOpeningHandsCommand::new(vec![
+        player_deck_contents(
+            "player-1",
+            vec![
+                (String::from("forest"), CardType::Land),
+                (String::from("card-2"), CardType::NonLand),
+                (String::from("card-3"), CardType::NonLand),
+                (String::from("card-4"), CardType::NonLand),
+                (String::from("card-5"), CardType::NonLand),
+                (String::from("card-6"), CardType::NonLand),
+                (String::from("card-7"), CardType::NonLand),
+                (String::from("card-8"), CardType::NonLand),
+                (String::from("card-9"), CardType::NonLand),
+                (String::from("card-10"), CardType::NonLand),
+            ],
+        ),
+        player_deck_contents(
+            "player-2",
+            vec![
+                (String::from("mountain"), CardType::Land),
+                (String::from("card-2"), CardType::NonLand),
+                (String::from("card-3"), CardType::NonLand),
+                (String::from("card-4"), CardType::NonLand),
+                (String::from("card-5"), CardType::NonLand),
+                (String::from("card-6"), CardType::NonLand),
+                (String::from("card-7"), CardType::NonLand),
+                (String::from("card-8"), CardType::NonLand),
+            ],
+        ),
+    ]);
+
+    service.deal_opening_hands(&mut game, &cmd).unwrap();
+
+    let advance_cmd = AdvanceTurnCommand::new();
+    service.advance_turn(&mut game, advance_cmd).unwrap();
+
+    let hand_before = game.players()[1].hand().cards().len();
+    let lib_before = game.players()[1].library().len();
+
+    let draw_cmd = DrawCardCommand::new(PlayerId::new("player-2"));
+    service.draw_card(&mut game, draw_cmd).unwrap();
+
+    let hand_after = game.players()[1].hand().cards().len();
+    let lib_after = game.players()[1].library().len();
 
     assert_eq!(hand_before + 1, hand_after);
-    assert_eq!(library_before - 1, library_after);
+    assert_eq!(lib_before - 1, lib_after);
 }
 
 #[test]
 fn draw_card_emits_event() {
-    let mut game = create_game_with_library_cards();
+    let service = create_service();
+    let (mut game, _) = service
+        .start_game(StartGameCommand::new(
+            GameId::new("game-1"),
+            vec![
+                player_deck("player-1", "deck-1"),
+                player_deck("player-2", "deck-2"),
+            ],
+        ))
+        .unwrap();
 
-    let cmd = DrawCardCommand::new(PlayerId::new("player-1"));
-    let result = GameService::draw_card(&mut game, cmd);
+    let cmd = DealOpeningHandsCommand::new(vec![
+        player_deck_contents(
+            "player-1",
+            vec![
+                (String::from("forest"), CardType::Land),
+                (String::from("card-2"), CardType::NonLand),
+                (String::from("card-3"), CardType::NonLand),
+                (String::from("card-4"), CardType::NonLand),
+                (String::from("card-5"), CardType::NonLand),
+                (String::from("card-6"), CardType::NonLand),
+                (String::from("card-7"), CardType::NonLand),
+                (String::from("card-8"), CardType::NonLand),
+            ],
+        ),
+        player_deck_contents(
+            "player-2",
+            vec![
+                (String::from("mountain"), CardType::Land),
+                (String::from("card-2"), CardType::NonLand),
+                (String::from("card-3"), CardType::NonLand),
+                (String::from("card-4"), CardType::NonLand),
+                (String::from("card-5"), CardType::NonLand),
+                (String::from("card-6"), CardType::NonLand),
+                (String::from("card-7"), CardType::NonLand),
+                (String::from("card-8"), CardType::NonLand),
+            ],
+        ),
+    ]);
+
+    service.deal_opening_hands(&mut game, &cmd).unwrap();
+
+    let advance_cmd = AdvanceTurnCommand::new();
+    service.advance_turn(&mut game, advance_cmd).unwrap();
+
+    let draw_cmd = DrawCardCommand::new(PlayerId::new("player-2"));
+    let result = service.draw_card(&mut game, draw_cmd);
 
     assert!(result.is_ok());
     let event = result.unwrap();
-    assert_eq!(event.player_id.0, "player-1");
-    assert_eq!(event.game_id.0, "game-1");
+    assert_eq!(event.player_id.0, "player-2");
+}
+
+#[test]
+fn draw_card_fails_when_not_enough_cards() {
+    let mut game = create_game_with_library_cards();
+    let service = create_service();
+
+    let advance_cmd = AdvanceTurnCommand::new();
+    service.advance_turn(&mut game, advance_cmd).unwrap();
+
+    let draw_cmd = DrawCardCommand::new(PlayerId::new("player-2"));
+    let result = service.draw_card(&mut game, draw_cmd);
+
+    assert!(result.is_err());
+    let err = result.unwrap_err();
+    assert!(matches!(err, DomainError::NotEnoughCardsInLibrary { .. }));
 }
 
 #[test]
 fn draw_card_fails_when_not_player_turn() {
-    let mut game = create_game_with_library_cards();
+    let service = create_service();
+    let (mut game, _) = service
+        .start_game(StartGameCommand::new(
+            GameId::new("game-1"),
+            vec![
+                player_deck("player-1", "deck-1"),
+                player_deck("player-2", "deck-2"),
+            ],
+        ))
+        .unwrap();
 
-    let cmd = DrawCardCommand::new(PlayerId::new("player-2"));
-    let result = GameService::draw_card(&mut game, cmd);
+    let cmd = DealOpeningHandsCommand::new(vec![
+        player_deck_contents(
+            "player-1",
+            vec![
+                (String::from("forest"), CardType::Land),
+                (String::from("card-2"), CardType::NonLand),
+                (String::from("card-3"), CardType::NonLand),
+                (String::from("card-4"), CardType::NonLand),
+                (String::from("card-5"), CardType::NonLand),
+                (String::from("card-6"), CardType::NonLand),
+                (String::from("card-7"), CardType::NonLand),
+                (String::from("card-8"), CardType::NonLand),
+            ],
+        ),
+        player_deck_contents(
+            "player-2",
+            vec![
+                (String::from("mountain"), CardType::Land),
+                (String::from("card-2"), CardType::NonLand),
+                (String::from("card-3"), CardType::NonLand),
+                (String::from("card-4"), CardType::NonLand),
+                (String::from("card-5"), CardType::NonLand),
+                (String::from("card-6"), CardType::NonLand),
+                (String::from("card-7"), CardType::NonLand),
+            ],
+        ),
+    ]);
 
-    assert!(matches!(result, Err(DomainError::NotYourTurn { .. })));
-}
+    service.deal_opening_hands(&mut game, &cmd).unwrap();
 
-#[test]
-fn draw_card_fails_when_library_empty() {
-    let (mut game, _) = GameService::start_game(StartGameCommand::new(
-        GameId::new("game-1"),
-        vec![
-            player_deck("player-1", "deck-1"),
-            player_deck("player-2", "deck-2"),
-        ],
-    ))
-    .unwrap();
+    let draw_cmd = DrawCardCommand::new(PlayerId::new("player-2"));
+    let result = service.draw_card(&mut game, draw_cmd);
 
-    let cmd = DrawCardCommand::new(PlayerId::new("player-1"));
-    let result = GameService::draw_card(&mut game, cmd);
-
+    assert!(result.is_err());
     assert!(matches!(
-        result,
-        Err(DomainError::NotEnoughCardsInLibrary { .. })
+        result.unwrap_err(),
+        DomainError::NotYourTurn { .. }
     ));
-}
-
-#[test]
-fn draw_card_works_in_main_phase() {
-    let mut game = create_game_with_library_cards();
-
-    let cmd = DrawCardCommand::new(PlayerId::new("player-1"));
-    let result = GameService::draw_card(&mut game, cmd);
-
-    assert!(result.is_ok());
 }
 
 #[test]
 fn draw_card_allows_playing_land_after_draw() {
     let mut game = create_game_with_library_cards();
+    let service = create_service();
 
     let draw_cmd = DrawCardCommand::new(PlayerId::new("player-1"));
-    GameService::draw_card(&mut game, draw_cmd).unwrap();
+    service.draw_card(&mut game, draw_cmd).unwrap();
 
     let advance_cmd = AdvanceTurnCommand::new();
-    GameService::advance_turn(&mut game, advance_cmd).unwrap();
+    service.advance_turn(&mut game, advance_cmd).unwrap();
 
     let land_cmd = PlayLandCommand::new(
         PlayerId::new("player-2"),
         CardInstanceId::new("game-1-player-2-0"),
     );
-    let result = GameService::play_land(&mut game, land_cmd);
+    let result = service.play_land(&mut game, land_cmd);
 
     assert!(result.is_ok());
 }

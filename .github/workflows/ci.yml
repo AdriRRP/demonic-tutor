@@ -54,3 +54,13 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - name: Run tests
         run: cargo test
+
+  deps:
+    name: Dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: taiki-e/cargo-outdated-action@v2
+        with:
+          exit-code: 1
+          args: --depth 1
