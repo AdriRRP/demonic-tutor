@@ -1,6 +1,6 @@
 # Current State — DemonicTutor
 
-## Implemented Slices (10/11)
+## Implemented Slices (11/11)
 
 1. StartGame
 2. DrawOpeningHands
@@ -12,6 +12,7 @@
 8. Player Life
 9. Turn Number
 10. Turn Phases
+11. Tap Lands for Mana
 
 ## Current Aggregate: Game
 
@@ -19,15 +20,17 @@ The `Game` aggregate handles:
 - game lifecycle
 - player management (exactly 2)
 - player life totals (starts at 20)
+- mana pool (starts at 0)
 - zone transitions (library → hand → battlefield)
-- turn progression
+- turn progression (turn number, active player)
+- phase progression (Setup → Beginning → Main → Ending)
 - action legality
 
 ## Constraints (Temporary)
 
 - 2 players only
 - Opening hand: 7 cards
-- Phase: Setup → Main
+- Phase: Setup → Beginning → Main → Ending → Main (next player)
 - No stack, priority, spell casting
 - In-memory event store (future: persistence)
 - In-memory event bus (future: distributed)
@@ -41,4 +44,4 @@ The `Game` aggregate handles:
 
 ## Next Decision Point
 
-Choose next focus: Turn Number / Turn Phases / Mana / Combat
+Choose next focus: Cast Non-Land Spells / Pay Mana Cost / Combat
