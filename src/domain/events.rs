@@ -8,6 +8,7 @@ pub enum DomainEvent {
     TurnAdvanced(TurnAdvanced),
     CardDrawn(CardDrawn),
     MulliganTaken(MulliganTaken),
+    LifeChanged(LifeChanged),
 }
 
 impl DomainEvent {
@@ -59,6 +60,15 @@ impl DomainEvent {
     #[must_use]
     pub const fn as_mulligan_taken(&self) -> Option<&MulliganTaken> {
         if let Self::MulliganTaken(e) = self {
+            Some(e)
+        } else {
+            None
+        }
+    }
+
+    #[must_use]
+    pub const fn as_life_changed(&self) -> Option<&LifeChanged> {
+        if let Self::LifeChanged(e) = self {
             Some(e)
         } else {
             None
@@ -162,6 +172,26 @@ impl MulliganTaken {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct LifeChanged {
+    pub game_id: GameId,
+    pub player_id: PlayerId,
+    pub from_life: u32,
+    pub to_life: u32,
+}
+
+impl LifeChanged {
+    #[must_use]
+    pub const fn new(game_id: GameId, player_id: PlayerId, from_life: u32, to_life: u32) -> Self {
+        Self {
+            game_id,
+            player_id,
+            from_life,
+            to_life,
+        }
+    }
+}
+
 impl From<GameStarted> for DomainEvent {
     fn from(event: GameStarted) -> Self {
         Self::GameStarted(event)
@@ -195,5 +225,11 @@ impl From<CardDrawn> for DomainEvent {
 impl From<MulliganTaken> for DomainEvent {
     fn from(event: MulliganTaken) -> Self {
         Self::MulliganTaken(event)
+    }
+}
+
+impl From<LifeChanged> for DomainEvent {
+    fn from(event: LifeChanged) -> Self {
+        Self::LifeChanged(event)
     }
 }

@@ -5,7 +5,10 @@ use crate::domain::{
         PlayLandCommand, StartGameCommand,
     },
     errors::DomainError,
-    events::{CardDrawn, GameStarted, LandPlayed, MulliganTaken, OpeningHandDealt, TurnAdvanced},
+    events::{
+        CardDrawn, GameStarted, LandPlayed, LifeChanged, MulliganTaken, OpeningHandDealt,
+        TurnAdvanced,
+    },
     ids::{CardInstanceId, DeckId, GameId, PlayerId},
     zones::{Battlefield, Hand, Library},
 };
@@ -19,6 +22,8 @@ pub enum Phase {
 mod player {
     use super::{Battlefield, DeckId, Hand, Library, PlayerId};
 
+    const DEFAULT_STARTING_LIFE: u32 = 20;
+
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub struct Player {
         id: PlayerId,
@@ -26,6 +31,7 @@ mod player {
         library: Library,
         hand: Hand,
         battlefield: Battlefield,
+        life: u32,
         lands_played_this_turn: usize,
         mulligan_used: bool,
     }
@@ -38,6 +44,7 @@ mod player {
                 library: Library::new(Vec::new()),
                 hand: Hand::new(),
                 battlefield: Battlefield::new(),
+                life: DEFAULT_STARTING_LIFE,
                 lands_played_this_turn: 0,
                 mulligan_used: false,
             }
@@ -66,6 +73,15 @@ mod player {
         #[must_use]
         pub const fn battlefield(&self) -> &Battlefield {
             &self.battlefield
+        }
+
+        #[must_use]
+        pub const fn life(&self) -> u32 {
+            self.life
+        }
+
+        pub const fn life_mut(&mut self) -> &mut u32 {
+            &mut self.life
         }
 
         #[must_use]
@@ -475,5 +491,34 @@ impl Game {
         player.hand_mut().receive(vec![card]);
 
         Ok(CardDrawn::new(self.id.clone(), cmd.player_id, card_id))
+    }
+
+    /// Sets a player's life total.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the player is not found.
+    pub fn set_life(
+        &mut self,
+        cmd: crate::domain::commands::SetLifeCommand,
+    ) -> Result<LifeChanged, DomainError> {
+        let player_idx = self
+            .players
+            .iter()
+            .position(|p| p.id() == &cmd.player_id)
+            .ok_or_else(|| DomainError::PlayerNotFound(cmd.player_id.clone()))?;
+
+        let player = &mut self.players[player_idx];
+        let from_life = player.life();
+        let to_life = cmd.life;
+
+        *player.life_mut() = to_life;
+
+        Ok(LifeChanged::new(
+            self.id.clone(),
+            cmd.player_id,
+            from_life,
+            to_life,
+        ))
     }
 }

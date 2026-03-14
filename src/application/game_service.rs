@@ -2,12 +2,12 @@ use crate::application::{EventBus, EventStore};
 use crate::domain::{
     commands::{
         AdvanceTurnCommand, DealOpeningHandsCommand, DrawCardCommand, MulliganCommand,
-        PlayLandCommand, StartGameCommand,
+        PlayLandCommand, SetLifeCommand, StartGameCommand,
     },
     errors::DomainError,
     events::{
-        CardDrawn, DomainEvent, GameStarted, LandPlayed, MulliganTaken, OpeningHandDealt,
-        TurnAdvanced,
+        CardDrawn, DomainEvent, GameStarted, LandPlayed, LifeChanged, MulliganTaken,
+        OpeningHandDealt, TurnAdvanced,
     },
     game::Game,
 };
@@ -153,6 +153,28 @@ where
         cmd: MulliganCommand,
     ) -> Result<MulliganTaken, DomainError> {
         let event = game.mulligan(cmd)?;
+        let domain_event: DomainEvent = event.clone().into();
+
+        let game_id = game.id().0.clone();
+        let _ = self
+            .event_store
+            .append(&game_id, std::slice::from_ref(&domain_event));
+        self.event_bus.publish(&domain_event);
+
+        Ok(event)
+    }
+
+    /// Sets a player's life total.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the command is invalid.
+    pub fn set_life(
+        &self,
+        game: &mut Game,
+        cmd: SetLifeCommand,
+    ) -> Result<LifeChanged, DomainError> {
+        let event = game.set_life(cmd)?;
         let domain_event: DomainEvent = event.clone().into();
 
         let game_id = game.id().0.clone();

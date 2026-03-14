@@ -53,6 +53,12 @@ impl GameLogProjection {
             DomainEvent::MulliganTaken(e) => {
                 format!("Player {} took a mulligan", e.player_id)
             }
+            DomainEvent::LifeChanged(e) => {
+                format!(
+                    "Player {} life changed from {} to {}",
+                    e.player_id, e.from_life, e.to_life
+                )
+            }
         };
 
         if let Ok(mut logs) = self.logs.write() {
