@@ -32,19 +32,23 @@ External systems must interact with the game **only through commands**.
 
 # Current Aggregate Structure
 
-At the current stage (after Slice 7), the aggregate structure is conceptually:
+At the current stage (after Slice 13), the aggregate structure is conceptually:
 
 Game
 ├── id
 ├── active_player
 ├── phase
+├── turn_number
 └── players
     ├── id
     ├── deck_id
     ├── library
     ├── hand
     ├── battlefield
-    └── lands_played_this_turn
+    ├── life
+    ├── mana
+    ├── lands_played_this_turn
+    └── mulligan_used
 
 ### Game
 
@@ -71,7 +75,8 @@ Responsibilities:
 
 * hold references to deck identity
 * manage personal card zones (library, hand, battlefield)
-* track per-turn state (lands played)
+* track per-turn state (lands played, mana)
+* track life total
 * expose state needed for gameplay actions
 
 Players are not aggregates themselves; they are **entities contained within `Game`**.
@@ -139,18 +144,22 @@ Fields:
 
 * `CardInstanceId`
 * `CardDefinitionId`
-* `CardType` (Land / NonLand)
+* `CardType` (Land, Creature, Instant, Sorcery, Enchantment, Artifact, Planeswalker)
+* `tapped` (bool)
 
 Responsibilities:
 
 * uniquely identify cards within a match
 * reference a card definition
 * distinguish card types
+* track tapped state
 
 Not yet responsible for:
 
 * rules text
 * abilities
+* power/toughness
+* damage
 * complex card state
 
 ---
@@ -210,6 +219,57 @@ Perform a mulligan by returning hand to library, shuffling, and drawing a new 7-
 
 **Commands**: `MulliganCommand`  
 **Events**: `MulliganTaken`
+
+---
+
+## Slice 7 — Infrastructure
+
+Add event store, event bus, and projections.
+
+**Components**: `EventStore`, `EventBus`, `GameLogProjection`
+
+---
+
+## Slice 8 — Player Life
+
+Add player life tracking.
+
+**Commands**: `SetLifeCommand`  
+**Events**: `LifeChanged`
+
+---
+
+## Slice 9 — Turn Number
+
+Track turn count.
+
+**Events**: `TurnNumberChanged`
+
+---
+
+## Slice 10 — Turn Phases
+
+Add proper phase structure (Setup, Beginning, Main, Ending).
+
+**Events**: `PhaseChanged`
+
+---
+
+## Slice 11 — Tap Lands for Mana
+
+Add mana production from lands.
+
+**Commands**: `TapLandCommand`  
+**Events**: `LandTapped`, `ManaAdded`
+
+---
+
+## Slice 12 — Cast Non-Land Spells
+
+Enable casting non-land spells from hand to battlefield.
+
+**Commands**: `CastSpellCommand`  
+**Events**: `SpellCast`
 
 ---
 
@@ -289,7 +349,9 @@ Current temporary rules include:
 * opening hand size is fixed to 7
 * deck contents are provided externally
 * shuffle behavior is not yet configurable
-* phase transitions: Setup → Main via AdvanceTurn
+* phase transitions: Setup → Beginning → Main → Ending → Main (next player)
+* spells cast for free (no mana cost)
+* no power/toughness on creatures
 
 These constraints will likely evolve in later slices.
 

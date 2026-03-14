@@ -6,7 +6,9 @@ This document proposes atomic slices for a meaningful playtesting release (0.2.0
 
 - StartGame, DealOpeningHands, Mulligan, PlayLand, DrawCard, AdvanceTurn
 - Infrastructure: EventStore, EventBus, GameLogProjection
-- Only 2 players, Setup → Main phase, no life, no combat
+- Player Life, Turn Number, Turn Phases
+- Tap Lands for Mana, Cast Non-Land Spells
+- 2 players, Setup → Beginning → Main → Ending phase, life tracking, mana system
 
 ---
 
@@ -38,13 +40,13 @@ This document proposes atomic slices for a meaningful playtesting release (0.2.0
 
 ---
 
-## Slice 10 — Beginning Phase
+## Slice 10 — Turn Phases
 
-**Goal:** Proper turn start with Beginning phase.
+**Goal:** Proper turn structure with phases.
 
 **Domain:**
-- `Phase` = `Beginning`, `FirstMain`, `Combat`, `SecondMain`, `Ending`
-- Turn flow: Beginning → FirstMain → Combat → SecondMain → Ending → Beginning (next turn)
+- `Phase` = `Setup`, `Beginning`, `Main`, `Ending`
+- Turn flow: Setup → Main → Ending → Main (next player)
 
 **Events:**
 - `PhaseChanged { from, to }`
@@ -53,37 +55,26 @@ This document proposes atomic slices for a meaningful playtesting release (0.2.0
 
 ---
 
-## Slice 11 — End Turn Command
-
-**Goal:** Allow ending current phase/turn.
-
-**Commands:**
-- `EndTurnCommand` — advances to next phase; if Ending, starts next player's turn
-
-**Tests:** ~3
-
----
-
-## Slice 12 — Tap Lands for Mana
+## Slice 11 — Tap Lands for Mana
 
 **Goal:** Lands produce mana.
 
 **Domain:**
-- `Player` gains `mana_pool: u32`
-- `Battlefield` cards gain `tapped: bool`
+- `Player` gains `mana: u32`
+- `CardInstance` gains `tapped: bool`
 
 **Commands:**
-- `TapLandCommand { card_id }` — tap a land to add 1 mana
+- `TapLandCommand { player_id, card_id }` — tap a land to add 1 mana
 
 **Events:**
 - `LandTapped { card_id }`
 - `ManaAdded { player_id, amount }`
 
-**Tests:** ~3
+**Tests:** ~5
 
 ---
 
-## Slice 13 — Cast Non-Land Spells (Simplified)
+## Slice 12 — Cast Non-Land Spells
 
 **Goal:** Enable spell casting without mana cost (for testing).
 
@@ -92,16 +83,16 @@ This document proposes atomic slices for a meaningful playtesting release (0.2.0
 - Remove `CardType::NonLand`, use specific types
 
 **Commands:**
-- `CastSpellCommand { card_id }` — cast any non-land card (free for now)
+- `CastSpellCommand { player_id, card_id }` — cast any non-land card (free for now)
 
 **Events:**
-- `SpellCast { card_id, caster_id }`
+- `SpellCast { player_id, card_id }`
 
-**Tests:** ~3
+**Tests:** ~4
 
 ---
 
-## Slice 14 — Pay Mana Cost
+## Slice 13 — Pay Mana Cost
 
 **Goal:** Require mana payment for spells.
 
@@ -110,13 +101,13 @@ This document proposes atomic slices for a meaningful playtesting release (0.2.0
 - Player must have enough mana to cast spell
 
 **Commands:**
-- `CastSpellCommand { card_id }` — checks mana cost
+- `CastSpellCommand { player_id, card_id }` — checks mana cost
 
 **Tests:** ~4
 
 ---
 
-## Slice 15 — Creature Power/Toughness
+## Slice 14 — Creature Power/Toughness
 
 **Goal:** Enable combat.
 
@@ -128,7 +119,7 @@ This document proposes atomic slices for a meaningful playtesting release (0.2.0
 
 ---
 
-## Slice 16 — Declare Attacker
+## Slice 15 — Declare Attacker
 
 **Goal:** Attack with creatures.
 
@@ -145,7 +136,7 @@ This document proposes atomic slices for a meaningful playtesting release (0.2.0
 
 ---
 
-## Slice 17 — Combat Damage (Simplified)
+## Slice 16 — Combat Damage (Simplified)
 
 **Goal:** Resolve combat damage.
 
@@ -159,7 +150,7 @@ This document proposes atomic slices for a meaningful playtesting release (0.2.0
 
 ---
 
-## Slice 18 — Graveyard Zone
+## Slice 17 — Graveyard Zone
 
 **Goal:** Track dead creatures.
 
@@ -176,8 +167,8 @@ This document proposes atomic slices for a meaningful playtesting release (0.2.0
 
 ## Release 0.2.0 Scope
 
-**Minimal viable:** Slices 8-12 (Life, Phases, Mana)
-**Full scope:** All 11 slices (8-18)
+**Minimal viable:** Slices 8-13 (Life, Turn, Phases, Mana, Spells)
+**Full scope:** All slices (8-17)
 
 ---
 
