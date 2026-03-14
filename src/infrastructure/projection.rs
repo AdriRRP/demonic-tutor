@@ -62,6 +62,9 @@ impl GameLogProjection {
             DomainEvent::TurnNumberChanged(e) => {
                 format!("Turn changed from {} to {}", e.from_turn, e.to_turn)
             }
+            DomainEvent::PhaseChanged(e) => {
+                format!("Phase changed from {} to {}", e.from_phase, e.to_phase)
+            }
         };
 
         if let Ok(mut logs) = self.logs.write() {

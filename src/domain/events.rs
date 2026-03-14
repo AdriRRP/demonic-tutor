@@ -10,6 +10,7 @@ pub enum DomainEvent {
     MulliganTaken(MulliganTaken),
     LifeChanged(LifeChanged),
     TurnNumberChanged(TurnNumberChanged),
+    PhaseChanged(PhaseChanged),
 }
 
 impl DomainEvent {
@@ -79,6 +80,15 @@ impl DomainEvent {
     #[must_use]
     pub const fn as_turn_number_changed(&self) -> Option<&TurnNumberChanged> {
         if let Self::TurnNumberChanged(e) = self {
+            Some(e)
+        } else {
+            None
+        }
+    }
+
+    #[must_use]
+    pub const fn as_phase_changed(&self) -> Option<&PhaseChanged> {
+        if let Self::PhaseChanged(e) = self {
             Some(e)
         } else {
             None
@@ -220,6 +230,28 @@ impl TurnNumberChanged {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct PhaseChanged {
+    pub game_id: GameId,
+    pub from_phase: String,
+    pub to_phase: String,
+}
+
+impl PhaseChanged {
+    #[must_use]
+    pub fn new(
+        game_id: GameId,
+        from_phase: crate::domain::game::Phase,
+        to_phase: crate::domain::game::Phase,
+    ) -> Self {
+        Self {
+            game_id,
+            from_phase: format!("{from_phase:?}"),
+            to_phase: format!("{to_phase:?}"),
+        }
+    }
+}
+
 impl From<GameStarted> for DomainEvent {
     fn from(event: GameStarted) -> Self {
         Self::GameStarted(event)
@@ -265,5 +297,11 @@ impl From<LifeChanged> for DomainEvent {
 impl From<TurnNumberChanged> for DomainEvent {
     fn from(event: TurnNumberChanged) -> Self {
         Self::TurnNumberChanged(event)
+    }
+}
+
+impl From<PhaseChanged> for DomainEvent {
+    fn from(event: PhaseChanged) -> Self {
+        Self::PhaseChanged(event)
     }
 }

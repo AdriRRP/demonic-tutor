@@ -7,16 +7,18 @@ use crate::domain::{
     errors::DomainError,
     events::{
         CardDrawn, GameStarted, LandPlayed, LifeChanged, MulliganTaken, OpeningHandDealt,
-        TurnAdvanced, TurnNumberChanged,
+        PhaseChanged, TurnAdvanced, TurnNumberChanged,
     },
     ids::{CardInstanceId, DeckId, GameId, PlayerId},
     zones::{Battlefield, Hand, Library},
 };
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Phase {
     Setup,
+    Beginning,
     Main,
+    Ending,
 }
 
 mod player {
@@ -417,7 +419,10 @@ impl Game {
         Ok(LandPlayed::new(self.id.clone(), cmd.player_id, card_id))
     }
 
-    /// Advances the turn to the next player.
+    /// Advances the turn to the next phase or player.
+    ///
+    /// Phase progression: Setup → Main → Ending → (next player) Main
+    /// Beginning is skipped for simplicity - game goes directly to Main phase.
     ///
     /// # Errors
     ///
@@ -425,31 +430,55 @@ impl Game {
     pub fn advance_turn(
         &mut self,
         _cmd: AdvanceTurnCommand,
-    ) -> Result<(TurnAdvanced, TurnNumberChanged), DomainError> {
-        let current_idx = self
-            .players
-            .iter()
-            .position(|p| p.id() == &self.active_player)
-            .ok_or_else(|| DomainError::InternalInvariantViolation {
-                message: "active player should exist in player list".to_string(),
-            })?;
-        let next_idx = (current_idx + 1) % self.players.len();
-        let new_active_player = self.players[next_idx].id().clone();
+    ) -> Result<(TurnAdvanced, TurnNumberChanged, PhaseChanged), DomainError> {
+        let from_phase = self.phase;
 
-        let from_turn = self.turn_number;
-        self.turn_number += 1;
-        let to_turn = self.turn_number;
+        let (to_phase, change_player) = match &self.phase {
+            Phase::Setup | Phase::Ending => (Phase::Main, true),
+            Phase::Main => (Phase::Ending, false),
+            Phase::Beginning => (Phase::Main, false),
+        };
 
-        self.active_player = new_active_player.clone();
-        self.phase = Phase::Main;
-
-        for player in &mut self.players {
-            *player.lands_played_this_turn_mut() = 0;
+        // Reset lands played when starting a new turn
+        if matches!(&self.phase, Phase::Setup | Phase::Ending) {
+            for player in &mut self.players {
+                *player.lands_played_this_turn_mut() = 0;
+            }
         }
 
+        if change_player {
+            let current_idx = self
+                .players
+                .iter()
+                .position(|p| p.id() == &self.active_player)
+                .ok_or_else(|| DomainError::InternalInvariantViolation {
+                    message: "active player should exist in player list".to_string(),
+                })?;
+            let next_idx = (current_idx + 1) % self.players.len();
+            self.active_player = self.players[next_idx].id().clone();
+
+            for player in &mut self.players {
+                *player.lands_played_this_turn_mut() = 0;
+            }
+
+            let from = self.turn_number;
+            self.turn_number += 1;
+
+            self.phase = to_phase;
+
+            return Ok((
+                TurnAdvanced::new(self.id.clone(), self.active_player.clone()),
+                TurnNumberChanged::new(self.id.clone(), from, self.turn_number),
+                PhaseChanged::new(self.id.clone(), from_phase, to_phase),
+            ));
+        }
+
+        self.phase = to_phase;
+
         Ok((
-            TurnAdvanced::new(self.id.clone(), new_active_player),
-            TurnNumberChanged::new(self.id.clone(), from_turn, to_turn),
+            TurnAdvanced::new(self.id.clone(), self.active_player.clone()),
+            TurnNumberChanged::new(self.id.clone(), self.turn_number, self.turn_number),
+            PhaseChanged::new(self.id.clone(), from_phase, to_phase),
         ))
     }
 
@@ -475,9 +504,7 @@ impl Game {
         }
 
         if !matches!(self.phase, Phase::Main | Phase::Setup) {
-            return Err(DomainError::InvalidPhaseForDraw {
-                phase: self.phase.clone(),
-            });
+            return Err(DomainError::InvalidPhaseForDraw { phase: self.phase });
         }
 
         let player_idx = self

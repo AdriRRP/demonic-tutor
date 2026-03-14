@@ -114,6 +114,8 @@ fn advance_turn_resets_lands_played() {
     let mut game = create_game_with_land_in_hand();
 
     let service = create_service();
+
+    // First advance: Setup -> Main (player-2)
     let advance_cmd = AdvanceTurnCommand::new();
     service.advance_turn(&mut game, advance_cmd).unwrap();
 
@@ -125,8 +127,13 @@ fn advance_turn_resets_lands_played() {
 
     assert_eq!(game.players()[1].lands_played_this_turn(), 1);
 
+    // Second advance: Main -> Ending (player-2)
     let advance_cmd2 = AdvanceTurnCommand::new();
     service.advance_turn(&mut game, advance_cmd2).unwrap();
+
+    // Third advance: Ending -> Main (player-1) - lands reset here
+    let advance_cmd3 = AdvanceTurnCommand::new();
+    service.advance_turn(&mut game, advance_cmd3).unwrap();
 
     assert_eq!(game.players()[0].lands_played_this_turn(), 0);
     assert_eq!(game.players()[1].lands_played_this_turn(), 0);
@@ -137,9 +144,12 @@ fn advance_turn_allows_playing_land_after_turn_change() {
     let mut game = create_game_with_land_in_hand();
 
     let service = create_service();
+
+    // Advance to player-2's turn (Main)
     let advance_cmd = AdvanceTurnCommand::new();
     service.advance_turn(&mut game, advance_cmd).unwrap();
 
+    // Player-2 can play land in Main phase
     let land_cmd = PlayLandCommand::new(
         PlayerId::new("player-2"),
         CardInstanceId::new("game-1-player-2-0"),
@@ -148,9 +158,14 @@ fn advance_turn_allows_playing_land_after_turn_change() {
 
     assert!(result.is_ok());
 
+    // Advance through Ending to player-1's Main phase
     let advance_cmd2 = AdvanceTurnCommand::new();
-    service.advance_turn(&mut game, advance_cmd2).unwrap();
+    service.advance_turn(&mut game, advance_cmd2).unwrap(); // Main -> Ending
 
+    let advance_cmd3 = AdvanceTurnCommand::new();
+    service.advance_turn(&mut game, advance_cmd3).unwrap(); // Ending -> Main (player-1)
+
+    // Now it's player-1's Main phase, player-1 cannot play land (no land in hand)
     let land_cmd_player2 = PlayLandCommand::new(
         PlayerId::new("player-1"),
         CardInstanceId::new("nonexistent"),

@@ -15,7 +15,7 @@ pub use domain::{
     errors::DomainError,
     events::{
         CardDrawn, DomainEvent, GameStarted, LandPlayed, LifeChanged, MulliganTaken,
-        OpeningHandDealt, TurnAdvanced, TurnNumberChanged,
+        OpeningHandDealt, PhaseChanged, TurnAdvanced, TurnNumberChanged,
     },
     game::{Game, Phase},
     ids::{CardDefinitionId, CardInstanceId, DeckId, GameId, PlayerId},

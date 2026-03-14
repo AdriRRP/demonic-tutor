@@ -108,7 +108,7 @@ where
         game: &mut Game,
         cmd: AdvanceTurnCommand,
     ) -> Result<TurnAdvanced, DomainError> {
-        let (turn_event, turn_number_event) = game.advance_turn(cmd)?;
+        let (turn_event, turn_number_event, phase_event) = game.advance_turn(cmd)?;
 
         let game_id = game.id().0.clone();
 
@@ -123,6 +123,12 @@ where
             .event_store
             .append(&game_id, std::slice::from_ref(&turn_number_domain_event));
         self.event_bus.publish(&turn_number_domain_event);
+
+        let phase_domain_event: DomainEvent = phase_event.into();
+        let _ = self
+            .event_store
+            .append(&game_id, std::slice::from_ref(&phase_domain_event));
+        self.event_bus.publish(&phase_domain_event);
 
         Ok(turn_event)
     }
