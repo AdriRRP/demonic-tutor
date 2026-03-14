@@ -1,165 +1,188 @@
 # Slice Proposal — Release 0.2.0
 
-This document proposes a multi-slice plan to implement basic Magic: The Gathering gameplay elements sufficient for a meaningful playtesting release (0.2.0).
+This document proposes atomic slices for a meaningful playtesting release (0.2.0).
 
 ## Current State (0.1.0)
 
-**Implemented:**
 - StartGame, DealOpeningHands, Mulligan, PlayLand, DrawCard, AdvanceTurn
 - Infrastructure: EventStore, EventBus, GameLogProjection
-- Zones: Library, Hand, Battlefield
-- Only 2 players, 7-card opening hand, Setup → Main phase
-
-**Missing for basic playtesting:**
-- Life totals
-- Proper turn phases (Beginning, Combat, Ending)
-- Spell/ability casting
-- Mana system
-- Creature combat
-- Graveyard
+- Only 2 players, Setup → Main phase, no life, no combat
 
 ---
 
-## Slice 8 — Life Totals & Turn Phases
+## Slice 8 — Player Life
 
-### Goal
-Add player life tracking and proper turn phase structure.
-
-### Changes
+**Goal:** Add player life tracking.
 
 **Domain:**
 - `Player` gains `life: u32` (default 20)
-- `Phase` expands to: `Beginning`, `FirstMain`, `Combat`, `SecondMain`, `Ending`
-- `Game` tracks `turn_number: u32`
-
-**Commands:**
-- `EndTurnCommand` — advances to next phase/turn
 
 **Events:**
-- `LifeChanged` — emitted when life total changes
-- `PhaseChanged` — emitted when phase changes
-- `TurnEnded` — emitted when turn ends
+- `LifeChanged { player_id, from, to }`
 
-**Tests:** ~6 new tests
+**Tests:** ~2
 
 ---
 
-## Slice 9 — Spell Casting & Mana
+## Slice 9 — Turn Number
 
-### Goal
-Enable casting non-land spells with mana costs.
-
-### Changes
+**Goal:** Track turn count.
 
 **Domain:**
-- Expand `CardType` to include: `Creature`, `Instant`, `Sorcery`, `Enchantment`, `Artifact`, `Planeswalker`
-- Add `ManaCost` to `CardInstance` (or `CardDefinition`)
-- Add `ManaPool` to `Player` with methods: `add_mana`, `spend_mana`, `tap_for_mana`
-- `Land` produces 1 generic mana (simplified)
-
-**Commands:**
-- `CastSpellCommand` — cast a non-land card by paying mana cost
-- `TapForManaCommand` — tap a land to add mana to pool
+- `Game` gains `turn_number: u32`
 
 **Events:**
-- `SpellCast` — emitted when spell is cast
-- `ManaAdded` — emitted when mana is added to pool
-- `ManaSpent` — emitted when mana is spent
-- `CardMoved` — generic event for zone transitions
+- `TurnNumberChanged { old, new }`
 
-**Tests:** ~8 new tests
+**Tests:** ~2
 
 ---
 
-## Slice 10 — Combat Phase
+## Slice 10 — Beginning Phase
 
-### Goal
-Implement basic creature combat.
-
-### Changes
+**Goal:** Proper turn start with Beginning phase.
 
 **Domain:**
-- Add `Power`, `Toughness` to `CardInstance`
-- `Battlefield` distinguishes `Lands` from `Creatures`
-- Combat phases: `DeclareAttackers`, `DeclareBlockers`, `CombatDamage`
-
-**Commands:**
-- `DeclareAttackerCommand` — declare a creature as attacker
-- `DeclareBlockerCommand` — assign blocker to attacker
-- `ResolveCombatCommand` — resolve combat damage
+- `Phase` = `Beginning`, `FirstMain`, `Combat`, `SecondMain`, `Ending`
+- Turn flow: Beginning → FirstMain → Combat → SecondMain → Ending → Beginning (next turn)
 
 **Events:**
-- `AttackerDeclared` — emitted when attacker is declared
-- `BlockerDeclared` — emitted when blocker is assigned
-- `CombatDamageDealt` — emitted during damage resolution
-- `CreatureDestroyed` — emitted when creature dies
+- `PhaseChanged { from, to }`
 
-**Tests:** ~10 new tests
+**Tests:** ~3
 
 ---
 
-## Slice 11 — Graveyard & Exile
+## Slice 11 — End Turn Command
 
-### Goal
-Implement additional zones and card movement.
-
-### Changes
-
-**Domain:**
-- Add `Graveyard` and `Exile` zones to `Player`
-- Cards move to graveyard on: spell resolution, creature death, discard
+**Goal:** Allow ending current phase/turn.
 
 **Commands:**
-- `DiscardCommand` — discard a card from hand
+- `EndTurnCommand` — advances to next phase; if Ending, starts next player's turn
 
-**Events:**
-- `CardDiscarded` — emitted when card is discarded
-- `CardExiled` — emitted when card is exiled
-
-**Tests:** ~5 new tests
+**Tests:** ~3
 
 ---
 
-## Slice 12 — Basic Abilities (Optional)
+## Slice 12 — Tap Lands for Mana
 
-### Goal
-Simple static abilities and triggered effects.
-
-### Changes
+**Goal:** Lands produce mana.
 
 **Domain:**
-- Add `abilities: Vec<Ability>` to `CardInstance`
-- Simple abilities: `Hexproof`, `Trample`, `Flying`, `Deathtouch`
+- `Player` gains `mana_pool: u32`
+- `Battlefield` cards gain `tapped: bool`
 
-This slice is optional and can be deferred to 0.3.0.
+**Commands:**
+- `TapLandCommand { card_id }` — tap a land to add 1 mana
+
+**Events:**
+- `LandTapped { card_id }`
+- `ManaAdded { player_id, amount }`
+
+**Tests:** ~3
+
+---
+
+## Slice 13 — Cast Non-Land Spells (Simplified)
+
+**Goal:** Enable spell casting without mana cost (for testing).
+
+**Domain:**
+- `CardType` expands: `Creature`, `Instant`, `Sorcery`, `Enchantment`, `Artifact`, `Planeswalker`
+- Remove `CardType::NonLand`, use specific types
+
+**Commands:**
+- `CastSpellCommand { card_id }` — cast any non-land card (free for now)
+
+**Events:**
+- `SpellCast { card_id, caster_id }`
+
+**Tests:** ~3
+
+---
+
+## Slice 14 — Pay Mana Cost
+
+**Goal:** Require mana payment for spells.
+
+**Domain:**
+- `CardDefinition` has `mana_cost: u32`
+- Player must have enough mana to cast spell
+
+**Commands:**
+- `CastSpellCommand { card_id }` — checks mana cost
+
+**Tests:** ~4
+
+---
+
+## Slice 15 — Creature Power/Toughness
+
+**Goal:** Enable combat.
+
+**Domain:**
+- `CardInstance` gains `power: Option<i32>`, `toughness: Option<i32>`
+- Creatures have P/T, non-creatures are None
+
+**Tests:** ~2
+
+---
+
+## Slice 16 — Declare Attacker
+
+**Goal:** Attack with creatures.
+
+**Domain:**
+- `CombatState` tracks declared attackers
+
+**Commands:**
+- `DeclareAttackerCommand { attacker_id }`
+
+**Events:**
+- `AttackerDeclared { player_id, creature_id }`
+
+**Tests:** ~3
+
+---
+
+## Slice 17 — Combat Damage (Simplified)
+
+**Goal:** Resolve combat damage.
+
+**Commands:**
+- `ResolveCombatCommand`
+
+**Events:**
+- `DamageDealt { target, amount }`
+
+**Tests:** ~4
+
+---
+
+## Slice 18 — Graveyard Zone
+
+**Goal:** Track dead creatures.
+
+**Domain:**
+- `Player` gains `graveyard: Vec<CardInstance>`
+- Creatures with damage >= toughness go to graveyard after combat
+
+**Events:**
+- `CardMovedToGraveyard { card_id }`
+
+**Tests:** ~3
 
 ---
 
 ## Release 0.2.0 Scope
 
-**Included:**
-- Slice 8: Life & Turn Phases
-- Slice 9: Spell Casting & Mana
-- Slice 10: Combat
-- Slice 11: Graveyard & Exile
-
-**Estimated Tests:** ~30 new tests
-**Estimated Commands:** ~8 new commands
+**Minimal viable:** Slices 8-12 (Life, Phases, Mana)
+**Full scope:** All 11 slices (8-18)
 
 ---
 
 ## Open Questions
 
-1. **Mana colors** — Should we track specific colors (W, U, B, R, G) or just generic mana?
-2. **Combat damage order** — How to handle multiple blockers?
-3. **Card definitions** — Where are card definitions loaded from?
-4. **State-based actions** — When to check and apply SBAs (e.g., lethal damage)?
-
----
-
-## Recommendation
-
-Start with **Slice 8** (Life & Turn Phases) as it provides:
-- Clear, measurable progress
-- Foundation for subsequent slices
-- Minimal complexity increase
+1. ¿Mana de colores o genérico?
+2. ¿Combat simple o con blockers?
+3. ¿Dónde se cargan las definiciones de cartas?
