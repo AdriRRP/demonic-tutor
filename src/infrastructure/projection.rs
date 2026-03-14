@@ -59,6 +59,9 @@ impl GameLogProjection {
                     e.player_id, e.from_life, e.to_life
                 )
             }
+            DomainEvent::TurnNumberChanged(e) => {
+                format!("Turn changed from {} to {}", e.from_turn, e.to_turn)
+            }
         };
 
         if let Ok(mut logs) = self.logs.write() {

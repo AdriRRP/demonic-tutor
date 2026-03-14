@@ -1,6 +1,6 @@
 # Current State — DemonicTutor
 
-## Implemented Slices (8/11)
+## Implemented Slices (9/11)
 
 1. StartGame
 2. DrawOpeningHands
@@ -10,6 +10,7 @@
 6. Mulligan
 7. Infrastructure (EventBus, EventStore, GameLogProjection)
 8. Player Life
+9. Turn Number
 
 ## Current Aggregate: Game
 

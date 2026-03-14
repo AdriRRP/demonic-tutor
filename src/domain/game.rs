@@ -7,7 +7,7 @@ use crate::domain::{
     errors::DomainError,
     events::{
         CardDrawn, GameStarted, LandPlayed, LifeChanged, MulliganTaken, OpeningHandDealt,
-        TurnAdvanced,
+        TurnAdvanced, TurnNumberChanged,
     },
     ids::{CardInstanceId, DeckId, GameId, PlayerId},
     zones::{Battlefield, Hand, Library},
@@ -123,6 +123,7 @@ pub struct Game {
     id: GameId,
     active_player: PlayerId,
     phase: Phase,
+    turn_number: u32,
     players: Vec<Player>,
 }
 
@@ -140,6 +141,11 @@ impl Game {
     #[must_use]
     pub const fn phase(&self) -> &Phase {
         &self.phase
+    }
+
+    #[must_use]
+    pub const fn turn_number(&self) -> u32 {
+        self.turn_number
     }
 
     #[must_use]
@@ -198,6 +204,7 @@ impl Game {
             id: cmd.game_id,
             active_player,
             phase: Phase::Setup,
+            turn_number: 1,
             players,
         };
 
@@ -415,7 +422,10 @@ impl Game {
     /// # Errors
     ///
     /// Returns an error if the active player cannot be found (internal invariant violation).
-    pub fn advance_turn(&mut self, _cmd: AdvanceTurnCommand) -> Result<TurnAdvanced, DomainError> {
+    pub fn advance_turn(
+        &mut self,
+        _cmd: AdvanceTurnCommand,
+    ) -> Result<(TurnAdvanced, TurnNumberChanged), DomainError> {
         let current_idx = self
             .players
             .iter()
@@ -426,6 +436,10 @@ impl Game {
         let next_idx = (current_idx + 1) % self.players.len();
         let new_active_player = self.players[next_idx].id().clone();
 
+        let from_turn = self.turn_number;
+        self.turn_number += 1;
+        let to_turn = self.turn_number;
+
         self.active_player = new_active_player.clone();
         self.phase = Phase::Main;
 
@@ -433,7 +447,10 @@ impl Game {
             *player.lands_played_this_turn_mut() = 0;
         }
 
-        Ok(TurnAdvanced::new(self.id.clone(), new_active_player))
+        Ok((
+            TurnAdvanced::new(self.id.clone(), new_active_player),
+            TurnNumberChanged::new(self.id.clone(), from_turn, to_turn),
+        ))
     }
 
     /// Draws a card from the player's library to their hand.

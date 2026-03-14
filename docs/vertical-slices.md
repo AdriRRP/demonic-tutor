@@ -16,6 +16,7 @@ Vertical slices are the primary evolution mechanism. Each slice delivers one coh
 | 6 | Mulligan | `docs/slices/mulligan.md` |
 | 7 | Infrastructure | `docs/slices/infrastructure.md` |
 | 8 | Player Life | `docs/slices/player-life.md` |
+| 9 | Turn Number | `docs/slices/turn-number.md` |
 
 ## Future Slices
 
