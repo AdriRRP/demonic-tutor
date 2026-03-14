@@ -60,7 +60,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: taiki-e/cargo-outdated-action@v2
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install cargo-outdated
+        uses: actions-rs/cargo@v1
         with:
-          exit-code: 1
-          args: --depth 1
+          command: install
+          args: cargo-outdated
+      - name: Check for outdated dependencies
+        run: |
+          cargo outdated --depth 1 --exit-code 1 || {
+            echo "ERROR: There are outdated direct dependencies."
+            exit 1
+          }
