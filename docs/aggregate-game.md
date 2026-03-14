@@ -146,6 +146,7 @@ Fields:
 * `CardDefinitionId`
 * `CardType` (Land, Creature, Instant, Sorcery, Enchantment, Artifact, Planeswalker)
 * `tapped` (bool)
+* `mana_cost` (u32)
 
 Responsibilities:
 
@@ -153,6 +154,7 @@ Responsibilities:
 * reference a card definition
 * distinguish card types
 * track tapped state
+* track mana cost
 
 Not yet responsible for:
 

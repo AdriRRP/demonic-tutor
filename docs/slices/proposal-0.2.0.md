@@ -7,8 +7,8 @@ This document proposes atomic slices for a meaningful playtesting release (0.2.0
 - StartGame, DealOpeningHands, Mulligan, PlayLand, DrawCard, AdvanceTurn
 - Infrastructure: EventStore, EventBus, GameLogProjection
 - Player Life, Turn Number, Turn Phases
-- Tap Lands for Mana, Cast Non-Land Spells
-- 2 players, Setup → Beginning → Main → Ending phase, life tracking, mana system
+- Tap Lands for Mana, Cast Non-Land Spells, Pay Mana Cost
+- 2 players, Setup → Beginning → Main → Ending phase, life tracking, mana system with cost payment
 
 ---
 
