@@ -493,7 +493,8 @@ impl Game {
         Ok(CardDrawn::new(self.id.clone(), cmd.player_id, card_id))
     }
 
-    /// Sets a player's life total.
+    /// Modifies a player's life total by the given amount.
+    /// Positive values gain life, negative values lose life.
     ///
     /// # Errors
     ///
@@ -510,7 +511,7 @@ impl Game {
 
         let player = &mut self.players[player_idx];
         let from_life = player.life();
-        let to_life = cmd.life;
+        let to_life = from_life.saturating_add_signed(cmd.life_change);
 
         *player.life_mut() = to_life;
 

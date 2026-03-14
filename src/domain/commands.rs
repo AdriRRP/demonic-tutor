@@ -104,12 +104,15 @@ impl MulliganCommand {
 #[derive(Debug, Clone)]
 pub struct SetLifeCommand {
     pub player_id: PlayerId,
-    pub life: u32,
+    pub life_change: i32,
 }
 
 impl SetLifeCommand {
     #[must_use]
-    pub const fn new(player_id: PlayerId, life: u32) -> Self {
-        Self { player_id, life }
+    pub const fn new(player_id: PlayerId, life_change: i32) -> Self {
+        Self {
+            player_id,
+            life_change,
+        }
     }
 }

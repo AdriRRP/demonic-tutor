@@ -1,6 +1,6 @@
 # Current State — DemonicTutor
 
-## Implemented Slices (7/7)
+## Implemented Slices (8/11)
 
 1. StartGame
 2. DrawOpeningHands
@@ -9,12 +9,14 @@
 5. DrawCard
 6. Mulligan
 7. Infrastructure (EventBus, EventStore, GameLogProjection)
+8. Player Life
 
 ## Current Aggregate: Game
 
 The `Game` aggregate handles:
 - game lifecycle
 - player management (exactly 2)
+- player life totals (starts at 20)
 - zone transitions (library → hand → battlefield)
 - turn progression
 - action legality
@@ -37,4 +39,4 @@ The `Game` aggregate handles:
 
 ## Next Decision Point
 
-Choose next focus: new slice / internal refactor / infrastructure extraction
+Choose next focus: Turn Number / Turn Phases / Mana / Combat

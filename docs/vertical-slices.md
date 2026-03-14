@@ -15,17 +15,23 @@ Vertical slices are the primary evolution mechanism. Each slice delivers one coh
 | 5 | DrawCard | `docs/slices/draw-card.md` |
 | 6 | Mulligan | `docs/slices/mulligan.md` |
 | 7 | Infrastructure | `docs/slices/infrastructure.md` |
+| 8 | Player Life | `docs/slices/player-life.md` |
 
 ## Future Slices
 
-Future slices will expand:
-- combat phase
-- spell casting
-- card abilities
-- turn phases beyond Main
-- multiplayer support
+| # | Slice |
+|---|-------|
+| 9 | Turn Number |
+| 10 | Turn Phases |
+| 11 | Tap Lands for Mana |
+| 12 | Cast Non-Land Spells |
+| 13 | Pay Mana Cost |
+| 14 | Creature Power/Toughness |
+| 15 | Declare Attacker |
+| 16 | Combat Damage |
+| 17 | Graveyard Zone |
 
-See `docs/slices/` for detailed slice specifications.
+See `docs/slices/proposal-0.2.0.md` for detailed specifications.
 
 ## Policy
 
