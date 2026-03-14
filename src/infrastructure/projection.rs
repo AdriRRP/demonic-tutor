@@ -74,6 +74,9 @@ impl GameLogProjection {
                     e.player_id, e.amount, e.new_mana_total
                 )
             }
+            DomainEvent::SpellCast(e) => {
+                format!("Player {} cast spell {}", e.player_id, e.card_id)
+            }
         };
 
         if let Ok(mut logs) = self.logs.write() {

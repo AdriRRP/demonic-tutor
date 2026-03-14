@@ -1,13 +1,13 @@
 use crate::application::{EventBus, EventStore};
 use crate::domain::{
     commands::{
-        AdvanceTurnCommand, DealOpeningHandsCommand, DrawCardCommand, MulliganCommand,
-        PlayLandCommand, SetLifeCommand, StartGameCommand, TapLandCommand,
+        AdvanceTurnCommand, CastSpellCommand, DealOpeningHandsCommand, DrawCardCommand,
+        MulliganCommand, PlayLandCommand, SetLifeCommand, StartGameCommand, TapLandCommand,
     },
     errors::DomainError,
     events::{
         CardDrawn, DomainEvent, GameStarted, LandPlayed, LandTapped, LifeChanged, ManaAdded,
-        MulliganTaken, OpeningHandDealt, TurnAdvanced,
+        MulliganTaken, OpeningHandDealt, SpellCast, TurnAdvanced,
     },
     game::Game,
 };
@@ -226,5 +226,27 @@ where
         self.event_bus.publish(&mana_domain_event);
 
         Ok((land_event, mana_event))
+    }
+
+    /// Casts a non-land spell.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the command is invalid.
+    pub fn cast_spell(
+        &self,
+        game: &mut Game,
+        cmd: CastSpellCommand,
+    ) -> Result<SpellCast, DomainError> {
+        let event = game.cast_spell(cmd)?;
+        let domain_event: DomainEvent = event.clone().into();
+
+        let game_id = game.id().0.clone();
+        let _ = self
+            .event_store
+            .append(&game_id, std::slice::from_ref(&domain_event));
+        self.event_bus.publish(&domain_event);
+
+        Ok(event)
     }
 }

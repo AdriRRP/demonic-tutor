@@ -1,13 +1,13 @@
 use crate::domain::{
     cards::{CardInstance, CardType},
     commands::{
-        AdvanceTurnCommand, DealOpeningHandsCommand, DrawCardCommand, MulliganCommand,
-        PlayLandCommand, StartGameCommand, TapLandCommand,
+        AdvanceTurnCommand, CastSpellCommand, DealOpeningHandsCommand, DrawCardCommand,
+        MulliganCommand, PlayLandCommand, StartGameCommand, TapLandCommand,
     },
     errors::DomainError,
     events::{
         CardDrawn, GameStarted, LandPlayed, LandTapped, LifeChanged, ManaAdded, MulliganTaken,
-        OpeningHandDealt, PhaseChanged, TurnAdvanced, TurnNumberChanged,
+        OpeningHandDealt, PhaseChanged, SpellCast, TurnAdvanced, TurnNumberChanged,
     },
     ids::{CardInstanceId, DeckId, GameId, PlayerId},
     zones::{Battlefield, Hand, Library},
@@ -628,5 +628,50 @@ impl Game {
             LandTapped::new(self.id.clone(), cmd.player_id.clone(), cmd.card_id.clone()),
             ManaAdded::new(self.id.clone(), cmd.player_id, 1, new_mana),
         ))
+    }
+
+    /// Casts a non-land spell from the player's hand to the battlefield.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if:
+    /// - The player is not the active player
+    /// - The player is not found
+    /// - The card is not in the player's hand
+    /// - The card is a land card
+    pub fn cast_spell(&mut self, cmd: CastSpellCommand) -> Result<SpellCast, DomainError> {
+        if self.active_player != cmd.player_id {
+            return Err(DomainError::NotYourTurn {
+                current_player: self.active_player.clone(),
+                requested_player: cmd.player_id,
+            });
+        }
+
+        let player_idx = self
+            .players
+            .iter()
+            .position(|p| p.id() == &cmd.player_id)
+            .ok_or_else(|| DomainError::PlayerNotFound(cmd.player_id.clone()))?;
+
+        let player = &mut self.players[player_idx];
+
+        let card_id = cmd.card_id.clone();
+
+        let card =
+            player
+                .hand_mut()
+                .remove(&card_id)
+                .ok_or_else(|| DomainError::CardNotInHand {
+                    player_id: cmd.player_id.clone(),
+                    card_id: card_id.clone(),
+                })?;
+
+        if matches!(card.card_type(), CardType::Land) {
+            return Err(DomainError::CannotCastLand { card_id });
+        }
+
+        player.battlefield_mut().add(card);
+
+        Ok(SpellCast::new(self.id.clone(), cmd.player_id, card_id))
     }
 }

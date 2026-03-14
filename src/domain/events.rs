@@ -13,6 +13,7 @@ pub enum DomainEvent {
     PhaseChanged(PhaseChanged),
     LandTapped(LandTapped),
     ManaAdded(ManaAdded),
+    SpellCast(SpellCast),
 }
 
 impl DomainEvent {
@@ -109,6 +110,15 @@ impl DomainEvent {
     #[must_use]
     pub const fn as_mana_added(&self) -> Option<&ManaAdded> {
         if let Self::ManaAdded(e) = self {
+            Some(e)
+        } else {
+            None
+        }
+    }
+
+    #[must_use]
+    pub const fn as_spell_cast(&self) -> Option<&SpellCast> {
+        if let Self::SpellCast(e) = self {
             Some(e)
         } else {
             None
@@ -315,6 +325,24 @@ impl ManaAdded {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct SpellCast {
+    pub game_id: GameId,
+    pub player_id: PlayerId,
+    pub card_id: CardInstanceId,
+}
+
+impl SpellCast {
+    #[must_use]
+    pub const fn new(game_id: GameId, player_id: PlayerId, card_id: CardInstanceId) -> Self {
+        Self {
+            game_id,
+            player_id,
+            card_id,
+        }
+    }
+}
+
 impl From<GameStarted> for DomainEvent {
     fn from(event: GameStarted) -> Self {
         Self::GameStarted(event)
@@ -378,5 +406,11 @@ impl From<LandTapped> for DomainEvent {
 impl From<ManaAdded> for DomainEvent {
     fn from(event: ManaAdded) -> Self {
         Self::ManaAdded(event)
+    }
+}
+
+impl From<SpellCast> for DomainEvent {
+    fn from(event: SpellCast) -> Self {
+        Self::SpellCast(event)
     }
 }

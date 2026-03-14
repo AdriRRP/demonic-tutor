@@ -22,7 +22,7 @@ fn player_deck_contents(player: &str, cards: Vec<(String, CardType)>) -> PlayerD
 
 fn non_land_cards(count: usize) -> Vec<(String, CardType)> {
     (0..count)
-        .map(|i| (format!("card-{i}"), CardType::NonLand))
+        .map(|i| (format!("card-{i}"), CardType::Creature))
         .collect()
 }
 

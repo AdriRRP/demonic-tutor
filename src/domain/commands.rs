@@ -129,3 +129,16 @@ impl TapLandCommand {
         Self { player_id, card_id }
     }
 }
+
+#[derive(Debug, Clone)]
+pub struct CastSpellCommand {
+    pub player_id: PlayerId,
+    pub card_id: CardInstanceId,
+}
+
+impl CastSpellCommand {
+    #[must_use]
+    pub const fn new(player_id: PlayerId, card_id: CardInstanceId) -> Self {
+        Self { player_id, card_id }
+    }
+}

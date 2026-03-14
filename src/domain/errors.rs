@@ -44,6 +44,9 @@ pub enum DomainError {
         player_id: PlayerId,
         card_id: CardInstanceId,
     },
+    CannotCastLand {
+        card_id: CardInstanceId,
+    },
     MulliganAlreadyUsed {
         player_id: PlayerId,
     },
@@ -111,6 +114,9 @@ impl std::fmt::Display for DomainError {
                     f,
                     "card {card_id} not on battlefield for player {player_id}"
                 )
+            }
+            Self::CannotCastLand { card_id } => {
+                write!(f, "cannot cast land {card_id} as a spell")
             }
             Self::MulliganAlreadyUsed { player_id } => {
                 write!(f, "player {player_id} has already used mulligan")

@@ -3,7 +3,22 @@ use crate::domain::ids::{CardDefinitionId, CardInstanceId};
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum CardType {
     Land,
-    NonLand,
+    Creature,
+    Instant,
+    Sorcery,
+    Enchantment,
+    Artifact,
+    Planeswalker,
+}
+
+impl CardType {
+    pub const fn is_land(&self) -> bool {
+        matches!(self, CardType::Land)
+    }
+
+    pub const fn is_non_land(&self) -> bool {
+        !self.is_land()
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
