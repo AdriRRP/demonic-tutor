@@ -4,7 +4,6 @@ use std::collections::HashMap;
 use std::error::Error;
 use std::sync::RwLock;
 
-#[allow(clippy::significant_drop_tightening)]
 pub struct InMemoryEventStore {
     events: RwLock<HashMap<String, Vec<DomainEvent>>>,
 }
@@ -25,17 +24,20 @@ impl Default for InMemoryEventStore {
 }
 
 impl EventStore for InMemoryEventStore {
-    #[allow(clippy::significant_drop_tightening)]
     fn append(
         &self,
         aggregate_id: &str,
         new_events: &[DomainEvent],
     ) -> Result<(), Box<dyn Error + Send + Sync>> {
-        let mut events = self.events.write().map_err(|e| e.to_string())?;
-        let entry = events
-            .entry(aggregate_id.to_string())
-            .or_insert_with(Vec::new);
-        entry.extend(new_events.iter().cloned());
+        {
+            let mut events = self.events.write().map_err(|e| e.to_string())?;
+            let key = aggregate_id.to_string();
+            if let Some(existing) = events.get_mut(&key) {
+                existing.extend(new_events.iter().cloned());
+            } else {
+                events.insert(key, new_events.to_vec());
+            }
+        }
         Ok(())
     }
 

@@ -4,6 +4,8 @@ pub mod infrastructure;
 
 pub use application::{EventBus, EventStore, GameService};
 
+pub use infrastructure::{GameLogProjection, InMemoryEventBus, InMemoryEventStore};
+
 pub use domain::{
     cards::{CardInstance, CardType},
     commands::{

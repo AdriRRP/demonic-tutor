@@ -1,0 +1,178 @@
+#![allow(clippy::unwrap_used)]
+#![allow(clippy::significant_drop_tightening)]
+
+use demonictutor::{
+    CardDrawn, CardInstanceId, DomainEvent, EventBus, EventStore, GameId, GameLogProjection,
+    GameStarted, InMemoryEventBus, InMemoryEventStore, LandPlayed, MulliganTaken, OpeningHandDealt,
+    PlayerId, TurnAdvanced,
+};
+
+#[test]
+fn event_bus_publishes_to_handler() {
+    let mut bus = InMemoryEventBus::new();
+
+    let received = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
+    let received_clone = std::sync::Arc::clone(&received);
+
+    bus.subscribe(std::sync::Arc::new(move |event: &DomainEvent| {
+        received_clone.lock().unwrap().push(event.clone());
+    }));
+
+    let event = DomainEvent::GameStarted(GameStarted::new(
+        GameId::new("game-1"),
+        vec![PlayerId::new("player-1"), PlayerId::new("player-2")],
+    ));
+
+    bus.publish(&event);
+
+    let locked = received.lock().unwrap();
+    assert_eq!(locked.len(), 1);
+}
+
+#[test]
+fn event_bus_multiple_handlers() {
+    let mut bus = InMemoryEventBus::new();
+
+    let handler1_calls = std::sync::Arc::new(std::sync::Mutex::new(0));
+    let handler2_calls = std::sync::Arc::new(std::sync::Mutex::new(0));
+
+    let calls1 = std::sync::Arc::clone(&handler1_calls);
+    let calls2 = std::sync::Arc::clone(&handler2_calls);
+
+    bus.subscribe(std::sync::Arc::new(move |_: &DomainEvent| {
+        *calls1.lock().unwrap() += 1;
+    }));
+
+    bus.subscribe(std::sync::Arc::new(move |_: &DomainEvent| {
+        *calls2.lock().unwrap() += 1;
+    }));
+
+    let event = DomainEvent::GameStarted(GameStarted::new(
+        GameId::new("game-1"),
+        vec![PlayerId::new("player-1")],
+    ));
+
+    bus.publish(&event);
+
+    assert_eq!(*handler1_calls.lock().unwrap(), 1);
+    assert_eq!(*handler2_calls.lock().unwrap(), 1);
+}
+
+#[test]
+fn event_store_append_and_retrieve() {
+    let store = InMemoryEventStore::new();
+
+    let event1 = DomainEvent::GameStarted(GameStarted::new(
+        GameId::new("game-1"),
+        vec![PlayerId::new("player-1"), PlayerId::new("player-2")],
+    ));
+
+    let event2 = DomainEvent::OpeningHandDealt(OpeningHandDealt::new(
+        GameId::new("game-1"),
+        PlayerId::new("player-1"),
+        vec![],
+    ));
+
+    store
+        .append("game-1", std::slice::from_ref(&event1))
+        .unwrap();
+    store
+        .append("game-1", std::slice::from_ref(&event2))
+        .unwrap();
+
+    let stored_events = store.get_events("game-1").unwrap();
+
+    assert_eq!(stored_events.len(), 2);
+}
+
+#[test]
+fn event_store_empty_for_unknown_aggregate() {
+    let store = InMemoryEventStore::new();
+
+    let stored_events = store.get_events("nonexistent").unwrap();
+
+    assert!(stored_events.is_empty());
+}
+
+#[test]
+fn projection_logs_events() {
+    let projection = GameLogProjection::new();
+
+    let event = DomainEvent::GameStarted(GameStarted::new(
+        GameId::new("game-1"),
+        vec![PlayerId::new("player-1"), PlayerId::new("player-2")],
+    ));
+
+    projection.handle(&event);
+
+    let logs = projection.logs();
+    assert_eq!(logs.len(), 1);
+    assert!(logs[0].contains("game-1"));
+    assert!(logs[0].contains("player-1"));
+}
+
+#[test]
+fn projection_logs_multiple_events() {
+    let projection = GameLogProjection::new();
+
+    projection.handle(&DomainEvent::GameStarted(GameStarted::new(
+        GameId::new("game-1"),
+        vec![PlayerId::new("player-1"), PlayerId::new("player-2")],
+    )));
+
+    projection.handle(&DomainEvent::OpeningHandDealt(OpeningHandDealt::new(
+        GameId::new("game-1"),
+        PlayerId::new("player-1"),
+        vec![],
+    )));
+
+    projection.handle(&DomainEvent::LandPlayed(LandPlayed::new(
+        GameId::new("game-1"),
+        PlayerId::new("player-1"),
+        CardInstanceId::new("card-1"),
+    )));
+
+    projection.handle(&DomainEvent::TurnAdvanced(TurnAdvanced::new(
+        GameId::new("game-1"),
+        PlayerId::new("player-2"),
+    )));
+
+    projection.handle(&DomainEvent::CardDrawn(CardDrawn::new(
+        GameId::new("game-1"),
+        PlayerId::new("player-2"),
+        CardInstanceId::new("card-2"),
+    )));
+
+    projection.handle(&DomainEvent::MulliganTaken(MulliganTaken::new(
+        GameId::new("game-1"),
+        PlayerId::new("player-1"),
+    )));
+
+    let logs = projection.logs();
+    assert_eq!(logs.len(), 6);
+    assert!(logs[0].starts_with("Game"));
+    assert!(logs[1].starts_with("Player"));
+    assert!(logs[2].starts_with("Player"));
+    assert!(logs[3].starts_with("Turn"));
+    assert!(logs[4].starts_with("Player"));
+    assert!(logs[5].starts_with("Player"));
+}
+
+#[test]
+fn integration_event_store_and_bus() {
+    let bus = InMemoryEventBus::new();
+    let store = InMemoryEventStore::new();
+
+    let event = DomainEvent::GameStarted(GameStarted::new(
+        GameId::new("game-1"),
+        vec![PlayerId::new("player-1"), PlayerId::new("player-2")],
+    ));
+
+    store
+        .append("game-1", std::slice::from_ref(&event))
+        .unwrap();
+    bus.publish(&event);
+
+    let stored_events = store.get_events("game-1").unwrap();
+    assert_eq!(stored_events.len(), 1);
+}
