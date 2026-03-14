@@ -2,12 +2,12 @@ use crate::application::{EventBus, EventStore};
 use crate::domain::{
     commands::{
         AdvanceTurnCommand, DealOpeningHandsCommand, DrawCardCommand, MulliganCommand,
-        PlayLandCommand, SetLifeCommand, StartGameCommand,
+        PlayLandCommand, SetLifeCommand, StartGameCommand, TapLandCommand,
     },
     errors::DomainError,
     events::{
-        CardDrawn, DomainEvent, GameStarted, LandPlayed, LifeChanged, MulliganTaken,
-        OpeningHandDealt, TurnAdvanced,
+        CardDrawn, DomainEvent, GameStarted, LandPlayed, LandTapped, LifeChanged, ManaAdded,
+        MulliganTaken, OpeningHandDealt, TurnAdvanced,
     },
     game::Game,
 };
@@ -197,5 +197,34 @@ where
         self.event_bus.publish(&domain_event);
 
         Ok(event)
+    }
+
+    /// Taps a land to add mana.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the command is invalid.
+    pub fn tap_land(
+        &self,
+        game: &mut Game,
+        cmd: TapLandCommand,
+    ) -> Result<(LandTapped, ManaAdded), DomainError> {
+        let (land_event, mana_event) = game.tap_land(cmd)?;
+
+        let game_id = game.id().0.clone();
+
+        let land_domain_event: DomainEvent = land_event.clone().into();
+        let _ = self
+            .event_store
+            .append(&game_id, std::slice::from_ref(&land_domain_event));
+        self.event_bus.publish(&land_domain_event);
+
+        let mana_domain_event: DomainEvent = mana_event.clone().into();
+        let _ = self
+            .event_store
+            .append(&game_id, std::slice::from_ref(&mana_domain_event));
+        self.event_bus.publish(&mana_domain_event);
+
+        Ok((land_event, mana_event))
     }
 }

@@ -1,0 +1,196 @@
+#![allow(clippy::unwrap_used)]
+
+use demonictutor::{
+    CardDefinitionId, CardInstanceId, CardType, DealOpeningHandsCommand, DeckId, DomainError,
+    GameId, GameService, InMemoryEventBus, InMemoryEventStore, PlayLandCommand, PlayerDeck,
+    PlayerDeckContents, PlayerId, StartGameCommand, TapLandCommand,
+};
+
+fn player_deck(player: &str, deck: &str) -> PlayerDeck {
+    PlayerDeck::new(PlayerId::new(player), DeckId::new(deck))
+}
+
+fn player_deck_contents(player: &str, cards: Vec<(String, CardType)>) -> PlayerDeckContents {
+    PlayerDeckContents::new(
+        PlayerId::new(player),
+        cards
+            .into_iter()
+            .map(|(c, ct)| (CardDefinitionId::new(c), ct))
+            .collect(),
+    )
+}
+
+fn create_service() -> GameService<InMemoryEventStore, InMemoryEventBus> {
+    GameService::new(InMemoryEventStore::new(), InMemoryEventBus::new())
+}
+
+fn create_game_with_land_on_battlefield() -> (
+    demonictutor::Game,
+    GameService<InMemoryEventStore, InMemoryEventBus>,
+) {
+    let service = create_service();
+    let (mut game, _) = service
+        .start_game(StartGameCommand::new(
+            GameId::new("game-1"),
+            vec![
+                player_deck("player-1", "deck-1"),
+                player_deck("player-2", "deck-2"),
+            ],
+        ))
+        .unwrap();
+
+    let cmd = DealOpeningHandsCommand::new(vec![
+        player_deck_contents(
+            "player-1",
+            vec![
+                (String::from("forest"), CardType::Land),
+                (String::from("card-2"), CardType::NonLand),
+                (String::from("card-3"), CardType::NonLand),
+                (String::from("card-4"), CardType::NonLand),
+                (String::from("card-5"), CardType::NonLand),
+                (String::from("card-6"), CardType::NonLand),
+                (String::from("card-7"), CardType::NonLand),
+            ],
+        ),
+        player_deck_contents(
+            "player-2",
+            vec![
+                (String::from("mountain"), CardType::Land),
+                (String::from("card-2"), CardType::NonLand),
+                (String::from("card-3"), CardType::NonLand),
+                (String::from("card-4"), CardType::NonLand),
+                (String::from("card-5"), CardType::NonLand),
+                (String::from("card-6"), CardType::NonLand),
+                (String::from("card-7"), CardType::NonLand),
+            ],
+        ),
+    ]);
+
+    service.deal_opening_hands(&mut game, &cmd).unwrap();
+
+    // Advance: Setup -> Main (player-2)
+    let advance_cmd = demonictutor::AdvanceTurnCommand::new();
+    service.advance_turn(&mut game, advance_cmd).unwrap();
+
+    // Advance: Main -> Ending (player-2)
+    let advance_cmd = demonictutor::AdvanceTurnCommand::new();
+    service.advance_turn(&mut game, advance_cmd).unwrap();
+
+    // Advance: Ending -> Main (player-1)
+    let advance_cmd = demonictutor::AdvanceTurnCommand::new();
+    service.advance_turn(&mut game, advance_cmd).unwrap();
+
+    // Player-1 plays a land
+    let play_land_cmd = PlayLandCommand::new(
+        PlayerId::new("player-1"),
+        CardInstanceId::new("game-1-player-1-0"),
+    );
+    service.play_land(&mut game, play_land_cmd).unwrap();
+
+    (game, service)
+}
+
+#[test]
+fn players_start_with_zero_mana() {
+    let service = create_service();
+    let (game, _) = service
+        .start_game(StartGameCommand::new(
+            GameId::new("game-1"),
+            vec![
+                player_deck("player-1", "deck-1"),
+                player_deck("player-2", "deck-2"),
+            ],
+        ))
+        .unwrap();
+
+    assert_eq!(game.players()[0].mana(), 0);
+    assert_eq!(game.players()[1].mana(), 0);
+}
+
+#[test]
+fn tap_land_adds_mana() {
+    let (mut game, service) = create_game_with_land_on_battlefield();
+
+    let cmd = TapLandCommand::new(
+        PlayerId::new("player-1"),
+        CardInstanceId::new("game-1-player-1-0"),
+    );
+    let result = service.tap_land(&mut game, cmd);
+
+    assert!(result.is_ok());
+    let (_, mana_event) = result.unwrap();
+    assert_eq!(mana_event.amount, 1);
+    assert_eq!(mana_event.new_mana_total, 1);
+    assert_eq!(game.players()[0].mana(), 1);
+}
+
+#[test]
+fn tap_land_fails_for_untapped_land() {
+    let (mut game, service) = create_game_with_land_on_battlefield();
+
+    // Try to tap player's own land
+    let cmd = TapLandCommand::new(
+        PlayerId::new("player-1"),
+        CardInstanceId::new("game-1-player-1-0"),
+    );
+    let result = service.tap_land(&mut game, cmd);
+
+    assert!(result.is_ok());
+
+    // Try to tap again - should fail
+    let cmd2 = TapLandCommand::new(
+        PlayerId::new("player-1"),
+        CardInstanceId::new("game-1-player-1-0"),
+    );
+    let result2 = service.tap_land(&mut game, cmd2);
+
+    assert!(result2.is_err());
+    assert!(matches!(
+        result2.unwrap_err(),
+        DomainError::CardAlreadyTapped { .. }
+    ));
+}
+
+#[test]
+fn tap_land_fails_for_non_land_card() {
+    let (mut game, service) = create_game_with_land_on_battlefield();
+
+    // Try to tap a non-land card (not on battlefield)
+    let cmd = TapLandCommand::new(
+        PlayerId::new("player-1"),
+        CardInstanceId::new("game-1-player-1-1"), // This is in hand
+    );
+    let result = service.tap_land(&mut game, cmd);
+
+    assert!(result.is_err());
+    assert!(matches!(
+        result.unwrap_err(),
+        DomainError::CardNotOnBattlefield { .. }
+    ));
+}
+
+#[test]
+fn tap_land_fails_for_unknown_card() {
+    let service = create_service();
+    let (mut game, _) = service
+        .start_game(StartGameCommand::new(
+            GameId::new("game-1"),
+            vec![
+                player_deck("player-1", "deck-1"),
+                player_deck("player-2", "deck-2"),
+            ],
+        ))
+        .unwrap();
+
+    let cmd = TapLandCommand::new(
+        PlayerId::new("player-1"),
+        CardInstanceId::new("nonexistent"),
+    );
+    let result = service.tap_land(&mut game, cmd);
+
+    assert!(result.is_err());
+    assert!(matches!(
+        result.unwrap_err(),
+        DomainError::CardNotOnBattlefield { .. }
+    ));
+}

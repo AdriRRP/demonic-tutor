@@ -11,6 +11,7 @@ pub struct CardInstance {
     id: CardInstanceId,
     definition_id: CardDefinitionId,
     card_type: CardType,
+    tapped: bool,
 }
 
 impl CardInstance {
@@ -24,6 +25,7 @@ impl CardInstance {
             id,
             definition_id,
             card_type,
+            tapped: false,
         }
     }
 
@@ -40,5 +42,18 @@ impl CardInstance {
     #[must_use]
     pub const fn card_type(&self) -> &CardType {
         &self.card_type
+    }
+
+    #[must_use]
+    pub const fn is_tapped(&self) -> bool {
+        self.tapped
+    }
+
+    pub const fn tap(&mut self) {
+        self.tapped = true;
+    }
+
+    pub const fn untap(&mut self) {
+        self.tapped = false;
     }
 }

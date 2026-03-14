@@ -82,4 +82,8 @@ impl Battlefield {
     pub fn cards(&self) -> &[CardInstance] {
         &self.0
     }
+
+    pub fn card_mut(&mut self, card_id: &CardInstanceId) -> Option<&mut CardInstance> {
+        self.0.iter_mut().find(|c| c.id() == card_id)
+    }
 }

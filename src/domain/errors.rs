@@ -36,6 +36,14 @@ pub enum DomainError {
     AlreadyPlayedLandThisTurn {
         player_id: PlayerId,
     },
+    CardAlreadyTapped {
+        player_id: PlayerId,
+        card_id: CardInstanceId,
+    },
+    CardNotOnBattlefield {
+        player_id: PlayerId,
+        card_id: CardInstanceId,
+    },
     MulliganAlreadyUsed {
         player_id: PlayerId,
     },
@@ -94,6 +102,15 @@ impl std::fmt::Display for DomainError {
             }
             Self::AlreadyPlayedLandThisTurn { player_id } => {
                 write!(f, "player {player_id} already played a land this turn")
+            }
+            Self::CardAlreadyTapped { player_id, card_id } => {
+                write!(f, "card {card_id} is already tapped for player {player_id}")
+            }
+            Self::CardNotOnBattlefield { player_id, card_id } => {
+                write!(
+                    f,
+                    "card {card_id} not on battlefield for player {player_id}"
+                )
             }
             Self::MulliganAlreadyUsed { player_id } => {
                 write!(f, "player {player_id} has already used mulligan")

@@ -11,11 +11,12 @@ pub use domain::{
     commands::{
         AdvanceTurnCommand, DealOpeningHandsCommand, DrawCardCommand, MulliganCommand,
         PlayLandCommand, PlayerDeck, PlayerDeckContents, SetLifeCommand, StartGameCommand,
+        TapLandCommand,
     },
     errors::DomainError,
     events::{
-        CardDrawn, DomainEvent, GameStarted, LandPlayed, LifeChanged, MulliganTaken,
-        OpeningHandDealt, PhaseChanged, TurnAdvanced, TurnNumberChanged,
+        CardDrawn, DomainEvent, GameStarted, LandPlayed, LandTapped, LifeChanged, ManaAdded,
+        MulliganTaken, OpeningHandDealt, PhaseChanged, TurnAdvanced, TurnNumberChanged,
     },
     game::{Game, Phase},
     ids::{CardDefinitionId, CardInstanceId, DeckId, GameId, PlayerId},

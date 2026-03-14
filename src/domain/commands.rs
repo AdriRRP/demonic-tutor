@@ -116,3 +116,16 @@ impl SetLifeCommand {
         }
     }
 }
+
+#[derive(Debug, Clone)]
+pub struct TapLandCommand {
+    pub player_id: PlayerId,
+    pub card_id: CardInstanceId,
+}
+
+impl TapLandCommand {
+    #[must_use]
+    pub const fn new(player_id: PlayerId, card_id: CardInstanceId) -> Self {
+        Self { player_id, card_id }
+    }
+}

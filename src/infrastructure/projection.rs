@@ -65,6 +65,15 @@ impl GameLogProjection {
             DomainEvent::PhaseChanged(e) => {
                 format!("Phase changed from {} to {}", e.from_phase, e.to_phase)
             }
+            DomainEvent::LandTapped(e) => {
+                format!("Player {} tapped land {}", e.player_id, e.card_id)
+            }
+            DomainEvent::ManaAdded(e) => {
+                format!(
+                    "Player {} added {} mana (total: {})",
+                    e.player_id, e.amount, e.new_mana_total
+                )
+            }
         };
 
         if let Ok(mut logs) = self.logs.write() {

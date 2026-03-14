@@ -11,6 +11,8 @@ pub enum DomainEvent {
     LifeChanged(LifeChanged),
     TurnNumberChanged(TurnNumberChanged),
     PhaseChanged(PhaseChanged),
+    LandTapped(LandTapped),
+    ManaAdded(ManaAdded),
 }
 
 impl DomainEvent {
@@ -89,6 +91,24 @@ impl DomainEvent {
     #[must_use]
     pub const fn as_phase_changed(&self) -> Option<&PhaseChanged> {
         if let Self::PhaseChanged(e) = self {
+            Some(e)
+        } else {
+            None
+        }
+    }
+
+    #[must_use]
+    pub const fn as_land_tapped(&self) -> Option<&LandTapped> {
+        if let Self::LandTapped(e) = self {
+            Some(e)
+        } else {
+            None
+        }
+    }
+
+    #[must_use]
+    pub const fn as_mana_added(&self) -> Option<&ManaAdded> {
+        if let Self::ManaAdded(e) = self {
             Some(e)
         } else {
             None
@@ -252,6 +272,49 @@ impl PhaseChanged {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct LandTapped {
+    pub game_id: GameId,
+    pub player_id: PlayerId,
+    pub card_id: CardInstanceId,
+}
+
+impl LandTapped {
+    #[must_use]
+    pub const fn new(game_id: GameId, player_id: PlayerId, card_id: CardInstanceId) -> Self {
+        Self {
+            game_id,
+            player_id,
+            card_id,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ManaAdded {
+    pub game_id: GameId,
+    pub player_id: PlayerId,
+    pub amount: u32,
+    pub new_mana_total: u32,
+}
+
+impl ManaAdded {
+    #[must_use]
+    pub const fn new(
+        game_id: GameId,
+        player_id: PlayerId,
+        amount: u32,
+        new_mana_total: u32,
+    ) -> Self {
+        Self {
+            game_id,
+            player_id,
+            amount,
+            new_mana_total,
+        }
+    }
+}
+
 impl From<GameStarted> for DomainEvent {
     fn from(event: GameStarted) -> Self {
         Self::GameStarted(event)
@@ -303,5 +366,17 @@ impl From<TurnNumberChanged> for DomainEvent {
 impl From<PhaseChanged> for DomainEvent {
     fn from(event: PhaseChanged) -> Self {
         Self::PhaseChanged(event)
+    }
+}
+
+impl From<LandTapped> for DomainEvent {
+    fn from(event: LandTapped) -> Self {
+        Self::LandTapped(event)
+    }
+}
+
+impl From<ManaAdded> for DomainEvent {
+    fn from(event: ManaAdded) -> Self {
+        Self::ManaAdded(event)
     }
 }

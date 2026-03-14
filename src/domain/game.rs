@@ -2,12 +2,12 @@ use crate::domain::{
     cards::{CardInstance, CardType},
     commands::{
         AdvanceTurnCommand, DealOpeningHandsCommand, DrawCardCommand, MulliganCommand,
-        PlayLandCommand, StartGameCommand,
+        PlayLandCommand, StartGameCommand, TapLandCommand,
     },
     errors::DomainError,
     events::{
-        CardDrawn, GameStarted, LandPlayed, LifeChanged, MulliganTaken, OpeningHandDealt,
-        PhaseChanged, TurnAdvanced, TurnNumberChanged,
+        CardDrawn, GameStarted, LandPlayed, LandTapped, LifeChanged, ManaAdded, MulliganTaken,
+        OpeningHandDealt, PhaseChanged, TurnAdvanced, TurnNumberChanged,
     },
     ids::{CardInstanceId, DeckId, GameId, PlayerId},
     zones::{Battlefield, Hand, Library},
@@ -34,6 +34,7 @@ mod player {
         hand: Hand,
         battlefield: Battlefield,
         life: u32,
+        mana: u32,
         lands_played_this_turn: usize,
         mulligan_used: bool,
     }
@@ -47,6 +48,7 @@ mod player {
                 hand: Hand::new(),
                 battlefield: Battlefield::new(),
                 life: DEFAULT_STARTING_LIFE,
+                mana: 0,
                 lands_played_this_turn: 0,
                 mulligan_used: false,
             }
@@ -84,6 +86,15 @@ mod player {
 
         pub const fn life_mut(&mut self) -> &mut u32 {
             &mut self.life
+        }
+
+        #[must_use]
+        pub const fn mana(&self) -> u32 {
+            self.mana
+        }
+
+        pub const fn mana_mut(&mut self) -> &mut u32 {
+            &mut self.mana
         }
 
         #[must_use]
@@ -564,6 +575,58 @@ impl Game {
             cmd.player_id,
             from_life,
             to_life,
+        ))
+    }
+
+    /// Taps a land to add mana.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if:
+    /// - The player is not found
+    /// - The card is not on the battlefield
+    /// - The card is already tapped
+    /// - The card is not a land
+    pub fn tap_land(
+        &mut self,
+        cmd: TapLandCommand,
+    ) -> Result<(LandTapped, ManaAdded), DomainError> {
+        let player_idx = self
+            .players
+            .iter()
+            .position(|p| p.id() == &cmd.player_id)
+            .ok_or_else(|| DomainError::PlayerNotFound(cmd.player_id.clone()))?;
+
+        let player = &mut self.players[player_idx];
+
+        let card = player
+            .battlefield_mut()
+            .card_mut(&cmd.card_id)
+            .ok_or_else(|| DomainError::CardNotOnBattlefield {
+                player_id: cmd.player_id.clone(),
+                card_id: cmd.card_id.clone(),
+            })?;
+
+        if card.is_tapped() {
+            return Err(DomainError::CardAlreadyTapped {
+                player_id: cmd.player_id.clone(),
+                card_id: cmd.card_id.clone(),
+            });
+        }
+
+        if !matches!(card.card_type(), CardType::Land) {
+            return Err(DomainError::NotALand {
+                card_id: cmd.card_id.clone(),
+            });
+        }
+
+        card.tap();
+        *player.mana_mut() += 1;
+        let new_mana = player.mana();
+
+        Ok((
+            LandTapped::new(self.id.clone(), cmd.player_id.clone(), cmd.card_id.clone()),
+            ManaAdded::new(self.id.clone(), cmd.player_id, 1, new_mana),
         ))
     }
 }
