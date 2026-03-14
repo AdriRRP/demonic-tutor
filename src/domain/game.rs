@@ -31,8 +31,7 @@ mod player {
     }
 
     impl Player {
-        #[allow(clippy::missing_const_for_fn)]
-        pub fn new(id: PlayerId, deck_id: DeckId) -> Self {
+        pub const fn new(id: PlayerId, deck_id: DeckId) -> Self {
             Self {
                 id,
                 deck_id,
@@ -74,23 +73,19 @@ mod player {
             self.lands_played_this_turn
         }
 
-        #[allow(clippy::missing_const_for_fn)]
-        pub fn library_mut(&mut self) -> &mut Library {
+        pub const fn library_mut(&mut self) -> &mut Library {
             &mut self.library
         }
 
-        #[allow(clippy::missing_const_for_fn)]
-        pub fn hand_mut(&mut self) -> &mut Hand {
+        pub const fn hand_mut(&mut self) -> &mut Hand {
             &mut self.hand
         }
 
-        #[allow(clippy::missing_const_for_fn)]
-        pub fn battlefield_mut(&mut self) -> &mut Battlefield {
+        pub const fn battlefield_mut(&mut self) -> &mut Battlefield {
             &mut self.battlefield
         }
 
-        #[allow(clippy::missing_const_for_fn)]
-        pub fn lands_played_this_turn_mut(&mut self) -> &mut usize {
+        pub const fn lands_played_this_turn_mut(&mut self) -> &mut usize {
             &mut self.lands_played_this_turn
         }
 
@@ -99,8 +94,7 @@ mod player {
             self.mulligan_used
         }
 
-        #[allow(clippy::missing_const_for_fn)]
-        pub fn mulligan_used_mut(&mut self) -> &mut bool {
+        pub const fn mulligan_used_mut(&mut self) -> &mut bool {
             &mut self.mulligan_used
         }
     }
