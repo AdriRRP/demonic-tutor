@@ -1,6 +1,6 @@
 # Current State — DemonicTutor
 
-## Implemented Slices (12/12)
+## Implemented Slices (13/13)
 
 1. StartGame
 2. DrawOpeningHands
@@ -14,6 +14,7 @@
 10. Turn Phases
 11. Tap Lands for Mana
 12. Cast Non-Land Spells
+13. Pay Mana Cost
 
 ## Current Aggregate: Game
 
@@ -26,7 +27,7 @@ The `Game` aggregate handles:
 - turn progression (turn number, active player)
 - phase progression (Setup → Beginning → Main → Ending)
 - action legality
-- spell casting (non-land cards)
+- spell casting with mana cost
 
 ## Constraints (Temporary)
 
@@ -34,7 +35,6 @@ The `Game` aggregate handles:
 - Opening hand: 7 cards
 - Phase: Setup → Beginning → Main → Ending → Main (next player)
 - No stack, priority
-- Spells cast for free (no mana cost)
 - In-memory event store (future: persistence)
 - In-memory event bus (future: distributed)
 
@@ -47,4 +47,4 @@ The `Game` aggregate handles:
 
 ## Next Decision Point
 
-Choose next focus: Pay Mana Cost / Combat / Creature Power-Toughness
+Choose next focus: Creature Power-Toughness / Combat / Declare Attacker

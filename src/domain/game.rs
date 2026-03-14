@@ -276,11 +276,12 @@ impl Game {
                 .iter()
                 .take(hand_size)
                 .enumerate()
-                .map(|(i, (def_id, card_type))| {
+                .map(|(i, (def_id, card_type, mana_cost))| {
                     CardInstance::new(
                         CardInstanceId::new(format!("{}-{}-{}", self.id.0, player_id_owned.0, i)),
                         def_id.clone(),
                         card_type.clone(),
+                        *mana_cost,
                     )
                 })
                 .collect();
@@ -290,7 +291,7 @@ impl Game {
                 .iter()
                 .skip(hand_size)
                 .enumerate()
-                .map(|(i, (def_id, card_type))| {
+                .map(|(i, (def_id, card_type, mana_cost))| {
                     CardInstance::new(
                         CardInstanceId::new(format!(
                             "{}-{}-lib-{}",
@@ -298,6 +299,7 @@ impl Game {
                         )),
                         def_id.clone(),
                         card_type.clone(),
+                        *mana_cost,
                     )
                 })
                 .collect();
@@ -639,6 +641,7 @@ impl Game {
     /// - The player is not found
     /// - The card is not in the player's hand
     /// - The card is a land card
+    /// - The player does not have enough mana
     pub fn cast_spell(&mut self, cmd: CastSpellCommand) -> Result<SpellCast, DomainError> {
         if self.active_player != cmd.player_id {
             return Err(DomainError::NotYourTurn {
@@ -670,6 +673,16 @@ impl Game {
             return Err(DomainError::CannotCastLand { card_id });
         }
 
+        let mana_cost = card.mana_cost();
+        if player.mana() < mana_cost {
+            return Err(DomainError::InsufficientMana {
+                player_id: cmd.player_id.clone(),
+                required: mana_cost,
+                available: player.mana(),
+            });
+        }
+
+        *player.mana_mut() -= mana_cost;
         player.battlefield_mut().add(card);
 
         Ok(SpellCast::new(self.id.clone(), cmd.player_id, card_id))

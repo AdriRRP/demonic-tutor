@@ -32,12 +32,12 @@ impl StartGameCommand {
 #[derive(Debug, Clone)]
 pub struct PlayerDeckContents {
     pub player_id: PlayerId,
-    pub cards: Vec<(CardDefinitionId, CardType)>,
+    pub cards: Vec<(CardDefinitionId, CardType, u32)>,
 }
 
 impl PlayerDeckContents {
     #[must_use]
-    pub const fn new(player_id: PlayerId, cards: Vec<(CardDefinitionId, CardType)>) -> Self {
+    pub const fn new(player_id: PlayerId, cards: Vec<(CardDefinitionId, CardType, u32)>) -> Self {
         Self { player_id, cards }
     }
 }

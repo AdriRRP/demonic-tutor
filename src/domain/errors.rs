@@ -47,6 +47,11 @@ pub enum DomainError {
     CannotCastLand {
         card_id: CardInstanceId,
     },
+    InsufficientMana {
+        player_id: PlayerId,
+        required: u32,
+        available: u32,
+    },
     MulliganAlreadyUsed {
         player_id: PlayerId,
     },
@@ -117,6 +122,17 @@ impl std::fmt::Display for DomainError {
             }
             Self::CannotCastLand { card_id } => {
                 write!(f, "cannot cast land {card_id} as a spell")
+            }
+            Self::InsufficientMana {
+                player_id,
+                required,
+                available,
+            } => {
+                write!(
+                    f,
+                    "player {} has insufficient mana: required {}, available {}",
+                    player_id.0, required, available
+                )
             }
             Self::MulliganAlreadyUsed { player_id } => {
                 write!(f, "player {player_id} has already used mulligan")

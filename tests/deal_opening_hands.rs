@@ -10,19 +10,19 @@ fn player_deck(player: &str, deck: &str) -> PlayerDeck {
     PlayerDeck::new(PlayerId::new(player), DeckId::new(deck))
 }
 
-fn player_deck_contents(player: &str, cards: Vec<(String, CardType)>) -> PlayerDeckContents {
+fn player_deck_contents(player: &str, cards: Vec<(String, CardType, u32)>) -> PlayerDeckContents {
     PlayerDeckContents::new(
         PlayerId::new(player),
         cards
             .into_iter()
-            .map(|(c, ct)| (CardDefinitionId::new(c), ct))
+            .map(|(c, ct, mc)| (CardDefinitionId::new(c), ct, mc))
             .collect(),
     )
 }
 
-fn non_land_cards(count: usize) -> Vec<(String, CardType)> {
+fn non_land_cards(count: usize) -> Vec<(String, CardType, u32)> {
     (0..count)
-        .map(|i| (format!("card-{i}"), CardType::Creature))
+        .map(|i| (format!("card-{i}"), CardType::Creature, 0))
         .collect()
 }
 

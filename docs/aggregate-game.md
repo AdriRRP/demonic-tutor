@@ -273,6 +273,15 @@ Enable casting non-land spells from hand to battlefield.
 
 ---
 
+## Slice 13 — Pay Mana Cost
+
+Require mana payment for casting spells.
+
+**Commands**: `CastSpellCommand` (now checks mana cost)  
+**Errors**: `InsufficientMana`
+
+---
+
 # Invariants Maintained by the Aggregate
 
 The `Game` aggregate currently guarantees:

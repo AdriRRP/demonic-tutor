@@ -10,12 +10,12 @@ fn player_deck(player: &str, deck: &str) -> PlayerDeck {
     PlayerDeck::new(PlayerId::new(player), DeckId::new(deck))
 }
 
-fn player_deck_contents(player: &str, cards: Vec<(String, CardType)>) -> PlayerDeckContents {
+fn player_deck_contents(player: &str, cards: Vec<(String, CardType, u32)>) -> PlayerDeckContents {
     PlayerDeckContents::new(
         PlayerId::new(player),
         cards
             .into_iter()
-            .map(|(c, ct)| (CardDefinitionId::new(c), ct))
+            .map(|(c, ct, mc)| (CardDefinitionId::new(c), ct, mc))
             .collect(),
     )
 }
@@ -42,25 +42,25 @@ fn create_game_with_land_in_hand() -> (demonictutor::Game, CardInstanceId) {
         player_deck_contents(
             "player-1",
             vec![
-                (String::from("forest"), CardType::Land),
-                (String::from("card-2"), CardType::Creature),
-                (String::from("card-3"), CardType::Creature),
-                (String::from("card-4"), CardType::Creature),
-                (String::from("card-5"), CardType::Creature),
-                (String::from("card-6"), CardType::Creature),
-                (String::from("card-7"), CardType::Creature),
+                (String::from("forest"), CardType::Land, 0),
+                (String::from("card-2"), CardType::Creature, 0),
+                (String::from("card-3"), CardType::Creature, 0),
+                (String::from("card-4"), CardType::Creature, 0),
+                (String::from("card-5"), CardType::Creature, 0),
+                (String::from("card-6"), CardType::Creature, 0),
+                (String::from("card-7"), CardType::Creature, 0),
             ],
         ),
         player_deck_contents(
             "player-2",
             vec![
-                (String::from("mountain"), CardType::Land),
-                (String::from("card-2"), CardType::Creature),
-                (String::from("card-3"), CardType::Creature),
-                (String::from("card-4"), CardType::Creature),
-                (String::from("card-5"), CardType::Creature),
-                (String::from("card-6"), CardType::Creature),
-                (String::from("card-7"), CardType::Creature),
+                (String::from("mountain"), CardType::Land, 0),
+                (String::from("card-2"), CardType::Creature, 0),
+                (String::from("card-3"), CardType::Creature, 0),
+                (String::from("card-4"), CardType::Creature, 0),
+                (String::from("card-5"), CardType::Creature, 0),
+                (String::from("card-6"), CardType::Creature, 0),
+                (String::from("card-7"), CardType::Creature, 0),
             ],
         ),
     ]);

@@ -20,12 +20,12 @@ Vertical slices are the primary evolution mechanism. Each slice delivers one coh
 |10 | Turn Phases | `docs/slices/turn-phases.md` |
 |11 | Tap Lands for Mana | `docs/slices/tap-land.md` |
 |12 | Cast Non-Land Spells | `docs/slices/cast-spell.md` |
+|13 | Pay Mana Cost | `docs/slices/pay-mana-cost.md` |
 
 ## Future Slices
 
 | # | Slice |
 |---|-------|
-|13 | Pay Mana Cost |
 |14 | Creature Power/Toughness |
 |15 | Declare Attacker |
 |16 | Combat Damage |
