@@ -676,7 +676,7 @@ impl Game {
         let mana_cost = card.mana_cost();
         if player.mana() < mana_cost {
             return Err(DomainError::InsufficientMana {
-                player_id: cmd.player_id.clone(),
+                player_id: cmd.player_id,
                 required: mana_cost,
                 available: player.mana(),
             });

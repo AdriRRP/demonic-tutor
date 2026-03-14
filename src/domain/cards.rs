@@ -12,10 +12,12 @@ pub enum CardType {
 }
 
 impl CardType {
+    #[must_use]
     pub const fn is_land(&self) -> bool {
-        matches!(self, CardType::Land)
+        matches!(self, Self::Land)
     }
 
+    #[must_use]
     pub const fn is_non_land(&self) -> bool {
         !self.is_land()
     }
