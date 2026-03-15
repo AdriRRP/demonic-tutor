@@ -1,5 +1,17 @@
 # Slice 10 — Turn Phases
 
+## Rules Reference
+
+- 501
+- 502
+- 503
+- 504
+- 505
+
+## Rules Support Statement
+
+This slice implements turn phase structure per rules 501-505. The model implements a simplified phase structure (Setup, Beginning, Main, Ending) that maps loosely to CR 501-505. Specific steps like Draw, Untap, Begin Combat, Declare Blockers are not implemented.
+
 ## Goal
 
 Add proper turn phase structure to enable future game actions.

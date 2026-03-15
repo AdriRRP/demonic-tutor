@@ -1,5 +1,13 @@
 # Slice 9 — Turn Number
 
+## Rules Reference
+
+This slice provides turn counting as a game state attribute. It does not correspond directly to a specific Magic Comprehensive Rules section.
+
+## Rules Support Statement
+
+This slice implements turn number tracking as a simple counter. The full turn structure rules are handled by the AdvanceTurn and Turn Phases slices.
+
 ## Goal
 
 Track the turn count in the game.

@@ -188,6 +188,17 @@ Do not inflate this section with exhaustive implementation detail.
 
 ---
 
+## Rules Reference
+
+Relevant sections of the Magic Comprehensive Rules that justify this slice.
+
+Example:
+
+- 305.2 — Playing a land
+- 305.3 — Land play restrictions
+
+---
+
 ## Rules Support Statement
 
 State clearly what this slice means for actual Magic rules support.

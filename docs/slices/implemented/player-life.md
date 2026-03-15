@@ -1,5 +1,14 @@
 # Slice 8 — Player Life
 
+## Rules Reference
+
+- 118.1
+- 118.2
+
+## Rules Support Statement
+
+This slice implements player life tracking per rules 118.1 and 118.2. This supports basic life total management. Damage, life gain, and life loss effects are not implemented.
+
 ## Goal
 
 Add player life tracking to support future damage and win conditions.

@@ -1,5 +1,14 @@
 # Slice 11 — Tap Lands for Mana
 
+## Rules Reference
+
+- 605.1
+- 605.3a
+
+## Rules Support Statement
+
+This slice implements mana production from lands per rules 605.1 and 605.3a. This implements basic mana production. Mana types, color identity, and untap steps are not implemented.
+
 ## Goal
 
 Enable lands to produce mana for future spell casting.

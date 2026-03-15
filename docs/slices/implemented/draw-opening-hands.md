@@ -35,6 +35,14 @@ Assign opening hands to all players in a started game.
 * persistence
 * event publication
 
+## Rules Reference
+
+- 103.3
+
+## Rules Support Statement
+
+This slice implements the initial hand creation per rule 103.3, drawing exactly seven cards. Opening hand size is fixed to seven cards as a development simplification.
+
 ## Notes
 
 This slice is intentionally limited.

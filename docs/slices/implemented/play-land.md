@@ -37,6 +37,16 @@ Allow the active player to play a land from hand under a minimal but meaningful 
 * effects that allow additional land plays
 * card text execution
 
+## Rules Reference
+
+- 305.1
+- 305.2
+- 305.3
+
+## Rules Support Statement
+
+This slice implements land playing per rules 305.1, 305.2, and 305.3, with a simplified one-land-per-turn model.
+
 ## Notes
 
 This slice introduces the first player-driven gameplay action with legality checks.

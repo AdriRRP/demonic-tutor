@@ -32,6 +32,15 @@ Initialize a valid game with exactly two players.
 - event persistence
 - event publication
 
+## Rules Reference
+
+- 103.1
+- 103.2
+
+## Rules Support Statement
+
+This slice initializes the game state as defined in rule 103.1 and establishes the two-player structure per rule 103.2. It establishes the two-player game start but does not implement the full pre-game procedure (ante, sideboards, etc.).
+
 ## Notes
 
 This slice intentionally prioritizes correctness and narrow scope over completeness.

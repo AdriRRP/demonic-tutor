@@ -183,6 +183,14 @@ Check whether the slice changes:
 - context map
 - current-state documentation
 
+### Step 5 — Identify relevant Magic Comprehensive Rules
+
+Every gameplay slice must reference the relevant sections of the Magic Comprehensive Rules.
+
+These references must be added under the "Rules Reference" section of the slice document.
+
+Use `docs/rules/rules-map.md` as the source of truth when mapping slices to rules.
+
 ### Step 6 — Identify tests
 
 List the smallest set of tests needed to make the slice reviewable.

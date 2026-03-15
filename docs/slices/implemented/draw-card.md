@@ -30,6 +30,15 @@ Allow the active player to draw exactly one card from their library into their h
 * stack
 * spell abilities
 
+## Rules Reference
+
+- 121.1
+- 121.2
+
+## Rules Support Statement
+
+This slice implements a minimal explicit draw action per rules 121.1 and 121.2, not the full Magic draw step.
+
 ## Notes
 
 This slice intentionally models a minimal explicit draw action, not the full Magic draw step.

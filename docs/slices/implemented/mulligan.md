@@ -36,6 +36,14 @@ This slice does not finalize the setup flow. The exact transition from `Setup` t
 
 This slice models a simplified one-time mulligan to 7 cards.
 
+## Rules Reference
+
+- 103.4
+
+## Rules Support Statement
+
+This slice implements the basic mulligan mechanic per rule 103.4, allowing a player to shuffle their hand back into the library and draw a new seven-card hand. This implements a simplified one-time mulligan to exactly seven cards.
+
 ## Out of Scope
 
 - Scry
