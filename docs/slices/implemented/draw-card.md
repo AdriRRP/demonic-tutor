@@ -17,7 +17,7 @@ Allow the active player to draw exactly one card from their library into their h
 ## Invariants currently enforced
 
 * only the active player may draw through this command
-* drawing is only allowed during `Phase::Main`
+* drawing is only allowed during `Phase::Main` or `Phase::Setup`
 * drawing fails if the library has no available cards
 
 ## Out of scope

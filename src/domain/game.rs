@@ -452,13 +452,6 @@ impl Game {
             Phase::Beginning => (Phase::Main, false),
         };
 
-        // Reset lands played when starting a new turn
-        if matches!(&self.phase, Phase::Setup | Phase::Ending) {
-            for player in &mut self.players {
-                *player.lands_played_this_turn_mut() = 0;
-            }
-        }
-
         if change_player {
             let current_idx = self
                 .players
