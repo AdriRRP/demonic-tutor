@@ -228,7 +228,7 @@ where
         Ok((land_event, mana_event))
     }
 
-    /// Casts a non-land spell.
+    /// Casts a spell.
     ///
     /// # Errors
     ///

@@ -32,7 +32,7 @@ src/domain/game/
 ├── draw.rs          # Drawing cards
 ├── lands.rs         # Playing and managing lands
 ├── mana.rs          # Mana production and usage
-├── spells.rs        # Casting non-land spells
+├── spells.rs        # Casting spells
 ├── creatures.rs     # Creature-specific behavior
 ├── combat.rs        # Attacking and blocking
 ├── turns.rs         # Turn progression

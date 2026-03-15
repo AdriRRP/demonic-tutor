@@ -1,8 +1,8 @@
-# Slice 13 — Cast Non-Land Spells
+# Slice 13 — Cast Spells
 
 ## Goal
 
-Enable casting non-land spells (creatures, instants, sorceries, etc.) from hand to battlefield.
+Enable casting spells (creatures, instants, sorceries, etc.) from hand to battlefield.
 
 ## Supported behavior
 
@@ -59,7 +59,7 @@ Emitted when a spell is cast successfully.
 
 ## Rules Support Statement
 
-This slice implements a simplified spell-casting model in which non-land cards are moved from hand into play according to the current game model. The full casting process (targets, modes, stack, timing, alternative costs, and resolution rules) is not implemented.
+This slice implements a simplified spell-casting model in which cards are moved from hand into play according to the current game model. The full casting process (targets, modes, stack, timing, alternative costs, and resolution rules) is not implemented.
 
 ## Tests
 

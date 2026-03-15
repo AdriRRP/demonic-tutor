@@ -669,7 +669,7 @@ impl Game {
         ))
     }
 
-    /// Casts a non-land spell from the player's hand to the battlefield.
+    /// Casts a spell from the player's hand to the battlefield.
     ///
     /// # Errors
     ///
