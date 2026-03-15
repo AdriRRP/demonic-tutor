@@ -84,122 +84,105 @@ pub enum DomainError {
 }
 
 impl std::fmt::Display for DomainError {
-    #[allow(clippy::too_many_lines)]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
+        let s = match self {
             Self::NotEnoughPlayers { actual } => {
-                write!(f, "not enough players: expected at least 2, got {actual}")
+                return write!(f, "not enough players: expected at least 2, got {actual}")
             }
             Self::TooManyPlayers { actual } => {
-                write!(f, "too many players: expected at most 2, got {actual}")
+                return write!(f, "too many players: expected at most 2, got {actual}")
             }
-            Self::DuplicatePlayer(pid) => {
-                write!(f, "duplicate player: {}", pid.0)
-            }
-            Self::PlayerNotFound(pid) => {
-                write!(f, "player not found: {}", pid.0)
-            }
+            Self::DuplicatePlayer(pid) => return write!(f, "duplicate player: {}", pid.0),
+            Self::PlayerNotFound(pid) => return write!(f, "player not found: {}", pid.0),
             Self::NotEnoughCardsInLibrary {
                 player_id,
                 available,
                 requested,
             } => {
-                write!(
+                return write!(
                     f,
                     "not enough cards in library for player {}: have {available}, need {requested}",
                     player_id.0
                 )
             }
             Self::CardNotInHand { player_id, card_id } => {
-                write!(f, "card {card_id} not in hand of player {player_id}")
+                return write!(f, "card {card_id} not in hand of player {player_id}")
             }
-            Self::NotALand { card_id } => {
-                write!(f, "card {card_id} is not a land")
-            }
-            Self::NotACreature { card_id } => {
-                write!(f, "card {card_id} is not a creature")
-            }
+            Self::NotALand { card_id } => return write!(f, "card {card_id} is not a land"),
+            Self::NotACreature { card_id } => return write!(f, "card {card_id} is not a creature"),
             Self::NotYourTurn {
                 current_player,
                 requested_player,
             } => {
-                write!(
+                return write!(
                     f,
                     "not {requested_player}'s turn, it's {current_player}'s turn"
                 )
             }
-            Self::InvalidPhaseForLand => {
-                write!(f, "cannot play land in current phase")
-            }
+            Self::InvalidPhaseForLand => "cannot play land in current phase",
             Self::InvalidPhaseForPlayingCard { phase } => {
-                write!(f, "cannot play card in phase {phase:?}")
+                return write!(f, "cannot play card in phase {phase:?}")
             }
             Self::InvalidPhaseForDraw { phase } => {
-                write!(f, "cannot draw card in phase {phase:?}")
+                return write!(f, "cannot draw card in phase {phase:?}")
             }
             Self::AlreadyPlayedLandThisTurn { player_id } => {
-                write!(f, "player {player_id} already played a land this turn")
+                return write!(f, "player {player_id} already played a land this turn")
             }
             Self::CardAlreadyTapped { player_id, card_id } => {
-                write!(f, "card {card_id} is already tapped for player {player_id}")
+                return write!(f, "card {card_id} is already tapped for player {player_id}")
             }
             Self::CardNotOnBattlefield { player_id, card_id } => {
-                write!(
+                return write!(
                     f,
                     "card {card_id} not on battlefield for player {player_id}"
                 )
             }
             Self::CannotCastLand { card_id } => {
-                write!(f, "cannot cast land {card_id} as a spell")
+                return write!(f, "cannot cast land {card_id} as a spell")
             }
             Self::InsufficientMana {
                 player_id,
                 required,
                 available,
             } => {
-                write!(
+                return write!(
                     f,
-                    "player {} has insufficient mana: required {}, available {}",
-                    player_id.0, required, available
+                    "player {} has insufficient mana: required {required}, available {available}",
+                    player_id.0
                 )
             }
             Self::MulliganAlreadyUsed { player_id } => {
-                write!(f, "player {player_id} has already used mulligan")
+                return write!(f, "player {player_id} has already used mulligan")
             }
-            Self::InvalidPhaseForMulligan => {
-                write!(f, "cannot perform mulligan in current phase")
-            }
-            Self::InvalidPhaseForCombat => {
-                write!(f, "cannot declare attackers in current phase")
-            }
+            Self::InvalidPhaseForMulligan => "cannot perform mulligan in current phase",
+            Self::InvalidPhaseForCombat => "cannot declare attackers in current phase",
             Self::CreatureAlreadyTapped { player_id, card_id } => {
-                write!(
+                return write!(
                     f,
                     "creature {card_id} is already tapped for player {player_id}"
                 )
             }
-            Self::CreatureHasSummoningSickness {
-                player_id: _,
-                card_id,
-            } => {
-                write!(
+            Self::CreatureHasSummoningSickness { card_id, .. } => {
+                return write!(
                     f,
                     "creature {card_id} has summoning sickness and cannot attack"
                 )
             }
             Self::CreatureNotControlledByAttacker { player_id, card_id } => {
-                write!(
+                return write!(
                     f,
                     "creature {card_id} is not controlled by player {player_id}"
                 )
             }
             Self::NotACreatureForAttack { card_id } => {
-                write!(f, "card {card_id} is not a creature and cannot attack")
+                return write!(f, "card {card_id} is not a creature and cannot attack")
             }
             Self::InternalInvariantViolation { message } => {
-                write!(f, "internal invariant violated: {message}")
+                return write!(f, "internal invariant violated: {message}")
             }
-        }
+        };
+        write!(f, "{s}")
     }
 }
 
