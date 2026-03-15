@@ -140,6 +140,9 @@ Fields include:
 - `CardType`
 - tapped state
 - mana cost
+- power (for creatures)
+- toughness (for creatures)
+- has_summoning_sickness (for creatures)
 
 Responsibilities:
 
@@ -147,12 +150,17 @@ Responsibilities:
 - reference card definitions
 - track minimal runtime state required for gameplay
 
+The current model includes:
+
+- power and toughness for creature cards
+- summoning sickness tracking for creatures
+
 The current model intentionally omits:
 
 - rules text
 - triggered abilities
-- power/toughness
 - damage tracking
+- counters
 - stack interactions
 
 These may be introduced incrementally in future slices.
@@ -252,6 +260,7 @@ Current constraints include:
 - deck contents are provided externally
 - shuffle behavior is minimal
 - creature combat is not modeled
+- creature damage/destruction not modeled
 - stack interactions are not modeled
 - only a minimal subset of card behavior exists
 

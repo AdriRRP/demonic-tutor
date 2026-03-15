@@ -117,6 +117,64 @@ Full support for stack behavior may be introduced in future slices.
 
 ---
 
+# Card Types
+
+## Creature
+
+A card type representing a permanent that can attack and block.
+
+Creatures have power and toughness characteristics.
+
+When a creature enters the battlefield, it has summoning sickness and cannot attack or use tap abilities until the next turn.
+
+---
+
+## Land
+
+A card type representing a permanent that produces mana.
+
+Currently the only card type that can be played without mana cost.
+
+---
+
+## Spell
+
+A card type that has an effect and then goes to the graveyard upon resolution.
+
+---
+
+# Creature-Specific Terms
+
+## Power
+
+The amount of damage a creature deals in combat.
+
+---
+
+## Toughness
+
+The amount of damage required to destroy a creature.
+
+---
+
+## Summoning Sickness
+
+A state applied to creatures that have just entered the battlefield.
+
+A creature with summoning sickness cannot attack or use abilities with tap in their cost.
+
+Summoning sickness is removed at the beginning of the creature's controller's next turn.
+
+---
+
+## Damage
+
+A value assigned to creatures during combat or from sources with damage effects.
+
+Damage is marked on a creature and persists until end of turn or regeneration.
+
+---
+
 # Gameplay Structure
 
 ## Turn

@@ -1,23 +1,18 @@
 #![allow(clippy::unwrap_used)]
 
 use demonictutor::{
-    AdvanceTurnCommand, CardDefinitionId, CardInstanceId, CardType, DealOpeningHandsCommand,
-    DeckId, DomainError, GameId, GameService, InMemoryEventBus, InMemoryEventStore,
-    PlayLandCommand, PlayerDeck, PlayerDeckContents, PlayerId, StartGameCommand,
+    AdvanceTurnCommand, CardDefinitionId, CardInstanceId, CardType, CardWithCost,
+    DealOpeningHandsCommand, DeckId, DomainError, GameId, GameService, InMemoryEventBus,
+    InMemoryEventStore, PlayLandCommand, PlayerDeck, PlayerDeckContents, PlayerId,
+    StartGameCommand,
 };
 
 fn player_deck(player: &str, deck: &str) -> PlayerDeck {
     PlayerDeck::new(PlayerId::new(player), DeckId::new(deck))
 }
 
-fn player_deck_contents(player: &str, cards: Vec<(String, CardType, u32)>) -> PlayerDeckContents {
-    PlayerDeckContents::new(
-        PlayerId::new(player),
-        cards
-            .into_iter()
-            .map(|(c, ct, mc)| (CardDefinitionId::new(c), ct, mc))
-            .collect(),
-    )
+fn player_deck_contents(player: &str, cards: Vec<CardWithCost>) -> PlayerDeckContents {
+    PlayerDeckContents::new(PlayerId::new(player), cards)
 }
 
 fn create_service() -> GameService<InMemoryEventStore, InMemoryEventBus> {
@@ -42,25 +37,25 @@ fn create_game_with_land_in_hand() -> (demonictutor::Game, CardInstanceId) {
         player_deck_contents(
             "player-1",
             vec![
-                (String::from("forest"), CardType::Land, 0),
-                (String::from("card-2"), CardType::Creature, 0),
-                (String::from("card-3"), CardType::Creature, 0),
-                (String::from("card-4"), CardType::Creature, 0),
-                (String::from("card-5"), CardType::Creature, 0),
-                (String::from("card-6"), CardType::Creature, 0),
-                (String::from("card-7"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("forest"), CardType::Land, 0),
+                CardWithCost::new(CardDefinitionId::new("card-2"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-3"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-4"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-5"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-6"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-7"), CardType::Creature, 0),
             ],
         ),
         player_deck_contents(
             "player-2",
             vec![
-                (String::from("mountain"), CardType::Land, 0),
-                (String::from("card-2"), CardType::Creature, 0),
-                (String::from("card-3"), CardType::Creature, 0),
-                (String::from("card-4"), CardType::Creature, 0),
-                (String::from("card-5"), CardType::Creature, 0),
-                (String::from("card-6"), CardType::Creature, 0),
-                (String::from("card-7"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("mountain"), CardType::Land, 0),
+                CardWithCost::new(CardDefinitionId::new("card-2"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-3"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-4"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-5"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-6"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-7"), CardType::Creature, 0),
             ],
         ),
     ]);

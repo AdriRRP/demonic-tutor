@@ -1,28 +1,28 @@
 #![allow(clippy::unwrap_used)]
 
 use demonictutor::{
-    AdvanceTurnCommand, CardDefinitionId, CardType, DealOpeningHandsCommand, DeckId, DomainError,
-    GameId, GameService, InMemoryEventBus, InMemoryEventStore, MulliganCommand, PlayerDeck,
-    PlayerDeckContents, PlayerId, StartGameCommand,
+    AdvanceTurnCommand, CardDefinitionId, CardType, CardWithCost, DealOpeningHandsCommand, DeckId,
+    DomainError, GameId, GameService, InMemoryEventBus, InMemoryEventStore, MulliganCommand,
+    PlayerDeck, PlayerDeckContents, PlayerId, StartGameCommand,
 };
 
 fn player_deck(player: &str, deck: &str) -> PlayerDeck {
     PlayerDeck::new(PlayerId::new(player), DeckId::new(deck))
 }
 
-fn player_deck_contents(player: &str, cards: Vec<(String, CardType, u32)>) -> PlayerDeckContents {
-    PlayerDeckContents::new(
-        PlayerId::new(player),
-        cards
-            .into_iter()
-            .map(|(c, ct, mc)| (CardDefinitionId::new(c), ct, mc))
-            .collect(),
-    )
+fn player_deck_contents(player: &str, cards: Vec<CardWithCost>) -> PlayerDeckContents {
+    PlayerDeckContents::new(PlayerId::new(player), cards)
 }
 
-fn non_land_cards(count: usize) -> Vec<(String, CardType, u32)> {
+fn non_land_cards(count: usize) -> Vec<CardWithCost> {
     (0..count)
-        .map(|i| (format!("card-{i}"), CardType::Creature, 0))
+        .map(|i| {
+            CardWithCost::new(
+                CardDefinitionId::new(format!("card-{i}")),
+                CardType::Creature,
+                0,
+            )
+        })
         .collect()
 }
 

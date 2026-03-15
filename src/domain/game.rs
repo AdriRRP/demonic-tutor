@@ -2,12 +2,13 @@ use crate::domain::{
     cards::{CardInstance, CardType},
     commands::{
         AdvanceTurnCommand, CastSpellCommand, DealOpeningHandsCommand, DrawCardCommand,
-        MulliganCommand, PlayLandCommand, StartGameCommand, TapLandCommand,
+        MulliganCommand, PlayCreatureCommand, PlayLandCommand, StartGameCommand, TapLandCommand,
     },
     errors::DomainError,
     events::{
-        CardDrawn, GameStarted, LandPlayed, LandTapped, LifeChanged, ManaAdded, MulliganTaken,
-        OpeningHandDealt, PhaseChanged, SpellCast, TurnAdvanced, TurnNumberChanged,
+        CardDrawn, CreatureEnteredBattlefield, GameStarted, LandPlayed, LandTapped, LifeChanged,
+        ManaAdded, MulliganTaken, OpeningHandDealt, PhaseChanged, SpellCast, TurnAdvanced,
+        TurnNumberChanged,
     },
     ids::{CardInstanceId, DeckId, GameId, PlayerId},
     zones::{Battlefield, Hand, Library},
@@ -276,13 +277,29 @@ impl Game {
                 .iter()
                 .take(hand_size)
                 .enumerate()
-                .map(|(i, (def_id, card_type, mana_cost))| {
-                    CardInstance::new(
-                        CardInstanceId::new(format!("{}-{}-{}", self.id.0, player_id_owned.0, i)),
-                        def_id.clone(),
-                        card_type.clone(),
-                        *mana_cost,
-                    )
+                .map(|(i, card)| {
+                    if card.card_type.is_creature() {
+                        CardInstance::new_creature(
+                            CardInstanceId::new(format!(
+                                "{}-{}-{}",
+                                self.id.0, player_id_owned.0, i
+                            )),
+                            card.definition_id.clone(),
+                            card.mana_cost,
+                            card.power.unwrap_or(0),
+                            card.toughness.unwrap_or(0),
+                        )
+                    } else {
+                        CardInstance::new(
+                            CardInstanceId::new(format!(
+                                "{}-{}-{}",
+                                self.id.0, player_id_owned.0, i
+                            )),
+                            card.definition_id.clone(),
+                            card.card_type.clone(),
+                            card.mana_cost,
+                        )
+                    }
                 })
                 .collect();
 
@@ -291,16 +308,29 @@ impl Game {
                 .iter()
                 .skip(hand_size)
                 .enumerate()
-                .map(|(i, (def_id, card_type, mana_cost))| {
-                    CardInstance::new(
-                        CardInstanceId::new(format!(
-                            "{}-{}-lib-{}",
-                            self.id.0, player_id_owned.0, i
-                        )),
-                        def_id.clone(),
-                        card_type.clone(),
-                        *mana_cost,
-                    )
+                .map(|(i, card)| {
+                    if card.card_type.is_creature() {
+                        CardInstance::new_creature(
+                            CardInstanceId::new(format!(
+                                "{}-{}-lib-{}",
+                                self.id.0, player_id_owned.0, i
+                            )),
+                            card.definition_id.clone(),
+                            card.mana_cost,
+                            card.power.unwrap_or(0),
+                            card.toughness.unwrap_or(0),
+                        )
+                    } else {
+                        CardInstance::new(
+                            CardInstanceId::new(format!(
+                                "{}-{}-lib-{}",
+                                self.id.0, player_id_owned.0, i
+                            )),
+                            card.definition_id.clone(),
+                            card.card_type.clone(),
+                            card.mana_cost,
+                        )
+                    }
                 })
                 .collect();
 
@@ -679,5 +709,78 @@ impl Game {
         player.battlefield_mut().add(card);
 
         Ok(SpellCast::new(self.id.clone(), cmd.player_id, card_id))
+    }
+
+    /// Plays a creature card from the player's hand to the battlefield.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if:
+    /// - The player is not the active player
+    /// - The current phase is not Main
+    /// - The player is not found
+    /// - The card is not in the player's hand
+    /// - The card is not a creature card
+    /// - The player does not have enough mana
+    pub fn play_creature(
+        &mut self,
+        cmd: PlayCreatureCommand,
+    ) -> Result<CreatureEnteredBattlefield, DomainError> {
+        if self.active_player != cmd.player_id {
+            return Err(DomainError::NotYourTurn {
+                current_player: self.active_player.clone(),
+                requested_player: cmd.player_id,
+            });
+        }
+
+        if !matches!(self.phase, Phase::Main) {
+            return Err(DomainError::InvalidPhaseForPlayingCard { phase: self.phase });
+        }
+
+        let player_idx = self
+            .players
+            .iter()
+            .position(|p| p.id() == &cmd.player_id)
+            .ok_or_else(|| DomainError::PlayerNotFound(cmd.player_id.clone()))?;
+
+        let player = &mut self.players[player_idx];
+
+        let card_id = cmd.card_id.clone();
+
+        let card =
+            player
+                .hand_mut()
+                .remove(&card_id)
+                .ok_or_else(|| DomainError::CardNotInHand {
+                    player_id: cmd.player_id.clone(),
+                    card_id: card_id.clone(),
+                })?;
+
+        if !matches!(card.card_type(), CardType::Creature) {
+            return Err(DomainError::NotACreature { card_id });
+        }
+
+        let power = card.power().unwrap_or(0);
+        let toughness = card.toughness().unwrap_or(0);
+
+        let mana_cost = card.mana_cost();
+        if player.mana() < mana_cost {
+            return Err(DomainError::InsufficientMana {
+                player_id: cmd.player_id,
+                required: mana_cost,
+                available: player.mana(),
+            });
+        }
+
+        *player.mana_mut() -= mana_cost;
+        player.battlefield_mut().add(card);
+
+        Ok(CreatureEnteredBattlefield::new(
+            self.id.clone(),
+            cmd.player_id,
+            card_id,
+            power,
+            toughness,
+        ))
     }
 }

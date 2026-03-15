@@ -25,11 +25,17 @@ pub enum DomainError {
     NotALand {
         card_id: CardInstanceId,
     },
+    NotACreature {
+        card_id: CardInstanceId,
+    },
     NotYourTurn {
         current_player: PlayerId,
         requested_player: PlayerId,
     },
     InvalidPhaseForLand,
+    InvalidPhaseForPlayingCard {
+        phase: Phase,
+    },
     InvalidPhaseForDraw {
         phase: Phase,
     },
@@ -93,6 +99,9 @@ impl std::fmt::Display for DomainError {
             Self::NotALand { card_id } => {
                 write!(f, "card {card_id} is not a land")
             }
+            Self::NotACreature { card_id } => {
+                write!(f, "card {card_id} is not a creature")
+            }
             Self::NotYourTurn {
                 current_player,
                 requested_player,
@@ -104,6 +113,9 @@ impl std::fmt::Display for DomainError {
             }
             Self::InvalidPhaseForLand => {
                 write!(f, "cannot play land in current phase")
+            }
+            Self::InvalidPhaseForPlayingCard { phase } => {
+                write!(f, "cannot play card in phase {phase:?}")
             }
             Self::InvalidPhaseForDraw { phase } => {
                 write!(f, "cannot draw card in phase {phase:?}")

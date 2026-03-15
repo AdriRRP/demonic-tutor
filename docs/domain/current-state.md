@@ -22,6 +22,7 @@ Implemented capabilities include:
 - playing lands
 - tapping lands for mana
 - casting spells that require mana
+- playing creatures with power and toughness
 - tracking player life totals
 - advancing turns
 - basic phase progression
@@ -42,6 +43,8 @@ The domain currently includes:
 - basic zones (library, hand, battlefield)
 - mana production from lands
 - spell casting with mana cost
+- creature cards with power and toughness
+- summoning sickness for creatures
 - turn and phase progression
 
 The system intentionally excludes complex gameplay mechanics at this stage.
@@ -62,6 +65,7 @@ Current constraints include:
 - no stack resolution
 - no priority system
 - no combat system
+- no creature combat or damage modeling
 - limited card behavior modeling
 
 These constraints are expected to evolve in future slices.
@@ -106,9 +110,9 @@ The next gameplay expansion requires choosing which domain capability to introdu
 
 Possible directions include:
 
-- creature power/toughness modeling
-- combat system
-- declare attackers step
+- combat system (declare attackers)
+- creature damage and destruction
+- declare blockers step
 - stack and priority system
 
 The next slice should continue expanding gameplay behavior incrementally.

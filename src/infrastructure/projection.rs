@@ -77,6 +77,12 @@ impl GameLogProjection {
             DomainEvent::SpellCast(e) => {
                 format!("Player {} cast spell {}", e.player_id, e.card_id)
             }
+            DomainEvent::CreatureEnteredBattlefield(e) => {
+                format!(
+                    "Player {} played creature {} ({}/{})",
+                    e.player_id, e.card_id, e.power, e.toughness
+                )
+            }
         };
 
         if let Ok(mut logs) = self.logs.write() {

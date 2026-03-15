@@ -1,23 +1,18 @@
 #![allow(clippy::unwrap_used)]
 
 use demonictutor::{
-    CardDefinitionId, CardInstanceId, CardType, CastSpellCommand, DealOpeningHandsCommand, DeckId,
-    DomainError, GameId, GameService, InMemoryEventBus, InMemoryEventStore, PlayLandCommand,
-    PlayerDeck, PlayerDeckContents, PlayerId, StartGameCommand, TapLandCommand,
+    CardDefinitionId, CardInstanceId, CardType, CardWithCost, CastSpellCommand,
+    DealOpeningHandsCommand, DeckId, DomainError, GameId, GameService, InMemoryEventBus,
+    InMemoryEventStore, PlayLandCommand, PlayerDeck, PlayerDeckContents, PlayerId,
+    StartGameCommand, TapLandCommand,
 };
 
 fn player_deck(player: &str, deck: &str) -> PlayerDeck {
     PlayerDeck::new(PlayerId::new(player), DeckId::new(deck))
 }
 
-fn player_deck_contents(player: &str, cards: Vec<(String, CardType, u32)>) -> PlayerDeckContents {
-    PlayerDeckContents::new(
-        PlayerId::new(player),
-        cards
-            .into_iter()
-            .map(|(c, ct, mc)| (CardDefinitionId::new(c), ct, mc))
-            .collect(),
-    )
+fn player_deck_contents(player: &str, cards: Vec<CardWithCost>) -> PlayerDeckContents {
+    PlayerDeckContents::new(PlayerId::new(player), cards)
 }
 
 fn create_service() -> GameService<InMemoryEventStore, InMemoryEventBus> {
@@ -40,13 +35,13 @@ fn cast_spell_moves_card_from_hand_to_battlefield() {
     let cmd = DealOpeningHandsCommand::new(vec![player_deck_contents(
         "player-1",
         vec![
-            (String::from("giant-growth"), CardType::Instant, 0),
-            (String::from("card-2"), CardType::Creature, 0),
-            (String::from("card-3"), CardType::Creature, 0),
-            (String::from("card-4"), CardType::Creature, 0),
-            (String::from("card-5"), CardType::Creature, 0),
-            (String::from("card-6"), CardType::Creature, 0),
-            (String::from("card-7"), CardType::Creature, 0),
+            CardWithCost::new(CardDefinitionId::new("giant-growth"), CardType::Instant, 0),
+            CardWithCost::new(CardDefinitionId::new("card-2"), CardType::Creature, 0),
+            CardWithCost::new(CardDefinitionId::new("card-3"), CardType::Creature, 0),
+            CardWithCost::new(CardDefinitionId::new("card-4"), CardType::Creature, 0),
+            CardWithCost::new(CardDefinitionId::new("card-5"), CardType::Creature, 0),
+            CardWithCost::new(CardDefinitionId::new("card-6"), CardType::Creature, 0),
+            CardWithCost::new(CardDefinitionId::new("card-7"), CardType::Creature, 0),
         ],
     )]);
 
@@ -84,13 +79,13 @@ fn cast_spell_fails_for_land_card() {
     let cmd = DealOpeningHandsCommand::new(vec![player_deck_contents(
         "player-1",
         vec![
-            (String::from("forest"), CardType::Land, 0),
-            (String::from("card-2"), CardType::Creature, 0),
-            (String::from("card-3"), CardType::Creature, 0),
-            (String::from("card-4"), CardType::Creature, 0),
-            (String::from("card-5"), CardType::Creature, 0),
-            (String::from("card-6"), CardType::Creature, 0),
-            (String::from("card-7"), CardType::Creature, 0),
+            CardWithCost::new(CardDefinitionId::new("forest"), CardType::Land, 0),
+            CardWithCost::new(CardDefinitionId::new("card-2"), CardType::Creature, 0),
+            CardWithCost::new(CardDefinitionId::new("card-3"), CardType::Creature, 0),
+            CardWithCost::new(CardDefinitionId::new("card-4"), CardType::Creature, 0),
+            CardWithCost::new(CardDefinitionId::new("card-5"), CardType::Creature, 0),
+            CardWithCost::new(CardDefinitionId::new("card-6"), CardType::Creature, 0),
+            CardWithCost::new(CardDefinitionId::new("card-7"), CardType::Creature, 0),
         ],
     )]);
 
@@ -120,25 +115,25 @@ fn cast_spell_fails_when_not_player_turn() {
         player_deck_contents(
             "player-1",
             vec![
-                (String::from("card-1"), CardType::Instant, 0),
-                (String::from("card-2"), CardType::Creature, 0),
-                (String::from("card-3"), CardType::Creature, 0),
-                (String::from("card-4"), CardType::Creature, 0),
-                (String::from("card-5"), CardType::Creature, 0),
-                (String::from("card-6"), CardType::Creature, 0),
-                (String::from("card-7"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-1"), CardType::Instant, 0),
+                CardWithCost::new(CardDefinitionId::new("card-2"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-3"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-4"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-5"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-6"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-7"), CardType::Creature, 0),
             ],
         ),
         player_deck_contents(
             "player-2",
             vec![
-                (String::from("card-1"), CardType::Instant, 0),
-                (String::from("card-2"), CardType::Creature, 0),
-                (String::from("card-3"), CardType::Creature, 0),
-                (String::from("card-4"), CardType::Creature, 0),
-                (String::from("card-5"), CardType::Creature, 0),
-                (String::from("card-6"), CardType::Creature, 0),
-                (String::from("card-7"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-1"), CardType::Instant, 0),
+                CardWithCost::new(CardDefinitionId::new("card-2"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-3"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-4"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-5"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-6"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-7"), CardType::Creature, 0),
             ],
         ),
     ]);
@@ -168,13 +163,13 @@ fn cast_spell_fails_when_card_not_in_hand() {
     let cmd = DealOpeningHandsCommand::new(vec![player_deck_contents(
         "player-1",
         vec![
-            (String::from("card-1"), CardType::Creature, 0),
-            (String::from("card-2"), CardType::Creature, 0),
-            (String::from("card-3"), CardType::Creature, 0),
-            (String::from("card-4"), CardType::Creature, 0),
-            (String::from("card-5"), CardType::Creature, 0),
-            (String::from("card-6"), CardType::Creature, 0),
-            (String::from("card-7"), CardType::Creature, 0),
+            CardWithCost::new(CardDefinitionId::new("card-1"), CardType::Creature, 0),
+            CardWithCost::new(CardDefinitionId::new("card-2"), CardType::Creature, 0),
+            CardWithCost::new(CardDefinitionId::new("card-3"), CardType::Creature, 0),
+            CardWithCost::new(CardDefinitionId::new("card-4"), CardType::Creature, 0),
+            CardWithCost::new(CardDefinitionId::new("card-5"), CardType::Creature, 0),
+            CardWithCost::new(CardDefinitionId::new("card-6"), CardType::Creature, 0),
+            CardWithCost::new(CardDefinitionId::new("card-7"), CardType::Creature, 0),
         ],
     )]);
 
@@ -203,13 +198,17 @@ fn cast_spell_fails_with_insufficient_mana() {
     let cmd = DealOpeningHandsCommand::new(vec![player_deck_contents(
         "player-1",
         vec![
-            (String::from("expensive-spell"), CardType::Instant, 3),
-            (String::from("card-2"), CardType::Creature, 0),
-            (String::from("card-3"), CardType::Creature, 0),
-            (String::from("card-4"), CardType::Creature, 0),
-            (String::from("card-5"), CardType::Creature, 0),
-            (String::from("card-6"), CardType::Creature, 0),
-            (String::from("card-7"), CardType::Creature, 0),
+            CardWithCost::new(
+                CardDefinitionId::new("expensive-spell"),
+                CardType::Instant,
+                3,
+            ),
+            CardWithCost::new(CardDefinitionId::new("card-2"), CardType::Creature, 0),
+            CardWithCost::new(CardDefinitionId::new("card-3"), CardType::Creature, 0),
+            CardWithCost::new(CardDefinitionId::new("card-4"), CardType::Creature, 0),
+            CardWithCost::new(CardDefinitionId::new("card-5"), CardType::Creature, 0),
+            CardWithCost::new(CardDefinitionId::new("card-6"), CardType::Creature, 0),
+            CardWithCost::new(CardDefinitionId::new("card-7"), CardType::Creature, 0),
         ],
     )]);
 
@@ -238,13 +237,13 @@ fn cast_spell_succeeds_with_sufficient_mana() {
     let cmd = DealOpeningHandsCommand::new(vec![player_deck_contents(
         "player-1",
         vec![
-            (String::from("forest"), CardType::Land, 0),
-            (String::from("card-2"), CardType::Instant, 1),
-            (String::from("card-3"), CardType::Creature, 0),
-            (String::from("card-4"), CardType::Creature, 0),
-            (String::from("card-5"), CardType::Creature, 0),
-            (String::from("card-6"), CardType::Creature, 0),
-            (String::from("card-7"), CardType::Creature, 0),
+            CardWithCost::new(CardDefinitionId::new("forest"), CardType::Land, 0),
+            CardWithCost::new(CardDefinitionId::new("card-2"), CardType::Instant, 1),
+            CardWithCost::new(CardDefinitionId::new("card-3"), CardType::Creature, 0),
+            CardWithCost::new(CardDefinitionId::new("card-4"), CardType::Creature, 0),
+            CardWithCost::new(CardDefinitionId::new("card-5"), CardType::Creature, 0),
+            CardWithCost::new(CardDefinitionId::new("card-6"), CardType::Creature, 0),
+            CardWithCost::new(CardDefinitionId::new("card-7"), CardType::Creature, 0),
         ],
     )]);
 
@@ -253,13 +252,13 @@ fn cast_spell_succeeds_with_sufficient_mana() {
     let deal_p2_cmd = DealOpeningHandsCommand::new(vec![player_deck_contents(
         "player-2",
         vec![
-            (String::from("forest"), CardType::Land, 0),
-            (String::from("card-2"), CardType::Instant, 1),
-            (String::from("card-3"), CardType::Creature, 0),
-            (String::from("card-4"), CardType::Creature, 0),
-            (String::from("card-5"), CardType::Creature, 0),
-            (String::from("card-6"), CardType::Creature, 0),
-            (String::from("card-7"), CardType::Creature, 0),
+            CardWithCost::new(CardDefinitionId::new("forest"), CardType::Land, 0),
+            CardWithCost::new(CardDefinitionId::new("card-2"), CardType::Instant, 1),
+            CardWithCost::new(CardDefinitionId::new("card-3"), CardType::Creature, 0),
+            CardWithCost::new(CardDefinitionId::new("card-4"), CardType::Creature, 0),
+            CardWithCost::new(CardDefinitionId::new("card-5"), CardType::Creature, 0),
+            CardWithCost::new(CardDefinitionId::new("card-6"), CardType::Creature, 0),
+            CardWithCost::new(CardDefinitionId::new("card-7"), CardType::Creature, 0),
         ],
     )]);
     service.deal_opening_hands(&mut game, &deal_p2_cmd).unwrap();

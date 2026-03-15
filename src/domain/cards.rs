@@ -21,6 +21,11 @@ impl CardType {
     pub const fn is_non_land(&self) -> bool {
         !self.is_land()
     }
+
+    #[must_use]
+    pub const fn is_creature(&self) -> bool {
+        matches!(self, Self::Creature)
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -53,6 +58,9 @@ pub struct CardInstance {
     card_type: CardType,
     tapped: bool,
     mana_cost: u32,
+    power: Option<u32>,
+    toughness: Option<u32>,
+    has_summoning_sickness: bool,
 }
 
 impl CardInstance {
@@ -69,6 +77,29 @@ impl CardInstance {
             card_type,
             tapped: false,
             mana_cost,
+            power: None,
+            toughness: None,
+            has_summoning_sickness: false,
+        }
+    }
+
+    #[must_use]
+    pub const fn new_creature(
+        id: CardInstanceId,
+        definition_id: CardDefinitionId,
+        mana_cost: u32,
+        power: u32,
+        toughness: u32,
+    ) -> Self {
+        Self {
+            id,
+            definition_id,
+            card_type: CardType::Creature,
+            tapped: false,
+            mana_cost,
+            power: Some(power),
+            toughness: Some(toughness),
+            has_summoning_sickness: true,
         }
     }
 
@@ -97,11 +128,30 @@ impl CardInstance {
         self.mana_cost
     }
 
+    #[must_use]
+    pub const fn power(&self) -> Option<u32> {
+        self.power
+    }
+
+    #[must_use]
+    pub const fn toughness(&self) -> Option<u32> {
+        self.toughness
+    }
+
+    #[must_use]
+    pub const fn has_summoning_sickness(&self) -> bool {
+        self.has_summoning_sickness
+    }
+
     pub const fn tap(&mut self) {
         self.tapped = true;
     }
 
     pub const fn untap(&mut self) {
         self.tapped = false;
+    }
+
+    pub const fn remove_summoning_sickness(&mut self) {
+        self.has_summoning_sickness = false;
     }
 }

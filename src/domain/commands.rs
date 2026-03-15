@@ -17,6 +17,57 @@ impl PlayerDeck {
 }
 
 #[derive(Debug, Clone)]
+pub struct CardWithCost {
+    pub definition_id: CardDefinitionId,
+    pub card_type: CardType,
+    pub mana_cost: u32,
+    pub power: Option<u32>,
+    pub toughness: Option<u32>,
+}
+
+impl CardWithCost {
+    #[must_use]
+    pub const fn new(definition_id: CardDefinitionId, card_type: CardType, mana_cost: u32) -> Self {
+        Self {
+            definition_id,
+            card_type,
+            mana_cost,
+            power: None,
+            toughness: None,
+        }
+    }
+
+    #[must_use]
+    pub const fn creature(
+        definition_id: CardDefinitionId,
+        mana_cost: u32,
+        power: u32,
+        toughness: u32,
+    ) -> Self {
+        Self {
+            definition_id,
+            card_type: CardType::Creature,
+            mana_cost,
+            power: Some(power),
+            toughness: Some(toughness),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct PlayerDeckContents {
+    pub player_id: PlayerId,
+    pub cards: Vec<CardWithCost>,
+}
+
+impl PlayerDeckContents {
+    #[must_use]
+    pub const fn new(player_id: PlayerId, cards: Vec<CardWithCost>) -> Self {
+        Self { player_id, cards }
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct StartGameCommand {
     pub game_id: GameId,
     pub players: Vec<PlayerDeck>,
@@ -26,19 +77,6 @@ impl StartGameCommand {
     #[must_use]
     pub const fn new(game_id: GameId, players: Vec<PlayerDeck>) -> Self {
         Self { game_id, players }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct PlayerDeckContents {
-    pub player_id: PlayerId,
-    pub cards: Vec<(CardDefinitionId, CardType, u32)>,
-}
-
-impl PlayerDeckContents {
-    #[must_use]
-    pub const fn new(player_id: PlayerId, cards: Vec<(CardDefinitionId, CardType, u32)>) -> Self {
-        Self { player_id, cards }
     }
 }
 
@@ -137,6 +175,19 @@ pub struct CastSpellCommand {
 }
 
 impl CastSpellCommand {
+    #[must_use]
+    pub const fn new(player_id: PlayerId, card_id: CardInstanceId) -> Self {
+        Self { player_id, card_id }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct PlayCreatureCommand {
+    pub player_id: PlayerId,
+    pub card_id: CardInstanceId,
+}
+
+impl PlayCreatureCommand {
     #[must_use]
     pub const fn new(player_id: PlayerId, card_id: CardInstanceId) -> Self {
         Self { player_id, card_id }

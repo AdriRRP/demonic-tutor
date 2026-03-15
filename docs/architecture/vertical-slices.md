@@ -83,6 +83,7 @@ Example:
 ```
 StartGameCommand
 PlayLandCommand
+PlayCreatureCommand
 CastSpellCommand
 
 ```
@@ -104,6 +105,7 @@ Examples:
 ```
 GameStarted
 LandPlayed
+CreatureEnteredBattlefield
 CardDrawn
 SpellCast
 
@@ -261,6 +263,8 @@ AdvanceTurn
 TapLand
 ↓
 CastSpell
+↓
+PlayCreature
 
 ```
 
@@ -274,9 +278,9 @@ The system should evolve through **small, observable domain capabilities**.
 
 Future slices may include:
 
-- creature modeling
-- combat system
+- creature combat and damage
 - declare attackers step
+- declare blockers step
 - stack resolution
 - triggered abilities
 

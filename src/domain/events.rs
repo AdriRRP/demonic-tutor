@@ -14,6 +14,7 @@ pub enum DomainEvent {
     LandTapped(LandTapped),
     ManaAdded(ManaAdded),
     SpellCast(SpellCast),
+    CreatureEnteredBattlefield(CreatureEnteredBattlefield),
 }
 
 impl DomainEvent {
@@ -119,6 +120,15 @@ impl DomainEvent {
     #[must_use]
     pub const fn as_spell_cast(&self) -> Option<&SpellCast> {
         if let Self::SpellCast(e) = self {
+            Some(e)
+        } else {
+            None
+        }
+    }
+
+    #[must_use]
+    pub const fn as_creature_entered_battlefield(&self) -> Option<&CreatureEnteredBattlefield> {
+        if let Self::CreatureEnteredBattlefield(e) = self {
             Some(e)
         } else {
             None
@@ -343,6 +353,34 @@ impl SpellCast {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct CreatureEnteredBattlefield {
+    pub game_id: GameId,
+    pub player_id: PlayerId,
+    pub card_id: CardInstanceId,
+    pub power: u32,
+    pub toughness: u32,
+}
+
+impl CreatureEnteredBattlefield {
+    #[must_use]
+    pub const fn new(
+        game_id: GameId,
+        player_id: PlayerId,
+        card_id: CardInstanceId,
+        power: u32,
+        toughness: u32,
+    ) -> Self {
+        Self {
+            game_id,
+            player_id,
+            card_id,
+            power,
+            toughness,
+        }
+    }
+}
+
 impl From<GameStarted> for DomainEvent {
     fn from(event: GameStarted) -> Self {
         Self::GameStarted(event)
@@ -412,5 +450,11 @@ impl From<ManaAdded> for DomainEvent {
 impl From<SpellCast> for DomainEvent {
     fn from(event: SpellCast) -> Self {
         Self::SpellCast(event)
+    }
+}
+
+impl From<CreatureEnteredBattlefield> for DomainEvent {
+    fn from(event: CreatureEnteredBattlefield) -> Self {
+        Self::CreatureEnteredBattlefield(event)
     }
 }
