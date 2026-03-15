@@ -1,14 +1,5 @@
 # Slice 13 — Cast Non-Land Spells
 
-## Rules Reference
-
-- 601.1
-- 601.2
-
-## Rules Support Statement
-
-This slice implements a simplified spell-casting model in which non-land cards are moved from hand into play according to the current game model. The full casting process (targets, modes, stack, timing, alternative costs, and resolution rules) is not implemented.
-
 ## Goal
 
 Enable casting non-land spells (creatures, instants, sorceries, etc.) from hand to battlefield.
@@ -60,6 +51,15 @@ Emitted when a spell is cast successfully.
 - `CardType` enum expanded with specific types
 - `Game::cast_spell()` method handles spell casting
 - New error: `CannotCastLand` - when trying to cast a land as a spell
+
+## Rules Reference
+
+- 601.1
+- 601.2
+
+## Rules Support Statement
+
+This slice implements a simplified spell-casting model in which non-land cards are moved from hand into play according to the current game model. The full casting process (targets, modes, stack, timing, alternative costs, and resolution rules) is not implemented.
 
 ## Tests
 

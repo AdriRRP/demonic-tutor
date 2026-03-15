@@ -1,14 +1,5 @@
 # Slice 8 — Player Life
 
-## Rules Reference
-
-- 118.1
-- 118.2
-
-## Rules Support Statement
-
-This slice implements player life tracking per rules 118.1 and 118.2. This supports basic life total management. Damage, life gain, and life loss effects are not implemented.
-
 ## Goal
 
 Add player life tracking to support future damage and win conditions.
@@ -55,6 +46,15 @@ Emitted whenever a player's life total changes.
 - Default starting life: 20
 - `Game::set_life()` method handles life modification
 - Life uses `saturating_add_signed` to prevent underflow
+
+## Rules Reference
+
+- 118.1
+- 118.2
+
+## Rules Support Statement
+
+This slice implements player life tracking per rules 118.1 and 118.2. This supports basic life total management. Damage, life gain, and life loss effects are not implemented.
 
 ## Tests
 

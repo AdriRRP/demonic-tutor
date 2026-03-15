@@ -81,7 +81,6 @@ The goal is traceability between the domain model and the rule system.
 
 - 118.1
 - 118.2
-- 118.3
 
 ---
 

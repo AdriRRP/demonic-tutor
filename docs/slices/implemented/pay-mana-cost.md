@@ -1,14 +1,5 @@
 # Slice 14 — Pay Mana Cost
 
-## Rules Reference
-
-- 202.1
-- 202.1a
-
-## Rules Support Statement
-
-This slice implements mana cost payment per rules 202.1 and 202.1a. This implements basic mana cost deduction. Color mana, alternative costs, and cost adjustments are not implemented.
-
 ## Goal
 
 Require mana payment for casting spells.
@@ -38,6 +29,15 @@ pub struct InsufficientMana {
 ```
 
 Returned when player tries to cast a spell without enough mana.
+
+## Rules Reference
+
+- 202.1
+- 202.1a
+
+## Rules Support Statement
+
+This slice implements mana cost payment per rules 202.1 and 202.1a. This implements basic mana cost deduction. Color mana, alternative costs, and cost adjustments are not implemented.
 
 ## Tests
 

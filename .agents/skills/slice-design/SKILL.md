@@ -183,7 +183,7 @@ Check whether the slice changes:
 - context map
 - current-state documentation
 
-### Step 5 — Identify relevant Magic Comprehensive Rules
+### Step 6 — Identify relevant Magic Comprehensive Rules
 
 Every gameplay slice must reference the relevant sections of the Magic Comprehensive Rules.
 
