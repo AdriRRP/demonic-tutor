@@ -153,7 +153,7 @@ Responsibilities:
 The current model includes:
 
 - power and toughness for creature cards
-- summoning sickness tracking for creatures
+- summoning sickness tracking and automatic removal at turn start
 
 The current model intentionally omits:
 

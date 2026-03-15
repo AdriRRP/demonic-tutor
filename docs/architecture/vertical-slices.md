@@ -265,6 +265,8 @@ TapLand
 CastSpell
 ↓
 PlayCreature
+↓
+RemoveSummoningSickness
 
 ```
 

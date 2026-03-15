@@ -83,6 +83,10 @@ impl Battlefield {
         &self.0
     }
 
+    pub const fn cards_mut(&mut self) -> &mut Vec<CardInstance> {
+        &mut self.0
+    }
+
     pub fn card_mut(&mut self, card_id: &CardInstanceId) -> Option<&mut CardInstance> {
         self.0.iter_mut().find(|c| c.id() == card_id)
     }

@@ -491,11 +491,17 @@ impl Game {
                     message: "active player should exist in player list".to_string(),
                 })?;
             let next_idx = (current_idx + 1) % self.players.len();
-            self.active_player = self.players[next_idx].id().clone();
 
             for player in &mut self.players {
                 *player.lands_played_this_turn_mut() = 0;
+                for card in player.battlefield_mut().cards_mut() {
+                    if card.card_type().is_creature() {
+                        card.remove_summoning_sickness();
+                    }
+                }
             }
+
+            self.active_player = self.players[next_idx].id().clone();
 
             let from = self.turn_number;
             self.turn_number += 1;

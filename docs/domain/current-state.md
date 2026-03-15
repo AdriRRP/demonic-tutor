@@ -44,7 +44,7 @@ The domain currently includes:
 - mana production from lands
 - spell casting with mana cost
 - creature cards with power and toughness
-- summoning sickness for creatures
+- summoning sickness for creatures (removed at turn start)
 - turn and phase progression
 
 The system intentionally excludes complex gameplay mechanics at this stage.
