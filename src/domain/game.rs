@@ -18,7 +18,6 @@ use crate::domain::{
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Phase {
     Setup,
-    Beginning,
     Main,
     Ending,
 }
@@ -485,7 +484,6 @@ impl Game {
         let (to_phase, change_player) = match &self.phase {
             Phase::Setup | Phase::Ending => (Phase::Main, true),
             Phase::Main => (Phase::Ending, false),
-            Phase::Beginning => (Phase::Main, false),
         };
 
         if change_player {
@@ -819,7 +817,7 @@ impl Game {
             }));
         }
 
-        if !matches!(self.phase, Phase::Beginning) {
+        if !matches!(self.phase, Phase::Main) {
             return Err(DomainError::Phase(PhaseError::InvalidForCombat));
         }
 
@@ -900,7 +898,7 @@ impl Game {
             }));
         }
 
-        if !matches!(self.phase, Phase::Beginning) {
+        if !matches!(self.phase, Phase::Main) {
             return Err(DomainError::Phase(PhaseError::InvalidForCombat));
         }
 
