@@ -1,14 +1,15 @@
 use crate::domain::{
     cards::{CardInstance, CardType},
     commands::{
-        AdvanceTurnCommand, CastSpellCommand, DealOpeningHandsCommand, DrawCardCommand,
-        MulliganCommand, PlayCreatureCommand, PlayLandCommand, StartGameCommand, TapLandCommand,
+        AdvanceTurnCommand, CastSpellCommand, DealOpeningHandsCommand, DeclareAttackersCommand,
+        DrawCardCommand, MulliganCommand, PlayCreatureCommand, PlayLandCommand, StartGameCommand,
+        TapLandCommand,
     },
     errors::DomainError,
     events::{
-        CardDrawn, CreatureEnteredBattlefield, GameStarted, LandPlayed, LandTapped, LifeChanged,
-        ManaAdded, MulliganTaken, OpeningHandDealt, PhaseChanged, SpellCast, TurnAdvanced,
-        TurnNumberChanged,
+        AttackersDeclared, CardDrawn, CreatureEnteredBattlefield, GameStarted, LandPlayed,
+        LandTapped, LifeChanged, ManaAdded, MulliganTaken, OpeningHandDealt, PhaseChanged,
+        SpellCast, TurnAdvanced, TurnNumberChanged,
     },
     ids::{CardInstanceId, DeckId, GameId, PlayerId},
     zones::{Battlefield, Hand, Library},
@@ -787,6 +788,86 @@ impl Game {
             card_id,
             power,
             toughness,
+        ))
+    }
+
+    /// Declares attacking creatures for the active player.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if:
+    /// - The player is not the active player
+    /// - The current phase is not Beginning (combat phase)
+    /// - Any attacker is not a creature
+    /// - Any attacker is already tapped
+    /// - Any attacker has summoning sickness
+    /// - Any attacker is not on the battlefield
+    /// - Any attacker is not controlled by the active player
+    pub fn declare_attackers(
+        &mut self,
+        cmd: DeclareAttackersCommand,
+    ) -> Result<AttackersDeclared, DomainError> {
+        if self.active_player != cmd.player_id {
+            return Err(DomainError::NotYourTurn {
+                current_player: self.active_player.clone(),
+                requested_player: cmd.player_id,
+            });
+        }
+
+        if !matches!(self.phase, Phase::Beginning) {
+            return Err(DomainError::InvalidPhaseForCombat);
+        }
+
+        let player_idx = self
+            .players
+            .iter()
+            .position(|p| p.id() == &cmd.player_id)
+            .ok_or_else(|| DomainError::PlayerNotFound(cmd.player_id.clone()))?;
+
+        let player = &mut self.players[player_idx];
+        let battlefield = player.battlefield_mut();
+
+        let mut valid_attackers: Vec<CardInstanceId> = Vec::new();
+
+        for attacker_id in &cmd.attacker_ids {
+            let card = battlefield
+                .cards_mut()
+                .iter_mut()
+                .find(|c| c.id() == attacker_id)
+                .ok_or_else(|| DomainError::CardNotOnBattlefield {
+                    player_id: cmd.player_id.clone(),
+                    card_id: attacker_id.clone(),
+                })?;
+
+            if !matches!(card.card_type(), CardType::Creature) {
+                return Err(DomainError::NotACreatureForAttack {
+                    card_id: attacker_id.clone(),
+                });
+            }
+
+            if card.is_tapped() {
+                return Err(DomainError::CreatureAlreadyTapped {
+                    player_id: cmd.player_id.clone(),
+                    card_id: attacker_id.clone(),
+                });
+            }
+
+            if card.has_summoning_sickness() {
+                return Err(DomainError::CreatureHasSummoningSickness {
+                    player_id: cmd.player_id.clone(),
+                    card_id: attacker_id.clone(),
+                });
+            }
+
+            card.set_attacking(true);
+            card.tap();
+            valid_attackers.push(attacker_id.clone());
+        }
+
+        Ok(AttackersDeclared::new(
+            self.id.clone(),
+            cmd.player_id,
+            valid_attackers,
         ))
     }
 }

@@ -61,6 +61,7 @@ pub struct CardInstance {
     power: Option<u32>,
     toughness: Option<u32>,
     has_summoning_sickness: bool,
+    is_attacking: bool,
 }
 
 impl CardInstance {
@@ -80,6 +81,7 @@ impl CardInstance {
             power: None,
             toughness: None,
             has_summoning_sickness: false,
+            is_attacking: false,
         }
     }
 
@@ -100,6 +102,7 @@ impl CardInstance {
             power: Some(power),
             toughness: Some(toughness),
             has_summoning_sickness: true,
+            is_attacking: false,
         }
     }
 
@@ -143,6 +146,11 @@ impl CardInstance {
         self.has_summoning_sickness
     }
 
+    #[must_use]
+    pub const fn is_attacking(&self) -> bool {
+        self.is_attacking
+    }
+
     pub const fn tap(&mut self) {
         self.tapped = true;
     }
@@ -153,5 +161,9 @@ impl CardInstance {
 
     pub const fn remove_summoning_sickness(&mut self) {
         self.has_summoning_sickness = false;
+    }
+
+    pub const fn set_attacking(&mut self, attacking: bool) {
+        self.is_attacking = attacking;
     }
 }

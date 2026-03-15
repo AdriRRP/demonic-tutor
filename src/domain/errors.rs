@@ -62,12 +62,29 @@ pub enum DomainError {
         player_id: PlayerId,
     },
     InvalidPhaseForMulligan,
+    InvalidPhaseForCombat,
+    CreatureAlreadyTapped {
+        player_id: PlayerId,
+        card_id: CardInstanceId,
+    },
+    CreatureHasSummoningSickness {
+        player_id: PlayerId,
+        card_id: CardInstanceId,
+    },
+    CreatureNotControlledByAttacker {
+        player_id: PlayerId,
+        card_id: CardInstanceId,
+    },
+    NotACreatureForAttack {
+        card_id: CardInstanceId,
+    },
     InternalInvariantViolation {
         message: String,
     },
 }
 
 impl std::fmt::Display for DomainError {
+    #[allow(clippy::too_many_lines)]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::NotEnoughPlayers { actual } => {
@@ -151,6 +168,33 @@ impl std::fmt::Display for DomainError {
             }
             Self::InvalidPhaseForMulligan => {
                 write!(f, "cannot perform mulligan in current phase")
+            }
+            Self::InvalidPhaseForCombat => {
+                write!(f, "cannot declare attackers in current phase")
+            }
+            Self::CreatureAlreadyTapped { player_id, card_id } => {
+                write!(
+                    f,
+                    "creature {card_id} is already tapped for player {player_id}"
+                )
+            }
+            Self::CreatureHasSummoningSickness {
+                player_id: _,
+                card_id,
+            } => {
+                write!(
+                    f,
+                    "creature {card_id} has summoning sickness and cannot attack"
+                )
+            }
+            Self::CreatureNotControlledByAttacker { player_id, card_id } => {
+                write!(
+                    f,
+                    "creature {card_id} is not controlled by player {player_id}"
+                )
+            }
+            Self::NotACreatureForAttack { card_id } => {
+                write!(f, "card {card_id} is not a creature and cannot attack")
             }
             Self::InternalInvariantViolation { message } => {
                 write!(f, "internal invariant violated: {message}")

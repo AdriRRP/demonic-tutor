@@ -193,3 +193,19 @@ impl PlayCreatureCommand {
         Self { player_id, card_id }
     }
 }
+
+#[derive(Debug, Clone)]
+pub struct DeclareAttackersCommand {
+    pub player_id: PlayerId,
+    pub attacker_ids: Vec<CardInstanceId>,
+}
+
+impl DeclareAttackersCommand {
+    #[must_use]
+    pub const fn new(player_id: PlayerId, attacker_ids: Vec<CardInstanceId>) -> Self {
+        Self {
+            player_id,
+            attacker_ids,
+        }
+    }
+}

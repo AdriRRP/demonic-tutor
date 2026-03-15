@@ -143,6 +143,7 @@ Fields include:
 - power (for creatures)
 - toughness (for creatures)
 - has_summoning_sickness (for creatures)
+- is_attacking (for creatures)
 
 Responsibilities:
 
@@ -154,6 +155,7 @@ The current model includes:
 
 - power and toughness for creature cards
 - summoning sickness tracking and automatic removal at turn start
+- declare attackers in combat phase
 
 The current model intentionally omits:
 

@@ -84,6 +84,7 @@ Example:
 StartGameCommand
 PlayLandCommand
 PlayCreatureCommand
+DeclareAttackersCommand
 CastSpellCommand
 
 ```
@@ -106,6 +107,7 @@ Examples:
 GameStarted
 LandPlayed
 CreatureEnteredBattlefield
+AttackersDeclared
 CardDrawn
 SpellCast
 
@@ -267,6 +269,8 @@ CastSpell
 PlayCreature
 ↓
 RemoveSummoningSickness
+↓
+DeclareAttackers
 
 ```
 

@@ -83,6 +83,12 @@ impl GameLogProjection {
                     e.player_id, e.card_id, e.power, e.toughness
                 )
             }
+            DomainEvent::AttackersDeclared(e) => {
+                format!(
+                    "Player {} declared {:?} as attackers",
+                    e.player_id, e.attackers
+                )
+            }
         };
 
         if let Ok(mut logs) = self.logs.write() {
