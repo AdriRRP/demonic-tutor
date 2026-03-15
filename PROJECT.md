@@ -2,115 +2,145 @@
 
 ## Vision
 
-DemonicTutor is a lightweight client-side application for testing, observing and analyzing Magic: The Gathering decks through real play sessions, event logging and live statistics.
+DemonicTutor is a lightweight client-side application for observing and analyzing Magic: The Gathering decks through real play sessions.
 
-It is both:
-- a useful deck playtesting tool
-- and a technical learning vehicle for Rust, WebAssembly, DDD and event-driven design
+The system records gameplay as explicit domain events, allowing sessions to be replayed, inspected and analyzed.
 
-## Product identity
+It serves two purposes:
+
+- a practical **deck playtesting laboratory**
+- a **technical learning project** for Rust, WebAssembly, Domain-Driven Design and event-driven architecture
+
+---
+
+# Product Identity
 
 DemonicTutor should feel like:
-- a laboratory for decks
-- a rules-aware playtesting environment
-- an observable gameplay engine
-- a replayable and analyzable system
 
-It should not feel like:
-- a bloated generic card platform
+- a **laboratory for decks**
+- a **rules-aware playtesting environment**
+- an **observable gameplay engine**
+- a **replayable and analyzable system**
+
+It should **not** feel like:
+
+- a generic card platform
 - a backend-heavy service
-- a monolithic simulator trying to solve all of Magic at once
+- a monolithic simulator attempting to implement all of Magic
 
-## Primary goals
+The system favors **precision, observability and architectural clarity** over feature breadth.
 
-The project aims to build a system that can:
-1. represent game sessions with explicit domain state
-2. process player intent through commands
-3. produce domain events as facts
-4. persist and replay event histories
-5. derive live and post-game statistics from actual play
-6. remain precise, fast and architecturally clean
+---
 
-## Technical goals
+# Core Capabilities
 
-The project is also intended to be a serious practice ground for:
-- Rust
-- WebAssembly
-- tactical DDD
+The system is designed to support the following capabilities:
+
+- representing game sessions through explicit domain state
+- processing player intent through commands
+- producing domain events as factual history
+- replaying sessions from event history
+- deriving gameplay statistics from real play
+
+These capabilities enable both **live analysis during a game** and **post-game inspection**.
+
+---
+
+# Engineering Goals
+
+DemonicTutor is also intended as a serious engineering practice project.
+
+It exercises:
+
+- Rust for domain modeling
+- WebAssembly for client-side execution
+- tactical Domain-Driven Design
 - event-driven application design
-- BDD for observable behaviors
-- gradual agent-assisted development
+- behavior-driven testing for observable gameplay
+- controlled use of agent-assisted development
 
-## Product goals
+---
 
-The product should eventually support:
-- deck playtesting through real game flows
-- event logging of relevant gameplay facts
-- replayability from persisted history
-- live statistics during a game
-- post-game analysis and comparison
-- future extension toward richer rules and multiplayer support
+# Product Philosophy
 
-## Product philosophy
+The project prioritizes:
 
-DemonicTutor must prioritize:
-- correctness over breadth
-- clarity over cleverness
-- explicit modeling over hidden behavior
-- incremental delivery over speculative architecture
+- **correctness over breadth**
+- **clarity over cleverness**
+- **explicit modeling over hidden behavior**
+- **incremental delivery over speculative architecture**
 
-## Initial scope
+The system should grow through small, coherent vertical slices.
 
-The initial milestone is intentionally narrow.
+---
 
-The repository should first provide:
-- a clear product definition
-- explicit constraints
+# Initial Scope
+
+The initial stage of the project intentionally focuses on foundations.
+
+The repository should first establish:
+
+- a clear project vision
+- explicit project constraints
 - a minimal ubiquitous language
-- a sound starting point for domain modeling
+- a stable starting point for domain modeling
 
-Later milestones will introduce:
+Subsequent milestones introduce:
+
 - bounded contexts
 - aggregates
-- commands and events
+- commands and domain events
 - an initial vertical slice such as `StartGame`
-- in-memory event store and event bus
+- an in-memory event store and event bus
 - basic projections
 - initial BDD scenarios
 
-## Non-goals for the initial stage
+---
 
-At the beginning, DemonicTutor is not trying to be:
-- a complete implementation of the full Magic Comprehensive Rules
-- a generic card database manager
+# Non-Goals (Initial Stage)
+
+In its early stages, DemonicTutor is **not intended to be**:
+
+- a complete implementation of the Magic Comprehensive Rules
+- a full card database system
 - a collection manager
 - a marketplace
 - a social platform
-- a fully autonomous AI-designed system
+- a fully autonomous AI-driven system
 
-## Modeling direction
+The focus remains on **clear domain modeling and observable gameplay behavior**.
 
-The game domain will be approached incrementally.
+---
 
-Only the rule subset required by the current milestone should be modeled.
+# Modeling Direction
 
-Official Magic rules may inform the model, but the implementation should not claim full rules coverage unless explicitly supported.
+The gameplay model evolves incrementally.
 
-## Long-term direction
+Only the rule subset required by the current milestone should be implemented.
 
-Once the core is solid, future iterations may include:
+Official Magic rules inform the model, but the system must **never imply full rules coverage unless it is explicitly supported**.
+
+---
+
+# Long-Term Direction
+
+Once the core architecture is stable, future iterations may introduce:
+
 - richer phase and priority handling
 - stack-aware interactions
-- replay browser
-- deck comparison tools
+- replay browsing tools
+- deck comparison workflows
 - multiplayer synchronization
-- advanced analytics
-- AI-assisted analysis of logs and replays
+- deeper gameplay analytics
+- AI-assisted analysis of gameplay logs
 
-## Definition of success for phase 0
+---
 
-Phase 0 is successful when the project has:
-- a stable name
+# Definition of Success — Phase 0
+
+Phase 0 is considered successful when the project provides:
+
+- a stable project identity
 - a clear written vision
-- explicit constraints
-- a coherent initial language for the domain
+- explicit architectural constraints
+- a coherent initial ubiquitous language

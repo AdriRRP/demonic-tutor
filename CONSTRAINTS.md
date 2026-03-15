@@ -1,64 +1,113 @@
 # Constraints — DemonicTutor
 
-## Product constraints
+This document defines the non-negotiable constraints that shape the project.
 
-- The application must be client-side first.
-- The application must be deployable as a static web app.
-- The system must favor low operational complexity.
-- The system must prioritize speed and precision over feature breadth.
-- The user experience may evolve gradually, but the core model must stay coherent.
+Constraints exist to preserve:
 
-## Domain constraints
+- domain integrity
+- architectural coherence
+- operational simplicity
+- long-term maintainability
 
-- The project must not attempt to model all Magic rules from day one.
-- Only the rules required by the current vertical slice may be modeled.
-- Domain behavior must be explicit and traceable.
-- Unsupported rules must never be implied as implemented.
-- Card-specific complexity should be postponed unless truly needed.
+They are stronger than guidelines and should only change through explicit architectural decisions.
 
-## Modeling constraints
+---
 
-- The ubiquitous language must remain consistent across code and documentation.
-- The domain model must be driven by explicit concepts, not UI convenience.
-- Rules interpretations and modeling choices must be distinguished clearly.
+# Product Constraints
+
+The application is designed as a lightweight, client-first system.
+
+- The application must work primarily as a **client-side application**.
+- The application must remain **deployable as a static web application**.
+- Operational complexity must remain **minimal by design**.
+- The system prioritizes **speed, precision, and clarity** over feature breadth.
+- User experience may evolve gradually, but **the domain model must remain coherent**.
+
+---
+
+# Domain Constraints
+
+The project models a **subset of Magic gameplay**, expanded incrementally.
+
+- The system must **not attempt to model the full Magic ruleset from the start**.
+- Only the rules required by the **current vertical slice** may be implemented.
+- Domain behavior must be **explicit, observable, and traceable**.
+- Unsupported rules must **never be implied as implemented**.
+- Card-specific complexity should be postponed unless it is **required for a slice**.
+
+---
+
+# Modeling Constraints
+
+The domain model must remain **clear, explicit, and language-driven**.
+
+- The **ubiquitous language** must remain consistent across code and documentation.
+- The domain model must be driven by **explicit domain concepts**, not UI convenience.
+- Modeling choices must clearly distinguish **rules interpretation** from **implementation simplification**.
 - Observable gameplay behavior has priority over speculative abstractions.
-- The project must avoid over-modeling early edge cases.
+- The project must avoid **premature modeling of rare edge cases**.
 
-## Architectural constraints
+---
 
-- No business logic may live in the UI layer.
-- The domain core must not depend on storage, network or rendering concerns.
-- The domain core must remain deterministic.
-- Event publication must not happen inside the aggregate itself.
-- Analytics concerns must remain separate from gameplay rules.
-- Concurrency is an optimization, not a prerequisite for correctness.
-- The system must work correctly without parallelism.
+# Architectural Constraints
 
-## Technology constraints
+The architecture enforces strict separation of concerns.
 
-- Rust is the main implementation language for the core.
-- WebAssembly is the primary target for client-side execution of the core.
-- The architecture must remain compatible with browser execution constraints.
-- The design must not assume multithreaded browser execution by default.
-- Infrastructure choices must remain simple until proven otherwise.
+- No business logic may live in the **UI layer**.
+- The **domain core must not depend on infrastructure** (storage, network, rendering).
+- The domain model must remain **deterministic**.
+- **Aggregates must not publish events directly**.
+- Event publication is handled outside the aggregate.
+- Analytics and telemetry must remain **separate from gameplay rules**.
+- Concurrency is an **optimization**, not a requirement for correctness.
+- The system must function correctly **without parallel execution**.
 
-## Testing constraints
+---
 
-- Important domain behavior must be testable in isolation.
-- Observable user-visible flows should later be covered with BDD scenarios.
-- The project should prefer narrow vertical slices with tests over large unverified scaffolding.
+# Technology Constraints
 
-## Development constraints
+Technology choices support the client-first architecture.
 
-- Large decisions should be written down explicitly.
-- The repository should evolve incrementally.
-- Small coherent changes are preferred over broad speculative changes.
-- New concepts should only be introduced when they solve a real modeling problem.
-- The project must remain understandable without relying on agent memory.
+- **Rust** is the main language for the domain core.
+- The core must be able to compile to **WebAssembly**.
+- The design must remain compatible with **browser execution constraints**.
+- The system must not assume **multithreaded browser execution** by default.
+- Infrastructure choices should remain **simple until complexity is justified**.
 
-## Agent-related constraints
+---
 
-- Agents may assist development, but they are not a source of domain truth.
-- Agents must work from project documents and explicit instructions.
-- Agents must not silently redefine scope, architecture or rules support.
-- Agent outputs must be reviewable, constrained and incremental.
+# Testing Constraints
+
+Testing must validate observable domain behavior.
+
+- Important domain behavior must be **testable in isolation**.
+- Tests should validate **observable behavior**, not internal implementation details.
+- Vertical slices should include **focused tests before expanding scope**.
+- Overly broad scaffolding without verification should be avoided.
+
+---
+
+# Development Constraints
+
+The repository evolves through **small, coherent changes**.
+
+- Architectural decisions with lasting impact should be **recorded explicitly** (ADR).
+- The system should evolve through **incremental vertical slices**.
+- Small, reviewable changes are preferred over large speculative refactors.
+- New domain concepts should only appear when they **solve a real modeling problem**.
+- The repository must remain understandable **without relying on agent memory**.
+
+---
+
+# Agent Constraints
+
+Agents assist development but do not define project truth.
+
+- Agents are **contributors**, not authorities on domain behavior.
+- Agents must work from **canonical project documentation**.
+- Agents must not silently redefine **scope, architecture, or rules support**.
+- Agent outputs must remain **reviewable, constrained, and incremental**.
+
+---
+
+Changes to this document should normally require an ADR.

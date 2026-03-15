@@ -1,136 +1,152 @@
-# DemonicTutor Project Rules
+# AGENTS.md — DemonicTutor
 
-This repository contains the early design and implementation of DemonicTutor, a client-side Magic: The Gathering deck playtesting and analysis application.
+## Purpose
 
-## Canonical project documents
+This file is the entry point for agents working in the DemonicTutor repository.
 
-Always treat the following files as the primary source of truth for this repository:
+It defines:
 
-1. `PROJECT.md`
-2. `CONSTRAINTS.md`
-3. `DOMAIN_GLOSSARY.md`
-4. `docs/system-overview.md`
-5. `docs/context-map.md`
-6. `docs/vertical-slices.md`
-7. `docs/adr/*.md`
+- how agents enter the repository
+- how context should be loaded
+- how work should be routed to the correct documentation
 
-If a proposal conflicts with these files, these files win.
+This document is intentionally minimal.
 
-## Source of Truth Priority
+For full agent architecture see:
 
-When reasoning about the project, use this precedence:
+`docs/architecture/agent-architecture.md`
 
-1. **Rust code** (`src/`) — actual implementation
-2. **ADRs** (`docs/adr/*.md`) — architectural decisions
-3. **`docs/current-state.md`** — implementation snapshot
-4. **`DOMAIN_GLOSSARY.md`** — ubiquitous language
-5. **Other documentation** — context and rationale
+For operational working behavior see:
 
-This order prevents contradictions between documentation and code.
+`.agents/context/core-agent.md`
 
-## Project intent
+---
 
-DemonicTutor is:
+# Initial Context
 
-* client-side first
-* static-deployable
-* Rust-centered in the core
-* WebAssembly-oriented
-* DDD-guided
-* event-driven
-* incrementally developed
+When beginning work, agents must read:
 
-DemonicTutor is not:
+1. `CONSTRAINTS.md`
+2. `docs/architecture/agent-architecture.md`
+3. `.agents/context/core-agent.md`
 
-* a full implementation of all Magic rules from day one
-* a backend-heavy service
-* a generic card marketplace or collection app
-* an excuse for speculative over-engineering
+After this initial context, agents must load **only the documentation required for the task**.
 
-## Development philosophy
+Agents must **not scan the repository indiscriminately**.
 
-Work incrementally.
+Context should expand **incrementally and only when needed**.
 
-Prefer:
+---
 
-* narrow vertical slices
-* explicit naming
-* small coherent changes
-* draft-first proposals
-* reviewable outputs
+# Source of Truth
 
-Avoid:
+If multiple sources conflict, the following precedence applies:
 
-* broad speculative architecture
-* unsupported claims about rules coverage
-* unnecessary abstractions
-* introducing concepts that belong only to future slices
+1. **Code (`src/`)**
+2. **Accepted ADRs**
+3. **Canonical documentation**
+4. **Operational agent context**
+5. **Skills**
 
-## Domain rules
+Operational context and skills must **never override canonical documentation**.
 
-Do not claim support for Magic rules unless that support is explicitly modeled.
+---
 
-Only introduce the minimum rule subset required by the active vertical slice.
+# Canonical Documentation
 
-Treat official Magic rules as normative input when provided, but do not assume the implementation already covers them.
+The following documents define project truth.
 
-## Architecture rules
+### Project and constraints
 
-Do not place business logic in UI or infrastructure.
+- `PROJECT.md`
+- `CONSTRAINTS.md`
 
-Keep the domain core deterministic.
+### Domain model
 
-Aggregates emit events but do not publish them directly.
+- `docs/domain/DOMAIN_GLOSSARY.md`
+- `docs/domain/context-map.md`
+- `docs/domain/aggregate-game.md`
+- `docs/domain/current-state.md`
 
-Application services orchestrate loading, command execution, event persistence and event publication.
+### System architecture
 
-Analytics is observational and must not influence gameplay legality.
+- `docs/architecture/system-overview.md`
+- `docs/architecture/vertical-slices.md`
 
-## Working style for this repository
+### Architecture decisions
 
-When asked to perform a task:
+- `docs/architecture/adr/`
 
-1. restate the task in repository terms
-2. identify the smallest sensible deliverable
-3. produce a result that is directly reviewable
-4. avoid changing many files at once unless explicitly requested
+---
 
-When proposing code or structure:
+# Context Routing
 
-* respect the current active vertical slice
-* prefer the simplest valid design
-* list open questions only when they materially affect correctness
+Agents should load the **minimum documentation necessary** depending on the task.
 
-## Current bounded contexts
+### Domain reasoning
 
-* `play`
-* `deck`
-* `analytics`
+Load:
 
-## Implementation state
+- `docs/domain/DOMAIN_GLOSSARY.md`
+- `docs/domain/context-map.md`
+- `docs/domain/aggregate-game.md`
+- `docs/domain/current-state.md`
 
-See `docs/current-state.md` for the current slice implementation status.
+### System architecture work
 
-## Versioning and Changelog
+Load:
 
-This project follows Semantic Versioning (MAJOR.MINOR.PATCH).
+- `docs/architecture/system-overview.md`
+- `docs/architecture/vertical-slices.md`
+- relevant ADRs
 
-- **Version**: Check `Cargo.toml` for current version
-- **Changelog**: See `CHANGELOG.md` for release history
+### Slice implementation
 
-When making changes:
-1. Do NOT modify version in `Cargo.toml` unless explicitly requested
-2. Do NOT manually update `CHANGELOG.md` - it is generated at release time
-3. Focus on implementing the feature correctly; release process handles versioning
+Load:
 
-## Documentation synchronization rules
+- `docs/domain/current-state.md`
+- `docs/domain/aggregate-game.md`
+- `docs/architecture/vertical-slices.md`
+- relevant slice documentation in `docs/slices/`
 
-If a task changes bounded contexts or their relationships, update `docs/context-map.md`.
+### Development workflow
 
-This includes:
-- the textual description
-- the Mermaid diagram
+Load:
 
-Do not leave them out of sync.
+- `docs/development/development.md`
 
-Operational rules for agents are defined in `agents/core-agent.md`.
+These routing rules are examples.  
+Agents must always prefer **minimal context loading**.
+
+---
+
+# Domain Discipline
+
+Agents must:
+
+- model only rules required by the active slice
+- never imply unsupported Magic rules
+- preserve aggregate boundaries
+- maintain ubiquitous language consistency
+
+When domain truth is unclear, agents must defer to canonical documentation rather than infer behavior.
+
+---
+
+# Skills
+
+Skills encapsulate reusable workflows.
+
+They should be used when work is:
+
+- repeatable
+- narrow in scope
+- workflow driven
+
+Skills live under:
+
+`.agents/skills/`
+
+Prefer creating a **skill** rather than introducing a new agent.
+
+Skills must reference canonical documentation instead of duplicating domain knowledge.

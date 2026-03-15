@@ -1,0 +1,174 @@
+# Domain Glossary — DemonicTutor
+
+This glossary defines the ubiquitous language used in the DemonicTutor domain.
+
+Its purpose is to ensure that the same terms always mean the same concepts across:
+
+- domain model
+- documentation
+- code
+- discussions
+
+Only domain concepts are included here.
+
+---
+
+# Core Concepts
+
+## Game
+
+A running play session between players.
+
+A game maintains state such as players, zones, turn progression and legal actions.
+
+The game enforces gameplay invariants and produces domain events describing state transitions.
+
+---
+
+## Player
+
+A participant in a game.
+
+A player owns cards in various zones and may perform actions when allowed by the game state.
+
+---
+
+## Deck
+
+A predefined list of cards used to initialize a player's library.
+
+Decks are defined outside gameplay and are not modified by the game.
+
+---
+
+# Cards
+
+## CardDefinition
+
+The conceptual identity of a card.
+
+A card definition describes what a card *is* independently of any specific game.
+
+Examples include card name, type and characteristics.
+
+---
+
+## CardInstance
+
+A concrete copy of a card inside a specific game session.
+
+Multiple card instances may reference the same card definition.
+
+Instances track runtime state such as location or tapped status.
+
+---
+
+# Zones
+
+## Zone
+
+A logical area of the game capable of containing card instances.
+
+Zones define where cards exist during gameplay.
+
+---
+
+## Library
+
+A player's draw pile.
+
+Cards are drawn from the library into the hand.
+
+---
+
+## Hand
+
+A zone containing cards currently available to a player.
+
+Cards in hand may potentially be played or cast.
+
+---
+
+## Battlefield
+
+A zone containing permanents currently in play.
+
+Cards entering the battlefield become part of the active game state.
+
+---
+
+## Graveyard
+
+A zone containing cards that have been used, destroyed or discarded.
+
+---
+
+## Exile
+
+A zone containing cards removed from normal gameplay circulation.
+
+---
+
+## Stack
+
+A conceptual zone where spells and abilities wait to resolve.
+
+Full support for stack behavior may be introduced in future slices.
+
+---
+
+# Gameplay Structure
+
+## Turn
+
+A numbered unit of progression in the game.
+
+Turns structure the order in which players act.
+
+---
+
+## Phase
+
+A subdivision of a turn.
+
+Phases organize gameplay into distinct stages.
+
+---
+
+## Priority
+
+The right of a player to take an action at a specific moment.
+
+Priority determines which player may act and when.
+
+Full priority rules may be introduced incrementally.
+
+---
+
+# Actions and Facts
+
+## Command
+
+A request expressing intent to perform an action in the domain.
+
+Commands ask the model to attempt an operation.
+
+They may succeed or fail depending on the current state.
+
+---
+
+## Event
+
+A domain fact representing something that has already happened.
+
+Events describe state transitions and are immutable.
+
+---
+
+# Domain Integrity
+
+## Invariant
+
+A rule that must always hold for the domain model to remain valid.
+
+Invariants protect the correctness of the game state.
