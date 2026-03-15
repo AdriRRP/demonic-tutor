@@ -1,13 +1,15 @@
 use crate::application::{EventBus, EventStore};
 use crate::domain::{
     commands::{
-        AdvanceTurnCommand, CastSpellCommand, DealOpeningHandsCommand, DrawCardCommand,
-        MulliganCommand, PlayLandCommand, SetLifeCommand, StartGameCommand, TapLandCommand,
+        AdvanceTurnCommand, CastSpellCommand, DealOpeningHandsCommand, DeclareAttackersCommand,
+        DeclareBlockersCommand, DrawCardCommand, MulliganCommand, PlayCreatureCommand,
+        PlayLandCommand, SetLifeCommand, StartGameCommand, TapLandCommand,
     },
     errors::DomainError,
     events::{
-        CardDrawn, DomainEvent, GameStarted, LandPlayed, LandTapped, LifeChanged, ManaAdded,
-        MulliganTaken, OpeningHandDealt, SpellCast, TurnAdvanced,
+        AttackersDeclared, BlockersDeclared, CardDrawn, CreatureEnteredBattlefield, DomainEvent,
+        GameStarted, LandPlayed, LandTapped, LifeChanged, ManaAdded, MulliganTaken,
+        OpeningHandDealt, SpellCast, TurnAdvanced,
     },
     game::Game,
 };
@@ -239,6 +241,72 @@ where
         cmd: CastSpellCommand,
     ) -> Result<SpellCast, DomainError> {
         let event = game.cast_spell(cmd)?;
+        let domain_event: DomainEvent = event.clone().into();
+
+        let game_id = game.id().0.clone();
+        let _ = self
+            .event_store
+            .append(&game_id, std::slice::from_ref(&domain_event));
+        self.event_bus.publish(&domain_event);
+
+        Ok(event)
+    }
+
+    /// Plays a creature.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the command is invalid.
+    pub fn play_creature(
+        &self,
+        game: &mut Game,
+        cmd: PlayCreatureCommand,
+    ) -> Result<CreatureEnteredBattlefield, DomainError> {
+        let event = game.play_creature(cmd)?;
+        let domain_event: DomainEvent = event.clone().into();
+
+        let game_id = game.id().0.clone();
+        let _ = self
+            .event_store
+            .append(&game_id, std::slice::from_ref(&domain_event));
+        self.event_bus.publish(&domain_event);
+
+        Ok(event)
+    }
+
+    /// Declares attacking creatures.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the command is invalid.
+    pub fn declare_attackers(
+        &self,
+        game: &mut Game,
+        cmd: DeclareAttackersCommand,
+    ) -> Result<AttackersDeclared, DomainError> {
+        let event = game.declare_attackers(cmd)?;
+        let domain_event: DomainEvent = event.clone().into();
+
+        let game_id = game.id().0.clone();
+        let _ = self
+            .event_store
+            .append(&game_id, std::slice::from_ref(&domain_event));
+        self.event_bus.publish(&domain_event);
+
+        Ok(event)
+    }
+
+    /// Declares blocking creatures.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the command is invalid.
+    pub fn declare_blockers(
+        &self,
+        game: &mut Game,
+        cmd: DeclareBlockersCommand,
+    ) -> Result<BlockersDeclared, DomainError> {
+        let event = game.declare_blockers(cmd)?;
         let domain_event: DomainEvent = event.clone().into();
 
         let game_id = game.id().0.clone();

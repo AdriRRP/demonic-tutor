@@ -25,6 +25,7 @@ Implemented capabilities include:
 - playing creatures with power and toughness
 - summoning sickness for creatures (removed at turn start)
 - declaring attackers in combat phase
+- declaring blockers in combat phase
 - tracking player life totals
 - advancing turns
 - basic phase progression
@@ -66,8 +67,7 @@ Current constraints include:
 - only a subset of zones are modeled
 - no stack resolution
 - no priority system
-- no combat system
-- no creature combat or damage modeling
+- no combat damage or destruction
 - limited card behavior modeling
 
 These constraints are expected to evolve in future slices.
@@ -112,9 +112,8 @@ The next gameplay expansion requires choosing which domain capability to introdu
 
 Possible directions include:
 
-- combat system (declare attackers)
-- creature damage and destruction
-- declare blockers step
+- combat damage and destruction
+- creature destruction rules
 - stack and priority system
 
 The next slice should continue expanding gameplay behavior incrementally.

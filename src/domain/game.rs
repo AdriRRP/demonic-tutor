@@ -2,14 +2,14 @@ use crate::domain::{
     cards::{CardInstance, CardType},
     commands::{
         AdvanceTurnCommand, CastSpellCommand, DealOpeningHandsCommand, DeclareAttackersCommand,
-        DrawCardCommand, MulliganCommand, PlayCreatureCommand, PlayLandCommand, StartGameCommand,
-        TapLandCommand,
+        DeclareBlockersCommand, DrawCardCommand, MulliganCommand, PlayCreatureCommand,
+        PlayLandCommand, StartGameCommand, TapLandCommand,
     },
     errors::{CardError, DomainError, GameError, PhaseError, PlayerError},
     events::{
-        AttackersDeclared, CardDrawn, CreatureEnteredBattlefield, GameStarted, LandPlayed,
-        LandTapped, LifeChanged, ManaAdded, MulliganTaken, OpeningHandDealt, PhaseChanged,
-        SpellCast, TurnAdvanced, TurnNumberChanged,
+        AttackersDeclared, BlockersDeclared, CardDrawn, CreatureEnteredBattlefield, GameStarted,
+        LandPlayed, LandTapped, LifeChanged, ManaAdded, MulliganTaken, OpeningHandDealt,
+        PhaseChanged, SpellCast, TurnAdvanced, TurnNumberChanged,
     },
     ids::{CardInstanceId, DeckId, GameId, PlayerId},
     zones::{Battlefield, Hand, Library},
@@ -875,6 +875,83 @@ impl Game {
             self.id.clone(),
             cmd.player_id,
             valid_attackers,
+        ))
+    }
+
+    /// Declares blocking creatures for the defending player.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if:
+    /// - The player is the active player (only defending player can block)
+    /// - The current phase is not Beginning
+    /// - Any blocker is not a creature
+    /// - Any blocker is already tapped
+    /// - Any blocker is not on the battlefield
+    /// - Any blocker is not controlled by the defending player
+    pub fn declare_blockers(
+        &mut self,
+        cmd: DeclareBlockersCommand,
+    ) -> Result<BlockersDeclared, DomainError> {
+        if self.active_player == cmd.player_id {
+            return Err(DomainError::Phase(PhaseError::NotDefendingPlayer {
+                current: self.active_player.clone(),
+                requested: cmd.player_id,
+            }));
+        }
+
+        if !matches!(self.phase, Phase::Beginning) {
+            return Err(DomainError::Phase(PhaseError::InvalidForCombat));
+        }
+
+        let defending_player_idx = self
+            .players
+            .iter()
+            .position(|p| p.id() != &self.active_player)
+            .ok_or_else(|| {
+                DomainError::Game(GameError::InternalInvariantViolation(
+                    "defending player should exist".to_string(),
+                ))
+            })?;
+
+        let defender = &mut self.players[defending_player_idx];
+        let battlefield = defender.battlefield_mut();
+
+        let mut valid_blockers: Vec<(CardInstanceId, CardInstanceId)> = Vec::new();
+
+        for (blocker_id, _attacker_id) in &cmd.blocker_assignments {
+            let card = battlefield
+                .cards_mut()
+                .iter_mut()
+                .find(|c| c.id() == blocker_id)
+                .ok_or_else(|| {
+                    DomainError::Card(CardError::NotOnBattlefield {
+                        player: cmd.player_id.clone(),
+                        card: blocker_id.clone(),
+                    })
+                })?;
+
+            if !matches!(card.card_type(), CardType::Creature) {
+                return Err(DomainError::Card(CardError::NotACreature(
+                    blocker_id.clone(),
+                )));
+            }
+
+            if card.is_tapped() {
+                return Err(DomainError::Card(CardError::AlreadyTapped {
+                    player: cmd.player_id.clone(),
+                    card: blocker_id.clone(),
+                }));
+            }
+
+            card.set_blocking(true);
+            valid_blockers.push((blocker_id.clone(), _attacker_id.clone()));
+        }
+
+        Ok(BlockersDeclared::new(
+            self.id.clone(),
+            cmd.player_id,
+            valid_blockers,
         ))
     }
 }
