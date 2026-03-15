@@ -220,3 +220,21 @@ Avoid:
 * speculative architecture
 * premature abstraction
 * large refactors without clear benefit
+
+---
+
+# Code Organization
+
+When an `impl`, trait, or module grows to affect readability or maintainability, it should be split by **domain capability**, not by generic utilities.
+
+Prefer:
+
+- modules organized by domain behavior (e.g., `lands.rs`, `mana.rs`, `spells.rs`)
+- focused files with clear responsibilities
+
+Avoid:
+
+- monolithic files that mix unrelated behaviors
+- generic `helpers.rs`, `utils.rs`, or `common.rs` modules without domain context
+
+This applies especially to the `Game` aggregate: dividing its implementation into internal modules does not change the aggregate boundary.

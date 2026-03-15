@@ -133,6 +133,16 @@ When domain truth is unclear, agents must defer to canonical documentation rathe
 
 ---
 
+# Aggregate Implementation
+
+When the `Game` aggregate grows, new behaviors should preferably be added as **internal modules by domain capability**, not by expanding a monolithic file.
+
+Dividing the aggregate's implementation into modules does **not** create new aggregates. The aggregate boundary remains unchanged.
+
+Agents should not infer new aggregates just because code is split into modules.
+
+---
+
 # Skills
 
 Skills encapsulate reusable workflows.

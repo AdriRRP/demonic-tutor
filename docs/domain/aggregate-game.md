@@ -287,3 +287,37 @@ Avoid:
 - modeling unused zones or mechanics
 - leaking infrastructure concerns into the domain
 - speculative abstractions without active behavior
+
+---
+
+# Internal Implementation Guidance
+
+The `Game` aggregate remains a single aggregate root. Its internal implementation may be organized into modules by domain capability to improve readability and maintainability.
+
+This means:
+
+- `Game` continues to be the **aggregate root**
+- implementation may be divided into **internal modules** by behavior
+- dividing code into modules does **not create new aggregates**
+- modularization should follow **domain capabilities**, not generic utilities
+
+Example structure (guideline, not requirement):
+
+```
+src/domain/game/
+├── mod.rs
+├── aggregate.rs    # main impl block
+├── state.rs        # state management
+├── phases.rs       # phase logic
+├── start_game.rs   # game initialization
+├── opening_hands.rs
+├── mulligan.rs
+├── draw.rs
+├── lands.rs
+├── mana.rs
+├── spells.rs
+├── turns.rs
+└── life.rs
+```
+
+This organization keeps the aggregate cohesive while avoiding monolithic files.

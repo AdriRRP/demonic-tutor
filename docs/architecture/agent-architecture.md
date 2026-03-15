@@ -71,6 +71,8 @@ Agents must respect:
 
 Agents assist implementation but do not redefine the domain.
 
+**Note on modularization:** Internal code organization may evolve independently from domain boundaries. The aggregate boundary defines domain responsibility, while file/module boundaries are implementation details. Dividing an aggregate's implementation into internal modules does not create new aggregates.
+
 ---
 
 ## Canonical Documentation

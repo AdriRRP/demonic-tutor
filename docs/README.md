@@ -60,6 +60,7 @@ These documents describe **how the system is structured**.
 | `system-overview.md` | High-level architecture of the system |
 | `vertical-slices.md` | Strategy for incremental feature evolution |
 | `agent-architecture.md` | Architecture of the agent system |
+| `game-aggregate-structure.md` | Internal organization of the `Game` aggregate |
 | `slice-template.md` | Canonical structure for slice documentation |
 | `adr-template.md` | Template for architecture decisions |
 | `adr/` | Accepted architecture decision records |
