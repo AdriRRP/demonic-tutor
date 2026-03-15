@@ -10,7 +10,6 @@ Add proper turn phase structure to enable future game actions.
 ```rust
 pub enum Phase {
     Setup,    // Initial game setup
-    Beginning, // Turn beginning (draw, untap - future)
     Main,     // Main phase - can play lands and spells
     Ending,   // End of turn cleanup
 }
@@ -29,7 +28,7 @@ pub enum Phase {
 
 ### Phase Validation
 - PlayLand: requires `Main` phase
-- DrawCard: allowed in `Main`, `Beginning`, or `Setup` phases
+- DrawCard: allowed in `Main` or `Setup` phases
 
 ### Events
 - `PhaseChanged { game_id, from_phase, to_phase }`
