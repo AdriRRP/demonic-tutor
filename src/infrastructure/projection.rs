@@ -89,6 +89,12 @@ impl GameLogProjection {
                     e.player_id, e.attackers
                 )
             }
+            DomainEvent::BlockersDeclared(e) => {
+                format!(
+                    "Player {} declared {:?} as blockers",
+                    e.player_id, e.assignments
+                )
+            }
         };
 
         if let Ok(mut logs) = self.logs.write() {

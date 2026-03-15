@@ -1,9 +1,9 @@
 #![allow(clippy::unwrap_used)]
 
 use demonictutor::{
-    AdvanceTurnCommand, CardDefinitionId, CardInstanceId, CardType, CardWithCost,
-    DealOpeningHandsCommand, DeckId, DomainError, GameId, GameService, InMemoryEventBus,
-    InMemoryEventStore, PlayLandCommand, PlayerDeck, PlayerDeckContents, PlayerId,
+    AdvanceTurnCommand, CardDefinitionId, CardError, CardInstanceId, CardType, CardWithCost,
+    DealOpeningHandsCommand, DeckId, DomainError, GameError, GameId, GameService, InMemoryEventBus,
+    InMemoryEventStore, PhaseError, PlayLandCommand, PlayerDeck, PlayerDeckContents, PlayerId,
     StartGameCommand,
 };
 
@@ -108,7 +108,10 @@ fn play_land_fails_when_card_not_in_hand() {
     );
     let result = service.play_land(&mut game, cmd);
 
-    assert!(matches!(result, Err(DomainError::CardNotInHand { .. })));
+    assert!(matches!(
+        result,
+        Err(DomainError::Card(CardError::NotInHand { .. }))
+    ));
 }
 
 #[test]
@@ -122,7 +125,10 @@ fn play_land_fails_when_card_is_not_a_land() {
     );
     let result = service.play_land(&mut game, cmd);
 
-    assert!(matches!(result, Err(DomainError::NotALand { .. })));
+    assert!(matches!(
+        result,
+        Err(DomainError::Card(CardError::NotALand { .. }))
+    ));
 }
 
 #[test]
@@ -133,7 +139,10 @@ fn play_land_fails_when_not_player_turn() {
     let cmd = PlayLandCommand::new(PlayerId::new("player-1"), land_card_id);
     let result = service.play_land(&mut game, cmd);
 
-    assert!(matches!(result, Err(DomainError::NotYourTurn { .. })));
+    assert!(matches!(
+        result,
+        Err(DomainError::Game(GameError::NotYourTurn { .. }))
+    ));
 }
 
 #[test]
@@ -151,6 +160,8 @@ fn play_land_fails_when_land_already_played_this_turn() {
 
     assert!(matches!(
         result2,
-        Err(DomainError::AlreadyPlayedLandThisTurn { .. })
+        Err(DomainError::Phase(PhaseError::AlreadyPlayedLandThisTurn(
+            ..
+        )))
     ));
 }

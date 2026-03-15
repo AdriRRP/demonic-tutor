@@ -1,9 +1,9 @@
 #![allow(clippy::unwrap_used)]
 
 use demonictutor::{
-    CardDefinitionId, CardInstanceId, CardType, CardWithCost, DealOpeningHandsCommand, DeckId,
-    DomainError, GameId, GameService, InMemoryEventBus, InMemoryEventStore, PlayLandCommand,
-    PlayerDeck, PlayerDeckContents, PlayerId, StartGameCommand, TapLandCommand,
+    CardDefinitionId, CardError, CardInstanceId, CardType, CardWithCost, DealOpeningHandsCommand,
+    DeckId, DomainError, GameId, GameService, InMemoryEventBus, InMemoryEventStore,
+    PlayLandCommand, PlayerDeck, PlayerDeckContents, PlayerId, StartGameCommand, TapLandCommand,
 };
 
 fn player_deck(player: &str, deck: &str) -> PlayerDeck {
@@ -141,7 +141,7 @@ fn tap_land_fails_for_untapped_land() {
     assert!(result2.is_err());
     assert!(matches!(
         result2.unwrap_err(),
-        DomainError::CardAlreadyTapped { .. }
+        DomainError::Card(CardError::AlreadyTapped { .. })
     ));
 }
 
@@ -159,7 +159,7 @@ fn tap_land_fails_for_non_land_card() {
     assert!(result.is_err());
     assert!(matches!(
         result.unwrap_err(),
-        DomainError::CardNotOnBattlefield { .. }
+        DomainError::Card(CardError::NotOnBattlefield { .. })
     ));
 }
 
@@ -185,6 +185,6 @@ fn tap_land_fails_for_unknown_card() {
     assert!(result.is_err());
     assert!(matches!(
         result.unwrap_err(),
-        DomainError::CardNotOnBattlefield { .. }
+        DomainError::Card(CardError::NotOnBattlefield { .. })
     ));
 }

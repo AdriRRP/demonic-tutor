@@ -2,8 +2,8 @@
 
 use demonictutor::{
     AdvanceTurnCommand, CardDefinitionId, CardType, CardWithCost, DealOpeningHandsCommand, DeckId,
-    DomainError, GameId, GameService, InMemoryEventBus, InMemoryEventStore, MulliganCommand,
-    PlayerDeck, PlayerDeckContents, PlayerId, StartGameCommand,
+    DomainError, GameError, GameId, GameService, InMemoryEventBus, InMemoryEventStore,
+    MulliganCommand, PhaseError, PlayerDeck, PlayerDeckContents, PlayerId, StartGameCommand,
 };
 
 fn player_deck(player: &str, deck: &str) -> PlayerDeck {
@@ -91,9 +91,7 @@ fn mulligan_fails_already_used() {
     assert!(result.is_err());
     assert_eq!(
         result.unwrap_err(),
-        DomainError::MulliganAlreadyUsed {
-            player_id: PlayerId::new("player-1")
-        }
+        DomainError::Game(GameError::MulliganAlreadyUsed(PlayerId::new("player-1")))
     );
 }
 
@@ -118,11 +116,11 @@ fn mulligan_fails_not_enough_cards() {
     assert!(result.is_err());
     assert!(matches!(
         result.unwrap_err(),
-        DomainError::NotEnoughCardsInLibrary {
+        DomainError::Game(GameError::NotEnoughCardsInLibrary {
             available: 0,
             requested: 7,
             ..
-        }
+        })
     ));
 }
 
@@ -157,5 +155,8 @@ fn mulligan_fails_not_setup_phase() {
     let result = service.mulligan(&mut game, mulligan_cmd);
 
     assert!(result.is_err());
-    assert_eq!(result.unwrap_err(), DomainError::InvalidPhaseForMulligan);
+    assert_eq!(
+        result.unwrap_err(),
+        DomainError::Phase(PhaseError::InvalidForMulligan)
+    );
 }

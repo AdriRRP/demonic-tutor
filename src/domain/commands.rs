@@ -209,3 +209,22 @@ impl DeclareAttackersCommand {
         }
     }
 }
+
+#[derive(Debug, Clone)]
+pub struct DeclareBlockersCommand {
+    pub player_id: PlayerId,
+    pub blocker_assignments: Vec<(CardInstanceId, CardInstanceId)>,
+}
+
+impl DeclareBlockersCommand {
+    #[must_use]
+    pub const fn new(
+        player_id: PlayerId,
+        blocker_assignments: Vec<(CardInstanceId, CardInstanceId)>,
+    ) -> Self {
+        Self {
+            player_id,
+            blocker_assignments,
+        }
+    }
+}

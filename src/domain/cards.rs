@@ -52,6 +52,7 @@ impl CardDefinition {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[allow(clippy::struct_excessive_bools)]
 pub struct CardInstance {
     id: CardInstanceId,
     definition_id: CardDefinitionId,
@@ -62,6 +63,7 @@ pub struct CardInstance {
     toughness: Option<u32>,
     has_summoning_sickness: bool,
     is_attacking: bool,
+    is_blocking: bool,
 }
 
 impl CardInstance {
@@ -82,6 +84,7 @@ impl CardInstance {
             toughness: None,
             has_summoning_sickness: false,
             is_attacking: false,
+            is_blocking: false,
         }
     }
 
@@ -103,6 +106,7 @@ impl CardInstance {
             toughness: Some(toughness),
             has_summoning_sickness: true,
             is_attacking: false,
+            is_blocking: false,
         }
     }
 
@@ -151,6 +155,11 @@ impl CardInstance {
         self.is_attacking
     }
 
+    #[must_use]
+    pub const fn is_blocking(&self) -> bool {
+        self.is_blocking
+    }
+
     pub const fn tap(&mut self) {
         self.tapped = true;
     }
@@ -165,5 +174,9 @@ impl CardInstance {
 
     pub const fn set_attacking(&mut self, attacking: bool) {
         self.is_attacking = attacking;
+    }
+
+    pub const fn set_blocking(&mut self, blocking: bool) {
+        self.is_blocking = blocking;
     }
 }

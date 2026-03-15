@@ -1,7 +1,7 @@
 #![allow(clippy::unwrap_used)]
 
 use demonictutor::{
-    CardDefinitionId, CardInstanceId, CardType, CardWithCost, CastSpellCommand,
+    CardDefinitionId, CardError, CardInstanceId, CardType, CardWithCost, CastSpellCommand,
     DealOpeningHandsCommand, DeckId, DomainError, GameId, GameService, InMemoryEventBus,
     InMemoryEventStore, PlayLandCommand, PlayerDeck, PlayerDeckContents, PlayerId,
     StartGameCommand, TapLandCommand,
@@ -95,7 +95,10 @@ fn cast_spell_fails_for_land_card() {
     let cmd = CastSpellCommand::new(PlayerId::new("player-1"), card_id);
     let result = service.cast_spell(&mut game, cmd);
 
-    assert!(matches!(result, Err(DomainError::CannotCastLand { .. })));
+    assert!(matches!(
+        result,
+        Err(DomainError::Card(CardError::CannotCastLand { .. }))
+    ));
 }
 
 #[test]
@@ -144,7 +147,12 @@ fn cast_spell_fails_when_not_player_turn() {
     let cmd = CastSpellCommand::new(PlayerId::new("player-2"), card_id);
     let result = service.cast_spell(&mut game, cmd);
 
-    assert!(matches!(result, Err(DomainError::NotYourTurn { .. })));
+    assert!(matches!(
+        result,
+        Err(DomainError::Game(
+            demonictutor::GameError::NotYourTurn { .. }
+        ))
+    ));
 }
 
 #[test]
@@ -179,7 +187,10 @@ fn cast_spell_fails_when_card_not_in_hand() {
     let cmd = CastSpellCommand::new(PlayerId::new("player-1"), card_id);
     let result = service.cast_spell(&mut game, cmd);
 
-    assert!(matches!(result, Err(DomainError::CardNotInHand { .. })));
+    assert!(matches!(
+        result,
+        Err(DomainError::Card(CardError::NotInHand { .. }))
+    ));
 }
 
 #[test]
@@ -218,7 +229,12 @@ fn cast_spell_fails_with_insufficient_mana() {
     let cmd = CastSpellCommand::new(PlayerId::new("player-1"), card_id);
     let result = service.cast_spell(&mut game, cmd);
 
-    assert!(matches!(result, Err(DomainError::InsufficientMana { .. })));
+    assert!(matches!(
+        result,
+        Err(DomainError::Game(
+            demonictutor::GameError::InsufficientMana { .. }
+        ))
+    ));
 }
 
 #[test]

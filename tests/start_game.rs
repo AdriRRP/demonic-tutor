@@ -1,8 +1,8 @@
 #![allow(clippy::unwrap_used)]
 
 use demonictutor::{
-    DeckId, DomainError, GameId, GameService, InMemoryEventBus, InMemoryEventStore, PlayerDeck,
-    PlayerId, StartGameCommand,
+    DeckId, DomainError, GameError, GameId, GameService, InMemoryEventBus, InMemoryEventStore,
+    PlayerDeck, PlayerError, PlayerId, StartGameCommand,
 };
 
 fn player_deck(player: &str, deck: &str) -> PlayerDeck {
@@ -45,7 +45,7 @@ fn start_game_rejects_single_player() {
     assert!(result.is_err());
     assert_eq!(
         result.unwrap_err(),
-        DomainError::NotEnoughPlayers { actual: 1 }
+        DomainError::Player(PlayerError::NotEnoughPlayers { actual: 1 })
     );
 }
 
@@ -66,7 +66,7 @@ fn start_game_rejects_too_many_players() {
     assert!(result.is_err());
     assert_eq!(
         result.unwrap_err(),
-        DomainError::TooManyPlayers { actual: 3 }
+        DomainError::Player(PlayerError::TooManyPlayers { actual: 3 })
     );
 }
 
@@ -86,6 +86,6 @@ fn start_game_rejects_duplicate_players() {
     assert!(result.is_err());
     assert_eq!(
         result.unwrap_err(),
-        DomainError::DuplicatePlayer(PlayerId::new("player-1"))
+        DomainError::Game(GameError::DuplicatePlayer(PlayerId::new("player-1")))
     );
 }

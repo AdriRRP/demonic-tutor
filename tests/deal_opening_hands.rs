@@ -1,9 +1,9 @@
 #![allow(clippy::unwrap_used)]
 
 use demonictutor::{
-    CardDefinitionId, CardType, CardWithCost, DealOpeningHandsCommand, DeckId, DomainError, GameId,
-    GameService, InMemoryEventBus, InMemoryEventStore, PlayerDeck, PlayerDeckContents, PlayerId,
-    StartGameCommand,
+    CardDefinitionId, CardType, CardWithCost, DealOpeningHandsCommand, DeckId, DomainError,
+    GameError, GameId, GameService, InMemoryEventBus, InMemoryEventStore, PlayerDeck,
+    PlayerDeckContents, PlayerId, StartGameCommand,
 };
 
 fn player_deck(player: &str, deck: &str) -> PlayerDeck {
@@ -107,7 +107,7 @@ fn deal_opening_hands_fails_when_not_enough_cards() {
     assert!(result.is_err());
     assert!(matches!(
         result.unwrap_err(),
-        DomainError::NotEnoughCardsInLibrary { .. }
+        DomainError::Game(GameError::NotEnoughCardsInLibrary { .. })
     ));
 }
 

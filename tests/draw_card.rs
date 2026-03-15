@@ -2,7 +2,7 @@
 
 use demonictutor::{
     AdvanceTurnCommand, CardDefinitionId, CardInstanceId, CardType, CardWithCost,
-    DealOpeningHandsCommand, DeckId, DomainError, DrawCardCommand, GameId, GameService,
+    DealOpeningHandsCommand, DeckId, DomainError, DrawCardCommand, GameError, GameId, GameService,
     InMemoryEventBus, InMemoryEventStore, PlayLandCommand, PlayerDeck, PlayerDeckContents,
     PlayerId, StartGameCommand,
 };
@@ -253,7 +253,10 @@ fn draw_card_fails_when_not_enough_cards() {
 
     assert!(result.is_err());
     let err = result.unwrap_err();
-    assert!(matches!(err, DomainError::NotEnoughCardsInLibrary { .. }));
+    assert!(matches!(
+        err,
+        DomainError::Game(GameError::NotEnoughCardsInLibrary { .. })
+    ));
 }
 
 #[test]
@@ -305,7 +308,7 @@ fn draw_card_fails_when_not_player_turn() {
     assert!(result.is_err());
     assert!(matches!(
         result.unwrap_err(),
-        DomainError::NotYourTurn { .. }
+        DomainError::Game(GameError::NotYourTurn { .. })
     ));
 }
 

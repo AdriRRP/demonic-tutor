@@ -1,8 +1,8 @@
 #![allow(clippy::unwrap_used)]
 
 use demonictutor::{
-    DeckId, DomainError, GameId, GameService, InMemoryEventBus, InMemoryEventStore, PlayerDeck,
-    PlayerId, SetLifeCommand, StartGameCommand,
+    DeckId, DomainError, GameError, GameId, GameService, InMemoryEventBus, InMemoryEventStore,
+    PlayerDeck, PlayerId, SetLifeCommand, StartGameCommand,
 };
 
 fn player_deck(player: &str, deck: &str) -> PlayerDeck {
@@ -120,6 +120,6 @@ fn set_life_fails_for_unknown_player() {
     assert!(result.is_err());
     assert!(matches!(
         result.unwrap_err(),
-        DomainError::PlayerNotFound { .. }
+        DomainError::Game(GameError::PlayerNotFound { .. })
     ));
 }

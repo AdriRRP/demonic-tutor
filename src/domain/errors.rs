@@ -5,184 +5,194 @@ use crate::domain::{
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum DomainError {
-    NotEnoughPlayers {
-        actual: usize,
-    },
-    TooManyPlayers {
-        actual: usize,
+    Game(GameError),
+    Card(CardError),
+    Phase(PhaseError),
+    Player(PlayerError),
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum GameError {
+    NotYourTurn {
+        current: PlayerId,
+        requested: PlayerId,
     },
     DuplicatePlayer(PlayerId),
     PlayerNotFound(PlayerId),
-    NotEnoughCardsInLibrary {
-        player_id: PlayerId,
-        available: usize,
-        requested: usize,
-    },
-    CardNotInHand {
-        player_id: PlayerId,
-        card_id: CardInstanceId,
-    },
-    NotALand {
-        card_id: CardInstanceId,
-    },
-    NotACreature {
-        card_id: CardInstanceId,
-    },
-    NotYourTurn {
-        current_player: PlayerId,
-        requested_player: PlayerId,
-    },
-    InvalidPhaseForLand,
-    InvalidPhaseForPlayingCard {
-        phase: Phase,
-    },
-    InvalidPhaseForDraw {
-        phase: Phase,
-    },
-    AlreadyPlayedLandThisTurn {
-        player_id: PlayerId,
-    },
-    CardAlreadyTapped {
-        player_id: PlayerId,
-        card_id: CardInstanceId,
-    },
-    CardNotOnBattlefield {
-        player_id: PlayerId,
-        card_id: CardInstanceId,
-    },
-    CannotCastLand {
-        card_id: CardInstanceId,
-    },
     InsufficientMana {
-        player_id: PlayerId,
+        player: PlayerId,
         required: u32,
         available: u32,
     },
-    MulliganAlreadyUsed {
-        player_id: PlayerId,
+    NotEnoughCardsInLibrary {
+        player: PlayerId,
+        available: usize,
+        requested: usize,
     },
-    InvalidPhaseForMulligan,
-    InvalidPhaseForCombat,
-    CreatureAlreadyTapped {
-        player_id: PlayerId,
-        card_id: CardInstanceId,
+    MulliganAlreadyUsed(PlayerId),
+    InternalInvariantViolation(String),
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum CardError {
+    NotInHand {
+        player: PlayerId,
+        card: CardInstanceId,
     },
+    NotALand(CardInstanceId),
+    NotACreature(CardInstanceId),
+    AlreadyTapped {
+        player: PlayerId,
+        card: CardInstanceId,
+    },
+    NotOnBattlefield {
+        player: PlayerId,
+        card: CardInstanceId,
+    },
+    CannotCastLand(CardInstanceId),
     CreatureHasSummoningSickness {
-        player_id: PlayerId,
-        card_id: CardInstanceId,
+        player: PlayerId,
+        card: CardInstanceId,
     },
-    CreatureNotControlledByAttacker {
-        player_id: PlayerId,
-        card_id: CardInstanceId,
+    NotControlledBy {
+        player: PlayerId,
+        card: CardInstanceId,
     },
-    NotACreatureForAttack {
-        card_id: CardInstanceId,
+    NotAttacking(CardInstanceId),
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum PhaseError {
+    InvalidForLand,
+    InvalidForPlayingCard {
+        phase: Phase,
     },
-    InternalInvariantViolation {
-        message: String,
+    InvalidForDraw {
+        phase: Phase,
     },
+    InvalidForMulligan,
+    InvalidForCombat,
+    AlreadyPlayedLandThisTurn(PlayerId),
+    NotDefendingPlayer {
+        current: PlayerId,
+        requested: PlayerId,
+    },
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum PlayerError {
+    NotEnoughPlayers { actual: usize },
+    TooManyPlayers { actual: usize },
 }
 
 impl std::fmt::Display for DomainError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let s = match self {
-            Self::NotEnoughPlayers { actual } => {
-                return write!(f, "not enough players: expected at least 2, got {actual}")
+        match self {
+            Self::Game(e) => write!(f, "{e}"),
+            Self::Card(e) => write!(f, "{e}"),
+            Self::Phase(e) => write!(f, "{e}"),
+            Self::Player(e) => write!(f, "{e}"),
+        }
+    }
+}
+
+impl std::fmt::Display for GameError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::NotYourTurn { current, requested } => {
+                write!(f, "not {requested}'s turn, it's {current}'s turn")
             }
-            Self::TooManyPlayers { actual } => {
-                return write!(f, "too many players: expected at most 2, got {actual}")
-            }
-            Self::DuplicatePlayer(pid) => return write!(f, "duplicate player: {}", pid.0),
-            Self::PlayerNotFound(pid) => return write!(f, "player not found: {}", pid.0),
-            Self::NotEnoughCardsInLibrary {
-                player_id,
-                available,
-                requested,
-            } => {
-                return write!(
-                    f,
-                    "not enough cards in library for player {}: have {available}, need {requested}",
-                    player_id.0
-                )
-            }
-            Self::CardNotInHand { player_id, card_id } => {
-                return write!(f, "card {card_id} not in hand of player {player_id}")
-            }
-            Self::NotALand { card_id } => return write!(f, "card {card_id} is not a land"),
-            Self::NotACreature { card_id } => return write!(f, "card {card_id} is not a creature"),
-            Self::NotYourTurn {
-                current_player,
-                requested_player,
-            } => {
-                return write!(
-                    f,
-                    "not {requested_player}'s turn, it's {current_player}'s turn"
-                )
-            }
-            Self::InvalidPhaseForLand => "cannot play land in current phase",
-            Self::InvalidPhaseForPlayingCard { phase } => {
-                return write!(f, "cannot play card in phase {phase:?}")
-            }
-            Self::InvalidPhaseForDraw { phase } => {
-                return write!(f, "cannot draw card in phase {phase:?}")
-            }
-            Self::AlreadyPlayedLandThisTurn { player_id } => {
-                return write!(f, "player {player_id} already played a land this turn")
-            }
-            Self::CardAlreadyTapped { player_id, card_id } => {
-                return write!(f, "card {card_id} is already tapped for player {player_id}")
-            }
-            Self::CardNotOnBattlefield { player_id, card_id } => {
-                return write!(
-                    f,
-                    "card {card_id} not on battlefield for player {player_id}"
-                )
-            }
-            Self::CannotCastLand { card_id } => {
-                return write!(f, "cannot cast land {card_id} as a spell")
-            }
+            Self::DuplicatePlayer(pid) => write!(f, "duplicate player: {}", pid.0),
+            Self::PlayerNotFound(pid) => write!(f, "player not found: {}", pid.0),
             Self::InsufficientMana {
-                player_id,
+                player,
                 required,
                 available,
-            } => {
-                return write!(
+            } => write!(
+                f,
+                "player {} has insufficient mana: required {required}, available {available}",
+                player.0
+            ),
+            Self::NotEnoughCardsInLibrary {
+                player,
+                available,
+                requested,
+            } => write!(
+                f,
+                "not enough cards in library for player {}: have {available}, need {requested}",
+                player.0
+            ),
+            Self::MulliganAlreadyUsed(pid) => {
+                write!(f, "player {} has already used mulligan", pid.0)
+            }
+            Self::InternalInvariantViolation(msg) => {
+                write!(f, "internal invariant violated: {msg}")
+            }
+        }
+    }
+}
+
+impl std::fmt::Display for CardError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::NotInHand { player, card } => {
+                write!(f, "card {card} not in hand of player {player}")
+            }
+            Self::NotALand(card) => write!(f, "card {card} is not a land"),
+            Self::NotACreature(card) => write!(f, "card {card} is not a creature"),
+            Self::AlreadyTapped { player, card } => {
+                write!(f, "card {card} is already tapped for player {player}")
+            }
+            Self::NotOnBattlefield { player, card } => {
+                write!(f, "card {card} not on battlefield for player {player}")
+            }
+            Self::CannotCastLand(card) => write!(f, "cannot cast land {card} as a spell"),
+            Self::CreatureHasSummoningSickness { player: _, card } => {
+                write!(
                     f,
-                    "player {} has insufficient mana: required {required}, available {available}",
-                    player_id.0
+                    "creature {card} has summoning sickness and cannot attack"
                 )
             }
-            Self::MulliganAlreadyUsed { player_id } => {
-                return write!(f, "player {player_id} has already used mulligan")
+            Self::NotControlledBy { player, card } => {
+                write!(f, "creature {card} is not controlled by player {player}")
             }
-            Self::InvalidPhaseForMulligan => "cannot perform mulligan in current phase",
-            Self::InvalidPhaseForCombat => "cannot declare attackers in current phase",
-            Self::CreatureAlreadyTapped { player_id, card_id } => {
-                return write!(
-                    f,
-                    "creature {card_id} is already tapped for player {player_id}"
-                )
+            Self::NotAttacking(card) => write!(f, "creature {card} is not an attacking creature"),
+        }
+    }
+}
+
+impl std::fmt::Display for PhaseError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::InvalidForLand => write!(f, "cannot play land in current phase"),
+            Self::InvalidForPlayingCard { phase } => {
+                write!(f, "cannot play card in phase {phase:?}")
             }
-            Self::CreatureHasSummoningSickness { card_id, .. } => {
-                return write!(
-                    f,
-                    "creature {card_id} has summoning sickness and cannot attack"
-                )
+            Self::InvalidForDraw { phase } => write!(f, "cannot draw card in phase {phase:?}"),
+            Self::InvalidForMulligan => write!(f, "cannot perform mulligan in current phase"),
+            Self::InvalidForCombat => {
+                write!(f, "cannot declare attackers or blockers in current phase")
             }
-            Self::CreatureNotControlledByAttacker { player_id, card_id } => {
-                return write!(
-                    f,
-                    "creature {card_id} is not controlled by player {player_id}"
-                )
+            Self::AlreadyPlayedLandThisTurn(pid) => {
+                write!(f, "player {pid} already played a land this turn")
             }
-            Self::NotACreatureForAttack { card_id } => {
-                return write!(f, "card {card_id} is not a creature and cannot attack")
+            Self::NotDefendingPlayer { current, requested } => {
+                write!(f, "not {requested}'s turn to block, it's {current}'s turn")
             }
-            Self::InternalInvariantViolation { message } => {
-                return write!(f, "internal invariant violated: {message}")
+        }
+    }
+}
+
+impl std::fmt::Display for PlayerError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::NotEnoughPlayers { actual } => {
+                write!(f, "not enough players: expected at least 2, got {actual}")
             }
-        };
-        write!(f, "{s}")
+            Self::TooManyPlayers { actual } => {
+                write!(f, "too many players: expected at most 2, got {actual}")
+            }
+        }
     }
 }
 

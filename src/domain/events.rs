@@ -16,6 +16,7 @@ pub enum DomainEvent {
     SpellCast(SpellCast),
     CreatureEnteredBattlefield(CreatureEnteredBattlefield),
     AttackersDeclared(AttackersDeclared),
+    BlockersDeclared(BlockersDeclared),
 }
 
 impl DomainEvent {
@@ -139,6 +140,15 @@ impl DomainEvent {
     #[must_use]
     pub const fn as_attackers_declared(&self) -> Option<&AttackersDeclared> {
         if let Self::AttackersDeclared(e) = self {
+            Some(e)
+        } else {
+            None
+        }
+    }
+
+    #[must_use]
+    pub const fn as_blockers_declared(&self) -> Option<&BlockersDeclared> {
+        if let Self::BlockersDeclared(e) = self {
             Some(e)
         } else {
             None
@@ -409,6 +419,28 @@ impl AttackersDeclared {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct BlockersDeclared {
+    pub game_id: GameId,
+    pub player_id: PlayerId,
+    pub assignments: Vec<(CardInstanceId, CardInstanceId)>,
+}
+
+impl BlockersDeclared {
+    #[must_use]
+    pub const fn new(
+        game_id: GameId,
+        player_id: PlayerId,
+        assignments: Vec<(CardInstanceId, CardInstanceId)>,
+    ) -> Self {
+        Self {
+            game_id,
+            player_id,
+            assignments,
+        }
+    }
+}
+
 impl From<GameStarted> for DomainEvent {
     fn from(event: GameStarted) -> Self {
         Self::GameStarted(event)
@@ -490,5 +522,11 @@ impl From<CreatureEnteredBattlefield> for DomainEvent {
 impl From<AttackersDeclared> for DomainEvent {
     fn from(event: AttackersDeclared) -> Self {
         Self::AttackersDeclared(event)
+    }
+}
+
+impl From<BlockersDeclared> for DomainEvent {
+    fn from(event: BlockersDeclared) -> Self {
+        Self::BlockersDeclared(event)
     }
 }

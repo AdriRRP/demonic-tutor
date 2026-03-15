@@ -5,7 +5,7 @@ use crate::domain::{
         DrawCardCommand, MulliganCommand, PlayCreatureCommand, PlayLandCommand, StartGameCommand,
         TapLandCommand,
     },
-    errors::DomainError,
+    errors::{CardError, DomainError, GameError, PhaseError, PlayerError},
     events::{
         AttackersDeclared, CardDrawn, CreatureEnteredBattlefield, GameStarted, LandPlayed,
         LandTapped, LifeChanged, ManaAdded, MulliganTaken, OpeningHandDealt, PhaseChanged,
@@ -184,15 +184,15 @@ impl Game {
         let player_count = cmd.players.len();
 
         if player_count < 2 {
-            return Err(DomainError::NotEnoughPlayers {
+            return Err(DomainError::Player(PlayerError::NotEnoughPlayers {
                 actual: player_count,
-            });
+            }));
         }
 
         if player_count > 2 {
-            return Err(DomainError::TooManyPlayers {
+            return Err(DomainError::Player(PlayerError::TooManyPlayers {
                 actual: player_count,
-            });
+            }));
         }
 
         let mut seen_players = std::collections::HashSet::new();
@@ -201,7 +201,9 @@ impl Game {
 
         for pd in &cmd.players {
             if !seen_players.insert(pd.player_id.clone()) {
-                return Err(DomainError::DuplicatePlayer(pd.player_id.clone()));
+                return Err(DomainError::Game(GameError::DuplicatePlayer(
+                    pd.player_id.clone(),
+                )));
             }
             players.push(Player::new(pd.player_id.clone(), pd.deck_id.clone()));
             player_ids.push(pd.player_id.clone());
@@ -210,9 +212,9 @@ impl Game {
         let game_started = GameStarted::new(cmd.game_id.clone(), player_ids.clone());
 
         let active_player = player_ids.into_iter().next().ok_or_else(|| {
-            DomainError::InternalInvariantViolation {
-                message: "player list should not be empty after validation".to_string(),
-            }
+            DomainError::Game(GameError::InternalInvariantViolation(
+                "player list should not be empty after validation".to_string(),
+            ))
         })?;
 
         let game = Self {
@@ -246,17 +248,19 @@ impl Game {
         for pc in &cmd.player_cards {
             let player_exists = self.players.iter().any(|p| p.id() == &pc.player_id);
             if !player_exists {
-                return Err(DomainError::PlayerNotFound(pc.player_id.clone()));
+                return Err(DomainError::Game(GameError::PlayerNotFound(
+                    pc.player_id.clone(),
+                )));
             }
         }
 
         for pc in &cmd.player_cards {
             if pc.cards.len() < hand_size {
-                return Err(DomainError::NotEnoughCardsInLibrary {
-                    player_id: pc.player_id.clone(),
+                return Err(DomainError::Game(GameError::NotEnoughCardsInLibrary {
+                    player: pc.player_id.clone(),
                     available: pc.cards.len(),
                     requested: hand_size,
-                });
+                }));
             }
         }
 
@@ -267,8 +271,11 @@ impl Game {
                 .players
                 .iter()
                 .position(|p| p.id() == &pc.player_id)
-                .ok_or_else(|| DomainError::InternalInvariantViolation {
-                    message: format!("player {} should exist after validation", pc.player_id.0),
+                .ok_or_else(|| {
+                    DomainError::Game(GameError::InternalInvariantViolation(format!(
+                        "player {} should exist after validation",
+                        pc.player_id.0
+                    )))
                 })?;
 
             let player_id_owned = pc.player_id.clone();
@@ -360,30 +367,30 @@ impl Game {
     /// - The library has fewer than 7 cards
     pub fn mulligan(&mut self, cmd: MulliganCommand) -> Result<MulliganTaken, DomainError> {
         if !matches!(self.phase, Phase::Setup) {
-            return Err(DomainError::InvalidPhaseForMulligan);
+            return Err(DomainError::Phase(PhaseError::InvalidForMulligan));
         }
 
         let player_idx = self
             .players
             .iter()
             .position(|p| p.id() == &cmd.player_id)
-            .ok_or_else(|| DomainError::PlayerNotFound(cmd.player_id.clone()))?;
+            .ok_or_else(|| DomainError::Game(GameError::PlayerNotFound(cmd.player_id.clone())))?;
 
         let player = &mut self.players[player_idx];
 
         if player.mulligan_used() {
-            return Err(DomainError::MulliganAlreadyUsed {
-                player_id: cmd.player_id,
-            });
+            return Err(DomainError::Game(GameError::MulliganAlreadyUsed(
+                cmd.player_id,
+            )));
         }
 
         let hand_size = 7;
         if player.library().len() < hand_size {
-            return Err(DomainError::NotEnoughCardsInLibrary {
-                player_id: cmd.player_id,
+            return Err(DomainError::Game(GameError::NotEnoughCardsInLibrary {
+                player: cmd.player_id,
                 available: player.library().len(),
                 requested: hand_size,
-            });
+            }));
         }
 
         let hand_cards: Vec<CardInstance> = player.hand().cards().to_vec();
@@ -392,11 +399,11 @@ impl Game {
         player.library_mut().shuffle();
 
         let drawn_cards = player.library_mut().draw(hand_size).ok_or_else(|| {
-            DomainError::NotEnoughCardsInLibrary {
-                player_id: cmd.player_id.clone(),
+            DomainError::Game(GameError::NotEnoughCardsInLibrary {
+                player: cmd.player_id.clone(),
                 available: player.library().len(),
                 requested: hand_size,
-            }
+            })
         })?;
 
         player.hand_mut().receive(drawn_cards);
@@ -418,43 +425,41 @@ impl Game {
     /// - The card is not a land card
     pub fn play_land(&mut self, cmd: PlayLandCommand) -> Result<LandPlayed, DomainError> {
         if self.active_player != cmd.player_id {
-            return Err(DomainError::NotYourTurn {
-                current_player: self.active_player.clone(),
-                requested_player: cmd.player_id,
-            });
+            return Err(DomainError::Game(GameError::NotYourTurn {
+                current: self.active_player.clone(),
+                requested: cmd.player_id,
+            }));
         }
 
         if !matches!(self.phase, Phase::Main) {
-            return Err(DomainError::InvalidPhaseForLand);
+            return Err(DomainError::Phase(PhaseError::InvalidForLand));
         }
 
         let player_idx = self
             .players
             .iter()
             .position(|p| p.id() == &cmd.player_id)
-            .ok_or_else(|| DomainError::PlayerNotFound(cmd.player_id.clone()))?;
+            .ok_or_else(|| DomainError::Game(GameError::PlayerNotFound(cmd.player_id.clone())))?;
 
         let player = &mut self.players[player_idx];
 
         if player.lands_played_this_turn() > 0 {
-            return Err(DomainError::AlreadyPlayedLandThisTurn {
-                player_id: cmd.player_id,
-            });
+            return Err(DomainError::Phase(PhaseError::AlreadyPlayedLandThisTurn(
+                cmd.player_id,
+            )));
         }
 
         let card_id = cmd.card_id.clone();
 
-        let card =
-            player
-                .hand_mut()
-                .remove(&card_id)
-                .ok_or_else(|| DomainError::CardNotInHand {
-                    player_id: cmd.player_id.clone(),
-                    card_id: card_id.clone(),
-                })?;
+        let card = player.hand_mut().remove(&card_id).ok_or_else(|| {
+            DomainError::Card(CardError::NotInHand {
+                player: cmd.player_id.clone(),
+                card: card_id.clone(),
+            })
+        })?;
 
         if !matches!(card.card_type(), CardType::Land) {
-            return Err(DomainError::NotALand { card_id });
+            return Err(DomainError::Card(CardError::NotALand(card_id)));
         }
 
         player.battlefield_mut().add(card);
@@ -488,8 +493,10 @@ impl Game {
                 .players
                 .iter()
                 .position(|p| p.id() == &self.active_player)
-                .ok_or_else(|| DomainError::InternalInvariantViolation {
-                    message: "active player should exist in player list".to_string(),
+                .ok_or_else(|| {
+                    DomainError::Game(GameError::InternalInvariantViolation(
+                        "active player should exist in player list".to_string(),
+                    ))
                 })?;
             let next_idx = (current_idx + 1) % self.players.len();
 
@@ -540,38 +547,38 @@ impl Game {
     /// Panics if the library returns fewer cards than requested after validation.
     pub fn draw_card(&mut self, cmd: DrawCardCommand) -> Result<CardDrawn, DomainError> {
         if self.active_player != cmd.player_id {
-            return Err(DomainError::NotYourTurn {
-                current_player: self.active_player.clone(),
-                requested_player: cmd.player_id,
-            });
+            return Err(DomainError::Game(GameError::NotYourTurn {
+                current: self.active_player.clone(),
+                requested: cmd.player_id,
+            }));
         }
 
         if !matches!(self.phase, Phase::Main | Phase::Setup) {
-            return Err(DomainError::InvalidPhaseForDraw { phase: self.phase });
+            return Err(DomainError::Phase(PhaseError::InvalidForDraw {
+                phase: self.phase,
+            }));
         }
 
         let player_idx = self
             .players
             .iter()
             .position(|p| p.id() == &cmd.player_id)
-            .ok_or_else(|| DomainError::PlayerNotFound(cmd.player_id.clone()))?;
+            .ok_or_else(|| DomainError::Game(GameError::PlayerNotFound(cmd.player_id.clone())))?;
 
         let player = &mut self.players[player_idx];
 
-        let drawn_cards =
-            player
-                .library_mut()
-                .draw(1)
-                .ok_or_else(|| DomainError::NotEnoughCardsInLibrary {
-                    player_id: cmd.player_id.clone(),
-                    available: player.library().len(),
-                    requested: 1,
-                })?;
+        let drawn_cards = player.library_mut().draw(1).ok_or_else(|| {
+            DomainError::Game(GameError::NotEnoughCardsInLibrary {
+                player: cmd.player_id.clone(),
+                available: player.library().len(),
+                requested: 1,
+            })
+        })?;
 
         let card = drawn_cards.into_iter().next().ok_or_else(|| {
-            DomainError::InternalInvariantViolation {
-                message: "draw(1) should return exactly one card".to_string(),
-            }
+            DomainError::Game(GameError::InternalInvariantViolation(
+                "draw(1) should return exactly one card".to_string(),
+            ))
         })?;
         let card_id = card.id().clone();
 
@@ -594,7 +601,7 @@ impl Game {
             .players
             .iter()
             .position(|p| p.id() == &cmd.player_id)
-            .ok_or_else(|| DomainError::PlayerNotFound(cmd.player_id.clone()))?;
+            .ok_or_else(|| DomainError::Game(GameError::PlayerNotFound(cmd.player_id.clone())))?;
 
         let player = &mut self.players[player_idx];
         let from_life = player.life();
@@ -627,29 +634,29 @@ impl Game {
             .players
             .iter()
             .position(|p| p.id() == &cmd.player_id)
-            .ok_or_else(|| DomainError::PlayerNotFound(cmd.player_id.clone()))?;
+            .ok_or_else(|| DomainError::Game(GameError::PlayerNotFound(cmd.player_id.clone())))?;
 
         let player = &mut self.players[player_idx];
 
         let card = player
             .battlefield_mut()
             .card_mut(&cmd.card_id)
-            .ok_or_else(|| DomainError::CardNotOnBattlefield {
-                player_id: cmd.player_id.clone(),
-                card_id: cmd.card_id.clone(),
+            .ok_or_else(|| {
+                DomainError::Card(CardError::NotOnBattlefield {
+                    player: cmd.player_id.clone(),
+                    card: cmd.card_id.clone(),
+                })
             })?;
 
         if card.is_tapped() {
-            return Err(DomainError::CardAlreadyTapped {
-                player_id: cmd.player_id.clone(),
-                card_id: cmd.card_id.clone(),
-            });
+            return Err(DomainError::Card(CardError::AlreadyTapped {
+                player: cmd.player_id.clone(),
+                card: cmd.card_id.clone(),
+            }));
         }
 
         if !matches!(card.card_type(), CardType::Land) {
-            return Err(DomainError::NotALand {
-                card_id: cmd.card_id.clone(),
-            });
+            return Err(DomainError::Card(CardError::NotALand(cmd.card_id.clone())));
         }
 
         card.tap();
@@ -674,42 +681,40 @@ impl Game {
     /// - The player does not have enough mana
     pub fn cast_spell(&mut self, cmd: CastSpellCommand) -> Result<SpellCast, DomainError> {
         if self.active_player != cmd.player_id {
-            return Err(DomainError::NotYourTurn {
-                current_player: self.active_player.clone(),
-                requested_player: cmd.player_id,
-            });
+            return Err(DomainError::Game(GameError::NotYourTurn {
+                current: self.active_player.clone(),
+                requested: cmd.player_id,
+            }));
         }
 
         let player_idx = self
             .players
             .iter()
             .position(|p| p.id() == &cmd.player_id)
-            .ok_or_else(|| DomainError::PlayerNotFound(cmd.player_id.clone()))?;
+            .ok_or_else(|| DomainError::Game(GameError::PlayerNotFound(cmd.player_id.clone())))?;
 
         let player = &mut self.players[player_idx];
 
         let card_id = cmd.card_id.clone();
 
-        let card =
-            player
-                .hand_mut()
-                .remove(&card_id)
-                .ok_or_else(|| DomainError::CardNotInHand {
-                    player_id: cmd.player_id.clone(),
-                    card_id: card_id.clone(),
-                })?;
+        let card = player.hand_mut().remove(&card_id).ok_or_else(|| {
+            DomainError::Card(CardError::NotInHand {
+                player: cmd.player_id.clone(),
+                card: card_id.clone(),
+            })
+        })?;
 
         if matches!(card.card_type(), CardType::Land) {
-            return Err(DomainError::CannotCastLand { card_id });
+            return Err(DomainError::Card(CardError::CannotCastLand(card_id)));
         }
 
         let mana_cost = card.mana_cost();
         if player.mana() < mana_cost {
-            return Err(DomainError::InsufficientMana {
-                player_id: cmd.player_id,
+            return Err(DomainError::Game(GameError::InsufficientMana {
+                player: cmd.player_id,
                 required: mana_cost,
                 available: player.mana(),
-            });
+            }));
         }
 
         *player.mana_mut() -= mana_cost;
@@ -734,37 +739,37 @@ impl Game {
         cmd: PlayCreatureCommand,
     ) -> Result<CreatureEnteredBattlefield, DomainError> {
         if self.active_player != cmd.player_id {
-            return Err(DomainError::NotYourTurn {
-                current_player: self.active_player.clone(),
-                requested_player: cmd.player_id,
-            });
+            return Err(DomainError::Game(GameError::NotYourTurn {
+                current: self.active_player.clone(),
+                requested: cmd.player_id,
+            }));
         }
 
         if !matches!(self.phase, Phase::Main) {
-            return Err(DomainError::InvalidPhaseForPlayingCard { phase: self.phase });
+            return Err(DomainError::Phase(PhaseError::InvalidForPlayingCard {
+                phase: self.phase,
+            }));
         }
 
         let player_idx = self
             .players
             .iter()
             .position(|p| p.id() == &cmd.player_id)
-            .ok_or_else(|| DomainError::PlayerNotFound(cmd.player_id.clone()))?;
+            .ok_or_else(|| DomainError::Game(GameError::PlayerNotFound(cmd.player_id.clone())))?;
 
         let player = &mut self.players[player_idx];
 
         let card_id = cmd.card_id.clone();
 
-        let card =
-            player
-                .hand_mut()
-                .remove(&card_id)
-                .ok_or_else(|| DomainError::CardNotInHand {
-                    player_id: cmd.player_id.clone(),
-                    card_id: card_id.clone(),
-                })?;
+        let card = player.hand_mut().remove(&card_id).ok_or_else(|| {
+            DomainError::Card(CardError::NotInHand {
+                player: cmd.player_id.clone(),
+                card: card_id.clone(),
+            })
+        })?;
 
         if !matches!(card.card_type(), CardType::Creature) {
-            return Err(DomainError::NotACreature { card_id });
+            return Err(DomainError::Card(CardError::NotACreature(card_id)));
         }
 
         let power = card.power().unwrap_or(0);
@@ -772,11 +777,11 @@ impl Game {
 
         let mana_cost = card.mana_cost();
         if player.mana() < mana_cost {
-            return Err(DomainError::InsufficientMana {
-                player_id: cmd.player_id,
+            return Err(DomainError::Game(GameError::InsufficientMana {
+                player: cmd.player_id,
                 required: mana_cost,
                 available: player.mana(),
-            });
+            }));
         }
 
         *player.mana_mut() -= mana_cost;
@@ -808,21 +813,21 @@ impl Game {
         cmd: DeclareAttackersCommand,
     ) -> Result<AttackersDeclared, DomainError> {
         if self.active_player != cmd.player_id {
-            return Err(DomainError::NotYourTurn {
-                current_player: self.active_player.clone(),
-                requested_player: cmd.player_id,
-            });
+            return Err(DomainError::Game(GameError::NotYourTurn {
+                current: self.active_player.clone(),
+                requested: cmd.player_id,
+            }));
         }
 
         if !matches!(self.phase, Phase::Beginning) {
-            return Err(DomainError::InvalidPhaseForCombat);
+            return Err(DomainError::Phase(PhaseError::InvalidForCombat));
         }
 
         let player_idx = self
             .players
             .iter()
             .position(|p| p.id() == &cmd.player_id)
-            .ok_or_else(|| DomainError::PlayerNotFound(cmd.player_id.clone()))?;
+            .ok_or_else(|| DomainError::Game(GameError::PlayerNotFound(cmd.player_id.clone())))?;
 
         let player = &mut self.players[player_idx];
         let battlefield = player.battlefield_mut();
@@ -834,29 +839,31 @@ impl Game {
                 .cards_mut()
                 .iter_mut()
                 .find(|c| c.id() == attacker_id)
-                .ok_or_else(|| DomainError::CardNotOnBattlefield {
-                    player_id: cmd.player_id.clone(),
-                    card_id: attacker_id.clone(),
+                .ok_or_else(|| {
+                    DomainError::Card(CardError::NotOnBattlefield {
+                        player: cmd.player_id.clone(),
+                        card: attacker_id.clone(),
+                    })
                 })?;
 
             if !matches!(card.card_type(), CardType::Creature) {
-                return Err(DomainError::NotACreatureForAttack {
-                    card_id: attacker_id.clone(),
-                });
+                return Err(DomainError::Card(CardError::NotACreature(
+                    attacker_id.clone(),
+                )));
             }
 
             if card.is_tapped() {
-                return Err(DomainError::CreatureAlreadyTapped {
-                    player_id: cmd.player_id.clone(),
-                    card_id: attacker_id.clone(),
-                });
+                return Err(DomainError::Card(CardError::AlreadyTapped {
+                    player: cmd.player_id.clone(),
+                    card: attacker_id.clone(),
+                }));
             }
 
             if card.has_summoning_sickness() {
-                return Err(DomainError::CreatureHasSummoningSickness {
-                    player_id: cmd.player_id.clone(),
-                    card_id: attacker_id.clone(),
-                });
+                return Err(DomainError::Card(CardError::CreatureHasSummoningSickness {
+                    player: cmd.player_id.clone(),
+                    card: attacker_id.clone(),
+                }));
             }
 
             card.set_attacking(true);
