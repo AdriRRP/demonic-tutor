@@ -6,9 +6,9 @@ Fix rules inconsistencies between documented state and actual implementation. Im
 
 ## Issues Found
 
-1. **Phase `Beginning`**: Exists in enum but is never used (skipped in `advance_turn`)
-2. **DeclareBlockers**: Command and event exist but no implementation
-3. **Documentation**: `current-state.md` claims "no combat system" but `DeclareAttackers` is implemented
+1. **Phase `Beginning`**: Existed in enum but was never used (skipped in `advance_turn`) - FIXED: removed
+2. **DeclareBlockers**: Command and event existed but no implementation - FIXED: now implemented
+3. **Documentation**: `current-state.md` claimed "no combat system" but `DeclareAttackers` is implemented - FIXED: updated
 
 ## Scope
 
@@ -19,7 +19,7 @@ Fix rules inconsistencies between documented state and actual implementation. Im
 
 ### Implementation
 - `src/domain/game.rs` - Implement `declare_blockers` method
-- Ensure blockers can only be declared in Beginning phase
+- Ensure blockers can only be declared in Main phase (after fix)
 - Ensure blocking creatures are controlled by defending player
 - Ensure blocking creatures are not tapped
 - Mark blocking creatures as `is_blocking`
