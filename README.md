@@ -18,14 +18,20 @@ The project is designed as a practical laboratory for:
 
 This repository is in active development.
 
-Seven vertical slices have been implemented:
+Twelve vertical slices have been implemented:
+
 1. **StartGame** — Initialize a game with two players
 2. **DrawOpeningHands** — Deal opening hands to players
-3. **PlayLand** — Play a land from hand to battlefield
-4. **AdvanceTurn** — Advance to the next player's turn
-5. **DrawCard** — Draw a card from library to hand
-6. **Mulligan** — Redraw opening hand during setup phase
-7. **Infrastructure** — EventBus, EventStore, GameLogProjection
+3. **Mulligan** — Redraw opening hand during setup phase
+4. **PlayLand** — Play a land from hand to battlefield
+5. **TapLand** — Tap lands to produce mana
+6. **CastSpell** — Cast non-land spells from hand
+7. **PlayCreature** — Play creatures with power and toughness
+8. **AdvanceTurn** — Advance to the next player's turn
+9. **Turn Number** — Track turn progression
+10. **DeclareAttackers** — Declare attacking creatures
+11. **DeclareBlockers** — Declare blocking creatures
+12. **CombatDamage** — Resolve combat damage
 
 ## Version
 

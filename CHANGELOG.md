@@ -7,6 +7,31 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ---
 
+## [0.2.0] - Unreleased
+
+### Added
+
+- **CombatDamage**: Resolve combat damage between attackers and blockers
+- **DeclareBlockers**: Declare blockers for attacking creatures
+- **Phase::Combat**: Proper combat phase with begin/combat/end steps
+- **Phase::Upkeep**: Intermediate phase between Untap and Draw
+- **Turn Number**: Track and increment turn number
+- **Summoning Sickness**: Creatures cannot attack the turn they enter battlefield
+- **CardInstance damage**: Track damage on creatures during combat
+
+### Changed
+
+- **Phase Model**: Full 8-phase turn structure (Setup → Untap → Upkeep → Draw → FirstMain → Combat → SecondMain → EndStep)
+- **Turn Progression**: Auto-untap at start of turn, auto-draw in Draw phase
+- **Game Aggregate**: Split into internal modules by domain capability
+
+### Quality
+
+- Strict clippy warnings resolved
+- Documentation synchronized with implementation
+
+---
+
 ## [0.1.0] - 2026-03-14
 
 ### Added
