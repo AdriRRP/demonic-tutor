@@ -158,6 +158,8 @@ The current model includes:
 - summoning sickness tracking and automatic removal at turn start
 - declare attackers and blockers in combat phase
 
+Card instances can be checked for whether they represent permanents (cards that can exist on the battlefield) using the `CardType::is_permanent()` method.
+
 The current model intentionally omits:
 
 - rules text

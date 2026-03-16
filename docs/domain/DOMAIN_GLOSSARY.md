@@ -137,6 +137,12 @@ Currently the only card type that can be played without mana cost.
 
 ---
 
+## Permanent
+
+A card or token that exists on the battlefield. Permanents include lands, creatures, enchantments, artifacts, and planeswalkers. They remain in play until removed by an effect.
+
+---
+
 ## Spell
 
 A card type that has an effect and then goes to the graveyard upon resolution.

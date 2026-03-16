@@ -26,6 +26,14 @@ impl CardType {
     pub const fn is_creature(&self) -> bool {
         matches!(self, Self::Creature)
     }
+
+    #[must_use]
+    pub const fn is_permanent(&self) -> bool {
+        matches!(
+            self,
+            Self::Land | Self::Creature | Self::Enchantment | Self::Artifact | Self::Planeswalker
+        )
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
