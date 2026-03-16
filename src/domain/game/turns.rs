@@ -1,6 +1,7 @@
 use super::player::Player;
 use super::Phase;
 use crate::domain::{
+    cards::CardInstance,
     commands::AdvanceTurnCommand,
     errors::{DomainError, GameError},
     events::{CardDrawn, PhaseChanged, TurnAdvanced, TurnNumberChanged},
@@ -12,6 +13,7 @@ use crate::domain::{
 ///
 /// # Errors
 /// Returns an error if auto-draw fails (empty library).
+#[allow(clippy::too_many_lines)]
 pub fn advance_turn(
     players: &mut [Player],
     active_player: &mut PlayerId,
@@ -43,6 +45,17 @@ pub fn advance_turn(
 
     let mut card_drawn_event: Option<CardDrawn> = None;
 
+    // Clear damage at end of EndStep (before transitioning to Untap)
+    if matches!(from_phase, Phase::EndStep) {
+        for player in players.iter_mut() {
+            player
+                .battlefield_mut()
+                .cards_mut()
+                .iter_mut()
+                .for_each(CardInstance::clear_damage);
+        }
+    }
+
     if change_player {
         let current_idx = players
             .iter()
@@ -66,7 +79,6 @@ pub fn advance_turn(
                 .for_each(|card| {
                     card.untap();
                     card.remove_summoning_sickness();
-                    card.clear_damage();
                 });
         }
 
