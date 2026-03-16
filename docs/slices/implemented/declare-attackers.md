@@ -50,8 +50,6 @@ This slice is the natural next step after `RemoveSummoningSickness` because:
 ## Out of Scope
 
 - combat damage dealing
-- blocking behavior
-- declare blockers step
 - combat damage resolution
 - state-based actions for damage destruction
 - double strike / first strike
