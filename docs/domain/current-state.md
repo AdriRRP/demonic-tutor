@@ -24,8 +24,8 @@ Implemented capabilities include:
 - casting spells that require mana
 - playing creatures with power and toughness
 - summoning sickness for creatures (removed at turn start)
-- declaring attackers in combat phase
-- declaring blockers in combat phase
+- declaring attackers in main phase
+- declaring blockers in main phase
 - tracking player life totals
 - advancing turns
 - basic phase progression
