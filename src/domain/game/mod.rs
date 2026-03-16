@@ -14,13 +14,13 @@ use crate::domain::{
     commands::{
         AdvanceTurnCommand, CastSpellCommand, DealOpeningHandsCommand, DeclareAttackersCommand,
         DeclareBlockersCommand, DrawCardCommand, MulliganCommand, PlayCreatureCommand,
-        PlayLandCommand, StartGameCommand, TapLandCommand,
+        PlayLandCommand, ResolveCombatDamageCommand, StartGameCommand, TapLandCommand,
     },
     errors::{DomainError, GameError, PhaseError},
     events::{
-        AttackersDeclared, BlockersDeclared, CardDrawn, CreatureEnteredBattlefield, GameStarted,
-        LandPlayed, LandTapped, LifeChanged, ManaAdded, MulliganTaken, OpeningHandDealt,
-        PhaseChanged, SpellCast, TurnAdvanced, TurnNumberChanged,
+        AttackersDeclared, BlockersDeclared, CardDrawn, CombatDamageResolved,
+        CreatureEnteredBattlefield, GameStarted, LandPlayed, LandTapped, LifeChanged, ManaAdded,
+        MulliganTaken, OpeningHandDealt, PhaseChanged, SpellCast, TurnAdvanced, TurnNumberChanged,
     },
     ids::{DeckId, GameId, PlayerId},
     zones::{Battlefield, Hand, Library},
@@ -322,5 +322,16 @@ impl Game {
         cmd: DeclareBlockersCommand,
     ) -> Result<BlockersDeclared, DomainError> {
         combat::declare_blockers(&mut self.players, &self.active_player, &self.phase, cmd)
+    }
+
+    /// Resolves combat damage.
+    ///
+    /// # Errors
+    /// See [`combat::resolve_combat_damage`].
+    pub fn resolve_combat_damage(
+        &mut self,
+        cmd: ResolveCombatDamageCommand,
+    ) -> Result<CombatDamageResolved, DomainError> {
+        combat::resolve_combat_damage(&mut self.players, &self.active_player, &self.phase, cmd)
     }
 }

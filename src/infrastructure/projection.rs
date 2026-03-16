@@ -95,6 +95,9 @@ impl GameLogProjection {
                     e.player_id, e.assignments
                 )
             }
+            DomainEvent::CombatDamageResolved(e) => {
+                format!("Combat damage resolved: {:?}", e.damage_events)
+            }
         };
 
         if let Ok(mut logs) = self.logs.write() {

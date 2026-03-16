@@ -2,9 +2,11 @@ use super::player::Player;
 use super::Phase;
 use crate::domain::{
     cards::CardType,
-    commands::{DeclareAttackersCommand, DeclareBlockersCommand},
+    commands::{DeclareAttackersCommand, DeclareBlockersCommand, ResolveCombatDamageCommand},
     errors::{CardError, DomainError, GameError, PhaseError},
-    events::{AttackersDeclared, BlockersDeclared},
+    events::{
+        AttackersDeclared, BlockersDeclared, CombatDamageResolved, DamageEvent, DamageTarget,
+    },
     ids::{CardInstanceId, PlayerId},
 };
 
@@ -160,5 +162,115 @@ pub fn declare_blockers(
         super::Game::id_from_player_id(&cmd.player_id),
         cmd.player_id,
         valid_blockers,
+    ))
+}
+
+/// Resolves combat damage between attacking and blocking creatures.
+///
+/// # Errors
+/// Returns an error if:
+/// - The player is not the active player
+/// - The phase is not Combat
+pub fn resolve_combat_damage(
+    players: &mut [Player],
+    active_player: &PlayerId,
+    phase: &Phase,
+    cmd: ResolveCombatDamageCommand,
+) -> Result<CombatDamageResolved, DomainError> {
+    if *active_player != cmd.player_id {
+        return Err(DomainError::Game(GameError::NotYourTurn {
+            current: active_player.clone(),
+            requested: cmd.player_id,
+        }));
+    }
+
+    if !matches!(phase, Phase::Combat) {
+        return Err(DomainError::Phase(PhaseError::InvalidForCombat));
+    }
+
+    let player_idx = players
+        .iter()
+        .position(|p| p.id() == &cmd.player_id)
+        .ok_or_else(|| DomainError::Game(GameError::PlayerNotFound(cmd.player_id.clone())))?;
+
+    let defender_idx = players
+        .iter()
+        .position(|p| p.id() != &cmd.player_id)
+        .ok_or_else(|| {
+            DomainError::Game(GameError::InternalInvariantViolation(
+                "defending player should exist".to_string(),
+            ))
+        })?;
+
+    let defender_player_id = players[defender_idx].id().clone();
+
+    let attackers: Vec<_> = players[player_idx]
+        .battlefield()
+        .cards()
+        .iter()
+        .filter(|c| c.is_attacking())
+        .map(|c| (c.id().clone(), c.power().unwrap_or(0)))
+        .collect();
+
+    let blockers: Vec<_> = players[defender_idx]
+        .battlefield()
+        .cards()
+        .iter()
+        .filter(|c| c.is_blocking())
+        .map(|c| (c.id().clone(), c.power().unwrap_or(0)))
+        .collect();
+
+    let mut damage_events: Vec<DamageEvent> = Vec::new();
+
+    for (attacker_id, power) in &attackers {
+        let blocking: Vec<_> = blockers.iter().map(|(id, _)| id.clone()).collect();
+
+        if blocking.is_empty() {
+            let player = &mut players[defender_idx];
+            *player.life_mut() = player.life().saturating_sub(*power);
+            damage_events.push(DamageEvent {
+                source: attacker_id.clone(),
+                target: DamageTarget::Player(defender_player_id.clone()),
+                damage_amount: *power,
+            });
+        } else {
+            for blocker_id in &blocking {
+                damage_events.push(DamageEvent {
+                    source: attacker_id.clone(),
+                    target: DamageTarget::Creature(blocker_id.clone()),
+                    damage_amount: *power,
+                });
+            }
+        }
+    }
+
+    for (blocker_id, power) in &blockers {
+        if !attackers.is_empty() {
+            for (attacker_id, _) in &attackers {
+                damage_events.push(DamageEvent {
+                    source: blocker_id.clone(),
+                    target: DamageTarget::Creature(attacker_id.clone()),
+                    damage_amount: *power,
+                });
+            }
+        }
+    }
+
+    for player in players.iter_mut() {
+        for card in player.battlefield_mut().cards_mut().iter_mut() {
+            if card.is_attacking() || card.is_blocking() {
+                let power = card.power().unwrap_or(0);
+                card.add_damage(power);
+            }
+            card.untap();
+            card.set_attacking(false);
+            card.set_blocking(false);
+        }
+    }
+
+    Ok(CombatDamageResolved::new(
+        super::Game::id_from_player_id(&cmd.player_id),
+        cmd.player_id,
+        damage_events,
     ))
 }

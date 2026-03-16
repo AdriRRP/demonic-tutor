@@ -3,13 +3,14 @@ use crate::domain::{
     commands::{
         AdvanceTurnCommand, CastSpellCommand, DealOpeningHandsCommand, DeclareAttackersCommand,
         DeclareBlockersCommand, DrawCardCommand, MulliganCommand, PlayCreatureCommand,
-        PlayLandCommand, SetLifeCommand, StartGameCommand, TapLandCommand,
+        PlayLandCommand, ResolveCombatDamageCommand, SetLifeCommand, StartGameCommand,
+        TapLandCommand,
     },
     errors::DomainError,
     events::{
-        AttackersDeclared, BlockersDeclared, CardDrawn, CreatureEnteredBattlefield, DomainEvent,
-        GameStarted, LandPlayed, LandTapped, LifeChanged, ManaAdded, MulliganTaken,
-        OpeningHandDealt, SpellCast, TurnAdvanced,
+        AttackersDeclared, BlockersDeclared, CardDrawn, CombatDamageResolved,
+        CreatureEnteredBattlefield, DomainEvent, GameStarted, LandPlayed, LandTapped, LifeChanged,
+        ManaAdded, MulliganTaken, OpeningHandDealt, SpellCast, TurnAdvanced,
     },
     game::Game,
 };
@@ -307,6 +308,28 @@ where
         cmd: DeclareBlockersCommand,
     ) -> Result<BlockersDeclared, DomainError> {
         let event = game.declare_blockers(cmd)?;
+        let domain_event: DomainEvent = event.clone().into();
+
+        let game_id = game.id().0.clone();
+        let _ = self
+            .event_store
+            .append(&game_id, std::slice::from_ref(&domain_event));
+        self.event_bus.publish(&domain_event);
+
+        Ok(event)
+    }
+
+    /// Resolves combat damage.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the command is invalid.
+    pub fn resolve_combat_damage(
+        &self,
+        game: &mut Game,
+        cmd: ResolveCombatDamageCommand,
+    ) -> Result<CombatDamageResolved, DomainError> {
+        let event = game.resolve_combat_damage(cmd)?;
         let domain_event: DomainEvent = event.clone().into();
 
         let game_id = game.id().0.clone();

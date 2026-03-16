@@ -17,6 +17,7 @@ pub enum DomainEvent {
     CreatureEnteredBattlefield(CreatureEnteredBattlefield),
     AttackersDeclared(AttackersDeclared),
     BlockersDeclared(BlockersDeclared),
+    CombatDamageResolved(CombatDamageResolved),
 }
 
 impl DomainEvent {
@@ -149,6 +150,15 @@ impl DomainEvent {
     #[must_use]
     pub const fn as_blockers_declared(&self) -> Option<&BlockersDeclared> {
         if let Self::BlockersDeclared(e) = self {
+            Some(e)
+        } else {
+            None
+        }
+    }
+
+    #[must_use]
+    pub const fn as_combat_damage_resolved(&self) -> Option<&CombatDamageResolved> {
+        if let Self::CombatDamageResolved(e) = self {
             Some(e)
         } else {
             None
@@ -441,6 +451,41 @@ impl BlockersDeclared {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct CombatDamageResolved {
+    pub game_id: GameId,
+    pub player_id: PlayerId,
+    pub damage_events: Vec<DamageEvent>,
+}
+
+#[derive(Debug, Clone)]
+pub struct DamageEvent {
+    pub source: CardInstanceId,
+    pub target: DamageTarget,
+    pub damage_amount: u32,
+}
+
+#[derive(Debug, Clone)]
+pub enum DamageTarget {
+    Creature(CardInstanceId),
+    Player(PlayerId),
+}
+
+impl CombatDamageResolved {
+    #[must_use]
+    pub const fn new(
+        game_id: GameId,
+        player_id: PlayerId,
+        damage_events: Vec<DamageEvent>,
+    ) -> Self {
+        Self {
+            game_id,
+            player_id,
+            damage_events,
+        }
+    }
+}
+
 impl From<GameStarted> for DomainEvent {
     fn from(event: GameStarted) -> Self {
         Self::GameStarted(event)
@@ -528,5 +573,11 @@ impl From<AttackersDeclared> for DomainEvent {
 impl From<BlockersDeclared> for DomainEvent {
     fn from(event: BlockersDeclared) -> Self {
         Self::BlockersDeclared(event)
+    }
+}
+
+impl From<CombatDamageResolved> for DomainEvent {
+    fn from(event: CombatDamageResolved) -> Self {
+        Self::CombatDamageResolved(event)
     }
 }

@@ -228,3 +228,15 @@ impl DeclareBlockersCommand {
         }
     }
 }
+
+#[derive(Debug, Clone)]
+pub struct ResolveCombatDamageCommand {
+    pub player_id: PlayerId,
+}
+
+impl ResolveCombatDamageCommand {
+    #[must_use]
+    pub const fn new(player_id: PlayerId) -> Self {
+        Self { player_id }
+    }
+}

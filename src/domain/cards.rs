@@ -64,6 +64,7 @@ pub struct CardInstance {
     has_summoning_sickness: bool,
     is_attacking: bool,
     is_blocking: bool,
+    damage: u32,
 }
 
 impl CardInstance {
@@ -85,6 +86,7 @@ impl CardInstance {
             has_summoning_sickness: false,
             is_attacking: false,
             is_blocking: false,
+            damage: 0,
         }
     }
 
@@ -107,6 +109,7 @@ impl CardInstance {
             has_summoning_sickness: true,
             is_attacking: false,
             is_blocking: false,
+            damage: 0,
         }
     }
 
@@ -178,5 +181,18 @@ impl CardInstance {
 
     pub const fn set_blocking(&mut self, blocking: bool) {
         self.is_blocking = blocking;
+    }
+
+    #[must_use]
+    pub const fn damage(&self) -> u32 {
+        self.damage
+    }
+
+    pub const fn add_damage(&mut self, damage: u32) {
+        self.damage += damage;
+    }
+
+    pub const fn clear_damage(&mut self) {
+        self.damage = 0;
     }
 }
