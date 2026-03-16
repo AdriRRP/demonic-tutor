@@ -50,9 +50,8 @@ pub fn tap_land(
 
     card.tap();
 
-    let old_mana = player.mana();
-    let new_mana = old_mana + 1;
-    *player.mana_mut() = new_mana;
+    *player.mana_mut() += 1;
+    let new_mana = player.mana();
 
     let game_id = super::Game::id_from_player_id(&cmd.player_id);
 

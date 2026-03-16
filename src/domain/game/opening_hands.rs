@@ -80,9 +80,7 @@ pub fn deal_opening_hands(
 
         let player = &mut players[idx];
 
-        for card in cards.clone() {
-            player.library_mut().receive(vec![card]);
-        }
+        player.library_mut().receive(cards);
 
         let drawn_cards = player.library_mut().draw(hand_size).ok_or_else(|| {
             DomainError::Game(GameError::NotEnoughCardsInLibrary {

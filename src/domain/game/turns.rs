@@ -59,11 +59,15 @@ pub fn advance_turn(
 
         for player in players.iter_mut() {
             *player.lands_played_this_turn_mut() = 0;
-            for card in player.battlefield_mut().cards_mut() {
-                card.untap();
-                card.remove_summoning_sickness();
-                card.clear_damage();
-            }
+            player
+                .battlefield_mut()
+                .cards_mut()
+                .iter_mut()
+                .for_each(|card| {
+                    card.untap();
+                    card.remove_summoning_sickness();
+                    card.clear_damage();
+                });
         }
 
         *phase = to_phase;

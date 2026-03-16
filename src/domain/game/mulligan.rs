@@ -62,9 +62,6 @@ pub fn mulligan(
     player.hand_mut().receive(drawn_cards);
     *player.mulligan_used_mut() = true;
 
-    let hand = player.hand();
-    let _new_hand: Vec<_> = hand.cards().to_vec();
-
     Ok(MulliganTaken::new(
         super::Game::id_from_player_id(&cmd.player_id),
         cmd.player_id,
