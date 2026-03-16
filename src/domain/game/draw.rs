@@ -7,6 +7,13 @@ use crate::domain::{
     ids::PlayerId,
 };
 
+/// Draws a card from the player's library to their hand.
+///
+/// # Errors
+/// Returns an error if:
+/// - The player is not the active player
+/// - The phase is not Main or Setup
+/// - The player has no cards in their library
 pub fn draw_card(
     players: &mut [Player],
     active_player: &PlayerId,
@@ -16,7 +23,7 @@ pub fn draw_card(
     if *active_player != cmd.player_id {
         return Err(DomainError::Game(GameError::NotYourTurn {
             current: active_player.clone(),
-            requested: cmd.player_id.clone(),
+            requested: cmd.player_id,
         }));
     }
 

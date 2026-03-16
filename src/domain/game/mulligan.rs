@@ -7,6 +7,13 @@ use crate::domain::{
     ids::PlayerId,
 };
 
+/// Performs a mulligan, shuffling hand back into library and drawing new hand.
+///
+/// # Errors
+/// Returns an error if:
+/// - The phase is not Setup
+/// - The player has already used mulligan
+/// - The player does not have enough cards in library
 pub fn mulligan(
     players: &mut [Player],
     _active_player: &PlayerId,

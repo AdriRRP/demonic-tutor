@@ -7,6 +7,12 @@ use crate::domain::{
     ids::CardInstanceId,
 };
 
+/// Deals opening hands to all players.
+///
+/// # Errors
+/// Returns an error if:
+/// - A player is not found
+/// - A player does not have enough cards in their library
 pub fn deal_opening_hands(
     players: &mut [Player],
     cmd: &DealOpeningHandsCommand,

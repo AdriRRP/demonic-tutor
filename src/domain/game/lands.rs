@@ -8,6 +8,15 @@ use crate::domain::{
     ids::PlayerId,
 };
 
+/// Plays a land card from hand to battlefield.
+///
+/// # Errors
+/// Returns an error if:
+/// - The player is not the active player
+/// - The phase is not Main
+/// - The player has already played a land this turn
+/// - The card is not in the player's hand
+/// - The card is not a land
 pub fn play_land(
     players: &mut [Player],
     active_player: &PlayerId,
@@ -17,7 +26,7 @@ pub fn play_land(
     if *active_player != cmd.player_id {
         return Err(DomainError::Game(super::GameError::NotYourTurn {
             current: active_player.clone(),
-            requested: cmd.player_id.clone(),
+            requested: cmd.player_id,
         }));
     }
 
@@ -36,7 +45,7 @@ pub fn play_land(
 
     if player.lands_played_this_turn() > 0 {
         return Err(DomainError::Phase(PhaseError::AlreadyPlayedLandThisTurn(
-            cmd.player_id.clone(),
+            cmd.player_id,
         )));
     }
 

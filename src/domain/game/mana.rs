@@ -6,6 +6,14 @@ use crate::domain::{
     events::{LandTapped, ManaAdded},
 };
 
+/// Taps a land to produce mana.
+///
+/// # Errors
+/// Returns an error if:
+/// - The player is not found
+/// - The card is not on the battlefield
+/// - The card is not a land
+/// - The land is already tapped
 pub fn tap_land(
     players: &mut [Player],
     cmd: TapLandCommand,

@@ -5,6 +5,13 @@ use crate::domain::{
     events::GameStarted,
 };
 
+/// Starts a new game with the given players.
+///
+/// # Errors
+/// Returns an error if:
+/// - Fewer than 2 players are provided
+/// - More than 2 players are provided
+/// - There are duplicate players
 pub fn start(cmd: StartGameCommand) -> Result<(Game, GameStarted), DomainError> {
     let player_count = cmd.players.len();
 

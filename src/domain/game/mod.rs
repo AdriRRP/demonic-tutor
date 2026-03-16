@@ -153,6 +153,7 @@ pub struct Game {
 }
 
 impl Game {
+    #[must_use]
     pub const fn new(
         id: GameId,
         active_player: PlayerId,
@@ -169,6 +170,7 @@ impl Game {
         }
     }
 
+    #[must_use]
     pub fn id_from_player_id(player_id: &PlayerId) -> GameId {
         GameId(format!("game-from-{}", player_id.0))
     }
@@ -198,10 +200,18 @@ impl Game {
         &self.players
     }
 
+    /// Starts a new game.
+    ///
+    /// # Errors
+    /// See [`start_game::start`].
     pub fn start(cmd: StartGameCommand) -> Result<(Self, GameStarted), DomainError> {
         start_game::start(cmd)
     }
 
+    /// Deals opening hands to players.
+    ///
+    /// # Errors
+    /// See [`opening_hands::deal_opening_hands`].
     pub fn deal_opening_hands(
         &mut self,
         cmd: &DealOpeningHandsCommand,
@@ -209,14 +219,26 @@ impl Game {
         opening_hands::deal_opening_hands(&mut self.players, cmd, &self.id)
     }
 
+    /// Performs a mulligan.
+    ///
+    /// # Errors
+    /// See [`mulligan::mulligan`].
     pub fn mulligan(&mut self, cmd: MulliganCommand) -> Result<MulliganTaken, DomainError> {
         mulligan::mulligan(&mut self.players, &self.active_player, &self.phase, cmd)
     }
 
+    /// Plays a land from hand to battlefield.
+    ///
+    /// # Errors
+    /// See [`lands::play_land`].
     pub fn play_land(&mut self, cmd: PlayLandCommand) -> Result<LandPlayed, DomainError> {
         lands::play_land(&mut self.players, &self.active_player, &self.phase, cmd)
     }
 
+    /// Advances the turn to the next phase and player.
+    ///
+    /// # Errors
+    /// See [`turns::advance_turn`].
     pub fn advance_turn(
         &mut self,
         cmd: AdvanceTurnCommand,
@@ -230,10 +252,18 @@ impl Game {
         )
     }
 
+    /// Draws a card from library to hand.
+    ///
+    /// # Errors
+    /// See [`draw::draw_card`].
     pub fn draw_card(&mut self, cmd: DrawCardCommand) -> Result<CardDrawn, DomainError> {
         draw::draw_card(&mut self.players, &self.active_player, &self.phase, cmd)
     }
 
+    /// Sets a player's life total.
+    ///
+    /// # Errors
+    /// See [`life::set_life`].
     pub fn set_life(
         &mut self,
         cmd: crate::domain::commands::SetLifeCommand,
@@ -241,6 +271,10 @@ impl Game {
         life::set_life(&mut self.players, cmd)
     }
 
+    /// Taps a land to produce mana.
+    ///
+    /// # Errors
+    /// See [`mana::tap_land`].
     pub fn tap_land(
         &mut self,
         cmd: TapLandCommand,
@@ -248,10 +282,18 @@ impl Game {
         mana::tap_land(&mut self.players, cmd)
     }
 
+    /// Casts a non-creature spell.
+    ///
+    /// # Errors
+    /// See [`spells::cast_spell`].
     pub fn cast_spell(&mut self, cmd: CastSpellCommand) -> Result<SpellCast, DomainError> {
         spells::cast_spell(&mut self.players, &self.active_player, &self.phase, cmd)
     }
 
+    /// Plays a creature from hand to battlefield.
+    ///
+    /// # Errors
+    /// See [`creatures::play_creature`].
     pub fn play_creature(
         &mut self,
         cmd: PlayCreatureCommand,
@@ -259,6 +301,10 @@ impl Game {
         creatures::play_creature(&mut self.players, &self.active_player, &self.phase, cmd)
     }
 
+    /// Declares attackers in combat.
+    ///
+    /// # Errors
+    /// See [`combat::declare_attackers`].
     pub fn declare_attackers(
         &mut self,
         cmd: DeclareAttackersCommand,
@@ -266,6 +312,10 @@ impl Game {
         combat::declare_attackers(&mut self.players, &self.active_player, &self.phase, cmd)
     }
 
+    /// Declares blockers in combat.
+    ///
+    /// # Errors
+    /// See [`combat::declare_blockers`].
     pub fn declare_blockers(
         &mut self,
         cmd: DeclareBlockersCommand,

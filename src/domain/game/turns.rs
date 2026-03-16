@@ -7,6 +7,10 @@ use crate::domain::{
     ids::PlayerId,
 };
 
+/// Advances the turn to the next phase and player.
+///
+/// # Errors
+/// Currently returns no errors.
 pub fn advance_turn(
     players: &mut [Player],
     active_player: &mut PlayerId,

@@ -8,6 +8,14 @@ use crate::domain::{
     ids::PlayerId,
 };
 
+/// Casts a non-creature spell from hand to battlefield.
+///
+/// # Errors
+/// Returns an error if:
+/// - The player is not the active player
+/// - The card is not in the player's hand
+/// - The card is a land (cannot be cast)
+/// - The player has insufficient mana
 pub fn cast_spell(
     players: &mut [Player],
     active_player: &PlayerId,
@@ -17,7 +25,7 @@ pub fn cast_spell(
     if *active_player != cmd.player_id {
         return Err(DomainError::Game(GameError::NotYourTurn {
             current: active_player.clone(),
-            requested: cmd.player_id.clone(),
+            requested: cmd.player_id,
         }));
     }
 
@@ -44,7 +52,7 @@ pub fn cast_spell(
     let mana_cost = card.mana_cost();
     if player.mana() < mana_cost {
         return Err(DomainError::Game(GameError::InsufficientMana {
-            player: cmd.player_id.clone(),
+            player: cmd.player_id,
             required: mana_cost,
             available: player.mana(),
         }));

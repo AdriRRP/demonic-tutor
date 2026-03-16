@@ -8,6 +8,15 @@ use crate::domain::{
     ids::{CardInstanceId, PlayerId},
 };
 
+/// Declares attackers for the active player in combat.
+///
+/// # Errors
+/// Returns an error if:
+/// - The player is not the active player
+/// - The phase is not Main
+/// - Any creature is not on the battlefield
+/// - Any creature is tapped
+/// - Any creature has summoning sickness
 pub fn declare_attackers(
     players: &mut [Player],
     active_player: &PlayerId,
@@ -17,7 +26,7 @@ pub fn declare_attackers(
     if *active_player != cmd.player_id {
         return Err(DomainError::Game(GameError::NotYourTurn {
             current: active_player.clone(),
-            requested: cmd.player_id.clone(),
+            requested: cmd.player_id,
         }));
     }
 
@@ -79,6 +88,14 @@ pub fn declare_attackers(
     ))
 }
 
+/// Declares blockers for the defending player in combat.
+///
+/// # Errors
+/// Returns an error if:
+/// - The player is the active player (not the defending player)
+/// - The phase is not Main
+/// - Any blocker is not on the battlefield
+/// - Any blocker is tapped
 pub fn declare_blockers(
     players: &mut [Player],
     active_player: &PlayerId,
@@ -88,7 +105,7 @@ pub fn declare_blockers(
     if *active_player == cmd.player_id {
         return Err(DomainError::Phase(PhaseError::NotDefendingPlayer {
             current: active_player.clone(),
-            requested: cmd.player_id.clone(),
+            requested: cmd.player_id,
         }));
     }
 

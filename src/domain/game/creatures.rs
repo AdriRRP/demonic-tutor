@@ -8,6 +8,15 @@ use crate::domain::{
     ids::PlayerId,
 };
 
+/// Plays a creature card from hand to battlefield.
+///
+/// # Errors
+/// Returns an error if:
+/// - The player is not the active player
+/// - The phase is not Main
+/// - The card is not in the player's hand
+/// - The card is not a creature
+/// - The player has insufficient mana
 pub fn play_creature(
     players: &mut [Player],
     active_player: &PlayerId,
@@ -17,7 +26,7 @@ pub fn play_creature(
     if *active_player != cmd.player_id {
         return Err(DomainError::Game(GameError::NotYourTurn {
             current: active_player.clone(),
-            requested: cmd.player_id.clone(),
+            requested: cmd.player_id,
         }));
     }
 
@@ -53,7 +62,7 @@ pub fn play_creature(
     let mana_cost = card.mana_cost();
     if player.mana() < mana_cost {
         return Err(DomainError::Game(GameError::InsufficientMana {
-            player: cmd.player_id.clone(),
+            player: cmd.player_id,
             required: mana_cost,
             available: player.mana(),
         }));
