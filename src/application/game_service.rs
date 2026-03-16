@@ -105,13 +105,13 @@ where
     ///
     /// # Errors
     ///
-    /// Returns an error if the active player cannot be found.
+    /// Returns an error if the active player cannot be found or auto-draw fails.
     pub fn advance_turn(
         &self,
         game: &mut Game,
         cmd: AdvanceTurnCommand,
     ) -> Result<TurnAdvanced, DomainError> {
-        let (turn_event, turn_number_event, phase_event) = game.advance_turn(cmd)?;
+        let (turn_event, turn_number_event, phase_event, card_drawn) = game.advance_turn(cmd)?;
 
         let game_id = game.id().0.clone();
 
@@ -132,6 +132,14 @@ where
             .event_store
             .append(&game_id, std::slice::from_ref(&phase_domain_event));
         self.event_bus.publish(&phase_domain_event);
+
+        if let Some(draw_event) = card_drawn {
+            let draw_domain_event: DomainEvent = draw_event.into();
+            let _ = self
+                .event_store
+                .append(&game_id, std::slice::from_ref(&draw_domain_event));
+            self.event_bus.publish(&draw_domain_event);
+        }
 
         Ok(turn_event)
     }

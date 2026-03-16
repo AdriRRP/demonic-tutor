@@ -44,6 +44,9 @@ fn create_game_with_land_in_hand() -> (demonictutor::Game, CardInstanceId) {
                 CardWithCost::new(CardDefinitionId::new("card-5"), CardType::Creature, 0),
                 CardWithCost::new(CardDefinitionId::new("card-6"), CardType::Creature, 0),
                 CardWithCost::new(CardDefinitionId::new("card-7"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-8"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-9"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-10"), CardType::Creature, 0),
             ],
         ),
         player_deck_contents(
@@ -56,14 +59,20 @@ fn create_game_with_land_in_hand() -> (demonictutor::Game, CardInstanceId) {
                 CardWithCost::new(CardDefinitionId::new("card-5"), CardType::Creature, 0),
                 CardWithCost::new(CardDefinitionId::new("card-6"), CardType::Creature, 0),
                 CardWithCost::new(CardDefinitionId::new("card-7"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-8"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-9"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-10"), CardType::Creature, 0),
             ],
         ),
     ]);
 
     service.deal_opening_hands(&mut game, &cmd).unwrap();
 
-    let advance_cmd = AdvanceTurnCommand::new();
-    service.advance_turn(&mut game, advance_cmd).unwrap();
+    // Need 11 advances to reach player-2's FirstMain (Setup adds 3 more phases)
+    for _ in 0..11 {
+        let advance_cmd = AdvanceTurnCommand::new();
+        service.advance_turn(&mut game, advance_cmd).unwrap();
+    }
 
     (game, land_card_id)
 }

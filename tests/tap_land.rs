@@ -44,6 +44,9 @@ fn create_game_with_land_on_battlefield() -> (
                 CardWithCost::new(CardDefinitionId::new("card-5"), CardType::Creature, 0),
                 CardWithCost::new(CardDefinitionId::new("card-6"), CardType::Creature, 0),
                 CardWithCost::new(CardDefinitionId::new("card-7"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-8"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-9"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-10"), CardType::Creature, 0),
             ],
         ),
         player_deck_contents(
@@ -56,27 +59,21 @@ fn create_game_with_land_on_battlefield() -> (
                 CardWithCost::new(CardDefinitionId::new("card-5"), CardType::Creature, 0),
                 CardWithCost::new(CardDefinitionId::new("card-6"), CardType::Creature, 0),
                 CardWithCost::new(CardDefinitionId::new("card-7"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-8"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-9"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-10"), CardType::Creature, 0),
             ],
         ),
     ]);
 
     service.deal_opening_hands(&mut game, &cmd).unwrap();
 
-    // Advance: Setup -> Main (player-2)
-    let advance_cmd = demonictutor::AdvanceTurnCommand::new();
-    service.advance_turn(&mut game, advance_cmd).unwrap();
-
-    // Advance: Main -> Combat (player-2)
-    let advance_cmd = demonictutor::AdvanceTurnCommand::new();
-    service.advance_turn(&mut game, advance_cmd).unwrap();
-
-    // Advance: Combat -> Ending (player-2)
-    let advance_cmd = demonictutor::AdvanceTurnCommand::new();
-    service.advance_turn(&mut game, advance_cmd).unwrap();
-
-    // Advance: Ending -> Main (player-1)
-    let advance_cmd = demonictutor::AdvanceTurnCommand::new();
-    service.advance_turn(&mut game, advance_cmd).unwrap();
+    // Advance to player-1's FirstMain phase (so player-1 can play a land)
+    // Setup -> Untap -> Upkeep -> Draw -> FirstMain
+    for _ in 0..4 {
+        let advance_cmd = demonictutor::AdvanceTurnCommand::new();
+        service.advance_turn(&mut game, advance_cmd).unwrap();
+    }
 
     // Player-1 plays a land
     let play_land_cmd = PlayLandCommand::new(

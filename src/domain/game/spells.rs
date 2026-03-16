@@ -13,13 +13,14 @@ use crate::domain::{
 /// # Errors
 /// Returns an error if:
 /// - The player is not the active player
+/// - The phase is not `FirstMain` or `SecondMain`
 /// - The card is not in the player's hand
 /// - The card is a land (cannot be cast)
 /// - The player has insufficient mana
 pub fn cast_spell(
     players: &mut [Player],
     active_player: &PlayerId,
-    _phase: &Phase,
+    phase: &Phase,
     cmd: CastSpellCommand,
 ) -> Result<SpellCast, DomainError> {
     if *active_player != cmd.player_id {
@@ -27,6 +28,12 @@ pub fn cast_spell(
             current: active_player.clone(),
             requested: cmd.player_id,
         }));
+    }
+
+    if !matches!(phase, Phase::FirstMain | Phase::SecondMain) {
+        return Err(DomainError::Phase(
+            super::PhaseError::InvalidForPlayingCard { phase: *phase },
+        ));
     }
 
     let player_idx = players

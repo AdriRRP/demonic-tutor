@@ -12,7 +12,7 @@ use crate::domain::{
 /// # Errors
 /// Returns an error if:
 /// - The player is not the active player
-/// - The phase is not Main or Setup
+/// - The phase is not `FirstMain` or `SecondMain`
 /// - The player has no cards in their library
 pub fn draw_card(
     players: &mut [Player],
@@ -27,7 +27,10 @@ pub fn draw_card(
         }));
     }
 
-    if !matches!(phase, Phase::Main | Phase::Setup) {
+    if !matches!(
+        phase,
+        Phase::Untap | Phase::Draw | Phase::FirstMain | Phase::SecondMain
+    ) {
         return Err(DomainError::Phase(super::PhaseError::InvalidForDraw {
             phase: *phase,
         }));

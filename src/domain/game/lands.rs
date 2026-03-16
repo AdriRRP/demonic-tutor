@@ -30,7 +30,7 @@ pub fn play_land(
         }));
     }
 
-    if !matches!(phase, Phase::Main) {
+    if !matches!(phase, Phase::FirstMain | Phase::SecondMain) {
         return Err(DomainError::Phase(PhaseError::InvalidForLand));
     }
 

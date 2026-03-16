@@ -59,6 +59,9 @@ fn create_game_with_library_cards() -> demonictutor::Game {
                 CardWithCost::new(CardDefinitionId::new("card-5"), CardType::Creature, 0),
                 CardWithCost::new(CardDefinitionId::new("card-6"), CardType::Creature, 0),
                 CardWithCost::new(CardDefinitionId::new("card-7"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-8"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-9"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-10"), CardType::Creature, 0),
             ],
         ),
     ]);
@@ -108,6 +111,8 @@ fn draw_card_works_in_main_phase() {
                 CardWithCost::new(CardDefinitionId::new("card-6"), CardType::Creature, 0),
                 CardWithCost::new(CardDefinitionId::new("card-7"), CardType::Creature, 0),
                 CardWithCost::new(CardDefinitionId::new("card-8"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-9"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-10"), CardType::Creature, 0),
             ],
         ),
     ]);
@@ -115,7 +120,15 @@ fn draw_card_works_in_main_phase() {
     service.deal_opening_hands(&mut game, &cmd).unwrap();
 
     let advance_cmd = AdvanceTurnCommand::new();
-    service.advance_turn(&mut game, advance_cmd).unwrap();
+    service.advance_turn(&mut game, advance_cmd).unwrap(); // Untap -> Draw
+
+    let advance_cmd = AdvanceTurnCommand::new();
+    service.advance_turn(&mut game, advance_cmd).unwrap(); // Draw -> FirstMain
+
+    for _ in 0..6 {
+        let advance_cmd = AdvanceTurnCommand::new();
+        service.advance_turn(&mut game, advance_cmd).unwrap();
+    }
 
     let draw_cmd = DrawCardCommand::new(PlayerId::new("player-2"));
     let result = service.draw_card(&mut game, draw_cmd);
@@ -163,14 +176,18 @@ fn draw_card_moves_card_from_library_to_hand() {
                 CardWithCost::new(CardDefinitionId::new("card-6"), CardType::Creature, 0),
                 CardWithCost::new(CardDefinitionId::new("card-7"), CardType::Creature, 0),
                 CardWithCost::new(CardDefinitionId::new("card-8"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-9"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-10"), CardType::Creature, 0),
             ],
         ),
     ]);
 
     service.deal_opening_hands(&mut game, &cmd).unwrap();
 
-    let advance_cmd = AdvanceTurnCommand::new();
-    service.advance_turn(&mut game, advance_cmd).unwrap();
+    for _ in 0..8 {
+        let advance_cmd = AdvanceTurnCommand::new();
+        service.advance_turn(&mut game, advance_cmd).unwrap();
+    }
 
     let hand_before = game.players()[1].hand().cards().len();
     let lib_before = game.players()[1].library().len();
@@ -223,14 +240,18 @@ fn draw_card_emits_event() {
                 CardWithCost::new(CardDefinitionId::new("card-6"), CardType::Creature, 0),
                 CardWithCost::new(CardDefinitionId::new("card-7"), CardType::Creature, 0),
                 CardWithCost::new(CardDefinitionId::new("card-8"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-9"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-10"), CardType::Creature, 0),
             ],
         ),
     ]);
 
     service.deal_opening_hands(&mut game, &cmd).unwrap();
 
-    let advance_cmd = AdvanceTurnCommand::new();
-    service.advance_turn(&mut game, advance_cmd).unwrap();
+    for _ in 0..8 {
+        let advance_cmd = AdvanceTurnCommand::new();
+        service.advance_turn(&mut game, advance_cmd).unwrap();
+    }
 
     let draw_cmd = DrawCardCommand::new(PlayerId::new("player-2"));
     let result = service.draw_card(&mut game, draw_cmd);
@@ -245,8 +266,19 @@ fn draw_card_fails_when_not_enough_cards() {
     let mut game = create_game_with_library_cards();
     let service = create_service();
 
-    let advance_cmd = AdvanceTurnCommand::new();
-    service.advance_turn(&mut game, advance_cmd).unwrap();
+    // Need more advances to reach player-2's FirstMain with new phases
+    for _ in 0..11 {
+        let advance_cmd = AdvanceTurnCommand::new();
+        service.advance_turn(&mut game, advance_cmd).unwrap();
+    }
+
+    let draw_cmd = DrawCardCommand::new(PlayerId::new("player-2"));
+    let result = service.draw_card(&mut game, draw_cmd);
+    assert!(result.is_ok());
+
+    let draw_cmd = DrawCardCommand::new(PlayerId::new("player-2"));
+    let result = service.draw_card(&mut game, draw_cmd);
+    assert!(result.is_ok());
 
     let draw_cmd = DrawCardCommand::new(PlayerId::new("player-2"));
     let result = service.draw_card(&mut game, draw_cmd);
@@ -317,11 +349,20 @@ fn draw_card_allows_playing_land_after_draw() {
     let mut game = create_game_with_library_cards();
     let service = create_service();
 
+    // First advance out of Setup phase to Draw
+    for _ in 0..3 {
+        let advance_cmd = AdvanceTurnCommand::new();
+        service.advance_turn(&mut game, advance_cmd).unwrap();
+    }
+
     let draw_cmd = DrawCardCommand::new(PlayerId::new("player-1"));
     service.draw_card(&mut game, draw_cmd).unwrap();
 
-    let advance_cmd = AdvanceTurnCommand::new();
-    service.advance_turn(&mut game, advance_cmd).unwrap();
+    // Now advance to player-2's FirstMain
+    for _ in 0..8 {
+        let advance_cmd = AdvanceTurnCommand::new();
+        service.advance_turn(&mut game, advance_cmd).unwrap();
+    }
 
     let land_cmd = PlayLandCommand::new(
         PlayerId::new("player-2"),

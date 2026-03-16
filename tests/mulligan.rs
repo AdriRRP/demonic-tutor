@@ -149,7 +149,7 @@ fn mulligan_fails_not_setup_phase() {
     let advance_cmd = AdvanceTurnCommand::new();
     service.advance_turn(&mut game, advance_cmd).unwrap();
 
-    assert_eq!(game.phase(), &demonictutor::Phase::Main);
+    assert_eq!(game.phase(), &demonictutor::Phase::Untap);
 
     let mulligan_cmd = MulliganCommand::new(PlayerId::new("player-1"));
     let result = service.mulligan(&mut game, mulligan_cmd);

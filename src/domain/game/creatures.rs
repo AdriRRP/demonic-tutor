@@ -30,7 +30,7 @@ pub fn play_creature(
         }));
     }
 
-    if !matches!(phase, Phase::Main) {
+    if !matches!(phase, Phase::FirstMain | Phase::SecondMain) {
         return Err(DomainError::Phase(
             super::PhaseError::InvalidForPlayingCard { phase: *phase },
         ));

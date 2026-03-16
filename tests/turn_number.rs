@@ -3,12 +3,17 @@
 use std::sync::Arc;
 
 use demonictutor::{
-    AdvanceTurnCommand, DeckId, DomainEvent, GameId, GameLogProjection, GameService,
-    InMemoryEventBus, InMemoryEventStore, PlayerDeck, PlayerId, StartGameCommand,
+    AdvanceTurnCommand, CardDefinitionId, CardType, CardWithCost, DealOpeningHandsCommand, DeckId,
+    DomainEvent, GameId, GameLogProjection, GameService, InMemoryEventBus, InMemoryEventStore,
+    PlayerDeck, PlayerDeckContents, PlayerId, StartGameCommand,
 };
 
 fn player_deck(player: &str, deck: &str) -> PlayerDeck {
     PlayerDeck::new(PlayerId::new(player), DeckId::new(deck))
+}
+
+fn player_deck_contents(player: &str, cards: Vec<CardWithCost>) -> PlayerDeckContents {
+    PlayerDeckContents::new(PlayerId::new(player), cards)
 }
 
 fn create_service() -> GameService<InMemoryEventStore, InMemoryEventBus> {
@@ -44,10 +49,47 @@ fn advance_turn_increments_turn_number() {
         ))
         .unwrap();
 
+    let cmd = DealOpeningHandsCommand::new(vec![
+        player_deck_contents(
+            "player-1",
+            vec![
+                CardWithCost::new(CardDefinitionId::new("forest"), CardType::Land, 0),
+                CardWithCost::new(CardDefinitionId::new("card-2"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-3"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-4"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-5"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-6"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-7"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-8"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-9"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-10"), CardType::Creature, 0),
+            ],
+        ),
+        player_deck_contents(
+            "player-2",
+            vec![
+                CardWithCost::new(CardDefinitionId::new("mountain"), CardType::Land, 0),
+                CardWithCost::new(CardDefinitionId::new("card-2"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-3"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-4"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-5"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-6"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-7"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-8"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-9"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-10"), CardType::Creature, 0),
+            ],
+        ),
+    ]);
+    service.deal_opening_hands(&mut game, &cmd).unwrap();
+
     assert_eq!(game.turn_number(), 1);
 
-    let cmd = AdvanceTurnCommand::new();
-    service.advance_turn(&mut game, cmd).unwrap();
+    // Need 8 advances to get to turn 2 (Setup adds 2 more phases)
+    for _ in 0..8 {
+        let cmd = AdvanceTurnCommand::new();
+        service.advance_turn(&mut game, cmd).unwrap();
+    }
 
     assert_eq!(game.turn_number(), 2);
 }

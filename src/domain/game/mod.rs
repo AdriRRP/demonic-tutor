@@ -29,9 +29,13 @@ use crate::domain::{
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Phase {
     Setup,
-    Main,
+    Untap,
+    Upkeep,
+    Draw,
+    FirstMain,
     Combat,
-    Ending,
+    SecondMain,
+    EndStep,
 }
 
 mod player {
@@ -243,7 +247,15 @@ impl Game {
     pub fn advance_turn(
         &mut self,
         cmd: AdvanceTurnCommand,
-    ) -> Result<(TurnAdvanced, TurnNumberChanged, PhaseChanged), DomainError> {
+    ) -> Result<
+        (
+            TurnAdvanced,
+            TurnNumberChanged,
+            PhaseChanged,
+            Option<CardDrawn>,
+        ),
+        DomainError,
+    > {
         turns::advance_turn(
             &mut self.players,
             &mut self.active_player,
