@@ -24,7 +24,7 @@ This slice follows `DeclareAttackers` because:
 
 - introduce a `DeclareBlockersCommand` that specifies blocking assignments
 - verify the player is the defending player (not active player)
-- verify the phase is Beginning (combat phase)
+- verify the phase is Main (combat phase)
 - verify each blocking creature:
   - is on the battlefield
   - is controlled by defending player
@@ -67,7 +67,7 @@ This slice follows `DeclareAttackers` because:
 - extend `Game` with `declare_blockers` behavior
 
 ### Entity / Value Object Impact
-- `CardInstance` - add `is_blocking` field, `blocked_attacker` reference
+- `CardInstance` - add `is_blocking` field
 
 ### Commands
 - add `DeclareBlockersCommand` - contains pairs of (blocker, target attacker)
