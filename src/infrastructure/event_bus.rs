@@ -1,5 +1,7 @@
-use crate::{application::EventBus, domain::events::DomainEvent};
-use std::sync::Arc;
+use {
+    crate::{application::EventBus, domain::events::DomainEvent},
+    std::sync::Arc,
+};
 
 pub type EventHandler = Arc<dyn Fn(&DomainEvent) + Send + Sync>;
 

@@ -1,5 +1,4 @@
-use crate::domain::events::DomainEvent;
-use std::sync::RwLock;
+use {crate::domain::events::DomainEvent, std::sync::RwLock};
 
 #[derive(Debug, Default)]
 pub struct GameLogProjection {

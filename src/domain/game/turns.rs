@@ -1,10 +1,11 @@
-use super::Phase;
-use super::{phase_behavior, player::Player};
-use crate::domain::{
-    commands::AdvanceTurnCommand,
-    errors::{DomainError, GameError},
-    events::{CardDrawn, PhaseChanged, TurnAdvanced, TurnNumberChanged},
-    ids::{GameId, PlayerId},
+use {
+    super::{phase_behavior, player::Player, Phase},
+    crate::domain::{
+        commands::AdvanceTurnCommand,
+        errors::{DomainError, GameError},
+        events::{CardDrawn, PhaseChanged, TurnAdvanced, TurnNumberChanged},
+        ids::{GameId, PlayerId},
+    },
 };
 
 fn rotate_to_next_player(

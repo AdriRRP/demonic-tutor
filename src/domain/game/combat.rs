@@ -1,13 +1,14 @@
-use super::player::Player;
-use super::Phase;
-use crate::domain::{
-    cards::CardType,
-    commands::{DeclareAttackersCommand, DeclareBlockersCommand, ResolveCombatDamageCommand},
-    errors::{CardError, DomainError, GameError, PhaseError},
-    events::{
-        AttackersDeclared, BlockersDeclared, CombatDamageResolved, DamageEvent, DamageTarget,
+use {
+    super::{player::Player, Phase},
+    crate::domain::{
+        cards::CardType,
+        commands::{DeclareAttackersCommand, DeclareBlockersCommand, ResolveCombatDamageCommand},
+        errors::{CardError, DomainError, GameError, PhaseError},
+        events::{
+            AttackersDeclared, BlockersDeclared, CombatDamageResolved, DamageEvent, DamageTarget,
+        },
+        ids::{CardInstanceId, PlayerId},
     },
-    ids::{CardInstanceId, PlayerId},
 };
 
 /// Declares attackers for the active player in combat.

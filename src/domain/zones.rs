@@ -1,5 +1,7 @@
-use crate::domain::{cards::CardInstance, ids::CardInstanceId};
-use rand::seq::SliceRandom;
+use {
+    crate::domain::{cards::CardInstance, ids::CardInstanceId},
+    rand::seq::SliceRandom,
+};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Library(Vec<CardInstance>);

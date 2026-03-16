@@ -1,5 +1,7 @@
-use crate::{application::EventStore, domain::events::DomainEvent};
-use std::{collections::HashMap, error::Error, sync::RwLock};
+use {
+    crate::{application::EventStore, domain::events::DomainEvent},
+    std::{collections::HashMap, error::Error, sync::RwLock},
+};
 
 pub struct InMemoryEventStore {
     events: RwLock<HashMap<String, Vec<DomainEvent>>>,
