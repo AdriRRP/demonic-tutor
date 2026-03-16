@@ -133,7 +133,7 @@ This behavior belongs to the `Game` aggregate because:
 
 ## Rules Support Statement
 
-This slice introduces the declare attackers step of the combat phase. It allows creatures to attack but does not resolve combat damage. Damage resolution, blocking, and state-based actions are future slices.
+This slice introduces the declare attackers step of the combat phase. It allows creatures to attack but does not resolve combat damage. Combat damage resolution and state-based actions are future slices.
 
 ---
 

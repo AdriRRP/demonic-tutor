@@ -271,6 +271,8 @@ PlayCreature
 RemoveSummoningSickness
 ↓
 DeclareAttackers
+↓
+DeclareBlockers
 
 ```
 
@@ -284,9 +286,7 @@ The system should evolve through **small, observable domain capabilities**.
 
 Future slices may include:
 
-- creature combat and damage
-- declare attackers step
-- declare blockers step
+- combat damage and destruction
 - stack resolution
 - triggered abilities
 
