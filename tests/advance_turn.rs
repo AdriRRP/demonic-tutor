@@ -121,13 +121,17 @@ fn advance_turn_resets_lands_played() {
 
     assert_eq!(game.players()[1].lands_played_this_turn(), 1);
 
-    // Second advance: Main -> Ending (player-2)
+    // Second advance: Main -> Combat (player-1)
     let advance_cmd2 = AdvanceTurnCommand::new();
     service.advance_turn(&mut game, advance_cmd2).unwrap();
 
-    // Third advance: Ending -> Main (player-1) - lands reset here
+    // Third advance: Combat -> Ending (player-1)
     let advance_cmd3 = AdvanceTurnCommand::new();
     service.advance_turn(&mut game, advance_cmd3).unwrap();
+
+    // Fourth advance: Ending -> Main (player-2) - lands reset here
+    let advance_cmd4 = AdvanceTurnCommand::new();
+    service.advance_turn(&mut game, advance_cmd4).unwrap();
 
     assert_eq!(game.players()[0].lands_played_this_turn(), 0);
     assert_eq!(game.players()[1].lands_played_this_turn(), 0);
@@ -152,12 +156,15 @@ fn advance_turn_allows_playing_land_after_turn_change() {
 
     assert!(result.is_ok());
 
-    // Advance through Ending to player-1's Main phase
+    // Advance through Combat and Ending to player-1's Main phase
     let advance_cmd2 = AdvanceTurnCommand::new();
-    service.advance_turn(&mut game, advance_cmd2).unwrap(); // Main -> Ending
+    service.advance_turn(&mut game, advance_cmd2).unwrap(); // Main -> Combat
 
     let advance_cmd3 = AdvanceTurnCommand::new();
-    service.advance_turn(&mut game, advance_cmd3).unwrap(); // Ending -> Main (player-1)
+    service.advance_turn(&mut game, advance_cmd3).unwrap(); // Combat -> Ending
+
+    let advance_cmd4 = AdvanceTurnCommand::new();
+    service.advance_turn(&mut game, advance_cmd4).unwrap(); // Ending -> Main (player-1)
 
     // Now it's player-1's Main phase, player-1 cannot play land (no land in hand)
     let land_cmd_player2 = PlayLandCommand::new(

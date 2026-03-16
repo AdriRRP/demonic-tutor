@@ -156,7 +156,7 @@ The current model includes:
 
 - power and toughness for creature cards
 - summoning sickness tracking and automatic removal at turn start
-- declare attackers and blockers in main phase
+- declare attackers and blockers in combat phase
 
 The current model intentionally omits:
 

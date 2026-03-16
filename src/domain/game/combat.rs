@@ -30,7 +30,7 @@ pub fn declare_attackers(
         }));
     }
 
-    if !matches!(phase, Phase::Main) {
+    if !matches!(phase, Phase::Combat) {
         return Err(DomainError::Phase(PhaseError::InvalidForCombat));
     }
 
@@ -109,7 +109,7 @@ pub fn declare_blockers(
         }));
     }
 
-    if !matches!(phase, Phase::Main) {
+    if !matches!(phase, Phase::Combat) {
         return Err(DomainError::Phase(PhaseError::InvalidForCombat));
     }
 

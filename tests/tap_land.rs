@@ -66,7 +66,11 @@ fn create_game_with_land_on_battlefield() -> (
     let advance_cmd = demonictutor::AdvanceTurnCommand::new();
     service.advance_turn(&mut game, advance_cmd).unwrap();
 
-    // Advance: Main -> Ending (player-2)
+    // Advance: Main -> Combat (player-2)
+    let advance_cmd = demonictutor::AdvanceTurnCommand::new();
+    service.advance_turn(&mut game, advance_cmd).unwrap();
+
+    // Advance: Combat -> Ending (player-2)
     let advance_cmd = demonictutor::AdvanceTurnCommand::new();
     service.advance_turn(&mut game, advance_cmd).unwrap();
 

@@ -23,7 +23,8 @@ pub fn advance_turn(
     let from_turn = *turn_number;
     let (to_phase, change_player) = match phase {
         Phase::Setup | Phase::Ending => (Phase::Main, true),
-        Phase::Main => (Phase::Ending, false),
+        Phase::Main => (Phase::Combat, false),
+        Phase::Combat => (Phase::Ending, false),
     };
 
     if change_player {

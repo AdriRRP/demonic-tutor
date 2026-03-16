@@ -24,7 +24,7 @@ This slice follows `DeclareAttackers` because:
 
 - introduce a `DeclareBlockersCommand` that specifies blocking assignments
 - verify the player is the defending player (not active player)
-- verify the phase is Main phase
+- verify the phase is Combat
 - verify each blocking creature:
   - is on the battlefield
   - is controlled by defending player

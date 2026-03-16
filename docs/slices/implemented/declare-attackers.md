@@ -6,7 +6,7 @@ DeclareAttackers
 
 ## Goal
 
-Allow the active player to declare attacking creatures during the main phase. Creatures must satisfy requirements (not tapped, not summoning sickness) to attack.
+Introduce a combat phase that allows the active player to declare attacking creatures. Creatures must satisfy requirements (not tapped, not summoning sickness) to attack.
 
 ---
 
@@ -131,7 +131,7 @@ This behavior belongs to the `Game` aggregate because:
 
 ## Rules Support Statement
 
-This slice introduces the declare attackers step during the main phase. It allows creatures to attack but does not resolve combat damage. Combat damage resolution and state-based actions are future slices.
+This slice introduces the declare attackers step of the combat phase. It allows creatures to attack but does not resolve combat damage. Combat damage resolution and state-based actions are future slices.
 
 ---
 

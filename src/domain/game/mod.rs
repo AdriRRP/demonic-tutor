@@ -30,6 +30,7 @@ use crate::domain::{
 pub enum Phase {
     Setup,
     Main,
+    Combat,
     Ending,
 }
 
