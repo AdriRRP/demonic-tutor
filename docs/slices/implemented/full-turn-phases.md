@@ -8,13 +8,13 @@ FullTurnPhases
 
 ## Goal
 
-Expand the turn model to include all standard Magic phases: Untap, Draw, First Main, Combat, Second Main, and End Step. This replaces the current simplified phase model with the proper Magic turn structure.
+Expand the turn model to include all standard Magic phases: Setup, Untap, Upkeep, Draw, First Main, Combat, Second Main, and End Step. This replaces the current simplified phase model with the proper Magic turn structure.
 
 ---
 
 ## Why This Slice Exists Now
 
-The current simplified model (Setup → Main → Combat → Ending) is too limited:
+The current simplified model (Setup → Main → Combat → Ending) was too limited. The introduction of `mulligan-with-setup.md` re-introduced the `Setup` and `Upkeep` phases. This slice ensures the full turn structure is accurately reflected.
 
 1. Combat damage is now implemented, requiring proper phase structure
 2. Draw should happen at start of turn, not as explicit command

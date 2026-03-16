@@ -1,41 +1,11 @@
-use super::player::Player;
 use super::Phase;
+use super::{phase_behavior, player::Player};
 use crate::domain::{
-    cards::CardInstance,
     commands::AdvanceTurnCommand,
     errors::{DomainError, GameError},
     events::{CardDrawn, PhaseChanged, TurnAdvanced, TurnNumberChanged},
-    ids::PlayerId,
+    ids::{GameId, PlayerId},
 };
-
-/// Represents the result of determining the next phase transition.
-struct PhaseTransition {
-    to_phase: Phase,
-    change_player: bool,
-    auto_draw: bool,
-}
-
-impl Phase {
-    const fn next(self) -> Self {
-        match self {
-            Self::Setup | Self::EndStep => Self::Untap,
-            Self::Untap => Self::Upkeep,
-            Self::Upkeep => Self::Draw,
-            Self::Draw => Self::FirstMain,
-            Self::FirstMain => Self::Combat,
-            Self::Combat => Self::SecondMain,
-            Self::SecondMain => Self::EndStep,
-        }
-    }
-
-    const fn requires_player_change(self) -> bool {
-        matches!(self, Self::EndStep)
-    }
-
-    const fn triggers_auto_draw(self) -> bool {
-        matches!(self, Self::Draw)
-    }
-}
 
 fn rotate_to_next_player(
     players: &[Player],
@@ -57,31 +27,8 @@ fn rotate_to_next_player(
     Ok(())
 }
 
-fn prepare_players_for_new_turn(players: &mut [Player]) {
-    for player in players.iter_mut() {
-        *player.lands_played_this_turn_mut() = 0;
-        player
-            .battlefield_mut()
-            .cards_mut()
-            .iter_mut()
-            .for_each(|card| {
-                card.untap();
-                card.remove_summoning_sickness();
-            });
-    }
-}
-
-fn cleanup_damage(players: &mut [Player]) {
-    for player in players.iter_mut() {
-        player
-            .battlefield_mut()
-            .cards_mut()
-            .iter_mut()
-            .for_each(CardInstance::clear_damage);
-    }
-}
-
 fn auto_draw_card(
+    game_id: &GameId,
     players: &mut [Player],
     active_player: &PlayerId,
 ) -> Result<Option<CardDrawn>, DomainError> {
@@ -109,13 +56,14 @@ fn auto_draw_card(
     player.hand_mut().receive(vec![card]);
 
     Ok(Some(CardDrawn::new(
-        super::Game::id_from_player_id(active_player),
+        game_id.clone(),
         active_player.clone(),
         card_id,
     )))
 }
 
 fn build_events(
+    game_id: &GameId,
     active_player: &PlayerId,
     from_phase: Phase,
     to_phase: Phase,
@@ -129,20 +77,9 @@ fn build_events(
     Option<CardDrawn>,
 ) {
     (
-        TurnAdvanced::new(
-            super::Game::id_from_player_id(active_player),
-            active_player.clone(),
-        ),
-        TurnNumberChanged::new(
-            super::Game::id_from_player_id(active_player),
-            from_turn,
-            turn_number,
-        ),
-        PhaseChanged::new(
-            super::Game::id_from_player_id(active_player),
-            from_phase,
-            to_phase,
-        ),
+        TurnAdvanced::new(game_id.clone(), active_player.clone()),
+        TurnNumberChanged::new(game_id.clone(), from_turn, turn_number),
+        PhaseChanged::new(game_id.clone(), from_phase, to_phase),
         card_drawn_event,
     )
 }
@@ -152,6 +89,7 @@ fn build_events(
 /// # Errors
 /// Returns an error if auto-draw fails (empty library).
 pub fn advance_turn(
+    game_id: &GameId,
     players: &mut [Player],
     active_player: &mut PlayerId,
     phase: &mut Phase,
@@ -168,44 +106,52 @@ pub fn advance_turn(
 > {
     let from_phase = *phase;
     let from_turn = *turn_number;
-    let to_phase = from_phase.next();
 
-    let transition = PhaseTransition {
-        to_phase,
-        change_player: from_phase.requires_player_change(),
-        auto_draw: from_phase.triggers_auto_draw(),
-    };
+    // Get behavior for current phase using State pattern
+    let current_phase_behavior = phase_behavior::get_phase_behavior(&from_phase);
 
-    // Cleanup damage at end of EndStep
-    if matches!(from_phase, Phase::EndStep) {
-        cleanup_damage(players);
-    }
+    // Execute phase exit logic
+    current_phase_behavior.on_exit(players, active_player)?;
 
-    if transition.change_player {
+    // Determine next phase
+    let to_phase = current_phase_behavior.next_phase();
+    let to_phase_behavior = phase_behavior::get_phase_behavior(&to_phase);
+
+    // Check if we need to change players
+    if current_phase_behavior.requires_player_change() {
         rotate_to_next_player(players, active_player, turn_number)?;
-        prepare_players_for_new_turn(players);
-        *phase = transition.to_phase;
+        *phase = to_phase;
+
+        // Execute phase entry logic for new phase
+        to_phase_behavior.on_enter(players, active_player)?;
+
         return Ok(build_events(
+            game_id,
             active_player,
             from_phase,
-            transition.to_phase,
+            to_phase,
             from_turn,
             *turn_number,
             None,
         ));
     }
 
-    let card_drawn_event = if transition.auto_draw {
-        auto_draw_card(players, active_player)?
+    // Handle auto-draw if current phase triggers it
+    let card_drawn_event = if current_phase_behavior.triggers_auto_draw() {
+        auto_draw_card(game_id, players, active_player)?
     } else {
         None
     };
 
-    *phase = transition.to_phase;
+    // Update phase and execute entry logic
+    *phase = to_phase;
+    to_phase_behavior.on_enter(players, active_player)?;
+
     Ok(build_events(
+        game_id,
         active_player,
         from_phase,
-        transition.to_phase,
+        to_phase,
         from_turn,
         *turn_number,
         card_drawn_event,

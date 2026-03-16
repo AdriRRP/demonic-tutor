@@ -1,18 +1,20 @@
-use crate::application::{EventBus, EventStore};
-use crate::domain::{
-    commands::{
-        AdvanceTurnCommand, CastSpellCommand, DealOpeningHandsCommand, DeclareAttackersCommand,
-        DeclareBlockersCommand, DrawCardCommand, MulliganCommand, PlayCreatureCommand,
-        PlayLandCommand, ResolveCombatDamageCommand, SetLifeCommand, StartGameCommand,
-        TapLandCommand,
+use crate::{
+    application::{Command, EventBus, EventStore},
+    domain::{
+        commands::{
+            AdvanceTurnCommand, CastSpellCommand, DealOpeningHandsCommand, DeclareAttackersCommand,
+            DeclareBlockersCommand, DrawCardCommand, MulliganCommand, PlayCreatureCommand,
+            PlayLandCommand, ResolveCombatDamageCommand, SetLifeCommand, StartGameCommand,
+            TapLandCommand,
+        },
+        errors::DomainError,
+        events::{
+            AttackersDeclared, BlockersDeclared, CardDrawn, CombatDamageResolved,
+            CreatureEnteredBattlefield, DomainEvent, GameStarted, LandPlayed, LandTapped,
+            LifeChanged, ManaAdded, MulliganTaken, OpeningHandDealt, SpellCast, TurnAdvanced,
+        },
+        game::Game,
     },
-    errors::DomainError,
-    events::{
-        AttackersDeclared, BlockersDeclared, CardDrawn, CombatDamageResolved,
-        CreatureEnteredBattlefield, DomainEvent, GameStarted, LandPlayed, LandTapped, LifeChanged,
-        ManaAdded, MulliganTaken, OpeningHandDealt, SpellCast, TurnAdvanced,
-    },
-    game::Game,
 };
 
 pub struct GameService<E, B>
@@ -37,6 +39,30 @@ where
         }
     }
 
+    fn persist_and_publish_events(&self, game_id: &str, events: &[DomainEvent]) {
+        if !events.is_empty() {
+            let _ = self.event_store.append(game_id, events);
+            for event in events {
+                self.event_bus.publish(event);
+            }
+        }
+    }
+
+    /// Executes a command using the `Command` pattern.
+    ///
+    /// # Errors
+    /// Returns a `DomainError` if the command violates domain rules or invariants.
+    pub fn execute_command<C: Command>(
+        &self,
+        game: &mut Game,
+        command: &C,
+    ) -> Result<Vec<DomainEvent>, DomainError> {
+        let events = game.execute_command(command)?;
+        let game_id = game.id().0.clone();
+        self.persist_and_publish_events(&game_id, &events);
+        Ok(events)
+    }
+
     /// Starts a new game.
     ///
     /// # Errors
@@ -47,10 +73,7 @@ where
         let domain_event: DomainEvent = event.clone().into();
 
         let game_id = game.id().0.clone();
-        let _ = self
-            .event_store
-            .append(&game_id, std::slice::from_ref(&domain_event));
-        self.event_bus.publish(&domain_event);
+        self.persist_and_publish_events(&game_id, &[domain_event]);
 
         Ok((game, event))
     }
@@ -70,10 +93,7 @@ where
         if !events.is_empty() {
             let game_id = game.id().0.clone();
             let domain_events: Vec<DomainEvent> = events.iter().cloned().map(Into::into).collect();
-            let _ = self.event_store.append(&game_id, &domain_events);
-            for event in &domain_events {
-                self.event_bus.publish(event);
-            }
+            self.persist_and_publish_events(&game_id, &domain_events);
         }
 
         Ok(events)
@@ -93,10 +113,7 @@ where
         let domain_event: DomainEvent = event.clone().into();
 
         let game_id = game.id().0.clone();
-        let _ = self
-            .event_store
-            .append(&game_id, std::slice::from_ref(&domain_event));
-        self.event_bus.publish(&domain_event);
+        self.persist_and_publish_events(&game_id, &[domain_event]);
 
         Ok(event)
     }
@@ -114,32 +131,15 @@ where
         let (turn_event, turn_number_event, phase_event, card_drawn) = game.advance_turn(cmd)?;
 
         let game_id = game.id().0.clone();
-
-        let turn_domain_event: DomainEvent = turn_event.clone().into();
-        let _ = self
-            .event_store
-            .append(&game_id, std::slice::from_ref(&turn_domain_event));
-        self.event_bus.publish(&turn_domain_event);
-
-        let turn_number_domain_event: DomainEvent = turn_number_event.into();
-        let _ = self
-            .event_store
-            .append(&game_id, std::slice::from_ref(&turn_number_domain_event));
-        self.event_bus.publish(&turn_number_domain_event);
-
-        let phase_domain_event: DomainEvent = phase_event.into();
-        let _ = self
-            .event_store
-            .append(&game_id, std::slice::from_ref(&phase_domain_event));
-        self.event_bus.publish(&phase_domain_event);
-
+        let mut domain_events = Vec::new();
+        domain_events.push(turn_event.clone().into());
+        domain_events.push(turn_number_event.into());
+        domain_events.push(phase_event.into());
         if let Some(draw_event) = card_drawn {
-            let draw_domain_event: DomainEvent = draw_event.into();
-            let _ = self
-                .event_store
-                .append(&game_id, std::slice::from_ref(&draw_domain_event));
-            self.event_bus.publish(&draw_domain_event);
+            domain_events.push(draw_event.into());
         }
+
+        self.persist_and_publish_events(&game_id, &domain_events);
 
         Ok(turn_event)
     }
@@ -158,10 +158,7 @@ where
         let domain_event: DomainEvent = event.clone().into();
 
         let game_id = game.id().0.clone();
-        let _ = self
-            .event_store
-            .append(&game_id, std::slice::from_ref(&domain_event));
-        self.event_bus.publish(&domain_event);
+        self.persist_and_publish_events(&game_id, &[domain_event]);
 
         Ok(event)
     }
@@ -180,10 +177,7 @@ where
         let domain_event: DomainEvent = event.clone().into();
 
         let game_id = game.id().0.clone();
-        let _ = self
-            .event_store
-            .append(&game_id, std::slice::from_ref(&domain_event));
-        self.event_bus.publish(&domain_event);
+        self.persist_and_publish_events(&game_id, &[domain_event]);
 
         Ok(event)
     }
@@ -202,10 +196,7 @@ where
         let domain_event: DomainEvent = event.clone().into();
 
         let game_id = game.id().0.clone();
-        let _ = self
-            .event_store
-            .append(&game_id, std::slice::from_ref(&domain_event));
-        self.event_bus.publish(&domain_event);
+        self.persist_and_publish_events(&game_id, &[domain_event]);
 
         Ok(event)
     }
@@ -223,18 +214,8 @@ where
         let (land_event, mana_event) = game.tap_land(cmd)?;
 
         let game_id = game.id().0.clone();
-
-        let land_domain_event: DomainEvent = land_event.clone().into();
-        let _ = self
-            .event_store
-            .append(&game_id, std::slice::from_ref(&land_domain_event));
-        self.event_bus.publish(&land_domain_event);
-
-        let mana_domain_event: DomainEvent = mana_event.clone().into();
-        let _ = self
-            .event_store
-            .append(&game_id, std::slice::from_ref(&mana_domain_event));
-        self.event_bus.publish(&mana_domain_event);
+        let domain_events = vec![land_event.clone().into(), mana_event.clone().into()];
+        self.persist_and_publish_events(&game_id, &domain_events);
 
         Ok((land_event, mana_event))
     }
@@ -253,10 +234,7 @@ where
         let domain_event: DomainEvent = event.clone().into();
 
         let game_id = game.id().0.clone();
-        let _ = self
-            .event_store
-            .append(&game_id, std::slice::from_ref(&domain_event));
-        self.event_bus.publish(&domain_event);
+        self.persist_and_publish_events(&game_id, &[domain_event]);
 
         Ok(event)
     }
@@ -275,10 +253,7 @@ where
         let domain_event: DomainEvent = event.clone().into();
 
         let game_id = game.id().0.clone();
-        let _ = self
-            .event_store
-            .append(&game_id, std::slice::from_ref(&domain_event));
-        self.event_bus.publish(&domain_event);
+        self.persist_and_publish_events(&game_id, &[domain_event]);
 
         Ok(event)
     }
@@ -297,10 +272,7 @@ where
         let domain_event: DomainEvent = event.clone().into();
 
         let game_id = game.id().0.clone();
-        let _ = self
-            .event_store
-            .append(&game_id, std::slice::from_ref(&domain_event));
-        self.event_bus.publish(&domain_event);
+        self.persist_and_publish_events(&game_id, &[domain_event]);
 
         Ok(event)
     }
@@ -319,10 +291,7 @@ where
         let domain_event: DomainEvent = event.clone().into();
 
         let game_id = game.id().0.clone();
-        let _ = self
-            .event_store
-            .append(&game_id, std::slice::from_ref(&domain_event));
-        self.event_bus.publish(&domain_event);
+        self.persist_and_publish_events(&game_id, &[domain_event]);
 
         Ok(event)
     }
@@ -341,10 +310,7 @@ where
         let domain_event: DomainEvent = event.clone().into();
 
         let game_id = game.id().0.clone();
-        let _ = self
-            .event_store
-            .append(&game_id, std::slice::from_ref(&domain_event));
-        self.event_bus.publish(&domain_event);
+        self.persist_and_publish_events(&game_id, &[domain_event]);
 
         Ok(event)
     }

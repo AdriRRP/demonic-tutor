@@ -63,7 +63,7 @@ impl GameLogProjection {
                 format!("Turn changed from {} to {}", e.from_turn, e.to_turn)
             }
             DomainEvent::PhaseChanged(e) => {
-                format!("Phase changed from {} to {}", e.from_phase, e.to_phase)
+                format!("Phase changed from {:?} to {:?}", e.from_phase, e.to_phase)
             }
             DomainEvent::LandTapped(e) => {
                 format!("Player {} tapped land {}", e.player_id, e.card_id)

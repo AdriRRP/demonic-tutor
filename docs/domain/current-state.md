@@ -30,7 +30,7 @@ Implemented capabilities include:
 - resolving combat damage (without creature destruction)
 - tracking player life totals
 - advancing turns
-- full phase progression (Setup, Untap, Upkeep, Draw, FirstMain, Combat, SecondMain, EndStep)
+- full phase progression using State pattern (Setup, Untap, Upkeep, Draw, FirstMain, Combat, SecondMain, EndStep)
 
 These capabilities correspond to the slices currently implemented in the system.
 
@@ -94,17 +94,22 @@ Persistent infrastructure may be introduced in future iterations.
 
 The project currently includes:
 
-- a core `Game` aggregate
+- a core `Game` aggregate with centralized player access
 - command-driven gameplay operations
 - domain events describing state transitions
 - an event bus for event distribution
 - projections derived from gameplay events
+- State pattern for phase transitions
+- Command pattern for unified command processing
+- helper methods for event persistence and publishing
 
 This architecture supports:
 
 - replayability
 - observability
 - deterministic state transitions
+- State pattern for phase behavior encapsulation
+- Command pattern for consistent command processing
 
 ---
 

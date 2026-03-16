@@ -20,152 +20,6 @@ pub enum DomainEvent {
     CombatDamageResolved(CombatDamageResolved),
 }
 
-impl DomainEvent {
-    #[must_use]
-    pub const fn as_game_started(&self) -> Option<&GameStarted> {
-        if let Self::GameStarted(e) = self {
-            Some(e)
-        } else {
-            None
-        }
-    }
-
-    #[must_use]
-    pub const fn as_opening_hand_dealt(&self) -> Option<&OpeningHandDealt> {
-        if let Self::OpeningHandDealt(e) = self {
-            Some(e)
-        } else {
-            None
-        }
-    }
-
-    #[must_use]
-    pub const fn as_land_played(&self) -> Option<&LandPlayed> {
-        if let Self::LandPlayed(e) = self {
-            Some(e)
-        } else {
-            None
-        }
-    }
-
-    #[must_use]
-    pub const fn as_turn_advanced(&self) -> Option<&TurnAdvanced> {
-        if let Self::TurnAdvanced(e) = self {
-            Some(e)
-        } else {
-            None
-        }
-    }
-
-    #[must_use]
-    pub const fn as_card_drawn(&self) -> Option<&CardDrawn> {
-        if let Self::CardDrawn(e) = self {
-            Some(e)
-        } else {
-            None
-        }
-    }
-
-    #[must_use]
-    pub const fn as_mulligan_taken(&self) -> Option<&MulliganTaken> {
-        if let Self::MulliganTaken(e) = self {
-            Some(e)
-        } else {
-            None
-        }
-    }
-
-    #[must_use]
-    pub const fn as_life_changed(&self) -> Option<&LifeChanged> {
-        if let Self::LifeChanged(e) = self {
-            Some(e)
-        } else {
-            None
-        }
-    }
-
-    #[must_use]
-    pub const fn as_turn_number_changed(&self) -> Option<&TurnNumberChanged> {
-        if let Self::TurnNumberChanged(e) = self {
-            Some(e)
-        } else {
-            None
-        }
-    }
-
-    #[must_use]
-    pub const fn as_phase_changed(&self) -> Option<&PhaseChanged> {
-        if let Self::PhaseChanged(e) = self {
-            Some(e)
-        } else {
-            None
-        }
-    }
-
-    #[must_use]
-    pub const fn as_land_tapped(&self) -> Option<&LandTapped> {
-        if let Self::LandTapped(e) = self {
-            Some(e)
-        } else {
-            None
-        }
-    }
-
-    #[must_use]
-    pub const fn as_mana_added(&self) -> Option<&ManaAdded> {
-        if let Self::ManaAdded(e) = self {
-            Some(e)
-        } else {
-            None
-        }
-    }
-
-    #[must_use]
-    pub const fn as_spell_cast(&self) -> Option<&SpellCast> {
-        if let Self::SpellCast(e) = self {
-            Some(e)
-        } else {
-            None
-        }
-    }
-
-    #[must_use]
-    pub const fn as_creature_entered_battlefield(&self) -> Option<&CreatureEnteredBattlefield> {
-        if let Self::CreatureEnteredBattlefield(e) = self {
-            Some(e)
-        } else {
-            None
-        }
-    }
-
-    #[must_use]
-    pub const fn as_attackers_declared(&self) -> Option<&AttackersDeclared> {
-        if let Self::AttackersDeclared(e) = self {
-            Some(e)
-        } else {
-            None
-        }
-    }
-
-    #[must_use]
-    pub const fn as_blockers_declared(&self) -> Option<&BlockersDeclared> {
-        if let Self::BlockersDeclared(e) = self {
-            Some(e)
-        } else {
-            None
-        }
-    }
-
-    #[must_use]
-    pub const fn as_combat_damage_resolved(&self) -> Option<&CombatDamageResolved> {
-        if let Self::CombatDamageResolved(e) = self {
-            Some(e)
-        } else {
-            None
-        }
-    }
-}
-
 #[derive(Debug, Clone)]
 pub struct GameStarted {
     pub game_id: GameId,
@@ -303,21 +157,21 @@ impl TurnNumberChanged {
 #[derive(Debug, Clone)]
 pub struct PhaseChanged {
     pub game_id: GameId,
-    pub from_phase: String,
-    pub to_phase: String,
+    pub from_phase: crate::domain::game::Phase,
+    pub to_phase: crate::domain::game::Phase,
 }
 
 impl PhaseChanged {
     #[must_use]
-    pub fn new(
+    pub const fn new(
         game_id: GameId,
         from_phase: crate::domain::game::Phase,
         to_phase: crate::domain::game::Phase,
     ) -> Self {
         Self {
             game_id,
-            from_phase: format!("{from_phase:?}"),
-            to_phase: format!("{to_phase:?}"),
+            from_phase,
+            to_phase,
         }
     }
 }
