@@ -46,8 +46,7 @@ pub fn mulligan(
         }));
     }
 
-    let hand_cards: Vec<_> = player.hand().cards().to_vec();
-    player.hand_mut().receive(Vec::new());
+    let hand_cards = player.hand_mut().drain_all();
     player.library_mut().receive(hand_cards);
     player.library_mut().shuffle();
 

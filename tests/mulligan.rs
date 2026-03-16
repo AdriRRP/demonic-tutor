@@ -31,6 +31,36 @@ fn create_service() -> GameService<InMemoryEventStore, InMemoryEventBus> {
 }
 
 #[test]
+fn mulligan_hand_contains_exactly_seven_cards_after_mulligan() {
+    let service = create_service();
+    let (mut game, _) = service
+        .start_game(StartGameCommand::new(
+            GameId::new("game-1"),
+            vec![
+                player_deck("player-1", "deck-1"),
+                player_deck("player-2", "deck-2"),
+            ],
+        ))
+        .unwrap();
+
+    let cmd = DealOpeningHandsCommand::new(vec![
+        player_deck_contents("player-1", non_land_cards(14)),
+        player_deck_contents("player-2", non_land_cards(14)),
+    ]);
+
+    service.deal_opening_hands(&mut game, &cmd).unwrap();
+
+    // Hand has 7 cards before mulligan
+    assert_eq!(game.players()[0].hand().cards().len(), 7);
+
+    let mulligan_cmd = MulliganCommand::new(PlayerId::new("player-1"));
+    service.mulligan(&mut game, mulligan_cmd).unwrap();
+
+    // Hand must still have exactly 7 cards after mulligan, not 14
+    assert_eq!(game.players()[0].hand().cards().len(), 7);
+}
+
+#[test]
 fn mulligan_succeeds() {
     let service = create_service();
     let (mut game, _) = service

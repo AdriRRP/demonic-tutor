@@ -58,6 +58,11 @@ impl Hand {
         &self.0
     }
 
+    /// Removes and returns all cards from the hand, leaving it empty.
+    pub fn drain_all(&mut self) -> Vec<CardInstance> {
+        std::mem::take(&mut self.0)
+    }
+
     #[must_use]
     pub fn remove(&mut self, card_id: &CardInstanceId) -> Option<CardInstance> {
         self.0
