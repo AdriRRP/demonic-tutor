@@ -286,6 +286,7 @@ The system evolves through **small, observable domain capabilities**.
 
 Future slices may include:
 
+- creature destruction (when damage >= toughness)
 - stack resolution
 - triggered abilities
 - more detailed combat rules

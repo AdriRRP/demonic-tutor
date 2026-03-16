@@ -11,7 +11,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
-- **CombatDamage**: Resolve combat damage between attackers and blockers
+- **CombatDamage**: Resolve combat damage between attackers and blockers (without creature destruction)
 - **DeclareBlockers**: Declare blockers for attacking creatures
 - **Phase::Combat**: Proper combat phase with begin/combat/end steps
 - **Phase::Upkeep**: Intermediate phase between Untap and Draw
