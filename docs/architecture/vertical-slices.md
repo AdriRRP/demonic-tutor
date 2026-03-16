@@ -282,13 +282,13 @@ Each step introduces a single new capability.
 
 # Long-Term Strategy
 
-The system should evolve through **small, observable domain capabilities**.
+The system evolves through **small, observable domain capabilities**.
 
 Future slices may include:
 
-- combat damage and destruction
 - stack resolution
 - triggered abilities
+- more detailed combat rules
 
 These should be introduced incrementally.
 
