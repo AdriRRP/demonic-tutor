@@ -1,7 +1,6 @@
 use super::player::Player;
 use super::Phase;
 use crate::domain::{
-    cards::CardType,
     commands::CastSpellCommand,
     errors::{CardError, DomainError, GameError},
     events::SpellCast,
@@ -45,16 +44,31 @@ pub fn cast_spell(
 
     let card_id = cmd.card_id.clone();
 
+    // Validate card type before removing from hand to avoid losing the card
+    // if the type check fails.
+    let card_type = player
+        .hand()
+        .cards()
+        .iter()
+        .find(|c| c.id() == &card_id)
+        .map(|c| c.card_type().clone())
+        .ok_or_else(|| {
+            DomainError::Card(CardError::NotInHand {
+                player: cmd.player_id.clone(),
+                card: card_id.clone(),
+            })
+        })?;
+
+    if card_type.is_land() {
+        return Err(DomainError::Card(CardError::CannotCastLand(card_id)));
+    }
+
     let card = player.hand_mut().remove(&card_id).ok_or_else(|| {
         DomainError::Card(CardError::NotInHand {
             player: cmd.player_id.clone(),
             card: card_id.clone(),
         })
     })?;
-
-    if matches!(card.card_type(), CardType::Land) {
-        return Err(DomainError::Card(CardError::CannotCastLand(card_id)));
-    }
 
     let mana_cost = card.mana_cost();
     if player.mana() < mana_cost {

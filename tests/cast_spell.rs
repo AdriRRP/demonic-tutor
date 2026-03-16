@@ -105,6 +105,67 @@ fn cast_spell_moves_card_from_hand_to_battlefield() {
 }
 
 #[test]
+fn cast_spell_rejected_land_card_stays_in_hand() {
+    // Regression: card must not disappear when cast is rejected due to wrong type.
+    let service = create_service();
+    let (mut game, _) = service
+        .start_game(StartGameCommand::new(
+            GameId::new("game-1"),
+            vec![
+                player_deck("player-1", "deck-1"),
+                player_deck("player-2", "deck-2"),
+            ],
+        ))
+        .unwrap();
+
+    let cmd = DealOpeningHandsCommand::new(vec![
+        player_deck_contents(
+            "player-1",
+            vec![
+                CardWithCost::new(CardDefinitionId::new("forest"), CardType::Land, 0),
+                CardWithCost::new(CardDefinitionId::new("card-2"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-3"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-4"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-5"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-6"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-7"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-8"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-9"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-10"), CardType::Creature, 0),
+            ],
+        ),
+        player_deck_contents(
+            "player-2",
+            vec![
+                CardWithCost::new(CardDefinitionId::new("mountain"), CardType::Land, 0),
+                CardWithCost::new(CardDefinitionId::new("card-2"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-3"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-4"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-5"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-6"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-7"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-8"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-9"), CardType::Creature, 0),
+                CardWithCost::new(CardDefinitionId::new("card-10"), CardType::Creature, 0),
+            ],
+        ),
+    ]);
+
+    service.deal_opening_hands(&mut game, &cmd).unwrap();
+    advance_to_first_main(&service, &mut game);
+
+    let hand_before = game.players()[0].hand().cards().len();
+
+    let card_id = CardInstanceId::new("game-1-player-1-0");
+    let cmd = CastSpellCommand::new(PlayerId::new("player-1"), card_id);
+    let result = service.cast_spell(&mut game, cmd);
+
+    assert!(result.is_err());
+    // Card must still be in the hand after a failed cast
+    assert_eq!(game.players()[0].hand().cards().len(), hand_before);
+}
+
+#[test]
 fn cast_spell_fails_for_land_card() {
     let service = create_service();
     let (mut game, _) = service

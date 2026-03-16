@@ -141,6 +141,25 @@ fn play_land_fails_when_card_is_not_a_land() {
 }
 
 #[test]
+fn play_land_rejected_non_land_card_stays_in_hand() {
+    // Regression: card must not disappear when play_land is rejected due to wrong type.
+    let (mut game, _) = create_game_with_land_in_hand();
+    let service = create_service();
+
+    let hand_before = game.players()[1].hand().cards().len();
+
+    let cmd = PlayLandCommand::new(
+        PlayerId::new("player-2"),
+        CardInstanceId::new("game-1-player-2-1"),
+    );
+    let result = service.play_land(&mut game, cmd);
+
+    assert!(result.is_err());
+    // Card must still be in the hand after a failed play_land
+    assert_eq!(game.players()[1].hand().cards().len(), hand_before);
+}
+
+#[test]
 fn play_land_fails_when_not_player_turn() {
     let (mut game, land_card_id) = create_game_with_land_in_hand();
     let service = create_service();
