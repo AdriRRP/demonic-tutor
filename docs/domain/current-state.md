@@ -18,7 +18,8 @@ Implemented capabilities include:
 
 - starting a two-player game
 - dealing opening hands
-- drawing cards
+- mulligan support (London Mulligan - simplified)
+- drawing cards (auto-draw in Draw phase)
 - playing lands
 - tapping lands for mana
 - casting spells that require mana
@@ -26,9 +27,10 @@ Implemented capabilities include:
 - summoning sickness for creatures (removed at turn start)
 - declaring attackers in combat phase
 - declaring blockers in combat phase
+- resolving combat damage
 - tracking player life totals
 - advancing turns
-- basic phase progression
+- full phase progression (Setup, Untap, Upkeep, Draw, FirstMain, Combat, SecondMain, EndStep)
 
 These capabilities correspond to the slices currently implemented in the system.
 
@@ -67,7 +69,7 @@ Current constraints include:
 - only a subset of zones are modeled
 - no stack resolution
 - no priority system
-- no combat damage or destruction
+- no triggered abilities
 - limited card behavior modeling
 
 These constraints are expected to evolve in future slices.

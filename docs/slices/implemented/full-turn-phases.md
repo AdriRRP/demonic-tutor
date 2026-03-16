@@ -2,6 +2,8 @@
 
 FullTurnPhases
 
+> **Note**: This slice has been superseded by `mulligan-with-setup.md` which adds Setup and Upkeep phases.
+
 ---
 
 ## Goal

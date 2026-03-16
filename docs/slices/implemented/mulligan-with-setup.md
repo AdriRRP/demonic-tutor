@@ -29,8 +29,9 @@ The current implementation removed the Setup phase, but Magic requires a pre-gam
 2. If mulligan: shuffle hand back into library, draw new hand (7 cards)
 3. Continue to next player in turn order
 4. Repeat until all players keep hands
-5. Players who already took mulligan can take another (London Mulligan)
-6. After all players keep, proceed to Untap phase
+5. After all players keep, proceed to Untap phase
+
+> **Simplification**: Current implementation allows only one mulligan per player (not London Mulligan with multiple mulligans per round)
 
 ### Phase Sequence
 - Setup (mulligan phase - once at game start)
@@ -51,9 +52,8 @@ The current implementation removed the Setup phase, but Magic requires a pre-gam
 
 ## Invariants / Legality Rules
 
-- Only players who haven't taken mulligan can decide in each round
-- Each player can only take one mulligan per round
-- Mulligan reduces hand size by 1 each time (London Mulligan)
+- Each player can only take one mulligan (simplified, not London Mulligan)
+- Mulligan draws 7 cards from library
 - Minimum hand size is 1 card
 - After Setup, transition to Untap is automatic when all keep
 - Mulligan is only valid during Setup phase
@@ -138,7 +138,7 @@ This behavior belongs to the `Game` aggregate because:
 
 ## Rules Support Statement
 
-This slice introduces proper London Mulligan rules with Setup phase at game start. Players take mulligans in turn order, drawing one fewer card each time (minimum 1). After all players keep hands, the game proceeds to the first turn's Untap phase. Scry 1, priority during mulligan, and partial Paris Mulligan remain out of scope.
+This slice introduces Setup phase at game start with simplified mulligan support. Players can take one mulligan during Setup, shuffling their hand back into the library and drawing 7 new cards. After all players keep their hands, the game proceeds to the first turn's Untap phase. Multiple mulligans per round, scry 1, priority during mulligan, and full London Mulligan rules remain out of scope.
 
 ---
 
