@@ -90,6 +90,7 @@ The domain currently includes:
 - instant-speed spell responses for the current priority holder
 - resolving the top stack object after two consecutive passes
 - entering `Combat` opens an empty priority window for the active player
+- the active player may cast and resolve an instant at the beginning of `Combat`
 - combat actions reopen priority after attackers and blockers are declared
 - combat damage resolution reopens priority for the active player while the game remains active
 

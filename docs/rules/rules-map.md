@@ -158,6 +158,15 @@ It is not a literal restatement of the rules text.
 
 ---
 
+## Cast Instant In Beginning Of Combat Window
+
+- 117
+- 506
+- 601
+- 608
+
+---
+
 ## Beginning Of Combat Priority Window
 
 - 117
@@ -232,6 +241,7 @@ The initial Gherkin pilot currently targets these rule areas:
 - `features/stack/cast_instant_in_upkeep_window.feature`
 - `features/stack/cast_instant_in_draw_window.feature`
 - `features/stack/cast_instant_in_end_step_window.feature`
+- `features/stack/cast_instant_in_beginning_of_combat_window.feature`
 - `features/turn-flow/upkeep_priority_window.feature`
 - `features/turn-flow/draw_priority_window.feature`
 - `features/turn-flow/main_phase_priority_window.feature`
