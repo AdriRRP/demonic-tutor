@@ -287,6 +287,13 @@ fn alice_is_the_active_player_in_end_step_with_an_instant_card_in_hand_and_prior
     world.setup_active_priority_window_with_instant("bdd-end-step-instant-window", Phase::EndStep);
 }
 
+#[given("Alice is the active player in Upkeep with two instant cards in hand and priority")]
+fn alice_is_the_active_player_in_upkeep_with_two_instant_cards_in_hand_and_priority(
+    world: &mut GameplayWorld,
+) {
+    world.setup_active_priority_window_with_two_instants("bdd-upkeep-two-instants", Phase::Upkeep);
+}
+
 #[given("Alice is at the beginning of Combat with an instant card in hand and priority")]
 fn alice_is_at_the_beginning_of_combat_with_an_instant_card_in_hand_and_priority(
     world: &mut GameplayWorld,
@@ -386,6 +393,11 @@ fn bob_casts_the_instant_spell(world: &mut GameplayWorld) {
     world.cast_tracked_response_spell("Bob");
 }
 
+#[when("Alice casts the second instant spell")]
+fn alice_casts_the_second_instant_spell(world: &mut GameplayWorld) {
+    world.cast_tracked_response_spell("Alice");
+}
+
 #[then("the spell is on the stack under Bob's control")]
 fn the_spell_is_on_the_stack_under_bobs_control(world: &mut GameplayWorld) {
     let top = world
@@ -394,6 +406,14 @@ fn the_spell_is_on_the_stack_under_bobs_control(world: &mut GameplayWorld) {
         .top()
         .expect("stack should contain a top spell");
     assert_eq!(top.controller_id(), &GameplayWorld::player_id("Bob"));
+}
+
+#[then("the stack contains 2 spells controlled by Alice")]
+fn the_stack_contains_two_spells_controlled_by_alice(world: &mut GameplayWorld) {
+    assert_eq!(world.game().stack().len(), 2);
+    for object in world.game().stack().objects() {
+        assert_eq!(object.controller_id(), &GameplayWorld::player_id("Alice"));
+    }
 }
 
 #[when("Alice tries to cast the card as a spell")]

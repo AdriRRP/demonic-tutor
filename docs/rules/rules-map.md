@@ -140,6 +140,15 @@ It is not a literal restatement of the rules text.
 
 ---
 
+## Cast Second Instant In Upkeep Window
+
+- 117
+- 503
+- 601
+- 608
+
+---
+
 ## Respond In Upkeep Window
 
 - 117
@@ -358,6 +367,7 @@ The initial Gherkin pilot currently targets these rule areas:
 - `features/stack/stack_foundation.feature`
 - `features/stack/respond_with_instant_spell.feature`
 - `features/stack/cast_instant_in_upkeep_window.feature`
+- `features/stack/cast_second_instant_in_upkeep_window.feature`
 - `features/stack/cast_instant_in_draw_window.feature`
 - `features/stack/cast_instant_in_end_step_window.feature`
 - `features/stack/cast_instant_in_beginning_of_combat_window.feature`
