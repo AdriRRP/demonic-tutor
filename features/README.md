@@ -37,6 +37,7 @@ Current executable feature coverage:
 - `features/stack/cast_instant_in_second_main_window.feature`
 - `features/stack/cast_second_instant_in_second_main_window.feature`
 - `features/stack/cast_instant_in_end_step_window.feature`
+- `features/stack/cast_second_instant_in_end_step_window.feature`
 - `features/stack/cast_instant_in_beginning_of_combat_window.feature`
 - `features/stack/cast_instant_after_attackers.feature`
 - `features/stack/cast_instant_after_blockers.feature`
