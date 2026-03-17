@@ -69,6 +69,14 @@ It is not a literal restatement of the rules text.
 
 ---
 
+## Beginning Of Combat Step
+
+- 506
+- 507
+- 508
+
+---
+
 ## Upkeep Priority Window
 
 - 117

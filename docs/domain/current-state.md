@@ -110,6 +110,7 @@ The domain currently includes:
 - instant-speed spell responses for the current priority holder
 - resolving the top stack object after two consecutive passes
 - entering `BeginningOfCombat` opens an empty priority window for the active player
+- closing that empty beginning-of-combat window advances the game into `DeclareAttackers`
 - the non-active player may cast and resolve an instant at the beginning of `Combat` after the active player passes
 - the non-active player may cast a second instant at the beginning of `Combat` before passing priority after the first response
 - the active player may cast and resolve an instant at the beginning of `Combat`

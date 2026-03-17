@@ -64,6 +64,7 @@ Current executable feature coverage:
 - `features/spells/cast_creature_spell.feature`
 - `features/combat/combat_priority_windows.feature`
 - `features/combat/combat_subphases_foundation.feature`
+- `features/combat/beginning_of_combat_step.feature`
 - `features/combat/beginning_of_combat_priority_window.feature`
 - `features/combat/post_combat_damage_priority_window.feature`
 - `features/combat/combat_damage_marking.feature`
