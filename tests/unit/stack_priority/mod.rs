@@ -1,3 +1,5 @@
+#[path = "cast_second_instant_in_draw_window.rs"]
+mod cast_second_instant_in_draw_window;
 #[path = "cast_second_instant_in_upkeep_window.rs"]
 mod cast_second_instant_in_upkeep_window;
 #[path = "stack_foundation.rs"]

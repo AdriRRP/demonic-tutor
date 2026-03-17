@@ -86,6 +86,7 @@ The domain currently includes:
 - the non-active player may cast and resolve an instant in `Upkeep` after the active player passes
 - entering `Draw` opens an empty priority window for the active player after the automatic turn draw
 - the active player may cast and resolve an instant during that draw-step priority window
+- the active player may cast a second instant in `Draw` before passing priority after the first
 - the non-active player may cast and resolve an instant in `Draw` after the active player passes
 - entering `FirstMain` or `SecondMain` opens an empty priority window for the active player
 - the non-active player may cast and resolve an instant in `FirstMain` after the active player passes

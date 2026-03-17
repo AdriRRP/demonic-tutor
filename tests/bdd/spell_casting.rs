@@ -294,6 +294,13 @@ fn alice_is_the_active_player_in_upkeep_with_two_instant_cards_in_hand_and_prior
     world.setup_active_priority_window_with_two_instants("bdd-upkeep-two-instants", Phase::Upkeep);
 }
 
+#[given("Alice is the active player in Draw with two instant cards in hand and priority")]
+fn alice_is_the_active_player_in_draw_with_two_instant_cards_in_hand_and_priority(
+    world: &mut GameplayWorld,
+) {
+    world.setup_active_priority_window_with_two_instants("bdd-draw-two-instants", Phase::Draw);
+}
+
 #[given("Alice is at the beginning of Combat with an instant card in hand and priority")]
 fn alice_is_at_the_beginning_of_combat_with_an_instant_card_in_hand_and_priority(
     world: &mut GameplayWorld,

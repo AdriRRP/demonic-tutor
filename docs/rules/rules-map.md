@@ -240,6 +240,15 @@ It is not a literal restatement of the rules text.
 
 ---
 
+## Cast Second Instant In Draw Window
+
+- 117
+- 504
+- 601
+- 608
+
+---
+
 ## Cast Instant In Second Main Window
 
 - 117
@@ -369,6 +378,7 @@ The initial Gherkin pilot currently targets these rule areas:
 - `features/stack/cast_instant_in_upkeep_window.feature`
 - `features/stack/cast_second_instant_in_upkeep_window.feature`
 - `features/stack/cast_instant_in_draw_window.feature`
+- `features/stack/cast_second_instant_in_draw_window.feature`
 - `features/stack/cast_instant_in_end_step_window.feature`
 - `features/stack/cast_instant_in_beginning_of_combat_window.feature`
 - `features/stack/cast_instant_after_attackers.feature`
