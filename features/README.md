@@ -68,6 +68,7 @@ Current executable feature coverage:
 - `features/combat/declare_attackers_step.feature`
 - `features/combat/declare_blockers_step.feature`
 - `features/combat/combat_damage_step.feature`
+- `features/combat/end_of_combat_step.feature`
 - `features/combat/beginning_of_combat_priority_window.feature`
 - `features/combat/post_combat_damage_priority_window.feature`
 - `features/combat/combat_damage_marking.feature`

@@ -97,6 +97,12 @@ It is not a literal restatement of the rules text.
 
 ---
 
+## End Of Combat Step
+
+- 511
+
+---
+
 ## Upkeep Priority Window
 
 - 117
