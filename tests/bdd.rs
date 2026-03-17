@@ -33,6 +33,7 @@ async fn main() {
     GameplayWorld::run("features/stack/stack_foundation.feature").await;
     GameplayWorld::run("features/stack/respond_with_instant_spell.feature").await;
     GameplayWorld::run("features/stack/respond_in_upkeep_window.feature").await;
+    GameplayWorld::run("features/stack/respond_in_draw_window.feature").await;
     GameplayWorld::run("features/stack/cast_instant_in_upkeep_window.feature").await;
     GameplayWorld::run("features/stack/cast_instant_in_draw_window.feature").await;
     GameplayWorld::run("features/stack/cast_instant_in_second_main_window.feature").await;

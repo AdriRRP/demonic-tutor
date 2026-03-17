@@ -22,6 +22,7 @@ Current executable feature coverage:
 - `features/stack/stack_foundation.feature`
 - `features/stack/respond_with_instant_spell.feature`
 - `features/stack/respond_in_upkeep_window.feature`
+- `features/stack/respond_in_draw_window.feature`
 - `features/stack/cast_instant_in_upkeep_window.feature`
 - `features/stack/cast_instant_in_draw_window.feature`
 - `features/stack/cast_instant_in_second_main_window.feature`
