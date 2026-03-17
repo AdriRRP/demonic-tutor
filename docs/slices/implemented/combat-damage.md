@@ -134,9 +134,8 @@ This slice resolves and marks combat damage. The follow-on `CreatureDestruction`
 
 ## Open Questions
 
-1. Should damage reset at end of turn? (Magic rules: damage "fizzles" at end of turn)
-2. Should we model damage as a transient value or persistent?
-3. How do we track which creature blocks which for damage assignment?
+1. Should we model damage as a transient value or persistent?
+2. How do we track which creature blocks which for damage assignment?
 
 ---
 

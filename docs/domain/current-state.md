@@ -31,6 +31,7 @@ Implemented capabilities include:
 - declaring blockers in combat phase
 - resolving combat damage
 - destroying creatures automatically when marked combat damage is lethal
+- clearing marked damage from surviving creatures when the turn ends
 - tracking player life totals
 - advancing turns
 - full phase progression using State pattern (Setup, Untap, Upkeep, Draw, FirstMain, Combat, SecondMain, EndStep)
@@ -56,6 +57,7 @@ The domain currently includes:
 - creature spells entering the battlefield through `CastSpell`
 - creature damage tracking during combat
 - automatic destruction of creatures with lethal marked damage
+- cleanup-based removal of marked damage from surviving creatures
 - summoning sickness for creatures (removed for the active player's creatures at turn start)
 - turn and phase progression
 - explicit draw effects as a simplified non-stack entrypoint
@@ -131,9 +133,9 @@ The next gameplay expansion requires choosing which domain capability to introdu
 
 Possible directions include:
 
-- cleanup-based damage removal
 - stack and priority system
 - broader state-based actions beyond lethal creature damage
+- richer cleanup and end-of-turn semantics
 
 The next slice should continue expanding gameplay behavior incrementally.
 

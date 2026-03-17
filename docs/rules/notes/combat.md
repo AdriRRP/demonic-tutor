@@ -20,7 +20,7 @@ This is a repository-owned interpretation note, not a copy of the Comprehensive 
 - combat damage is assigned and marked on the creatures that receive it
 - player life changes from unblocked combat damage are supported
 - creatures with lethal marked damage are destroyed automatically and moved to graveyard
-- surviving creatures keep damage marked as runtime state
+- surviving creatures keep damage marked until the turn ends, then lose it automatically
 
 ## Out of Scope
 
@@ -28,10 +28,10 @@ This is a repository-owned interpretation note, not a copy of the Comprehensive 
 - double strike
 - trample
 - combat tricks on the stack
-- cleanup-based damage removal
 - a general state-based action engine
 
 ## Related Features
 
 - `features/combat/combat_damage_marking.feature`
 - `features/combat/creature_destruction.feature`
+- `features/turn-flow/cleanup_damage_removal.feature`

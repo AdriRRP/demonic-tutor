@@ -2,9 +2,13 @@
 
 use crate::support::{
     advance_n, advance_to_first_main, advance_to_player_first_main, filled_library, land_card,
-    setup_two_player_game,
+    setup_two_player_game, vanilla_creature,
 };
-use demonictutor::{AdvanceTurnCommand, CardInstanceId, Phase, PlayLandCommand, PlayerId};
+use demonictutor::{
+    AdvanceTurnCommand, CardDefinitionId, CardInstanceId, CastSpellCommand,
+    DeclareAttackersCommand, DeclareBlockersCommand, LibraryCard, Phase, PlayLandCommand, PlayerId,
+    ResolveCombatDamageCommand,
+};
 
 fn create_game_with_land_in_hand() -> demonictutor::Game {
     let (.., game) = setup_two_player_game(
@@ -117,4 +121,76 @@ fn advance_turn_allows_playing_land_after_turn_change() {
             ),
         )
         .is_ok());
+}
+
+#[test]
+fn advance_turn_clears_marked_damage_when_turn_ends() {
+    let (service, mut game) = setup_two_player_game(
+        "game-1",
+        filled_library(
+            vec![LibraryCard::creature(
+                CardDefinitionId::new("ogre"),
+                0,
+                3,
+                3,
+            )],
+            10,
+        ),
+        filled_library(vec![vanilla_creature("soldier")], 10),
+    );
+
+    let attacker_id = CardInstanceId::new("game-1-player-1-0");
+    let blocker_id = CardInstanceId::new("game-1-player-2-0");
+
+    advance_to_player_first_main(&service, &mut game, "player-1");
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), attacker_id.clone()),
+        )
+        .unwrap();
+
+    advance_to_player_first_main(&service, &mut game, "player-2");
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-2"), blocker_id.clone()),
+        )
+        .unwrap();
+
+    advance_to_player_first_main(&service, &mut game, "player-1");
+    service
+        .advance_turn(&mut game, AdvanceTurnCommand::new())
+        .unwrap();
+    assert_eq!(game.phase(), &Phase::Combat);
+    assert_eq!(game.active_player(), &PlayerId::new("player-1"));
+
+    service
+        .declare_attackers(
+            &mut game,
+            DeclareAttackersCommand::new(PlayerId::new("player-1"), vec![attacker_id.clone()]),
+        )
+        .unwrap();
+
+    let assignments = vec![(blocker_id, attacker_id)];
+    service
+        .declare_blockers(
+            &mut game,
+            DeclareBlockersCommand::new(PlayerId::new("player-2"), assignments.clone()),
+        )
+        .unwrap();
+
+    service
+        .resolve_combat_damage(
+            &mut game,
+            ResolveCombatDamageCommand::new(PlayerId::new("player-1"), assignments),
+        )
+        .unwrap();
+
+    assert_eq!(game.players()[0].battlefield().cards()[0].damage(), 2);
+
+    advance_n(&service, &mut game, 3);
+
+    assert_eq!(game.phase(), &Phase::Untap);
+    assert_eq!(game.players()[0].battlefield().cards()[0].damage(), 0);
 }
