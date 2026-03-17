@@ -112,6 +112,7 @@ The domain currently includes:
 - entering `BeginningOfCombat` opens an empty priority window for the active player
 - closing that empty beginning-of-combat window advances the game into `DeclareAttackers`
 - an empty `DeclareAttackers` step may advance into `DeclareBlockers`
+- an empty `DeclareBlockers` step may advance into `CombatDamage`
 - the non-active player may cast and resolve an instant at the beginning of `Combat` after the active player passes
 - the non-active player may cast a second instant at the beginning of `Combat` before passing priority after the first response
 - the active player may cast and resolve an instant at the beginning of `Combat`

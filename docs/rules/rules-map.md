@@ -83,6 +83,13 @@ It is not a literal restatement of the rules text.
 
 ---
 
+## Declare Blockers Step
+
+- 509
+- 510
+
+---
+
 ## Upkeep Priority Window
 
 - 117
