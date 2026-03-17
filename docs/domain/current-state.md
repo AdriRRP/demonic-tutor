@@ -124,6 +124,7 @@ The domain currently includes:
 - the active player may cast and resolve an instant after attackers are declared
 - the active player may cast a second instant after attackers are declared before passing priority after the first
 - the non-active player may cast and resolve an instant after attackers are declared once the active player passes
+- the non-active player may cast a second instant in `DeclareBlockers` once the active player passes after attackers are declared
 - the active player may cast and resolve an instant after blockers are declared
 - the active player may cast a second instant after blockers are declared before passing priority after the first
 - the non-active player may cast and resolve an instant after blockers are declared once the active player passes

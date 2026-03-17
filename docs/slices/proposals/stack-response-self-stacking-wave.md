@@ -129,16 +129,16 @@ Planned implemented slice doc:
 
 ---
 
-### 8. Respond With Second Instant After Attackers
+### 8. Respond With Second Instant In Declare Blockers Window
 
 Behavior:
-- after Alice passes the post-attackers combat window, Bob may cast two instants consecutively before passing
+- after Alice passes from the post-attacker handoff, Bob may cast two instants consecutively before passing in `DeclareBlockers`
 
 Feature:
-- `features/stack/respond_with_second_instant_after_attackers.feature`
+- `features/stack/respond_with_second_instant_in_declare_blockers_window.feature`
 
-Planned implemented slice doc:
-- `docs/slices/implemented/respond-with-second-instant-after-attackers.md`
+Implemented slice doc:
+- `docs/slices/implemented/respond-with-second-instant-in-declare-blockers-window.md`
 
 ---
 

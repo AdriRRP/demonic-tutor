@@ -40,6 +40,10 @@ async fn main() {
     GameplayWorld::run("features/stack/respond_in_end_step_window.feature").await;
     GameplayWorld::run("features/stack/respond_in_beginning_of_combat_window.feature").await;
     GameplayWorld::run("features/stack/respond_after_attackers.feature").await;
+    GameplayWorld::run(
+        "features/stack/respond_with_second_instant_in_declare_blockers_window.feature",
+    )
+    .await;
     GameplayWorld::run("features/stack/respond_after_blockers.feature").await;
     GameplayWorld::run("features/stack/respond_after_combat_damage.feature").await;
     GameplayWorld::run("features/stack/respond_with_second_instant_spell.feature").await;

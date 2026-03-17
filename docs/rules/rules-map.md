@@ -185,6 +185,16 @@ It is not a literal restatement of the rules text.
 
 ---
 
+## Respond With Second Instant In Declare Blockers Window
+
+- 117
+- 508
+- 509
+- 601
+- 608
+
+---
+
 ## Cast Instant In Upkeep Window
 
 - 117
