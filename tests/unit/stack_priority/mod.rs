@@ -1,3 +1,5 @@
+#[path = "cast_second_instant_in_beginning_of_combat_window.rs"]
+mod cast_second_instant_in_beginning_of_combat_window;
 #[path = "cast_second_instant_in_draw_window.rs"]
 mod cast_second_instant_in_draw_window;
 #[path = "cast_second_instant_in_end_step_window.rs"]
