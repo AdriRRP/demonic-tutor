@@ -163,7 +163,7 @@ A card or token that exists on the battlefield. Permanents include lands, creatu
 
 A card on the stack.
 
-In the current runtime model, non-land cards are cast as spells. Permanent spells currently enter the battlefield directly, while instants and sorceries resolve directly to the graveyard because the stack is not yet modeled explicitly.
+In the current runtime model, spell cards are cast through `CastSpell`. Permanent spells currently enter the battlefield directly, while instants and sorceries resolve directly to the graveyard because the stack is not yet modeled explicitly.
 
 ---
 

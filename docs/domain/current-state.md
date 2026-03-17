@@ -26,7 +26,7 @@ Implemented capabilities include:
 - ending the game when a player reaches 0 life
 - playing lands
 - tapping lands for mana
-- casting non-land spells that require mana
+- casting spells that require mana
 - casting creature spells that enter the battlefield with power and toughness
 - resolving instants and sorceries to graveyard
 - summoning sickness for creatures (removed for the active player's battlefield at turn start)
@@ -58,7 +58,7 @@ The domain currently includes:
 - card instances
 - basic zones (library, hand, battlefield, graveyard)
 - mana production from lands
-- non-land spell casting with mana cost
+- spell casting with mana cost
 - transient mana pools cleared when the game advances to the next phase or turn
 - creature cards with power and toughness
 - creature spells entering the battlefield through `CastSpell`
@@ -94,7 +94,7 @@ Current constraints include:
 - no priority system
 - no triggered abilities
 - limited card behavior modeling
-- non-land permanents currently enter the battlefield through simplified spell resolution without stack handling
+- permanent spells currently enter the battlefield through simplified spell resolution without stack handling
 - mana production is simplified to active-player main phases and generic mana only
 - combat blocking is simplified to at most one blocker per attacker
 

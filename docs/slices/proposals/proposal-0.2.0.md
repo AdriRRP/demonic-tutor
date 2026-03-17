@@ -76,7 +76,7 @@ This document proposes atomic slices for a meaningful playtesting release (0.2.0
 
 ---
 
-## Slice 12 — Cast Non-Land Spells
+## Slice 12 — Cast Spells
 
 **Goal:** Enable spell casting without mana cost (for testing).
 
@@ -85,7 +85,7 @@ This document proposes atomic slices for a meaningful playtesting release (0.2.0
 - Remove `CardType::NonLand`, use specific types
 
 **Commands:**
-- `CastSpellCommand { player_id, card_id }` — cast any non-land card (free for now)
+- `CastSpellCommand { player_id, card_id }` — cast any spell card (free for now)
 
 **Events:**
 - `SpellCast { player_id, card_id }`

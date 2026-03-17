@@ -70,7 +70,7 @@ This slice implements mana production from lands per rules 605.1 and 605.3a. Thi
 ## Tests
 
 - TapLandCommand with unknown card fails
-- TapLandCommand with non-land card fails
+- TapLandCommand with spell card fails
 - TapLandCommand with already tapped land fails
 - TapLandCommand adds 1 mana to player
 - LandTapped and ManaAdded events are emitted correctly

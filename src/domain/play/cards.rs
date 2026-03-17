@@ -23,7 +23,7 @@ impl CardType {
     }
 
     #[must_use]
-    pub const fn is_non_land(&self) -> bool {
+    pub const fn is_spell_card(&self) -> bool {
         !self.is_land()
     }
 

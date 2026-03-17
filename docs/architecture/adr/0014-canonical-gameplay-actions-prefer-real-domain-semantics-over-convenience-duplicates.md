@@ -22,7 +22,7 @@ When one gameplay concept has a clear domain-canonical action, the repository sh
 
 For the current play model this means:
 
-- non-land cards are cast through `CastSpell`
+- spell cards are cast through `CastSpell`
 - lands are played through `PlayLand`
 - duplicate commands, events, and slice docs should be removed or marked superseded once the canonical action is established
 

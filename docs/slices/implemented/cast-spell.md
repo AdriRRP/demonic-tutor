@@ -2,7 +2,7 @@
 
 ## Goal
 
-Enable casting non-land spells from hand with simplified resolution.
+Enable casting spell cards from hand with simplified resolution.
 
 ## Supported behavior
 
@@ -19,7 +19,7 @@ Enable casting non-land spells from hand with simplified resolution.
 
 Helper methods:
 - `CardType::is_land()` - returns true for Land type
-- `CardType::is_non_land()` - returns true for all non-land types
+- `CardType::is_spell_card()` - returns true for all spell card types
 
 ### Commands
 
@@ -67,7 +67,7 @@ Emitted when a spell is cast successfully, including the spell card type, the ma
 
 ## Rules Support Statement
 
-This slice implements a simplified spell-casting model. Permanent non-land spells enter the battlefield, while instants and sorceries resolve directly to the graveyard. The current runtime also triggers the shared review of currently supported state-based actions after spell resolution, which can produce `CreatureDied` or `GameEnded` in addition to `SpellCast`. The full casting process (targets, modes, stack, timing, alternative costs, and resolution rules) is not implemented.
+This slice implements a simplified spell-casting model. Permanent spells enter the battlefield, while instants and sorceries resolve directly to the graveyard. The current runtime also triggers the shared review of currently supported state-based actions after spell resolution, which can produce `CreatureDied` or `GameEnded` in addition to `SpellCast`. The full casting process (targets, modes, stack, timing, alternative costs, and resolution rules) is not implemented.
 
 ## Tests
 

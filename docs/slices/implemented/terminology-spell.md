@@ -25,12 +25,12 @@ The code already uses correct naming (`CastSpellCommand`), but comments and docu
 ### Documentation Changes
 - `docs/slices/implemented/cast-spell.md` — Fix terminology
 
-### No Changes Needed
-- `CardType::is_non_land()` — Method name is correct (boolean comparison)
+### Additional Cleanup
+- `CardType::is_spell_card()` now expresses the same distinction in positive domain language
 
 ## Verification
 
-Search for "non-land spell" returns no results after this slice.
+Search for `non-land spell`, `nonland spell`, and `is_non_land` returns no live usage outside historical explanation.
 
 ## Notes
 

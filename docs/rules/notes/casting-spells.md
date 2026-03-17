@@ -16,7 +16,7 @@ This is a repository-owned interpretation note, not a copy of the Comprehensive 
 ## Current DemonicTutor Interpretation
 
 - lands are played, not cast
-- non-land cards are cast through `CastSpell`
+- spell cards are cast through `CastSpell`
 - permanent spells currently enter the battlefield directly
 - instants and sorceries currently resolve directly to the graveyard
 - mana cost must be payable before a spell can be cast
