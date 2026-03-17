@@ -421,13 +421,21 @@ impl Game {
     ) -> Result<ResolveCombatDamageOutcome, DomainError> {
         invariants::require_game_active(self.is_over())?;
         invariants::require_no_open_priority_window(self.priority())?;
-        rules::combat::resolve_combat_damage(
+        let outcome = rules::combat::resolve_combat_damage(
             &self.id,
             &mut self.players,
             &self.active_player,
             &self.phase,
             &mut self.terminal_state,
             cmd,
-        )
+        )?;
+
+        self.priority = if self.is_over() {
+            None
+        } else {
+            Some(PriorityState::new(self.active_player.clone()))
+        };
+
+        Ok(outcome)
     }
 }

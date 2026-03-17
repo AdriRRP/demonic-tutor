@@ -304,3 +304,51 @@ fn declare_blockers_opens_priority_for_the_active_player() {
     let priority = game.priority().expect("asserted above");
     assert_eq!(priority.current_holder(), &PlayerId::new("player-1"));
 }
+
+#[test]
+fn resolve_combat_damage_opens_priority_for_the_active_player() {
+    let (service, mut game) = setup_two_player_game(
+        "game-combat-damage-priority",
+        filled_library(
+            vec![LibraryCard::creature(
+                CardDefinitionId::new("attacker"),
+                0,
+                3,
+                3,
+            )],
+            10,
+        ),
+        filled_library(Vec::new(), 10),
+    );
+
+    let attacker_id = CardInstanceId::new("game-combat-damage-priority-player-1-0");
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
+    cast_spell_and_resolve(&service, &mut game, "player-1", attacker_id.clone());
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-2");
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
+    advance_turn_raw(&service, &mut game);
+    close_empty_priority_window(&service, &mut game);
+    service
+        .declare_attackers(
+            &mut game,
+            DeclareAttackersCommand::new(PlayerId::new("player-1"), vec![attacker_id]),
+        )
+        .unwrap();
+    close_empty_priority_window(&service, &mut game);
+
+    service
+        .resolve_combat_damage(
+            &mut game,
+            ResolveCombatDamageCommand::new(PlayerId::new("player-1")),
+        )
+        .unwrap();
+
+    assert_eq!(game.phase(), &demonictutor::Phase::Combat);
+    let priority = game
+        .priority()
+        .expect("combat damage should reopen priority");
+    assert_eq!(priority.current_holder(), &PlayerId::new("player-1"));
+    assert!(game.stack().is_empty());
+}

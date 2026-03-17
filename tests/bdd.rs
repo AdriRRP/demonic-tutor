@@ -39,6 +39,7 @@ async fn main() {
     GameplayWorld::run("features/spells/cast_creature_spell.feature").await;
     GameplayWorld::run("features/combat/combat_priority_windows.feature").await;
     GameplayWorld::run("features/combat/beginning_of_combat_priority_window.feature").await;
+    GameplayWorld::run("features/combat/post_combat_damage_priority_window.feature").await;
     GameplayWorld::run("features/state-based-actions/zero_toughness_creature_dies.feature").await;
     GameplayWorld::run("features/combat/combat_damage_marking.feature").await;
     GameplayWorld::run("features/combat/single_blocker_per_attacker.feature").await;

@@ -20,6 +20,7 @@ This is a repository-owned interpretation note, not a copy of the Comprehensive 
 - entering `Combat` opens a priority window for the active player before attackers are declared
 - declaring attackers opens a priority window for the active player
 - declaring blockers opens a priority window for the active player
+- resolving combat damage reopens a priority window for the active player when the game remains active
 - blocker-to-attacker assignments are stored in runtime combat state and reused during damage resolution
 - the current combat model supports at most one blocker per attacker
 - combat damage is assigned and marked on the creatures that receive it
@@ -41,6 +42,7 @@ This is a repository-owned interpretation note, not a copy of the Comprehensive 
 
 - `features/combat/combat_priority_windows.feature`
 - `features/combat/beginning_of_combat_priority_window.feature`
+- `features/combat/post_combat_damage_priority_window.feature`
 - `features/combat/combat_damage_marking.feature`
 - `features/combat/creature_destruction.feature`
 - `features/turn-flow/cleanup_damage_removal.feature`

@@ -185,6 +185,7 @@ The current model includes:
 - opening empty priority windows when entering `FirstMain` and `SecondMain`
 - opening an empty priority window when entering `Combat`
 - reopening priority after attackers and blockers are declared in combat
+- reopening priority after combat damage resolves when the game remains active
 - rejection of turn advancement while a priority window is open
 
 Card instances can be checked for whether they represent permanents (cards that can exist on the battlefield) using the `CardType::is_permanent()` method.
