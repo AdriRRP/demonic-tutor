@@ -185,6 +185,7 @@ The current model includes:
 - opening an empty priority window when entering `Upkeep`
 - opening an empty priority window when entering `Draw` after the automatic turn draw
 - opening empty priority windows when entering `FirstMain` and `SecondMain`
+- opening an empty priority window when entering `EndStep`
 - opening an empty priority window when entering `Combat`
 - reopening priority after attackers and blockers are declared in combat
 - reopening priority after combat damage resolves when the game remains active

@@ -28,6 +28,7 @@ This is a repository-owned interpretation note, not a copy of the Comprehensive 
 - entering `Upkeep` opens an empty priority window for the active player
 - entering `Draw` opens an empty priority window for the active player after the automatic turn draw
 - if the active player is above the maximum hand size at `EndStep`, the turn cannot advance until they discard down to the maximum
+- entering `EndStep` opens an empty priority window for the active player before cleanup can finish the turn
 - marked damage is cleared automatically when the game leaves `EndStep` for the next turn
 - entering `FirstMain` or `SecondMain` opens an empty priority window for the active player
 - entering `Combat` opens an empty priority window for the active player before attackers are declared
@@ -37,7 +38,7 @@ This is a repository-owned interpretation note, not a copy of the Comprehensive 
 
 ## Out of Scope
 
-- broader turn-flow priority windows beyond `Upkeep`, `Draw`, main phases, and the currently supported combat-entry / post-declaration / post-damage windows
+- broader turn-flow priority windows beyond `Upkeep`, `Draw`, `EndStep`, main phases, and the currently supported combat-entry / post-declaration / post-damage windows
 - skipped phases
 - extra turns
 - repeated cleanup loops from state-based actions or triggered abilities

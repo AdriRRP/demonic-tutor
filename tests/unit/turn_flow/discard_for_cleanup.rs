@@ -1,8 +1,8 @@
 #![allow(clippy::unwrap_used)]
 
 use crate::support::{
-    advance_n_raw, advance_to_player_first_main_satisfying_cleanup, creature_library,
-    setup_two_player_game,
+    advance_n_raw, advance_to_player_first_main_satisfying_cleanup, close_empty_priority_window,
+    creature_library, setup_two_player_game,
 };
 use demonictutor::{
     AdvanceTurnCommand, AdvanceTurnOutcome, DiscardForCleanupCommand, DiscardKind, DomainError,
@@ -119,6 +119,18 @@ fn advance_turn_fails_from_end_step_while_cleanup_discard_is_still_required() {
     let error = service
         .advance_turn(&mut game, AdvanceTurnCommand::new())
         .unwrap_err();
+    assert_eq!(
+        error,
+        DomainError::Game(GameError::PriorityWindowOpen {
+            current_holder: PlayerId::new("player-1"),
+        })
+    );
+
+    close_empty_priority_window(&service, &mut game);
+
+    let error = service
+        .advance_turn(&mut game, AdvanceTurnCommand::new())
+        .unwrap_err();
 
     assert_eq!(
         error,
@@ -142,6 +154,7 @@ fn advance_turn_succeeds_after_discarding_down_to_maximum_hand_size() {
             DiscardForCleanupCommand::new(PlayerId::new("player-1"), card_id),
         )
         .unwrap();
+    close_empty_priority_window(&service, &mut game);
 
     let outcome = service
         .advance_turn(&mut game, AdvanceTurnCommand::new())

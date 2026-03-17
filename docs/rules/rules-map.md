@@ -73,6 +73,13 @@ It is not a literal restatement of the rules text.
 
 ---
 
+## End Step Priority Window
+
+- 117
+- 507
+
+---
+
 ## DrawCard
 
 - 121.1
@@ -198,6 +205,7 @@ The initial Gherkin pilot currently targets these rule areas:
 - `features/turn-flow/upkeep_priority_window.feature`
 - `features/turn-flow/draw_priority_window.feature`
 - `features/turn-flow/main_phase_priority_window.feature`
+- `features/turn-flow/end_step_priority_window.feature`
 
 ---
 

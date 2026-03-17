@@ -26,6 +26,7 @@ This slice is the next coherent cleanup increment because:
 - block `advance_turn` from `EndStep` while the active player's hand size is above the maximum
 - accept `DiscardForCleanupCommand` for the active player in `EndStep`
 - move the chosen card from hand to graveyard
+- require any empty end-step priority window to be closed before the turn can finish cleanup and advance
 - allow the turn to advance once the hand size is at or below the maximum
 - emit `CardDiscarded` with `DiscardKind::CleanupHandSize`
 
@@ -47,7 +48,7 @@ This slice is the next coherent cleanup increment because:
 - repeated cleanup loops caused by state-based actions or triggered abilities
 - discard effects from spells or abilities outside cleanup
 - player loss from empty library
-- priority during cleanup
+- a distinct cleanup-step priority model
 
 ---
 
@@ -112,4 +113,4 @@ This behavior belongs to the `Game` aggregate because it:
 
 ## Rules Support Statement
 
-This slice introduces a minimal hand-size cleanup behavior. The active player explicitly discards chosen cards during `EndStep` until their hand is at or below the maximum, after which the turn may advance. It does not model a distinct cleanup step or repeated cleanup loops.
+This slice introduces a minimal hand-size cleanup behavior. The active player explicitly discards chosen cards during `EndStep` until their hand is at or below the maximum, after any end-step priority window has been closed, after which the turn may advance. It does not model a distinct cleanup step or repeated cleanup loops.

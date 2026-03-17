@@ -24,6 +24,7 @@ Current executable feature coverage:
 - `features/turn-flow/upkeep_priority_window.feature`
 - `features/turn-flow/draw_priority_window.feature`
 - `features/turn-flow/main_phase_priority_window.feature`
+- `features/turn-flow/end_step_priority_window.feature`
 - `features/turn-flow/turn_progression.feature`
 - `features/turn-flow/draw_multiple_cards.feature`
 - `features/spells/cast_creature_spell.feature`
