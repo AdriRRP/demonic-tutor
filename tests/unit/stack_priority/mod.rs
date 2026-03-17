@@ -1,3 +1,5 @@
+#[path = "cast_instant_in_first_main_window.rs"]
+mod cast_instant_in_first_main_window;
 #[path = "cast_second_instant_after_attackers.rs"]
 mod cast_second_instant_after_attackers;
 #[path = "cast_second_instant_after_blockers.rs"]
