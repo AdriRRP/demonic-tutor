@@ -2,28 +2,30 @@
 
 ## Goal
 
-Provide a simplified explicit draw effect entrypoint that lets the active player draw exactly one card from their library into their hand.
+Provide a simplified explicit draw effect entrypoint that lets the active player draw one or more cards from their library into their hand.
 
 ## Supported behavior
 
-* accept `DrawCardEffectCommand`
+* accept `DrawCardsEffectCommand`
 * verify that the referenced player exists
 * verify that the referenced player is the active player
 * verify that the current phase is an explicit action window
-* draw exactly one card from library
-* move that card into the player's hand
-* emit `CardDrawn` with explicit `DrawKind`
+* verify that the requested draw count is at least one
+* draw the requested number of cards one by one from library
+* move each drawn card into the player's hand
+* emit one `CardDrawn` per drawn card with explicit `DrawKind`
+* if the library runs out mid-effect, emit `GameEnded` after any already completed draws
 
 ## Invariants currently enforced
 
 * only the active player may draw through this command
 * explicit draw effects are only allowed during `Phase::FirstMain` or `Phase::SecondMain`
-* if the library is empty, the explicit draw effect ends the game through the `LoseOnEmptyDraw` slice
+* explicit draw effects must request at least one card
+* if the library runs out during the effect, the game ends through the `LoseOnEmptyDraw` slice after completed draws are kept
 
 ## Out of scope
 
 * replacing the automatic draw step
-* drawing multiple cards
 * replacement effects
 * priority
 * stack
@@ -36,8 +38,8 @@ Provide a simplified explicit draw effect entrypoint that lets the active player
 
 ## Rules Support Statement
 
-This slice implements a minimal explicit draw effect per rules 121.1 and 121.2. The current model also includes automatic turn-step draw, and this command remains as a simplified effect-oriented entrypoint distinct from the automatic draw flow. If the draw cannot happen because the library is empty, the game ends through the separate `LoseOnEmptyDraw` slice.
+This slice implements a minimal explicit draw effect per rules 121.1 and 121.2. The current model also includes automatic turn-step draw, and this command remains as a simplified effect-oriented entrypoint distinct from the automatic draw flow. If the effect tries to draw past an empty library, the game ends through the separate `LoseOnEmptyDraw` slice after any already completed draws.
 
 ## Notes
 
-This slice intentionally models a minimal explicit draw effect, not the full Magic draw step. The event now distinguishes explicit effects from automatic turn-step draws.
+This slice intentionally models a minimal explicit draw effect, not the full Magic draw step. The event distinguishes explicit effects from automatic turn-step draws, and multi-card effects are resolved one draw at a time.

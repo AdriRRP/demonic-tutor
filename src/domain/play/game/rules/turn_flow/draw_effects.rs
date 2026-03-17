@@ -1,6 +1,6 @@
 use crate::domain::play::{
-    commands::DrawCardEffectCommand,
-    errors::DomainError,
+    commands::DrawCardsEffectCommand,
+    errors::{DomainError, GameError},
     events::{CardDrawn, DrawKind, GameEnded},
     game::{invariants, model::Player, TerminalState},
     ids::{CardInstanceId, GameId, PlayerId},
@@ -8,9 +8,19 @@ use crate::domain::play::{
 };
 
 #[derive(Debug, Clone)]
-pub enum DrawCardEffectOutcome {
-    CardDrawn(CardDrawn),
-    GameEnded(GameEnded),
+pub struct DrawCardsEffectOutcome {
+    pub cards_drawn: Vec<CardDrawn>,
+    pub game_ended: Option<GameEnded>,
+}
+
+impl DrawCardsEffectOutcome {
+    #[must_use]
+    pub const fn new(cards_drawn: Vec<CardDrawn>, game_ended: Option<GameEnded>) -> Self {
+        Self {
+            cards_drawn,
+            game_ended,
+        }
+    }
 }
 
 pub(super) fn draw_one_card(player: &mut Player) -> Option<CardInstanceId> {
@@ -21,21 +31,21 @@ pub(super) fn draw_one_card(player: &mut Player) -> Option<CardInstanceId> {
     Some(card_id)
 }
 
-/// Resolves an explicit draw effect by moving one card from library to hand.
+/// Resolves an explicit draw effect by moving one or more cards from library to hand.
 ///
 /// # Errors
 /// Returns an error if:
 /// - The player is not the active player
 /// - The phase is not valid for drawing
-/// - The player has no cards in their library
-pub fn draw_card_effect(
+/// - The requested draw count is zero
+pub fn draw_cards_effect(
     game_id: &GameId,
     players: &mut [Player],
     active_player: &PlayerId,
     phase: &Phase,
     terminal_state: &mut TerminalState,
-    cmd: DrawCardEffectCommand,
-) -> Result<DrawCardEffectOutcome, DomainError> {
+    cmd: &DrawCardsEffectCommand,
+) -> Result<DrawCardsEffectOutcome, DomainError> {
     invariants::require_game_active(terminal_state.is_over())?;
     invariants::require_active_player(active_player, &cmd.player_id)?;
 
@@ -45,21 +55,32 @@ pub fn draw_card_effect(
         ));
     }
 
-    let player_idx = invariants::find_player_index(players, &cmd.player_id)?;
-    let Some(card_id) = draw_one_card(&mut players[player_idx]) else {
-        return crate::domain::play::game::rules::game_effects::end_game_for_empty_library_draw(
-            game_id,
-            players,
-            terminal_state,
-            &cmd.player_id,
-        )
-        .map(DrawCardEffectOutcome::GameEnded);
-    };
+    if cmd.draw_count == 0 {
+        return Err(DomainError::Game(GameError::InvalidDrawCount(0)));
+    }
 
-    Ok(DrawCardEffectOutcome::CardDrawn(CardDrawn::new(
-        game_id.clone(),
-        cmd.player_id,
-        card_id,
-        DrawKind::ExplicitEffect,
-    )))
+    let player_idx = invariants::find_player_index(players, &cmd.player_id)?;
+    let mut cards_drawn = Vec::new();
+
+    for _ in 0..cmd.draw_count {
+        let Some(card_id) = draw_one_card(&mut players[player_idx]) else {
+            let game_ended =
+                crate::domain::play::game::rules::game_effects::end_game_for_empty_library_draw(
+                    game_id,
+                    players,
+                    terminal_state,
+                    &cmd.player_id,
+                )?;
+            return Ok(DrawCardsEffectOutcome::new(cards_drawn, Some(game_ended)));
+        };
+
+        cards_drawn.push(CardDrawn::new(
+            game_id.clone(),
+            cmd.player_id.clone(),
+            card_id,
+            DrawKind::ExplicitEffect,
+        ));
+    }
+
+    Ok(DrawCardsEffectOutcome::new(cards_drawn, None))
 }

@@ -11,7 +11,7 @@ pub use domain::play::{
     commands::{
         AdjustLifeCommand, AdvanceTurnCommand, CastSpellCommand, DealOpeningHandsCommand,
         DeclareAttackersCommand, DeclareBlockersCommand, DiscardForCleanupCommand,
-        DrawCardEffectCommand, LibraryCard, MulliganCommand, NonCreatureCardType, PlayLandCommand,
+        DrawCardsEffectCommand, LibraryCard, MulliganCommand, NonCreatureCardType, PlayLandCommand,
         PlayerDeck, PlayerLibrary, ResolveCombatDamageCommand, StartGameCommand, TapLandCommand,
     },
     errors::{CardError, DomainError, GameError, PhaseError, PlayerError},
@@ -21,7 +21,7 @@ pub use domain::play::{
         GameStarted, LandPlayed, LandTapped, LifeChanged, ManaAdded, MulliganTaken,
         OpeningHandDealt, SpellCast, SpellCastOutcome, TurnProgressed,
     },
-    game::{AdjustLifeOutcome, AdvanceTurnOutcome, CastSpellOutcome, DrawCardEffectOutcome, Game},
+    game::{AdjustLifeOutcome, AdvanceTurnOutcome, CastSpellOutcome, DrawCardsEffectOutcome, Game},
     ids::{CardDefinitionId, CardInstanceId, DeckId, GameId, PlayerId},
     phase::Phase,
     zones::{Battlefield, Graveyard, Hand, Library},

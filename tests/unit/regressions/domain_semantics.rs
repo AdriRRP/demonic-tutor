@@ -265,8 +265,8 @@ fn combat_damage_marks_surviving_creatures_and_destroys_lethally_damaged_ones() 
 fn creature_destruction_emits_one_event_per_destroyed_creature() {
     let (service, mut game) = setup_game(
         vec![
-            LibraryCard::creature(CardDefinitionId::new("rhino"), 0, 4, 5),
-            LibraryCard::creature(CardDefinitionId::new("card-2"), 0, 2, 2),
+            LibraryCard::creature(CardDefinitionId::new("rhino-a"), 0, 4, 5),
+            LibraryCard::creature(CardDefinitionId::new("rhino-b"), 0, 4, 5),
             LibraryCard::creature(CardDefinitionId::new("card-3"), 0, 2, 2),
             LibraryCard::creature(CardDefinitionId::new("card-4"), 0, 2, 2),
             LibraryCard::creature(CardDefinitionId::new("card-5"), 0, 2, 2),
@@ -290,7 +290,8 @@ fn creature_destruction_emits_one_event_per_destroyed_creature() {
         ],
     );
 
-    let attacker_id = CardInstanceId::new("game-1-player-1-0");
+    let left_attacker_id = CardInstanceId::new("game-1-player-1-0");
+    let right_attacker_id = CardInstanceId::new("game-1-player-1-1");
     let left_blocker_id = CardInstanceId::new("game-1-player-2-0");
     let right_blocker_id = CardInstanceId::new("game-1-player-2-1");
 
@@ -298,7 +299,13 @@ fn creature_destruction_emits_one_event_per_destroyed_creature() {
     service
         .cast_spell(
             &mut game,
-            CastSpellCommand::new(PlayerId::new("player-1"), attacker_id.clone()),
+            CastSpellCommand::new(PlayerId::new("player-1"), left_attacker_id.clone()),
+        )
+        .unwrap();
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), right_attacker_id.clone()),
         )
         .unwrap();
 
@@ -321,13 +328,16 @@ fn creature_destruction_emits_one_event_per_destroyed_creature() {
     service
         .declare_attackers(
             &mut game,
-            DeclareAttackersCommand::new(PlayerId::new("player-1"), vec![attacker_id.clone()]),
+            DeclareAttackersCommand::new(
+                PlayerId::new("player-1"),
+                vec![left_attacker_id.clone(), right_attacker_id.clone()],
+            ),
         )
         .unwrap();
 
     let blocker_assignments = vec![
-        (left_blocker_id.clone(), attacker_id.clone()),
-        (right_blocker_id.clone(), attacker_id),
+        (left_blocker_id.clone(), left_attacker_id),
+        (right_blocker_id.clone(), right_attacker_id),
     ];
 
     service

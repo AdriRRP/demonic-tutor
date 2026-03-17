@@ -121,4 +121,4 @@ This behavior belongs to the `Game` aggregate because it:
 
 ## Rules Support Statement
 
-This slice implements a narrow game-loss condition for required draws from an empty library. It currently applies to the automatic draw step and to the simplified explicit draw-effect entrypoint. It does not yet implement the broader set of game-loss conditions or replacement effects that can modify draw behavior.
+This slice implements a narrow game-loss condition for required draws from an empty library. It currently applies to the automatic draw step and to the simplified explicit draw-effect entrypoint, including multi-card effects that overrun the library mid-resolution. It does not yet implement the broader set of game-loss conditions or replacement effects that can modify draw behavior.

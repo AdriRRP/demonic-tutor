@@ -20,6 +20,7 @@ pub enum GameError {
     DuplicatePlayer(PlayerId),
     PlayerNotFound(PlayerId),
     DuplicateBlockerAssignment(CardInstanceId),
+    MultipleBlockersPerAttackerNotSupported(CardInstanceId),
     InsufficientMana {
         player: PlayerId,
         required: u32,
@@ -34,6 +35,7 @@ pub enum GameError {
     DuplicatePlayerLibrary(PlayerId),
     OpeningHandsAlreadyDealt,
     GameAlreadyEnded,
+    InvalidDrawCount(u32),
     NoAttackersDeclared,
     MulliganAlreadyUsed(PlayerId),
     HandSizeLimitExceeded {
@@ -126,6 +128,12 @@ impl std::fmt::Display for GameError {
             Self::DuplicateBlockerAssignment(card_id) => {
                 write!(f, "blocking creature {card_id} cannot be assigned more than once")
             }
+            Self::MultipleBlockersPerAttackerNotSupported(card_id) => {
+                write!(
+                    f,
+                    "attacking creature {card_id} cannot be assigned more than one blocker in the current combat model"
+                )
+            }
             Self::InsufficientMana {
                 player,
                 required,
@@ -162,6 +170,9 @@ impl std::fmt::Display for GameError {
                 write!(f, "opening hands have already been dealt")
             }
             Self::GameAlreadyEnded => write!(f, "the game has already ended"),
+            Self::InvalidDrawCount(requested) => {
+                write!(f, "draw effect must request at least one card, got {requested}")
+            }
             Self::NoAttackersDeclared => write!(f, "no attackers have been declared"),
             Self::MulliganAlreadyUsed(pid) => {
                 write!(f, "player {} has already used mulligan", pid.as_str())

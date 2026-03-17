@@ -7,6 +7,15 @@ fn alice_attacks_with_a_creature(world: &mut GameplayWorld) {
     world.setup_blocked_damage_marking();
 }
 
+#[given(
+    "Alice attacks with a creature and Bob has two creatures that could block the same attacker"
+)]
+fn alice_attacks_with_a_creature_and_bob_has_two_creatures_that_could_block_the_same_attacker(
+    world: &mut GameplayWorld,
+) {
+    world.setup_multiple_blockers_not_supported();
+}
+
 #[given("Bob blocks with a creature")]
 fn bob_blocks_with_a_creature(world: &mut GameplayWorld) {
     assert!(world.tracked_blocker_id.is_some());
@@ -16,6 +25,11 @@ fn bob_blocks_with_a_creature(world: &mut GameplayWorld) {
 #[when("combat damage resolves")]
 fn combat_damage_resolves(world: &mut GameplayWorld) {
     world.resolve_combat_damage();
+}
+
+#[when("Bob tries to assign both blockers to that attacker")]
+fn bob_tries_to_assign_both_blockers_to_that_attacker(world: &mut GameplayWorld) {
+    world.try_declare_multiple_blockers_on_one_attacker();
 }
 
 #[when("combat damage resolution finishes")]
@@ -36,6 +50,20 @@ fn blocker_damage_is_marked_on_the_attacking_creature(world: &mut GameplayWorld)
 #[then("the game emits CombatDamageResolved")]
 fn the_game_emits_combat_damage_resolved(world: &mut GameplayWorld) {
     assert!(world.last_combat_damage.is_some());
+}
+
+#[then("the action is rejected because multiple blockers per attacker are not yet supported")]
+fn the_action_is_rejected_because_multiple_blockers_per_attacker_are_not_yet_supported(
+    world: &mut GameplayWorld,
+) {
+    let error = world
+        .last_error
+        .as_ref()
+        .expect("multiple blockers should be rejected");
+    assert!(
+        error.contains("cannot be assigned more than one blocker"),
+        "unexpected error: {error}"
+    );
 }
 
 #[given("Alice attacks with an unblocked creature")]

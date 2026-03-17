@@ -4,7 +4,7 @@ use crate::{
         commands::{
             AdjustLifeCommand, AdvanceTurnCommand, CastSpellCommand, DealOpeningHandsCommand,
             DeclareAttackersCommand, DeclareBlockersCommand, DiscardForCleanupCommand,
-            DrawCardEffectCommand, MulliganCommand, PlayLandCommand, ResolveCombatDamageCommand,
+            DrawCardsEffectCommand, MulliganCommand, PlayLandCommand, ResolveCombatDamageCommand,
             StartGameCommand, TapLandCommand,
         },
         errors::{DomainError, GameError},
@@ -13,7 +13,7 @@ use crate::{
             LandPlayed, LandTapped, ManaAdded, MulliganTaken, OpeningHandDealt,
         },
         game::{
-            AdjustLifeOutcome, AdvanceTurnOutcome, CastSpellOutcome, DrawCardEffectOutcome, Game,
+            AdjustLifeOutcome, AdvanceTurnOutcome, CastSpellOutcome, DrawCardsEffectOutcome, Game,
             ResolveCombatDamageOutcome,
         },
     },
@@ -163,21 +163,23 @@ where
     /// # Errors
     ///
     /// Returns an error if the command is invalid.
-    pub fn draw_card_effect(
+    pub fn draw_cards_effect(
         &self,
         game: &mut Game,
-        cmd: DrawCardEffectCommand,
-    ) -> Result<DrawCardEffectOutcome, DomainError> {
-        let outcome = game.draw_card_effect(cmd)?;
+        cmd: &DrawCardsEffectCommand,
+    ) -> Result<DrawCardsEffectOutcome, DomainError> {
+        let outcome = game.draw_cards_effect(cmd)?;
 
-        match &outcome {
-            DrawCardEffectOutcome::CardDrawn(event) => {
-                self.persist_and_publish_event(game.id().as_str(), event)?;
-            }
-            DrawCardEffectOutcome::GameEnded(game_ended) => {
-                self.persist_and_publish_event(game.id().as_str(), game_ended)?;
-            }
+        let mut domain_events = outcome
+            .cards_drawn
+            .iter()
+            .cloned()
+            .map(Into::into)
+            .collect::<Vec<_>>();
+        if let Some(game_ended) = &outcome.game_ended {
+            domain_events.push(game_ended.clone().into());
         }
+        self.persist_and_publish_events(game.id().as_str(), &domain_events)?;
 
         Ok(outcome)
     }

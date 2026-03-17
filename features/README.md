@@ -20,8 +20,10 @@ Some features may also be executable through `cucumber-rs`.
 Current executable feature coverage:
 
 - `features/turn-flow/turn_progression.feature`
+- `features/turn-flow/draw_multiple_cards.feature`
 - `features/spells/cast_creature_spell.feature`
 - `features/combat/combat_damage_marking.feature`
+- `features/combat/single_blocker_per_attacker.feature`
 - `features/combat/creature_destruction.feature`
 - `features/turn-flow/cleanup_damage_removal.feature`
 - `features/turn-flow/cleanup_hand_size_discard.feature`

@@ -61,7 +61,7 @@ Be explicit and concrete.
 
 Examples:
 
-- accept a `DrawCardEffectCommand`
+- accept a `DrawCardsEffectCommand`
 - verify the player exists
 - verify the player is the active player
 - draw exactly one card from the player library into the hand
@@ -255,7 +255,7 @@ This slice enables direct hand progression and supports later gameplay actions t
 
 ## Supported Behavior
 
-- accept `DrawCardEffectCommand`
+- accept `DrawCardsEffectCommand`
 - verify player exists
 - verify player is active
 - draw exactly one card
@@ -282,7 +282,7 @@ This slice enables direct hand progression and supports later gameplay actions t
 - extend `Game` with explicit draw behavior
 
 ### Commands
-- add `DrawCardEffectCommand`
+- add `DrawCardsEffectCommand`
 
 ### Events
 - add `CardDrawn`

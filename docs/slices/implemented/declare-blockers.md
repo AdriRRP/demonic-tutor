@@ -31,7 +31,7 @@ This slice follows `DeclareAttackers` because:
   - is not tapped
 - verify each target attacker exists and is attacking
 - assign each blocking creature to exactly one attacking creature
-- allow multiple blockers to be assigned to the same attacker
+- support at most one blocker per attacker in the current combat model
 - persist blocker-to-attacker assignment in aggregate runtime state for later combat damage resolution
 - mark blocking creatures as blocked
 - emit `BlockersDeclared` event
@@ -44,6 +44,7 @@ This slice follows `DeclareAttackers` because:
 - blockers must be untapped creatures controlled by defending player
 - cannot block creatures that are not attacking
 - each blocking creature may appear at most once in the assignment list
+- each attacking creature may have at most one blocker assigned
 - this slice does NOT itself resolve combat damage
 
 ---
@@ -53,6 +54,7 @@ This slice follows `DeclareAttackers` because:
 - combat damage resolution
 - trample
 - first strike / double strike
+- multiple blockers per attacker
 - deathtouch
 - lifelink
 - indestructible
@@ -110,6 +112,7 @@ This behavior belongs to the `Game` aggregate because:
 - declare blockers fails for tapped creatures
 - declare blockers fails for non-attacking targets
 - declare blockers fails when the same blocker is assigned more than once
+- declare blockers fails when multiple blockers are assigned to the same attacker
 - `BlockersDeclared` event is emitted
 
 ---
@@ -130,7 +133,7 @@ This slice introduces the declare blockers step. It allows defenders to block at
 
 ## Open Questions
 
-- When multiple blockers exist on one attacker, how should attacker-side damage assignment order be modeled?
+- If we later support multiple blockers per attacker, how should attacker-side damage assignment order be modeled?
 
 ---
 

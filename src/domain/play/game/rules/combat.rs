@@ -264,12 +264,19 @@ pub fn declare_blockers(
     let battlefield = defender.battlefield_mut();
     let mut valid_blockers: Vec<(CardInstanceId, CardInstanceId)> = Vec::new();
     let mut seen_blockers = HashSet::new();
+    let mut seen_attackers = HashSet::new();
 
     for (blocker_id, attacker_id) in &cmd.blocker_assignments {
         if !seen_blockers.insert(blocker_id.clone()) {
             return Err(DomainError::Game(GameError::DuplicateBlockerAssignment(
                 blocker_id.clone(),
             )));
+        }
+
+        if !seen_attackers.insert(attacker_id.clone()) {
+            return Err(DomainError::Game(
+                GameError::MultipleBlockersPerAttackerNotSupported(attacker_id.clone()),
+            ));
         }
 
         if !declared_attackers.contains(attacker_id) {

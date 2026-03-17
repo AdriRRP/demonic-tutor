@@ -175,3 +175,86 @@ fn declare_blockers_fails_when_the_same_blocker_is_assigned_more_than_once() {
         DomainError::Game(GameError::DuplicateBlockerAssignment(blocker_id))
     );
 }
+
+#[test]
+fn declare_blockers_fails_when_multiple_blockers_target_the_same_attacker() {
+    let (service, mut game) = setup_two_player_game(
+        "game-1",
+        filled_library(
+            vec![LibraryCard::creature(
+                CardDefinitionId::new("attacker"),
+                0,
+                3,
+                3,
+            )],
+            10,
+        ),
+        filled_library(
+            vec![
+                LibraryCard::creature(CardDefinitionId::new("blocker-a"), 0, 2, 2),
+                LibraryCard::creature(CardDefinitionId::new("blocker-b"), 0, 2, 2),
+            ],
+            10,
+        ),
+    );
+
+    let attacker_id = CardInstanceId::new("game-1-player-1-0");
+    let left_blocker_id = CardInstanceId::new("game-1-player-2-0");
+    let right_blocker_id = CardInstanceId::new("game-1-player-2-1");
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), attacker_id.clone()),
+        )
+        .unwrap();
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-2");
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-2"), left_blocker_id.clone()),
+        )
+        .unwrap();
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-2"), right_blocker_id.clone()),
+        )
+        .unwrap();
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
+    service
+        .advance_turn(&mut game, demonictutor::AdvanceTurnCommand::new())
+        .unwrap();
+    service
+        .declare_attackers(
+            &mut game,
+            demonictutor::DeclareAttackersCommand::new(
+                PlayerId::new("player-1"),
+                vec![attacker_id.clone()],
+            ),
+        )
+        .unwrap();
+
+    let error = service
+        .declare_blockers(
+            &mut game,
+            DeclareBlockersCommand::new(
+                PlayerId::new("player-2"),
+                vec![
+                    (left_blocker_id, attacker_id.clone()),
+                    (right_blocker_id, attacker_id.clone()),
+                ],
+            ),
+        )
+        .unwrap_err();
+
+    assert_eq!(
+        error,
+        DomainError::Game(GameError::MultipleBlockersPerAttackerNotSupported(
+            attacker_id
+        ))
+    );
+}

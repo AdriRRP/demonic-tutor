@@ -4,9 +4,9 @@ pub mod support;
 use demonictutor::{
     AdjustLifeCommand, AdvanceTurnCommand, AdvanceTurnOutcome, CardDefinitionId, CardDiscarded,
     CardDrawn, CardInstance, CardInstanceId, CastSpellCommand, CombatDamageResolved, CreatureDied,
-    DealOpeningHandsCommand, DiscardForCleanupCommand, Game, GameEnded, GameId, LibraryCard,
-    LifeChanged, Phase, PlayLandCommand, PlayerId, ResolveCombatDamageCommand, SpellCast,
-    StartGameCommand, TapLandCommand, TurnProgressed,
+    DealOpeningHandsCommand, DiscardForCleanupCommand, DrawCardsEffectCommand, Game, GameEnded,
+    GameId, LibraryCard, LifeChanged, Phase, PlayLandCommand, PlayerId, ResolveCombatDamageCommand,
+    SpellCast, StartGameCommand, TapLandCommand, TurnProgressed,
 };
 
 #[derive(Debug, Default, cucumber::World)]
@@ -15,6 +15,7 @@ pub struct GameplayWorld {
     pub last_turn_progressed: Option<TurnProgressed>,
     pub last_game_ended: Option<GameEnded>,
     pub last_card_drawn: Option<CardDrawn>,
+    pub last_cards_drawn: Vec<CardDrawn>,
     pub last_card_discarded: Option<CardDiscarded>,
     pub last_spell_cast: Option<SpellCast>,
     pub last_combat_damage: Option<CombatDamageResolved>,
@@ -134,6 +135,7 @@ impl GameplayWorld {
         self.last_turn_progressed = None;
         self.last_game_ended = None;
         self.last_card_drawn = None;
+        self.last_cards_drawn.clear();
         self.last_card_discarded = None;
         self.last_spell_cast = None;
         self.last_combat_damage = None;
@@ -274,6 +276,24 @@ impl GameplayWorld {
         self.reset_observations();
         assert_eq!(self.game().phase(), &Phase::Draw);
         assert_eq!(self.player_library_size("Alice"), 0);
+    }
+
+    pub fn setup_first_main_with_library_size(&mut self, library_size: usize) {
+        self.reset_game_with_libraries(
+            "bdd-explicit-draw-effect",
+            support::filled_library(Vec::new(), library_size + 8),
+            support::filled_library(Vec::new(), 20),
+        );
+
+        let service = support::create_service();
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-1",
+        );
+        self.reset_observations();
+        assert_eq!(self.game().phase(), &Phase::FirstMain);
+        assert_eq!(self.player_library_size("Alice"), library_size);
     }
 
     pub fn setup_cast_creature_spell(&mut self) {
@@ -463,6 +483,88 @@ impl GameplayWorld {
         );
     }
 
+    pub fn setup_multiple_blockers_not_supported(&mut self) {
+        self.reset_game_with_libraries(
+            "bdd-single-blocker",
+            support::filled_library(
+                vec![LibraryCard::creature(
+                    CardDefinitionId::new("bdd-attacker-single-blocker"),
+                    0,
+                    3,
+                    3,
+                )],
+                10,
+            ),
+            support::filled_library(
+                vec![
+                    LibraryCard::creature(CardDefinitionId::new("bdd-blocker-left"), 0, 2, 2),
+                    LibraryCard::creature(CardDefinitionId::new("bdd-blocker-right"), 0, 2, 2),
+                ],
+                10,
+            ),
+        );
+
+        let service = support::create_service();
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-1",
+        );
+        let attacker_id = self.hand_card_by_definition("Alice", "bdd-attacker-single-blocker");
+        service
+            .cast_spell(
+                self.game_mut(),
+                CastSpellCommand::new(Self::player_id("Alice"), attacker_id.clone()),
+            )
+            .expect("attacker cast should succeed");
+
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-2",
+        );
+        let left_blocker_id = self.hand_card_by_definition("Bob", "bdd-blocker-left");
+        let right_blocker_id = self.hand_card_by_definition("Bob", "bdd-blocker-right");
+        service
+            .cast_spell(
+                self.game_mut(),
+                CastSpellCommand::new(Self::player_id("Bob"), left_blocker_id.clone()),
+            )
+            .expect("left blocker cast should succeed");
+        service
+            .cast_spell(
+                self.game_mut(),
+                CastSpellCommand::new(Self::player_id("Bob"), right_blocker_id.clone()),
+            )
+            .expect("right blocker cast should succeed");
+
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-1",
+        );
+        service
+            .advance_turn(self.game_mut(), AdvanceTurnCommand::new())
+            .expect("advance to combat should succeed");
+        service
+            .declare_attackers(
+                self.game_mut(),
+                demonictutor::DeclareAttackersCommand::new(
+                    Self::player_id("Alice"),
+                    vec![attacker_id.clone()],
+                ),
+            )
+            .expect("declare attackers should succeed");
+
+        self.tracked_attacker_id = Some(attacker_id.clone());
+        self.tracked_blocker_id = Some(left_blocker_id.clone());
+        self.blocker_assignments = vec![
+            (left_blocker_id, attacker_id.clone()),
+            (right_blocker_id, attacker_id),
+        ];
+        self.reset_observations();
+    }
+
     pub fn setup_unblocked_combat(&mut self) {
         self.setup_combat(
             "bdd-unblocked-combat",
@@ -640,6 +742,28 @@ impl GameplayWorld {
         }
     }
 
+    pub fn draw_cards_effect(&mut self, alias: &str, count: u32) {
+        let service = support::create_service();
+
+        match service.draw_cards_effect(
+            self.game_mut(),
+            &DrawCardsEffectCommand::new(Self::player_id(alias), count),
+        ) {
+            Ok(outcome) => {
+                self.last_card_drawn = outcome.cards_drawn.last().cloned();
+                self.last_cards_drawn = outcome.cards_drawn;
+                self.last_game_ended = outcome.game_ended;
+                self.last_error = None;
+            }
+            Err(error) => {
+                self.last_card_drawn = None;
+                self.last_cards_drawn.clear();
+                self.last_game_ended = None;
+                self.last_error = Some(error.to_string());
+            }
+        }
+    }
+
     pub fn adjust_life(&mut self, alias: &str, delta: i32) {
         let service = support::create_service();
 
@@ -698,6 +822,23 @@ impl GameplayWorld {
                 self.last_life_changed = None;
                 self.last_creature_died.clear();
                 self.last_game_ended = None;
+                self.last_error = Some(error.to_string());
+            }
+        }
+    }
+
+    pub fn try_declare_multiple_blockers_on_one_attacker(&mut self) {
+        let service = support::create_service();
+        let assignments = self.blocker_assignments.clone();
+
+        match service.declare_blockers(
+            self.game_mut(),
+            demonictutor::DeclareBlockersCommand::new(Self::player_id("Bob"), assignments),
+        ) {
+            Ok(_) => {
+                self.last_error = None;
+            }
+            Err(error) => {
                 self.last_error = Some(error.to_string());
             }
         }

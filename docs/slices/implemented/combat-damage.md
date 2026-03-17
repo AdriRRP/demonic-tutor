@@ -142,7 +142,7 @@ This slice resolves and marks combat damage. The follow-on `CreatureDestruction`
 ## Open Questions
 
 1. Should we model damage as a transient value or persistent?
-2. When multiple blockers exist, how should attacker-side damage assignment order be introduced?
+2. When and how should attacker-side damage assignment order be introduced if multiple blockers per attacker become supported?
 
 ---
 

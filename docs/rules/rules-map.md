@@ -66,6 +66,14 @@ It is not a literal restatement of the rules text.
 
 ---
 
+## Draw Multiple Cards
+
+- 121.1
+- 121.2
+- 121.4
+
+---
+
 ## Lose On Empty Draw
 
 - 121.4
@@ -134,8 +142,10 @@ It is not a literal restatement of the rules text.
 The initial Gherkin pilot currently targets these rule areas:
 
 - `features/turn-flow/turn_progression.feature`
+- `features/turn-flow/draw_multiple_cards.feature`
 - `features/spells/cast_creature_spell.feature`
 - `features/combat/combat_damage_marking.feature`
+- `features/combat/single_blocker_per_attacker.feature`
 - `features/combat/creature_destruction.feature`
 - `features/turn-flow/cleanup_damage_removal.feature`
 - `features/turn-flow/cleanup_hand_size_discard.feature`

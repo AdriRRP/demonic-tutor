@@ -21,6 +21,7 @@ Implemented capabilities include:
 - mulligan support (London Mulligan - simplified)
 - drawing cards (auto-draw in Draw phase)
 - resolving explicit draw effects during main phases
+- resolving explicit draw effects that draw multiple cards one by one
 - ending the game when a player must draw from an empty library
 - ending the game when a player reaches 0 life
 - playing lands
@@ -31,6 +32,7 @@ Implemented capabilities include:
 - summoning sickness for creatures (removed for the active player's battlefield at turn start)
 - declaring attackers in combat phase
 - declaring blockers in combat phase
+- blocking currently supports at most one blocker per attacking creature
 - resolving combat damage
 - applying unblocked combat damage to players through shared life-change semantics
 - destroying creatures automatically when marked combat damage is lethal
@@ -61,6 +63,7 @@ The domain currently includes:
 - creature cards with power and toughness
 - creature spells entering the battlefield through `CastSpell`
 - creature damage tracking during combat
+- single-blocker combat assignments for each attacking creature
 - player life changes from combat damage
 - automatic destruction of creatures with lethal marked damage
 - automatic destruction of creatures with 0 toughness after creature-spell resolution
@@ -69,7 +72,7 @@ The domain currently includes:
 - explicit cleanup discard to maximum hand size during `EndStep`
 - summoning sickness for creatures (removed for the active player's creatures at turn start)
 - turn and phase progression
-- explicit draw effects as a simplified non-stack entrypoint
+- explicit draw effects as a simplified non-stack entrypoint, including multi-card draw
 - terminal game state when a player loses by empty-library draw or zero life
 
 The system intentionally excludes complex gameplay mechanics at this stage.
@@ -93,6 +96,7 @@ Current constraints include:
 - limited card behavior modeling
 - non-land permanents currently enter the battlefield through simplified spell resolution without stack handling
 - mana production is simplified to active-player main phases and generic mana only
+- combat blocking is simplified to at most one blocker per attacker
 
 These constraints are expected to evolve in future slices.
 
@@ -129,7 +133,7 @@ The project currently includes:
 - projections derived from gameplay events
 - State pattern for phase transitions
 - helper methods for event persistence and publishing
-- a Gherkin acceptance layer, with executable coverage for turn progression, spell casting, combat damage, creature destruction, cleanup damage removal, cleanup hand-size discard, empty-library draw loss, and zero-life loss via `cucumber-rs`
+- a Gherkin acceptance layer, with executable coverage for turn progression, explicit multi-card draw effects, spell casting, combat damage, creature destruction, cleanup damage removal, cleanup hand-size discard, empty-library draw loss, and zero-life loss via `cucumber-rs`
 
 This architecture supports:
 

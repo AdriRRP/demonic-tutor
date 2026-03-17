@@ -24,7 +24,7 @@ This is a repository-owned interpretation note, not a copy of the Comprehensive 
 - automatic untap applies only to the active player's permanents
 - automatic draw happens in the Draw phase
 - if a player must draw from an empty library, the game ends immediately with `GameEnded(EmptyLibraryDraw)`
-- explicit draw effects are modeled separately from the automatic draw step and are limited to main phases
+- explicit draw effects are modeled separately from the automatic draw step, are limited to main phases, and may draw multiple cards one by one
 - if the active player is above the maximum hand size at `EndStep`, the turn cannot advance until they discard down to the maximum
 - marked damage is cleared automatically when the game leaves `EndStep` for the next turn
 - no priority windows are modeled

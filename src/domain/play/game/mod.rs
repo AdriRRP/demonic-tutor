@@ -6,7 +6,7 @@ use crate::domain::play::{
     commands::{
         AdjustLifeCommand, AdvanceTurnCommand, CastSpellCommand, DealOpeningHandsCommand,
         DeclareAttackersCommand, DeclareBlockersCommand, DiscardForCleanupCommand,
-        DrawCardEffectCommand, MulliganCommand, PlayLandCommand, ResolveCombatDamageCommand,
+        DrawCardsEffectCommand, MulliganCommand, PlayLandCommand, ResolveCombatDamageCommand,
         StartGameCommand, TapLandCommand,
     },
     errors::DomainError,
@@ -22,7 +22,7 @@ pub use model::Player;
 pub use rules::{
     combat::ResolveCombatDamageOutcome,
     resource_actions::{AdjustLifeOutcome, CastSpellOutcome},
-    turn_flow::{AdvanceTurnOutcome, DrawCardEffectOutcome},
+    turn_flow::{AdvanceTurnOutcome, DrawCardsEffectOutcome},
 };
 
 #[derive(Debug, Clone, Default)]
@@ -215,12 +215,12 @@ impl Game {
     /// Resolves an explicit draw effect.
     ///
     /// # Errors
-    /// See [`rules::turn_flow::draw_card_effect`].
-    pub fn draw_card_effect(
+    /// See [`rules::turn_flow::draw_cards_effect`].
+    pub fn draw_cards_effect(
         &mut self,
-        cmd: DrawCardEffectCommand,
-    ) -> Result<rules::turn_flow::DrawCardEffectOutcome, DomainError> {
-        rules::turn_flow::draw_card_effect(
+        cmd: &DrawCardsEffectCommand,
+    ) -> Result<rules::turn_flow::DrawCardsEffectOutcome, DomainError> {
+        rules::turn_flow::draw_cards_effect(
             &self.id,
             &mut self.players,
             &self.active_player,
