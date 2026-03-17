@@ -258,6 +258,15 @@ It is not a literal restatement of the rules text.
 
 ---
 
+## Cast Second Instant In First Main Window
+
+- 117
+- 505
+- 601
+- 608
+
+---
+
 ## Cast Instant In Second Main Window
 
 - 117

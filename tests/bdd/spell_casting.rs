@@ -311,6 +311,16 @@ fn alice_is_the_active_player_in_draw_with_two_instant_cards_in_hand_and_priorit
     world.setup_active_priority_window_with_two_instants("bdd-draw-two-instants", Phase::Draw);
 }
 
+#[given("Alice is the active player in FirstMain with two instant cards in hand and priority")]
+fn alice_is_the_active_player_in_first_main_with_two_instant_cards_in_hand_and_priority(
+    world: &mut GameplayWorld,
+) {
+    world.setup_active_priority_window_with_two_instants(
+        "bdd-first-main-two-instants",
+        Phase::FirstMain,
+    );
+}
+
 #[given("Alice is the active player in SecondMain with two instant cards in hand and priority")]
 fn alice_is_the_active_player_in_second_main_with_two_instant_cards_in_hand_and_priority(
     world: &mut GameplayWorld,
