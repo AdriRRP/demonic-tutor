@@ -166,9 +166,9 @@ impl std::fmt::Display for PhaseError {
         match self {
             Self::InvalidForLand => write!(f, "cannot play land in current phase"),
             Self::InvalidForPlayingCard { phase } => {
-                write!(f, "cannot play card in phase {phase:?}")
+                write!(f, "cannot play card in phase {phase}")
             }
-            Self::InvalidForDraw { phase } => write!(f, "cannot draw card in phase {phase:?}"),
+            Self::InvalidForDraw { phase } => write!(f, "cannot draw card in phase {phase}"),
             Self::InvalidForMulligan => write!(f, "cannot perform mulligan in current phase"),
             Self::InvalidForCombat => {
                 write!(f, "cannot declare attackers or blockers in current phase")
@@ -197,3 +197,27 @@ impl std::fmt::Display for PlayerError {
 }
 
 impl std::error::Error for DomainError {}
+
+impl From<GameError> for DomainError {
+    fn from(e: GameError) -> Self {
+        Self::Game(e)
+    }
+}
+
+impl From<CardError> for DomainError {
+    fn from(e: CardError) -> Self {
+        Self::Card(e)
+    }
+}
+
+impl From<PhaseError> for DomainError {
+    fn from(e: PhaseError) -> Self {
+        Self::Phase(e)
+    }
+}
+
+impl From<PlayerError> for DomainError {
+    fn from(e: PlayerError) -> Self {
+        Self::Player(e)
+    }
+}

@@ -19,6 +19,13 @@ impl std::fmt::Display for GameId {
     }
 }
 
+impl GameId {
+    #[must_use]
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct PlayerId(pub String);
 

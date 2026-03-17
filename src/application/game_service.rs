@@ -58,8 +58,7 @@ where
         command: &C,
     ) -> Result<Vec<DomainEvent>, DomainError> {
         let events = game.execute_command(command)?;
-        let game_id = game.id().0.clone();
-        self.persist_and_publish_events(&game_id, &events);
+        self.persist_and_publish_events(game.id().as_str(), &events);
         Ok(events)
     }
 
@@ -72,8 +71,7 @@ where
         let (game, event) = Game::start(cmd)?;
         let domain_event: DomainEvent = event.clone().into();
 
-        let game_id = game.id().0.clone();
-        self.persist_and_publish_events(&game_id, &[domain_event]);
+        self.persist_and_publish_events(game.id().as_str(), &[domain_event]);
 
         Ok((game, event))
     }
@@ -91,9 +89,8 @@ where
         let events = game.deal_opening_hands(cmd)?;
 
         if !events.is_empty() {
-            let game_id = game.id().0.clone();
             let domain_events: Vec<DomainEvent> = events.iter().cloned().map(Into::into).collect();
-            self.persist_and_publish_events(&game_id, &domain_events);
+            self.persist_and_publish_events(game.id().as_str(), &domain_events);
         }
 
         Ok(events)
@@ -112,8 +109,7 @@ where
         let event = game.play_land(cmd)?;
         let domain_event: DomainEvent = event.clone().into();
 
-        let game_id = game.id().0.clone();
-        self.persist_and_publish_events(&game_id, &[domain_event]);
+        self.persist_and_publish_events(game.id().as_str(), &[domain_event]);
 
         Ok(event)
     }
@@ -130,16 +126,16 @@ where
     ) -> Result<TurnAdvanced, DomainError> {
         let (turn_event, turn_number_event, phase_event, card_drawn) = game.advance_turn(cmd)?;
 
-        let game_id = game.id().0.clone();
-        let mut domain_events = Vec::new();
-        domain_events.push(turn_event.clone().into());
-        domain_events.push(turn_number_event.into());
-        domain_events.push(phase_event.into());
+        let mut domain_events = vec![
+            turn_event.clone().into(),
+            turn_number_event.into(),
+            phase_event.into(),
+        ];
         if let Some(draw_event) = card_drawn {
             domain_events.push(draw_event.into());
         }
 
-        self.persist_and_publish_events(&game_id, &domain_events);
+        self.persist_and_publish_events(game.id().as_str(), &domain_events);
 
         Ok(turn_event)
     }
@@ -157,8 +153,7 @@ where
         let event = game.draw_card(cmd)?;
         let domain_event: DomainEvent = event.clone().into();
 
-        let game_id = game.id().0.clone();
-        self.persist_and_publish_events(&game_id, &[domain_event]);
+        self.persist_and_publish_events(game.id().as_str(), &[domain_event]);
 
         Ok(event)
     }
@@ -176,8 +171,7 @@ where
         let event = game.mulligan(cmd)?;
         let domain_event: DomainEvent = event.clone().into();
 
-        let game_id = game.id().0.clone();
-        self.persist_and_publish_events(&game_id, &[domain_event]);
+        self.persist_and_publish_events(game.id().as_str(), &[domain_event]);
 
         Ok(event)
     }
@@ -195,8 +189,7 @@ where
         let event = game.set_life(cmd)?;
         let domain_event: DomainEvent = event.clone().into();
 
-        let game_id = game.id().0.clone();
-        self.persist_and_publish_events(&game_id, &[domain_event]);
+        self.persist_and_publish_events(game.id().as_str(), &[domain_event]);
 
         Ok(event)
     }
@@ -213,9 +206,8 @@ where
     ) -> Result<(LandTapped, ManaAdded), DomainError> {
         let (land_event, mana_event) = game.tap_land(cmd)?;
 
-        let game_id = game.id().0.clone();
         let domain_events = vec![land_event.clone().into(), mana_event.clone().into()];
-        self.persist_and_publish_events(&game_id, &domain_events);
+        self.persist_and_publish_events(game.id().as_str(), &domain_events);
 
         Ok((land_event, mana_event))
     }
@@ -233,8 +225,7 @@ where
         let event = game.cast_spell(cmd)?;
         let domain_event: DomainEvent = event.clone().into();
 
-        let game_id = game.id().0.clone();
-        self.persist_and_publish_events(&game_id, &[domain_event]);
+        self.persist_and_publish_events(game.id().as_str(), &[domain_event]);
 
         Ok(event)
     }
@@ -252,8 +243,7 @@ where
         let event = game.play_creature(cmd)?;
         let domain_event: DomainEvent = event.clone().into();
 
-        let game_id = game.id().0.clone();
-        self.persist_and_publish_events(&game_id, &[domain_event]);
+        self.persist_and_publish_events(game.id().as_str(), &[domain_event]);
 
         Ok(event)
     }
@@ -271,8 +261,7 @@ where
         let event = game.declare_attackers(cmd)?;
         let domain_event: DomainEvent = event.clone().into();
 
-        let game_id = game.id().0.clone();
-        self.persist_and_publish_events(&game_id, &[domain_event]);
+        self.persist_and_publish_events(game.id().as_str(), &[domain_event]);
 
         Ok(event)
     }
@@ -290,8 +279,7 @@ where
         let event = game.declare_blockers(cmd)?;
         let domain_event: DomainEvent = event.clone().into();
 
-        let game_id = game.id().0.clone();
-        self.persist_and_publish_events(&game_id, &[domain_event]);
+        self.persist_and_publish_events(game.id().as_str(), &[domain_event]);
 
         Ok(event)
     }
@@ -309,8 +297,7 @@ where
         let event = game.resolve_combat_damage(cmd)?;
         let domain_event: DomainEvent = event.clone().into();
 
-        let game_id = game.id().0.clone();
-        self.persist_and_publish_events(&game_id, &[domain_event]);
+        self.persist_and_publish_events(game.id().as_str(), &[domain_event]);
 
         Ok(event)
     }

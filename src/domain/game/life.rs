@@ -1,11 +1,17 @@
 use super::player::Player;
-use crate::domain::{commands::SetLifeCommand, errors::DomainError, events::LifeChanged};
+use crate::domain::{
+    commands::SetLifeCommand, errors::DomainError, events::LifeChanged, ids::GameId,
+};
 
 /// Sets a player's life total.
 ///
 /// # Errors
 /// Returns an error if the player is not found.
-pub fn set_life(players: &mut [Player], cmd: SetLifeCommand) -> Result<LifeChanged, DomainError> {
+pub fn set_life(
+    game_id: &GameId,
+    players: &mut [Player],
+    cmd: SetLifeCommand,
+) -> Result<LifeChanged, DomainError> {
     let player_idx = players
         .iter()
         .position(|p| p.id() == &cmd.player_id)
@@ -16,13 +22,16 @@ pub fn set_life(players: &mut [Player], cmd: SetLifeCommand) -> Result<LifeChang
     let player = &mut players[player_idx];
 
     let old_life = player.life();
-    let new_life = old_life
-        .saturating_add(cmd.life_change.max(0).cast_unsigned())
-        .saturating_sub((-cmd.life_change).max(0).cast_unsigned());
+    let change = cmd.life_change;
+    let new_life = if change >= 0 {
+        old_life.saturating_add(change.unsigned_abs())
+    } else {
+        old_life.saturating_sub(change.unsigned_abs())
+    };
     *player.life_mut() = new_life;
 
     Ok(LifeChanged::new(
-        super::Game::id_from_player_id(&cmd.player_id),
+        game_id.clone(),
         cmd.player_id,
         old_life,
         new_life,

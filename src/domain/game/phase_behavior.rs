@@ -38,9 +38,6 @@ pub trait PhaseBehavior {
     ) -> Result<(), DomainError> {
         Ok(())
     }
-
-    /// Returns a human-readable description of the phase.
-    fn description(&self) -> &'static str;
 }
 
 /// Implementation for Setup phase.
@@ -57,10 +54,6 @@ impl PhaseBehavior for SetupPhase {
 
     fn triggers_auto_draw(&self) -> bool {
         false
-    }
-
-    fn description(&self) -> &'static str {
-        "Setup - Initial game preparation"
     }
 }
 
@@ -100,10 +93,6 @@ impl PhaseBehavior for UntapPhase {
 
         Ok(())
     }
-
-    fn description(&self) -> &'static str {
-        "Untap - Untap permanents and remove summoning sickness"
-    }
 }
 
 /// Implementation for Upkeep phase.
@@ -120,10 +109,6 @@ impl PhaseBehavior for UpkeepPhase {
 
     fn triggers_auto_draw(&self) -> bool {
         false
-    }
-
-    fn description(&self) -> &'static str {
-        "Upkeep - Beginning of turn effects"
     }
 }
 
@@ -142,10 +127,6 @@ impl PhaseBehavior for DrawPhase {
     fn triggers_auto_draw(&self) -> bool {
         true
     }
-
-    fn description(&self) -> &'static str {
-        "Draw - Draw a card"
-    }
 }
 
 /// Implementation for First Main phase.
@@ -162,10 +143,6 @@ impl PhaseBehavior for FirstMainPhase {
 
     fn triggers_auto_draw(&self) -> bool {
         false
-    }
-
-    fn description(&self) -> &'static str {
-        "First Main - Play lands and spells"
     }
 }
 
@@ -184,10 +161,6 @@ impl PhaseBehavior for CombatPhase {
     fn triggers_auto_draw(&self) -> bool {
         false
     }
-
-    fn description(&self) -> &'static str {
-        "Combat - Declare attackers and blockers"
-    }
 }
 
 /// Implementation for Second Main phase.
@@ -204,10 +177,6 @@ impl PhaseBehavior for SecondMainPhase {
 
     fn triggers_auto_draw(&self) -> bool {
         false
-    }
-
-    fn description(&self) -> &'static str {
-        "Second Main - Play lands and spells after combat"
     }
 }
 
@@ -242,23 +211,19 @@ impl PhaseBehavior for EndStepPhase {
         }
         Ok(())
     }
-
-    fn description(&self) -> &'static str {
-        "End Step - Cleanup and end of turn"
-    }
 }
 
 /// Converts a Phase enum to its corresponding `PhaseBehavior` implementation.
 #[must_use]
-pub fn get_phase_behavior(phase: &crate::domain::game::Phase) -> Box<dyn PhaseBehavior> {
+pub fn get_phase_behavior(phase: &crate::domain::game::Phase) -> &'static dyn PhaseBehavior {
     match phase {
-        crate::domain::game::Phase::Setup => Box::new(SetupPhase),
-        crate::domain::game::Phase::Untap => Box::new(UntapPhase),
-        crate::domain::game::Phase::Upkeep => Box::new(UpkeepPhase),
-        crate::domain::game::Phase::Draw => Box::new(DrawPhase),
-        crate::domain::game::Phase::FirstMain => Box::new(FirstMainPhase),
-        crate::domain::game::Phase::Combat => Box::new(CombatPhase),
-        crate::domain::game::Phase::SecondMain => Box::new(SecondMainPhase),
-        crate::domain::game::Phase::EndStep => Box::new(EndStepPhase),
+        crate::domain::game::Phase::Setup => &SetupPhase,
+        crate::domain::game::Phase::Untap => &UntapPhase,
+        crate::domain::game::Phase::Upkeep => &UpkeepPhase,
+        crate::domain::game::Phase::Draw => &DrawPhase,
+        crate::domain::game::Phase::FirstMain => &FirstMainPhase,
+        crate::domain::game::Phase::Combat => &CombatPhase,
+        crate::domain::game::Phase::SecondMain => &SecondMainPhase,
+        crate::domain::game::Phase::EndStep => &EndStepPhase,
     }
 }

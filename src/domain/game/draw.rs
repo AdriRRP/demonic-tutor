@@ -4,7 +4,7 @@ use crate::domain::{
     commands::DrawCardCommand,
     errors::{DomainError, GameError},
     events::CardDrawn,
-    ids::PlayerId,
+    ids::{GameId, PlayerId},
 };
 
 /// Draws a card from the player's library to their hand.
@@ -15,6 +15,7 @@ use crate::domain::{
 /// - The phase is not `FirstMain` or `SecondMain`
 /// - The player has no cards in their library
 pub fn draw_card(
+    game_id: &GameId,
     players: &mut [Player],
     active_player: &PlayerId,
     phase: &Phase,
@@ -60,9 +61,5 @@ pub fn draw_card(
     let card_id = card.id().clone();
     player.hand_mut().receive(vec![card]);
 
-    Ok(CardDrawn::new(
-        super::Game::id_from_player_id(&cmd.player_id),
-        cmd.player_id,
-        card_id,
-    ))
+    Ok(CardDrawn::new(game_id.clone(), cmd.player_id, card_id))
 }

@@ -5,7 +5,7 @@ use crate::domain::{
     commands::PlayCreatureCommand,
     errors::{CardError, DomainError, GameError},
     events::CreatureEnteredBattlefield,
-    ids::PlayerId,
+    ids::{GameId, PlayerId},
 };
 
 /// Plays a creature card from hand to battlefield.
@@ -18,6 +18,7 @@ use crate::domain::{
 /// - The card is not a creature
 /// - The player has insufficient mana
 pub fn play_creature(
+    game_id: &GameId,
     players: &mut [Player],
     active_player: &PlayerId,
     phase: &Phase,
@@ -73,7 +74,7 @@ pub fn play_creature(
     player.battlefield_mut().add(card);
 
     Ok(CreatureEnteredBattlefield::new(
-        super::Game::id_from_player_id(&cmd.player_id),
+        game_id.clone(),
         cmd.player_id,
         card_id,
         power,

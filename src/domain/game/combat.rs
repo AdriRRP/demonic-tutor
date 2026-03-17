@@ -7,7 +7,7 @@ use {
         events::{
             AttackersDeclared, BlockersDeclared, CombatDamageResolved, DamageEvent, DamageTarget,
         },
-        ids::{CardInstanceId, PlayerId},
+        ids::{CardInstanceId, GameId, PlayerId},
     },
 };
 
@@ -21,6 +21,7 @@ use {
 /// - Any creature is tapped
 /// - Any creature has summoning sickness
 pub fn declare_attackers(
+    game_id: &GameId,
     players: &mut [Player],
     active_player: &PlayerId,
     phase: &Phase,
@@ -85,7 +86,7 @@ pub fn declare_attackers(
     }
 
     Ok(AttackersDeclared::new(
-        super::Game::id_from_player_id(&cmd.player_id),
+        game_id.clone(),
         cmd.player_id,
         valid_attackers,
     ))
@@ -100,6 +101,7 @@ pub fn declare_attackers(
 /// - Any blocker is not on the battlefield
 /// - Any blocker is tapped
 pub fn declare_blockers(
+    game_id: &GameId,
     players: &mut [Player],
     active_player: &PlayerId,
     phase: &Phase,
@@ -160,7 +162,7 @@ pub fn declare_blockers(
     }
 
     Ok(BlockersDeclared::new(
-        super::Game::id_from_player_id(&cmd.player_id),
+        game_id.clone(),
         cmd.player_id,
         valid_blockers,
     ))
@@ -173,6 +175,7 @@ pub fn declare_blockers(
 /// - The player is not the active player
 /// - The phase is not Combat
 pub fn resolve_combat_damage(
+    game_id: &GameId,
     players: &mut [Player],
     active_player: &PlayerId,
     phase: &Phase,
@@ -224,9 +227,14 @@ pub fn resolve_combat_damage(
     let mut damage_events: Vec<DamageEvent> = Vec::new();
 
     for (attacker_id, power) in &attackers {
-        let blocking: Vec<_> = blockers.iter().map(|(id, _)| id.clone()).collect();
+        let blocking_for_attacker: Vec<_> = cmd
+            .blocker_assignments
+            .iter()
+            .filter(|(_, attacker)| attacker == attacker_id)
+            .map(|(blocker, _)| blocker.clone())
+            .collect();
 
-        if blocking.is_empty() {
+        if blocking_for_attacker.is_empty() {
             let player = &mut players[defender_idx];
             *player.life_mut() = player.life().saturating_sub(*power);
             damage_events.push(DamageEvent {
@@ -235,7 +243,7 @@ pub fn resolve_combat_damage(
                 damage_amount: *power,
             });
         } else {
-            for blocker_id in &blocking {
+            for blocker_id in &blocking_for_attacker {
                 damage_events.push(DamageEvent {
                     source: attacker_id.clone(),
                     target: DamageTarget::Creature(blocker_id.clone()),
@@ -246,8 +254,15 @@ pub fn resolve_combat_damage(
     }
 
     for (blocker_id, power) in &blockers {
-        if !attackers.is_empty() {
-            for (attacker_id, _) in &attackers {
+        let attackers_blocked: Vec<_> = cmd
+            .blocker_assignments
+            .iter()
+            .filter(|(blocker, _)| blocker == blocker_id)
+            .map(|(_, attacker)| attacker.clone())
+            .collect();
+
+        if !attackers_blocked.is_empty() && !attackers.is_empty() {
+            for attacker_id in &attackers_blocked {
                 damage_events.push(DamageEvent {
                     source: blocker_id.clone(),
                     target: DamageTarget::Creature(attacker_id.clone()),
@@ -270,7 +285,7 @@ pub fn resolve_combat_damage(
     }
 
     Ok(CombatDamageResolved::new(
-        super::Game::id_from_player_id(&cmd.player_id),
+        game_id.clone(),
         cmd.player_id,
         damage_events,
     ))

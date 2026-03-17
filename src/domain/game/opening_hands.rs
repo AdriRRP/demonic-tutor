@@ -96,7 +96,7 @@ pub fn deal_opening_hands(
         let hand_cards: Vec<_> = hand.cards().iter().map(|c| c.id().clone()).collect();
 
         events.push(OpeningHandDealt::new(
-            super::Game::id_from_player_id(&pc.player_id),
+            game_id.clone(),
             pc.player_id.clone(),
             hand_cards,
         ));

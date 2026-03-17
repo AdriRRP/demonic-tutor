@@ -4,7 +4,7 @@ use crate::domain::{
     commands::MulliganCommand,
     errors::{DomainError, GameError},
     events::MulliganTaken,
-    ids::PlayerId,
+    ids::{GameId, PlayerId},
 };
 
 /// Performs a mulligan, shuffling hand back into library and drawing new hand.
@@ -15,6 +15,7 @@ use crate::domain::{
 /// - The player has already used mulligan
 /// - The player does not have enough cards in library
 pub fn mulligan(
+    game_id: &GameId,
     players: &mut [Player],
     _active_player: &PlayerId,
     phase: &Phase,
@@ -61,8 +62,5 @@ pub fn mulligan(
     player.hand_mut().receive(drawn_cards);
     *player.mulligan_used_mut() = true;
 
-    Ok(MulliganTaken::new(
-        super::Game::id_from_player_id(&cmd.player_id),
-        cmd.player_id,
-    ))
+    Ok(MulliganTaken::new(game_id.clone(), cmd.player_id))
 }

@@ -42,6 +42,21 @@ pub enum Phase {
     EndStep,
 }
 
+impl std::fmt::Display for Phase {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Setup => write!(f, "Setup"),
+            Self::Untap => write!(f, "Untap"),
+            Self::Upkeep => write!(f, "Upkeep"),
+            Self::Draw => write!(f, "Draw"),
+            Self::FirstMain => write!(f, "FirstMain"),
+            Self::Combat => write!(f, "Combat"),
+            Self::SecondMain => write!(f, "SecondMain"),
+            Self::EndStep => write!(f, "EndStep"),
+        }
+    }
+}
+
 mod player;
 
 pub use player::Player;
@@ -71,11 +86,6 @@ impl Game {
             turn_number,
             players,
         }
-    }
-
-    #[must_use]
-    pub fn id_from_player_id(player_id: &PlayerId) -> GameId {
-        GameId(format!("game-from-{}", player_id.0))
     }
 
     #[must_use]
@@ -149,7 +159,13 @@ impl Game {
     /// # Errors
     /// See [`mulligan::mulligan`].
     pub fn mulligan(&mut self, cmd: MulliganCommand) -> Result<MulliganTaken, DomainError> {
-        mulligan::mulligan(&mut self.players, &self.active_player, &self.phase, cmd)
+        mulligan::mulligan(
+            &self.id,
+            &mut self.players,
+            &self.active_player,
+            &self.phase,
+            cmd,
+        )
     }
 
     /// Plays a land from hand to battlefield.
@@ -157,7 +173,13 @@ impl Game {
     /// # Errors
     /// See [`lands::play_land`].
     pub fn play_land(&mut self, cmd: PlayLandCommand) -> Result<LandPlayed, DomainError> {
-        lands::play_land(&mut self.players, &self.active_player, &self.phase, cmd)
+        lands::play_land(
+            &self.id,
+            &mut self.players,
+            &self.active_player,
+            &self.phase,
+            cmd,
+        )
     }
 
     /// Advances the turn to the next phase and player.
@@ -191,7 +213,13 @@ impl Game {
     /// # Errors
     /// See [`draw::draw_card`].
     pub fn draw_card(&mut self, cmd: DrawCardCommand) -> Result<CardDrawn, DomainError> {
-        draw::draw_card(&mut self.players, &self.active_player, &self.phase, cmd)
+        draw::draw_card(
+            &self.id,
+            &mut self.players,
+            &self.active_player,
+            &self.phase,
+            cmd,
+        )
     }
 
     /// Sets a player's life total.
@@ -202,7 +230,7 @@ impl Game {
         &mut self,
         cmd: crate::domain::commands::SetLifeCommand,
     ) -> Result<LifeChanged, DomainError> {
-        life::set_life(&mut self.players, cmd)
+        life::set_life(&self.id, &mut self.players, cmd)
     }
 
     /// Taps a land to produce mana.
@@ -213,7 +241,7 @@ impl Game {
         &mut self,
         cmd: TapLandCommand,
     ) -> Result<(LandTapped, ManaAdded), DomainError> {
-        mana::tap_land(&mut self.players, cmd)
+        mana::tap_land(&self.id, &mut self.players, cmd)
     }
 
     /// Casts a non-creature spell.
@@ -221,7 +249,13 @@ impl Game {
     /// # Errors
     /// See [`spells::cast_spell`].
     pub fn cast_spell(&mut self, cmd: CastSpellCommand) -> Result<SpellCast, DomainError> {
-        spells::cast_spell(&mut self.players, &self.active_player, &self.phase, cmd)
+        spells::cast_spell(
+            &self.id,
+            &mut self.players,
+            &self.active_player,
+            &self.phase,
+            cmd,
+        )
     }
 
     /// Plays a creature from hand to battlefield.
@@ -232,7 +266,13 @@ impl Game {
         &mut self,
         cmd: PlayCreatureCommand,
     ) -> Result<CreatureEnteredBattlefield, DomainError> {
-        creatures::play_creature(&mut self.players, &self.active_player, &self.phase, cmd)
+        creatures::play_creature(
+            &self.id,
+            &mut self.players,
+            &self.active_player,
+            &self.phase,
+            cmd,
+        )
     }
 
     /// Declares attackers in combat.
@@ -243,7 +283,13 @@ impl Game {
         &mut self,
         cmd: DeclareAttackersCommand,
     ) -> Result<AttackersDeclared, DomainError> {
-        combat::declare_attackers(&mut self.players, &self.active_player, &self.phase, cmd)
+        combat::declare_attackers(
+            &self.id,
+            &mut self.players,
+            &self.active_player,
+            &self.phase,
+            cmd,
+        )
     }
 
     /// Declares blockers in combat.
@@ -254,7 +300,13 @@ impl Game {
         &mut self,
         cmd: DeclareBlockersCommand,
     ) -> Result<BlockersDeclared, DomainError> {
-        combat::declare_blockers(&mut self.players, &self.active_player, &self.phase, cmd)
+        combat::declare_blockers(
+            &self.id,
+            &mut self.players,
+            &self.active_player,
+            &self.phase,
+            cmd,
+        )
     }
 
     /// Resolves combat damage.
@@ -265,6 +317,12 @@ impl Game {
         &mut self,
         cmd: ResolveCombatDamageCommand,
     ) -> Result<CombatDamageResolved, DomainError> {
-        combat::resolve_combat_damage(&mut self.players, &self.active_player, &self.phase, cmd)
+        combat::resolve_combat_damage(
+            &self.id,
+            &mut self.players,
+            &self.active_player,
+            &self.phase,
+            cmd,
+        )
     }
 }

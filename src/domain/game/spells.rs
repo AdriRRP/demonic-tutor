@@ -4,7 +4,7 @@ use crate::domain::{
     commands::CastSpellCommand,
     errors::{CardError, DomainError, GameError},
     events::SpellCast,
-    ids::PlayerId,
+    ids::{GameId, PlayerId},
 };
 
 /// Casts a non-creature spell from hand to battlefield.
@@ -17,6 +17,7 @@ use crate::domain::{
 /// - The card is a land (cannot be cast)
 /// - The player has insufficient mana
 pub fn cast_spell(
+    game_id: &GameId,
     players: &mut [Player],
     active_player: &PlayerId,
     phase: &Phase,
@@ -82,9 +83,5 @@ pub fn cast_spell(
     *player.mana_mut() -= mana_cost;
     player.battlefield_mut().add(card);
 
-    Ok(SpellCast::new(
-        super::Game::id_from_player_id(&cmd.player_id),
-        cmd.player_id,
-        card_id,
-    ))
+    Ok(SpellCast::new(game_id.clone(), cmd.player_id, card_id))
 }

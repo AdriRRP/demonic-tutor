@@ -4,7 +4,7 @@ use crate::domain::{
     commands::PlayLandCommand,
     errors::{CardError, DomainError, PhaseError},
     events::LandPlayed,
-    ids::PlayerId,
+    ids::{GameId, PlayerId},
 };
 
 /// Plays a land card from hand to battlefield.
@@ -17,6 +17,7 @@ use crate::domain::{
 /// - The card is not in the player's hand
 /// - The card is not a land
 pub fn play_land(
+    game_id: &GameId,
     players: &mut [Player],
     active_player: &PlayerId,
     phase: &Phase,
@@ -79,9 +80,5 @@ pub fn play_land(
     player.battlefield_mut().add(card);
     *player.lands_played_this_turn_mut() += 1;
 
-    Ok(LandPlayed::new(
-        super::Game::id_from_player_id(&cmd.player_id),
-        cmd.player_id,
-        card_id,
-    ))
+    Ok(LandPlayed::new(game_id.clone(), cmd.player_id, card_id))
 }

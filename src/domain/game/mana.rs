@@ -4,6 +4,7 @@ use crate::domain::{
     commands::TapLandCommand,
     errors::{CardError, DomainError},
     events::{LandTapped, ManaAdded},
+    ids::GameId,
 };
 
 /// Taps a land to produce mana.
@@ -15,6 +16,7 @@ use crate::domain::{
 /// - The card is not a land
 /// - The land is already tapped
 pub fn tap_land(
+    game_id: &GameId,
     players: &mut [Player],
     cmd: TapLandCommand,
 ) -> Result<(LandTapped, ManaAdded), DomainError> {
@@ -53,10 +55,8 @@ pub fn tap_land(
     *player.mana_mut() += 1;
     let new_mana = player.mana();
 
-    let game_id = super::Game::id_from_player_id(&cmd.player_id);
-
     Ok((
         LandTapped::new(game_id.clone(), cmd.player_id.clone(), cmd.card_id.clone()),
-        ManaAdded::new(game_id, cmd.player_id, 1, new_mana),
+        ManaAdded::new(game_id.clone(), cmd.player_id, 1, new_mana),
     ))
 }
