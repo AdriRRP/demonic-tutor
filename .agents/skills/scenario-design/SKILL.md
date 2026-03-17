@@ -49,6 +49,7 @@ Scenarios must:
 - reference relevant rules sections
 - map to one or more slices
 - state only supported or explicitly proposed behavior
+- make it clear through status metadata whether they are executable or reference-only when that distinction matters
 
 Scenarios must not:
 
@@ -80,6 +81,12 @@ Attach:
 - relevant rule sections
 - relevant slice documents
 
+Also decide whether the feature is:
+
+- executable now
+- implemented reference-only
+- proposed
+
 ### Step 4 — Write scenarios
 
 Prefer a small number of scenarios that cover:
@@ -91,6 +98,8 @@ Prefer a small number of scenarios that cover:
 ### Step 5 — Check truthfulness
 
 Verify that the scenario wording does not overstate support.
+
+If the repository already has a newer slice that supersedes the feature's original role, consider whether the feature should become `historical` or reference a different implemented slice.
 
 ---
 

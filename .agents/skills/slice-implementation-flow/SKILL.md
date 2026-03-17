@@ -136,6 +136,7 @@ If the slice is rule-heavy or semantically subtle:
 - create or refine a `.feature`
 - update or create the corresponding slice document
 - map rules and out-of-scope boundaries explicitly
+- decide whether the feature is executable now or is an implemented/proposed reference artifact
 
 Use:
 
@@ -178,6 +179,8 @@ Prefer:
 - explicit code
 - minimal new surface area
 - canonical events over shortcut-specific ones
+- module splits by domain capability when a file has become crowded enough to hide the slice
+- small helpers in application orchestration instead of generic event-publication frameworks
 
 Avoid:
 

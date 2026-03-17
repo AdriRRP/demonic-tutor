@@ -76,6 +76,7 @@ Check whether implemented slice docs:
 - should be updated
 - should be marked superseded instead of pretending to be current
 - should stop presenting convenience commands or shortcut events as live behavior after a canonical action replaced them
+- should distinguish clearly between live slices, historical baseline slices, and superseded documents
 
 ### 3. ADR Status
 
@@ -101,6 +102,12 @@ Search for obsolete names, old commands, old events, or outdated phase models.
 
 Prefer removing or narrowing stale references over leaving historical wording in active docs.
 
+Also search for:
+
+- feature headers that still claim `proposed` or `implemented` incorrectly
+- proposal docs that are already implemented but not marked historical
+- architecture docs that still describe monolithic files after internal module splits
+
 ---
 
 ## Procedure
@@ -115,6 +122,8 @@ Examples:
 - event payloads need enough semantic context for replay
 - internal memory optimization should stay hidden behind readable APIs
 - historical docs should be marked explicitly when they no longer describe live behavior
+- executable and reference features need honest status metadata
+- partial stack/priority support must be enforced consistently by new actions
 
 ### Step 2 — Identify truth owners
 

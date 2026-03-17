@@ -52,6 +52,7 @@ Close a release candidate so that:
 - the crate version matches the release
 - repository checks pass before the release commit
 - the final tag is created from a validated commit
+- stable lessons already captured in agent context or skills are not left behind as uncommitted repository drift
 
 ---
 
@@ -98,6 +99,7 @@ Identify:
 - semantic change groups
 - release-relevant files
 - whether repository curation is already complete
+- whether agent context or skills changed as part of the release-worthy work and therefore belong in semantic pre-release commits
 
 ### Step 2 — Define commit grouping
 

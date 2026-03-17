@@ -15,3 +15,11 @@ Current skills:
 - `release-prep` — group semantic commits and cut validated releases
 - `scenario-design` — design truthful Gherkin gameplay features tied to rules and slices
 - `slice-implementation-flow` — orchestrate the full slice workflow from choice through implementation and closure
+
+Common repository-wide guardrails these skills should reinforce:
+
+- prefer canonical gameplay actions over convenience duplicates
+- keep partial stack/priority support explicit and enforced
+- distinguish executable features from implemented reference features
+- mark historical or superseded docs honestly
+- prefer explicit Rust and DDD structure over speculative generic frameworks

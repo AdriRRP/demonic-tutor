@@ -75,6 +75,7 @@ Use this ownership model when checking synchronization.
 | `AGENTS.md` | agent entrypoint and repository-wide operational routing |
 | `.agents/context/*` | operational working posture for future sessions |
 | `.agents/skills/*` | reusable workflows and guardrails for repeated tasks |
+| `features/*` and `features/README.md` | supported gameplay scenarios and their execution/reference status |
 
 If a change does not alter the owned truth of a document, do not update it.
 
@@ -135,6 +136,8 @@ This is one of the most commonly affected documents.
 
 Update only the slice documents directly affected.
 
+If an implemented slice is no longer the live source for behavior because later slices superseded it, mark it honestly instead of silently leaving it current-looking.
+
 ---
 
 ### Update the system overview when:
@@ -155,6 +158,13 @@ Do not update it for local slice changes unless they alter architecture at syste
 - the slice index is no longer accurate
 
 Do not treat it as a second current-state document.
+
+### Update features when:
+
+- supported gameplay behavior changed
+- a feature status changed between `proposed`, `implemented`, and `historical`
+- slice mappings changed
+- an executable feature became reference-only or vice versa
 
 ---
 
@@ -301,6 +311,8 @@ Less frequently affected, but important when needed:
 - `docs/domain/DOMAIN_GLOSSARY.md`
 - `docs/domain/context-map.md`
 - `docs/architecture/adr/*`
+- `features/*`
+- `features/README.md`
 
 The goal of this skill is not to increase documentation churn.
 

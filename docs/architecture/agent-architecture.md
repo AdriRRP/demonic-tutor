@@ -171,6 +171,7 @@ Skills should:
 - reference canonical documentation
 - produce reviewable outputs
 - capture repeated repository workflows and guardrails that reduce future drift
+- stay synchronized with stable repository practices such as stack/priority guardrails, truthful feature statuses, and honest historical marking
 
 Skills must not redefine architecture or domain rules.
 
@@ -249,6 +250,18 @@ Examples include:
 These templates define the expected structure of those artifacts.
 
 Skills may use them, but must not duplicate them.
+
+## Stable Development Patterns
+
+The agent architecture should reinforce the repository's preferred implementation style:
+
+- grow the `Game` aggregate through internal modules by capability, not new aggregates by default
+- prefer explicit enums, small state structs, and deterministic transition helpers over generic engines
+- keep partial rule support honest in code, features, slices, and current-state docs
+- treat executable and non-executable features as different documentation roles that still require truthful status metadata
+- mark proposals and historical slices explicitly once they no longer describe the live source of truth
+
+These are implementation and curation guardrails, not separate sources of domain truth.
 
 ---
 

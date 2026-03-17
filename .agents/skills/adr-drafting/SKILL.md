@@ -270,5 +270,7 @@ In this project, ADRs are especially appropriate for:
 - temporary rule-model simplifications
 - bounded-context responsibility decisions
 - agent architecture decisions
+- stable stack/priority simplifications that materially constrain later slice design
+- repository-wide guidance on how historical slices or proposals should be treated
 
 Prefer a small ADR with a clear trade-off over a long ambiguous one.

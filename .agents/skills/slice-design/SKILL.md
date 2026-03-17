@@ -55,6 +55,7 @@ A good slice:
 - is easy to review and test
 - uses the semantically correct domain action names
 - prefers extending an existing canonical action over adding a second public command for the same game concept
+- prefers explicit state transitions, enums, and capability-local modules over generic frameworks
 
 A bad slice:
 
@@ -187,6 +188,7 @@ Check whether the slice changes:
 - context map
 - current-state documentation
 - whether an older slice should become superseded instead of staying live
+- whether a proposal or feature should become historical or executable/reference-only
 
 ### Step 6 — Identify relevant Magic Comprehensive Rules
 

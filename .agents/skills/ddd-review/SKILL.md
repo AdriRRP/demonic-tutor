@@ -114,6 +114,7 @@ Potential violations:
 - domain logic in controllers or infrastructure
 - duplicate commands for one real domain action when one entrypoint should be canonical
 - event streams that require consumers to reconstruct basic intent from technical deltas instead of explicit domain facts
+- new gameplay actions that ignore an already-open priority window
 
 ---
 
@@ -169,6 +170,7 @@ Common anti-patterns:
 - generic “card effect systems”
 - “flexible frameworks” anticipating unknown rules
 - preserving semantically wrong shortcuts because they are already implemented
+- trait-object heavy orchestration where a small enum or explicit module split would be clearer
 
 Unless justified, prefer **specific behavior over speculative infrastructure**.
 
@@ -297,5 +299,6 @@ During reviews:
 - keep slices narrow and behavior-focused
 - document simplifications explicitly
 - ensure implemented rule support matches documentation
+- prefer explicit module splits by capability before introducing more abstraction
 
 The goal is **domain clarity and correctness**, not architectural purity.

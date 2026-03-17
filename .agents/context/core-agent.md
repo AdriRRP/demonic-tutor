@@ -45,6 +45,9 @@ Prefer:
 - removal of duplicate entrypoints once the real domain model is clear
 - internal optimizations hidden behind stable, readable domain APIs
 - focused feature scenarios for rule-heavy behavior when they clarify supported gameplay semantics
+- small explicit module splits by domain capability once a file becomes crowded
+- small enums, state structs, and deterministic transitions over generic engines
+- honest historical notes when a once-live slice or proposal no longer describes the active model
 
 Avoid:
 
@@ -53,6 +56,7 @@ Avoid:
 - hidden assumptions
 - unrelated edits
 - keeping obsolete commands, events, or docs alive once they are no longer canonical
+- broad framework extraction when a local helper or module split is enough
 
 ---
 
@@ -99,6 +103,12 @@ When stack or priority is only partially implemented, any new gameplay action mu
 
 Do not allow new actions to silently bypass an open stack interaction.
 
+When new gameplay semantics are introduced through stack, combat, or state-based actions, verify whether:
+
+- feature headers still reflect reality
+- non-executable reference features need status or slice updates
+- older slice docs should become historical instead of staying live
+
 Documentation updates are required only when the owned truth of that document has changed.
 
 If gameplay behavior is already tracked through repository features, verify whether the relevant `.feature` files must also be updated.
@@ -125,6 +135,7 @@ When a broad cleanup is explicitly requested, keep the cleanup structured:
 3. fix operational agent context
 4. validate the whole repository
 5. ensure historical docs are marked honestly when they are no longer the live source of truth
+6. persist stable lessons into agent context or skills when the pattern is likely to recur
 
 ---
 

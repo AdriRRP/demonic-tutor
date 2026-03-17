@@ -120,6 +120,7 @@ Potential issue:
 - a slice about tapping lands implies mana system completeness
 - a spell-casting slice implies timing, stack, or abilities support
 - a convenience command implies a domain action that is no longer canonical
+- a feature marked `implemented` or `proposed` no longer matches the actual repository state
 
 ---
 
@@ -272,3 +273,5 @@ This is acceptable.
 What is not acceptable is allowing those references to create false claims about current rules support.
 
 When uncertain, prefer narrower wording and explicit out-of-scope statements.
+
+If stack or priority is partially implemented, verify that docs say exactly which windows, responses, and object kinds are supported today.
