@@ -7,28 +7,35 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ---
 
-## [0.2.0] - Unreleased
+## [0.2.0] - 2026-03-17
 
 ### Added
 
-- **CombatDamage**: Resolve combat damage between attackers and blockers (without creature destruction)
+- **CombatDamage**: Resolve combat damage between attackers and blockers with marked creature damage
 - **DeclareBlockers**: Declare blockers for attacking creatures
-- **Phase::Combat**: Proper combat phase with begin/combat/end steps
-- **Phase::Upkeep**: Intermediate phase between Untap and Draw
-- **Turn Number**: Track and increment turn number
-- **Summoning Sickness**: Creatures cannot attack the turn they enter battlefield
-- **CardInstance damage**: Track damage on creatures during combat
+- **Full phase model**: `Setup -> Untap -> Upkeep -> Draw -> FirstMain -> Combat -> SecondMain -> EndStep`
+- **Composite turn events**: `TurnProgressed` replaces technical turn delta events
+- **Draw origin tracking**: `CardDrawn` now records whether the draw came from a turn step or explicit action
+- **Runtime semantic tests**: regression coverage for combat damage, untap ownership, spell resolution, and zone invariants
+- **Shared test support**: reusable helpers for common game setup and phase advancement flows
+- **Repository curation skills**: reusable agent workflows for repository closing and release preparation
 
 ### Changed
 
-- **Phase Model**: Full 8-phase turn structure (Setup → Untap → Upkeep → Draw → FirstMain → Combat → SecondMain → EndStep)
-- **Turn Progression**: Auto-untap at start of turn, auto-draw in Draw phase
-- **Game Aggregate**: Split into internal modules by domain capability
+- **Turn progression**: auto-untap happens only for the active player and automatic draw happens in the Draw phase
+- **Spell casting semantics**: creatures are now cast through `CastSpell`, and permanent spells enter the battlefield while instants and sorceries resolve to the graveyard in the simplified model
+- **Bounded context layout**: gameplay code now lives explicitly under `domain::play`
+- **Game aggregate internals**: split into `model`, `rules`, and `invariants` for clearer ownership
+- **Application layer**: command processing uses explicit service and aggregate methods instead of a generic command trait
+- **Infrastructure layout**: event bus/store and projections now use more explicit module structure
+- **Event payloads**: `SpellCast` now records card type, mana cost paid, and outcome for better replayability
+- **Memory footprint**: identifiers now share storage with `Arc<str>` and card runtime state is more compact internally
 
 ### Quality
 
 - Strict clippy warnings resolved
-- Documentation synchronized with implementation
+- Canonical docs, ADRs, slices, agent context, and skills synchronized with implementation
+- Historical slices and ADRs marked explicitly when superseded
 
 ---
 
