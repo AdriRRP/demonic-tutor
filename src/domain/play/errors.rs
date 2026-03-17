@@ -32,6 +32,7 @@ pub enum GameError {
     MissingPlayerLibrary(PlayerId),
     DuplicatePlayerLibrary(PlayerId),
     OpeningHandsAlreadyDealt,
+    GameAlreadyEnded,
     MulliganAlreadyUsed(PlayerId),
     HandSizeLimitExceeded {
         player: PlayerId,
@@ -155,6 +156,7 @@ impl std::fmt::Display for GameError {
             Self::OpeningHandsAlreadyDealt => {
                 write!(f, "opening hands have already been dealt")
             }
+            Self::GameAlreadyEnded => write!(f, "the game has already ended"),
             Self::MulliganAlreadyUsed(pid) => {
                 write!(f, "player {} has already used mulligan", pid.as_str())
             }

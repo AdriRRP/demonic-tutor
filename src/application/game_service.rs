@@ -9,11 +9,11 @@ use crate::{
         },
         errors::{DomainError, GameError},
         events::{
-            AttackersDeclared, BlockersDeclared, CardDiscarded, CardDrawn, CombatDamageResolved,
-            CreatureDied, DomainEvent, GameStarted, LandPlayed, LandTapped, LifeChanged, ManaAdded,
-            MulliganTaken, OpeningHandDealt, SpellCast, TurnProgressed,
+            AttackersDeclared, BlockersDeclared, CardDiscarded, CombatDamageResolved, CreatureDied,
+            DomainEvent, GameStarted, LandPlayed, LandTapped, LifeChanged, ManaAdded,
+            MulliganTaken, OpeningHandDealt, SpellCast,
         },
-        game::Game,
+        game::{AdvanceTurnOutcome, DrawCardEffectOutcome, Game},
     },
 };
 
@@ -134,17 +134,26 @@ where
         &self,
         game: &mut Game,
         cmd: AdvanceTurnCommand,
-    ) -> Result<TurnProgressed, DomainError> {
-        let (turn_event, card_drawn) = game.advance_turn(cmd)?;
+    ) -> Result<AdvanceTurnOutcome, DomainError> {
+        let outcome = game.advance_turn(cmd)?;
 
-        let mut domain_events = vec![turn_event.clone().into()];
-        if let Some(draw_event) = card_drawn {
-            domain_events.push(draw_event.into());
+        match &outcome {
+            AdvanceTurnOutcome::Progressed {
+                turn_progressed,
+                card_drawn,
+            } => {
+                let mut domain_events = vec![turn_progressed.clone().into()];
+                if let Some(draw_event) = card_drawn {
+                    domain_events.push(draw_event.clone().into());
+                }
+                self.persist_and_publish_events(game.id().as_str(), &domain_events)?;
+            }
+            AdvanceTurnOutcome::GameEnded(game_ended) => {
+                self.persist_and_publish_event(game.id().as_str(), game_ended)?;
+            }
         }
 
-        self.persist_and_publish_events(game.id().as_str(), &domain_events)?;
-
-        Ok(turn_event)
+        Ok(outcome)
     }
 
     /// Resolves an explicit draw effect for the active player.
@@ -156,11 +165,19 @@ where
         &self,
         game: &mut Game,
         cmd: DrawCardEffectCommand,
-    ) -> Result<CardDrawn, DomainError> {
-        let event = game.draw_card_effect(cmd)?;
-        self.persist_and_publish_event(game.id().as_str(), &event)?;
+    ) -> Result<DrawCardEffectOutcome, DomainError> {
+        let outcome = game.draw_card_effect(cmd)?;
 
-        Ok(event)
+        match &outcome {
+            DrawCardEffectOutcome::CardDrawn(event) => {
+                self.persist_and_publish_event(game.id().as_str(), event)?;
+            }
+            DrawCardEffectOutcome::GameEnded(game_ended) => {
+                self.persist_and_publish_event(game.id().as_str(), game_ended)?;
+            }
+        }
+
+        Ok(outcome)
     }
 
     /// Discards one card from hand during cleanup-related turn flow.

@@ -46,6 +46,7 @@ At the current stage of the system, the aggregate conceptually maintains:
 - current phase
 - turn number
 - participating players
+- optional terminal game outcome (`winner`, `loser`, `end reason`)
 
 Each player maintains their own game zones and state within the aggregate.
 
@@ -197,8 +198,10 @@ The `Game` aggregate currently guarantees:
 - players are uniquely identified
 - card instances belong to exactly one player
 - cards cannot be drawn if not available
+- the game ends if a required draw cannot happen because the relevant library is empty
 - card movements maintain zone consistency
 - end-of-turn cleanup discard must reduce the active player's hand to the maximum before the turn can advance
+- gameplay actions are rejected once the game is in a terminal state
 - gameplay operations emit domain events
 
 These invariants are enforced whenever commands are applied.
@@ -216,6 +219,7 @@ The aggregate root must enforce:
 - turn progression rules
 - phase progression rules
 - active-player-only automatic turn updates
+- terminal game tracking for empty-library draw loss
 - lethal-damage creature destruction after combat damage resolution
 - correct event emission
 

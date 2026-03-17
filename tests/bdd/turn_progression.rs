@@ -1,5 +1,5 @@
 use cucumber::{given, then, when};
-use demonictutor::{DrawKind, Phase};
+use demonictutor::{DrawKind, GameEndReason, Phase};
 
 use crate::world::GameplayWorld;
 
@@ -32,6 +32,13 @@ fn the_current_turn_number_is(world: &mut GameplayWorld, turn_number: u32) {
 #[given(expr = "{word} has at least one card in her library")]
 fn player_has_at_least_one_card_in_library(world: &mut GameplayWorld, player: String) {
     assert!(world.player_library_size(&player) >= 1);
+}
+
+#[given(expr = "{word} has no cards in her library")]
+fn player_has_no_cards_in_her_library(world: &mut GameplayWorld, player: String) {
+    world.setup_draw_phase_with_empty_library();
+    assert_eq!(player, "Alice");
+    assert_eq!(world.player_library_size(&player), 0);
 }
 
 #[when("the game advances the turn")]
@@ -68,6 +75,38 @@ fn the_game_emits_turn_progressed(world: &mut GameplayWorld) {
         world.last_error
     );
     assert!(world.last_turn_progressed.is_some());
+}
+
+#[then(expr = "the game emits GameEnded with reason {word}")]
+fn the_game_emits_game_ended_with_reason(world: &mut GameplayWorld, reason: String) {
+    let expected = match reason.as_str() {
+        "EmptyLibraryDraw" => GameEndReason::EmptyLibraryDraw,
+        other => panic!("unsupported game-end reason in BDD suite: {other}"),
+    };
+
+    let event = world
+        .last_game_ended
+        .as_ref()
+        .expect("expected a GameEnded event");
+    assert_eq!(event.reason, expected);
+}
+
+#[then(expr = "{word} loses the game")]
+fn player_loses_the_game(world: &mut GameplayWorld, player: String) {
+    let event = world
+        .last_game_ended
+        .as_ref()
+        .expect("expected a GameEnded event");
+    assert_eq!(event.loser_id, GameplayWorld::player_id(&player));
+}
+
+#[then(expr = "{word} wins the game")]
+fn player_wins_the_game(world: &mut GameplayWorld, player: String) {
+    let event = world
+        .last_game_ended
+        .as_ref()
+        .expect("expected a GameEnded event");
+    assert_eq!(event.winner_id, GameplayWorld::player_id(&player));
 }
 
 #[then(expr = "{word} draws one card")]

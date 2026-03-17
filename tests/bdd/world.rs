@@ -2,16 +2,18 @@
 pub mod support;
 
 use demonictutor::{
-    AdvanceTurnCommand, CardDefinitionId, CardDiscarded, CardDrawn, CardInstance, CardInstanceId,
-    CastSpellCommand, CombatDamageResolved, CreatureDied, DealOpeningHandsCommand,
-    DiscardForCleanupCommand, Game, GameId, LibraryCard, Phase, PlayLandCommand, PlayerId,
-    ResolveCombatDamageCommand, SpellCast, StartGameCommand, TapLandCommand, TurnProgressed,
+    AdvanceTurnCommand, AdvanceTurnOutcome, CardDefinitionId, CardDiscarded, CardDrawn,
+    CardInstance, CardInstanceId, CastSpellCommand, CombatDamageResolved, CreatureDied,
+    DealOpeningHandsCommand, DiscardForCleanupCommand, Game, GameEnded, GameId, LibraryCard, Phase,
+    PlayLandCommand, PlayerId, ResolveCombatDamageCommand, SpellCast, StartGameCommand,
+    TapLandCommand, TurnProgressed,
 };
 
 #[derive(Debug, Default, cucumber::World)]
 pub struct GameplayWorld {
     game: Option<Game>,
     pub last_turn_progressed: Option<TurnProgressed>,
+    pub last_game_ended: Option<GameEnded>,
     pub last_card_drawn: Option<CardDrawn>,
     pub last_card_discarded: Option<CardDiscarded>,
     pub last_spell_cast: Option<SpellCast>,
@@ -129,6 +131,7 @@ impl GameplayWorld {
 
     pub fn reset_observations(&mut self) {
         self.last_turn_progressed = None;
+        self.last_game_ended = None;
         self.last_card_drawn = None;
         self.last_card_discarded = None;
         self.last_spell_cast = None;
@@ -255,6 +258,20 @@ impl GameplayWorld {
         panic!(
             "failed to reach target state: phase={target_phase:?}, player={target_player}, turn={target_turn}"
         );
+    }
+
+    pub fn setup_draw_phase_with_empty_library(&mut self) {
+        self.reset_game_with_libraries(
+            "bdd-empty-library-draw",
+            support::filled_library(Vec::new(), 7),
+            support::filled_library(Vec::new(), 7),
+        );
+
+        let service = support::create_service();
+        support::advance_n_raw(&service, self.game_mut(), 3);
+        self.reset_observations();
+        assert_eq!(self.game().phase(), &Phase::Draw);
+        assert_eq!(self.player_library_size("Alice"), 0);
     }
 
     pub fn setup_cast_creature_spell(&mut self) {
@@ -506,14 +523,25 @@ impl GameplayWorld {
         self.pre_advance_hand_size = Some(self.player_hand_size("Alice"));
 
         match self.game_mut().advance_turn(AdvanceTurnCommand::new()) {
-            Ok((turn_progressed, card_drawn)) => {
+            Ok(AdvanceTurnOutcome::Progressed {
+                turn_progressed,
+                card_drawn,
+            }) => {
                 self.last_turn_progressed = Some(turn_progressed);
+                self.last_game_ended = None;
                 self.last_card_drawn = card_drawn;
+                self.last_error = None;
+            }
+            Ok(AdvanceTurnOutcome::GameEnded(game_ended)) => {
+                self.last_turn_progressed = None;
+                self.last_game_ended = Some(game_ended);
+                self.last_card_drawn = None;
                 self.last_error = None;
             }
             Err(error) => {
                 self.last_error = Some(error.to_string());
                 self.last_turn_progressed = None;
+                self.last_game_ended = None;
                 self.last_card_drawn = None;
             }
         }

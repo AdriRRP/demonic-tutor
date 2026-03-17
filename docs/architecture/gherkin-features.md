@@ -184,6 +184,7 @@ Current executable BDD coverage:
 - `features/combat/creature_destruction.feature`
 - `features/turn-flow/cleanup_damage_removal.feature`
 - `features/turn-flow/cleanup_hand_size_discard.feature`
+- `features/turn-flow/lose_on_empty_draw.feature`
 - `tests/bdd.rs`
 
 Conventional Rust behavior tests remain separate under the aggregated `tests/unit.rs` target.
@@ -206,6 +207,7 @@ features/
     turn_progression.feature
     cleanup_damage_removal.feature
     cleanup_hand_size_discard.feature
+    lose_on_empty_draw.feature
   spells/
     cast_creature_spell.feature
   combat/

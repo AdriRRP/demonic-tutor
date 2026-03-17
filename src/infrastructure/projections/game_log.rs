@@ -40,6 +40,12 @@ impl GameLogProjection {
                     e.cards.len()
                 )
             }
+            DomainEvent::GameEnded(e) => {
+                format!(
+                    "Game ended: {} lost to {} via {:?}",
+                    e.loser_id, e.winner_id, e.reason
+                )
+            }
             DomainEvent::LandPlayed(e) => {
                 format!("Player {} played land {}", e.player_id, e.card_id)
             }

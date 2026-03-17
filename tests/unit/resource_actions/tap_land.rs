@@ -4,8 +4,8 @@ use crate::support::{
     advance_to_first_main_satisfying_cleanup, create_service, filled_library, land_card,
 };
 use demonictutor::{
-    AdvanceTurnCommand, CardError, CardInstanceId, DomainError, GameService, InMemoryEventBus,
-    InMemoryEventStore, Phase, PlayLandCommand, PlayerId, TapLandCommand,
+    AdvanceTurnCommand, AdvanceTurnOutcome, CardError, CardInstanceId, DomainError, GameService,
+    InMemoryEventBus, InMemoryEventStore, Phase, PlayLandCommand, PlayerId, TapLandCommand,
 };
 
 fn create_game_with_land_on_battlefield() -> (
@@ -157,9 +157,10 @@ fn tap_land_fails_when_not_players_turn() {
 fn tap_land_fails_outside_main_phases() {
     let (mut game, service) = create_game_with_land_on_battlefield();
 
-    service
+    let outcome = service
         .advance_turn(&mut game, AdvanceTurnCommand::new())
         .unwrap();
+    assert!(matches!(outcome, AdvanceTurnOutcome::Progressed { .. }));
 
     assert_eq!(game.phase(), &Phase::Combat);
 
@@ -197,9 +198,10 @@ fn advance_turn_clears_mana_pools() {
 
     assert_eq!(game.players()[0].mana(), 1);
 
-    service
+    let outcome = service
         .advance_turn(&mut game, AdvanceTurnCommand::new())
         .unwrap();
+    assert!(matches!(outcome, AdvanceTurnOutcome::Progressed { .. }));
 
     assert_eq!(game.players()[0].mana(), 0);
     assert_eq!(game.players()[1].mana(), 0);

@@ -2,7 +2,8 @@
 
 use crate::support::{create_service, creature_library, setup_two_player_game};
 use demonictutor::{
-    AdvanceTurnCommand, DomainError, GameError, MulliganCommand, Phase, PhaseError, PlayerId,
+    AdvanceTurnCommand, AdvanceTurnOutcome, DomainError, GameError, MulliganCommand, Phase,
+    PhaseError, PlayerId,
 };
 
 #[test]
@@ -69,9 +70,10 @@ fn mulligan_fails_not_setup_phase() {
     let (service, mut game) =
         setup_two_player_game("game-1", creature_library(14), creature_library(14));
 
-    service
+    let outcome = service
         .advance_turn(&mut game, AdvanceTurnCommand::new())
         .unwrap();
+    assert!(matches!(outcome, AdvanceTurnOutcome::Progressed { .. }));
 
     assert_eq!(game.phase(), &Phase::Untap);
 

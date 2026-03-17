@@ -3,7 +3,7 @@
 #![allow(dead_code)]
 
 use demonictutor::{
-    AdvanceTurnCommand, CardDefinitionId, DealOpeningHandsCommand, DeckId,
+    AdvanceTurnCommand, AdvanceTurnOutcome, CardDefinitionId, DealOpeningHandsCommand, DeckId,
     DiscardForCleanupCommand, Game, GameId, GameService, InMemoryEventBus, InMemoryEventStore,
     LibraryCard, NonCreatureCardType, Phase, PlayerDeck, PlayerId, PlayerLibrary, StartGameCommand,
 };
@@ -159,9 +159,10 @@ pub fn advance_to_player_first_main_satisfying_cleanup(
 }
 
 pub fn advance_turn_raw(service: &TestService, game: &mut Game) {
-    service
+    let outcome = service
         .advance_turn(game, AdvanceTurnCommand::new())
         .unwrap();
+    assert!(matches!(outcome, AdvanceTurnOutcome::Progressed { .. }));
 }
 
 pub fn satisfy_cleanup_discard(service: &TestService, game: &mut Game) {

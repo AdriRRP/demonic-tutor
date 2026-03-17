@@ -11,15 +11,60 @@ use crate::domain::play::{
     },
     errors::{DomainError, GameError},
     events::{
-        AttackersDeclared, BlockersDeclared, CardDiscarded, CardDrawn, CombatDamageResolved,
-        CreatureDied, GameStarted, LandPlayed, LandTapped, LifeChanged, ManaAdded, MulliganTaken,
-        OpeningHandDealt, SpellCast, TurnProgressed,
+        AttackersDeclared, BlockersDeclared, CardDiscarded, CombatDamageResolved, CreatureDied,
+        GameEndReason, GameStarted, LandPlayed, LandTapped, LifeChanged, ManaAdded, MulliganTaken,
+        OpeningHandDealt, SpellCast,
     },
     ids::{GameId, PlayerId},
     phase::Phase,
 };
 
 pub use model::Player;
+pub use rules::turn_flow::{AdvanceTurnOutcome, DrawCardEffectOutcome};
+
+#[derive(Debug, Clone, Default)]
+pub struct TerminalState {
+    winner: Option<PlayerId>,
+    loser: Option<PlayerId>,
+    end_reason: Option<GameEndReason>,
+}
+
+impl TerminalState {
+    #[must_use]
+    pub const fn active() -> Self {
+        Self {
+            winner: None,
+            loser: None,
+            end_reason: None,
+        }
+    }
+
+    #[must_use]
+    pub const fn is_over(&self) -> bool {
+        self.end_reason.is_some()
+    }
+
+    #[must_use]
+    pub const fn winner(&self) -> Option<&PlayerId> {
+        self.winner.as_ref()
+    }
+
+    #[must_use]
+    pub const fn loser(&self) -> Option<&PlayerId> {
+        self.loser.as_ref()
+    }
+
+    #[must_use]
+    pub const fn end_reason(&self) -> Option<GameEndReason> {
+        self.end_reason
+    }
+
+    pub fn end(&mut self, winner: PlayerId, loser: PlayerId, reason: GameEndReason) {
+        self.winner = Some(winner);
+        self.loser = Some(loser);
+        self.end_reason = Some(reason);
+    }
+}
 
 #[derive(Debug)]
 pub struct Game {
@@ -28,6 +73,7 @@ pub struct Game {
     phase: Phase,
     turn_number: u32,
     players: Vec<Player>,
+    terminal_state: TerminalState,
 }
 
 impl Game {
@@ -38,6 +84,7 @@ impl Game {
         phase: Phase,
         turn_number: u32,
         players: Vec<Player>,
+        terminal_state: TerminalState,
     ) -> Self {
         Self {
             id,
@@ -45,6 +92,7 @@ impl Game {
             phase,
             turn_number,
             players,
+            terminal_state,
         }
     }
 
@@ -71,6 +119,26 @@ impl Game {
     #[must_use]
     pub fn players(&self) -> &[Player] {
         &self.players
+    }
+
+    #[must_use]
+    pub const fn is_over(&self) -> bool {
+        self.terminal_state.is_over()
+    }
+
+    #[must_use]
+    pub const fn winner(&self) -> Option<&PlayerId> {
+        self.terminal_state.winner()
+    }
+
+    #[must_use]
+    pub const fn loser(&self) -> Option<&PlayerId> {
+        self.terminal_state.loser()
+    }
+
+    #[must_use]
+    pub const fn end_reason(&self) -> Option<GameEndReason> {
+        self.terminal_state.end_reason()
     }
 
     /// Gets a mutable reference to a player by their ID.
@@ -108,6 +176,7 @@ impl Game {
     /// # Errors
     /// See [`rules::lifecycle::mulligan`].
     pub fn mulligan(&mut self, cmd: MulliganCommand) -> Result<MulliganTaken, DomainError> {
+        invariants::require_game_active(self.is_over())?;
         rules::lifecycle::mulligan(
             &self.id,
             &mut self.players,
@@ -122,6 +191,7 @@ impl Game {
     /// # Errors
     /// See [`rules::resource_actions::play_land`].
     pub fn play_land(&mut self, cmd: PlayLandCommand) -> Result<LandPlayed, DomainError> {
+        invariants::require_game_active(self.is_over())?;
         rules::resource_actions::play_land(
             &self.id,
             &mut self.players,
@@ -138,13 +208,14 @@ impl Game {
     pub fn advance_turn(
         &mut self,
         cmd: AdvanceTurnCommand,
-    ) -> Result<(TurnProgressed, Option<CardDrawn>), DomainError> {
+    ) -> Result<rules::turn_flow::AdvanceTurnOutcome, DomainError> {
         rules::turn_flow::advance_turn(
             &self.id,
             &mut self.players,
             &mut self.active_player,
             &mut self.phase,
             &mut self.turn_number,
+            &mut self.terminal_state,
             cmd,
         )
     }
@@ -156,12 +227,13 @@ impl Game {
     pub fn draw_card_effect(
         &mut self,
         cmd: DrawCardEffectCommand,
-    ) -> Result<CardDrawn, DomainError> {
+    ) -> Result<rules::turn_flow::DrawCardEffectOutcome, DomainError> {
         rules::turn_flow::draw_card_effect(
             &self.id,
             &mut self.players,
             &self.active_player,
             &self.phase,
+            &mut self.terminal_state,
             cmd,
         )
     }
@@ -174,6 +246,7 @@ impl Game {
         &mut self,
         cmd: DiscardForCleanupCommand,
     ) -> Result<CardDiscarded, DomainError> {
+        invariants::require_game_active(self.is_over())?;
         rules::turn_flow::discard_for_cleanup(
             &self.id,
             &mut self.players,
@@ -188,6 +261,7 @@ impl Game {
     /// # Errors
     /// See [`rules::resource_actions::adjust_life`].
     pub fn adjust_life(&mut self, cmd: AdjustLifeCommand) -> Result<LifeChanged, DomainError> {
+        invariants::require_game_active(self.is_over())?;
         rules::resource_actions::adjust_life(&self.id, &mut self.players, cmd)
     }
 
@@ -199,6 +273,7 @@ impl Game {
         &mut self,
         cmd: TapLandCommand,
     ) -> Result<(LandTapped, ManaAdded), DomainError> {
+        invariants::require_game_active(self.is_over())?;
         rules::resource_actions::tap_land(
             &self.id,
             &mut self.players,
@@ -213,6 +288,7 @@ impl Game {
     /// # Errors
     /// See [`rules::resource_actions::cast_spell`].
     pub fn cast_spell(&mut self, cmd: CastSpellCommand) -> Result<SpellCast, DomainError> {
+        invariants::require_game_active(self.is_over())?;
         rules::resource_actions::cast_spell(
             &self.id,
             &mut self.players,
@@ -230,6 +306,7 @@ impl Game {
         &mut self,
         cmd: DeclareAttackersCommand,
     ) -> Result<AttackersDeclared, DomainError> {
+        invariants::require_game_active(self.is_over())?;
         rules::combat::declare_attackers(
             &self.id,
             &mut self.players,
@@ -247,6 +324,7 @@ impl Game {
         &mut self,
         cmd: DeclareBlockersCommand,
     ) -> Result<BlockersDeclared, DomainError> {
+        invariants::require_game_active(self.is_over())?;
         rules::combat::declare_blockers(
             &self.id,
             &mut self.players,
@@ -264,6 +342,7 @@ impl Game {
         &mut self,
         cmd: ResolveCombatDamageCommand,
     ) -> Result<(CombatDamageResolved, Vec<CreatureDied>), DomainError> {
+        invariants::require_game_active(self.is_over())?;
         rules::combat::resolve_combat_damage(
             &self.id,
             &mut self.players,

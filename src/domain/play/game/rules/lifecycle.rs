@@ -1,6 +1,6 @@
 use super::super::{
     model::{Player, OPENING_HAND_SIZE},
-    Game,
+    Game, TerminalState,
 };
 use crate::domain::play::{
     cards::CardInstance,
@@ -206,7 +206,14 @@ pub fn start(cmd: StartGameCommand) -> Result<(Game, GameStarted), DomainError> 
     let game_started = GameStarted::new(cmd.game_id.clone(), player_ids.clone());
     let active_player = first_player_id(&player_ids)?;
 
-    let game = Game::new(cmd.game_id, active_player, Phase::Setup, 1, players);
+    let game = Game::new(
+        cmd.game_id,
+        active_player,
+        Phase::Setup,
+        1,
+        players,
+        TerminalState::active(),
+    );
 
     Ok((game, game_started))
 }

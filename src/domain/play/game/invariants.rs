@@ -19,6 +19,14 @@ pub(super) fn require_active_player(
     Ok(())
 }
 
+pub(super) const fn require_game_active(game_is_over: bool) -> Result<(), DomainError> {
+    if game_is_over {
+        Err(DomainError::Game(GameError::GameAlreadyEnded))
+    } else {
+        Ok(())
+    }
+}
+
 pub(super) fn find_player_index(
     players: &[Player],
     player_id: &PlayerId,

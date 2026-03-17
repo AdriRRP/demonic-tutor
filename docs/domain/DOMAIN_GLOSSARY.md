@@ -255,6 +255,22 @@ Events describe state transitions and are immutable.
 
 ---
 
+## Game End
+
+A terminal match state in which the game has produced a winner, a loser, and an end reason.
+
+While the game is in a terminal state, normal gameplay actions are no longer legal.
+
+---
+
+## Lose the Game
+
+To reach a terminal state as the losing player of the match.
+
+In the current DemonicTutor model, this happens when a player must draw from an empty library.
+
+---
+
 # Domain Integrity
 
 ## Invariant

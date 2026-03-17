@@ -1,14 +1,14 @@
 #![allow(clippy::unwrap_used)]
 
 use crate::support::{
-    advance_n_satisfying_cleanup, advance_to_first_main_satisfying_cleanup,
+    advance_n_raw, advance_n_satisfying_cleanup, advance_to_first_main_satisfying_cleanup,
     advance_to_player_first_main_satisfying_cleanup, advance_turn_satisfying_cleanup,
     filled_library, land_card, setup_two_player_game, vanilla_creature,
 };
 use demonictutor::{
-    AdvanceTurnCommand, CardDefinitionId, CardInstanceId, CastSpellCommand,
-    DeclareAttackersCommand, DeclareBlockersCommand, LibraryCard, Phase, PlayLandCommand, PlayerId,
-    ResolveCombatDamageCommand,
+    AdvanceTurnCommand, AdvanceTurnOutcome, CardDefinitionId, CardInstanceId, CastSpellCommand,
+    DeclareAttackersCommand, DeclareBlockersCommand, GameEndReason, LibraryCard, Phase,
+    PlayLandCommand, PlayerId, ResolveCombatDamageCommand,
 };
 
 fn create_game_with_land_in_hand() -> demonictutor::Game {
@@ -58,9 +58,18 @@ fn advance_turn_emits_event() {
     );
 
     advance_n_satisfying_cleanup(&service, &mut game, 2);
-    let event = service
+    let outcome = service
         .advance_turn(&mut game, AdvanceTurnCommand::new())
         .unwrap();
+    let event = match outcome {
+        AdvanceTurnOutcome::Progressed {
+            turn_progressed: event,
+            ..
+        } => Some(event),
+        AdvanceTurnOutcome::GameEnded(_) => None,
+    };
+    assert!(event.is_some());
+    let event = event.unwrap();
 
     assert_eq!(event.active_player.as_str(), "player-1");
 }
@@ -190,4 +199,33 @@ fn advance_turn_clears_marked_damage_when_turn_ends() {
 
     assert_eq!(game.phase(), &Phase::Untap);
     assert_eq!(game.players()[0].battlefield().cards()[0].damage(), 0);
+}
+
+#[test]
+fn advance_turn_ends_the_game_when_the_active_player_cannot_draw() {
+    let (service, mut game) = setup_two_player_game(
+        "game-1",
+        filled_library(vec![land_card("forest")], 7),
+        filled_library(vec![land_card("mountain")], 7),
+    );
+
+    advance_n_raw(&service, &mut game, 3);
+    assert_eq!(game.phase(), &Phase::Draw);
+    assert_eq!(game.active_player(), &PlayerId::new("player-1"));
+    assert_eq!(game.players()[0].library().len(), 0);
+
+    let outcome = service
+        .advance_turn(&mut game, AdvanceTurnCommand::new())
+        .unwrap();
+
+    let game_ended = match outcome {
+        AdvanceTurnOutcome::GameEnded(game_ended) => Some(game_ended),
+        AdvanceTurnOutcome::Progressed { .. } => None,
+    };
+    assert!(game_ended.is_some());
+    let game_ended = game_ended.unwrap();
+    assert_eq!(game_ended.loser_id, PlayerId::new("player-1"));
+    assert_eq!(game_ended.winner_id, PlayerId::new("player-2"));
+    assert_eq!(game_ended.reason, GameEndReason::EmptyLibraryDraw);
+    assert!(game.is_over());
 }

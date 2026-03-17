@@ -22,6 +22,7 @@ use world::GameplayWorld;
 
 #[tokio::main]
 async fn main() {
+    GameplayWorld::run("features/turn-flow/lose_on_empty_draw.feature").await;
     GameplayWorld::run("features/turn-flow/turn_progression.feature").await;
     GameplayWorld::run("features/spells/cast_creature_spell.feature").await;
     GameplayWorld::run("features/combat/combat_damage_marking.feature").await;

@@ -1,12 +1,29 @@
 use super::super::model::MAX_HAND_SIZE;
-use super::super::{invariants, model::Player};
+use super::super::{invariants, model::Player, TerminalState};
 use crate::domain::play::{
     commands::{AdvanceTurnCommand, DiscardForCleanupCommand, DrawCardEffectCommand},
     errors::{DomainError, GameError, PhaseError},
-    events::{CardDiscarded, CardDrawn, DiscardKind, DrawKind, TurnProgressed},
+    events::{
+        CardDiscarded, CardDrawn, DiscardKind, DrawKind, GameEndReason, GameEnded, TurnProgressed,
+    },
     ids::{CardInstanceId, GameId, PlayerId},
     phase::Phase,
 };
+
+#[derive(Debug, Clone)]
+pub enum AdvanceTurnOutcome {
+    Progressed {
+        turn_progressed: TurnProgressed,
+        card_drawn: Option<CardDrawn>,
+    },
+    GameEnded(GameEnded),
+}
+
+#[derive(Debug, Clone)]
+pub enum DrawCardEffectOutcome {
+    CardDrawn(CardDrawn),
+    GameEnded(GameEnded),
+}
 
 trait PhaseBehavior {
     fn next_phase(&self) -> Phase;
@@ -176,18 +193,12 @@ fn get_phase_behavior(phase: Phase) -> &'static dyn PhaseBehavior {
     }
 }
 
-fn draw_one_card(player: &mut Player, player_id: &PlayerId) -> Result<CardInstanceId, DomainError> {
-    let card = player.library_mut().draw_one().ok_or_else(|| {
-        DomainError::Game(GameError::NotEnoughCardsInLibrary {
-            player: player_id.clone(),
-            available: player.library().len(),
-            requested: 1,
-        })
-    })?;
+fn draw_one_card(player: &mut Player) -> Option<CardInstanceId> {
+    let card = player.library_mut().draw_one()?;
 
     let card_id = card.id().clone();
     player.hand_mut().receive(vec![card]);
-    Ok(card_id)
+    Some(card_id)
 }
 
 fn rotate_to_next_player(
@@ -216,7 +227,9 @@ fn auto_draw_card(
     active_player: &PlayerId,
 ) -> Result<Option<CardDrawn>, DomainError> {
     let player_idx = invariants::find_player_index(players, active_player)?;
-    let card_id = draw_one_card(&mut players[player_idx], active_player)?;
+    let Some(card_id) = draw_one_card(&mut players[player_idx]) else {
+        return Ok(None);
+    };
 
     Ok(Some(CardDrawn::new(
         game_id.clone(),
@@ -224,6 +237,43 @@ fn auto_draw_card(
         card_id,
         DrawKind::TurnStep,
     )))
+}
+
+fn non_active_player_id(
+    players: &[Player],
+    losing_player: &PlayerId,
+) -> Result<PlayerId, DomainError> {
+    players
+        .iter()
+        .find(|player| player.id() != losing_player)
+        .map(|player| player.id().clone())
+        .ok_or_else(|| {
+            DomainError::Game(GameError::InternalInvariantViolation(
+                "a two-player game should always produce a winner when one player loses"
+                    .to_string(),
+            ))
+        })
+}
+
+fn game_ended_for_empty_library_draw(
+    game_id: &GameId,
+    players: &[Player],
+    terminal_state: &mut TerminalState,
+    losing_player: &PlayerId,
+) -> Result<GameEnded, DomainError> {
+    let winning_player = non_active_player_id(players, losing_player)?;
+    terminal_state.end(
+        winning_player.clone(),
+        losing_player.clone(),
+        GameEndReason::EmptyLibraryDraw,
+    );
+
+    Ok(GameEnded::new(
+        game_id.clone(),
+        winning_player,
+        losing_player.clone(),
+        GameEndReason::EmptyLibraryDraw,
+    ))
 }
 
 fn clear_all_mana(players: &mut [Player]) {
@@ -274,8 +324,10 @@ pub fn draw_card_effect(
     players: &mut [Player],
     active_player: &PlayerId,
     phase: &Phase,
+    terminal_state: &mut TerminalState,
     cmd: DrawCardEffectCommand,
-) -> Result<CardDrawn, DomainError> {
+) -> Result<DrawCardEffectOutcome, DomainError> {
+    invariants::require_game_active(terminal_state.is_over())?;
     invariants::require_active_player(active_player, &cmd.player_id)?;
 
     if !matches!(phase, Phase::FirstMain | Phase::SecondMain) {
@@ -285,14 +337,17 @@ pub fn draw_card_effect(
     }
 
     let player_idx = invariants::find_player_index(players, &cmd.player_id)?;
-    let card_id = draw_one_card(&mut players[player_idx], &cmd.player_id)?;
+    let Some(card_id) = draw_one_card(&mut players[player_idx]) else {
+        return game_ended_for_empty_library_draw(game_id, players, terminal_state, &cmd.player_id)
+            .map(DrawCardEffectOutcome::GameEnded);
+    };
 
-    Ok(CardDrawn::new(
+    Ok(DrawCardEffectOutcome::CardDrawn(CardDrawn::new(
         game_id.clone(),
         cmd.player_id,
         card_id,
         DrawKind::ExplicitEffect,
-    ))
+    )))
 }
 
 /// Discards one card from hand to graveyard as an explicit cleanup action.
@@ -350,8 +405,10 @@ pub fn advance_turn(
     active_player: &mut PlayerId,
     phase: &mut Phase,
     turn_number: &mut u32,
+    terminal_state: &mut TerminalState,
     _cmd: AdvanceTurnCommand,
-) -> Result<(TurnProgressed, Option<CardDrawn>), DomainError> {
+) -> Result<AdvanceTurnOutcome, DomainError> {
+    invariants::require_game_active(terminal_state.is_over())?;
     let from_phase = *phase;
     let from_turn = *turn_number;
 
@@ -378,7 +435,7 @@ pub fn advance_turn(
         *phase = to_phase;
         to_phase_behavior.on_enter(players, active_player)?;
 
-        return Ok(build_events(
+        let (turn_progressed, card_drawn) = build_events(
             game_id,
             active_player,
             from_phase,
@@ -386,7 +443,12 @@ pub fn advance_turn(
             from_turn,
             *turn_number,
             None,
-        ));
+        );
+
+        return Ok(AdvanceTurnOutcome::Progressed {
+            turn_progressed,
+            card_drawn,
+        });
     }
 
     let card_drawn_event = if current_phase_behavior.triggers_auto_draw() {
@@ -395,10 +457,15 @@ pub fn advance_turn(
         None
     };
 
+    if current_phase_behavior.triggers_auto_draw() && card_drawn_event.is_none() {
+        return game_ended_for_empty_library_draw(game_id, players, terminal_state, active_player)
+            .map(AdvanceTurnOutcome::GameEnded);
+    }
+
     *phase = to_phase;
     to_phase_behavior.on_enter(players, active_player)?;
 
-    Ok(build_events(
+    let (turn_progressed, card_drawn) = build_events(
         game_id,
         active_player,
         from_phase,
@@ -406,5 +473,10 @@ pub fn advance_turn(
         from_turn,
         *turn_number,
         card_drawn_event,
-    ))
+    );
+
+    Ok(AdvanceTurnOutcome::Progressed {
+        turn_progressed,
+        card_drawn,
+    })
 }

@@ -25,6 +25,7 @@ Current executable feature coverage:
 - `features/combat/creature_destruction.feature`
 - `features/turn-flow/cleanup_damage_removal.feature`
 - `features/turn-flow/cleanup_hand_size_discard.feature`
+- `features/turn-flow/lose_on_empty_draw.feature`
 - runner: `tests/bdd.rs`
 
 ## Required Header Convention

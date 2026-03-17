@@ -5,8 +5,8 @@ use crate::support::{
     setup_two_player_game,
 };
 use demonictutor::{
-    AdvanceTurnCommand, DiscardForCleanupCommand, DiscardKind, DomainError, GameError, Phase,
-    PhaseError, PlayerId,
+    AdvanceTurnCommand, AdvanceTurnOutcome, DiscardForCleanupCommand, DiscardKind, DomainError,
+    GameError, Phase, PhaseError, PlayerId,
 };
 
 fn setup_game_with_eight_cards_in_hand() -> (crate::support::TestService, demonictutor::Game) {
@@ -143,9 +143,10 @@ fn advance_turn_succeeds_after_discarding_down_to_maximum_hand_size() {
         )
         .unwrap();
 
-    service
+    let outcome = service
         .advance_turn(&mut game, AdvanceTurnCommand::new())
         .unwrap();
+    assert!(matches!(outcome, AdvanceTurnOutcome::Progressed { .. }));
 
     assert_eq!(game.phase(), &Phase::Untap);
     assert_eq!(game.active_player(), &PlayerId::new("player-2"));

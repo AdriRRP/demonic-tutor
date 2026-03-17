@@ -21,6 +21,7 @@ Implemented capabilities include:
 - mulligan support (London Mulligan - simplified)
 - drawing cards (auto-draw in Draw phase)
 - resolving explicit draw effects during main phases
+- ending the game when a player must draw from an empty library
 - playing lands
 - tapping lands for mana
 - casting non-land spells that require mana
@@ -63,6 +64,7 @@ The domain currently includes:
 - summoning sickness for creatures (removed for the active player's creatures at turn start)
 - turn and phase progression
 - explicit draw effects as a simplified non-stack entrypoint
+- terminal game state when a player loses by empty-library draw
 
 The system intentionally excludes complex gameplay mechanics at this stage.
 
@@ -114,11 +116,12 @@ The project currently includes:
 - type-safe library initialization data with distinct creature and non-creature variants
 - domain events describing state transitions
 - composite turn progression events and draw events with explicit origin
+- explicit game-end events with a reason for terminal empty-library draw
 - an event bus for event distribution
 - projections derived from gameplay events
 - State pattern for phase transitions
 - helper methods for event persistence and publishing
-- a Gherkin acceptance layer, with executable coverage for turn progression, spell casting, combat damage, creature destruction, cleanup damage removal, and cleanup hand-size discard via `cucumber-rs`
+- a Gherkin acceptance layer, with executable coverage for turn progression, spell casting, combat damage, creature destruction, cleanup damage removal, cleanup hand-size discard, and empty-library draw loss via `cucumber-rs`
 
 This architecture supports:
 
@@ -137,6 +140,7 @@ Possible directions include:
 
 - stack and priority system
 - broader state-based actions beyond lethal creature damage
+- broader game-loss and game-end conditions beyond empty-library draw
 - richer cleanup and end-of-turn semantics
 
 The next slice should continue expanding gameplay behavior incrementally.

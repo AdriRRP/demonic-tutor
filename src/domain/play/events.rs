@@ -18,6 +18,7 @@ macro_rules! impl_domain_event_from {
 pub enum DomainEvent {
     GameStarted(GameStarted),
     OpeningHandDealt(OpeningHandDealt),
+    GameEnded(GameEnded),
     LandPlayed(LandPlayed),
     TurnProgressed(TurnProgressed),
     CardDrawn(CardDrawn),
@@ -53,6 +54,36 @@ pub struct OpeningHandDealt {
     pub game_id: GameId,
     pub player_id: PlayerId,
     pub cards: Vec<CardInstanceId>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum GameEndReason {
+    EmptyLibraryDraw,
+}
+
+#[derive(Debug, Clone)]
+pub struct GameEnded {
+    pub game_id: GameId,
+    pub winner_id: PlayerId,
+    pub loser_id: PlayerId,
+    pub reason: GameEndReason,
+}
+
+impl GameEnded {
+    #[must_use]
+    pub const fn new(
+        game_id: GameId,
+        winner_id: PlayerId,
+        loser_id: PlayerId,
+        reason: GameEndReason,
+    ) -> Self {
+        Self {
+            game_id,
+            winner_id,
+            loser_id,
+            reason,
+        }
+    }
 }
 
 impl OpeningHandDealt {
@@ -390,6 +421,7 @@ impl CombatDamageResolved {
 
 impl_domain_event_from!(GameStarted, GameStarted);
 impl_domain_event_from!(OpeningHandDealt, OpeningHandDealt);
+impl_domain_event_from!(GameEnded, GameEnded);
 impl_domain_event_from!(LandPlayed, LandPlayed);
 impl_domain_event_from!(TurnProgressed, TurnProgressed);
 impl_domain_event_from!(CardDrawn, CardDrawn);

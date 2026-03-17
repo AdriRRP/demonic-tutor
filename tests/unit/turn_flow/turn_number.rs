@@ -6,8 +6,8 @@ use crate::support::{
     advance_n_satisfying_cleanup, filled_library, land_card, setup_two_player_game,
 };
 use demonictutor::{
-    AdvanceTurnCommand, DomainEvent, GameLogProjection, GameService, InMemoryEventBus,
-    InMemoryEventStore,
+    AdvanceTurnCommand, AdvanceTurnOutcome, DomainEvent, GameLogProjection, GameService,
+    InMemoryEventBus, InMemoryEventStore,
 };
 
 #[test]
@@ -46,9 +46,10 @@ fn advance_turn_emits_turn_progressed_event() {
     let service = GameService::new(InMemoryEventStore::new(), bus);
     let mut game = crate::support::start_two_player_game(&service, "game-1");
 
-    service
+    let outcome = service
         .advance_turn(&mut game, AdvanceTurnCommand::new())
         .unwrap();
+    assert!(matches!(outcome, AdvanceTurnOutcome::Progressed { .. }));
 
     let logs = projection.logs();
     let turn_log = logs.iter().find(|l| l.contains("Turn progressed"));

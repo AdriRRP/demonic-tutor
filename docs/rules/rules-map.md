@@ -66,6 +66,13 @@ It is not a literal restatement of the rules text.
 
 ---
 
+## Lose On Empty Draw
+
+- 121.4
+- 704.5b
+
+---
+
 ## Cleanup Hand Size Discard
 
 - 514.1
@@ -110,6 +117,7 @@ The initial Gherkin pilot currently targets these rule areas:
 - `features/combat/creature_destruction.feature`
 - `features/turn-flow/cleanup_damage_removal.feature`
 - `features/turn-flow/cleanup_hand_size_discard.feature`
+- `features/turn-flow/lose_on_empty_draw.feature`
 
 ---
 
