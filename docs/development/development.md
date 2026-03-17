@@ -224,7 +224,7 @@ When `features/` are executable, keep them focused on acceptance-level behavior 
 Current executable BDD pilot:
 
 ```bash
-cargo test --test bdd_turn_progression
+cargo test --test bdd
 ```
 
 ---

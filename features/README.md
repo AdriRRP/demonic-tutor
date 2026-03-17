@@ -17,10 +17,14 @@ Features exist to make behavior:
 
 Some features may also be executable through `cucumber-rs`.
 
-Current executable pilot:
+Current executable feature coverage:
 
 - `features/turn-flow/turn_progression.feature`
-- runner: `tests/bdd/turn_progression.rs`
+- `features/spells/cast_creature_spell.feature`
+- `features/combat/combat_damage_marking.feature`
+- `features/combat/creature_destruction.feature`
+- `features/turn-flow/cleanup_damage_removal.feature`
+- runner: `tests/bdd.rs`
 
 ## Required Header Convention
 
@@ -66,7 +70,7 @@ Executable feature pilots live alongside normal Rust tests.
 Current command:
 
 ```bash
-cargo test --test bdd_turn_progression
+cargo test --test bdd
 ```
 
 Conventional non-BDD behavior tests are aggregated under:

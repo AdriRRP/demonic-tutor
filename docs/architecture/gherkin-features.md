@@ -167,16 +167,22 @@ The repository should start with a small pilot:
 - casting a creature spell
 - combat damage marking
 
-These areas are already implemented and cover:
+That pilot is now extended into a broader executable acceptance layer covering:
 
 - turn flow
 - spell semantics
 - combat semantics
+- lethal creature destruction
+- cleanup-based damage removal
 
-Current executable pilot:
+Current executable BDD coverage:
 
 - `features/turn-flow/turn_progression.feature`
-- `tests/bdd/turn_progression.rs`
+- `features/spells/cast_creature_spell.feature`
+- `features/combat/combat_damage_marking.feature`
+- `features/combat/creature_destruction.feature`
+- `features/turn-flow/cleanup_damage_removal.feature`
+- `tests/bdd.rs`
 
 Conventional Rust behavior tests remain separate under the aggregated `tests/unit.rs` target.
 
@@ -196,21 +202,22 @@ features/
   README.md
   turn-flow/
     turn_progression.feature
+    cleanup_damage_removal.feature
   spells/
     cast_creature_spell.feature
   combat/
     combat_damage_marking.feature
+    creature_destruction.feature
 ```
 
 ---
 
 ## Future Direction
 
-The repository now includes a minimal executable pilot using `cucumber-rs`.
+The repository now includes an executable acceptance layer using `cucumber-rs`.
 
-If the pilot continues to prove useful, the next step should be:
+The next step should be:
 
 - adding feature-review guidance to agent workflow
 - mapping implemented slices to features explicitly
-- extending executable coverage to additional implemented features such as spell casting
 - deciding how much of the acceptance layer should remain in Cucumber versus conventional Rust tests

@@ -17,6 +17,6 @@ cucumber = "0.22.1"
 tokio = { version = "1.50.0", features = ["macros", "rt-multi-thread"] }
 
 [[test]]
-name = "bdd_turn_progression"
-path = "tests/bdd/turn_progression.rs"
+name = "bdd"
+path = "tests/bdd.rs"
 harness = false
