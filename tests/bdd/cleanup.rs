@@ -1,4 +1,5 @@
 use cucumber::{given, then, when};
+use demonictutor::DiscardKind;
 
 use crate::world::GameplayWorld;
 
@@ -50,9 +51,13 @@ fn the_discarded_card_enters_alices_graveyard(world: &mut GameplayWorld) {
     assert!(world.graveyard_contains("Alice", card_id));
 }
 
-#[then("the game emits CardDiscarded")]
-fn the_game_emits_card_discarded(world: &mut GameplayWorld) {
-    assert!(world.last_card_discarded.is_some());
+#[then("the game emits CardDiscarded with discard kind CleanupHandSize")]
+fn the_game_emits_card_discarded_with_cleanup_kind(world: &mut GameplayWorld) {
+    let event = world
+        .last_card_discarded
+        .as_ref()
+        .expect("expected a CardDiscarded event");
+    assert_eq!(event.discard_kind, DiscardKind::CleanupHandSize);
 }
 
 #[then("Alice has seven cards in hand")]

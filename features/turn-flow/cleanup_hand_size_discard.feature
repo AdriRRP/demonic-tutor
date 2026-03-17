@@ -19,4 +19,4 @@ Feature: Discard down to maximum hand size when the turn ends
     Then the discarded card leaves Alice's hand
     And the discarded card enters Alice's graveyard
     And Alice has seven cards in hand
-    And the game emits CardDiscarded
+    And the game emits CardDiscarded with discard kind CleanupHandSize

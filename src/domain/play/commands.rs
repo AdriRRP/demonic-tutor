@@ -192,12 +192,12 @@ impl DrawCardEffectCommand {
 }
 
 #[derive(Debug, Clone)]
-pub struct DiscardCardCommand {
+pub struct DiscardForCleanupCommand {
     pub player_id: PlayerId,
     pub card_id: CardInstanceId,
 }
 
-impl DiscardCardCommand {
+impl DiscardForCleanupCommand {
     #[must_use]
     pub const fn new(player_id: PlayerId, card_id: CardInstanceId) -> Self {
         Self { player_id, card_id }

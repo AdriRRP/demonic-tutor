@@ -1,6 +1,8 @@
 #![allow(clippy::unwrap_used)]
 
-use crate::support::{advance_to_first_main, create_service, filled_library, land_card};
+use crate::support::{
+    advance_to_first_main_satisfying_cleanup, create_service, filled_library, land_card,
+};
 use demonictutor::{
     AdvanceTurnCommand, CardError, CardInstanceId, DomainError, GameService, InMemoryEventBus,
     InMemoryEventStore, Phase, PlayLandCommand, PlayerId, TapLandCommand,
@@ -20,7 +22,7 @@ fn create_game_with_land_on_battlefield() -> (
         filled_library(vec![land_card("mountain")], 10),
     );
 
-    advance_to_first_main(&service, &mut game);
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
     service
         .play_land(
             &mut game,
@@ -115,7 +117,7 @@ fn tap_land_fails_for_unknown_card() {
         filled_library(vec![land_card("forest")], 10),
         filled_library(vec![land_card("mountain")], 10),
     );
-    advance_to_first_main(&service, &mut game);
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
 
     let result = service.tap_land(
         &mut game,

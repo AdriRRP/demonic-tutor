@@ -1,9 +1,9 @@
 use super::super::model::MAX_HAND_SIZE;
 use super::super::{invariants, model::Player};
 use crate::domain::play::{
-    commands::{AdvanceTurnCommand, DiscardCardCommand, DrawCardEffectCommand},
+    commands::{AdvanceTurnCommand, DiscardForCleanupCommand, DrawCardEffectCommand},
     errors::{DomainError, GameError, PhaseError},
-    events::{CardDiscarded, CardDrawn, DrawKind, TurnProgressed},
+    events::{CardDiscarded, CardDrawn, DiscardKind, DrawKind, TurnProgressed},
     ids::{CardInstanceId, GameId, PlayerId},
     phase::Phase,
 };
@@ -303,12 +303,12 @@ pub fn draw_card_effect(
 /// - The phase is not `EndStep`
 /// - The player is not above the maximum hand size
 /// - The card is not in the player's hand
-pub fn discard_card(
+pub fn discard_for_cleanup(
     game_id: &GameId,
     players: &mut [Player],
     active_player: &PlayerId,
     phase: &Phase,
-    cmd: DiscardCardCommand,
+    cmd: DiscardForCleanupCommand,
 ) -> Result<CardDiscarded, DomainError> {
     invariants::require_active_player(active_player, &cmd.player_id)?;
 
@@ -332,7 +332,12 @@ pub fn discard_card(
     let card_id = card.id().clone();
     player.graveyard_mut().add(card);
 
-    Ok(CardDiscarded::new(game_id.clone(), cmd.player_id, card_id))
+    Ok(CardDiscarded::new(
+        game_id.clone(),
+        cmd.player_id,
+        card_id,
+        DiscardKind::CleanupHandSize,
+    ))
 }
 
 /// Advances the turn to the next phase and player.

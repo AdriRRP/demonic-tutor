@@ -1,8 +1,9 @@
 #![allow(clippy::unwrap_used)]
 
 use crate::support::{
-    advance_to_first_main, advance_to_player_first_main, artifact_card, filled_library,
-    instant_card, land_card, setup_two_player_game, vanilla_creature,
+    advance_to_first_main_satisfying_cleanup, advance_to_player_first_main_satisfying_cleanup,
+    artifact_card, filled_library, instant_card, land_card, setup_two_player_game,
+    vanilla_creature,
 };
 use demonictutor::{
     CardError, CardInstanceId, CardType, CastSpellCommand, DomainError, Phase, PlayLandCommand,
@@ -17,7 +18,7 @@ fn cast_instant_moves_card_from_hand_to_graveyard() {
         filled_library(vec![land_card("mountain")], 10),
     );
 
-    advance_to_first_main(&service, &mut game);
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
 
     let card_id = CardInstanceId::new("game-1-player-1-0");
     let event = service
@@ -47,7 +48,7 @@ fn cast_spell_rejected_land_card_stays_in_hand() {
         filled_library(vec![land_card("mountain")], 10),
     );
 
-    advance_to_first_main(&service, &mut game);
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
 
     let hand_before = game.players()[0].hand().cards().len();
     let result = service.cast_spell(
@@ -70,7 +71,7 @@ fn cast_spell_fails_for_land_card() {
         filled_library(vec![land_card("mountain")], 10),
     );
 
-    advance_to_first_main(&service, &mut game);
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
 
     let result = service.cast_spell(
         &mut game,
@@ -94,7 +95,7 @@ fn cast_creature_spell_moves_card_to_battlefield() {
         filled_library(vec![land_card("mountain")], 10),
     );
 
-    advance_to_first_main(&service, &mut game);
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
 
     let event = service
         .cast_spell(
@@ -124,7 +125,7 @@ fn cast_artifact_spell_moves_card_to_battlefield() {
         filled_library(vec![land_card("mountain")], 10),
     );
 
-    advance_to_first_main(&service, &mut game);
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
 
     let event = service
         .cast_spell(
@@ -178,7 +179,7 @@ fn cast_spell_fails_when_card_not_in_hand() {
         filled_library(vec![land_card("mountain")], 10),
     );
 
-    advance_to_first_main(&service, &mut game);
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
 
     let result = service.cast_spell(
         &mut game,
@@ -202,7 +203,7 @@ fn cast_spell_fails_with_insufficient_mana() {
         filled_library(vec![land_card("mountain")], 10),
     );
 
-    advance_to_first_main(&service, &mut game);
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
 
     let result = service.cast_spell(
         &mut game,
@@ -231,7 +232,7 @@ fn cast_spell_succeeds_with_sufficient_mana() {
         filled_library(vec![land_card("forest"), instant_card("card-2", 1)], 10),
     );
 
-    advance_to_player_first_main(&service, &mut game, "player-2");
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-2");
     assert_eq!(*game.phase(), Phase::FirstMain);
 
     service

@@ -3,7 +3,7 @@ use crate::{
     domain::play::{
         commands::{
             AdjustLifeCommand, AdvanceTurnCommand, CastSpellCommand, DealOpeningHandsCommand,
-            DeclareAttackersCommand, DeclareBlockersCommand, DiscardCardCommand,
+            DeclareAttackersCommand, DeclareBlockersCommand, DiscardForCleanupCommand,
             DrawCardEffectCommand, MulliganCommand, PlayLandCommand, ResolveCombatDamageCommand,
             StartGameCommand, TapLandCommand,
         },
@@ -168,12 +168,12 @@ where
     /// # Errors
     ///
     /// Returns an error if the command is invalid.
-    pub fn discard_card(
+    pub fn discard_for_cleanup(
         &self,
         game: &mut Game,
-        cmd: DiscardCardCommand,
+        cmd: DiscardForCleanupCommand,
     ) -> Result<CardDiscarded, DomainError> {
-        let event = game.discard_card(cmd)?;
+        let event = game.discard_for_cleanup(cmd)?;
         self.persist_and_publish_event(game.id().as_str(), &event)?;
 
         Ok(event)

@@ -2,7 +2,9 @@
 
 use std::sync::Arc;
 
-use crate::support::{advance_n, filled_library, land_card, setup_two_player_game};
+use crate::support::{
+    advance_n_satisfying_cleanup, filled_library, land_card, setup_two_player_game,
+};
 use demonictutor::{
     AdvanceTurnCommand, DomainEvent, GameLogProjection, GameService, InMemoryEventBus,
     InMemoryEventStore,
@@ -26,7 +28,7 @@ fn advance_turn_increments_turn_number() {
 
     assert_eq!(game.turn_number(), 1);
 
-    advance_n(&service, &mut game, 8);
+    advance_n_satisfying_cleanup(&service, &mut game, 8);
 
     assert_eq!(game.turn_number(), 2);
 }

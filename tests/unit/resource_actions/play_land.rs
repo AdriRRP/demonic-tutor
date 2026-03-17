@@ -1,6 +1,8 @@
 #![allow(clippy::unwrap_used)]
 
-use crate::support::{advance_to_player_first_main, create_service, filled_library, land_card};
+use crate::support::{
+    advance_to_player_first_main_satisfying_cleanup, create_service, filled_library, land_card,
+};
 use demonictutor::{
     CardError, CardInstanceId, DomainError, GameError, PhaseError, PlayLandCommand, PlayerId,
 };
@@ -16,7 +18,7 @@ fn create_game_with_land_in_hand() -> (demonictutor::Game, CardInstanceId) {
         filled_library(vec![land_card("forest")], 10),
         filled_library(vec![land_card("mountain")], 10),
     );
-    advance_to_player_first_main(&service, &mut game, "player-2");
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-2");
 
     (game, land_card_id)
 }

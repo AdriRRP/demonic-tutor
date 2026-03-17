@@ -33,7 +33,7 @@ fn advance_until(
             return;
         }
 
-        crate::support::advance_turn_allowing_cleanup(service, game);
+        crate::support::advance_turn_satisfying_cleanup(service, game);
     }
 
     assert_eq!(game.active_player(), &target_player);

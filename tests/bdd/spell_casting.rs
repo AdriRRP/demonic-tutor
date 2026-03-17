@@ -7,7 +7,7 @@ use crate::world::GameplayWorld;
 fn player_is_active_in_phase(world: &mut GameplayWorld, player: String, phase: String) {
     let expected_phase = GameplayWorld::phase_from_name(&phase);
     if !world.is_initialized() {
-        world.setup_turn_state(expected_phase, &player, 1);
+        world.setup_turn_state_satisfying_cleanup(expected_phase, &player, 1);
     }
     assert_eq!(player, "Alice");
     assert_eq!(

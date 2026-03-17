@@ -105,6 +105,11 @@ pub enum DrawKind {
     ExplicitEffect,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DiscardKind {
+    CleanupHandSize,
+}
+
 #[derive(Debug, Clone)]
 pub struct CardDrawn {
     pub game_id: GameId,
@@ -118,15 +123,22 @@ pub struct CardDiscarded {
     pub game_id: GameId,
     pub player_id: PlayerId,
     pub card_id: CardInstanceId,
+    pub discard_kind: DiscardKind,
 }
 
 impl CardDiscarded {
     #[must_use]
-    pub const fn new(game_id: GameId, player_id: PlayerId, card_id: CardInstanceId) -> Self {
+    pub const fn new(
+        game_id: GameId,
+        player_id: PlayerId,
+        card_id: CardInstanceId,
+        discard_kind: DiscardKind,
+    ) -> Self {
         Self {
             game_id,
             player_id,
             card_id,
+            discard_kind,
         }
     }
 }

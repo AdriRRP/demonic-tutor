@@ -1,7 +1,8 @@
 #![allow(clippy::unwrap_used)]
 
 use crate::support::{
-    advance_n, advance_to_player_first_main, filled_library, land_card, setup_two_player_game,
+    advance_n_raw, advance_to_player_first_main_satisfying_cleanup, filled_library, land_card,
+    setup_two_player_game,
 };
 use demonictutor::{
     CardInstanceId, DomainError, DrawCardEffectCommand, GameError, Phase, PlayLandCommand, PlayerId,
@@ -24,7 +25,7 @@ fn draw_card_effect_works_in_main_phase() {
         filled_library(vec![land_card("mountain")], 10),
     );
 
-    advance_to_player_first_main(&service, &mut game, "player-2");
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-2");
 
     let result = service.draw_card_effect(
         &mut game,
@@ -41,7 +42,7 @@ fn draw_card_effect_moves_card_from_library_to_hand() {
         filled_library(vec![land_card("mountain")], 10),
     );
 
-    advance_to_player_first_main(&service, &mut game, "player-2");
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-2");
 
     let hand_before = game.players()[1].hand().cards().len();
     let lib_before = game.players()[1].library().len();
@@ -68,7 +69,7 @@ fn draw_card_effect_emits_event() {
         filled_library(vec![land_card("mountain")], 10),
     );
 
-    advance_to_player_first_main(&service, &mut game, "player-2");
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-2");
 
     let event = service
         .draw_card_effect(
@@ -85,7 +86,7 @@ fn draw_card_effect_fails_when_not_enough_cards() {
     let mut game = create_game_with_library_cards();
     let service = crate::support::create_service();
 
-    advance_to_player_first_main(&service, &mut game, "player-2");
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-2");
 
     assert!(service
         .draw_card_effect(
@@ -135,7 +136,7 @@ fn draw_card_effect_allows_playing_land_after_draw() {
     let mut game = create_game_with_library_cards();
     let service = crate::support::create_service();
 
-    advance_to_player_first_main(&service, &mut game, "player-1");
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
 
     service
         .draw_card_effect(
@@ -144,7 +145,7 @@ fn draw_card_effect_allows_playing_land_after_draw() {
         )
         .unwrap();
 
-    advance_to_player_first_main(&service, &mut game, "player-2");
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-2");
 
     let result = service.play_land(
         &mut game,
@@ -165,7 +166,7 @@ fn draw_card_effect_fails_outside_main_phases() {
         filled_library(vec![land_card("mountain")], 10),
     );
 
-    advance_n(&service, &mut game, 2);
+    advance_n_raw(&service, &mut game, 2);
     assert_eq!(game.phase(), &Phase::Upkeep);
 
     let result = service.draw_card_effect(

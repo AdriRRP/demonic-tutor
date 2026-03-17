@@ -2,8 +2,8 @@
 #![allow(clippy::significant_drop_tightening)]
 
 use demonictutor::{
-    CardDiscarded, CardDrawn, CardInstanceId, CardType, CreatureDied, DomainEvent, DrawKind,
-    EventBus, EventStore, GameId, GameLogProjection, GameStarted, InMemoryEventBus,
+    CardDiscarded, CardDrawn, CardInstanceId, CardType, CreatureDied, DiscardKind, DomainEvent,
+    DrawKind, EventBus, EventStore, GameId, GameLogProjection, GameStarted, InMemoryEventBus,
     InMemoryEventStore, LandPlayed, MulliganTaken, OpeningHandDealt, PlayerId, SpellCast,
     SpellCastOutcome, TurnProgressed,
 };
@@ -200,6 +200,7 @@ fn projection_logs_card_discarded_events() {
         GameId::new("game-1"),
         PlayerId::new("player-1"),
         CardInstanceId::new("card-9"),
+        DiscardKind::CleanupHandSize,
     )));
 
     let logs = projection.logs();
@@ -207,6 +208,7 @@ fn projection_logs_card_discarded_events() {
     assert!(logs[0].contains("player-1"));
     assert!(logs[0].contains("card-9"));
     assert!(logs[0].contains("discarded"));
+    assert!(logs[0].contains("CleanupHandSize"));
 }
 
 #[test]

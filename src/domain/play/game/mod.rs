@@ -5,9 +5,9 @@ pub mod rules;
 use crate::domain::play::{
     commands::{
         AdjustLifeCommand, AdvanceTurnCommand, CastSpellCommand, DealOpeningHandsCommand,
-        DeclareAttackersCommand, DeclareBlockersCommand, DiscardCardCommand, DrawCardEffectCommand,
-        MulliganCommand, PlayLandCommand, ResolveCombatDamageCommand, StartGameCommand,
-        TapLandCommand,
+        DeclareAttackersCommand, DeclareBlockersCommand, DiscardForCleanupCommand,
+        DrawCardEffectCommand, MulliganCommand, PlayLandCommand, ResolveCombatDamageCommand,
+        StartGameCommand, TapLandCommand,
     },
     errors::{DomainError, GameError},
     events::{
@@ -169,9 +169,12 @@ impl Game {
     /// Discards one card from hand during cleanup-related turn flow.
     ///
     /// # Errors
-    /// See [`rules::turn_flow::discard_card`].
-    pub fn discard_card(&mut self, cmd: DiscardCardCommand) -> Result<CardDiscarded, DomainError> {
-        rules::turn_flow::discard_card(
+    /// See [`rules::turn_flow::discard_for_cleanup`].
+    pub fn discard_for_cleanup(
+        &mut self,
+        cmd: DiscardForCleanupCommand,
+    ) -> Result<CardDiscarded, DomainError> {
+        rules::turn_flow::discard_for_cleanup(
             &self.id,
             &mut self.players,
             &self.active_player,

@@ -13,7 +13,7 @@ fn a_two_player_game_is_in_phase(world: &mut GameplayWorld, phase: String) {
         _ => panic!("unsupported phase in turn-progression feature"),
     };
 
-    world.setup_turn_state(phase, player, turn);
+    world.setup_turn_state_satisfying_cleanup(phase, player, turn);
 }
 
 #[given(expr = "{word} is the active player")]

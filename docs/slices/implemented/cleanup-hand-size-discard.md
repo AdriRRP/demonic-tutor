@@ -24,10 +24,10 @@ This slice is the next coherent cleanup increment because:
 ## Supported Behavior
 
 - block `advance_turn` from `EndStep` while the active player's hand size is above the maximum
-- accept `DiscardCardCommand` for the active player in `EndStep`
+- accept `DiscardForCleanupCommand` for the active player in `EndStep`
 - move the chosen card from hand to graveyard
 - allow the turn to advance once the hand size is at or below the maximum
-- emit `CardDiscarded`
+- emit `CardDiscarded` with `DiscardKind::CleanupHandSize`
 
 ---
 
@@ -59,11 +59,11 @@ This slice is the next coherent cleanup increment because:
 
 ### Commands
 
-- add `DiscardCardCommand`
+- add `DiscardForCleanupCommand`
 
 ### Events
 
-- add `CardDiscarded`
+- add `CardDiscarded` with `DiscardKind::CleanupHandSize`
 
 ### Errors
 

@@ -1,17 +1,19 @@
 #![allow(clippy::unwrap_used)]
 
 use crate::support::{
-    advance_n, advance_to_player_first_main, creature_library, setup_two_player_game,
+    advance_n_raw, advance_to_player_first_main_satisfying_cleanup, creature_library,
+    setup_two_player_game,
 };
 use demonictutor::{
-    AdvanceTurnCommand, DiscardCardCommand, DomainError, GameError, Phase, PhaseError, PlayerId,
+    AdvanceTurnCommand, DiscardForCleanupCommand, DiscardKind, DomainError, GameError, Phase,
+    PhaseError, PlayerId,
 };
 
 fn setup_game_with_eight_cards_in_hand() -> (crate::support::TestService, demonictutor::Game) {
     let (service, mut game) =
         setup_two_player_game("game-1", creature_library(20), creature_library(20));
 
-    advance_n(&service, &mut game, 7);
+    advance_n_raw(&service, &mut game, 7);
 
     assert_eq!(game.phase(), &Phase::EndStep);
     assert_eq!(game.players()[0].hand().cards().len(), 8);
@@ -20,34 +22,35 @@ fn setup_game_with_eight_cards_in_hand() -> (crate::support::TestService, demoni
 }
 
 #[test]
-fn discard_card_moves_card_from_hand_to_graveyard_during_end_step_cleanup() {
+fn discard_for_cleanup_moves_card_from_hand_to_graveyard_during_end_step_cleanup() {
     let (service, mut game) = setup_game_with_eight_cards_in_hand();
     let card_id = game.players()[0].hand().cards()[0].id().clone();
 
     let event = service
-        .discard_card(
+        .discard_for_cleanup(
             &mut game,
-            DiscardCardCommand::new(PlayerId::new("player-1"), card_id.clone()),
+            DiscardForCleanupCommand::new(PlayerId::new("player-1"), card_id.clone()),
         )
         .unwrap();
 
     assert_eq!(event.card_id, card_id);
+    assert_eq!(event.discard_kind, DiscardKind::CleanupHandSize);
     assert_eq!(game.players()[0].hand().cards().len(), 7);
     assert_eq!(game.players()[0].graveyard().cards().len(), 1);
     assert_eq!(game.players()[0].graveyard().cards()[0].id(), &card_id);
 }
 
 #[test]
-fn discard_card_fails_outside_end_step() {
+fn discard_for_cleanup_fails_outside_end_step() {
     let (service, mut game) =
         setup_two_player_game("game-1", creature_library(20), creature_library(20));
-    advance_to_player_first_main(&service, &mut game, "player-1");
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
     let card_id = game.players()[0].hand().cards()[0].id().clone();
 
     let error = service
-        .discard_card(
+        .discard_for_cleanup(
             &mut game,
-            DiscardCardCommand::new(PlayerId::new("player-1"), card_id),
+            DiscardForCleanupCommand::new(PlayerId::new("player-1"), card_id),
         )
         .unwrap_err();
 
@@ -60,14 +63,14 @@ fn discard_card_fails_outside_end_step() {
 }
 
 #[test]
-fn discard_card_fails_when_not_active_players_turn() {
+fn discard_for_cleanup_fails_when_not_active_players_turn() {
     let (service, mut game) = setup_game_with_eight_cards_in_hand();
     let card_id = game.players()[0].hand().cards()[0].id().clone();
 
     let error = service
-        .discard_card(
+        .discard_for_cleanup(
             &mut game,
-            DiscardCardCommand::new(PlayerId::new("player-2"), card_id),
+            DiscardForCleanupCommand::new(PlayerId::new("player-2"), card_id),
         )
         .unwrap_err();
 
@@ -81,21 +84,21 @@ fn discard_card_fails_when_not_active_players_turn() {
 }
 
 #[test]
-fn discard_card_fails_when_cleanup_discard_is_not_required() {
+fn discard_for_cleanup_fails_when_cleanup_discard_is_not_required() {
     let (service, mut game) = setup_game_with_eight_cards_in_hand();
     let first_card_id = game.players()[0].hand().cards()[0].id().clone();
     service
-        .discard_card(
+        .discard_for_cleanup(
             &mut game,
-            DiscardCardCommand::new(PlayerId::new("player-1"), first_card_id),
+            DiscardForCleanupCommand::new(PlayerId::new("player-1"), first_card_id),
         )
         .unwrap();
 
     let second_card_id = game.players()[0].hand().cards()[0].id().clone();
     let error = service
-        .discard_card(
+        .discard_for_cleanup(
             &mut game,
-            DiscardCardCommand::new(PlayerId::new("player-1"), second_card_id),
+            DiscardForCleanupCommand::new(PlayerId::new("player-1"), second_card_id),
         )
         .unwrap_err();
 
@@ -134,9 +137,9 @@ fn advance_turn_succeeds_after_discarding_down_to_maximum_hand_size() {
     let card_id = game.players()[0].hand().cards()[0].id().clone();
 
     service
-        .discard_card(
+        .discard_for_cleanup(
             &mut game,
-            DiscardCardCommand::new(PlayerId::new("player-1"), card_id),
+            DiscardForCleanupCommand::new(PlayerId::new("player-1"), card_id),
         )
         .unwrap();
 

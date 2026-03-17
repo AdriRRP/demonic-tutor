@@ -3,9 +3,9 @@
 #![allow(dead_code)]
 
 use demonictutor::{
-    AdvanceTurnCommand, CardDefinitionId, DealOpeningHandsCommand, DeckId, DiscardCardCommand,
-    Game, GameId, GameService, InMemoryEventBus, InMemoryEventStore, LibraryCard,
-    NonCreatureCardType, Phase, PlayerDeck, PlayerId, PlayerLibrary, StartGameCommand,
+    AdvanceTurnCommand, CardDefinitionId, DealOpeningHandsCommand, DeckId,
+    DiscardForCleanupCommand, Game, GameId, GameService, InMemoryEventBus, InMemoryEventStore,
+    LibraryCard, NonCreatureCardType, Phase, PlayerDeck, PlayerId, PlayerLibrary, StartGameCommand,
 };
 
 pub type TestService = GameService<InMemoryEventStore, InMemoryEventBus>;
@@ -102,19 +102,31 @@ pub fn setup_two_player_game(
     (service, game)
 }
 
-pub fn advance_n(service: &TestService, game: &mut Game, turns: usize) {
+pub fn advance_n_raw(service: &TestService, game: &mut Game, turns: usize) {
     for _ in 0..turns {
-        advance_turn_allowing_cleanup(service, game);
+        advance_turn_raw(service, game);
     }
 }
 
-pub fn advance_to_first_main(service: &TestService, game: &mut Game) {
+pub fn advance_n_satisfying_cleanup(service: &TestService, game: &mut Game, turns: usize) {
+    for _ in 0..turns {
+        advance_turn_satisfying_cleanup(service, game);
+    }
+}
+
+pub fn advance_to_first_main_raw(service: &TestService, game: &mut Game) {
     while game.phase() != &Phase::FirstMain {
-        advance_turn_allowing_cleanup(service, game);
+        advance_turn_raw(service, game);
     }
 }
 
-pub fn advance_to_player_first_main(service: &TestService, game: &mut Game, player_id: &str) {
+pub fn advance_to_first_main_satisfying_cleanup(service: &TestService, game: &mut Game) {
+    while game.phase() != &Phase::FirstMain {
+        advance_turn_satisfying_cleanup(service, game);
+    }
+}
+
+pub fn advance_to_player_first_main_raw(service: &TestService, game: &mut Game, player_id: &str) {
     let player_id = PlayerId::new(player_id);
 
     for _ in 0..32 {
@@ -122,13 +134,37 @@ pub fn advance_to_player_first_main(service: &TestService, game: &mut Game, play
             return;
         }
 
-        advance_turn_allowing_cleanup(service, game);
+        advance_turn_raw(service, game);
     }
 
     panic!("failed to reach FirstMain for {player_id}");
 }
 
-pub fn advance_turn_allowing_cleanup(service: &TestService, game: &mut Game) {
+pub fn advance_to_player_first_main_satisfying_cleanup(
+    service: &TestService,
+    game: &mut Game,
+    player_id: &str,
+) {
+    let player_id = PlayerId::new(player_id);
+
+    for _ in 0..32 {
+        if game.active_player() == &player_id && game.phase() == &Phase::FirstMain {
+            return;
+        }
+
+        advance_turn_satisfying_cleanup(service, game);
+    }
+
+    panic!("failed to reach FirstMain for {player_id}");
+}
+
+pub fn advance_turn_raw(service: &TestService, game: &mut Game) {
+    service
+        .advance_turn(game, AdvanceTurnCommand::new())
+        .unwrap();
+}
+
+pub fn satisfy_cleanup_discard(service: &TestService, game: &mut Game) {
     while game.phase() == &Phase::EndStep {
         let active_player = game.active_player().clone();
         let active_hand_size = game
@@ -155,11 +191,12 @@ pub fn advance_turn_allowing_cleanup(service: &TestService, game: &mut Game) {
             .clone();
 
         service
-            .discard_card(game, DiscardCardCommand::new(active_player, card_id))
+            .discard_for_cleanup(game, DiscardForCleanupCommand::new(active_player, card_id))
             .unwrap();
     }
+}
 
-    service
-        .advance_turn(game, AdvanceTurnCommand::new())
-        .unwrap();
+pub fn advance_turn_satisfying_cleanup(service: &TestService, game: &mut Game) {
+    satisfy_cleanup_discard(service, game);
+    advance_turn_raw(service, game);
 }

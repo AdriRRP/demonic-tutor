@@ -4,7 +4,7 @@ pub mod support;
 use demonictutor::{
     AdvanceTurnCommand, CardDefinitionId, CardDiscarded, CardDrawn, CardInstance, CardInstanceId,
     CastSpellCommand, CombatDamageResolved, CreatureDied, DealOpeningHandsCommand,
-    DiscardCardCommand, Game, GameId, LibraryCard, Phase, PlayLandCommand, PlayerId,
+    DiscardForCleanupCommand, Game, GameId, LibraryCard, Phase, PlayLandCommand, PlayerId,
     ResolveCombatDamageCommand, SpellCast, StartGameCommand, TapLandCommand, TurnProgressed,
 };
 
@@ -179,7 +179,43 @@ impl GameplayWorld {
         self.reset_tracking();
     }
 
-    pub fn setup_turn_state(&mut self, target_phase: Phase, target_player: &str, target_turn: u32) {
+    fn satisfy_cleanup_for_setup(&mut self) {
+        let active_player = self.game().active_player().clone();
+        let active_player_hand_size = self
+            .game()
+            .players()
+            .iter()
+            .find(|player| player.id() == &active_player)
+            .expect("active player should exist")
+            .hand()
+            .cards()
+            .len();
+
+        if active_player_hand_size <= 7 {
+            return;
+        }
+
+        let card_id = self
+            .game()
+            .players()
+            .iter()
+            .find(|player| player.id() == &active_player)
+            .expect("active player should exist")
+            .hand()
+            .cards()[0]
+            .id()
+            .clone();
+        self.game_mut()
+            .discard_for_cleanup(DiscardForCleanupCommand::new(active_player, card_id))
+            .expect("BDD setup cleanup discard should succeed");
+    }
+
+    pub fn setup_turn_state_satisfying_cleanup(
+        &mut self,
+        target_phase: Phase,
+        target_player: &str,
+        target_turn: u32,
+    ) {
         self.reset_game_with_libraries(
             "bdd-turn-progression",
             support::filled_library(Vec::new(), 40),
@@ -190,7 +226,7 @@ impl GameplayWorld {
         for _ in 0..64 {
             while self.game().phase() == &Phase::EndStep {
                 let active_player = self.game().active_player().clone();
-                let active_player_hand_size = self
+                let hand_size = self
                     .game()
                     .players()
                     .iter()
@@ -199,24 +235,10 @@ impl GameplayWorld {
                     .hand()
                     .cards()
                     .len();
-
-                if active_player_hand_size <= 7 {
+                if hand_size <= 7 {
                     break;
                 }
-
-                let card_id = self
-                    .game()
-                    .players()
-                    .iter()
-                    .find(|player| player.id() == &active_player)
-                    .expect("active player should exist")
-                    .hand()
-                    .cards()[0]
-                    .id()
-                    .clone();
-                self.game_mut()
-                    .discard_card(DiscardCardCommand::new(active_player, card_id))
-                    .expect("BDD state setup cleanup discard should succeed");
+                self.satisfy_cleanup_for_setup();
             }
 
             if self.game().phase() == &target_phase
@@ -249,7 +271,11 @@ impl GameplayWorld {
         );
 
         let service = support::create_service();
-        support::advance_to_player_first_main(&service, self.game_mut(), "player-1");
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-1",
+        );
         self.tracked_card_id = Some(self.hand_card_by_definition("Alice", "bdd-grizzly-bears"));
         self.tracked_blocker_id = Some(self.hand_card_by_definition("Alice", "bdd-forest"));
     }
@@ -262,7 +288,11 @@ impl GameplayWorld {
         );
 
         let service = support::create_service();
-        support::advance_to_player_first_main(&service, self.game_mut(), "player-1");
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-1",
+        );
         self.tracked_card_id = Some(self.hand_card_by_definition("Alice", "bdd-plains"));
     }
 
@@ -303,7 +333,11 @@ impl GameplayWorld {
         );
 
         let service = support::create_service();
-        support::advance_to_player_first_main(&service, self.game_mut(), "player-1");
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-1",
+        );
         let attacker_id = self.hand_card_by_definition("Alice", attacker_definition);
         service
             .cast_spell(
@@ -312,7 +346,11 @@ impl GameplayWorld {
             )
             .expect("attacker cast should succeed");
 
-        support::advance_to_player_first_main(&service, self.game_mut(), "player-2");
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-2",
+        );
 
         if let Some(blocker_definition) = blocker_definition {
             let blocker_id = self.hand_card_by_definition("Bob", blocker_definition);
@@ -325,7 +363,11 @@ impl GameplayWorld {
             self.tracked_blocker_id = Some(blocker_id);
         }
 
-        support::advance_to_player_first_main(&service, self.game_mut(), "player-1");
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-1",
+        );
         service
             .advance_turn(self.game_mut(), AdvanceTurnCommand::new())
             .expect("advance to combat should succeed");
@@ -430,13 +472,13 @@ impl GameplayWorld {
         );
         self.resolve_combat_damage();
         let service = support::create_service();
-        support::advance_n(&service, self.game_mut(), 2);
+        support::advance_n_satisfying_cleanup(&service, self.game_mut(), 2);
         while self.player_hand_size("Alice") > 7 {
             let card_id = self.player("Alice").hand().cards()[0].id().clone();
             service
-                .discard_card(
+                .discard_for_cleanup(
                     self.game_mut(),
-                    DiscardCardCommand::new(Self::player_id("Alice"), card_id),
+                    DiscardForCleanupCommand::new(Self::player_id("Alice"), card_id),
                 )
                 .expect("BDD cleanup discard setup should succeed");
         }
@@ -453,7 +495,7 @@ impl GameplayWorld {
         );
 
         let service = support::create_service();
-        support::advance_n(&service, self.game_mut(), 7);
+        support::advance_n_raw(&service, self.game_mut(), 7);
         self.tracked_card_id = Some(self.player("Alice").hand().cards()[0].id().clone());
         self.reset_observations();
         assert_eq!(self.game().phase(), &Phase::EndStep);
@@ -508,9 +550,9 @@ impl GameplayWorld {
             .clone()
             .expect("tracked discard card should exist");
 
-        match service.discard_card(
+        match service.discard_for_cleanup(
             self.game_mut(),
-            DiscardCardCommand::new(Self::player_id(alias), card_id),
+            DiscardForCleanupCommand::new(Self::player_id(alias), card_id),
         ) {
             Ok(event) => {
                 self.last_card_discarded = Some(event);
