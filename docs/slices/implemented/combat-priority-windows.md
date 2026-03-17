@@ -16,6 +16,7 @@ Open explicit priority windows after attackers and blockers are declared, so com
 ## Explicit Limits
 
 - this slice predates the explicit combat-subphase foundation and should now be read together with `combat-subphases-foundation.md`
+- `combat-step-priority-progression.md`
 - only the currently supported minimal stack semantics are available inside these windows
 - response spells during combat are still limited to instants
 

@@ -120,6 +120,7 @@ The domain currently includes:
 - the active player may cast and resolve an instant at the beginning of `Combat`
 - the active player may cast a second instant at the beginning of `Combat` before passing priority after the first
 - combat actions reopen priority after attackers and blockers are declared, moving the game into `DeclareBlockers` and `CombatDamage`
+- the explicit combat corridor now reopens priority coherently as combat progresses from `DeclareAttackers` to `DeclareBlockers`, from `DeclareBlockers` to `CombatDamage`, and from resolved combat damage to `EndOfCombat`
 - the active player may cast and resolve an instant after attackers are declared
 - the active player may cast a second instant after attackers are declared before passing priority after the first
 - the non-active player may cast and resolve an instant after attackers are declared once the active player passes

@@ -103,6 +103,16 @@ It is not a literal restatement of the rules text.
 
 ---
 
+## Combat Step Priority Progression
+
+- 117
+- 508
+- 509
+- 510
+- 511
+
+---
+
 ## Upkeep Priority Window
 
 - 117
