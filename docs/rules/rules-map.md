@@ -203,6 +203,15 @@ It is not a literal restatement of the rules text.
 
 ---
 
+## Respond With Second Instant In Second Main Window
+
+- 117
+- 505
+- 601
+- 608
+
+---
+
 ## Respond In End Step Window
 
 - 117
