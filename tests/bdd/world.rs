@@ -454,7 +454,7 @@ impl GameplayWorld {
 
         let service = support::create_service();
         for _ in 0..64 {
-            while self.game().phase() == &Phase::EndStep {
+            while self.game().phase() == &Phase::EndStep && phase != Phase::EndStep {
                 let active_player = self.game().active_player().clone();
                 let hand_size = self
                     .game()
