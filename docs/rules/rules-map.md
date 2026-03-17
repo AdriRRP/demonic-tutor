@@ -176,6 +176,15 @@ It is not a literal restatement of the rules text.
 
 ---
 
+## Respond In End Step Window
+
+- 117
+- 507
+- 601
+- 608
+
+---
+
 ## Cast Instant In Draw Window
 
 - 117
