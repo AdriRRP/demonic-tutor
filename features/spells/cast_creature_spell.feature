@@ -15,10 +15,10 @@ Feature: Cast a creature spell
     Then the card leaves Alice's hand
     And the spell is on the stack under Alice's control
     And the spell has not resolved yet
-    And Bob has priority
+    And Alice has priority
     And the game emits SpellPutOnStack
-    When Bob passes priority
-    And Alice passes priority
+    When Alice passes priority
+    And Bob passes priority
     Then the game emits StackTopResolved
     And the card enters Alice's battlefield
     And the card has summoning sickness

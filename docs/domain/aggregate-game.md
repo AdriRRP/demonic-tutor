@@ -181,6 +181,7 @@ The current model includes:
 - automatic destruction of creatures with lethal marked damage
 - automatic destruction of creatures with 0 toughness after creature-spell resolution
 - minimal stack-aware spell casting and spell resolution
+- casting player retaining priority immediately after putting a spell on the stack
 - rejection of other gameplay actions while a priority window is open
 
 Card instances can be checked for whether they represent permanents (cards that can exist on the battlefield) using the `CardType::is_permanent()` method.

@@ -37,23 +37,25 @@ fn alice_has_a_creature_card_in_hand_with_valid_power_and_toughness(world: &mut 
     assert_eq!(card.creature_stats(), Some((2, 2)));
 }
 
-#[given("Alice has cast a creature spell and Bob has priority with an instant in hand")]
-fn alice_has_cast_a_creature_spell_and_bob_has_priority_with_an_instant_in_hand(
+#[given("Alice has cast a creature spell and still holds priority with Bob's instant in hand")]
+fn alice_has_cast_a_creature_spell_and_still_holds_priority_with_bobs_instant_in_hand(
     world: &mut GameplayWorld,
 ) {
     world.setup_spell_response_stack();
     world.ensure_tracked_land_provides_mana();
     world.cast_tracked_spell("Alice");
-    bob_has_priority(world);
+    alice_has_priority(world);
 }
 
-#[given("Alice has cast an instant spell and Bob has priority with a creature card in hand")]
-fn alice_has_cast_an_instant_spell_and_bob_has_priority_with_a_creature_card_in_hand(
+#[given(
+    "Alice has cast an instant spell and still holds priority with Bob's creature card in hand"
+)]
+fn alice_has_cast_an_instant_spell_and_still_holds_priority_with_bobs_creature_card_in_hand(
     world: &mut GameplayWorld,
 ) {
     world.setup_invalid_noninstant_response();
     world.cast_tracked_spell("Alice");
-    bob_has_priority(world);
+    alice_has_priority(world);
 }
 
 #[given("Alice has enough mana to pay its cost")]
@@ -80,6 +82,18 @@ fn bob_tries_to_cast_the_creature_response_spell(world: &mut GameplayWorld) {
 #[when(expr = "{word} passes priority")]
 fn player_passes_priority(world: &mut GameplayWorld, player: String) {
     world.pass_priority(&player);
+}
+
+#[then("Alice has priority")]
+fn alice_has_priority(world: &mut GameplayWorld) {
+    let priority = world
+        .game()
+        .priority()
+        .expect("priority window should be open");
+    assert_eq!(
+        priority.current_holder(),
+        &GameplayWorld::player_id("Alice")
+    );
 }
 
 #[then("the card leaves Alice's hand")]

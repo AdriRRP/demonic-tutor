@@ -59,7 +59,7 @@ fn cast_instant_puts_the_spell_on_the_stack_before_resolution() {
     assert_eq!(game.stack().len(), 1);
     assert_eq!(
         game.priority().unwrap().current_holder(),
-        &PlayerId::new("player-2")
+        &PlayerId::new("player-1")
     );
 }
 
@@ -100,7 +100,33 @@ fn passing_priority_twice_resolves_an_instant_from_stack_to_graveyard() {
 }
 
 #[test]
-fn opponent_can_cast_an_instant_response_while_holding_priority() {
+fn casting_player_keeps_priority_after_casting_a_spell() {
+    let (service, mut game) = setup_two_player_game(
+        "game-priority-after-cast",
+        filled_library(vec![instant_card("giant-growth", 0)], 10),
+        filled_library(vec![land_card("mountain")], 10),
+    );
+
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
+
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(
+                PlayerId::new("player-1"),
+                CardInstanceId::new("game-priority-after-cast-player-1-0"),
+            ),
+        )
+        .unwrap();
+
+    assert_eq!(
+        game.priority().unwrap().current_holder(),
+        &PlayerId::new("player-1")
+    );
+}
+
+#[test]
+fn opponent_can_cast_an_instant_response_after_the_caster_passes_priority() {
     let (service, mut game) = setup_two_player_game(
         "game-respond-instant",
         filled_library(
@@ -134,6 +160,13 @@ fn opponent_can_cast_an_instant_response_while_holding_priority() {
         )
         .unwrap();
 
+    service
+        .pass_priority(
+            &mut game,
+            demonictutor::PassPriorityCommand::new(PlayerId::new("player-1")),
+        )
+        .unwrap();
+
     let bob_spell = CardInstanceId::new("game-respond-instant-player-2-0");
     let response = service
         .cast_spell(
@@ -150,7 +183,7 @@ fn opponent_can_cast_an_instant_response_while_holding_priority() {
     );
     assert_eq!(
         game.priority().unwrap().current_holder(),
-        &PlayerId::new("player-1")
+        &PlayerId::new("player-2")
     );
 
     let response_resolution = resolve_current_stack(&service, &mut game);
@@ -173,7 +206,7 @@ fn opponent_can_cast_an_instant_response_while_holding_priority() {
 }
 
 #[test]
-fn opponent_cannot_cast_a_creature_as_a_response() {
+fn opponent_cannot_cast_a_creature_as_a_response_after_the_caster_passes() {
     let (service, mut game) = setup_two_player_game(
         "game-respond-creature",
         filled_library(vec![instant_card("giant-growth", 0)], 10),
@@ -189,6 +222,13 @@ fn opponent_cannot_cast_a_creature_as_a_response() {
                 PlayerId::new("player-1"),
                 CardInstanceId::new("game-respond-creature-player-1-0"),
             ),
+        )
+        .unwrap();
+
+    service
+        .pass_priority(
+            &mut game,
+            demonictutor::PassPriorityCommand::new(PlayerId::new("player-1")),
         )
         .unwrap();
 

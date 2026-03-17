@@ -76,6 +76,7 @@ The domain currently includes:
 - terminal game state when a player loses by empty-library draw or zero life
 - casting spells onto an aggregate-owned stack zone
 - public priority passing for the currently open minimal stack windows
+- the casting player retains priority immediately after a spell is put on the stack
 - instant-speed spell responses for the current priority holder
 - resolving the top stack object after two consecutive passes
 

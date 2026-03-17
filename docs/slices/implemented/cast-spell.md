@@ -62,6 +62,8 @@ pub struct SpellPutOnStack {
 
 Emitted when casting successfully moves a spell card from hand onto the stack and opens the current minimal priority loop.
 
+The casting player keeps priority immediately after `SpellPutOnStack`. The opposing player may respond only after that first pass.
+
 #### SpellCast
 ```rust
 pub struct SpellCast {
@@ -93,7 +95,7 @@ Emitted when the top spell on the stack resolves successfully, including the spe
 
 ## Rules Support Statement
 
-This slice now implements a minimal stack-aware spell-casting model. Casting moves a spell card from hand onto the stack, opens a public priority window, and resolution happens only after two consecutive passes. Permanent spells resolve from the stack to the battlefield, while instants and sorceries resolve from the stack to the graveyard. The current runtime also triggers the shared review of currently supported state-based actions after spell resolution, which can produce `CreatureDied` or `GameEnded` in addition to `SpellCast`. The current priority-holder may now cast instant response spells, but broader timing rules, non-instant responses, targets, and modes remain out of scope.
+This slice now implements a minimal stack-aware spell-casting model. Casting moves a spell card from hand onto the stack, and the casting player keeps priority immediately afterward. Resolution happens only after two consecutive passes. Permanent spells resolve from the stack to the battlefield, while instants and sorceries resolve from the stack to the graveyard. The current runtime also triggers the shared review of currently supported state-based actions after spell resolution, which can produce `CreatureDied` or `GameEnded` in addition to `SpellCast`. The current priority-holder may now cast instant response spells, but broader timing rules, non-instant responses, targets, and modes remain out of scope.
 
 ## Tests
 

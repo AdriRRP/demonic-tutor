@@ -255,8 +255,7 @@ pub fn cast_spell(
         StackObjectKind::Spell(SpellOnStack::new(card, mana_cost)),
     ));
 
-    let next_holder = other_player_id(players, &player_id)?;
-    *priority = Some(PriorityState::new(next_holder));
+    *priority = Some(PriorityState::new(player_id.clone()));
 
     Ok(CastSpellOutcome {
         spell_put_on_stack: SpellPutOnStack::new(

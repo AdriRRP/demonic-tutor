@@ -7,6 +7,7 @@ Allow the current priority holder to cast an instant spell in response to a spel
 ## Supported behavior
 
 - when a priority window is open, the current holder may cast an instant spell from hand
+- after a spell is cast, the caster keeps priority first
 - the response spell is put on top of the stack
 - priority then passes to the other player
 - two consecutive passes resolve the top stack object first
@@ -27,7 +28,7 @@ Allow the current priority holder to cast an instant spell in response to a spel
 
 ## Rules support statement
 
-This slice extends the minimal stack model with real spell responses. The current priority holder may respond with an instant spell, that response becomes the new top object on the stack, and the stack continues to resolve in LIFO order through consecutive passes. Broader response timing is still intentionally unsupported.
+This slice extends the minimal stack model with real spell responses. After a spell is cast, the caster keeps priority and may pass it. The next priority holder may then respond with an instant spell, that response becomes the new top object on the stack, and the stack continues to resolve in LIFO order through consecutive passes. Broader response timing is still intentionally unsupported.
 
 ## Tests
 

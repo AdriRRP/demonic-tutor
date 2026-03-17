@@ -6,9 +6,9 @@ Feature: Passing priority resolves the top object when both players pass
 
   Scenario: Two consecutive passes resolve the top spell on the stack
     Given Alice has cast a spell and it is on the stack
-    And Bob has priority
-    When Bob passes priority
-    And Alice passes priority
+    And Alice has priority
+    When Alice passes priority
+    And Bob passes priority
     Then the top object on the stack resolves
     And the stack becomes empty
     And the game emits StackTopResolved

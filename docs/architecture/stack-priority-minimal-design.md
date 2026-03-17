@@ -208,7 +208,7 @@ But its meaning changes from:
 
 to:
 
-- validate, spend mana, remove card from hand, put a spell object on the stack, hand priority to the next player
+- validate, spend mana, remove card from hand, put a spell object on the stack, keep priority with the caster
 
 This is the canonical path and avoids duplicate “cast to stack” commands.
 
@@ -414,5 +414,6 @@ The repository now implements this first minimal slice with these additional exp
 - open priority windows currently support only instant spell responses
 - priority windows are currently opened by spell casting, not yet by the broader turn-flow engine
 - when a priority window is open, other gameplay actions are rejected until the window closes
+- after a spell is cast, the caster currently keeps priority before the opponent may respond
 
 That is the highest-signal path that stays elegant, Rusty, and reviewable.
