@@ -74,6 +74,19 @@ Implemented reference features that are not currently executed:
 - `features/stack/cast_spell_goes_on_stack.feature`
 - `features/stack/pass_priority_resolves_top.feature`
 
+Proposed feature backlog currently staged for future slices:
+
+- `features/stack/respond_with_second_instant_spell.feature`
+- `features/stack/respond_with_second_instant_in_upkeep_window.feature`
+- `features/stack/respond_with_second_instant_in_draw_window.feature`
+- `features/stack/respond_with_second_instant_in_first_main_window.feature`
+- `features/stack/respond_with_second_instant_in_second_main_window.feature`
+- `features/stack/respond_with_second_instant_in_end_step_window.feature`
+- `features/stack/respond_with_second_instant_in_beginning_of_combat_window.feature`
+- `features/stack/respond_with_second_instant_after_attackers.feature`
+- `features/stack/respond_with_second_instant_after_blockers.feature`
+- `features/stack/respond_with_second_instant_after_combat_damage.feature`
+
 ## Required Header Convention
 
 Each feature should start with metadata comments containing:
