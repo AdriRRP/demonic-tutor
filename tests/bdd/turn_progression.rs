@@ -36,7 +36,7 @@ fn player_has_at_least_one_card_in_library(world: &mut GameplayWorld, player: St
 
 #[given(expr = "{word} has no cards in her library")]
 fn player_has_no_cards_in_her_library(world: &mut GameplayWorld, player: String) {
-    world.setup_draw_phase_with_empty_library();
+    world.setup_upkeep_with_empty_library();
     assert_eq!(player, "Alice");
     assert_eq!(world.player_library_size(&player), 0);
 }

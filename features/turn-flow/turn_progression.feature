@@ -17,11 +17,11 @@ Feature: Turn progression
     And the phase becomes Untap
     And the game emits TurnProgressed
 
-  Scenario: Draw phase produces the automatic turn draw
-    Given a two-player game is in Draw
+  Scenario: Entering Draw produces the automatic turn draw
+    Given a two-player game is in Upkeep
     And Alice is the active player
     And Alice has at least one card in her library
     When the game advances the turn
     Then Alice draws one card
-    And the phase becomes FirstMain
+    And the phase becomes Draw
     And the game emits CardDrawn with draw kind TurnStep

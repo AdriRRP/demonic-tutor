@@ -86,8 +86,9 @@ fn advance_turn_opens_priority_when_entering_first_main() {
 
     advance_n_raw(&service, &mut game, 3);
     assert_eq!(game.phase(), &Phase::Draw);
-    assert!(game.priority().is_none());
+    assert!(game.priority().is_some());
 
+    close_empty_priority_window(&service, &mut game);
     let outcome = service
         .advance_turn(&mut game, AdvanceTurnCommand::new())
         .unwrap();
@@ -123,6 +124,33 @@ fn advance_turn_opens_priority_when_entering_upkeep() {
         game.priority().unwrap().current_holder(),
         &PlayerId::new("player-1")
     );
+    assert!(game.stack().is_empty());
+}
+
+#[test]
+fn advance_turn_opens_priority_when_entering_draw() {
+    let (service, mut game) = setup_two_player_game(
+        "game-draw-priority-window",
+        filled_library(vec![land_card("forest")], 10),
+        filled_library(vec![land_card("mountain")], 10),
+    );
+
+    advance_n_raw(&service, &mut game, 2);
+    assert_eq!(game.phase(), &Phase::Upkeep);
+    assert!(game.priority().is_some());
+
+    close_empty_priority_window(&service, &mut game);
+    let outcome = service
+        .advance_turn(&mut game, AdvanceTurnCommand::new())
+        .unwrap();
+    assert!(matches!(outcome, AdvanceTurnOutcome::Progressed { .. }));
+
+    assert_eq!(game.phase(), &Phase::Draw);
+    assert_eq!(
+        game.priority().unwrap().current_holder(),
+        &PlayerId::new("player-1")
+    );
+    assert_eq!(game.players()[0].hand().cards().len(), 8);
     assert!(game.stack().is_empty());
 }
 
@@ -283,10 +311,11 @@ fn advance_turn_ends_the_game_when_the_active_player_cannot_draw() {
         filled_library(vec![land_card("mountain")], 7),
     );
 
-    advance_n_raw(&service, &mut game, 3);
-    assert_eq!(game.phase(), &Phase::Draw);
+    advance_n_raw(&service, &mut game, 2);
+    assert_eq!(game.phase(), &Phase::Upkeep);
     assert_eq!(game.active_player(), &PlayerId::new("player-1"));
     assert_eq!(game.players()[0].library().len(), 0);
+    close_empty_priority_window(&service, &mut game);
 
     let outcome = service
         .advance_turn(&mut game, AdvanceTurnCommand::new())

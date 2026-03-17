@@ -19,7 +19,7 @@ Implemented capabilities include:
 - starting a two-player game
 - dealing opening hands
 - mulligan support (London Mulligan - simplified)
-- drawing cards (auto-draw in Draw phase)
+- drawing cards (auto-draw when entering `Draw`)
 - resolving explicit draw effects during main phases
 - resolving explicit draw effects that draw multiple cards one by one
 - ending the game when a player must draw from an empty library
@@ -81,6 +81,7 @@ The domain currently includes:
 - public priority passing for the currently open minimal stack windows
 - the casting player retains priority immediately after a spell is put on the stack
 - entering `Upkeep` opens an empty priority window for the active player
+- entering `Draw` opens an empty priority window for the active player after the automatic turn draw
 - entering `FirstMain` or `SecondMain` opens an empty priority window for the active player
 - instant-speed spell responses for the current priority holder
 - resolving the top stack object after two consecutive passes
@@ -104,9 +105,9 @@ Current constraints include:
 - opening hand size is fixed to 7 cards
 - only a subset of zones are modeled (no exile)
 - spell responses during open priority windows are currently limited to instants
-- priority windows are currently opened by spell casting, by entering `Upkeep`, `FirstMain`, `Combat`, or `SecondMain`, after attackers or blockers are declared, and after combat damage resolves if the game remains active
+- priority windows are currently opened by spell casting, by entering `Upkeep`, `Draw`, `FirstMain`, `Combat`, or `SecondMain`, after attackers or blockers are declared, and after combat damage resolves if the game remains active
 - outside stack-aware operations, general turn advancement still requires the priority window to be closed
-- broader priority windows for non-main-phase turn flow beyond `Upkeep` and the current combat windows are not modeled yet
+- broader priority windows for non-main-phase turn flow beyond `Upkeep`, `Draw`, and the current combat windows are not modeled yet
 - combat still uses a single `Combat` phase rather than full combat-step windows
 - no triggered abilities
 - limited card behavior modeling
@@ -150,7 +151,7 @@ The project currently includes:
 - projections derived from gameplay events
 - State pattern for phase transitions
 - helper methods for event persistence and publishing
-- a Gherkin acceptance layer, with executable coverage for stack foundation, stack-based spell responses, upkeep priority windows, main-phase priority windows, combat entry priority, post-combat-damage priority, combat priority windows, turn progression, explicit multi-card draw effects, spell casting through the stack, combat damage, creature destruction, cleanup damage removal, cleanup hand-size discard, empty-library draw loss, and zero-life loss via `cucumber-rs`
+- a Gherkin acceptance layer, with executable coverage for stack foundation, stack-based spell responses, upkeep priority windows, draw-step priority windows, main-phase priority windows, combat entry priority, post-combat-damage priority, combat priority windows, turn progression, explicit multi-card draw effects, spell casting through the stack, combat damage, creature destruction, cleanup damage removal, cleanup hand-size discard, empty-library draw loss, and zero-life loss via `cucumber-rs`
 
 This architecture supports:
 

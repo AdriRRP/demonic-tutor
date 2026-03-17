@@ -294,7 +294,7 @@ impl GameplayWorld {
         );
     }
 
-    pub fn setup_draw_phase_with_empty_library(&mut self) {
+    pub fn setup_upkeep_with_empty_library(&mut self) {
         self.reset_game_with_libraries(
             "bdd-empty-library-draw",
             support::filled_library(Vec::new(), 7),
@@ -302,9 +302,9 @@ impl GameplayWorld {
         );
 
         let service = support::create_service();
-        support::advance_n_raw(&service, self.game_mut(), 3);
+        support::advance_n_raw(&service, self.game_mut(), 2);
         self.reset_observations();
-        assert_eq!(self.game().phase(), &Phase::Draw);
+        assert_eq!(self.game().phase(), &Phase::Upkeep);
         assert_eq!(self.player_library_size("Alice"), 0);
     }
 

@@ -8,7 +8,7 @@ Feature: A player loses when they draw from an empty library
   A player who must draw from an empty library loses the game immediately
 
   Scenario: A player loses when they must draw from an empty library during the draw step
-    Given Alice is the active player in Draw
+    Given Alice is the active player in Upkeep
     And Alice has no cards in her library
     When the game advances the turn
     Then the game emits GameEnded with reason EmptyLibraryDraw

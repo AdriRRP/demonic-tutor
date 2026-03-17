@@ -93,7 +93,7 @@ fn build_events(
 const fn opens_priority_window(phase: Phase) -> bool {
     matches!(
         phase,
-        Phase::Upkeep | Phase::FirstMain | Phase::Combat | Phase::SecondMain
+        Phase::Upkeep | Phase::Draw | Phase::FirstMain | Phase::Combat | Phase::SecondMain
     )
 }
 

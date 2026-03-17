@@ -81,7 +81,7 @@ impl PhaseBehavior for UpkeepPhase {
         false
     }
     fn triggers_auto_draw(&self) -> bool {
-        false
+        true
     }
 }
 
@@ -93,7 +93,7 @@ impl PhaseBehavior for DrawPhase {
         false
     }
     fn triggers_auto_draw(&self) -> bool {
-        true
+        false
     }
 }
 

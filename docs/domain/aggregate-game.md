@@ -183,6 +183,7 @@ The current model includes:
 - minimal stack-aware spell casting and spell resolution
 - casting player retaining priority immediately after putting a spell on the stack
 - opening an empty priority window when entering `Upkeep`
+- opening an empty priority window when entering `Draw` after the automatic turn draw
 - opening empty priority windows when entering `FirstMain` and `SecondMain`
 - opening an empty priority window when entering `Combat`
 - reopening priority after attackers and blockers are declared in combat
