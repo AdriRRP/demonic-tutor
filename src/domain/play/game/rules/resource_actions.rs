@@ -5,12 +5,9 @@ use super::{
 };
 use crate::domain::play::{
     cards::CardType,
-    commands::{AdjustLifeCommand, CastSpellCommand, PlayLandCommand, TapLandCommand},
-    errors::{CardError, DomainError, GameError, PhaseError},
-    events::{
-        CreatureDied, GameEnded, LandPlayed, LandTapped, LifeChanged, ManaAdded, SpellCast,
-        SpellCastOutcome,
-    },
+    commands::{AdjustLifeCommand, PlayLandCommand, TapLandCommand},
+    errors::{CardError, DomainError, PhaseError},
+    events::{CreatureDied, GameEnded, LandPlayed, LandTapped, LifeChanged, ManaAdded},
     ids::{GameId, PlayerId},
     phase::Phase,
 };
@@ -20,28 +17,6 @@ pub struct AdjustLifeOutcome {
     pub life_changed: LifeChanged,
     pub creatures_died: Vec<CreatureDied>,
     pub game_ended: Option<GameEnded>,
-}
-
-#[derive(Debug, Clone)]
-pub struct CastSpellOutcome {
-    pub spell_cast: SpellCast,
-    pub creatures_died: Vec<CreatureDied>,
-    pub game_ended: Option<GameEnded>,
-}
-
-impl CastSpellOutcome {
-    #[must_use]
-    pub const fn new(
-        spell_cast: SpellCast,
-        creatures_died: Vec<CreatureDied>,
-        game_ended: Option<GameEnded>,
-    ) -> Self {
-        Self {
-            spell_cast,
-            creatures_died,
-            game_ended,
-        }
-    }
 }
 
 impl AdjustLifeOutcome {
@@ -175,91 +150,6 @@ pub fn adjust_life(
 
     Ok(AdjustLifeOutcome::new(
         life_changed,
-        creatures_died,
-        game_ended,
-    ))
-}
-
-/// Casts a spell from hand.
-///
-/// # Errors
-/// Returns an error if the action is invalid.
-pub fn cast_spell(
-    game_id: &GameId,
-    players: &mut [Player],
-    active_player: &PlayerId,
-    phase: &Phase,
-    terminal_state: &mut TerminalState,
-    cmd: CastSpellCommand,
-) -> Result<CastSpellOutcome, DomainError> {
-    invariants::require_active_player(active_player, &cmd.player_id)?;
-
-    if !matches!(phase, Phase::FirstMain | Phase::SecondMain) {
-        return Err(DomainError::Phase(PhaseError::InvalidForPlayingCard {
-            phase: *phase,
-        }));
-    }
-
-    let player = invariants::find_player_mut(players, &cmd.player_id)?;
-    let card_id = cmd.card_id.clone();
-    let card_type = invariants::hand_card_type(player, &cmd.player_id, &card_id)?;
-
-    if card_type.is_land() {
-        return Err(DomainError::Card(CardError::CannotCastLand(card_id)));
-    }
-
-    let hand_card = invariants::hand_card(player, &cmd.player_id, &card_id)?;
-    let mana_cost = hand_card.mana_cost();
-    if player.mana() < mana_cost {
-        return Err(DomainError::Game(GameError::InsufficientMana {
-            player: cmd.player_id.clone(),
-            required: mana_cost,
-            available: player.mana(),
-        }));
-    }
-    let card = invariants::remove_card_from_hand(player, &cmd.player_id, &card_id)?;
-    let spent = player.spend_mana(mana_cost);
-    debug_assert!(spent, "mana was checked before removing the card from hand");
-
-    let outcome = match card_type {
-        CardType::Creature
-        | CardType::Enchantment
-        | CardType::Artifact
-        | CardType::Planeswalker => {
-            if matches!(card_type, CardType::Creature) && card.creature_stats().is_none() {
-                return Err(DomainError::Game(GameError::InternalInvariantViolation(
-                    format!("creature card {} must have power and toughness", card.id()),
-                )));
-            }
-            player.battlefield_mut().add(card);
-            SpellCastOutcome::EnteredBattlefield
-        }
-        CardType::Instant | CardType::Sorcery => {
-            player.graveyard_mut().add(card);
-            SpellCastOutcome::ResolvedToGraveyard
-        }
-        CardType::Land => {
-            return Err(DomainError::Game(GameError::InternalInvariantViolation(
-                "land cards cannot be cast as spells".to_string(),
-            )))
-        }
-    };
-
-    let spell_cast = SpellCast::new(
-        game_id.clone(),
-        cmd.player_id,
-        card_id,
-        card_type,
-        mana_cost,
-        outcome,
-    );
-    let StateBasedActionsResult {
-        creatures_died,
-        game_ended,
-    } = state_based_actions::check_state_based_actions(game_id, players, terminal_state)?;
-
-    Ok(CastSpellOutcome::new(
-        spell_cast,
         creatures_died,
         game_ended,
     ))

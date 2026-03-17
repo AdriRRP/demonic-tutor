@@ -20,6 +20,15 @@ fn create_service() -> GameService<InMemoryEventStore, InMemoryEventBus> {
     GameService::new(InMemoryEventStore::new(), InMemoryEventBus::new())
 }
 
+fn cast_and_resolve(
+    service: &GameService<InMemoryEventStore, InMemoryEventBus>,
+    game: &mut Game,
+    player_id: &str,
+    card_id: CardInstanceId,
+) {
+    crate::support::cast_spell_and_resolve(service, game, player_id, card_id);
+}
+
 fn advance_until(
     service: &GameService<InMemoryEventStore, InMemoryEventBus>,
     game: &mut Game,
@@ -107,15 +116,12 @@ fn instant_spells_resolve_to_graveyard_not_battlefield() {
 
     advance_until(&service, &mut game, "player-1", Phase::FirstMain);
 
-    service
-        .cast_spell(
-            &mut game,
-            CastSpellCommand::new(
-                PlayerId::new("player-1"),
-                CardInstanceId::new("game-1-player-1-0"),
-            ),
-        )
-        .unwrap();
+    cast_and_resolve(
+        &service,
+        &mut game,
+        "player-1",
+        CardInstanceId::new("game-1-player-1-0"),
+    );
 
     let player = &game.players()[0];
     assert_eq!(player.hand().cards().len(), 7);
@@ -159,12 +165,7 @@ fn untap_only_updates_the_active_players_board_state() {
     advance_until(&service, &mut game, "player-1", Phase::FirstMain);
 
     let creature_id = CardInstanceId::new("game-1-player-1-0");
-    service
-        .cast_spell(
-            &mut game,
-            CastSpellCommand::new(PlayerId::new("player-1"), creature_id),
-        )
-        .unwrap();
+    cast_and_resolve(&service, &mut game, "player-1", creature_id);
 
     assert!(game.players()[0].battlefield().cards()[0].has_summoning_sickness());
 
@@ -210,20 +211,10 @@ fn combat_damage_marks_surviving_creatures_and_destroys_lethally_damaged_ones() 
     let blocker_id = CardInstanceId::new("game-1-player-2-0");
 
     advance_until(&service, &mut game, "player-1", Phase::FirstMain);
-    service
-        .cast_spell(
-            &mut game,
-            CastSpellCommand::new(PlayerId::new("player-1"), attacker_id.clone()),
-        )
-        .unwrap();
+    cast_and_resolve(&service, &mut game, "player-1", attacker_id.clone());
 
     advance_until(&service, &mut game, "player-2", Phase::FirstMain);
-    service
-        .cast_spell(
-            &mut game,
-            CastSpellCommand::new(PlayerId::new("player-2"), blocker_id.clone()),
-        )
-        .unwrap();
+    cast_and_resolve(&service, &mut game, "player-2", blocker_id.clone());
 
     advance_until(&service, &mut game, "player-1", Phase::Combat);
 
@@ -296,32 +287,12 @@ fn creature_destruction_emits_one_event_per_destroyed_creature() {
     let right_blocker_id = CardInstanceId::new("game-1-player-2-1");
 
     advance_until(&service, &mut game, "player-1", Phase::FirstMain);
-    service
-        .cast_spell(
-            &mut game,
-            CastSpellCommand::new(PlayerId::new("player-1"), left_attacker_id.clone()),
-        )
-        .unwrap();
-    service
-        .cast_spell(
-            &mut game,
-            CastSpellCommand::new(PlayerId::new("player-1"), right_attacker_id.clone()),
-        )
-        .unwrap();
+    cast_and_resolve(&service, &mut game, "player-1", left_attacker_id.clone());
+    cast_and_resolve(&service, &mut game, "player-1", right_attacker_id.clone());
 
     advance_until(&service, &mut game, "player-2", Phase::FirstMain);
-    service
-        .cast_spell(
-            &mut game,
-            CastSpellCommand::new(PlayerId::new("player-2"), left_blocker_id.clone()),
-        )
-        .unwrap();
-    service
-        .cast_spell(
-            &mut game,
-            CastSpellCommand::new(PlayerId::new("player-2"), right_blocker_id.clone()),
-        )
-        .unwrap();
+    cast_and_resolve(&service, &mut game, "player-2", left_blocker_id.clone());
+    cast_and_resolve(&service, &mut game, "player-2", right_blocker_id.clone());
 
     advance_until(&service, &mut game, "player-1", Phase::Combat);
 
@@ -395,12 +366,7 @@ fn unblocked_combat_damage_ends_the_game_when_it_reduces_a_player_to_zero_life()
     let attacker_id = CardInstanceId::new("game-1-player-1-0");
 
     advance_until(&service, &mut game, "player-1", Phase::FirstMain);
-    service
-        .cast_spell(
-            &mut game,
-            CastSpellCommand::new(PlayerId::new("player-1"), attacker_id.clone()),
-        )
-        .unwrap();
+    cast_and_resolve(&service, &mut game, "player-1", attacker_id.clone());
 
     service
         .adjust_life(

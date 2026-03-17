@@ -103,6 +103,13 @@ It is not a literal restatement of the rules text.
 
 ---
 
+## Stack Foundation
+
+- 117
+- 405
+
+---
+
 ## Cleanup Hand Size Discard
 
 - 514.1
@@ -110,7 +117,7 @@ It is not a literal restatement of the rules text.
 
 ---
 
-## Cast Non-Land Spells
+## Cast Spells
 
 - 601.1
 - 601.2
@@ -152,6 +159,7 @@ The initial Gherkin pilot currently targets these rule areas:
 - `features/turn-flow/lose_on_empty_draw.feature`
 - `features/life/lose_on_zero_life.feature`
 - `features/state-based-actions/zero_toughness_creature_dies.feature`
+- `features/stack/stack_foundation.feature`
 
 ---
 

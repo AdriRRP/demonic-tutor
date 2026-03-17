@@ -7,12 +7,19 @@ Feature: Cast a creature spell
   As the play bounded context
   Creatures are cast as spells rather than played through a separate action
 
-  Scenario: Casting a creature spell with enough mana
+  Scenario: Casting a creature spell uses the stack before it resolves
     Given Alice is the active player in FirstMain
     And Alice has a creature card in hand with valid power and toughness
     And Alice has enough mana to pay its cost
     When Alice casts the creature spell
     Then the card leaves Alice's hand
+    And the spell is on the stack under Alice's control
+    And the spell has not resolved yet
+    And Bob has priority
+    And the game emits SpellPutOnStack
+    When Bob passes priority
+    And Alice passes priority
+    Then the game emits StackTopResolved
     And the card enters Alice's battlefield
     And the card has summoning sickness
     And the game emits SpellCast with outcome EnteredBattlefield

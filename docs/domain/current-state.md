@@ -74,6 +74,7 @@ The domain currently includes:
 - turn and phase progression
 - explicit draw effects as a simplified non-stack entrypoint, including multi-card draw
 - terminal game state when a player loses by empty-library draw or zero life
+- aggregate-owned stack and priority foundation state without public stack behavior yet
 
 The system intentionally excludes complex gameplay mechanics at this stage.
 
@@ -89,9 +90,10 @@ Current constraints include:
 
 - matches support exactly two players
 - opening hand size is fixed to 7 cards
-- only a subset of zones are modeled (no exile or stack zone behavior)
+- only a subset of zones are modeled (no exile)
+- stack and priority exist only as foundation state; spells do not go onto the stack yet
 - no stack resolution
-- no priority system
+- no public priority passing system
 - no triggered abilities
 - limited card behavior modeling
 - permanent spells currently enter the battlefield through simplified spell resolution without stack handling
@@ -129,11 +131,12 @@ The project currently includes:
 - explicit game-end events with reasons for terminal empty-library draw and zero life
 - shared life-change semantics reused by explicit life adjustment and combat damage
 - shared review of currently supported state-based actions after relevant gameplay actions
+- aggregate-owned stack zone and priority state foundation for future stack slices
 - an event bus for event distribution
 - projections derived from gameplay events
 - State pattern for phase transitions
 - helper methods for event persistence and publishing
-- a Gherkin acceptance layer, with executable coverage for turn progression, explicit multi-card draw effects, spell casting, combat damage, creature destruction, cleanup damage removal, cleanup hand-size discard, empty-library draw loss, and zero-life loss via `cucumber-rs`
+- a Gherkin acceptance layer, with executable coverage for stack foundation, turn progression, explicit multi-card draw effects, spell casting, combat damage, creature destruction, cleanup damage removal, cleanup hand-size discard, empty-library draw loss, and zero-life loss via `cucumber-rs`
 
 This architecture supports:
 
@@ -150,7 +153,7 @@ The next gameplay expansion requires choosing which domain capability to introdu
 
 Possible directions include:
 
-- stack and priority system
+- stack and priority behavior on top of the new aggregate foundation
 - broader state-based actions beyond lethal creature damage and zero-toughness creature death
 - broader game-loss and game-end conditions beyond empty-library draw and zero life
 - richer cleanup and end-of-turn semantics

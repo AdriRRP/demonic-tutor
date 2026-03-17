@@ -4,8 +4,8 @@ use crate::{
         commands::{
             AdjustLifeCommand, AdvanceTurnCommand, CastSpellCommand, DealOpeningHandsCommand,
             DeclareAttackersCommand, DeclareBlockersCommand, DiscardForCleanupCommand,
-            DrawCardsEffectCommand, MulliganCommand, PlayLandCommand, ResolveCombatDamageCommand,
-            StartGameCommand, TapLandCommand,
+            DrawCardsEffectCommand, MulliganCommand, PassPriorityCommand, PlayLandCommand,
+            ResolveCombatDamageCommand, StartGameCommand, TapLandCommand,
         },
         errors::{DomainError, GameError},
         events::{
@@ -14,7 +14,7 @@ use crate::{
         },
         game::{
             AdjustLifeOutcome, AdvanceTurnOutcome, CastSpellOutcome, DrawCardsEffectOutcome, Game,
-            ResolveCombatDamageOutcome,
+            PassPriorityOutcome, ResolveCombatDamageOutcome,
         },
     },
 };
@@ -265,7 +265,30 @@ where
         cmd: CastSpellCommand,
     ) -> Result<CastSpellOutcome, DomainError> {
         let outcome = game.cast_spell(cmd)?;
-        let mut domain_events = vec![outcome.spell_cast.clone().into()];
+        let domain_events = vec![outcome.spell_put_on_stack.clone().into()];
+        self.persist_and_publish_events(game.id().as_str(), &domain_events)?;
+
+        Ok(outcome)
+    }
+
+    /// Passes priority in an open priority window.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the command is invalid.
+    pub fn pass_priority(
+        &self,
+        game: &mut Game,
+        cmd: PassPriorityCommand,
+    ) -> Result<PassPriorityOutcome, DomainError> {
+        let outcome = game.pass_priority(cmd)?;
+        let mut domain_events = vec![outcome.priority_passed.clone().into()];
+        if let Some(stack_top_resolved) = &outcome.stack_top_resolved {
+            domain_events.push(stack_top_resolved.clone().into());
+        }
+        if let Some(spell_cast) = &outcome.spell_cast {
+            domain_events.push(spell_cast.clone().into());
+        }
         domain_events.extend(outcome.creatures_died.iter().cloned().map(Into::into));
         if let Some(game_ended) = &outcome.game_ended {
             domain_events.push(game_ended.clone().into());

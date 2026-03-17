@@ -1,11 +1,12 @@
 #![allow(clippy::unwrap_used)]
 
 use crate::support::{
-    advance_to_player_first_main_satisfying_cleanup, filled_library, setup_two_player_game,
+    advance_to_player_first_main_satisfying_cleanup, cast_spell_and_resolve, filled_library,
+    setup_two_player_game,
 };
 use demonictutor::{
-    CardDefinitionId, CardError, CardInstanceId, CastSpellCommand, DeclareBlockersCommand,
-    DomainError, GameError, LibraryCard, PlayerId, ResolveCombatDamageCommand,
+    CardDefinitionId, CardError, CardInstanceId, DeclareBlockersCommand, DomainError, GameError,
+    LibraryCard, PlayerId, ResolveCombatDamageCommand,
 };
 
 #[test]
@@ -36,20 +37,10 @@ fn declare_blockers_fails_when_target_creature_is_not_attacking() {
     let blocker_id = CardInstanceId::new("game-1-player-2-0");
 
     advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
-    service
-        .cast_spell(
-            &mut game,
-            CastSpellCommand::new(PlayerId::new("player-1"), attacker_id.clone()),
-        )
-        .unwrap();
+    cast_spell_and_resolve(&service, &mut game, "player-1", attacker_id.clone());
 
     advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-2");
-    service
-        .cast_spell(
-            &mut game,
-            CastSpellCommand::new(PlayerId::new("player-2"), blocker_id.clone()),
-        )
-        .unwrap();
+    cast_spell_and_resolve(&service, &mut game, "player-2", blocker_id.clone());
 
     advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
     service
@@ -122,26 +113,11 @@ fn declare_blockers_fails_when_the_same_blocker_is_assigned_more_than_once() {
     let blocker_id = CardInstanceId::new("game-1-player-2-0");
 
     advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
-    service
-        .cast_spell(
-            &mut game,
-            CastSpellCommand::new(PlayerId::new("player-1"), left_attacker_id.clone()),
-        )
-        .unwrap();
-    service
-        .cast_spell(
-            &mut game,
-            CastSpellCommand::new(PlayerId::new("player-1"), right_attacker_id.clone()),
-        )
-        .unwrap();
+    cast_spell_and_resolve(&service, &mut game, "player-1", left_attacker_id.clone());
+    cast_spell_and_resolve(&service, &mut game, "player-1", right_attacker_id.clone());
 
     advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-2");
-    service
-        .cast_spell(
-            &mut game,
-            CastSpellCommand::new(PlayerId::new("player-2"), blocker_id.clone()),
-        )
-        .unwrap();
+    cast_spell_and_resolve(&service, &mut game, "player-2", blocker_id.clone());
 
     advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
     service
@@ -203,26 +179,11 @@ fn declare_blockers_fails_when_multiple_blockers_target_the_same_attacker() {
     let right_blocker_id = CardInstanceId::new("game-1-player-2-1");
 
     advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
-    service
-        .cast_spell(
-            &mut game,
-            CastSpellCommand::new(PlayerId::new("player-1"), attacker_id.clone()),
-        )
-        .unwrap();
+    cast_spell_and_resolve(&service, &mut game, "player-1", attacker_id.clone());
 
     advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-2");
-    service
-        .cast_spell(
-            &mut game,
-            CastSpellCommand::new(PlayerId::new("player-2"), left_blocker_id.clone()),
-        )
-        .unwrap();
-    service
-        .cast_spell(
-            &mut game,
-            CastSpellCommand::new(PlayerId::new("player-2"), right_blocker_id.clone()),
-        )
-        .unwrap();
+    cast_spell_and_resolve(&service, &mut game, "player-2", left_blocker_id.clone());
+    cast_spell_and_resolve(&service, &mut game, "player-2", right_blocker_id.clone());
 
     advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
     service

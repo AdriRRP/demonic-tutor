@@ -11,5 +11,7 @@ mod lifecycle;
 mod regressions;
 #[path = "unit/resource_actions/mod.rs"]
 mod resource_actions;
+#[path = "unit/stack_priority/mod.rs"]
+mod stack_priority;
 #[path = "unit/turn_flow/mod.rs"]
 mod turn_flow;

@@ -5,8 +5,9 @@ use demonictutor::{
     AdjustLifeCommand, AdvanceTurnCommand, AdvanceTurnOutcome, CardDefinitionId, CardDiscarded,
     CardDrawn, CardInstance, CardInstanceId, CastSpellCommand, CombatDamageResolved, CreatureDied,
     DealOpeningHandsCommand, DiscardForCleanupCommand, DrawCardsEffectCommand, Game, GameEnded,
-    GameId, LibraryCard, LifeChanged, Phase, PlayLandCommand, PlayerId, ResolveCombatDamageCommand,
-    SpellCast, StartGameCommand, TapLandCommand, TurnProgressed,
+    GameId, LibraryCard, LifeChanged, PassPriorityCommand, Phase, PlayLandCommand, PlayerId,
+    PriorityPassed, ResolveCombatDamageCommand, SpellCast, SpellPutOnStack, StackTopResolved,
+    StartGameCommand, TapLandCommand, TurnProgressed,
 };
 
 #[derive(Debug, Default, cucumber::World)]
@@ -17,7 +18,10 @@ pub struct GameplayWorld {
     pub last_card_drawn: Option<CardDrawn>,
     pub last_cards_drawn: Vec<CardDrawn>,
     pub last_card_discarded: Option<CardDiscarded>,
+    pub last_spell_put_on_stack: Option<SpellPutOnStack>,
     pub last_spell_cast: Option<SpellCast>,
+    pub last_priority_passed: Option<PriorityPassed>,
+    pub last_stack_top_resolved: Option<StackTopResolved>,
     pub last_combat_damage: Option<CombatDamageResolved>,
     pub last_life_changed: Option<LifeChanged>,
     pub last_creature_died: Vec<CreatureDied>,
@@ -137,7 +141,10 @@ impl GameplayWorld {
         self.last_card_drawn = None;
         self.last_cards_drawn.clear();
         self.last_card_discarded = None;
+        self.last_spell_put_on_stack = None;
         self.last_spell_cast = None;
+        self.last_priority_passed = None;
+        self.last_stack_top_resolved = None;
         self.last_combat_damage = None;
         self.last_life_changed = None;
         self.last_creature_died.clear();
@@ -180,6 +187,24 @@ impl GameplayWorld {
                 ]),
             )
             .expect("opening hands should be dealt");
+
+        self.game = Some(game);
+        self.reset_observations();
+        self.reset_tracking();
+    }
+
+    pub fn setup_started_game(&mut self, game_id: &str) {
+        let service = support::create_service();
+        let game = service
+            .start_game(StartGameCommand::new(
+                GameId::new(game_id),
+                vec![
+                    support::player_deck("player-1", "deck-1"),
+                    support::player_deck("player-2", "deck-2"),
+                ],
+            ))
+            .expect("game should start")
+            .0;
 
         self.game = Some(game);
         self.reset_observations();
@@ -413,6 +438,7 @@ impl GameplayWorld {
                 CastSpellCommand::new(Self::player_id("Alice"), attacker_id.clone()),
             )
             .expect("attacker cast should succeed");
+        support::resolve_top_stack_with_passes(&service, self.game_mut());
 
         support::advance_to_player_first_main_satisfying_cleanup(
             &service,
@@ -428,6 +454,7 @@ impl GameplayWorld {
                     CastSpellCommand::new(Self::player_id("Bob"), blocker_id.clone()),
                 )
                 .expect("blocker cast should succeed");
+            support::resolve_top_stack_with_passes(&service, self.game_mut());
             self.tracked_blocker_id = Some(blocker_id);
         }
 
@@ -517,6 +544,7 @@ impl GameplayWorld {
                 CastSpellCommand::new(Self::player_id("Alice"), attacker_id.clone()),
             )
             .expect("attacker cast should succeed");
+        support::resolve_top_stack_with_passes(&service, self.game_mut());
 
         support::advance_to_player_first_main_satisfying_cleanup(
             &service,
@@ -531,12 +559,14 @@ impl GameplayWorld {
                 CastSpellCommand::new(Self::player_id("Bob"), left_blocker_id.clone()),
             )
             .expect("left blocker cast should succeed");
+        support::resolve_top_stack_with_passes(&service, self.game_mut());
         service
             .cast_spell(
                 self.game_mut(),
                 CastSpellCommand::new(Self::player_id("Bob"), right_blocker_id.clone()),
             )
             .expect("right blocker cast should succeed");
+        support::resolve_top_stack_with_passes(&service, self.game_mut());
 
         support::advance_to_player_first_main_satisfying_cleanup(
             &service,
@@ -730,13 +760,44 @@ impl GameplayWorld {
             CastSpellCommand::new(Self::player_id(alias), card_id),
         ) {
             Ok(outcome) => {
-                self.last_spell_cast = Some(outcome.spell_cast);
-                self.last_creature_died = outcome.creatures_died;
+                self.last_spell_put_on_stack = Some(outcome.spell_put_on_stack);
+                self.last_spell_cast = None;
+                self.last_priority_passed = None;
+                self.last_stack_top_resolved = None;
+                self.last_creature_died.clear();
                 self.last_error = None;
             }
             Err(error) => {
+                self.last_spell_put_on_stack = None;
+                self.last_spell_cast = None;
+                self.last_priority_passed = None;
+                self.last_stack_top_resolved = None;
+                self.last_creature_died.clear();
+                self.last_error = Some(error.to_string());
+            }
+        }
+    }
+
+    pub fn pass_priority(&mut self, alias: &str) {
+        let service = support::create_service();
+        match service.pass_priority(
+            self.game_mut(),
+            PassPriorityCommand::new(Self::player_id(alias)),
+        ) {
+            Ok(outcome) => {
+                self.last_priority_passed = Some(outcome.priority_passed);
+                self.last_stack_top_resolved = outcome.stack_top_resolved;
+                self.last_spell_cast = outcome.spell_cast;
+                self.last_creature_died = outcome.creatures_died;
+                self.last_game_ended = outcome.game_ended;
+                self.last_error = None;
+            }
+            Err(error) => {
+                self.last_priority_passed = None;
+                self.last_stack_top_resolved = None;
                 self.last_spell_cast = None;
                 self.last_creature_died.clear();
+                self.last_game_ended = None;
                 self.last_error = Some(error.to_string());
             }
         }

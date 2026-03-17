@@ -46,6 +46,8 @@ At the current stage of the system, the aggregate conceptually maintains:
 - current phase
 - turn number
 - participating players
+- stack zone foundation state
+- optional priority state foundation
 - optional terminal game outcome (`winner`, `loser`, `end reason`)
 
 Each player maintains their own game zones and state within the aggregate.
@@ -186,7 +188,7 @@ The current model intentionally omits:
 - rules text
 - triggered abilities
 - counters
-- stack interactions
+- stack interactions beyond the currently modeled foundation state
 
 These may be introduced incrementally in future slices.
 
@@ -224,6 +226,7 @@ The aggregate root must enforce:
 - phase progression rules
 - active-player-only automatic turn updates
 - terminal game tracking for empty-library draw and zero-life loss
+- ownership of stack and priority foundation state
 - zero-toughness creature death after current creature-spell resolution checks
 - lethal-damage creature destruction after combat damage resolution
 - correct event emission
@@ -250,11 +253,12 @@ Responsible for:
 
 ---
 
-## Rules Engine (future)
+## Future Play Expansion
 
-Responsible for:
+Future slices inside the `play` context are expected to introduce:
 
-- stack resolution
+- stack resolution behavior
+- priority passing
 - card abilities
 - triggered effects
 - replacement effects

@@ -26,6 +26,11 @@ pub enum GameError {
         required: u32,
         available: u32,
     },
+    NoPriorityWindow,
+    NotPriorityHolder {
+        current: PlayerId,
+        requested: PlayerId,
+    },
     NotEnoughCardsInLibrary {
         player: PlayerId,
         available: usize,
@@ -143,6 +148,10 @@ impl std::fmt::Display for GameError {
                 "player {} has insufficient mana: required {required}, available {available}",
                 player.as_str()
             ),
+            Self::NoPriorityWindow => write!(f, "no priority window is currently open"),
+            Self::NotPriorityHolder { current, requested } => {
+                write!(f, "not {requested}'s priority, current holder is {current}")
+            }
             Self::NotEnoughCardsInLibrary {
                 player,
                 available,

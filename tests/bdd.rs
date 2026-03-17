@@ -16,6 +16,8 @@ mod draw_effects;
 mod life;
 #[path = "bdd/spell_casting.rs"]
 mod spell_casting;
+#[path = "bdd/stack_foundation.rs"]
+mod stack_foundation;
 #[path = "bdd/state_based_actions.rs"]
 mod state_based_actions;
 #[path = "bdd/turn_progression.rs"]
@@ -28,6 +30,7 @@ use world::GameplayWorld;
 
 #[tokio::main]
 async fn main() {
+    GameplayWorld::run("features/stack/stack_foundation.feature").await;
     GameplayWorld::run("features/turn-flow/lose_on_empty_draw.feature").await;
     GameplayWorld::run("features/turn-flow/turn_progression.feature").await;
     GameplayWorld::run("features/turn-flow/draw_multiple_cards.feature").await;

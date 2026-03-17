@@ -26,7 +26,9 @@ src/domain/play/game/
 ├── invariants.rs      # Aggregate legality checks and internal lookups
 ├── model/
 │   ├── mod.rs
-│   └── player.rs      # Aggregate-owned entity internals
+│   ├── player.rs      # Aggregate-owned entity internals
+│   ├── priority.rs    # Aggregate-owned priority state
+│   └── stack.rs       # Aggregate-owned stack state
 └── rules/
     ├── mod.rs
     ├── lifecycle.rs        # Start game, opening hands, mulligan
@@ -52,6 +54,7 @@ src/domain/play/game/
 - **DDD alignment** — Modules reflect the domain language, not technical categories.
 - **Rust coherence** — `mod.rs` stays small while internal modules separate aggregate state, rules, and invariants.
 - **Semantic consistency** — Shared state-based action review and direct game effects stay explicit instead of being duplicated across turn flow, resource, and combat code.
+- **Incremental stack evolution** — Stack and priority can grow from aggregate-owned model state before their full command flow lands.
 
 ---
 

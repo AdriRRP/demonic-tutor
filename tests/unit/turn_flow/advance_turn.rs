@@ -3,10 +3,10 @@
 use crate::support::{
     advance_n_raw, advance_n_satisfying_cleanup, advance_to_first_main_satisfying_cleanup,
     advance_to_player_first_main_satisfying_cleanup, advance_turn_satisfying_cleanup,
-    filled_library, land_card, setup_two_player_game, vanilla_creature,
+    cast_spell_and_resolve, filled_library, land_card, setup_two_player_game, vanilla_creature,
 };
 use demonictutor::{
-    AdvanceTurnCommand, AdvanceTurnOutcome, CardDefinitionId, CardInstanceId, CastSpellCommand,
+    AdvanceTurnCommand, AdvanceTurnOutcome, CardDefinitionId, CardInstanceId,
     DeclareAttackersCommand, DeclareBlockersCommand, GameEndReason, LibraryCard, Phase,
     PlayLandCommand, PlayerId, ResolveCombatDamageCommand,
 };
@@ -151,20 +151,10 @@ fn advance_turn_clears_marked_damage_when_turn_ends() {
     let blocker_id = CardInstanceId::new("game-1-player-2-0");
 
     advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
-    service
-        .cast_spell(
-            &mut game,
-            CastSpellCommand::new(PlayerId::new("player-1"), attacker_id.clone()),
-        )
-        .unwrap();
+    cast_spell_and_resolve(&service, &mut game, "player-1", attacker_id.clone());
 
     advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-2");
-    service
-        .cast_spell(
-            &mut game,
-            CastSpellCommand::new(PlayerId::new("player-2"), blocker_id.clone()),
-        )
-        .unwrap();
+    cast_spell_and_resolve(&service, &mut game, "player-2", blocker_id.clone());
 
     advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
     advance_turn_satisfying_cleanup(&service, &mut game);

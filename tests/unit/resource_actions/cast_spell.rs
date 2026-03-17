@@ -12,8 +12,26 @@ use demonictutor::{
     TapLandCommand,
 };
 
+fn resolve_current_stack(
+    service: &demonictutor::GameService<
+        demonictutor::InMemoryEventStore,
+        demonictutor::InMemoryEventBus,
+    >,
+    game: &mut Game,
+) -> demonictutor::PassPriorityOutcome {
+    let first_holder = game.priority().unwrap().current_holder().clone();
+    service
+        .pass_priority(game, demonictutor::PassPriorityCommand::new(first_holder))
+        .unwrap();
+
+    let second_holder = game.priority().unwrap().current_holder().clone();
+    service
+        .pass_priority(game, demonictutor::PassPriorityCommand::new(second_holder))
+        .unwrap()
+}
+
 #[test]
-fn cast_instant_moves_card_from_hand_to_graveyard() {
+fn cast_instant_puts_the_spell_on_the_stack_before_resolution() {
     let (service, mut game) = setup_two_player_game(
         "game-1",
         filled_library(vec![instant_card("giant-growth", 0)], 10),
@@ -30,16 +48,50 @@ fn cast_instant_moves_card_from_hand_to_graveyard() {
         )
         .unwrap();
 
-    assert_eq!(outcome.spell_cast.card_id, card_id);
-    assert!(matches!(outcome.spell_cast.card_type, CardType::Instant));
-    assert_eq!(outcome.spell_cast.mana_cost_paid, 0);
+    assert_eq!(outcome.spell_put_on_stack.card_id, card_id);
     assert!(matches!(
-        outcome.spell_cast.outcome,
+        outcome.spell_put_on_stack.card_type,
+        CardType::Instant
+    ));
+    assert_eq!(outcome.spell_put_on_stack.mana_cost_paid, 0);
+    assert_eq!(game.players()[0].hand().cards().len(), 7);
+    assert_eq!(game.players()[0].graveyard().cards().len(), 0);
+    assert_eq!(game.stack().len(), 1);
+    assert_eq!(
+        game.priority().unwrap().current_holder(),
+        &PlayerId::new("player-2")
+    );
+}
+
+#[test]
+fn passing_priority_twice_resolves_an_instant_from_stack_to_graveyard() {
+    let (service, mut game) = setup_two_player_game(
+        "game-1",
+        filled_library(vec![instant_card("giant-growth", 0)], 10),
+        filled_library(vec![land_card("mountain")], 10),
+    );
+
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
+
+    let card_id = CardInstanceId::new("game-1-player-1-0");
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), card_id.clone()),
+        )
+        .unwrap();
+
+    let outcome = resolve_current_stack(&service, &mut game);
+
+    let spell_cast = outcome.spell_cast.unwrap();
+    assert_eq!(spell_cast.card_id, card_id);
+    assert!(matches!(spell_cast.card_type, CardType::Instant));
+    assert!(matches!(
+        spell_cast.outcome,
         SpellCastOutcome::ResolvedToGraveyard
     ));
     assert!(outcome.creatures_died.is_empty());
-    assert_eq!(game.players()[0].hand().cards().len(), 7);
-    assert_eq!(game.players()[0].battlefield().cards().len(), 0);
+    assert_eq!(game.stack().len(), 0);
     assert_eq!(game.players()[0].graveyard().cards().len(), 1);
 }
 
@@ -86,12 +138,12 @@ fn cast_spell_fails_for_land_card() {
 
     assert!(matches!(
         result,
-        Err(DomainError::Card(CardError::CannotCastLand { .. }))
+        Err(DomainError::Card(CardError::CannotCastLand(_)))
     ));
 }
 
 #[test]
-fn cast_creature_spell_moves_card_to_battlefield() {
+fn resolving_a_creature_spell_moves_card_to_battlefield() {
     let (service, mut game) = setup_two_player_game(
         "game-1",
         filled_library(vec![vanilla_creature("grizzly-bears")], 10),
@@ -100,7 +152,7 @@ fn cast_creature_spell_moves_card_to_battlefield() {
 
     advance_to_first_main_satisfying_cleanup(&service, &mut game);
 
-    let outcome = service
+    let cast_outcome = service
         .cast_spell(
             &mut game,
             CastSpellCommand::new(
@@ -110,19 +162,27 @@ fn cast_creature_spell_moves_card_to_battlefield() {
         )
         .unwrap();
 
-    assert!(matches!(outcome.spell_cast.card_type, CardType::Creature));
-    assert_eq!(outcome.spell_cast.mana_cost_paid, 0);
     assert!(matches!(
-        outcome.spell_cast.outcome,
+        cast_outcome.spell_put_on_stack.card_type,
+        CardType::Creature
+    ));
+    assert_eq!(game.stack().len(), 1);
+
+    let outcome = resolve_current_stack(&service, &mut game);
+    let spell_cast = outcome.spell_cast.unwrap();
+
+    assert!(matches!(
+        spell_cast.outcome,
         SpellCastOutcome::EnteredBattlefield
     ));
     assert!(outcome.creatures_died.is_empty());
+    assert_eq!(game.stack().len(), 0);
     assert_eq!(game.players()[0].battlefield().cards().len(), 1);
     assert_eq!(game.players()[0].graveyard().cards().len(), 0);
 }
 
 #[test]
-fn cast_artifact_spell_moves_card_to_battlefield() {
+fn resolving_an_artifact_spell_moves_card_to_battlefield() {
     let (service, mut game) = setup_two_player_game(
         "game-1",
         filled_library(vec![artifact_card("howling-mine", 0)], 10),
@@ -131,7 +191,7 @@ fn cast_artifact_spell_moves_card_to_battlefield() {
 
     advance_to_first_main_satisfying_cleanup(&service, &mut game);
 
-    let outcome = service
+    let cast_outcome = service
         .cast_spell(
             &mut game,
             CastSpellCommand::new(
@@ -141,10 +201,15 @@ fn cast_artifact_spell_moves_card_to_battlefield() {
         )
         .unwrap();
 
-    assert!(matches!(outcome.spell_cast.card_type, CardType::Artifact));
-    assert_eq!(outcome.spell_cast.mana_cost_paid, 0);
     assert!(matches!(
-        outcome.spell_cast.outcome,
+        cast_outcome.spell_put_on_stack.card_type,
+        CardType::Artifact
+    ));
+    let outcome = resolve_current_stack(&service, &mut game);
+
+    let spell_cast = outcome.spell_cast.unwrap();
+    assert!(matches!(
+        spell_cast.outcome,
         SpellCastOutcome::EnteredBattlefield
     ));
     assert!(outcome.creatures_died.is_empty());
@@ -153,7 +218,7 @@ fn cast_artifact_spell_moves_card_to_battlefield() {
 }
 
 #[test]
-fn cast_zero_toughness_creature_dies_immediately_after_entering_battlefield() {
+fn zero_toughness_creature_dies_after_its_spell_resolves() {
     let (service, mut game) = setup_two_player_game(
         "game-1",
         filled_library(
@@ -170,7 +235,7 @@ fn cast_zero_toughness_creature_dies_immediately_after_entering_battlefield() {
 
     advance_to_first_main_satisfying_cleanup(&service, &mut game);
 
-    let outcome = service
+    service
         .cast_spell(
             &mut game,
             CastSpellCommand::new(
@@ -180,11 +245,8 @@ fn cast_zero_toughness_creature_dies_immediately_after_entering_battlefield() {
         )
         .unwrap();
 
-    assert!(matches!(outcome.spell_cast.card_type, CardType::Creature));
-    assert!(matches!(
-        outcome.spell_cast.outcome,
-        SpellCastOutcome::EnteredBattlefield
-    ));
+    let outcome = resolve_current_stack(&service, &mut game);
+
     assert_eq!(outcome.creatures_died.len(), 1);
     assert_eq!(
         outcome.creatures_died[0].player_id,
@@ -199,7 +261,7 @@ fn cast_zero_toughness_creature_dies_immediately_after_entering_battlefield() {
 }
 
 #[test]
-fn cast_spell_reviews_pending_state_based_actions_for_existing_zero_toughness_creatures() {
+fn resolving_a_spell_reviews_pending_state_based_actions_for_existing_zero_toughness_creatures() {
     let service = crate::support::create_service();
 
     let mut alice = Player::new(PlayerId::new("player-1"), DeckId::new("deck-1"));
@@ -227,7 +289,7 @@ fn cast_spell_reviews_pending_state_based_actions_for_existing_zero_toughness_cr
         TerminalState::active(),
     );
 
-    let outcome = service
+    service
         .cast_spell(
             &mut game,
             CastSpellCommand::new(
@@ -236,6 +298,8 @@ fn cast_spell_reviews_pending_state_based_actions_for_existing_zero_toughness_cr
             ),
         )
         .unwrap();
+
+    let outcome = resolve_current_stack(&service, &mut game);
 
     assert_eq!(outcome.creatures_died.len(), 1);
     assert_eq!(
@@ -322,6 +386,7 @@ fn cast_spell_fails_with_insufficient_mana() {
     assert_eq!(game.players()[0].hand().cards().len(), 8);
     assert_eq!(game.players()[0].graveyard().cards().len(), 0);
     assert_eq!(game.players()[0].battlefield().cards().len(), 0);
+    assert_eq!(game.stack().len(), 0);
 }
 
 #[test]
@@ -365,7 +430,7 @@ fn cast_spell_succeeds_with_sufficient_mana() {
     );
 
     let outcome = result.unwrap();
-    assert_eq!(outcome.spell_cast.mana_cost_paid, 1);
-    assert!(outcome.creatures_died.is_empty());
+    assert_eq!(outcome.spell_put_on_stack.mana_cost_paid, 1);
     assert_eq!(game.players()[1].mana(), 0);
+    assert_eq!(game.stack().len(), 1);
 }

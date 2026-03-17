@@ -48,6 +48,11 @@ fn alice_casts_the_creature_spell(world: &mut GameplayWorld) {
     world.cast_tracked_spell("Alice");
 }
 
+#[when(expr = "{word} passes priority")]
+fn player_passes_priority(world: &mut GameplayWorld, player: String) {
+    world.pass_priority(&player);
+}
+
 #[then("the card leaves Alice's hand")]
 fn the_card_leaves_alices_hand(world: &mut GameplayWorld) {
     let card_id = world
@@ -55,6 +60,40 @@ fn the_card_leaves_alices_hand(world: &mut GameplayWorld) {
         .as_ref()
         .expect("tracked card should exist");
     assert!(!world.hand_contains("Alice", card_id));
+}
+
+#[then("the spell is on the stack under Alice's control")]
+fn the_spell_is_on_the_stack_under_alices_control(world: &mut GameplayWorld) {
+    let event = world
+        .last_spell_put_on_stack
+        .as_ref()
+        .expect("expected a SpellPutOnStack event");
+    let top = world
+        .game()
+        .stack()
+        .top()
+        .expect("stack should contain a spell");
+    assert_eq!(event.player_id, GameplayWorld::player_id("Alice"));
+    assert_eq!(top.controller_id(), &GameplayWorld::player_id("Alice"));
+}
+
+#[then("the spell has not resolved yet")]
+fn the_spell_has_not_resolved_yet(world: &mut GameplayWorld) {
+    assert!(world.last_spell_cast.is_none());
+}
+
+#[then("Bob has priority")]
+fn bob_has_priority(world: &mut GameplayWorld) {
+    let priority = world
+        .game()
+        .priority()
+        .expect("priority window should be open after casting");
+    assert_eq!(priority.current_holder(), &GameplayWorld::player_id("Bob"));
+}
+
+#[then("the game emits SpellPutOnStack")]
+fn the_game_emits_spell_put_on_stack(world: &mut GameplayWorld) {
+    assert!(world.last_spell_put_on_stack.is_some());
 }
 
 #[then("the card enters Alice's battlefield")]
@@ -69,6 +108,11 @@ fn the_card_enters_alices_battlefield(world: &mut GameplayWorld) {
 #[then("the card has summoning sickness")]
 fn the_card_has_summoning_sickness(world: &mut GameplayWorld) {
     assert!(world.tracked_card("Alice").has_summoning_sickness());
+}
+
+#[then("the game emits StackTopResolved")]
+fn the_game_emits_stack_top_resolved(world: &mut GameplayWorld) {
+    assert!(world.last_stack_top_resolved.is_some());
 }
 
 #[then(expr = "the game emits SpellCast with outcome {word}")]

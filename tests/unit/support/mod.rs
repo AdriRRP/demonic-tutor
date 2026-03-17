@@ -5,7 +5,8 @@
 use demonictutor::{
     AdvanceTurnCommand, AdvanceTurnOutcome, CardDefinitionId, DealOpeningHandsCommand, DeckId,
     DiscardForCleanupCommand, Game, GameId, GameService, InMemoryEventBus, InMemoryEventStore,
-    LibraryCard, NonCreatureCardType, Phase, PlayerDeck, PlayerId, PlayerLibrary, StartGameCommand,
+    LibraryCard, NonCreatureCardType, PassPriorityCommand, Phase, PlayerDeck, PlayerId,
+    PlayerLibrary, StartGameCommand,
 };
 
 pub type TestService = GameService<InMemoryEventStore, InMemoryEventBus>;
@@ -200,4 +201,37 @@ pub fn satisfy_cleanup_discard(service: &TestService, game: &mut Game) {
 pub fn advance_turn_satisfying_cleanup(service: &TestService, game: &mut Game) {
     satisfy_cleanup_discard(service, game);
     advance_turn_raw(service, game);
+}
+
+pub fn resolve_top_stack_with_passes(service: &TestService, game: &mut Game) {
+    let first_holder = game.priority().map_or_else(
+        || panic!("priority window should be open"),
+        |priority| priority.current_holder().clone(),
+    );
+    service
+        .pass_priority(game, PassPriorityCommand::new(first_holder))
+        .unwrap();
+
+    let second_holder = game.priority().map_or_else(
+        || panic!("priority window should remain open after one pass"),
+        |priority| priority.current_holder().clone(),
+    );
+    service
+        .pass_priority(game, PassPriorityCommand::new(second_holder))
+        .unwrap();
+}
+
+pub fn cast_spell_and_resolve(
+    service: &TestService,
+    game: &mut Game,
+    player_id: &str,
+    card_id: demonictutor::CardInstanceId,
+) {
+    service
+        .cast_spell(
+            game,
+            demonictutor::CastSpellCommand::new(PlayerId::new(player_id), card_id),
+        )
+        .unwrap();
+    resolve_top_stack_with_passes(service, game);
 }

@@ -114,3 +114,25 @@ impl CardDefinitionId {
         &self.0
     }
 }
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct StackObjectId(Arc<str>);
+
+impl StackObjectId {
+    pub fn new(value: impl Into<String>) -> Self {
+        Self(Arc::from(value.into()))
+    }
+}
+
+impl std::fmt::Display for StackObjectId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl StackObjectId {
+    #[must_use]
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}

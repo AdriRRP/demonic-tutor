@@ -201,6 +201,18 @@ pub struct DiscardForCleanupCommand {
     pub card_id: CardInstanceId,
 }
 
+#[derive(Debug, Clone)]
+pub struct PassPriorityCommand {
+    pub player_id: PlayerId,
+}
+
+impl PassPriorityCommand {
+    #[must_use]
+    pub const fn new(player_id: PlayerId) -> Self {
+        Self { player_id }
+    }
+}
+
 impl DiscardForCleanupCommand {
     #[must_use]
     pub const fn new(player_id: PlayerId, card_id: CardInstanceId) -> Self {

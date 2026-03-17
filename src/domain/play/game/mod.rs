@@ -6,8 +6,8 @@ use crate::domain::play::{
     commands::{
         AdjustLifeCommand, AdvanceTurnCommand, CastSpellCommand, DealOpeningHandsCommand,
         DeclareAttackersCommand, DeclareBlockersCommand, DiscardForCleanupCommand,
-        DrawCardsEffectCommand, MulliganCommand, PlayLandCommand, ResolveCombatDamageCommand,
-        StartGameCommand, TapLandCommand,
+        DrawCardsEffectCommand, MulliganCommand, PassPriorityCommand, PlayLandCommand,
+        ResolveCombatDamageCommand, StartGameCommand, TapLandCommand,
     },
     errors::DomainError,
     events::{
@@ -19,9 +19,11 @@ use crate::domain::play::{
 };
 
 pub use model::Player;
+pub use model::{PriorityState, SpellOnStack, StackObject, StackObjectKind, StackZone};
 pub use rules::{
     combat::ResolveCombatDamageOutcome,
-    resource_actions::{AdjustLifeOutcome, CastSpellOutcome},
+    resource_actions::AdjustLifeOutcome,
+    stack_priority::{CastSpellOutcome, PassPriorityOutcome, StackPriorityContext},
     turn_flow::{AdvanceTurnOutcome, DrawCardsEffectOutcome},
 };
 
@@ -76,6 +78,9 @@ pub struct Game {
     phase: Phase,
     turn_number: u32,
     players: Vec<Player>,
+    stack: StackZone,
+    priority: Option<PriorityState>,
+    next_stack_object_number: u32,
     terminal_state: TerminalState,
 }
 
@@ -95,6 +100,9 @@ impl Game {
             phase,
             turn_number,
             players,
+            stack: StackZone::empty(),
+            priority: None,
+            next_stack_object_number: 1,
             terminal_state,
         }
     }
@@ -122,6 +130,21 @@ impl Game {
     #[must_use]
     pub fn players(&self) -> &[Player] {
         &self.players
+    }
+
+    #[must_use]
+    pub const fn stack(&self) -> &StackZone {
+        &self.stack
+    }
+
+    #[must_use]
+    pub const fn priority(&self) -> Option<&PriorityState> {
+        self.priority.as_ref()
+    }
+
+    #[must_use]
+    pub const fn has_open_priority_window(&self) -> bool {
+        self.priority.is_some()
     }
 
     #[must_use]
@@ -286,15 +309,44 @@ impl Game {
     /// Casts a spell.
     ///
     /// # Errors
-    /// See [`rules::resource_actions::cast_spell`].
+    /// See [`rules::stack_priority::cast_spell`].
     pub fn cast_spell(&mut self, cmd: CastSpellCommand) -> Result<CastSpellOutcome, DomainError> {
         invariants::require_game_active(self.is_over())?;
-        rules::resource_actions::cast_spell(
-            &self.id,
-            &mut self.players,
-            &self.active_player,
-            &self.phase,
-            &mut self.terminal_state,
+        rules::stack_priority::cast_spell(
+            StackPriorityContext {
+                game_id: &self.id,
+                players: &mut self.players,
+                active_player: &self.active_player,
+                phase: &self.phase,
+                stack: &mut self.stack,
+                priority: &mut self.priority,
+                next_stack_object_number: &mut self.next_stack_object_number,
+                terminal_state: &mut self.terminal_state,
+            },
+            cmd,
+        )
+    }
+
+    /// Passes priority in an open priority window.
+    ///
+    /// # Errors
+    /// See [`rules::stack_priority::pass_priority`].
+    pub fn pass_priority(
+        &mut self,
+        cmd: PassPriorityCommand,
+    ) -> Result<PassPriorityOutcome, DomainError> {
+        invariants::require_game_active(self.is_over())?;
+        rules::stack_priority::pass_priority(
+            StackPriorityContext {
+                game_id: &self.id,
+                players: &mut self.players,
+                active_player: &self.active_player,
+                phase: &self.phase,
+                stack: &mut self.stack,
+                priority: &mut self.priority,
+                next_stack_object_number: &mut self.next_stack_object_number,
+                terminal_state: &mut self.terminal_state,
+            },
             cmd,
         )
     }

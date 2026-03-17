@@ -21,40 +21,15 @@ impl GameLogProjection {
             .unwrap_or_default()
     }
 
-    pub fn handle(&self, event: &DomainEvent) {
-        let log_entry = match event {
-            DomainEvent::GameStarted(e) => {
-                format!(
-                    "Game {} started with players: {:?}",
-                    e.game_id,
-                    e.players
-                        .iter()
-                        .map(ToString::to_string)
-                        .collect::<Vec<_>>()
-                )
-            }
-            DomainEvent::OpeningHandDealt(e) => {
-                format!(
-                    "Player {} received opening hand with {} cards",
-                    e.player_id,
-                    e.cards.len()
-                )
-            }
-            DomainEvent::GameEnded(e) => {
-                format!(
-                    "Game ended: {} lost to {} via {:?}",
-                    e.loser_id, e.winner_id, e.reason
-                )
-            }
+    fn describe_event(event: &DomainEvent) -> String {
+        match event {
+            DomainEvent::GameStarted(e) => Self::log_game_started(e),
+            DomainEvent::OpeningHandDealt(e) => Self::log_opening_hand_dealt(e),
+            DomainEvent::GameEnded(e) => Self::log_game_ended(e),
             DomainEvent::LandPlayed(e) => {
                 format!("Player {} played land {}", e.player_id, e.card_id)
             }
-            DomainEvent::TurnProgressed(e) => {
-                format!(
-                    "Turn progressed: {} {}->{}, {:?}->{:?}",
-                    e.active_player, e.from_turn, e.to_turn, e.from_phase, e.to_phase
-                )
-            }
+            DomainEvent::TurnProgressed(e) => Self::log_turn_progressed(e),
             DomainEvent::CardDrawn(e) => {
                 format!("Player {} drew a card via {:?}", e.player_id, e.draw_kind)
             }
@@ -64,9 +39,7 @@ impl GameLogProjection {
                     e.player_id, e.card_id, e.discard_kind
                 )
             }
-            DomainEvent::MulliganTaken(e) => {
-                format!("Player {} took a mulligan", e.player_id)
-            }
+            DomainEvent::MulliganTaken(e) => format!("Player {} took a mulligan", e.player_id),
             DomainEvent::LifeChanged(e) => {
                 format!(
                     "Player {} life changed from {} to {}",
@@ -82,12 +55,10 @@ impl GameLogProjection {
                     e.player_id, e.amount, e.new_mana_total
                 )
             }
-            DomainEvent::SpellCast(e) => {
-                format!(
-                    "Player {} cast {:?} spell {} for {} mana ({:?})",
-                    e.player_id, e.card_type, e.card_id, e.mana_cost_paid, e.outcome
-                )
-            }
+            DomainEvent::SpellPutOnStack(e) => Self::log_spell_put_on_stack(e),
+            DomainEvent::PriorityPassed(e) => format!("Player {} passed priority", e.player_id),
+            DomainEvent::StackTopResolved(e) => Self::log_stack_top_resolved(e),
+            DomainEvent::SpellCast(e) => Self::log_spell_cast(e),
             DomainEvent::AttackersDeclared(e) => {
                 format!(
                     "Player {} declared {:?} as attackers",
@@ -106,7 +77,66 @@ impl GameLogProjection {
             DomainEvent::CreatureDied(e) => {
                 format!("Creature {} controlled by {} died", e.card_id, e.player_id)
             }
-        };
+        }
+    }
+
+    fn log_game_started(event: &crate::domain::play::events::GameStarted) -> String {
+        format!(
+            "Game {} started with players: {:?}",
+            event.game_id,
+            event
+                .players
+                .iter()
+                .map(ToString::to_string)
+                .collect::<Vec<_>>()
+        )
+    }
+
+    fn log_opening_hand_dealt(event: &crate::domain::play::events::OpeningHandDealt) -> String {
+        format!(
+            "Player {} received opening hand with {} cards",
+            event.player_id,
+            event.cards.len()
+        )
+    }
+
+    fn log_game_ended(event: &crate::domain::play::events::GameEnded) -> String {
+        format!(
+            "Game ended: {} lost to {} via {:?}",
+            event.loser_id, event.winner_id, event.reason
+        )
+    }
+
+    fn log_turn_progressed(event: &crate::domain::play::events::TurnProgressed) -> String {
+        format!(
+            "Turn progressed: {} {}->{}, {:?}->{:?}",
+            event.active_player, event.from_turn, event.to_turn, event.from_phase, event.to_phase
+        )
+    }
+
+    fn log_spell_put_on_stack(event: &crate::domain::play::events::SpellPutOnStack) -> String {
+        format!(
+            "Player {} put {:?} spell {} on the stack for {} mana",
+            event.player_id, event.card_type, event.card_id, event.mana_cost_paid
+        )
+    }
+
+    fn log_stack_top_resolved(event: &crate::domain::play::events::StackTopResolved) -> String {
+        format!(
+            "Stack object {} from card {} resolved for player {}",
+            event.stack_object_id, event.source_card_id, event.player_id
+        )
+    }
+
+    fn log_spell_cast(event: &crate::domain::play::events::SpellCast) -> String {
+        format!(
+            "Player {} resolved {:?} spell {} for {} mana ({:?})",
+            event.player_id, event.card_type, event.card_id, event.mana_cost_paid, event.outcome
+        )
+    }
+
+    pub fn handle(&self, event: &DomainEvent) {
+        let log_entry = Self::describe_event(event);
 
         if let Ok(mut logs) = self.logs.write() {
             logs.push(log_entry);

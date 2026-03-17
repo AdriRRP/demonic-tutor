@@ -13,6 +13,13 @@ Feature: A creature with zero toughness dies after entering the battlefield
     And Alice has enough mana to pay its cost
     When Alice casts the zero-toughness creature spell
     Then the card leaves Alice's hand
+    And the spell is on the stack under Alice's control
+    And the spell has not resolved yet
+    And Bob has priority
+    And the game emits SpellPutOnStack
+    When Bob passes priority
+    And Alice passes priority
+    Then the game emits StackTopResolved
     And the card is not on Alice's battlefield
     And the card enters Alice's graveyard
     And the game emits SpellCast with outcome EnteredBattlefield
