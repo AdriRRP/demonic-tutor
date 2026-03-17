@@ -70,7 +70,9 @@ Current implemented capabilities include:
 - land play, land tapping, mana payment, and cleanup discard when hand size exceeds the maximum
 - spell casting through a canonical `CastSpell` action for spell cards, while lands are played
 - minimal stack and priority support, including `SpellPutOnStack`, `PassPriority`, and `StackTopResolved`
-- empty priority windows on `FirstMain` and `SecondMain`, plus combat priority windows after attackers and blockers
+- empty priority windows on `Upkeep`, `Draw`, `FirstMain`, `Combat`, `SecondMain`, and `EndStep`
+- reopened combat priority windows after attackers, blockers, and combat damage
+- active-player instant casting, non-active instant responses, and active-player self-stacking across the currently supported stack windows
 - creature runtime state with power, toughness, summoning sickness, combat assignments, and combat damage tracking
 - attacker declaration, blocker declaration, and combat damage resolution derived from aggregate state
 - automatic gameplay consequences for:

@@ -103,11 +103,20 @@ When stack or priority is only partially implemented, any new gameplay action mu
 
 Do not allow new actions to silently bypass an open stack interaction.
 
+When extending support for a new priority window, verify whether the repository now needs all three of these behaviors:
+
+- active-player casting in that window
+- non-active instant response after the first pass
+- active-player self-stacking while retaining priority
+
+Do not assume one of those behaviors automatically makes the others true; add or explicitly reject each one.
+
 When new gameplay semantics are introduced through stack, combat, or state-based actions, verify whether:
 
 - feature headers still reflect reality
 - non-executable reference features need status or slice updates
 - older slice docs should become historical instead of staying live
+- current-state, rules-map, and feature indexes now need broader wording rather than per-slice omissions
 
 Documentation updates are required only when the owned truth of that document has changed.
 

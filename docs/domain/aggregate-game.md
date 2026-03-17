@@ -182,6 +182,7 @@ The current model includes:
 - automatic destruction of creatures with 0 toughness through the shared review of supported state-based actions
 - minimal stack-aware spell casting and spell resolution
 - casting player retaining priority immediately after putting a spell on the stack
+- instant responses by the current priority holder in the currently supported windows
 - opening an empty priority window when entering `Upkeep`
 - opening an empty priority window when entering `Draw` after the automatic turn draw
 - opening empty priority windows when entering `FirstMain` and `SecondMain`
@@ -189,6 +190,7 @@ The current model includes:
 - opening an empty priority window when entering `Combat`
 - reopening priority after attackers and blockers are declared in combat
 - reopening priority after combat damage resolves when the game remains active
+- active-player self-stacking of multiple instants in the currently supported stack windows
 - rejection of turn advancement while a priority window is open
 
 Card instances can be checked for whether they represent permanents (cards that can exist on the battlefield) using the `CardType::is_permanent()` method.

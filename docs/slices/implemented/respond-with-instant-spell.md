@@ -17,7 +17,7 @@ Allow the current priority holder to cast an instant spell in response to a spel
 
 - response spells are currently limited to `CardType::Instant`
 - non-instant response spells are rejected
-- broader turn-flow priority windows beyond main phases and post-declaration combat windows are still out of scope
+- response timing is still limited to the currently implemented priority windows
 - targets, modes, activated abilities, and triggered abilities remain out of scope
 
 ## Domain changes
@@ -28,7 +28,7 @@ Allow the current priority holder to cast an instant spell in response to a spel
 
 ## Rules support statement
 
-This slice extends the minimal stack model with real spell responses. After a spell is cast, the caster keeps priority and may pass it. The next priority holder may then respond with an instant spell, that response becomes the new top object on the stack, and the stack continues to resolve in LIFO order through consecutive passes. Broader response timing is still intentionally unsupported.
+This slice extends the minimal stack model with real spell responses. After a spell is cast, the caster keeps priority and may pass it. The next priority holder may then respond with an instant spell, that response becomes the new top object on the stack, and the stack continues to resolve in LIFO order through consecutive passes. Response timing is now available across the currently implemented priority windows, but broader response spell types and richer timing rules are still intentionally unsupported.
 
 ## Tests
 

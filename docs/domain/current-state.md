@@ -33,9 +33,11 @@ Implemented capabilities include:
 - declaring attackers in combat phase
 - declaring blockers in combat phase
 - blocking currently supports at most one blocker per attacking creature
+- opening priority windows across `Upkeep`, `Draw`, `FirstMain`, `Combat`, `SecondMain`, and `EndStep`
 - opening a priority window when entering `Combat`
 - opening priority windows after attackers and blockers are declared
 - reopening priority after combat damage resolves while the game remains active
+- allowing instant responses and active-player self-stacking in the currently supported stack windows
 - resolving combat damage
 - applying unblocked combat damage to players through shared life-change semantics
 - destroying creatures automatically when marked combat damage is lethal
@@ -177,7 +179,7 @@ The project currently includes:
 - projections derived from gameplay events
 - State pattern for phase transitions
 - helper methods for event persistence and publishing
-- a Gherkin acceptance layer, with executable coverage for stack foundation, stack-based spell responses, upkeep priority windows, draw-step priority windows, main-phase priority windows, end-step priority windows, combat entry priority, post-combat-damage priority, combat priority windows, turn progression, explicit multi-card draw effects, spell casting through the stack, combat damage, creature destruction, cleanup damage removal, cleanup hand-size discard, empty-library draw loss, and zero-life loss via `cucumber-rs`
+- a Gherkin acceptance layer, with executable coverage for stack foundation, spell casting through the stack, instant responses, active-player self-stacking across the currently supported priority windows, turn-flow priority windows, combat priority windows, combat damage, creature destruction, cleanup damage removal, cleanup hand-size discard, explicit multi-card draw effects, empty-library draw loss, and zero-life loss via `cucumber-rs`
 
 This architecture supports:
 

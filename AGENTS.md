@@ -154,6 +154,7 @@ Agents must:
 - keep domain events expressive enough for replay and analysis without reconstructing basic intent from hidden state
 - treat Gherkin features as behavior specifications derived from project truth, not as a replacement for canonical documentation or the full rulebook
 - treat partial stack/priority support as a real constraint: new gameplay actions must either integrate with the currently supported priority windows or reject execution while one is open
+- when widening an existing priority window, check explicitly whether the repository now needs active-player casting, non-active instant response, and active-player self-stacking in that window
 - prefer positive, canonical game terminology over negated convenience wording
 - mark historical slices and proposals honestly when later slices supersede them instead of leaving them sounding current
 

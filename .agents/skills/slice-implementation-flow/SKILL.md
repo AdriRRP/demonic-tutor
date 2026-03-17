@@ -146,6 +146,14 @@ Use:
 The feature should describe behavior.
 The slice document should describe implementation scope.
 
+For stack/priority slices that widen an existing window, explicitly decide whether the slice covers:
+
+- active-player casting in that window
+- non-active instant response after the first pass
+- active-player self-stacking while retaining priority
+
+If only one or two are in scope, state the exclusions explicitly.
+
 ---
 
 ### Stage 3 — Check semantic integrity
@@ -218,6 +226,12 @@ Update only what is required:
 - ADRs
 - agent context
 - skills
+
+When many adjacent stack slices accumulate, prefer also checking whether:
+
+- public summaries like `README.md` and `current-state.md` now understate supported timing
+- older foundational stack docs need a historical note or narrower wording
+- feature indexes and rules maps need broader umbrella wording in addition to per-slice additions
 
 Use:
 
