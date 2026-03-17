@@ -59,6 +59,7 @@ pub struct OpeningHandDealt {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GameEndReason {
     EmptyLibraryDraw,
+    ZeroLife,
 }
 
 #[derive(Debug, Clone)]

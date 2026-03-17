@@ -37,6 +37,22 @@ pub(super) fn find_player_index(
         .ok_or_else(|| DomainError::Game(GameError::PlayerNotFound(player_id.clone())))
 }
 
+pub(super) fn opposing_player_id(
+    players: &[Player],
+    player_id: &PlayerId,
+) -> Result<PlayerId, DomainError> {
+    players
+        .iter()
+        .find(|player| player.id() != player_id)
+        .map(|player| player.id().clone())
+        .ok_or_else(|| {
+            DomainError::Game(GameError::InternalInvariantViolation(
+                "a two-player game should always produce a winner when one player loses"
+                    .to_string(),
+            ))
+        })
+}
+
 pub(super) fn find_player_mut<'a>(
     players: &'a mut [Player],
     player_id: &PlayerId,

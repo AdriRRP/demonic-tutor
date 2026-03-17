@@ -199,6 +199,7 @@ The `Game` aggregate currently guarantees:
 - card instances belong to exactly one player
 - cards cannot be drawn if not available
 - the game ends if a required draw cannot happen because the relevant library is empty
+- the game ends if a player's life total reaches 0
 - card movements maintain zone consistency
 - end-of-turn cleanup discard must reduce the active player's hand to the maximum before the turn can advance
 - gameplay actions are rejected once the game is in a terminal state
@@ -219,7 +220,7 @@ The aggregate root must enforce:
 - turn progression rules
 - phase progression rules
 - active-player-only automatic turn updates
-- terminal game tracking for empty-library draw loss
+- terminal game tracking for empty-library draw and zero-life loss
 - lethal-damage creature destruction after combat damage resolution
 - correct event emission
 

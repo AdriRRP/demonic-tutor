@@ -81,6 +81,7 @@ fn the_game_emits_turn_progressed(world: &mut GameplayWorld) {
 fn the_game_emits_game_ended_with_reason(world: &mut GameplayWorld, reason: String) {
     let expected = match reason.as_str() {
         "EmptyLibraryDraw" => GameEndReason::EmptyLibraryDraw,
+        "ZeroLife" => GameEndReason::ZeroLife,
         other => panic!("unsupported game-end reason in BDD suite: {other}"),
     };
 

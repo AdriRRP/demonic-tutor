@@ -239,29 +239,13 @@ fn auto_draw_card(
     )))
 }
 
-fn non_active_player_id(
-    players: &[Player],
-    losing_player: &PlayerId,
-) -> Result<PlayerId, DomainError> {
-    players
-        .iter()
-        .find(|player| player.id() != losing_player)
-        .map(|player| player.id().clone())
-        .ok_or_else(|| {
-            DomainError::Game(GameError::InternalInvariantViolation(
-                "a two-player game should always produce a winner when one player loses"
-                    .to_string(),
-            ))
-        })
-}
-
 fn game_ended_for_empty_library_draw(
     game_id: &GameId,
     players: &[Player],
     terminal_state: &mut TerminalState,
     losing_player: &PlayerId,
 ) -> Result<GameEnded, DomainError> {
-    let winning_player = non_active_player_id(players, losing_player)?;
+    let winning_player = invariants::opposing_player_id(players, losing_player)?;
     terminal_state.end(
         winning_player.clone(),
         losing_player.clone(),

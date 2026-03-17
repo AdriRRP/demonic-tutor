@@ -10,10 +10,10 @@ use crate::{
         errors::{DomainError, GameError},
         events::{
             AttackersDeclared, BlockersDeclared, CardDiscarded, CombatDamageResolved, CreatureDied,
-            DomainEvent, GameStarted, LandPlayed, LandTapped, LifeChanged, ManaAdded,
-            MulliganTaken, OpeningHandDealt, SpellCast,
+            DomainEvent, GameStarted, LandPlayed, LandTapped, ManaAdded, MulliganTaken,
+            OpeningHandDealt, SpellCast,
         },
-        game::{AdvanceTurnOutcome, DrawCardEffectOutcome, Game},
+        game::{AdjustLifeOutcome, AdvanceTurnOutcome, DrawCardEffectOutcome, Game},
     },
 };
 
@@ -221,11 +221,15 @@ where
         &self,
         game: &mut Game,
         cmd: AdjustLifeCommand,
-    ) -> Result<LifeChanged, DomainError> {
-        let event = game.adjust_life(cmd)?;
-        self.persist_and_publish_event(game.id().as_str(), &event)?;
+    ) -> Result<AdjustLifeOutcome, DomainError> {
+        let outcome = game.adjust_life(cmd)?;
+        let mut domain_events = vec![outcome.life_changed.clone().into()];
+        if let Some(game_ended) = &outcome.game_ended {
+            domain_events.push(game_ended.clone().into());
+        }
+        self.persist_and_publish_events(game.id().as_str(), &domain_events)?;
 
-        Ok(event)
+        Ok(outcome)
     }
 
     /// Taps a land to add mana.

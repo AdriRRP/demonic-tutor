@@ -1,12 +1,31 @@
-use super::super::{invariants, model::Player};
+use super::super::{invariants, model::Player, TerminalState};
 use crate::domain::play::{
     cards::CardType,
     commands::{AdjustLifeCommand, CastSpellCommand, PlayLandCommand, TapLandCommand},
     errors::{CardError, DomainError, GameError, PhaseError},
-    events::{LandPlayed, LandTapped, LifeChanged, ManaAdded, SpellCast, SpellCastOutcome},
+    events::{
+        GameEndReason, GameEnded, LandPlayed, LandTapped, LifeChanged, ManaAdded, SpellCast,
+        SpellCastOutcome,
+    },
     ids::{GameId, PlayerId},
     phase::Phase,
 };
+
+#[derive(Debug, Clone)]
+pub struct AdjustLifeOutcome {
+    pub life_changed: LifeChanged,
+    pub game_ended: Option<GameEnded>,
+}
+
+impl AdjustLifeOutcome {
+    #[must_use]
+    pub const fn new(life_changed: LifeChanged, game_ended: Option<GameEnded>) -> Self {
+        Self {
+            life_changed,
+            game_ended,
+        }
+    }
+}
 
 /// Plays a land card from hand to battlefield.
 ///
@@ -108,19 +127,34 @@ pub fn tap_land(
 pub fn adjust_life(
     game_id: &GameId,
     players: &mut [Player],
+    terminal_state: &mut TerminalState,
     cmd: AdjustLifeCommand,
-) -> Result<LifeChanged, DomainError> {
+) -> Result<AdjustLifeOutcome, DomainError> {
     let player = invariants::find_player_mut(players, &cmd.player_id)?;
     let old_life = player.life();
     player.adjust_life(cmd.life_delta);
     let new_life = player.life();
 
-    Ok(LifeChanged::new(
-        game_id.clone(),
-        cmd.player_id,
-        old_life,
-        new_life,
-    ))
+    let life_changed = LifeChanged::new(game_id.clone(), cmd.player_id.clone(), old_life, new_life);
+
+    let game_ended = if new_life == 0 {
+        let winner = invariants::opposing_player_id(players, &cmd.player_id)?;
+        terminal_state.end(
+            winner.clone(),
+            cmd.player_id.clone(),
+            GameEndReason::ZeroLife,
+        );
+        Some(GameEnded::new(
+            game_id.clone(),
+            winner,
+            cmd.player_id,
+            GameEndReason::ZeroLife,
+        ))
+    } else {
+        None
+    };
+
+    Ok(AdjustLifeOutcome::new(life_changed, game_ended))
 }
 
 /// Casts a spell from hand.

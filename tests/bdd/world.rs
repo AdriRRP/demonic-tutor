@@ -2,8 +2,8 @@
 pub mod support;
 
 use demonictutor::{
-    AdvanceTurnCommand, AdvanceTurnOutcome, CardDefinitionId, CardDiscarded, CardDrawn,
-    CardInstance, CardInstanceId, CastSpellCommand, CombatDamageResolved, CreatureDied,
+    AdjustLifeCommand, AdvanceTurnCommand, AdvanceTurnOutcome, CardDefinitionId, CardDiscarded,
+    CardDrawn, CardInstance, CardInstanceId, CastSpellCommand, CombatDamageResolved, CreatureDied,
     DealOpeningHandsCommand, DiscardForCleanupCommand, Game, GameEnded, GameId, LibraryCard, Phase,
     PlayLandCommand, PlayerId, ResolveCombatDamageCommand, SpellCast, StartGameCommand,
     TapLandCommand, TurnProgressed,
@@ -519,6 +519,27 @@ impl GameplayWorld {
         assert_eq!(self.player_hand_size("Alice"), 8);
     }
 
+    pub fn setup_player_at_life(&mut self, alias: &str, life: u32) {
+        self.reset_game_with_libraries(
+            "bdd-zero-life",
+            support::filled_library(Vec::new(), 40),
+            support::filled_library(Vec::new(), 40),
+        );
+
+        let current_life = self.player_life(alias);
+        let delta = life.cast_signed() - current_life.cast_signed();
+        let service = support::create_service();
+        let outcome = service
+            .adjust_life(
+                self.game_mut(),
+                AdjustLifeCommand::new(Self::player_id(alias), delta),
+            )
+            .expect("BDD setup life adjustment should succeed");
+
+        assert!(outcome.game_ended.is_none());
+        self.reset_observations();
+    }
+
     pub fn advance_turn(&mut self) {
         self.pre_advance_hand_size = Some(self.player_hand_size("Alice"));
 
@@ -566,6 +587,24 @@ impl GameplayWorld {
             }
             Err(error) => {
                 self.last_spell_cast = None;
+                self.last_error = Some(error.to_string());
+            }
+        }
+    }
+
+    pub fn adjust_life(&mut self, alias: &str, delta: i32) {
+        let service = support::create_service();
+
+        match service.adjust_life(
+            self.game_mut(),
+            AdjustLifeCommand::new(Self::player_id(alias), delta),
+        ) {
+            Ok(outcome) => {
+                self.last_game_ended = outcome.game_ended;
+                self.last_error = None;
+            }
+            Err(error) => {
+                self.last_game_ended = None;
                 self.last_error = Some(error.to_string());
             }
         }

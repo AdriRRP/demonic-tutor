@@ -268,6 +268,7 @@ While the game is in a terminal state, normal gameplay actions are no longer leg
 To reach a terminal state as the losing player of the match.
 
 In the current DemonicTutor model, this happens when a player must draw from an empty library.
+In the current DemonicTutor model, this also happens when a player's life total reaches 0.
 
 ---
 

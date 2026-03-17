@@ -73,6 +73,13 @@ It is not a literal restatement of the rules text.
 
 ---
 
+## Lose On Zero Life
+
+- 104.3b
+- 704.5a
+
+---
+
 ## Cleanup Hand Size Discard
 
 - 514.1
@@ -118,6 +125,7 @@ The initial Gherkin pilot currently targets these rule areas:
 - `features/turn-flow/cleanup_damage_removal.feature`
 - `features/turn-flow/cleanup_hand_size_discard.feature`
 - `features/turn-flow/lose_on_empty_draw.feature`
+- `features/life/lose_on_zero_life.feature`
 
 ---
 

@@ -12,7 +12,7 @@ use crate::domain::play::{
     errors::{DomainError, GameError},
     events::{
         AttackersDeclared, BlockersDeclared, CardDiscarded, CombatDamageResolved, CreatureDied,
-        GameEndReason, GameStarted, LandPlayed, LandTapped, LifeChanged, ManaAdded, MulliganTaken,
+        GameEndReason, GameStarted, LandPlayed, LandTapped, ManaAdded, MulliganTaken,
         OpeningHandDealt, SpellCast,
     },
     ids::{GameId, PlayerId},
@@ -20,7 +20,10 @@ use crate::domain::play::{
 };
 
 pub use model::Player;
-pub use rules::turn_flow::{AdvanceTurnOutcome, DrawCardEffectOutcome};
+pub use rules::{
+    resource_actions::AdjustLifeOutcome,
+    turn_flow::{AdvanceTurnOutcome, DrawCardEffectOutcome},
+};
 
 #[derive(Debug, Clone, Default)]
 pub struct TerminalState {
@@ -260,9 +263,17 @@ impl Game {
     ///
     /// # Errors
     /// See [`rules::resource_actions::adjust_life`].
-    pub fn adjust_life(&mut self, cmd: AdjustLifeCommand) -> Result<LifeChanged, DomainError> {
+    pub fn adjust_life(
+        &mut self,
+        cmd: AdjustLifeCommand,
+    ) -> Result<AdjustLifeOutcome, DomainError> {
         invariants::require_game_active(self.is_over())?;
-        rules::resource_actions::adjust_life(&self.id, &mut self.players, cmd)
+        rules::resource_actions::adjust_life(
+            &self.id,
+            &mut self.players,
+            &mut self.terminal_state,
+            cmd,
+        )
     }
 
     /// Taps a land to produce mana.

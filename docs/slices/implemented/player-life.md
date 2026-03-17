@@ -2,7 +2,7 @@
 
 ## Goal
 
-Add player life tracking to support future damage and win conditions.
+Add player life tracking to support gameplay semantics that depend on life totals.
 
 ## Supported behavior
 
@@ -11,6 +11,7 @@ Add player life tracking to support future damage and win conditions.
 - Life can be modified by `AdjustLifeCommand`
 - Life change uses `i32`: positive values gain life, negative values lose life
 - Life cannot go below 0 (saturating arithmetic)
+- Reaching 0 life ends the game through the separate `LoseOnZeroLife` slice
 
 ### Commands
 
@@ -40,6 +41,13 @@ pub struct LifeChanged {
 
 Emitted whenever a player's life total changes.
 
+#### AdjustLifeOutcome
+
+The current runtime returns an `AdjustLifeOutcome` containing:
+
+- the required `LifeChanged` event
+- an optional `GameEnded` if the player's life reached 0
+
 ## Domain Changes
 
 - `Player` struct gains `life: u32` field
@@ -54,7 +62,7 @@ Emitted whenever a player's life total changes.
 
 ## Rules Support Statement
 
-This slice implements player life tracking per rules 118.1 and 118.2. This supports basic life total management. Damage, life gain, and life loss effects are not implemented.
+This slice implements player life tracking per rules 118.1 and 118.2. This supports basic life total management. Life totals now also participate in terminal game behavior through the separate `LoseOnZeroLife` slice. Damage, life gain, and life loss effects beyond explicit adjustment are not implemented.
 
 ## Tests
 
@@ -62,5 +70,6 @@ This slice implements player life tracking per rules 118.1 and 118.2. This suppo
 - AdjustLifeCommand with negative value decreases life
 - AdjustLifeCommand with positive value increases life
 - Life cannot go below 0
+- Reaching 0 life ends the game
 - AdjustLifeCommand fails for unknown player
 - LifeChanged event is emitted correctly
