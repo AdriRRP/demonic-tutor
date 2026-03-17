@@ -118,7 +118,7 @@ The project currently includes:
 - projections derived from gameplay events
 - State pattern for phase transitions
 - helper methods for event persistence and publishing
-- a Gherkin acceptance layer, with executable coverage for turn progression, spell casting, combat damage, creature destruction, and cleanup damage removal via `cucumber-rs`
+- a Gherkin acceptance layer, with executable coverage for turn progression, spell casting, combat damage, creature destruction, cleanup damage removal, and cleanup hand-size discard via `cucumber-rs`
 
 This architecture supports:
 
@@ -138,7 +138,6 @@ Possible directions include:
 - stack and priority system
 - broader state-based actions beyond lethal creature damage
 - richer cleanup and end-of-turn semantics
-- broader state-based actions beyond lethal creature damage
 
 The next slice should continue expanding gameplay behavior incrementally.
 

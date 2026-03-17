@@ -64,15 +64,15 @@ MAJOR.MINOR.PATCH
 
 ```
 
-Release management is automated.
+Release management is explicit and curated when a release is being cut.
 
 When contributing:
 
 - **Do not modify the version** in `Cargo.toml` unless explicitly requested.
-- **Do not manually update `CHANGELOG.md`**.
+- **Do not update `CHANGELOG.md`** unless the user is explicitly preparing a release.
 - Focus on implementing the change correctly.
 
-The release process will handle versioning and changelog updates.
+When a release is explicitly requested, use the repository's release workflow to update version, changelog, validation, and tags together.
 
 ---
 
@@ -221,7 +221,7 @@ BDD-style tests may be introduced when gameplay flows become complex.
 
 When `features/` are executable, keep them focused on acceptance-level behavior and continue using ordinary Rust tests for fine-grained invariants and edge cases.
 
-Current executable BDD pilot:
+Current executable BDD suite:
 
 ```bash
 cargo test --test bdd

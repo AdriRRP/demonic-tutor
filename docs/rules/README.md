@@ -8,7 +8,7 @@ Instead, this directory exists to support a hybrid workflow:
 
 - `rules-map.md` links supported repository behavior to rule sections
 - `notes/` contains focused repository-owned summaries for rule areas currently modeled
-- `features/` contains behavior-facing specifications derived from those references
+- `/features/` contains behavior-facing specifications derived from those references
 
 Normative precedence remains:
 

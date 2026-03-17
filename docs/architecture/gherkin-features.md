@@ -219,8 +219,7 @@ features/
 
 The repository now includes an executable acceptance layer using `cucumber-rs`.
 
-The next step should be:
+Next worthwhile steps include:
 
-- adding feature-review guidance to agent workflow
 - mapping implemented slices to features explicitly
 - deciding how much of the acceptance layer should remain in Cucumber versus conventional Rust tests

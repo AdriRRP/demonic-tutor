@@ -91,7 +91,7 @@ It is intended to become:
 
 - `PROJECT.md` defines the product vision and scope.
 - `CONSTRAINTS.md` defines technical and modeling restrictions.
-- `DOMAIN_GLOSSARY.md` defines the initial ubiquitous language.
+- `docs/domain/DOMAIN_GLOSSARY.md` defines the initial ubiquitous language.
 
 ## Development philosophy
 

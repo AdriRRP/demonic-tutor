@@ -109,6 +109,7 @@ The initial Gherkin pilot currently targets these rule areas:
 - `features/combat/combat_damage_marking.feature`
 - `features/combat/creature_destruction.feature`
 - `features/turn-flow/cleanup_damage_removal.feature`
+- `features/turn-flow/cleanup_hand_size_discard.feature`
 
 ---
 

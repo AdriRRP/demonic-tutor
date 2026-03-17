@@ -5,7 +5,7 @@ Accepted
 
 ## Context
 
-The turn progression system in `src/domain/play/game/rules/turn_flow.rs` currently models phase transitions using simple enum methods (`Phase::next()`, `Phase::requires_player_change()`, `Phase::triggers_auto_draw()`). 
+At the time of this decision, the turn progression system in `src/domain/play/game/rules/turn_flow.rs` modeled phase transitions using simple enum methods (`Phase::next()`, `Phase::requires_player_change()`, `Phase::triggers_auto_draw()`).
 
 As phase logic grows in complexity with new slices, the `advance_turn` function becomes harder to maintain due to:
 - High cyclomatic complexity from conditional logic
