@@ -109,6 +109,16 @@ Load:
 - `docs/architecture/vertical-slices.md`
 - relevant slice documentation in `docs/slices/`
 
+When rule-heavy behavior already has a feature specification, also load:
+
+- relevant `.feature` files under `features/`
+- `docs/architecture/gherkin-features.md`
+- relevant notes under `docs/rules/`
+
+When the user asks for an end-to-end slice workflow, also consider the orchestrator skill:
+
+- `.agents/skills/slice-implementation-flow/SKILL.md`
+
 ### Development workflow
 
 Load:
@@ -142,6 +152,7 @@ Agents must:
 - prefer the **domain-canonical action** over temporary convenience commands
 - remove duplicate domain entrypoints when one concept is the real source of truth
 - keep domain events expressive enough for replay and analysis without reconstructing basic intent from hidden state
+- treat Gherkin features as behavior specifications derived from project truth, not as a replacement for canonical documentation or the full rulebook
 
 When domain truth is unclear, agents must defer to canonical documentation rather than infer behavior.
 

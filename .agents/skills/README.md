@@ -13,3 +13,5 @@ Current skills:
 - `rules-consistency` — ensure documented Magic support stays truthful
 - `repo-curation` — close broad refactors or release-prep work cleanly
 - `release-prep` — group semantic commits and cut validated releases
+- `scenario-design` — design truthful Gherkin gameplay features tied to rules and slices
+- `slice-implementation-flow` — orchestrate the full slice workflow from choice through implementation and closure

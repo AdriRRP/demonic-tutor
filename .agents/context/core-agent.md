@@ -44,6 +44,7 @@ Prefer:
 - semantically canonical domain actions
 - removal of duplicate entrypoints once the real domain model is clear
 - internal optimizations hidden behind stable, readable domain APIs
+- focused feature scenarios for rule-heavy behavior when they clarify supported gameplay semantics
 
 Avoid:
 
@@ -92,6 +93,10 @@ If a change affects multiple concerns, verify whether it requires updates to:
 When a session establishes a stable new design rule, naming rule, or repository-closing workflow, update the operational context or skills before ending the work so the lesson persists across sessions.
 
 Documentation updates are required only when the owned truth of that document has changed.
+
+If gameplay behavior is already tracked through repository features, verify whether the relevant `.feature` files must also be updated.
+
+When the user asks for a full slice workflow rather than a local implementation task, prefer using the repository's slice-flow orchestration skill instead of improvising the process from scratch.
 
 ---
 
