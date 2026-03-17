@@ -20,6 +20,8 @@ mod cast_second_instant_in_second_main_window;
 mod cast_second_instant_in_upkeep_window;
 #[path = "respond_with_second_instant_in_draw_window.rs"]
 mod respond_with_second_instant_in_draw_window;
+#[path = "respond_with_second_instant_in_end_step_window.rs"]
+mod respond_with_second_instant_in_end_step_window;
 #[path = "respond_with_second_instant_in_first_main_window.rs"]
 mod respond_with_second_instant_in_first_main_window;
 #[path = "respond_with_second_instant_in_second_main_window.rs"]
