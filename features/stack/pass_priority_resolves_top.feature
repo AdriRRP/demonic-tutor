@@ -1,6 +1,6 @@
-# status: proposed
+# status: implemented
 # rules: 117, 405, 608
-# slices: stack-priority-minimal.md
+# slices: respond-with-instant-spell.md, main-phase-priority-window.md
 
 Feature: Passing priority resolves the top object when both players pass
 

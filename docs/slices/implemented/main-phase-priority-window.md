@@ -14,9 +14,9 @@ Open an explicit empty priority window when the active player enters `FirstMain`
 
 ## Explicit Limits
 
-- only `FirstMain` and `SecondMain` open turn-flow priority windows in the current model
+- only `FirstMain`, `SecondMain`, and the combat post-declaration windows open turn-flow priority windows in the current model
 - the empty main-phase window is still a minimal stack-era simplification, not full Magic priority support
-- broader turn-flow priority windows for upkeep, draw step, combat, and cleanup are still out of scope
+- broader turn-flow priority windows for upkeep, draw step, post-damage combat, and cleanup are still out of scope
 
 ## Domain Changes
 

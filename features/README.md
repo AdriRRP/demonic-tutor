@@ -37,6 +37,11 @@ Current executable feature coverage:
 - `features/state-based-actions/state_based_actions_review.feature`
 - runner: `tests/bdd.rs`
 
+Implemented reference features that are not currently executed:
+
+- `features/stack/cast_spell_goes_on_stack.feature`
+- `features/stack/pass_priority_resolves_top.feature`
+
 ## Required Header Convention
 
 Each feature should start with metadata comments containing:

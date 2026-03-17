@@ -1,6 +1,6 @@
-# Slice Name
+# Slice Proposal — StackPriorityMinimal
 
-StackPriorityMinimal
+> **Note**: Historical proposal. The minimal stack plan described here has been substantially landed and superseded by the implemented stack slices, especially `stack-foundation.md`, `respond-with-instant-spell.md`, `main-phase-priority-window.md`, and `combat-priority-windows.md`.
 
 ---
 
@@ -116,7 +116,7 @@ src/domain/play/game/
 
 This proposal is for a minimal two-player stack and priority model. It aims to make spell casting and resolution semantically real without attempting full Magic timing support in one iteration.
 
-The current landed implementation keeps two explicit temporary limits:
+The current landed implementation keeps some explicit temporary limits:
 
 - response spells are currently limited to instants
-- broader turn-flow priority windows beyond `FirstMain` and `SecondMain` are not yet implemented
+- broader turn-flow priority windows beyond main phases and post-declaration combat windows are not yet implemented

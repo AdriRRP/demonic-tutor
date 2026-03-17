@@ -1,6 +1,6 @@
-# Slice Name
+# Slice Proposal — PermanentType
 
-PermanentType
+> **Note**: Historical proposal. This behavior is already captured by the implemented slice [`docs/slices/permanent-type.md`](../permanent-type.md), so this proposal remains only as planning history.
 
 ---
 

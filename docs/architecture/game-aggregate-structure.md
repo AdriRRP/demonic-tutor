@@ -35,7 +35,11 @@ src/domain/play/game/
     ├── game_effects.rs     # Direct life and game-end helpers reused by rules
     ├── resource_actions.rs # Lands, mana, spells, creatures, life
     ├── state_based_actions.rs # Shared review of supported state-based actions
-    ├── stack_priority.rs   # Minimal stack casting, passing, and top-object resolution
+    ├── stack_priority/
+    │   ├── mod.rs
+    │   ├── casting.rs
+    │   ├── passing.rs
+    │   └── resolution.rs
     └── combat.rs           # Attacking, blocking, combat damage
     └── turn_flow/
         ├── mod.rs

@@ -83,6 +83,83 @@ where
         self.persist_and_publish_events(game_id, &domain_events)
     }
 
+    fn domain_events_for_advance_turn(outcome: &AdvanceTurnOutcome) -> Vec<DomainEvent> {
+        match outcome {
+            AdvanceTurnOutcome::Progressed {
+                turn_progressed,
+                card_drawn,
+            } => {
+                let mut domain_events = vec![turn_progressed.clone().into()];
+                if let Some(draw_event) = card_drawn {
+                    domain_events.push(draw_event.clone().into());
+                }
+                domain_events
+            }
+            AdvanceTurnOutcome::GameEnded(game_ended) => vec![game_ended.clone().into()],
+        }
+    }
+
+    fn domain_events_for_draw_cards_effect(outcome: &DrawCardsEffectOutcome) -> Vec<DomainEvent> {
+        let mut domain_events = outcome
+            .cards_drawn
+            .iter()
+            .cloned()
+            .map(Into::into)
+            .collect::<Vec<_>>();
+        if let Some(game_ended) = &outcome.game_ended {
+            domain_events.push(game_ended.clone().into());
+        }
+        domain_events
+    }
+
+    fn domain_events_for_adjust_life(outcome: &AdjustLifeOutcome) -> Vec<DomainEvent> {
+        let mut domain_events = vec![outcome.life_changed.clone().into()];
+        domain_events.extend(outcome.creatures_died.iter().cloned().map(Into::into));
+        if let Some(game_ended) = &outcome.game_ended {
+            domain_events.push(game_ended.clone().into());
+        }
+        domain_events
+    }
+
+    fn domain_events_for_cast_spell(outcome: &CastSpellOutcome) -> Vec<DomainEvent> {
+        vec![outcome.spell_put_on_stack.clone().into()]
+    }
+
+    fn domain_events_for_pass_priority(outcome: &PassPriorityOutcome) -> Vec<DomainEvent> {
+        let mut domain_events = vec![outcome.priority_passed.clone().into()];
+        if let Some(stack_top_resolved) = &outcome.stack_top_resolved {
+            domain_events.push(stack_top_resolved.clone().into());
+        }
+        if let Some(spell_cast) = &outcome.spell_cast {
+            domain_events.push(spell_cast.clone().into());
+        }
+        domain_events.extend(outcome.creatures_died.iter().cloned().map(Into::into));
+        if let Some(game_ended) = &outcome.game_ended {
+            domain_events.push(game_ended.clone().into());
+        }
+        domain_events
+    }
+
+    fn domain_events_for_resolve_combat_damage(
+        outcome: &ResolveCombatDamageOutcome,
+    ) -> Vec<DomainEvent> {
+        let mut domain_events = vec![outcome.combat_damage_resolved.clone().into()];
+        if let Some(life_changed) = &outcome.life_changed {
+            domain_events.push(life_changed.clone().into());
+        }
+        domain_events.extend(
+            outcome
+                .creatures_died
+                .iter()
+                .cloned()
+                .map(DomainEvent::CreatureDied),
+        );
+        if let Some(game_ended) = &outcome.game_ended {
+            domain_events.push(game_ended.clone().into());
+        }
+        domain_events
+    }
+
     /// Starts a new game.
     ///
     /// # Errors
@@ -138,22 +215,8 @@ where
         cmd: AdvanceTurnCommand,
     ) -> Result<AdvanceTurnOutcome, DomainError> {
         let outcome = game.advance_turn(cmd)?;
-
-        match &outcome {
-            AdvanceTurnOutcome::Progressed {
-                turn_progressed,
-                card_drawn,
-            } => {
-                let mut domain_events = vec![turn_progressed.clone().into()];
-                if let Some(draw_event) = card_drawn {
-                    domain_events.push(draw_event.clone().into());
-                }
-                self.persist_and_publish_events(game.id().as_str(), &domain_events)?;
-            }
-            AdvanceTurnOutcome::GameEnded(game_ended) => {
-                self.persist_and_publish_event(game.id().as_str(), game_ended)?;
-            }
-        }
+        let domain_events = Self::domain_events_for_advance_turn(&outcome);
+        self.persist_and_publish_events(game.id().as_str(), &domain_events)?;
 
         Ok(outcome)
     }
@@ -169,16 +232,7 @@ where
         cmd: &DrawCardsEffectCommand,
     ) -> Result<DrawCardsEffectOutcome, DomainError> {
         let outcome = game.draw_cards_effect(cmd)?;
-
-        let mut domain_events = outcome
-            .cards_drawn
-            .iter()
-            .cloned()
-            .map(Into::into)
-            .collect::<Vec<_>>();
-        if let Some(game_ended) = &outcome.game_ended {
-            domain_events.push(game_ended.clone().into());
-        }
+        let domain_events = Self::domain_events_for_draw_cards_effect(&outcome);
         self.persist_and_publish_events(game.id().as_str(), &domain_events)?;
 
         Ok(outcome)
@@ -227,11 +281,7 @@ where
         cmd: AdjustLifeCommand,
     ) -> Result<AdjustLifeOutcome, DomainError> {
         let outcome = game.adjust_life(cmd)?;
-        let mut domain_events = vec![outcome.life_changed.clone().into()];
-        domain_events.extend(outcome.creatures_died.iter().cloned().map(Into::into));
-        if let Some(game_ended) = &outcome.game_ended {
-            domain_events.push(game_ended.clone().into());
-        }
+        let domain_events = Self::domain_events_for_adjust_life(&outcome);
         self.persist_and_publish_events(game.id().as_str(), &domain_events)?;
 
         Ok(outcome)
@@ -265,7 +315,7 @@ where
         cmd: CastSpellCommand,
     ) -> Result<CastSpellOutcome, DomainError> {
         let outcome = game.cast_spell(cmd)?;
-        let domain_events = vec![outcome.spell_put_on_stack.clone().into()];
+        let domain_events = Self::domain_events_for_cast_spell(&outcome);
         self.persist_and_publish_events(game.id().as_str(), &domain_events)?;
 
         Ok(outcome)
@@ -282,17 +332,7 @@ where
         cmd: PassPriorityCommand,
     ) -> Result<PassPriorityOutcome, DomainError> {
         let outcome = game.pass_priority(cmd)?;
-        let mut domain_events = vec![outcome.priority_passed.clone().into()];
-        if let Some(stack_top_resolved) = &outcome.stack_top_resolved {
-            domain_events.push(stack_top_resolved.clone().into());
-        }
-        if let Some(spell_cast) = &outcome.spell_cast {
-            domain_events.push(spell_cast.clone().into());
-        }
-        domain_events.extend(outcome.creatures_died.iter().cloned().map(Into::into));
-        if let Some(game_ended) = &outcome.game_ended {
-            domain_events.push(game_ended.clone().into());
-        }
+        let domain_events = Self::domain_events_for_pass_priority(&outcome);
         self.persist_and_publish_events(game.id().as_str(), &domain_events)?;
 
         Ok(outcome)
@@ -341,20 +381,7 @@ where
         cmd: ResolveCombatDamageCommand,
     ) -> Result<ResolveCombatDamageOutcome, DomainError> {
         let outcome = game.resolve_combat_damage(cmd)?;
-        let mut domain_events = vec![outcome.combat_damage_resolved.clone().into()];
-        if let Some(life_changed) = &outcome.life_changed {
-            domain_events.push(life_changed.clone().into());
-        }
-        domain_events.extend(
-            outcome
-                .creatures_died
-                .iter()
-                .cloned()
-                .map(DomainEvent::CreatureDied),
-        );
-        if let Some(game_ended) = &outcome.game_ended {
-            domain_events.push(game_ended.clone().into());
-        }
+        let domain_events = Self::domain_events_for_resolve_combat_damage(&outcome);
         self.persist_and_publish_events(game.id().as_str(), &domain_events)?;
 
         Ok(outcome)

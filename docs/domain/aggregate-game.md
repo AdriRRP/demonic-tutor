@@ -304,8 +304,8 @@ Current constraints include:
 - opening hand size is fixed to 7
 - deck contents are provided externally
 - shuffle behavior is minimal
-- creature damage tracking in combat (without destruction)
-- stack interactions are not modeled
+- combat still uses a single `Combat` phase instead of full combat-step modeling
+- stack interactions are intentionally limited to the current minimal spell-and-priority slices
 - only a minimal subset of card behavior exists
 
 These constraints will evolve as new slices are introduced.

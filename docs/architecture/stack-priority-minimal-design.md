@@ -412,7 +412,7 @@ The next work on stack and priority should begin with:
 The repository now implements this first minimal slice with these additional explicit constraints:
 
 - open priority windows currently support only instant spell responses
-- priority windows are opened by spell casting and by entering `FirstMain` or `SecondMain`
+- priority windows are opened by spell casting, by entering `FirstMain` or `SecondMain`, and after attackers or blockers are declared
 - turn advancement is rejected while a priority window remains open
 - after a spell is cast, the caster currently keeps priority before the opponent may respond
 

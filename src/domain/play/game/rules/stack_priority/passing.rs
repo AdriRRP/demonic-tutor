@@ -1,0 +1,98 @@
+use super::{resolution::resolve_spell_from_stack, PassPriorityOutcome, StackPriorityContext};
+use crate::domain::play::{
+    commands::PassPriorityCommand,
+    errors::{DomainError, GameError},
+    events::PriorityPassed,
+    game::{invariants, model::PriorityState, Player},
+    ids::PlayerId,
+};
+
+fn other_player_id(players: &[Player], player_id: &PlayerId) -> Result<PlayerId, DomainError> {
+    players
+        .iter()
+        .find(|player| player.id() != player_id)
+        .map(|player| player.id().clone())
+        .ok_or_else(|| {
+            DomainError::Game(GameError::InternalInvariantViolation(
+                "two-player game should have an opposing player".to_string(),
+            ))
+        })
+}
+
+/// Passes priority in the current priority window, and may resolve the top
+/// object on the stack when both players pass consecutively.
+///
+/// # Errors
+/// Returns an error if there is no open priority window, if the caller does
+/// not currently hold priority, or if resolving the top stack object fails.
+pub fn pass_priority(
+    ctx: StackPriorityContext<'_>,
+    cmd: PassPriorityCommand,
+) -> Result<PassPriorityOutcome, DomainError> {
+    let StackPriorityContext {
+        game_id,
+        players,
+        active_player,
+        stack,
+        priority,
+        terminal_state,
+        ..
+    } = ctx;
+
+    let PassPriorityCommand { player_id } = cmd;
+
+    invariants::require_priority_holder(priority.as_ref(), &player_id)?;
+    let priority_passed = PriorityPassed::new(game_id.clone(), player_id.clone());
+    let passes_in_row = priority
+        .as_ref()
+        .map(PriorityState::passes_in_row)
+        .ok_or(DomainError::Game(GameError::NoPriorityWindow))?;
+
+    if passes_in_row == 0 {
+        let next_holder = other_player_id(players, &player_id)?;
+        *priority = Some(PriorityState::new_with_passes(next_holder, 1));
+        return Ok(PassPriorityOutcome {
+            priority_passed,
+            stack_top_resolved: None,
+            spell_cast: None,
+            creatures_died: Vec::new(),
+            game_ended: None,
+            priority_still_open: true,
+        });
+    }
+
+    if stack.is_empty() {
+        *priority = None;
+        return Ok(PassPriorityOutcome {
+            priority_passed,
+            stack_top_resolved: None,
+            spell_cast: None,
+            creatures_died: Vec::new(),
+            game_ended: None,
+            priority_still_open: false,
+        });
+    }
+
+    let stack_object = stack.pop().ok_or_else(|| {
+        DomainError::Game(GameError::InternalInvariantViolation(
+            "priority resolution expected a stack object".to_string(),
+        ))
+    })?;
+    let (stack_top_resolved, spell_cast, creatures_died, game_ended) =
+        resolve_spell_from_stack(game_id, players, terminal_state, &stack_object)?;
+
+    if terminal_state.is_over() {
+        *priority = None;
+    } else {
+        *priority = Some(PriorityState::new(active_player.clone()));
+    }
+
+    Ok(PassPriorityOutcome {
+        priority_passed,
+        stack_top_resolved: Some(stack_top_resolved),
+        spell_cast: Some(spell_cast),
+        creatures_died,
+        game_ended,
+        priority_still_open: priority.is_some(),
+    })
+}

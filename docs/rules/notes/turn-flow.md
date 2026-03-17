@@ -33,7 +33,7 @@ This is a repository-owned interpretation note, not a copy of the Comprehensive 
 
 ## Out of Scope
 
-- broader turn-flow priority windows beyond `FirstMain` and `SecondMain`
+- broader turn-flow priority windows beyond main phases and post-declaration combat windows
 - skipped phases
 - extra turns
 - repeated cleanup loops from state-based actions or triggered abilities

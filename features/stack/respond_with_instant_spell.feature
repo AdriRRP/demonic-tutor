@@ -1,6 +1,6 @@
 # status: implemented
 # rules: 117, 405, 601, 608
-# slices: stack-priority-minimal.md
+# slices: respond-with-instant-spell.md
 
   Feature: Responding with an instant spell while holding priority
 

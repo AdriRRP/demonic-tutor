@@ -1,6 +1,6 @@
-# status: proposed
+# status: implemented
 # rules: 117, 405, 601
-# slices: stack-priority-minimal.md
+# slices: cast-spell.md
 
 Feature: Casting a spell puts it onto the stack before it resolves
 

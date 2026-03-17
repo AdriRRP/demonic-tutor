@@ -17,7 +17,7 @@ Allow the current priority holder to cast an instant spell in response to a spel
 
 - response spells are currently limited to `CardType::Instant`
 - non-instant response spells are rejected
-- broader turn-flow priority windows beyond main phases are still out of scope
+- broader turn-flow priority windows beyond main phases and post-declaration combat windows are still out of scope
 - targets, modes, activated abilities, and triggered abilities remain out of scope
 
 ## Domain changes
