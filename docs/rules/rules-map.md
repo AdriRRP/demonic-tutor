@@ -312,6 +312,15 @@ It is not a literal restatement of the rules text.
 
 ---
 
+## Cast Second Instant After Attackers
+
+- 117
+- 508
+- 601
+- 608
+
+---
+
 ## Cast Instant After Blockers
 
 - 117
@@ -413,6 +422,7 @@ The initial Gherkin pilot currently targets these rule areas:
 - `features/stack/cast_instant_in_beginning_of_combat_window.feature`
 - `features/stack/cast_second_instant_in_beginning_of_combat_window.feature`
 - `features/stack/cast_instant_after_attackers.feature`
+- `features/stack/cast_second_instant_after_attackers.feature`
 - `features/stack/cast_instant_after_blockers.feature`
 - `features/stack/cast_instant_after_combat_damage.feature`
 - `features/turn-flow/upkeep_priority_window.feature`

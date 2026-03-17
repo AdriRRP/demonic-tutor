@@ -342,6 +342,13 @@ fn alice_has_declared_attackers_and_still_has_an_instant_card_in_hand_with_prior
     world.setup_priority_after_attackers_declared_with_instant();
 }
 
+#[given("Alice has declared attackers and still has two instant cards in hand with priority")]
+fn alice_has_declared_attackers_and_still_has_two_instant_cards_in_hand_with_priority(
+    world: &mut GameplayWorld,
+) {
+    world.setup_priority_after_attackers_declared_with_two_instants();
+}
+
 #[given("Bob has declared blockers and Alice still has an instant card in hand with priority")]
 fn bob_has_declared_blockers_and_alice_still_has_an_instant_card_in_hand_with_priority(
     world: &mut GameplayWorld,
