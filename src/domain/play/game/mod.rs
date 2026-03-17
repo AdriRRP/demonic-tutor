@@ -192,6 +192,7 @@ impl Game {
     /// See [`rules::lifecycle::mulligan`].
     pub fn mulligan(&mut self, cmd: MulliganCommand) -> Result<MulliganTaken, DomainError> {
         invariants::require_game_active(self.is_over())?;
+        invariants::require_no_open_priority_window(self.priority())?;
         rules::lifecycle::mulligan(
             &self.id,
             &mut self.players,
@@ -207,6 +208,7 @@ impl Game {
     /// See [`rules::resource_actions::play_land`].
     pub fn play_land(&mut self, cmd: PlayLandCommand) -> Result<LandPlayed, DomainError> {
         invariants::require_game_active(self.is_over())?;
+        invariants::require_no_open_priority_window(self.priority())?;
         rules::resource_actions::play_land(
             &self.id,
             &mut self.players,
@@ -224,6 +226,7 @@ impl Game {
         &mut self,
         cmd: AdvanceTurnCommand,
     ) -> Result<rules::turn_flow::AdvanceTurnOutcome, DomainError> {
+        invariants::require_no_open_priority_window(self.priority())?;
         rules::turn_flow::advance_turn(
             &self.id,
             &mut self.players,
@@ -243,6 +246,7 @@ impl Game {
         &mut self,
         cmd: &DrawCardsEffectCommand,
     ) -> Result<rules::turn_flow::DrawCardsEffectOutcome, DomainError> {
+        invariants::require_no_open_priority_window(self.priority())?;
         rules::turn_flow::draw_cards_effect(
             &self.id,
             &mut self.players,
@@ -262,6 +266,7 @@ impl Game {
         cmd: DiscardForCleanupCommand,
     ) -> Result<CardDiscarded, DomainError> {
         invariants::require_game_active(self.is_over())?;
+        invariants::require_no_open_priority_window(self.priority())?;
         rules::turn_flow::discard_for_cleanup(
             &self.id,
             &mut self.players,
@@ -280,6 +285,7 @@ impl Game {
         cmd: AdjustLifeCommand,
     ) -> Result<AdjustLifeOutcome, DomainError> {
         invariants::require_game_active(self.is_over())?;
+        invariants::require_no_open_priority_window(self.priority())?;
         rules::resource_actions::adjust_life(
             &self.id,
             &mut self.players,
@@ -297,6 +303,7 @@ impl Game {
         cmd: TapLandCommand,
     ) -> Result<(LandTapped, ManaAdded), DomainError> {
         invariants::require_game_active(self.is_over())?;
+        invariants::require_no_open_priority_window(self.priority())?;
         rules::resource_actions::tap_land(
             &self.id,
             &mut self.players,
@@ -360,6 +367,7 @@ impl Game {
         cmd: DeclareAttackersCommand,
     ) -> Result<AttackersDeclared, DomainError> {
         invariants::require_game_active(self.is_over())?;
+        invariants::require_no_open_priority_window(self.priority())?;
         rules::combat::declare_attackers(
             &self.id,
             &mut self.players,
@@ -378,6 +386,7 @@ impl Game {
         cmd: DeclareBlockersCommand,
     ) -> Result<BlockersDeclared, DomainError> {
         invariants::require_game_active(self.is_over())?;
+        invariants::require_no_open_priority_window(self.priority())?;
         rules::combat::declare_blockers(
             &self.id,
             &mut self.players,
@@ -396,6 +405,7 @@ impl Game {
         cmd: ResolveCombatDamageCommand,
     ) -> Result<ResolveCombatDamageOutcome, DomainError> {
         invariants::require_game_active(self.is_over())?;
+        invariants::require_no_open_priority_window(self.priority())?;
         rules::combat::resolve_combat_damage(
             &self.id,
             &mut self.players,

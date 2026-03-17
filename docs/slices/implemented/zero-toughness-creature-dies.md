@@ -15,7 +15,7 @@ Destroy a creature automatically when it enters the battlefield with toughness 0
 This slice follows `CastSpell`, `CreatureDestruction`, and terminal game-state slices because:
 
 1. the runtime already models creature toughness and graveyard movement
-2. creature spells already enter the battlefield directly
+2. creature spells already resolve into the battlefield in the current stack-aware model
 3. zero-toughness death is a small but meaningful state-based behavior
 4. it improves semantic truthfulness without requiring a general SBA engine
 
@@ -54,7 +54,8 @@ This slice follows `CastSpell`, `CreatureDestruction`, and terminal game-state s
 
 ### Aggregate Impact
 
-- `CastSpell` may now produce both `SpellCast` and `CreatureDied`
+- zero-toughness review now happens during the shared state-based action review after relevant actions
+- a stack-resolved creature spell may now produce both `SpellCast` and `CreatureDied`
 
 ### Entity / Value Object Impact
 
@@ -88,6 +89,7 @@ This slice follows `CastSpell`, `CreatureDestruction`, and terminal game-state s
 ## Test Impact
 
 - casting a 0-toughness creature spell emits `SpellCast`
+- casting first emits `SpellPutOnStack` and only later resolves through `SpellCast`
 - that creature does not remain on the battlefield
 - that creature enters the graveyard
 - `CreatureDied` is emitted

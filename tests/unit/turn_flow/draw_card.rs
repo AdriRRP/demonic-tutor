@@ -2,7 +2,7 @@
 
 use crate::support::{
     advance_n_raw, advance_to_player_first_main_satisfying_cleanup, filled_library, land_card,
-    setup_two_player_game,
+    setup_two_player_game, vanilla_creature,
 };
 use demonictutor::{
     CardInstanceId, DomainError, DrawCardsEffectCommand, DrawCardsEffectOutcome, GameEndReason,
@@ -22,7 +22,7 @@ fn create_game_with_library_cards() -> demonictutor::Game {
 fn draw_cards_effect_works_in_main_phase() {
     let (service, mut game) = setup_two_player_game(
         "game-1",
-        filled_library(vec![land_card("forest")], 10),
+        filled_library(vec![vanilla_creature("grizzly-bears")], 10),
         filled_library(vec![land_card("mountain")], 10),
     );
 
@@ -251,4 +251,34 @@ fn draw_cards_effect_fails_when_zero_cards_are_requested() {
         result.unwrap_err(),
         DomainError::Game(GameError::InvalidDrawCount(0))
     );
+}
+
+#[test]
+fn draw_cards_effect_fails_while_priority_window_is_open() {
+    let (service, mut game) = setup_two_player_game(
+        "game-1",
+        filled_library(vec![vanilla_creature("grizzly-bears")], 10),
+        filled_library(vec![land_card("mountain")], 10),
+    );
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
+    service
+        .cast_spell(
+            &mut game,
+            demonictutor::CastSpellCommand::new(
+                PlayerId::new("player-1"),
+                CardInstanceId::new("game-1-player-1-0"),
+            ),
+        )
+        .unwrap();
+
+    let result = service.draw_cards_effect(
+        &mut game,
+        &DrawCardsEffectCommand::new(PlayerId::new("player-1"), 1),
+    );
+
+    assert!(matches!(
+        result,
+        Err(DomainError::Game(GameError::PriorityWindowOpen { .. }))
+    ));
 }

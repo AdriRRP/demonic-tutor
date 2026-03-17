@@ -7,8 +7,8 @@ use crate::support::{
 };
 use demonictutor::{
     AdvanceTurnCommand, AdvanceTurnOutcome, CardDefinitionId, CardInstanceId,
-    DeclareAttackersCommand, DeclareBlockersCommand, GameEndReason, LibraryCard, Phase,
-    PlayLandCommand, PlayerId, ResolveCombatDamageCommand,
+    DeclareAttackersCommand, DeclareBlockersCommand, DomainError, GameEndReason, LibraryCard,
+    Phase, PlayLandCommand, PlayerId, ResolveCombatDamageCommand,
 };
 
 fn create_game_with_land_in_hand() -> demonictutor::Game {
@@ -218,4 +218,33 @@ fn advance_turn_ends_the_game_when_the_active_player_cannot_draw() {
     assert_eq!(game_ended.winner_id, PlayerId::new("player-2"));
     assert_eq!(game_ended.reason, GameEndReason::EmptyLibraryDraw);
     assert!(game.is_over());
+}
+
+#[test]
+fn advance_turn_fails_while_priority_window_is_open() {
+    let (service, mut game) = setup_two_player_game(
+        "game-1",
+        filled_library(vec![vanilla_creature("grizzly-bears")], 10),
+        filled_library(vec![land_card("mountain")], 10),
+    );
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
+    service
+        .cast_spell(
+            &mut game,
+            demonictutor::CastSpellCommand::new(
+                PlayerId::new("player-1"),
+                CardInstanceId::new("game-1-player-1-0"),
+            ),
+        )
+        .unwrap();
+
+    let result = service.advance_turn(&mut game, AdvanceTurnCommand::new());
+
+    assert!(matches!(
+        result,
+        Err(DomainError::Game(
+            demonictutor::GameError::PriorityWindowOpen { .. }
+        ))
+    ));
 }

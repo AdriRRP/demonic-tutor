@@ -92,6 +92,13 @@ If a change affects multiple concerns, verify whether it requires updates to:
 
 When a session establishes a stable new design rule, naming rule, or repository-closing workflow, update the operational context or skills before ending the work so the lesson persists across sessions.
 
+When stack or priority is only partially implemented, any new gameplay action must either:
+
+- integrate with the currently supported priority windows, or
+- reject execution while a priority window is open
+
+Do not allow new actions to silently bypass an open stack interaction.
+
 Documentation updates are required only when the owned truth of that document has changed.
 
 If gameplay behavior is already tracked through repository features, verify whether the relevant `.feature` files must also be updated.

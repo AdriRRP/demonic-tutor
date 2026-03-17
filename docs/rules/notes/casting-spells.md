@@ -17,17 +17,17 @@ This is a repository-owned interpretation note, not a copy of the Comprehensive 
 
 - lands are played, not cast
 - spell cards are cast through `CastSpell`
-- permanent spells currently enter the battlefield directly
-- instants and sorceries currently resolve directly to the graveyard
+- casting currently puts spell cards onto the stack
+- permanent spells currently resolve from the stack to the battlefield
+- instants and sorceries currently resolve from the stack to the graveyard
 - mana cost must be payable before a spell can be cast
 - creature spells must carry valid power and toughness before entering the battlefield
 
 ## Out of Scope
 
-- stack resolution
+- non-active-player responses with new spells
 - targets
 - modes
-- responses
 - replacement effects
 - alternative costs
 - triggered abilities related to casting

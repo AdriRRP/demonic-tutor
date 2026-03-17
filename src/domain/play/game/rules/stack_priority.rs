@@ -302,6 +302,6 @@ pub fn pass_priority(
         spell_cast: Some(spell_cast),
         creatures_died,
         game_ended,
-        priority_still_open: true,
+        priority_still_open: false,
     })
 }

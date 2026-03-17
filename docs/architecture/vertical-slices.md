@@ -111,6 +111,7 @@ GameStarted
 LandPlayed
 AttackersDeclared
 CardDrawn
+SpellPutOnStack
 SpellCast
 
 ```

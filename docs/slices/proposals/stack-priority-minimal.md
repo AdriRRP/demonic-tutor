@@ -61,7 +61,7 @@ Adding more gameplay before stack and priority would likely increase inconsisten
 - `PriorityPassed`
 - `StackTopResolved`
 
-`SpellCast` should not remain the canonical event for both casting and resolution once this slice starts landing.
+The repository now keeps `SpellPutOnStack` for casting completion and `SpellCast` for spell resolution in the first implementation wave.
 
 ---
 
@@ -115,3 +115,8 @@ src/domain/play/game/
 ## Rules Support Statement
 
 This proposal is for a minimal two-player stack and priority model. It aims to make spell casting and resolution semantically real without attempting full Magic timing support in one iteration.
+
+The first landed implementation keeps two explicit temporary limits:
+
+- only the active player may cast spells
+- opponents may pass priority but cannot yet cast response spells

@@ -2,7 +2,7 @@
 
 ## Goal
 
-Enable casting spell cards from hand with simplified resolution.
+Enable casting spell cards from hand with minimal stack-aware resolution.
 
 ## Supported behavior
 
@@ -33,9 +33,33 @@ pub struct CastSpellCommand {
 
 - Card must be in the player's hand
 - Card must not be a land
-- Player must be the active player
+- In the current minimal stack slice, the player must be the active player
+
+#### PassPriorityCommand
+```rust
+pub struct PassPriorityCommand {
+    pub player_id: PlayerId,
+}
+```
+
+- Used to advance the currently open minimal priority loop
+- Two consecutive passes resolve the top stack object
 
 ### Events
+
+#### SpellPutOnStack
+```rust
+pub struct SpellPutOnStack {
+    pub game_id: GameId,
+    pub player_id: PlayerId,
+    pub card_id: CardInstanceId,
+    pub card_type: CardType,
+    pub mana_cost_paid: u32,
+    pub stack_object_id: StackObjectId,
+}
+```
+
+Emitted when casting successfully moves a spell card from hand onto the stack and opens the current minimal priority loop.
 
 #### SpellCast
 ```rust
@@ -49,14 +73,15 @@ pub struct SpellCast {
 }
 ```
 
-Emitted when a spell is cast successfully, including the spell card type, the mana cost paid, and whether it entered the battlefield or resolved to the graveyard in the simplified model.
+Emitted when the top spell on the stack resolves successfully, including the spell card type, the mana cost paid, and whether it entered the battlefield or resolved to the graveyard in the simplified model.
 
-`CastSpell` now returns a runtime outcome that may also include `CreatureDied` events or `GameEnded` when the shared review of currently supported state-based actions produces additional automatic consequences.
+`PassPriority` may now produce `SpellCast`, `CreatureDied`, or `GameEnded` when resolution and the shared review of currently supported state-based actions produce additional automatic consequences.
 
 ## Domain Changes
 
 - `CardType` enum expanded with specific types
-- `Game::cast_spell()` handles spell casting
+- `Game::cast_spell()` now puts a spell card on the stack
+- `Game::pass_priority()` advances the current minimal priority loop
 - supported state-based actions are reviewed after spell resolution
 - New error: `CannotCastLand` - when trying to cast a land as a spell
 
@@ -67,13 +92,14 @@ Emitted when a spell is cast successfully, including the spell card type, the ma
 
 ## Rules Support Statement
 
-This slice implements a simplified spell-casting model. Permanent spells enter the battlefield, while instants and sorceries resolve directly to the graveyard. The current runtime also triggers the shared review of currently supported state-based actions after spell resolution, which can produce `CreatureDied` or `GameEnded` in addition to `SpellCast`. The full casting process (targets, modes, stack, timing, alternative costs, and resolution rules) is not implemented.
+This slice now implements a minimal stack-aware spell-casting model. Casting moves a spell card from hand onto the stack, opens a public priority window, and resolution happens only after two consecutive passes. Permanent spells resolve from the stack to the battlefield, while instants and sorceries resolve from the stack to the graveyard. The current runtime also triggers the shared review of currently supported state-based actions after spell resolution, which can produce `CreatureDied` or `GameEnded` in addition to `SpellCast`. Responses with new spells from the non-active player, targets, modes, and broader timing rules remain out of scope.
 
 ## Tests
 
-- CastSpellCommand moves permanent spells from hand to battlefield
-- CastSpellCommand moves instants and sorceries from hand to graveyard
-- CastSpellCommand emits SpellCast event
+- CastSpellCommand moves spell cards from hand to stack
+- PassPriorityCommand resolves the top spell after two consecutive passes
+- SpellPutOnStack is emitted when casting succeeds
+- SpellCast is emitted when the spell resolves
 - Zero-toughness creature spells die immediately after entering the battlefield
 - CastSpellCommand fails for land cards (CannotCastLand)
 - CastSpellCommand fails when not player's turn (NotYourTurn)

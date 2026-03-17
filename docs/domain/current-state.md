@@ -74,7 +74,9 @@ The domain currently includes:
 - turn and phase progression
 - explicit draw effects as a simplified non-stack entrypoint, including multi-card draw
 - terminal game state when a player loses by empty-library draw or zero life
-- aggregate-owned stack and priority foundation state without public stack behavior yet
+- casting spells onto an aggregate-owned stack zone
+- public priority passing for the currently open minimal stack windows
+- resolving the top stack object after two consecutive passes
 
 The system intentionally excludes complex gameplay mechanics at this stage.
 
@@ -91,12 +93,12 @@ Current constraints include:
 - matches support exactly two players
 - opening hand size is fixed to 7 cards
 - only a subset of zones are modeled (no exile)
-- stack and priority exist only as foundation state; spells do not go onto the stack yet
-- no stack resolution
-- no public priority passing system
+- only the active player may cast spells in the current minimal stack model
+- priority windows are currently opened by spell casting, not yet by general turn-flow windows
+- when a priority window is open, other gameplay actions are rejected until the window closes
 - no triggered abilities
 - limited card behavior modeling
-- permanent spells currently enter the battlefield through simplified spell resolution without stack handling
+- permanent spells resolve from the stack into the battlefield in the current simplified stack model
 - mana production is simplified to active-player main phases and generic mana only
 - combat blocking is simplified to at most one blocker per attacker
 
@@ -131,12 +133,12 @@ The project currently includes:
 - explicit game-end events with reasons for terminal empty-library draw and zero life
 - shared life-change semantics reused by explicit life adjustment and combat damage
 - shared review of currently supported state-based actions after relevant gameplay actions
-- aggregate-owned stack zone and priority state foundation for future stack slices
+- aggregate-owned stack zone and priority state with minimal public stack behavior
 - an event bus for event distribution
 - projections derived from gameplay events
 - State pattern for phase transitions
 - helper methods for event persistence and publishing
-- a Gherkin acceptance layer, with executable coverage for stack foundation, turn progression, explicit multi-card draw effects, spell casting, combat damage, creature destruction, cleanup damage removal, cleanup hand-size discard, empty-library draw loss, and zero-life loss via `cucumber-rs`
+- a Gherkin acceptance layer, with executable coverage for stack foundation, turn progression, explicit multi-card draw effects, spell casting through the stack, combat damage, creature destruction, cleanup damage removal, cleanup hand-size discard, empty-library draw loss, and zero-life loss via `cucumber-rs`
 
 This architecture supports:
 
@@ -153,7 +155,7 @@ The next gameplay expansion requires choosing which domain capability to introdu
 
 Possible directions include:
 
-- stack and priority behavior on top of the new aggregate foundation
+- broader stack and priority behavior on top of the current minimal implementation
 - broader state-based actions beyond lethal creature damage and zero-toughness creature death
 - broader game-loss and game-end conditions beyond empty-library draw and zero life
 - richer cleanup and end-of-turn semantics

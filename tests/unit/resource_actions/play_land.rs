@@ -2,6 +2,7 @@
 
 use crate::support::{
     advance_to_player_first_main_satisfying_cleanup, create_service, filled_library, land_card,
+    setup_two_player_game, vanilla_creature,
 };
 use demonictutor::{
     CardError, CardInstanceId, DomainError, GameError, PhaseError, PlayLandCommand, PlayerId,
@@ -138,5 +139,38 @@ fn play_land_fails_when_land_already_played_this_turn() {
         Err(DomainError::Phase(PhaseError::AlreadyPlayedLandThisTurn(
             ..
         )))
+    ));
+}
+
+#[test]
+fn play_land_fails_while_priority_window_is_open() {
+    let (service, mut game) = setup_two_player_game(
+        "game-1",
+        filled_library(vec![vanilla_creature("grizzly-bears")], 10),
+        filled_library(vec![land_card("mountain")], 10),
+    );
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
+    service
+        .cast_spell(
+            &mut game,
+            demonictutor::CastSpellCommand::new(
+                PlayerId::new("player-1"),
+                CardInstanceId::new("game-1-player-1-0"),
+            ),
+        )
+        .unwrap();
+
+    let result = service.play_land(
+        &mut game,
+        PlayLandCommand::new(
+            PlayerId::new("player-1"),
+            CardInstanceId::new("game-1-player-1-1"),
+        ),
+    );
+
+    assert!(matches!(
+        result,
+        Err(DomainError::Game(GameError::PriorityWindowOpen { .. }))
     ));
 }

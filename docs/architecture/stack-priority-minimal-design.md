@@ -226,15 +226,11 @@ Recommended new events:
 
 Recommended event policy:
 
-- `SpellCast` should no longer mean “the spell fully resolved”
-- `SpellCast` should be superseded or narrowed once stack support is introduced
+- `SpellPutOnStack` marks casting completion
+- `SpellCast` is retained in the current implementation as the spell-resolution event
+- `StackTopResolved` marks that the stack object itself resolved
 
-The cleaner option is:
-
-- `SpellPutOnStack` for casting completion
-- `SpellResolved` or reuse `StackTopResolved` with payload for actual resolution result
-
-That separation is semantically much healthier than stretching `SpellCast` to cover both “was cast” and “already resolved.”
+This is the current repository decision for the first minimal stack slice. It keeps existing terminology stable while separating “was put on the stack” from “finished resolving.”
 
 ---
 
@@ -410,5 +406,13 @@ The next work on stack and priority should begin with:
 1. a proposal slice for minimal stack and priority
 2. proposed Gherkin features
 3. then a first implementation slice limited to “cast spell goes on stack” plus “pass priority resolves top object”
+
+## Current Implementation Note
+
+The repository now implements this first minimal slice with these additional explicit constraints:
+
+- only the active player may cast spells
+- the opponent may currently pass priority but not yet cast response spells
+- when a priority window is open, other gameplay actions are rejected until the window closes
 
 That is the highest-signal path that stays elegant, Rusty, and reviewable.

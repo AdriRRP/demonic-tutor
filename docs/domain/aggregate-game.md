@@ -46,8 +46,8 @@ At the current stage of the system, the aggregate conceptually maintains:
 - current phase
 - turn number
 - participating players
-- stack zone foundation state
-- optional priority state foundation
+- stack zone state
+- optional priority state
 - optional terminal game outcome (`winner`, `loser`, `end reason`)
 
 Each player maintains their own game zones and state within the aggregate.
@@ -180,6 +180,8 @@ The current model includes:
 - marked combat damage on creatures
 - automatic destruction of creatures with lethal marked damage
 - automatic destruction of creatures with 0 toughness after creature-spell resolution
+- minimal stack-aware spell casting and spell resolution
+- rejection of other gameplay actions while a priority window is open
 
 Card instances can be checked for whether they represent permanents (cards that can exist on the battlefield) using the `CardType::is_permanent()` method.
 
@@ -188,7 +190,7 @@ The current model intentionally omits:
 - rules text
 - triggered abilities
 - counters
-- stack interactions beyond the currently modeled foundation state
+- non-active-player spell responses while they hold priority
 
 These may be introduced incrementally in future slices.
 
@@ -226,7 +228,8 @@ The aggregate root must enforce:
 - phase progression rules
 - active-player-only automatic turn updates
 - terminal game tracking for empty-library draw and zero-life loss
-- ownership of stack and priority foundation state
+- ownership of stack and priority state
+- minimal priority-window legality for currently supported stack interactions
 - zero-toughness creature death after current creature-spell resolution checks
 - lethal-damage creature destruction after combat damage resolution
 - correct event emission
@@ -257,7 +260,7 @@ Responsible for:
 
 Future slices inside the `play` context are expected to introduce:
 
-- stack resolution behavior
+- broader stack and priority behavior
 - priority passing
 - card abilities
 - triggered effects

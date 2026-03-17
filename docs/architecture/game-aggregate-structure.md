@@ -35,6 +35,7 @@ src/domain/play/game/
     ├── game_effects.rs     # Direct life and game-end helpers reused by rules
     ├── resource_actions.rs # Lands, mana, spells, creatures, life
     ├── state_based_actions.rs # Shared review of supported state-based actions
+    ├── stack_priority.rs   # Minimal stack casting, passing, and top-object resolution
     └── combat.rs           # Attacking, blocking, combat damage
     └── turn_flow/
         ├── mod.rs
@@ -54,7 +55,7 @@ src/domain/play/game/
 - **DDD alignment** — Modules reflect the domain language, not technical categories.
 - **Rust coherence** — `mod.rs` stays small while internal modules separate aggregate state, rules, and invariants.
 - **Semantic consistency** — Shared state-based action review and direct game effects stay explicit instead of being duplicated across turn flow, resource, and combat code.
-- **Incremental stack evolution** — Stack and priority can grow from aggregate-owned model state before their full command flow lands.
+- **Incremental stack evolution** — Stack and priority can grow from aggregate-owned model state through small explicit slices instead of a generic rules engine.
 
 ---
 

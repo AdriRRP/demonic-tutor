@@ -4,6 +4,10 @@
 
 Introduce explicit stack and priority state into the `Game` aggregate without changing spell-casting behavior yet.
 
+## Historical Note
+
+This slice is now a historical foundation slice. Follow-up stack slices have landed, so stack and priority no longer exist only as inert aggregate state.
+
 ## Supported Behavior
 
 - a started game now owns an explicit `StackZone`
@@ -31,7 +35,7 @@ Introduce explicit stack and priority state into the `Game` aggregate without ch
 
 ## Rules Support Statement
 
-This slice introduces only the aggregate-owned foundation for stack and priority. It does not yet implement public stack gameplay behavior. Spells still resolve through the pre-stack simplified flow until follow-up slices land.
+This slice introduced the aggregate-owned foundation for stack and priority. Public stack gameplay behavior now exists in follow-up slices, but this foundation remains the structural base for that work.
 
 ## Tests
 

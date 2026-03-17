@@ -26,6 +26,9 @@ pub enum GameError {
         required: u32,
         available: u32,
     },
+    PriorityWindowOpen {
+        current_holder: PlayerId,
+    },
     NoPriorityWindow,
     NotPriorityHolder {
         current: PlayerId,
@@ -147,6 +150,10 @@ impl std::fmt::Display for GameError {
                 f,
                 "player {} has insufficient mana: required {required}, available {available}",
                 player.as_str()
+            ),
+            Self::PriorityWindowOpen { current_holder } => write!(
+                f,
+                "a priority window is currently open and waiting on {current_holder}"
             ),
             Self::NoPriorityWindow => write!(f, "no priority window is currently open"),
             Self::NotPriorityHolder { current, requested } => {

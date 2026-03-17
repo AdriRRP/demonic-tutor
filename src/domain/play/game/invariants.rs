@@ -1,4 +1,4 @@
-use super::model::Player;
+use super::{model::Player, PriorityState};
 use crate::domain::play::{
     cards::{CardInstance, CardType},
     errors::{CardError, DomainError, GameError},
@@ -25,6 +25,16 @@ pub(super) const fn require_game_active(game_is_over: bool) -> Result<(), Domain
     } else {
         Ok(())
     }
+}
+
+pub(super) fn require_no_open_priority_window(
+    priority: Option<&PriorityState>,
+) -> Result<(), DomainError> {
+    priority.map_or(Ok(()), |priority| {
+        Err(DomainError::Game(GameError::PriorityWindowOpen {
+            current_holder: priority.current_holder().clone(),
+        }))
+    })
 }
 
 pub(super) fn find_player_index(
