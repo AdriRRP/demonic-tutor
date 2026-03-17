@@ -110,6 +110,15 @@ It is not a literal restatement of the rules text.
 
 ---
 
+## Beginning Of Combat Priority Window
+
+- 117
+- 506
+- 507
+- 508
+
+---
+
 ## Cleanup Hand Size Discard
 
 - 514.1
@@ -153,6 +162,7 @@ The initial Gherkin pilot currently targets these rule areas:
 - `features/spells/cast_creature_spell.feature`
 - `features/combat/combat_damage_marking.feature`
 - `features/combat/combat_priority_windows.feature`
+- `features/combat/beginning_of_combat_priority_window.feature`
 - `features/combat/single_blocker_per_attacker.feature`
 - `features/combat/creature_destruction.feature`
 - `features/turn-flow/cleanup_damage_removal.feature`

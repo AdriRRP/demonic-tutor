@@ -224,6 +224,7 @@ fn combat_damage_marks_surviving_creatures_and_destroys_lethally_damaged_ones() 
     cast_and_resolve(&service, &mut game, "player-2", blocker_id.clone());
 
     advance_until(&service, &mut game, "player-1", Phase::Combat);
+    close_empty_priority_window(&service, &mut game);
 
     service
         .declare_attackers(
@@ -304,6 +305,7 @@ fn creature_destruction_emits_one_event_per_destroyed_creature() {
     cast_and_resolve(&service, &mut game, "player-2", right_blocker_id.clone());
 
     advance_until(&service, &mut game, "player-1", Phase::Combat);
+    close_empty_priority_window(&service, &mut game);
 
     service
         .declare_attackers(
@@ -388,6 +390,7 @@ fn unblocked_combat_damage_ends_the_game_when_it_reduces_a_player_to_zero_life()
 
     advance_until(&service, &mut game, "player-2", Phase::FirstMain);
     advance_until(&service, &mut game, "player-1", Phase::Combat);
+    close_empty_priority_window(&service, &mut game);
 
     service
         .declare_attackers(

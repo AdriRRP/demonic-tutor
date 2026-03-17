@@ -120,6 +120,7 @@ fn declare_blockers_fails_when_the_same_blocker_is_assigned_more_than_once() {
 
     advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
     advance_turn_raw(&service, &mut game);
+    close_empty_priority_window(&service, &mut game);
     service
         .declare_attackers(
             &mut game,
@@ -185,6 +186,7 @@ fn declare_blockers_fails_when_multiple_blockers_target_the_same_attacker() {
 
     advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
     advance_turn_raw(&service, &mut game);
+    close_empty_priority_window(&service, &mut game);
     service
         .declare_attackers(
             &mut game,

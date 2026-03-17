@@ -518,6 +518,7 @@ impl GameplayWorld {
             "player-1",
         );
         support::advance_turn_raw(&service, self.game_mut());
+        support::close_empty_priority_window(&service, self.game_mut());
 
         service
             .declare_attackers(
@@ -603,6 +604,33 @@ impl GameplayWorld {
 
         self.tracked_attacker_id = Some(attacker_id);
         self.reset_observations();
+    }
+
+    pub fn setup_priority_when_entering_combat(&mut self) {
+        self.reset_game_with_libraries(
+            "bdd-beginning-combat-priority",
+            support::filled_library(Vec::new(), 10),
+            support::filled_library(Vec::new(), 10),
+        );
+
+        let service = support::create_service();
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-1",
+        );
+        support::close_empty_priority_window(&service, self.game_mut());
+        support::advance_turn_raw(&service, self.game_mut());
+
+        self.reset_observations();
+        assert_eq!(self.game().phase(), &Phase::Combat);
+        assert_eq!(
+            self.game()
+                .priority()
+                .expect("combat should open priority")
+                .current_holder(),
+            &Self::player_id("Alice")
+        );
     }
 
     pub fn setup_priority_after_blockers_declared(&mut self) {
@@ -776,6 +804,7 @@ impl GameplayWorld {
             "player-1",
         );
         support::advance_turn_raw(&service, self.game_mut());
+        support::close_empty_priority_window(&service, self.game_mut());
         service
             .declare_attackers(
                 self.game_mut(),

@@ -12,6 +12,11 @@ fn alice_has_declared_attackers_in_combat(world: &mut GameplayWorld) {
     world.setup_priority_after_attackers_declared();
 }
 
+#[given("Alice enters Combat from FirstMain")]
+fn alice_enters_combat_from_first_main(world: &mut GameplayWorld) {
+    world.setup_priority_when_entering_combat();
+}
+
 #[given("Bob has declared blockers in Combat")]
 fn bob_has_declared_blockers_in_combat(world: &mut GameplayWorld) {
     world.setup_priority_after_blockers_declared();

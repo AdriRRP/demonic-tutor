@@ -101,6 +101,35 @@ fn advance_turn_opens_priority_when_entering_first_main() {
 }
 
 #[test]
+fn advance_turn_opens_priority_when_entering_combat() {
+    let (service, mut game) = setup_two_player_game(
+        "game-combat-priority-window",
+        filled_library(vec![land_card("forest")], 10),
+        filled_library(vec![land_card("mountain")], 10),
+    );
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
+    assert_eq!(game.phase(), &Phase::FirstMain);
+    assert_eq!(
+        game.priority().unwrap().current_holder(),
+        &PlayerId::new("player-1")
+    );
+
+    close_empty_priority_window(&service, &mut game);
+    let outcome = service
+        .advance_turn(&mut game, AdvanceTurnCommand::new())
+        .unwrap();
+    assert!(matches!(outcome, AdvanceTurnOutcome::Progressed { .. }));
+
+    assert_eq!(game.phase(), &Phase::Combat);
+    assert_eq!(
+        game.priority().unwrap().current_holder(),
+        &PlayerId::new("player-1")
+    );
+    assert!(game.stack().is_empty());
+}
+
+#[test]
 fn advance_turn_resets_lands_played() {
     let mut game = create_game_with_land_in_hand();
     let service = crate::support::create_service();
@@ -186,6 +215,7 @@ fn advance_turn_clears_marked_damage_when_turn_ends() {
     advance_turn_satisfying_cleanup(&service, &mut game);
     assert_eq!(game.phase(), &Phase::Combat);
     assert_eq!(game.active_player(), &PlayerId::new("player-1"));
+    close_empty_priority_window(&service, &mut game);
 
     service
         .declare_attackers(

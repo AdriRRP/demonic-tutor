@@ -33,6 +33,7 @@ Implemented capabilities include:
 - declaring attackers in combat phase
 - declaring blockers in combat phase
 - blocking currently supports at most one blocker per attacking creature
+- opening a priority window when entering `Combat`
 - opening priority windows after attackers and blockers are declared
 - resolving combat damage
 - applying unblocked combat damage to players through shared life-change semantics
@@ -81,6 +82,7 @@ The domain currently includes:
 - entering `FirstMain` or `SecondMain` opens an empty priority window for the active player
 - instant-speed spell responses for the current priority holder
 - resolving the top stack object after two consecutive passes
+- entering `Combat` opens an empty priority window for the active player
 - combat actions reopen priority after attackers and blockers are declared
 
 The system intentionally excludes complex gameplay mechanics at this stage.
@@ -99,7 +101,7 @@ Current constraints include:
 - opening hand size is fixed to 7 cards
 - only a subset of zones are modeled (no exile)
 - spell responses during open priority windows are currently limited to instants
-- priority windows are currently opened by spell casting, by entering `FirstMain` or `SecondMain`, and after attackers or blockers are declared
+- priority windows are currently opened by spell casting, by entering `FirstMain`, `Combat`, or `SecondMain`, and after attackers or blockers are declared
 - outside stack-aware operations, general turn advancement still requires the priority window to be closed
 - broader priority windows for non-main-phase turn flow are not modeled yet
 - combat still uses a single `Combat` phase rather than full combat-step windows
@@ -145,7 +147,7 @@ The project currently includes:
 - projections derived from gameplay events
 - State pattern for phase transitions
 - helper methods for event persistence and publishing
-- a Gherkin acceptance layer, with executable coverage for stack foundation, stack-based spell responses, main-phase priority windows, combat priority windows, turn progression, explicit multi-card draw effects, spell casting through the stack, combat damage, creature destruction, cleanup damage removal, cleanup hand-size discard, empty-library draw loss, and zero-life loss via `cucumber-rs`
+- a Gherkin acceptance layer, with executable coverage for stack foundation, stack-based spell responses, main-phase priority windows, combat entry priority, combat priority windows, turn progression, explicit multi-card draw effects, spell casting through the stack, combat damage, creature destruction, cleanup damage removal, cleanup hand-size discard, empty-library draw loss, and zero-life loss via `cucumber-rs`
 
 This architecture supports:
 

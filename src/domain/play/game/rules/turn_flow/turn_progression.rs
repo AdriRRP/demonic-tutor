@@ -91,7 +91,7 @@ fn build_events(
 }
 
 const fn opens_priority_window(phase: Phase) -> bool {
-    matches!(phase, Phase::FirstMain | Phase::SecondMain)
+    matches!(phase, Phase::FirstMain | Phase::Combat | Phase::SecondMain)
 }
 
 /// Advances the turn to the next phase and player.

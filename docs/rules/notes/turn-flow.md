@@ -28,12 +28,13 @@ This is a repository-owned interpretation note, not a copy of the Comprehensive 
 - if the active player is above the maximum hand size at `EndStep`, the turn cannot advance until they discard down to the maximum
 - marked damage is cleared automatically when the game leaves `EndStep` for the next turn
 - entering `FirstMain` or `SecondMain` opens an empty priority window for the active player
+- entering `Combat` opens an empty priority window for the active player before attackers are declared
 - turn-flow advancement is rejected while a priority window remains open
 - no distinct cleanup step phase is modeled yet
 
 ## Out of Scope
 
-- broader turn-flow priority windows beyond main phases and post-declaration combat windows
+- broader turn-flow priority windows beyond main phases, combat entry, and post-declaration combat windows
 - skipped phases
 - extra turns
 - repeated cleanup loops from state-based actions or triggered abilities

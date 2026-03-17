@@ -17,6 +17,7 @@ This is a repository-owned interpretation note, not a copy of the Comprehensive 
 
 - attackers are declared in `Combat`
 - blockers are declared in `Combat`
+- entering `Combat` opens a priority window for the active player before attackers are declared
 - declaring attackers opens a priority window for the active player
 - declaring blockers opens a priority window for the active player
 - blocker-to-attacker assignments are stored in runtime combat state and reused during damage resolution
@@ -39,6 +40,7 @@ This is a repository-owned interpretation note, not a copy of the Comprehensive 
 ## Related Features
 
 - `features/combat/combat_priority_windows.feature`
+- `features/combat/beginning_of_combat_priority_window.feature`
 - `features/combat/combat_damage_marking.feature`
 - `features/combat/creature_destruction.feature`
 - `features/turn-flow/cleanup_damage_removal.feature`
