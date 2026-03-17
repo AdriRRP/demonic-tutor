@@ -149,6 +149,15 @@ It is not a literal restatement of the rules text.
 
 ---
 
+## Cast Instant In Second Main Window
+
+- 117
+- 505
+- 601
+- 608
+
+---
+
 ## Cast Instant In End Step Window
 
 - 117

@@ -270,6 +270,16 @@ fn alice_is_the_active_player_in_draw_with_an_instant_card_in_hand_and_priority(
     world.setup_active_priority_window_with_instant("bdd-draw-instant-window", Phase::Draw);
 }
 
+#[given("Alice is the active player in SecondMain with an instant card in hand and priority")]
+fn alice_is_the_active_player_in_second_main_with_an_instant_card_in_hand_and_priority(
+    world: &mut GameplayWorld,
+) {
+    world.setup_active_priority_window_with_instant(
+        "bdd-second-main-instant-window",
+        Phase::SecondMain,
+    );
+}
+
 #[given("Alice is the active player in EndStep with an instant card in hand and priority")]
 fn alice_is_the_active_player_in_end_step_with_an_instant_card_in_hand_and_priority(
     world: &mut GameplayWorld,
@@ -308,6 +318,56 @@ fn combat_damage_has_resolved_and_alice_still_has_an_instant_card_in_hand_with_p
 #[when("Alice casts the instant spell")]
 fn alice_casts_the_instant_spell(world: &mut GameplayWorld) {
     world.cast_tracked_spell("Alice");
+}
+
+#[given("Bob has priority in Upkeep with an instant card in hand")]
+fn bob_has_priority_in_upkeep_with_an_instant_card_in_hand(world: &mut GameplayWorld) {
+    world
+        .setup_non_active_priority_window_with_instant("bdd-upkeep-response-window", Phase::Upkeep);
+}
+
+#[given("Bob has priority in Draw with an instant card in hand")]
+fn bob_has_priority_in_draw_with_an_instant_card_in_hand(world: &mut GameplayWorld) {
+    world.setup_non_active_priority_window_with_instant("bdd-draw-response-window", Phase::Draw);
+}
+
+#[given("Bob has priority in FirstMain with an instant card in hand")]
+fn bob_has_priority_in_first_main_with_an_instant_card_in_hand(world: &mut GameplayWorld) {
+    world.setup_non_active_priority_window_with_instant(
+        "bdd-first-main-response-window",
+        Phase::FirstMain,
+    );
+}
+
+#[given("Bob has priority in SecondMain with an instant card in hand")]
+fn bob_has_priority_in_second_main_with_an_instant_card_in_hand(world: &mut GameplayWorld) {
+    world.setup_non_active_priority_window_with_instant(
+        "bdd-second-main-response-window",
+        Phase::SecondMain,
+    );
+}
+
+#[given("Bob has priority in EndStep with an instant card in hand")]
+fn bob_has_priority_in_end_step_with_an_instant_card_in_hand(world: &mut GameplayWorld) {
+    world.setup_non_active_priority_window_with_instant(
+        "bdd-end-step-response-window",
+        Phase::EndStep,
+    );
+}
+
+#[when("Bob casts the instant spell")]
+fn bob_casts_the_instant_spell(world: &mut GameplayWorld) {
+    world.cast_tracked_response_spell("Bob");
+}
+
+#[then("the spell is on the stack under Bob's control")]
+fn the_spell_is_on_the_stack_under_bobs_control(world: &mut GameplayWorld) {
+    let top = world
+        .game()
+        .stack()
+        .top()
+        .expect("stack should contain a top spell");
+    assert_eq!(top.controller_id(), &GameplayWorld::player_id("Bob"));
 }
 
 #[when("Alice tries to cast the card as a spell")]
