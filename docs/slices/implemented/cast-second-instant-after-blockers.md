@@ -1,0 +1,34 @@
+# Slice - Cast Second Instant After Blockers
+
+## Goal
+
+Allow the active player to cast a second instant spell after blockers are declared, before passing priority after the first spell is put on the stack.
+
+## Supported Behavior
+
+- declaring blockers reopens priority for the active player
+- after the first instant is cast, the caster keeps priority
+- while still holding priority, the active player may cast a second instant
+- the second instant is placed on top of the stack
+- after two consecutive passes, the second instant resolves first and the original spell remains on the stack
+
+## Explicit Limits
+
+- this slice only proves self-stacking in the post-blockers priority window
+- it does not change combat damage assignment or blocker legality beyond the current simplified model
+- it does not introduce additional combat substeps
+
+## Domain Changes
+
+- no new public command is introduced
+- the existing stack and priority model is now covered for consecutive instant casts after blockers are declared
+
+## Rules Support Statement
+
+This slice proves that the minimal stack model remains coherent after blockers are declared: once priority reopens for the active player, they may cast an instant, keep priority, cast a second instant, and resolve the top object first through the normal two-pass flow.
+
+## Tests
+
+- the active player may cast a second instant while retaining priority after blockers are declared
+- both spells remain on the stack under the active player's control until passes begin
+- the top spell resolves first and the original spell remains on the stack afterward

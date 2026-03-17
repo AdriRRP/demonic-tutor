@@ -43,6 +43,7 @@ Current executable feature coverage:
 - `features/stack/cast_instant_after_attackers.feature`
 - `features/stack/cast_second_instant_after_attackers.feature`
 - `features/stack/cast_instant_after_blockers.feature`
+- `features/stack/cast_second_instant_after_blockers.feature`
 - `features/stack/cast_instant_after_combat_damage.feature`
 - `features/turn-flow/upkeep_priority_window.feature`
 - `features/turn-flow/draw_priority_window.feature`

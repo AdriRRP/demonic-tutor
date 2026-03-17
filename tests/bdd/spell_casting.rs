@@ -356,6 +356,13 @@ fn bob_has_declared_blockers_and_alice_still_has_an_instant_card_in_hand_with_pr
     world.setup_priority_after_blockers_declared_with_instant();
 }
 
+#[given("Bob has declared blockers and Alice still has two instant cards in hand with priority")]
+fn bob_has_declared_blockers_and_alice_still_has_two_instant_cards_in_hand_with_priority(
+    world: &mut GameplayWorld,
+) {
+    world.setup_priority_after_blockers_declared_with_two_instants();
+}
+
 #[given("combat damage has resolved and Alice still has an instant card in hand with priority")]
 fn combat_damage_has_resolved_and_alice_still_has_an_instant_card_in_hand_with_priority(
     world: &mut GameplayWorld,
