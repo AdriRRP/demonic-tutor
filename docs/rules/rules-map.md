@@ -90,6 +90,13 @@ It is not a literal restatement of the rules text.
 
 ---
 
+## Combat Damage Step
+
+- 510
+- 511
+
+---
+
 ## Upkeep Priority Window
 
 - 117
