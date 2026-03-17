@@ -239,6 +239,15 @@ It is not a literal restatement of the rules text.
 
 ---
 
+## Respond With Second Instant In Beginning Of Combat Window
+
+- 117
+- 506
+- 601
+- 608
+
+---
+
 ## Respond After Attackers
 
 - 117
