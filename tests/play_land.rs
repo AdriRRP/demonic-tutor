@@ -1,78 +1,24 @@
 #![allow(clippy::unwrap_used)]
 
+mod support;
+
 use demonictutor::{
-    AdvanceTurnCommand, CardDefinitionId, CardError, CardInstanceId, CardType, CardWithCost,
-    DealOpeningHandsCommand, DeckId, DomainError, GameError, GameId, GameService, InMemoryEventBus,
-    InMemoryEventStore, PhaseError, PlayLandCommand, PlayerDeck, PlayerDeckContents, PlayerId,
-    StartGameCommand,
+    CardError, CardInstanceId, DomainError, GameError, PhaseError, PlayLandCommand, PlayerId,
 };
-
-fn player_deck(player: &str, deck: &str) -> PlayerDeck {
-    PlayerDeck::new(PlayerId::new(player), DeckId::new(deck))
-}
-
-fn player_deck_contents(player: &str, cards: Vec<CardWithCost>) -> PlayerDeckContents {
-    PlayerDeckContents::new(PlayerId::new(player), cards)
-}
-
-fn create_service() -> GameService<InMemoryEventStore, InMemoryEventBus> {
-    GameService::new(InMemoryEventStore::new(), InMemoryEventBus::new())
-}
+use support::{advance_to_player_first_main, create_service, filled_library, land_card};
 
 fn create_game_with_land_in_hand() -> (demonictutor::Game, CardInstanceId) {
     let service = create_service();
-    let (mut game, _) = service
-        .start_game(StartGameCommand::new(
-            GameId::new("game-1"),
-            vec![
-                player_deck("player-1", "deck-1"),
-                player_deck("player-2", "deck-2"),
-            ],
-        ))
-        .unwrap();
-
+    let mut game = support::start_two_player_game(&service, "game-1");
     let land_card_id = CardInstanceId::new("game-1-player-2-0");
 
-    let cmd = DealOpeningHandsCommand::new(vec![
-        player_deck_contents(
-            "player-1",
-            vec![
-                CardWithCost::new(CardDefinitionId::new("forest"), CardType::Land, 0),
-                CardWithCost::new(CardDefinitionId::new("card-2"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-3"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-4"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-5"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-6"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-7"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-8"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-9"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-10"), CardType::Creature, 0),
-            ],
-        ),
-        player_deck_contents(
-            "player-2",
-            vec![
-                CardWithCost::new(CardDefinitionId::new("mountain"), CardType::Land, 0),
-                CardWithCost::new(CardDefinitionId::new("card-2"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-3"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-4"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-5"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-6"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-7"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-8"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-9"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-10"), CardType::Creature, 0),
-            ],
-        ),
-    ]);
-
-    service.deal_opening_hands(&mut game, &cmd).unwrap();
-
-    // Need 11 advances to reach player-2's FirstMain (Setup adds 3 more phases)
-    for _ in 0..11 {
-        let advance_cmd = AdvanceTurnCommand::new();
-        service.advance_turn(&mut game, advance_cmd).unwrap();
-    }
+    support::deal_opening_hands(
+        &service,
+        &mut game,
+        filled_library(vec![land_card("forest")], 10),
+        filled_library(vec![land_card("mountain")], 10),
+    );
+    advance_to_player_first_main(&service, &mut game, "player-2");
 
     (game, land_card_id)
 }
@@ -98,12 +44,10 @@ fn play_land_emits_event() {
     let service = create_service();
 
     let cmd = PlayLandCommand::new(PlayerId::new("player-2"), land_card_id.clone());
-    let result = service.play_land(&mut game, cmd);
+    let event = service.play_land(&mut game, cmd).unwrap();
 
-    assert!(result.is_ok());
-    let event = result.unwrap();
     assert_eq!(event.card_id, land_card_id);
-    assert_eq!(event.player_id.0, "player-2");
+    assert_eq!(event.player_id.as_str(), "player-2");
 }
 
 #[test]
@@ -142,7 +86,6 @@ fn play_land_fails_when_card_is_not_a_land() {
 
 #[test]
 fn play_land_rejected_non_land_card_stays_in_hand() {
-    // Regression: card must not disappear when play_land is rejected due to wrong type.
     let (mut game, _) = create_game_with_land_in_hand();
     let service = create_service();
 
@@ -155,7 +98,6 @@ fn play_land_rejected_non_land_card_stays_in_hand() {
     let result = service.play_land(&mut game, cmd);
 
     assert!(result.is_err());
-    // Card must still be in the hand after a failed play_land
     assert_eq!(game.players()[1].hand().cards().len(), hand_before);
 }
 
@@ -178,16 +120,21 @@ fn play_land_fails_when_land_already_played_this_turn() {
     let (mut game, land_card_id) = create_game_with_land_in_hand();
     let service = create_service();
 
-    let cmd = PlayLandCommand::new(PlayerId::new("player-2"), land_card_id);
-    let result = service.play_land(&mut game, cmd);
-    assert!(result.is_ok());
+    service
+        .play_land(
+            &mut game,
+            PlayLandCommand::new(PlayerId::new("player-2"), land_card_id),
+        )
+        .unwrap();
 
     let second_land_id = CardInstanceId::new("game-1-player-2-5");
-    let cmd2 = PlayLandCommand::new(PlayerId::new("player-2"), second_land_id);
-    let result2 = service.play_land(&mut game, cmd2);
+    let result = service.play_land(
+        &mut game,
+        PlayLandCommand::new(PlayerId::new("player-2"), second_land_id),
+    );
 
     assert!(matches!(
-        result2,
+        result,
         Err(DomainError::Phase(PhaseError::AlreadyPlayedLandThisTurn(
             ..
         )))

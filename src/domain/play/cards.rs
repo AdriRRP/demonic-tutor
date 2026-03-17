@@ -1,4 +1,9 @@
-use crate::domain::ids::{CardDefinitionId, CardInstanceId};
+use crate::domain::play::ids::{CardDefinitionId, CardInstanceId};
+
+const FLAG_TAPPED: u8 = 1 << 0;
+const FLAG_SUMMONING_SICKNESS: u8 = 1 << 1;
+const FLAG_ATTACKING: u8 = 1 << 2;
+const FLAG_BLOCKING: u8 = 1 << 3;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum CardType {
@@ -60,19 +65,44 @@ impl CardDefinition {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[allow(clippy::struct_excessive_bools)]
+struct CreatureState {
+    power: u32,
+    toughness: u32,
+    damage: u32,
+    flags: u8,
+}
+
+impl CreatureState {
+    const fn new(power: u32, toughness: u32) -> Self {
+        Self {
+            power,
+            toughness,
+            damage: 0,
+            flags: FLAG_SUMMONING_SICKNESS,
+        }
+    }
+
+    const fn has_flag(&self, flag: u8) -> bool {
+        self.flags & flag != 0
+    }
+
+    const fn set_flag(&mut self, flag: u8, enabled: bool) {
+        if enabled {
+            self.flags |= flag;
+        } else {
+            self.flags &= !flag;
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CardInstance {
     id: CardInstanceId,
     definition_id: CardDefinitionId,
     card_type: CardType,
-    tapped: bool,
     mana_cost: u32,
-    power: Option<u32>,
-    toughness: Option<u32>,
-    has_summoning_sickness: bool,
-    is_attacking: bool,
-    is_blocking: bool,
-    damage: u32,
+    flags: u8,
+    creature: Option<CreatureState>,
 }
 
 impl CardInstance {
@@ -87,14 +117,9 @@ impl CardInstance {
             id,
             definition_id,
             card_type,
-            tapped: false,
             mana_cost,
-            power: None,
-            toughness: None,
-            has_summoning_sickness: false,
-            is_attacking: false,
-            is_blocking: false,
-            damage: 0,
+            flags: 0,
+            creature: None,
         }
     }
 
@@ -110,14 +135,9 @@ impl CardInstance {
             id,
             definition_id,
             card_type: CardType::Creature,
-            tapped: false,
             mana_cost,
-            power: Some(power),
-            toughness: Some(toughness),
-            has_summoning_sickness: true,
-            is_attacking: false,
-            is_blocking: false,
-            damage: 0,
+            flags: 0,
+            creature: Some(CreatureState::new(power, toughness)),
         }
     }
 
@@ -138,7 +158,7 @@ impl CardInstance {
 
     #[must_use]
     pub const fn is_tapped(&self) -> bool {
-        self.tapped
+        self.flags & FLAG_TAPPED != 0
     }
 
     #[must_use]
@@ -148,59 +168,95 @@ impl CardInstance {
 
     #[must_use]
     pub const fn power(&self) -> Option<u32> {
-        self.power
+        match &self.creature {
+            Some(creature) => Some(creature.power),
+            None => None,
+        }
     }
 
     #[must_use]
     pub const fn toughness(&self) -> Option<u32> {
-        self.toughness
+        match &self.creature {
+            Some(creature) => Some(creature.toughness),
+            None => None,
+        }
+    }
+
+    #[must_use]
+    pub const fn creature_stats(&self) -> Option<(u32, u32)> {
+        match (&self.card_type, &self.creature) {
+            (CardType::Creature, Some(creature)) => Some((creature.power, creature.toughness)),
+            _ => None,
+        }
     }
 
     #[must_use]
     pub const fn has_summoning_sickness(&self) -> bool {
-        self.has_summoning_sickness
+        match &self.creature {
+            Some(creature) => creature.has_flag(FLAG_SUMMONING_SICKNESS),
+            None => false,
+        }
     }
 
     #[must_use]
     pub const fn is_attacking(&self) -> bool {
-        self.is_attacking
+        match &self.creature {
+            Some(creature) => creature.has_flag(FLAG_ATTACKING),
+            None => false,
+        }
     }
 
     #[must_use]
     pub const fn is_blocking(&self) -> bool {
-        self.is_blocking
+        match &self.creature {
+            Some(creature) => creature.has_flag(FLAG_BLOCKING),
+            None => false,
+        }
     }
 
     pub const fn tap(&mut self) {
-        self.tapped = true;
+        self.flags |= FLAG_TAPPED;
     }
 
     pub const fn untap(&mut self) {
-        self.tapped = false;
+        self.flags &= !FLAG_TAPPED;
     }
 
     pub const fn remove_summoning_sickness(&mut self) {
-        self.has_summoning_sickness = false;
+        if let Some(creature) = &mut self.creature {
+            creature.set_flag(FLAG_SUMMONING_SICKNESS, false);
+        }
     }
 
     pub const fn set_attacking(&mut self, attacking: bool) {
-        self.is_attacking = attacking;
+        if let Some(creature) = &mut self.creature {
+            creature.set_flag(FLAG_ATTACKING, attacking);
+        }
     }
 
     pub const fn set_blocking(&mut self, blocking: bool) {
-        self.is_blocking = blocking;
+        if let Some(creature) = &mut self.creature {
+            creature.set_flag(FLAG_BLOCKING, blocking);
+        }
     }
 
     #[must_use]
     pub const fn damage(&self) -> u32 {
-        self.damage
+        match &self.creature {
+            Some(creature) => creature.damage,
+            None => 0,
+        }
     }
 
     pub const fn add_damage(&mut self, damage: u32) {
-        self.damage += damage;
+        if let Some(creature) = &mut self.creature {
+            creature.damage += damage;
+        }
     }
 
     pub const fn clear_damage(&mut self) {
-        self.damage = 0;
+        if let Some(creature) = &mut self.creature {
+            creature.damage = 0;
+        }
     }
 }

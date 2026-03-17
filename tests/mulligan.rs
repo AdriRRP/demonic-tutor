@@ -1,124 +1,48 @@
 #![allow(clippy::unwrap_used)]
 
+mod support;
+
 use demonictutor::{
-    AdvanceTurnCommand, CardDefinitionId, CardType, CardWithCost, DealOpeningHandsCommand, DeckId,
-    DomainError, GameError, GameId, GameService, InMemoryEventBus, InMemoryEventStore,
-    MulliganCommand, PhaseError, PlayerDeck, PlayerDeckContents, PlayerId, StartGameCommand,
+    AdvanceTurnCommand, DomainError, GameError, MulliganCommand, Phase, PhaseError, PlayerId,
 };
-
-fn player_deck(player: &str, deck: &str) -> PlayerDeck {
-    PlayerDeck::new(PlayerId::new(player), DeckId::new(deck))
-}
-
-fn player_deck_contents(player: &str, cards: Vec<CardWithCost>) -> PlayerDeckContents {
-    PlayerDeckContents::new(PlayerId::new(player), cards)
-}
-
-fn non_land_cards(count: usize) -> Vec<CardWithCost> {
-    (0..count)
-        .map(|i| {
-            CardWithCost::new(
-                CardDefinitionId::new(format!("card-{i}")),
-                CardType::Creature,
-                0,
-            )
-        })
-        .collect()
-}
-
-fn create_service() -> GameService<InMemoryEventStore, InMemoryEventBus> {
-    GameService::new(InMemoryEventStore::new(), InMemoryEventBus::new())
-}
+use support::{create_service, creature_library, setup_two_player_game};
 
 #[test]
 fn mulligan_hand_contains_exactly_seven_cards_after_mulligan() {
-    let service = create_service();
-    let (mut game, _) = service
-        .start_game(StartGameCommand::new(
-            GameId::new("game-1"),
-            vec![
-                player_deck("player-1", "deck-1"),
-                player_deck("player-2", "deck-2"),
-            ],
-        ))
-        .unwrap();
+    let (service, mut game) =
+        setup_two_player_game("game-1", creature_library(14), creature_library(14));
 
-    let cmd = DealOpeningHandsCommand::new(vec![
-        player_deck_contents("player-1", non_land_cards(14)),
-        player_deck_contents("player-2", non_land_cards(14)),
-    ]);
-
-    service.deal_opening_hands(&mut game, &cmd).unwrap();
-
-    // Hand has 7 cards before mulligan
     assert_eq!(game.players()[0].hand().cards().len(), 7);
 
-    let mulligan_cmd = MulliganCommand::new(PlayerId::new("player-1"));
-    service.mulligan(&mut game, mulligan_cmd).unwrap();
+    service
+        .mulligan(&mut game, MulliganCommand::new(PlayerId::new("player-1")))
+        .unwrap();
 
-    // Hand must still have exactly 7 cards after mulligan, not 14
     assert_eq!(game.players()[0].hand().cards().len(), 7);
 }
 
 #[test]
 fn mulligan_succeeds() {
-    let service = create_service();
-    let (mut game, _) = service
-        .start_game(StartGameCommand::new(
-            GameId::new("game-1"),
-            vec![
-                player_deck("player-1", "deck-1"),
-                player_deck("player-2", "deck-2"),
-            ],
-        ))
-        .unwrap();
+    let (service, mut game) =
+        setup_two_player_game("game-1", creature_library(14), creature_library(14));
 
-    assert_eq!(game.phase(), &demonictutor::Phase::Setup);
-
-    let cmd = DealOpeningHandsCommand::new(vec![
-        player_deck_contents("player-1", non_land_cards(14)),
-        player_deck_contents("player-2", non_land_cards(14)),
-    ]);
-
-    service.deal_opening_hands(&mut game, &cmd).unwrap();
-
-    assert_eq!(game.phase(), &demonictutor::Phase::Setup);
-
-    let mulligan_cmd = MulliganCommand::new(PlayerId::new("player-1"));
-    let result = service.mulligan(&mut game, mulligan_cmd);
-
-    assert!(result.is_ok());
+    assert_eq!(game.phase(), &Phase::Setup);
+    assert!(service
+        .mulligan(&mut game, MulliganCommand::new(PlayerId::new("player-1")))
+        .is_ok());
 }
 
 #[test]
 fn mulligan_fails_already_used() {
-    let service = create_service();
-    let (mut game, _) = service
-        .start_game(StartGameCommand::new(
-            GameId::new("game-1"),
-            vec![
-                player_deck("player-1", "deck-1"),
-                player_deck("player-2", "deck-2"),
-            ],
-        ))
+    let (service, mut game) =
+        setup_two_player_game("game-1", creature_library(14), creature_library(14));
+
+    service
+        .mulligan(&mut game, MulliganCommand::new(PlayerId::new("player-1")))
         .unwrap();
 
-    assert_eq!(game.phase(), &demonictutor::Phase::Setup);
+    let result = service.mulligan(&mut game, MulliganCommand::new(PlayerId::new("player-1")));
 
-    let cmd = DealOpeningHandsCommand::new(vec![
-        player_deck_contents("player-1", non_land_cards(14)),
-        player_deck_contents("player-2", non_land_cards(14)),
-    ]);
-
-    service.deal_opening_hands(&mut game, &cmd).unwrap();
-
-    let mulligan_cmd = MulliganCommand::new(PlayerId::new("player-1"));
-    service.mulligan(&mut game, mulligan_cmd).unwrap();
-
-    let mulligan_cmd2 = MulliganCommand::new(PlayerId::new("player-1"));
-    let result = service.mulligan(&mut game, mulligan_cmd2);
-
-    assert!(result.is_err());
     assert_eq!(
         result.unwrap_err(),
         DomainError::Game(GameError::MulliganAlreadyUsed(PlayerId::new("player-1")))
@@ -128,22 +52,10 @@ fn mulligan_fails_already_used() {
 #[test]
 fn mulligan_fails_not_enough_cards() {
     let service = create_service();
-    let (mut game, _) = service
-        .start_game(StartGameCommand::new(
-            GameId::new("game-1"),
-            vec![
-                player_deck("player-1", "deck-1"),
-                player_deck("player-2", "deck-2"),
-            ],
-        ))
-        .unwrap();
+    let mut game = support::start_two_player_game(&service, "game-1");
 
-    assert_eq!(game.phase(), &demonictutor::Phase::Setup);
+    let result = service.mulligan(&mut game, MulliganCommand::new(PlayerId::new("player-1")));
 
-    let mulligan_cmd = MulliganCommand::new(PlayerId::new("player-1"));
-    let result = service.mulligan(&mut game, mulligan_cmd);
-
-    assert!(result.is_err());
     assert!(matches!(
         result.unwrap_err(),
         DomainError::Game(GameError::NotEnoughCardsInLibrary {
@@ -156,35 +68,17 @@ fn mulligan_fails_not_enough_cards() {
 
 #[test]
 fn mulligan_fails_not_setup_phase() {
-    let service = create_service();
-    let (mut game, _) = service
-        .start_game(StartGameCommand::new(
-            GameId::new("game-1"),
-            vec![
-                player_deck("player-1", "deck-1"),
-                player_deck("player-2", "deck-2"),
-            ],
-        ))
+    let (service, mut game) =
+        setup_two_player_game("game-1", creature_library(14), creature_library(14));
+
+    service
+        .advance_turn(&mut game, AdvanceTurnCommand::new())
         .unwrap();
 
-    let cmd = DealOpeningHandsCommand::new(vec![
-        player_deck_contents("player-1", non_land_cards(14)),
-        player_deck_contents("player-2", non_land_cards(14)),
-    ]);
+    assert_eq!(game.phase(), &Phase::Untap);
 
-    service.deal_opening_hands(&mut game, &cmd).unwrap();
+    let result = service.mulligan(&mut game, MulliganCommand::new(PlayerId::new("player-1")));
 
-    assert_eq!(game.phase(), &demonictutor::Phase::Setup);
-
-    let advance_cmd = AdvanceTurnCommand::new();
-    service.advance_turn(&mut game, advance_cmd).unwrap();
-
-    assert_eq!(game.phase(), &demonictutor::Phase::Untap);
-
-    let mulligan_cmd = MulliganCommand::new(PlayerId::new("player-1"));
-    let result = service.mulligan(&mut game, mulligan_cmd);
-
-    assert!(result.is_err());
     assert_eq!(
         result.unwrap_err(),
         DomainError::Phase(PhaseError::InvalidForMulligan)

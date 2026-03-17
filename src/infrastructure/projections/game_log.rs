@@ -1,4 +1,4 @@
-use {crate::domain::events::DomainEvent, std::sync::RwLock};
+use {crate::domain::play::events::DomainEvent, std::sync::RwLock};
 
 #[derive(Debug, Default)]
 pub struct GameLogProjection {
@@ -43,11 +43,14 @@ impl GameLogProjection {
             DomainEvent::LandPlayed(e) => {
                 format!("Player {} played land {}", e.player_id, e.card_id)
             }
-            DomainEvent::TurnAdvanced(e) => {
-                format!("Turn advanced to {}", e.new_active_player)
+            DomainEvent::TurnProgressed(e) => {
+                format!(
+                    "Turn progressed: {} {}->{}, {:?}->{:?}",
+                    e.active_player, e.from_turn, e.to_turn, e.from_phase, e.to_phase
+                )
             }
             DomainEvent::CardDrawn(e) => {
-                format!("Player {} drew a card", e.player_id)
+                format!("Player {} drew a card via {:?}", e.player_id, e.draw_kind)
             }
             DomainEvent::MulliganTaken(e) => {
                 format!("Player {} took a mulligan", e.player_id)
@@ -57,12 +60,6 @@ impl GameLogProjection {
                     "Player {} life changed from {} to {}",
                     e.player_id, e.from_life, e.to_life
                 )
-            }
-            DomainEvent::TurnNumberChanged(e) => {
-                format!("Turn changed from {} to {}", e.from_turn, e.to_turn)
-            }
-            DomainEvent::PhaseChanged(e) => {
-                format!("Phase changed from {:?} to {:?}", e.from_phase, e.to_phase)
             }
             DomainEvent::LandTapped(e) => {
                 format!("Player {} tapped land {}", e.player_id, e.card_id)
@@ -74,12 +71,9 @@ impl GameLogProjection {
                 )
             }
             DomainEvent::SpellCast(e) => {
-                format!("Player {} cast spell {}", e.player_id, e.card_id)
-            }
-            DomainEvent::CreatureEnteredBattlefield(e) => {
                 format!(
-                    "Player {} played creature {} ({}/{})",
-                    e.player_id, e.card_id, e.power, e.toughness
+                    "Player {} cast {:?} spell {} for {} mana ({:?})",
+                    e.player_id, e.card_type, e.card_id, e.mana_cost_paid, e.outcome
                 )
             }
             DomainEvent::AttackersDeclared(e) => {

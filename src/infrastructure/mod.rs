@@ -1,7 +1,5 @@
-pub mod event_bus;
-pub mod event_store;
-pub mod projection;
+pub mod events;
+pub mod projections;
 
-pub use event_bus::InMemoryEventBus;
-pub use event_store::InMemoryEventStore;
-pub use projection::GameLogProjection;
+pub use events::{InMemoryEventBus, InMemoryEventStore};
+pub use projections::GameLogProjection;

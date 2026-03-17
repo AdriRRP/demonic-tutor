@@ -28,7 +28,7 @@ fn start_game_creates_valid_game() {
 
     assert!(result.is_ok());
     let (game, event) = result.unwrap();
-    assert_eq!(game.id().0, "game-1");
+    assert_eq!(game.id().as_str(), "game-1");
     assert_eq!(event.players.len(), 2);
 }
 

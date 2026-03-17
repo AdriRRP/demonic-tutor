@@ -1,32 +1,37 @@
 use {
-    crate::domain::{cards::CardInstance, ids::CardInstanceId},
+    crate::domain::play::{cards::CardInstance, ids::CardInstanceId},
     rand::seq::SliceRandom,
+    std::collections::VecDeque,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
-pub struct Library(Vec<CardInstance>);
+pub struct Library(VecDeque<CardInstance>);
 
 impl Library {
     #[must_use]
-    pub const fn new(cards: Vec<CardInstance>) -> Self {
-        Self(cards)
+    pub fn new(cards: Vec<CardInstance>) -> Self {
+        Self(VecDeque::from(cards))
+    }
+
+    pub fn draw_one(&mut self) -> Option<CardInstance> {
+        self.0.pop_front()
     }
 
     pub fn draw(&mut self, n: usize) -> Option<Vec<CardInstance>> {
         if self.0.len() >= n {
-            Some(self.0.drain(0..n).collect())
+            Some((0..n).filter_map(|_| self.0.pop_front()).collect())
         } else {
             None
         }
     }
 
     #[must_use]
-    pub const fn len(&self) -> usize {
+    pub fn len(&self) -> usize {
         self.0.len()
     }
 
     #[must_use]
-    pub const fn is_empty(&self) -> bool {
+    pub fn is_empty(&self) -> bool {
         self.0.is_empty()
     }
 
@@ -36,7 +41,7 @@ impl Library {
 
     pub fn shuffle(&mut self) {
         let mut rng = rand::make_rng::<rand::rngs::StdRng>();
-        self.0.shuffle(&mut rng);
+        self.0.make_contiguous().shuffle(&mut rng);
     }
 }
 
@@ -90,11 +95,30 @@ impl Battlefield {
         &self.0
     }
 
-    pub const fn cards_mut(&mut self) -> &mut Vec<CardInstance> {
-        &mut self.0
-    }
-
     pub fn card_mut(&mut self, card_id: &CardInstanceId) -> Option<&mut CardInstance> {
         self.0.iter_mut().find(|c| c.id() == card_id)
+    }
+
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut CardInstance> {
+        self.0.iter_mut()
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct Graveyard(Vec<CardInstance>);
+
+impl Graveyard {
+    #[must_use]
+    pub const fn new() -> Self {
+        Self(Vec::new())
+    }
+
+    pub fn add(&mut self, card: CardInstance) {
+        self.0.push(card);
+    }
+
+    #[must_use]
+    pub fn cards(&self) -> &[CardInstance] {
+        &self.0
     }
 }

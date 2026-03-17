@@ -1,0 +1,135 @@
+#![allow(clippy::unwrap_used)]
+#![allow(clippy::panic)]
+#![allow(dead_code)]
+
+use demonictutor::{
+    AdvanceTurnCommand, CardDefinitionId, DealOpeningHandsCommand, DeckId, Game, GameId,
+    GameService, InMemoryEventBus, InMemoryEventStore, LibraryCard, NonCreatureCardType, Phase,
+    PlayerDeck, PlayerId, PlayerLibrary, StartGameCommand,
+};
+
+pub type TestService = GameService<InMemoryEventStore, InMemoryEventBus>;
+
+pub fn create_service() -> TestService {
+    GameService::new(InMemoryEventStore::new(), InMemoryEventBus::new())
+}
+
+pub fn player_deck(player: &str, deck: &str) -> PlayerDeck {
+    PlayerDeck::new(PlayerId::new(player), DeckId::new(deck))
+}
+
+pub fn player_library(player: &str, cards: Vec<LibraryCard>) -> PlayerLibrary {
+    PlayerLibrary::new(PlayerId::new(player), cards)
+}
+
+pub fn land_card(name: &str) -> LibraryCard {
+    LibraryCard::non_creature(CardDefinitionId::new(name), NonCreatureCardType::Land, 0)
+}
+
+pub fn instant_card(name: &str, mana_cost: u32) -> LibraryCard {
+    LibraryCard::non_creature(
+        CardDefinitionId::new(name),
+        NonCreatureCardType::Instant,
+        mana_cost,
+    )
+}
+
+pub fn artifact_card(name: &str, mana_cost: u32) -> LibraryCard {
+    LibraryCard::non_creature(
+        CardDefinitionId::new(name),
+        NonCreatureCardType::Artifact,
+        mana_cost,
+    )
+}
+
+pub fn vanilla_creature(name: &str) -> LibraryCard {
+    LibraryCard::creature(CardDefinitionId::new(name), 0, 2, 2)
+}
+
+pub fn filled_library(seed_cards: Vec<LibraryCard>, total_cards: usize) -> Vec<LibraryCard> {
+    assert!(seed_cards.len() <= total_cards);
+
+    let mut cards = seed_cards;
+    for i in cards.len() + 1..=total_cards {
+        cards.push(vanilla_creature(&format!("card-{i}")));
+    }
+
+    cards
+}
+
+pub fn creature_library(total_cards: usize) -> Vec<LibraryCard> {
+    filled_library(Vec::new(), total_cards)
+}
+
+pub fn start_two_player_game(service: &TestService, game_id: &str) -> Game {
+    service
+        .start_game(StartGameCommand::new(
+            GameId::new(game_id),
+            vec![
+                player_deck("player-1", "deck-1"),
+                player_deck("player-2", "deck-2"),
+            ],
+        ))
+        .unwrap()
+        .0
+}
+
+pub fn deal_opening_hands(
+    service: &TestService,
+    game: &mut Game,
+    player_one_cards: Vec<LibraryCard>,
+    player_two_cards: Vec<LibraryCard>,
+) {
+    service
+        .deal_opening_hands(
+            game,
+            &DealOpeningHandsCommand::new(vec![
+                player_library("player-1", player_one_cards),
+                player_library("player-2", player_two_cards),
+            ]),
+        )
+        .unwrap();
+}
+
+pub fn setup_two_player_game(
+    game_id: &str,
+    player_one_cards: Vec<LibraryCard>,
+    player_two_cards: Vec<LibraryCard>,
+) -> (TestService, Game) {
+    let service = create_service();
+    let mut game = start_two_player_game(&service, game_id);
+    deal_opening_hands(&service, &mut game, player_one_cards, player_two_cards);
+    (service, game)
+}
+
+pub fn advance_n(service: &TestService, game: &mut Game, turns: usize) {
+    for _ in 0..turns {
+        service
+            .advance_turn(game, AdvanceTurnCommand::new())
+            .unwrap();
+    }
+}
+
+pub fn advance_to_first_main(service: &TestService, game: &mut Game) {
+    while game.phase() != &Phase::FirstMain {
+        service
+            .advance_turn(game, AdvanceTurnCommand::new())
+            .unwrap();
+    }
+}
+
+pub fn advance_to_player_first_main(service: &TestService, game: &mut Game, player_id: &str) {
+    let player_id = PlayerId::new(player_id);
+
+    for _ in 0..32 {
+        if game.active_player() == &player_id && game.phase() == &Phase::FirstMain {
+            return;
+        }
+
+        service
+            .advance_turn(game, AdvanceTurnCommand::new())
+            .unwrap();
+    }
+
+    panic!("failed to reach FirstMain for {player_id}");
+}

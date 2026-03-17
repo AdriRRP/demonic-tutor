@@ -2,9 +2,9 @@
 #![allow(clippy::significant_drop_tightening)]
 
 use demonictutor::{
-    CardDrawn, CardInstanceId, DomainEvent, EventBus, EventStore, GameId, GameLogProjection,
-    GameStarted, InMemoryEventBus, InMemoryEventStore, LandPlayed, MulliganTaken, OpeningHandDealt,
-    PlayerId, TurnAdvanced,
+    CardDrawn, CardInstanceId, CardType, DomainEvent, DrawKind, EventBus, EventStore, GameId,
+    GameLogProjection, GameStarted, InMemoryEventBus, InMemoryEventStore, LandPlayed,
+    MulliganTaken, OpeningHandDealt, PlayerId, SpellCast, SpellCastOutcome, TurnProgressed,
 };
 
 #[test]
@@ -132,15 +132,20 @@ fn projection_logs_multiple_events() {
         CardInstanceId::new("card-1"),
     )));
 
-    projection.handle(&DomainEvent::TurnAdvanced(TurnAdvanced::new(
+    projection.handle(&DomainEvent::TurnProgressed(TurnProgressed::new(
         GameId::new("game-1"),
         PlayerId::new("player-2"),
+        1,
+        2,
+        demonictutor::Phase::EndStep,
+        demonictutor::Phase::Untap,
     )));
 
     projection.handle(&DomainEvent::CardDrawn(CardDrawn::new(
         GameId::new("game-1"),
         PlayerId::new("player-2"),
         CardInstanceId::new("card-2"),
+        DrawKind::TurnStep,
     )));
 
     projection.handle(&DomainEvent::MulliganTaken(MulliganTaken::new(
@@ -148,14 +153,25 @@ fn projection_logs_multiple_events() {
         PlayerId::new("player-1"),
     )));
 
+    projection.handle(&DomainEvent::SpellCast(SpellCast::new(
+        GameId::new("game-1"),
+        PlayerId::new("player-1"),
+        CardInstanceId::new("card-3"),
+        CardType::Creature,
+        3,
+        SpellCastOutcome::EnteredBattlefield,
+    )));
+
     let logs = projection.logs();
-    assert_eq!(logs.len(), 6);
+    assert_eq!(logs.len(), 7);
     assert!(logs[0].starts_with("Game"));
     assert!(logs[1].starts_with("Player"));
     assert!(logs[2].starts_with("Player"));
-    assert!(logs[3].starts_with("Turn"));
+    assert!(logs[3].starts_with("Turn progressed"));
     assert!(logs[4].starts_with("Player"));
     assert!(logs[5].starts_with("Player"));
+    assert!(logs[6].contains("Creature"));
+    assert!(logs[6].contains("3 mana"));
 }
 
 #[test]

@@ -1,4 +1,4 @@
-use crate::domain::{
+use crate::domain::play::{
     ids::{CardInstanceId, PlayerId},
     phase::Phase,
 };
@@ -102,8 +102,8 @@ impl std::fmt::Display for GameError {
             Self::NotYourTurn { current, requested } => {
                 write!(f, "not {requested}'s turn, it's {current}'s turn")
             }
-            Self::DuplicatePlayer(pid) => write!(f, "duplicate player: {}", pid.0),
-            Self::PlayerNotFound(pid) => write!(f, "player not found: {}", pid.0),
+            Self::DuplicatePlayer(pid) => write!(f, "duplicate player: {}", pid.as_str()),
+            Self::PlayerNotFound(pid) => write!(f, "player not found: {}", pid.as_str()),
             Self::InsufficientMana {
                 player,
                 required,
@@ -111,7 +111,7 @@ impl std::fmt::Display for GameError {
             } => write!(
                 f,
                 "player {} has insufficient mana: required {required}, available {available}",
-                player.0
+                player.as_str()
             ),
             Self::NotEnoughCardsInLibrary {
                 player,
@@ -120,10 +120,10 @@ impl std::fmt::Display for GameError {
             } => write!(
                 f,
                 "not enough cards in library for player {}: have {available}, need {requested}",
-                player.0
+                player.as_str()
             ),
             Self::MulliganAlreadyUsed(pid) => {
-                write!(f, "player {} has already used mulligan", pid.0)
+                write!(f, "player {} has already used mulligan", pid.as_str())
             }
             Self::InternalInvariantViolation(msg) => {
                 write!(f, "internal invariant violated: {msg}")

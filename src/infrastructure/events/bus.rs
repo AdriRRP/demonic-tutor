@@ -1,5 +1,5 @@
 use {
-    crate::{application::EventBus, domain::events::DomainEvent},
+    crate::{application::EventBus, domain::play::events::DomainEvent},
     std::sync::Arc,
 };
 

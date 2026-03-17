@@ -1,5 +1,5 @@
-use crate::domain::ids::{DeckId, PlayerId};
-use crate::domain::zones::{Battlefield, Hand, Library};
+use crate::domain::play::ids::{DeckId, PlayerId};
+use crate::domain::play::zones::{Battlefield, Graveyard, Hand, Library};
 
 const DEFAULT_STARTING_LIFE: u32 = 20;
 pub const OPENING_HAND_SIZE: usize = 7;
@@ -11,6 +11,7 @@ pub struct Player {
     library: Library,
     hand: Hand,
     battlefield: Battlefield,
+    graveyard: Graveyard,
     life: u32,
     mana: u32,
     lands_played_this_turn: usize,
@@ -20,13 +21,14 @@ pub struct Player {
 #[allow(clippy::missing_const_for_fn)]
 impl Player {
     #[must_use]
-    pub const fn new(id: PlayerId, deck_id: DeckId) -> Self {
+    pub fn new(id: PlayerId, deck_id: DeckId) -> Self {
         Self {
             id,
             deck_id,
             library: Library::new(Vec::new()),
             hand: Hand::new(),
             battlefield: Battlefield::new(),
+            graveyard: Graveyard::new(),
             life: DEFAULT_STARTING_LIFE,
             mana: 0,
             lands_played_this_turn: 0,
@@ -72,6 +74,15 @@ impl Player {
     }
 
     #[must_use]
+    pub const fn graveyard(&self) -> &Graveyard {
+        &self.graveyard
+    }
+
+    pub fn graveyard_mut(&mut self) -> &mut Graveyard {
+        &mut self.graveyard
+    }
+
+    #[must_use]
     pub const fn life(&self) -> u32 {
         self.life
     }
@@ -91,12 +102,8 @@ impl Player {
         self.mulligan_used
     }
 
-    pub fn set_life(&mut self, new_life: u32) {
-        self.life = new_life;
-    }
-
-    pub fn change_life(&mut self, delta: i32) {
-        self.life = self.life.saturating_add(delta.unsigned_abs());
+    pub fn adjust_life(&mut self, delta: i32) {
+        self.life = self.life.saturating_add_signed(delta);
     }
 
     pub fn gain_life(&mut self, amount: u32) {

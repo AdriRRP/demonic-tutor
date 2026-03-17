@@ -1,5 +1,5 @@
-use demonictutor::domain::cards::{CardDefinition, CardInstance, CardType};
-use demonictutor::domain::ids::{CardDefinitionId, CardInstanceId};
+use demonictutor::domain::play::cards::{CardDefinition, CardInstance, CardType};
+use demonictutor::domain::play::ids::{CardDefinitionId, CardInstanceId};
 
 #[test]
 fn test_is_permanent_returns_true_for_permanent_types() {

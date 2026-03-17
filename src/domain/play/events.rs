@@ -1,27 +1,37 @@
-use crate::domain::{
+use crate::domain::play::{
+    cards::CardType,
     ids::{CardInstanceId, GameId, PlayerId},
     phase::Phase,
 };
+
+macro_rules! impl_domain_event_from {
+    ($event_type:ident, $variant:ident) => {
+        impl From<$event_type> for DomainEvent {
+            fn from(event: $event_type) -> Self {
+                Self::$variant(event)
+            }
+        }
+    };
+}
 
 #[derive(Debug, Clone)]
 pub enum DomainEvent {
     GameStarted(GameStarted),
     OpeningHandDealt(OpeningHandDealt),
     LandPlayed(LandPlayed),
-    TurnAdvanced(TurnAdvanced),
+    TurnProgressed(TurnProgressed),
     CardDrawn(CardDrawn),
     MulliganTaken(MulliganTaken),
     LifeChanged(LifeChanged),
-    TurnNumberChanged(TurnNumberChanged),
-    PhaseChanged(PhaseChanged),
     LandTapped(LandTapped),
     ManaAdded(ManaAdded),
     SpellCast(SpellCast),
-    CreatureEnteredBattlefield(CreatureEnteredBattlefield),
     AttackersDeclared(AttackersDeclared),
     BlockersDeclared(BlockersDeclared),
     CombatDamageResolved(CombatDamageResolved),
 }
+
+// Game lifecycle events
 
 #[derive(Debug, Clone)]
 pub struct GameStarted {
@@ -54,6 +64,85 @@ impl OpeningHandDealt {
     }
 }
 
+// Turn flow events
+
+#[derive(Debug, Clone)]
+pub struct TurnProgressed {
+    pub game_id: GameId,
+    pub active_player: PlayerId,
+    pub from_turn: u32,
+    pub to_turn: u32,
+    pub from_phase: Phase,
+    pub to_phase: Phase,
+}
+
+impl TurnProgressed {
+    #[must_use]
+    pub const fn new(
+        game_id: GameId,
+        active_player: PlayerId,
+        from_turn: u32,
+        to_turn: u32,
+        from_phase: Phase,
+        to_phase: Phase,
+    ) -> Self {
+        Self {
+            game_id,
+            active_player,
+            from_turn,
+            to_turn,
+            from_phase,
+            to_phase,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DrawKind {
+    TurnStep,
+    ExplicitAction,
+}
+
+#[derive(Debug, Clone)]
+pub struct CardDrawn {
+    pub game_id: GameId,
+    pub player_id: PlayerId,
+    pub card_id: CardInstanceId,
+    pub draw_kind: DrawKind,
+}
+
+impl CardDrawn {
+    #[must_use]
+    pub const fn new(
+        game_id: GameId,
+        player_id: PlayerId,
+        card_id: CardInstanceId,
+        draw_kind: DrawKind,
+    ) -> Self {
+        Self {
+            game_id,
+            player_id,
+            card_id,
+            draw_kind,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct MulliganTaken {
+    pub game_id: GameId,
+    pub player_id: PlayerId,
+}
+
+impl MulliganTaken {
+    #[must_use]
+    pub const fn new(game_id: GameId, player_id: PlayerId) -> Self {
+        Self { game_id, player_id }
+    }
+}
+
+// Resource and battlefield events
+
 #[derive(Debug, Clone)]
 pub struct LandPlayed {
     pub game_id: GameId,
@@ -73,53 +162,6 @@ impl LandPlayed {
 }
 
 #[derive(Debug, Clone)]
-pub struct TurnAdvanced {
-    pub game_id: GameId,
-    pub new_active_player: PlayerId,
-}
-
-impl TurnAdvanced {
-    #[must_use]
-    pub const fn new(game_id: GameId, new_active_player: PlayerId) -> Self {
-        Self {
-            game_id,
-            new_active_player,
-        }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct CardDrawn {
-    pub game_id: GameId,
-    pub player_id: PlayerId,
-    pub card_id: CardInstanceId,
-}
-
-impl CardDrawn {
-    #[must_use]
-    pub const fn new(game_id: GameId, player_id: PlayerId, card_id: CardInstanceId) -> Self {
-        Self {
-            game_id,
-            player_id,
-            card_id,
-        }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct MulliganTaken {
-    pub game_id: GameId,
-    pub player_id: PlayerId,
-}
-
-impl MulliganTaken {
-    #[must_use]
-    pub const fn new(game_id: GameId, player_id: PlayerId) -> Self {
-        Self { game_id, player_id }
-    }
-}
-
-#[derive(Debug, Clone)]
 pub struct LifeChanged {
     pub game_id: GameId,
     pub player_id: PlayerId,
@@ -135,42 +177,6 @@ impl LifeChanged {
             player_id,
             from_life,
             to_life,
-        }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct TurnNumberChanged {
-    pub game_id: GameId,
-    pub from_turn: u32,
-    pub to_turn: u32,
-}
-
-impl TurnNumberChanged {
-    #[must_use]
-    pub const fn new(game_id: GameId, from_turn: u32, to_turn: u32) -> Self {
-        Self {
-            game_id,
-            from_turn,
-            to_turn,
-        }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct PhaseChanged {
-    pub game_id: GameId,
-    pub from_phase: Phase,
-    pub to_phase: Phase,
-}
-
-impl PhaseChanged {
-    #[must_use]
-    pub const fn new(game_id: GameId, from_phase: Phase, to_phase: Phase) -> Self {
-        Self {
-            game_id,
-            from_phase,
-            to_phase,
         }
     }
 }
@@ -219,50 +225,43 @@ impl ManaAdded {
 }
 
 #[derive(Debug, Clone)]
+pub enum SpellCastOutcome {
+    EnteredBattlefield,
+    ResolvedToGraveyard,
+}
+
+#[derive(Debug, Clone)]
 pub struct SpellCast {
     pub game_id: GameId,
     pub player_id: PlayerId,
     pub card_id: CardInstanceId,
+    pub card_type: CardType,
+    pub mana_cost_paid: u32,
+    pub outcome: SpellCastOutcome,
 }
 
 impl SpellCast {
-    #[must_use]
-    pub const fn new(game_id: GameId, player_id: PlayerId, card_id: CardInstanceId) -> Self {
-        Self {
-            game_id,
-            player_id,
-            card_id,
-        }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct CreatureEnteredBattlefield {
-    pub game_id: GameId,
-    pub player_id: PlayerId,
-    pub card_id: CardInstanceId,
-    pub power: u32,
-    pub toughness: u32,
-}
-
-impl CreatureEnteredBattlefield {
     #[must_use]
     pub const fn new(
         game_id: GameId,
         player_id: PlayerId,
         card_id: CardInstanceId,
-        power: u32,
-        toughness: u32,
+        card_type: CardType,
+        mana_cost_paid: u32,
+        outcome: SpellCastOutcome,
     ) -> Self {
         Self {
             game_id,
             player_id,
             card_id,
-            power,
-            toughness,
+            card_type,
+            mana_cost_paid,
+            outcome,
         }
     }
 }
+
+// Combat events
 
 #[derive(Debug, Clone)]
 pub struct AttackersDeclared {
@@ -339,98 +338,16 @@ impl CombatDamageResolved {
     }
 }
 
-impl From<GameStarted> for DomainEvent {
-    fn from(event: GameStarted) -> Self {
-        Self::GameStarted(event)
-    }
-}
-
-impl From<OpeningHandDealt> for DomainEvent {
-    fn from(event: OpeningHandDealt) -> Self {
-        Self::OpeningHandDealt(event)
-    }
-}
-
-impl From<LandPlayed> for DomainEvent {
-    fn from(event: LandPlayed) -> Self {
-        Self::LandPlayed(event)
-    }
-}
-
-impl From<TurnAdvanced> for DomainEvent {
-    fn from(event: TurnAdvanced) -> Self {
-        Self::TurnAdvanced(event)
-    }
-}
-
-impl From<CardDrawn> for DomainEvent {
-    fn from(event: CardDrawn) -> Self {
-        Self::CardDrawn(event)
-    }
-}
-
-impl From<MulliganTaken> for DomainEvent {
-    fn from(event: MulliganTaken) -> Self {
-        Self::MulliganTaken(event)
-    }
-}
-
-impl From<LifeChanged> for DomainEvent {
-    fn from(event: LifeChanged) -> Self {
-        Self::LifeChanged(event)
-    }
-}
-
-impl From<TurnNumberChanged> for DomainEvent {
-    fn from(event: TurnNumberChanged) -> Self {
-        Self::TurnNumberChanged(event)
-    }
-}
-
-impl From<PhaseChanged> for DomainEvent {
-    fn from(event: PhaseChanged) -> Self {
-        Self::PhaseChanged(event)
-    }
-}
-
-impl From<LandTapped> for DomainEvent {
-    fn from(event: LandTapped) -> Self {
-        Self::LandTapped(event)
-    }
-}
-
-impl From<ManaAdded> for DomainEvent {
-    fn from(event: ManaAdded) -> Self {
-        Self::ManaAdded(event)
-    }
-}
-
-impl From<SpellCast> for DomainEvent {
-    fn from(event: SpellCast) -> Self {
-        Self::SpellCast(event)
-    }
-}
-
-impl From<CreatureEnteredBattlefield> for DomainEvent {
-    fn from(event: CreatureEnteredBattlefield) -> Self {
-        Self::CreatureEnteredBattlefield(event)
-    }
-}
-
-impl From<AttackersDeclared> for DomainEvent {
-    fn from(event: AttackersDeclared) -> Self {
-        Self::AttackersDeclared(event)
-    }
-}
-
-impl From<BlockersDeclared> for DomainEvent {
-    fn from(event: BlockersDeclared) -> Self {
-        Self::BlockersDeclared(event)
-    }
-}
-
-impl From<CombatDamageResolved> for DomainEvent {
-    fn from(event: CombatDamageResolved) -> Self {
-        Self::CombatDamageResolved(event)
-    }
-}
+impl_domain_event_from!(GameStarted, GameStarted);
+impl_domain_event_from!(OpeningHandDealt, OpeningHandDealt);
+impl_domain_event_from!(LandPlayed, LandPlayed);
+impl_domain_event_from!(TurnProgressed, TurnProgressed);
+impl_domain_event_from!(CardDrawn, CardDrawn);
+impl_domain_event_from!(MulliganTaken, MulliganTaken);
+impl_domain_event_from!(LifeChanged, LifeChanged);
+impl_domain_event_from!(LandTapped, LandTapped);
+impl_domain_event_from!(ManaAdded, ManaAdded);
+impl_domain_event_from!(SpellCast, SpellCast);
+impl_domain_event_from!(AttackersDeclared, AttackersDeclared);
+impl_domain_event_from!(BlockersDeclared, BlockersDeclared);
+impl_domain_event_from!(CombatDamageResolved, CombatDamageResolved);

@@ -1,7 +1,5 @@
-pub mod commands;
 pub mod game_service;
-pub mod traits;
+pub mod ports;
 
-pub use commands::Command;
 pub use game_service::GameService;
-pub use traits::{EventBus, EventStore};
+pub use ports::{EventBus, EventStore};

@@ -1,4 +1,4 @@
-use {crate::domain::events::DomainEvent, std::error::Error};
+use {crate::domain::play::events::DomainEvent, std::error::Error};
 
 pub trait EventBus: Send + Sync {
     fn publish(&self, event: &DomainEvent);

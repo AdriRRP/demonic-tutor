@@ -1,17 +1,16 @@
 use crate::{
-    application::{Command, EventBus, EventStore},
-    domain::{
+    application::{EventBus, EventStore},
+    domain::play::{
         commands::{
-            AdvanceTurnCommand, CastSpellCommand, DealOpeningHandsCommand, DeclareAttackersCommand,
-            DeclareBlockersCommand, DrawCardCommand, MulliganCommand, PlayCreatureCommand,
-            PlayLandCommand, ResolveCombatDamageCommand, SetLifeCommand, StartGameCommand,
-            TapLandCommand,
+            AdjustLifeCommand, AdvanceTurnCommand, CastSpellCommand, DealOpeningHandsCommand,
+            DeclareAttackersCommand, DeclareBlockersCommand, DrawCardCommand, MulliganCommand,
+            PlayLandCommand, ResolveCombatDamageCommand, StartGameCommand, TapLandCommand,
         },
-        errors::DomainError,
+        errors::{DomainError, GameError},
         events::{
-            AttackersDeclared, BlockersDeclared, CardDrawn, CombatDamageResolved,
-            CreatureEnteredBattlefield, DomainEvent, GameStarted, LandPlayed, LandTapped,
-            LifeChanged, ManaAdded, MulliganTaken, OpeningHandDealt, SpellCast, TurnAdvanced,
+            AttackersDeclared, BlockersDeclared, CardDrawn, CombatDamageResolved, DomainEvent,
+            GameStarted, LandPlayed, LandTapped, LifeChanged, ManaAdded, MulliganTaken,
+            OpeningHandDealt, SpellCast, TurnProgressed,
         },
         game::Game,
     },
@@ -39,27 +38,46 @@ where
         }
     }
 
-    fn persist_and_publish_events(&self, game_id: &str, events: &[DomainEvent]) {
+    fn persist_and_publish_events(
+        &self,
+        game_id: &str,
+        events: &[DomainEvent],
+    ) -> Result<(), DomainError> {
         if !events.is_empty() {
-            let _ = self.event_store.append(game_id, events);
+            self.event_store.append(game_id, events).map_err(|err| {
+                DomainError::Game(GameError::InternalInvariantViolation(format!(
+                    "failed to persist domain events for aggregate {game_id}: {err}"
+                )))
+            })?;
             for event in events {
                 self.event_bus.publish(event);
             }
         }
+
+        Ok(())
     }
 
-    /// Executes a command using the `Command` pattern.
-    ///
-    /// # Errors
-    /// Returns a `DomainError` if the command violates domain rules or invariants.
-    pub fn execute_command<C: Command>(
+    fn persist_and_publish_event<T>(&self, game_id: &str, event: &T) -> Result<(), DomainError>
+    where
+        T: Clone + Into<DomainEvent>,
+    {
+        self.persist_and_publish_events(game_id, &[event.clone().into()])
+    }
+
+    fn persist_and_publish_event_batch<T>(
         &self,
-        game: &mut Game,
-        command: &C,
-    ) -> Result<Vec<DomainEvent>, DomainError> {
-        let events = game.execute_command(command)?;
-        self.persist_and_publish_events(game.id().as_str(), &events);
-        Ok(events)
+        game_id: &str,
+        events: &[T],
+    ) -> Result<(), DomainError>
+    where
+        T: Clone + Into<DomainEvent>,
+    {
+        if events.is_empty() {
+            return Ok(());
+        }
+
+        let domain_events = events.iter().cloned().map(Into::into).collect::<Vec<_>>();
+        self.persist_and_publish_events(game_id, &domain_events)
     }
 
     /// Starts a new game.
@@ -69,9 +87,7 @@ where
     /// Returns an error if the command is invalid.
     pub fn start_game(&self, cmd: StartGameCommand) -> Result<(Game, GameStarted), DomainError> {
         let (game, event) = Game::start(cmd)?;
-        let domain_event: DomainEvent = event.clone().into();
-
-        self.persist_and_publish_events(game.id().as_str(), &[domain_event]);
+        self.persist_and_publish_event(game.id().as_str(), &event)?;
 
         Ok((game, event))
     }
@@ -87,11 +103,7 @@ where
         cmd: &DealOpeningHandsCommand,
     ) -> Result<Vec<OpeningHandDealt>, DomainError> {
         let events = game.deal_opening_hands(cmd)?;
-
-        if !events.is_empty() {
-            let domain_events: Vec<DomainEvent> = events.iter().cloned().map(Into::into).collect();
-            self.persist_and_publish_events(game.id().as_str(), &domain_events);
-        }
+        self.persist_and_publish_event_batch(game.id().as_str(), &events)?;
 
         Ok(events)
     }
@@ -107,9 +119,7 @@ where
         cmd: PlayLandCommand,
     ) -> Result<LandPlayed, DomainError> {
         let event = game.play_land(cmd)?;
-        let domain_event: DomainEvent = event.clone().into();
-
-        self.persist_and_publish_events(game.id().as_str(), &[domain_event]);
+        self.persist_and_publish_event(game.id().as_str(), &event)?;
 
         Ok(event)
     }
@@ -123,19 +133,15 @@ where
         &self,
         game: &mut Game,
         cmd: AdvanceTurnCommand,
-    ) -> Result<TurnAdvanced, DomainError> {
-        let (turn_event, turn_number_event, phase_event, card_drawn) = game.advance_turn(cmd)?;
+    ) -> Result<TurnProgressed, DomainError> {
+        let (turn_event, card_drawn) = game.advance_turn(cmd)?;
 
-        let mut domain_events = vec![
-            turn_event.clone().into(),
-            turn_number_event.into(),
-            phase_event.into(),
-        ];
+        let mut domain_events = vec![turn_event.clone().into()];
         if let Some(draw_event) = card_drawn {
             domain_events.push(draw_event.into());
         }
 
-        self.persist_and_publish_events(game.id().as_str(), &domain_events);
+        self.persist_and_publish_events(game.id().as_str(), &domain_events)?;
 
         Ok(turn_event)
     }
@@ -151,9 +157,7 @@ where
         cmd: DrawCardCommand,
     ) -> Result<CardDrawn, DomainError> {
         let event = game.draw_card(cmd)?;
-        let domain_event: DomainEvent = event.clone().into();
-
-        self.persist_and_publish_events(game.id().as_str(), &[domain_event]);
+        self.persist_and_publish_event(game.id().as_str(), &event)?;
 
         Ok(event)
     }
@@ -169,27 +173,23 @@ where
         cmd: MulliganCommand,
     ) -> Result<MulliganTaken, DomainError> {
         let event = game.mulligan(cmd)?;
-        let domain_event: DomainEvent = event.clone().into();
-
-        self.persist_and_publish_events(game.id().as_str(), &[domain_event]);
+        self.persist_and_publish_event(game.id().as_str(), &event)?;
 
         Ok(event)
     }
 
-    /// Sets a player's life total.
+    /// Adjusts a player's life total by a signed delta.
     ///
     /// # Errors
     ///
     /// Returns an error if the command is invalid.
-    pub fn set_life(
+    pub fn adjust_life(
         &self,
         game: &mut Game,
-        cmd: SetLifeCommand,
+        cmd: AdjustLifeCommand,
     ) -> Result<LifeChanged, DomainError> {
-        let event = game.set_life(cmd)?;
-        let domain_event: DomainEvent = event.clone().into();
-
-        self.persist_and_publish_events(game.id().as_str(), &[domain_event]);
+        let event = game.adjust_life(cmd)?;
+        self.persist_and_publish_event(game.id().as_str(), &event)?;
 
         Ok(event)
     }
@@ -205,9 +205,8 @@ where
         cmd: TapLandCommand,
     ) -> Result<(LandTapped, ManaAdded), DomainError> {
         let (land_event, mana_event) = game.tap_land(cmd)?;
-
         let domain_events = vec![land_event.clone().into(), mana_event.clone().into()];
-        self.persist_and_publish_events(game.id().as_str(), &domain_events);
+        self.persist_and_publish_events(game.id().as_str(), &domain_events)?;
 
         Ok((land_event, mana_event))
     }
@@ -223,27 +222,7 @@ where
         cmd: CastSpellCommand,
     ) -> Result<SpellCast, DomainError> {
         let event = game.cast_spell(cmd)?;
-        let domain_event: DomainEvent = event.clone().into();
-
-        self.persist_and_publish_events(game.id().as_str(), &[domain_event]);
-
-        Ok(event)
-    }
-
-    /// Plays a creature.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the command is invalid.
-    pub fn play_creature(
-        &self,
-        game: &mut Game,
-        cmd: PlayCreatureCommand,
-    ) -> Result<CreatureEnteredBattlefield, DomainError> {
-        let event = game.play_creature(cmd)?;
-        let domain_event: DomainEvent = event.clone().into();
-
-        self.persist_and_publish_events(game.id().as_str(), &[domain_event]);
+        self.persist_and_publish_event(game.id().as_str(), &event)?;
 
         Ok(event)
     }
@@ -259,9 +238,7 @@ where
         cmd: DeclareAttackersCommand,
     ) -> Result<AttackersDeclared, DomainError> {
         let event = game.declare_attackers(cmd)?;
-        let domain_event: DomainEvent = event.clone().into();
-
-        self.persist_and_publish_events(game.id().as_str(), &[domain_event]);
+        self.persist_and_publish_event(game.id().as_str(), &event)?;
 
         Ok(event)
     }
@@ -277,9 +254,7 @@ where
         cmd: DeclareBlockersCommand,
     ) -> Result<BlockersDeclared, DomainError> {
         let event = game.declare_blockers(cmd)?;
-        let domain_event: DomainEvent = event.clone().into();
-
-        self.persist_and_publish_events(game.id().as_str(), &[domain_event]);
+        self.persist_and_publish_event(game.id().as_str(), &event)?;
 
         Ok(event)
     }
@@ -295,9 +270,7 @@ where
         cmd: ResolveCombatDamageCommand,
     ) -> Result<CombatDamageResolved, DomainError> {
         let event = game.resolve_combat_damage(cmd)?;
-        let domain_event: DomainEvent = event.clone().into();
-
-        self.persist_and_publish_events(game.id().as_str(), &[domain_event]);
+        self.persist_and_publish_event(game.id().as_str(), &event)?;
 
         Ok(event)
     }

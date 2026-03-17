@@ -1,39 +1,24 @@
-pub mod combat;
-pub mod creatures;
-pub mod draw;
-pub mod lands;
-pub mod life;
-pub mod mana;
-pub mod mulligan;
-pub mod opening_hands;
-pub mod phase_behavior;
-pub mod spells;
-pub mod start_game;
-pub mod turns;
+mod invariants;
+pub mod model;
+pub mod rules;
 
-use crate::{
-    application::Command,
-    domain::{
-        commands::{
-            AdvanceTurnCommand, CastSpellCommand, DealOpeningHandsCommand, DeclareAttackersCommand,
-            DeclareBlockersCommand, DrawCardCommand, MulliganCommand, PlayCreatureCommand,
-            PlayLandCommand, ResolveCombatDamageCommand, StartGameCommand, TapLandCommand,
-        },
-        errors::{DomainError, GameError, PhaseError},
-        events::{
-            AttackersDeclared, BlockersDeclared, CardDrawn, CombatDamageResolved,
-            CreatureEnteredBattlefield, DomainEvent, GameStarted, LandPlayed, LandTapped,
-            LifeChanged, ManaAdded, MulliganTaken, OpeningHandDealt, PhaseChanged, SpellCast,
-            TurnAdvanced, TurnNumberChanged,
-        },
-        ids::{GameId, PlayerId},
-        phase::Phase,
+use crate::domain::play::{
+    commands::{
+        AdjustLifeCommand, AdvanceTurnCommand, CastSpellCommand, DealOpeningHandsCommand,
+        DeclareAttackersCommand, DeclareBlockersCommand, DrawCardCommand, MulliganCommand,
+        PlayLandCommand, ResolveCombatDamageCommand, StartGameCommand, TapLandCommand,
     },
+    errors::{DomainError, GameError},
+    events::{
+        AttackersDeclared, BlockersDeclared, CardDrawn, CombatDamageResolved, GameStarted,
+        LandPlayed, LandTapped, LifeChanged, ManaAdded, MulliganTaken, OpeningHandDealt, SpellCast,
+        TurnProgressed,
+    },
+    ids::{GameId, PlayerId},
+    phase::Phase,
 };
 
-mod player;
-
-pub use player::Player;
+pub use model::Player;
 
 #[derive(Debug)]
 pub struct Game {
@@ -98,42 +83,31 @@ impl Game {
             .ok_or_else(|| DomainError::Game(GameError::PlayerNotFound(player_id.clone())))
     }
 
-    /// Executes a command using the `Command` pattern.
-    ///
-    /// # Errors
-    /// Returns a `DomainError` if the command violates domain rules or invariants.
-    pub fn execute_command<C: Command>(
-        &mut self,
-        command: &C,
-    ) -> Result<Vec<DomainEvent>, DomainError> {
-        command.execute(self)
-    }
-
     /// Starts a new game.
     ///
     /// # Errors
-    /// See [`start_game::start`].
+    /// See [`rules::lifecycle::start`].
     pub fn start(cmd: StartGameCommand) -> Result<(Self, GameStarted), DomainError> {
-        start_game::start(cmd)
+        rules::lifecycle::start(cmd)
     }
 
     /// Deals opening hands to players.
     ///
     /// # Errors
-    /// See [`opening_hands::deal_opening_hands`].
+    /// See [`rules::lifecycle::deal_opening_hands`].
     pub fn deal_opening_hands(
         &mut self,
         cmd: &DealOpeningHandsCommand,
     ) -> Result<Vec<OpeningHandDealt>, DomainError> {
-        opening_hands::deal_opening_hands(&mut self.players, cmd, &self.id)
+        rules::lifecycle::deal_opening_hands(&mut self.players, cmd, &self.id)
     }
 
     /// Performs a mulligan.
     ///
     /// # Errors
-    /// See [`mulligan::mulligan`].
+    /// See [`rules::lifecycle::mulligan`].
     pub fn mulligan(&mut self, cmd: MulliganCommand) -> Result<MulliganTaken, DomainError> {
-        mulligan::mulligan(
+        rules::lifecycle::mulligan(
             &self.id,
             &mut self.players,
             &self.active_player,
@@ -145,9 +119,9 @@ impl Game {
     /// Plays a land from hand to battlefield.
     ///
     /// # Errors
-    /// See [`lands::play_land`].
+    /// See [`rules::resource_actions::play_land`].
     pub fn play_land(&mut self, cmd: PlayLandCommand) -> Result<LandPlayed, DomainError> {
-        lands::play_land(
+        rules::resource_actions::play_land(
             &self.id,
             &mut self.players,
             &self.active_player,
@@ -159,20 +133,12 @@ impl Game {
     /// Advances the turn to the next phase and player.
     ///
     /// # Errors
-    /// See [`turns::advance_turn`].
+    /// See [`rules::turn_flow::advance_turn`].
     pub fn advance_turn(
         &mut self,
         cmd: AdvanceTurnCommand,
-    ) -> Result<
-        (
-            TurnAdvanced,
-            TurnNumberChanged,
-            PhaseChanged,
-            Option<CardDrawn>,
-        ),
-        DomainError,
-    > {
-        turns::advance_turn(
+    ) -> Result<(TurnProgressed, Option<CardDrawn>), DomainError> {
+        rules::turn_flow::advance_turn(
             &self.id,
             &mut self.players,
             &mut self.active_player,
@@ -185,9 +151,9 @@ impl Game {
     /// Draws a card from library to hand.
     ///
     /// # Errors
-    /// See [`draw::draw_card`].
+    /// See [`rules::turn_flow::draw_card`].
     pub fn draw_card(&mut self, cmd: DrawCardCommand) -> Result<CardDrawn, DomainError> {
-        draw::draw_card(
+        rules::turn_flow::draw_card(
             &self.id,
             &mut self.players,
             &self.active_player,
@@ -196,51 +162,31 @@ impl Game {
         )
     }
 
-    /// Sets a player's life total.
+    /// Adjusts a player's life total by a signed delta.
     ///
     /// # Errors
-    /// See [`life::set_life`].
-    pub fn set_life(
-        &mut self,
-        cmd: crate::domain::commands::SetLifeCommand,
-    ) -> Result<LifeChanged, DomainError> {
-        life::set_life(&self.id, &mut self.players, cmd)
+    /// See [`rules::resource_actions::adjust_life`].
+    pub fn adjust_life(&mut self, cmd: AdjustLifeCommand) -> Result<LifeChanged, DomainError> {
+        rules::resource_actions::adjust_life(&self.id, &mut self.players, cmd)
     }
 
     /// Taps a land to produce mana.
     ///
     /// # Errors
-    /// See [`mana::tap_land`].
+    /// See [`rules::resource_actions::tap_land`].
     pub fn tap_land(
         &mut self,
         cmd: TapLandCommand,
     ) -> Result<(LandTapped, ManaAdded), DomainError> {
-        mana::tap_land(&self.id, &mut self.players, cmd)
+        rules::resource_actions::tap_land(&self.id, &mut self.players, cmd)
     }
 
-    /// Casts a non-creature spell.
+    /// Casts a spell.
     ///
     /// # Errors
-    /// See [`spells::cast_spell`].
+    /// See [`rules::resource_actions::cast_spell`].
     pub fn cast_spell(&mut self, cmd: CastSpellCommand) -> Result<SpellCast, DomainError> {
-        spells::cast_spell(
-            &self.id,
-            &mut self.players,
-            &self.active_player,
-            &self.phase,
-            cmd,
-        )
-    }
-
-    /// Plays a creature from hand to battlefield.
-    ///
-    /// # Errors
-    /// See [`creatures::play_creature`].
-    pub fn play_creature(
-        &mut self,
-        cmd: PlayCreatureCommand,
-    ) -> Result<CreatureEnteredBattlefield, DomainError> {
-        creatures::play_creature(
+        rules::resource_actions::cast_spell(
             &self.id,
             &mut self.players,
             &self.active_player,
@@ -252,12 +198,12 @@ impl Game {
     /// Declares attackers in combat.
     ///
     /// # Errors
-    /// See [`combat::declare_attackers`].
+    /// See [`rules::combat::declare_attackers`].
     pub fn declare_attackers(
         &mut self,
         cmd: DeclareAttackersCommand,
     ) -> Result<AttackersDeclared, DomainError> {
-        combat::declare_attackers(
+        rules::combat::declare_attackers(
             &self.id,
             &mut self.players,
             &self.active_player,
@@ -269,12 +215,12 @@ impl Game {
     /// Declares blockers in combat.
     ///
     /// # Errors
-    /// See [`combat::declare_blockers`].
+    /// See [`rules::combat::declare_blockers`].
     pub fn declare_blockers(
         &mut self,
         cmd: DeclareBlockersCommand,
     ) -> Result<BlockersDeclared, DomainError> {
-        combat::declare_blockers(
+        rules::combat::declare_blockers(
             &self.id,
             &mut self.players,
             &self.active_player,
@@ -286,12 +232,12 @@ impl Game {
     /// Resolves combat damage.
     ///
     /// # Errors
-    /// See [`combat::resolve_combat_damage`].
+    /// See [`rules::combat::resolve_combat_damage`].
     pub fn resolve_combat_damage(
         &mut self,
         cmd: ResolveCombatDamageCommand,
     ) -> Result<CombatDamageResolved, DomainError> {
-        combat::resolve_combat_damage(
+        rules::combat::resolve_combat_damage(
             &self.id,
             &mut self.players,
             &self.active_player,

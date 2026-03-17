@@ -1,7 +1,9 @@
-use crate::domain::{
-    cards::CardType,
+use crate::domain::play::{
+    cards::{CardInstance, CardType},
     ids::{CardDefinitionId, CardInstanceId, DeckId, GameId, PlayerId},
 };
+
+// Setup and deck-to-play translation
 
 #[derive(Debug, Clone)]
 pub struct PlayerDeck {
@@ -16,24 +18,56 @@ impl PlayerDeck {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct CardWithCost {
-    pub definition_id: CardDefinitionId,
-    pub card_type: CardType,
-    pub mana_cost: u32,
-    pub power: Option<u32>,
-    pub toughness: Option<u32>,
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum NonCreatureCardType {
+    Land,
+    Instant,
+    Sorcery,
+    Enchantment,
+    Artifact,
+    Planeswalker,
 }
 
-impl CardWithCost {
+impl NonCreatureCardType {
     #[must_use]
-    pub const fn new(definition_id: CardDefinitionId, card_type: CardType, mana_cost: u32) -> Self {
-        Self {
+    pub const fn to_card_type(self) -> CardType {
+        match self {
+            Self::Land => CardType::Land,
+            Self::Instant => CardType::Instant,
+            Self::Sorcery => CardType::Sorcery,
+            Self::Enchantment => CardType::Enchantment,
+            Self::Artifact => CardType::Artifact,
+            Self::Planeswalker => CardType::Planeswalker,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum LibraryCard {
+    NonCreature {
+        definition_id: CardDefinitionId,
+        card_type: NonCreatureCardType,
+        mana_cost: u32,
+    },
+    Creature {
+        definition_id: CardDefinitionId,
+        mana_cost: u32,
+        power: u32,
+        toughness: u32,
+    },
+}
+
+impl LibraryCard {
+    #[must_use]
+    pub const fn non_creature(
+        definition_id: CardDefinitionId,
+        card_type: NonCreatureCardType,
+        mana_cost: u32,
+    ) -> Self {
+        Self::NonCreature {
             definition_id,
             card_type,
             mana_cost,
-            power: None,
-            toughness: None,
         }
     }
 
@@ -44,28 +78,57 @@ impl CardWithCost {
         power: u32,
         toughness: u32,
     ) -> Self {
-        Self {
+        Self::Creature {
             definition_id,
-            card_type: CardType::Creature,
             mana_cost,
-            power: Some(power),
-            toughness: Some(toughness),
+            power,
+            toughness,
+        }
+    }
+
+    #[must_use]
+    pub fn to_card_instance(&self, card_id: CardInstanceId) -> CardInstance {
+        match self {
+            Self::Creature {
+                definition_id,
+                mana_cost,
+                power,
+                toughness,
+            } => CardInstance::new_creature(
+                card_id,
+                definition_id.clone(),
+                *mana_cost,
+                *power,
+                *toughness,
+            ),
+            Self::NonCreature {
+                definition_id,
+                card_type,
+                mana_cost,
+            } => CardInstance::new(
+                card_id,
+                definition_id.clone(),
+                card_type.to_card_type(),
+                *mana_cost,
+            ),
         }
     }
 }
 
 #[derive(Debug, Clone)]
-pub struct PlayerDeckContents {
+pub struct PlayerLibrary {
     pub player_id: PlayerId,
-    pub cards: Vec<CardWithCost>,
+    pub cards: Vec<LibraryCard>,
 }
 
-impl PlayerDeckContents {
+impl PlayerLibrary {
     #[must_use]
-    pub const fn new(player_id: PlayerId, cards: Vec<CardWithCost>) -> Self {
+    pub const fn new(player_id: PlayerId, cards: Vec<LibraryCard>) -> Self {
         Self { player_id, cards }
     }
 }
+
+// Game lifecycle commands
 
 #[derive(Debug, Clone)]
 pub struct StartGameCommand {
@@ -82,28 +145,29 @@ impl StartGameCommand {
 
 #[derive(Debug, Clone)]
 pub struct DealOpeningHandsCommand {
-    pub player_cards: Vec<PlayerDeckContents>,
+    pub player_libraries: Vec<PlayerLibrary>,
 }
 
 impl DealOpeningHandsCommand {
     #[must_use]
-    pub const fn new(player_cards: Vec<PlayerDeckContents>) -> Self {
-        Self { player_cards }
+    pub const fn new(player_libraries: Vec<PlayerLibrary>) -> Self {
+        Self { player_libraries }
     }
 }
 
 #[derive(Debug, Clone)]
-pub struct PlayLandCommand {
+pub struct MulliganCommand {
     pub player_id: PlayerId,
-    pub card_id: CardInstanceId,
 }
 
-impl PlayLandCommand {
+impl MulliganCommand {
     #[must_use]
-    pub const fn new(player_id: PlayerId, card_id: CardInstanceId) -> Self {
-        Self { player_id, card_id }
+    pub const fn new(player_id: PlayerId) -> Self {
+        Self { player_id }
     }
 }
+
+// Turn flow commands
 
 #[derive(Debug, Clone, Default)]
 pub struct AdvanceTurnCommand;
@@ -127,30 +191,33 @@ impl DrawCardCommand {
     }
 }
 
+// Resource and battlefield commands
+
 #[derive(Debug, Clone)]
-pub struct MulliganCommand {
+pub struct PlayLandCommand {
     pub player_id: PlayerId,
+    pub card_id: CardInstanceId,
 }
 
-impl MulliganCommand {
+impl PlayLandCommand {
     #[must_use]
-    pub const fn new(player_id: PlayerId) -> Self {
-        Self { player_id }
+    pub const fn new(player_id: PlayerId, card_id: CardInstanceId) -> Self {
+        Self { player_id, card_id }
     }
 }
 
 #[derive(Debug, Clone)]
-pub struct SetLifeCommand {
+pub struct AdjustLifeCommand {
     pub player_id: PlayerId,
-    pub life_change: i32,
+    pub life_delta: i32,
 }
 
-impl SetLifeCommand {
+impl AdjustLifeCommand {
     #[must_use]
-    pub const fn new(player_id: PlayerId, life_change: i32) -> Self {
+    pub const fn new(player_id: PlayerId, life_delta: i32) -> Self {
         Self {
             player_id,
-            life_change,
+            life_delta,
         }
     }
 }
@@ -181,18 +248,7 @@ impl CastSpellCommand {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct PlayCreatureCommand {
-    pub player_id: PlayerId,
-    pub card_id: CardInstanceId,
-}
-
-impl PlayCreatureCommand {
-    #[must_use]
-    pub const fn new(player_id: PlayerId, card_id: CardInstanceId) -> Self {
-        Self { player_id, card_id }
-    }
-}
+// Combat commands
 
 #[derive(Debug, Clone)]
 pub struct DeclareAttackersCommand {

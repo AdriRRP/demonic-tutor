@@ -1,101 +1,40 @@
 #![allow(clippy::unwrap_used)]
 
+mod support;
+
 use std::sync::Arc;
 
 use demonictutor::{
-    AdvanceTurnCommand, CardDefinitionId, CardType, CardWithCost, DealOpeningHandsCommand, DeckId,
-    DomainEvent, GameId, GameLogProjection, GameService, InMemoryEventBus, InMemoryEventStore,
-    PlayerDeck, PlayerDeckContents, PlayerId, StartGameCommand,
+    AdvanceTurnCommand, DomainEvent, GameLogProjection, GameService, InMemoryEventBus,
+    InMemoryEventStore,
 };
-
-fn player_deck(player: &str, deck: &str) -> PlayerDeck {
-    PlayerDeck::new(PlayerId::new(player), DeckId::new(deck))
-}
-
-fn player_deck_contents(player: &str, cards: Vec<CardWithCost>) -> PlayerDeckContents {
-    PlayerDeckContents::new(PlayerId::new(player), cards)
-}
-
-fn create_service() -> GameService<InMemoryEventStore, InMemoryEventBus> {
-    GameService::new(InMemoryEventStore::new(), InMemoryEventBus::new())
-}
+use support::{advance_n, filled_library, land_card, setup_two_player_game};
 
 #[test]
 fn game_starts_with_turn_number_1() {
-    let service = create_service();
-    let (game, _) = service
-        .start_game(StartGameCommand::new(
-            GameId::new("game-1"),
-            vec![
-                player_deck("player-1", "deck-1"),
-                player_deck("player-2", "deck-2"),
-            ],
-        ))
-        .unwrap();
+    let service = support::create_service();
+    let game = support::start_two_player_game(&service, "game-1");
 
     assert_eq!(game.turn_number(), 1);
 }
 
 #[test]
 fn advance_turn_increments_turn_number() {
-    let service = create_service();
-    let (mut game, _) = service
-        .start_game(StartGameCommand::new(
-            GameId::new("game-1"),
-            vec![
-                player_deck("player-1", "deck-1"),
-                player_deck("player-2", "deck-2"),
-            ],
-        ))
-        .unwrap();
-
-    let cmd = DealOpeningHandsCommand::new(vec![
-        player_deck_contents(
-            "player-1",
-            vec![
-                CardWithCost::new(CardDefinitionId::new("forest"), CardType::Land, 0),
-                CardWithCost::new(CardDefinitionId::new("card-2"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-3"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-4"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-5"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-6"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-7"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-8"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-9"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-10"), CardType::Creature, 0),
-            ],
-        ),
-        player_deck_contents(
-            "player-2",
-            vec![
-                CardWithCost::new(CardDefinitionId::new("mountain"), CardType::Land, 0),
-                CardWithCost::new(CardDefinitionId::new("card-2"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-3"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-4"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-5"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-6"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-7"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-8"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-9"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-10"), CardType::Creature, 0),
-            ],
-        ),
-    ]);
-    service.deal_opening_hands(&mut game, &cmd).unwrap();
+    let (service, mut game) = setup_two_player_game(
+        "game-1",
+        filled_library(vec![land_card("forest")], 10),
+        filled_library(vec![land_card("mountain")], 10),
+    );
 
     assert_eq!(game.turn_number(), 1);
 
-    // Need 8 advances to get to turn 2 (Setup adds 2 more phases)
-    for _ in 0..8 {
-        let cmd = AdvanceTurnCommand::new();
-        service.advance_turn(&mut game, cmd).unwrap();
-    }
+    advance_n(&service, &mut game, 8);
 
     assert_eq!(game.turn_number(), 2);
 }
 
 #[test]
-fn advance_turn_emits_turn_number_changed_event() {
+fn advance_turn_emits_turn_progressed_event() {
     let projection = Arc::new(GameLogProjection::new());
     let projection_clone = Arc::clone(&projection);
 
@@ -105,21 +44,13 @@ fn advance_turn_emits_turn_number_changed_event() {
     }));
 
     let service = GameService::new(InMemoryEventStore::new(), bus);
+    let mut game = support::start_two_player_game(&service, "game-1");
 
-    let (mut game, _) = service
-        .start_game(StartGameCommand::new(
-            GameId::new("game-1"),
-            vec![
-                player_deck("player-1", "deck-1"),
-                player_deck("player-2", "deck-2"),
-            ],
-        ))
+    service
+        .advance_turn(&mut game, AdvanceTurnCommand::new())
         .unwrap();
 
-    let cmd = AdvanceTurnCommand::new();
-    service.advance_turn(&mut game, cmd).unwrap();
-
     let logs = projection.logs();
-    let turn_log = logs.iter().find(|l| l.contains("Turn changed"));
+    let turn_log = logs.iter().find(|l| l.contains("Turn progressed"));
     assert!(turn_log.is_some());
 }

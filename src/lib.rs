@@ -6,23 +6,22 @@ pub use application::{EventBus, EventStore, GameService};
 
 pub use infrastructure::{GameLogProjection, InMemoryEventBus, InMemoryEventStore};
 
-pub use domain::{
+pub use domain::play::{
     cards::{CardInstance, CardType},
     commands::{
-        AdvanceTurnCommand, CardWithCost, CastSpellCommand, DealOpeningHandsCommand,
-        DeclareAttackersCommand, DeclareBlockersCommand, DrawCardCommand, MulliganCommand,
-        PlayCreatureCommand, PlayLandCommand, PlayerDeck, PlayerDeckContents,
-        ResolveCombatDamageCommand, SetLifeCommand, StartGameCommand, TapLandCommand,
+        AdjustLifeCommand, AdvanceTurnCommand, CastSpellCommand, DealOpeningHandsCommand,
+        DeclareAttackersCommand, DeclareBlockersCommand, DrawCardCommand, LibraryCard,
+        MulliganCommand, NonCreatureCardType, PlayLandCommand, PlayerDeck, PlayerLibrary,
+        ResolveCombatDamageCommand, StartGameCommand, TapLandCommand,
     },
     errors::{CardError, DomainError, GameError, PhaseError, PlayerError},
     events::{
-        AttackersDeclared, BlockersDeclared, CardDrawn, CombatDamageResolved,
-        CreatureEnteredBattlefield, DamageEvent, DomainEvent, GameStarted, LandPlayed, LandTapped,
-        LifeChanged, ManaAdded, MulliganTaken, OpeningHandDealt, PhaseChanged, SpellCast,
-        TurnAdvanced, TurnNumberChanged,
+        AttackersDeclared, BlockersDeclared, CardDrawn, CombatDamageResolved, DamageEvent,
+        DomainEvent, DrawKind, GameStarted, LandPlayed, LandTapped, LifeChanged, ManaAdded,
+        MulliganTaken, OpeningHandDealt, SpellCast, SpellCastOutcome, TurnProgressed,
     },
     game::Game,
     ids::{CardDefinitionId, CardInstanceId, DeckId, GameId, PlayerId},
     phase::Phase,
-    zones::{Battlefield, Hand},
+    zones::{Battlefield, Graveyard, Hand, Library},
 };

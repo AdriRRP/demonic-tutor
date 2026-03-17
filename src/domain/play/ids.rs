@@ -1,15 +1,17 @@
+use std::sync::Arc;
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct GameId(pub String);
+pub struct GameId(pub Arc<str>);
 
 impl GameId {
     pub fn new(value: impl Into<String>) -> Self {
-        Self(value.into())
+        Self(Arc::from(value.into()))
     }
 }
 
 impl From<String> for GameId {
     fn from(s: String) -> Self {
-        Self(s)
+        Self(Arc::from(s))
     }
 }
 
@@ -27,17 +29,17 @@ impl GameId {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct PlayerId(pub String);
+pub struct PlayerId(pub Arc<str>);
 
 impl PlayerId {
     pub fn new(value: impl Into<String>) -> Self {
-        Self(value.into())
+        Self(Arc::from(value.into()))
     }
 }
 
 impl From<String> for PlayerId {
     fn from(s: String) -> Self {
-        Self(s)
+        Self(Arc::from(s))
     }
 }
 
@@ -47,27 +49,34 @@ impl std::fmt::Display for PlayerId {
     }
 }
 
+impl PlayerId {
+    #[must_use]
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct DeckId(pub String);
+pub struct DeckId(pub Arc<str>);
 
 impl DeckId {
     pub fn new(value: impl Into<String>) -> Self {
-        Self(value.into())
+        Self(Arc::from(value.into()))
     }
 }
 
 impl From<String> for DeckId {
     fn from(s: String) -> Self {
-        Self(s)
+        Self(Arc::from(s))
     }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct CardInstanceId(String);
+pub struct CardInstanceId(Arc<str>);
 
 impl CardInstanceId {
     pub fn new(value: impl Into<String>) -> Self {
-        Self(value.into())
+        Self(Arc::from(value.into()))
     }
 }
 
@@ -77,17 +86,31 @@ impl std::fmt::Display for CardInstanceId {
     }
 }
 
+impl CardInstanceId {
+    #[must_use]
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct CardDefinitionId(String);
+pub struct CardDefinitionId(Arc<str>);
 
 impl CardDefinitionId {
     pub fn new(value: impl Into<String>) -> Self {
-        Self(value.into())
+        Self(Arc::from(value.into()))
     }
 }
 
 impl std::fmt::Display for CardDefinitionId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0)
+    }
+}
+
+impl CardDefinitionId {
+    #[must_use]
+    pub fn as_str(&self) -> &str {
+        &self.0
     }
 }

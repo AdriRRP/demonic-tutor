@@ -1,138 +1,90 @@
 #![allow(clippy::unwrap_used)]
 
-use demonictutor::{
-    CardDefinitionId, CardType, CardWithCost, DealOpeningHandsCommand, DeckId, DomainError,
-    GameError, GameId, GameService, InMemoryEventBus, InMemoryEventStore, PlayerDeck,
-    PlayerDeckContents, PlayerId, StartGameCommand,
-};
+mod support;
 
-fn player_deck(player: &str, deck: &str) -> PlayerDeck {
-    PlayerDeck::new(PlayerId::new(player), DeckId::new(deck))
-}
-
-fn player_deck_contents(player: &str, cards: Vec<CardWithCost>) -> PlayerDeckContents {
-    PlayerDeckContents::new(PlayerId::new(player), cards)
-}
-
-fn non_land_cards(count: usize) -> Vec<CardWithCost> {
-    (0..count)
-        .map(|i| {
-            CardWithCost::new(
-                CardDefinitionId::new(format!("card-{i}")),
-                CardType::Creature,
-                0,
-            )
-        })
-        .collect()
-}
-
-fn create_service() -> GameService<InMemoryEventStore, InMemoryEventBus> {
-    GameService::new(InMemoryEventStore::new(), InMemoryEventBus::new())
-}
+use demonictutor::{CardDefinitionId, DomainError, GameError, LibraryCard, NonCreatureCardType};
+use support::{create_service, creature_library};
 
 #[test]
 fn deal_opening_hands_moves_cards_to_hand() {
-    let service = create_service();
-    let (mut game, _) = service
-        .start_game(StartGameCommand::new(
-            GameId::new("game-1"),
-            vec![
-                player_deck("player-1", "deck-1"),
-                player_deck("player-2", "deck-2"),
-            ],
-        ))
-        .unwrap();
-
-    let cmd = DealOpeningHandsCommand::new(vec![
-        player_deck_contents("player-1", non_land_cards(7)),
-        player_deck_contents("player-2", non_land_cards(7)),
-    ]);
-
-    let result = service.deal_opening_hands(&mut game, &cmd);
-
-    assert!(result.is_ok());
-    let events = result.unwrap();
-    assert_eq!(events.len(), 2);
+    let (service, game) =
+        support::setup_two_player_game("game-1", creature_library(7), creature_library(7));
 
     let p1_hand = game.players()[0].hand().cards();
-    assert_eq!(p1_hand.len(), 7);
-
     let p2_hand = game.players()[1].hand().cards();
+
+    assert_eq!(p1_hand.len(), 7);
     assert_eq!(p2_hand.len(), 7);
+
+    // setup_two_player_game already proved the command completed, but keep the service bound used
+    let _ = service;
 }
 
 #[test]
 fn deal_opening_hands_emits_event_per_player() {
     let service = create_service();
-    let (mut game, _) = service
-        .start_game(StartGameCommand::new(
-            GameId::new("game-1"),
-            vec![
-                player_deck("player-1", "deck-1"),
-                player_deck("player-2", "deck-2"),
-            ],
-        ))
+    let mut game = support::start_two_player_game(&service, "game-1");
+
+    let events = service
+        .deal_opening_hands(
+            &mut game,
+            &demonictutor::DealOpeningHandsCommand::new(vec![
+                support::player_library("player-1", creature_library(7)),
+                support::player_library("player-2", creature_library(7)),
+            ]),
+        )
         .unwrap();
 
-    let cmd = DealOpeningHandsCommand::new(vec![
-        player_deck_contents("player-1", non_land_cards(7)),
-        player_deck_contents("player-2", non_land_cards(7)),
-    ]);
-
-    let result = service.deal_opening_hands(&mut game, &cmd);
-
-    assert!(result.is_ok());
-    let events = result.unwrap();
     assert_eq!(events.len(), 2);
 }
 
 #[test]
 fn deal_opening_hands_fails_when_not_enough_cards() {
     let service = create_service();
-    let (mut game, _) = service
-        .start_game(StartGameCommand::new(
-            GameId::new("game-1"),
-            vec![
-                player_deck("player-1", "deck-1"),
-                player_deck("player-2", "deck-2"),
-            ],
-        ))
-        .unwrap();
+    let mut game = support::start_two_player_game(&service, "game-1");
 
-    let cmd =
-        DealOpeningHandsCommand::new(vec![player_deck_contents("player-1", non_land_cards(6))]);
+    let result = service.deal_opening_hands(
+        &mut game,
+        &demonictutor::DealOpeningHandsCommand::new(vec![support::player_library(
+            "player-1",
+            creature_library(6),
+        )]),
+    );
 
-    let result = service.deal_opening_hands(&mut game, &cmd);
-
-    assert!(result.is_err());
     assert!(matches!(
-        result.unwrap_err(),
-        DomainError::Game(GameError::NotEnoughCardsInLibrary { .. })
+        result,
+        Err(DomainError::Game(GameError::NotEnoughCardsInLibrary { .. }))
     ));
 }
 
 #[test]
 fn deal_opening_hands_does_not_affect_other_player() {
     let service = create_service();
-    let (mut game, _) = service
-        .start_game(StartGameCommand::new(
-            GameId::new("game-1"),
-            vec![
-                player_deck("player-1", "deck-1"),
-                player_deck("player-2", "deck-2"),
-            ],
-        ))
+    let mut game = support::start_two_player_game(&service, "game-1");
+
+    service
+        .deal_opening_hands(
+            &mut game,
+            &demonictutor::DealOpeningHandsCommand::new(vec![support::player_library(
+                "player-1",
+                creature_library(7),
+            )]),
+        )
         .unwrap();
 
-    let cmd =
-        DealOpeningHandsCommand::new(vec![player_deck_contents("player-1", non_land_cards(7))]);
+    assert_eq!(game.players()[0].hand().cards().len(), 7);
+    assert_eq!(game.players()[1].hand().cards().len(), 0);
+}
 
-    let result = service.deal_opening_hands(&mut game, &cmd);
+#[test]
+fn deal_opening_hands_uses_explicit_non_creature_library_input() {
+    let card = LibraryCard::non_creature(
+        CardDefinitionId::new("forest"),
+        NonCreatureCardType::Land,
+        0,
+    );
 
-    assert!(result.is_ok());
-    let p1_hand = game.players()[0].hand().cards();
-    assert_eq!(p1_hand.len(), 7);
+    let card_instance = card.to_card_instance(demonictutor::CardInstanceId::new("card-1"));
 
-    let p2_hand = game.players()[1].hand().cards();
-    assert_eq!(p2_hand.len(), 0);
+    assert!(card_instance.card_type().is_land());
 }

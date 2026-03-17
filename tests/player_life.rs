@@ -1,8 +1,8 @@
 #![allow(clippy::unwrap_used)]
 
 use demonictutor::{
-    DeckId, DomainError, GameError, GameId, GameService, InMemoryEventBus, InMemoryEventStore,
-    PlayerDeck, PlayerId, SetLifeCommand, StartGameCommand,
+    AdjustLifeCommand, DeckId, DomainError, GameError, GameId, GameService, InMemoryEventBus,
+    InMemoryEventStore, PlayerDeck, PlayerId, StartGameCommand,
 };
 
 fn player_deck(player: &str, deck: &str) -> PlayerDeck {
@@ -31,7 +31,7 @@ fn players_start_with_20_life() {
 }
 
 #[test]
-fn set_life_changes_player_life() {
+fn adjust_life_deltas_player_life() {
     let service = create_service();
     let (mut game, _) = service
         .start_game(StartGameCommand::new(
@@ -43,12 +43,12 @@ fn set_life_changes_player_life() {
         ))
         .unwrap();
 
-    let cmd = SetLifeCommand::new(PlayerId::new("player-1"), -5);
-    let result = service.set_life(&mut game, cmd);
+    let cmd = AdjustLifeCommand::new(PlayerId::new("player-1"), -5);
+    let result = service.adjust_life(&mut game, cmd);
 
     assert!(result.is_ok());
     let event = result.unwrap();
-    assert_eq!(event.player_id.0, "player-1");
+    assert_eq!(event.player_id.as_str(), "player-1");
     assert_eq!(event.from_life, 20);
     assert_eq!(event.to_life, 15);
     assert_eq!(game.players()[0].life(), 15);
@@ -56,7 +56,7 @@ fn set_life_changes_player_life() {
 }
 
 #[test]
-fn set_life_gains_life() {
+fn adjust_life_gains_life() {
     let service = create_service();
     let (mut game, _) = service
         .start_game(StartGameCommand::new(
@@ -68,8 +68,8 @@ fn set_life_gains_life() {
         ))
         .unwrap();
 
-    let cmd = SetLifeCommand::new(PlayerId::new("player-1"), 3);
-    let result = service.set_life(&mut game, cmd);
+    let cmd = AdjustLifeCommand::new(PlayerId::new("player-1"), 3);
+    let result = service.adjust_life(&mut game, cmd);
 
     assert!(result.is_ok());
     let event = result.unwrap();
@@ -79,7 +79,7 @@ fn set_life_gains_life() {
 }
 
 #[test]
-fn set_life_cannot_go_below_zero() {
+fn adjust_life_cannot_go_below_zero() {
     let service = create_service();
     let (mut game, _) = service
         .start_game(StartGameCommand::new(
@@ -91,8 +91,8 @@ fn set_life_cannot_go_below_zero() {
         ))
         .unwrap();
 
-    let cmd = SetLifeCommand::new(PlayerId::new("player-1"), -30);
-    let result = service.set_life(&mut game, cmd);
+    let cmd = AdjustLifeCommand::new(PlayerId::new("player-1"), -30);
+    let result = service.adjust_life(&mut game, cmd);
 
     assert!(result.is_ok());
     let event = result.unwrap();
@@ -102,7 +102,7 @@ fn set_life_cannot_go_below_zero() {
 }
 
 #[test]
-fn set_life_fails_for_unknown_player() {
+fn adjust_life_fails_for_unknown_player() {
     let service = create_service();
     let (mut game, _) = service
         .start_game(StartGameCommand::new(
@@ -114,8 +114,8 @@ fn set_life_fails_for_unknown_player() {
         ))
         .unwrap();
 
-    let cmd = SetLifeCommand::new(PlayerId::new("unknown-player"), 10);
-    let result = service.set_life(&mut game, cmd);
+    let cmd = AdjustLifeCommand::new(PlayerId::new("unknown-player"), 10);
+    let result = service.adjust_life(&mut game, cmd);
 
     assert!(result.is_err());
     assert!(matches!(

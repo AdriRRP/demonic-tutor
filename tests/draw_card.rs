@@ -1,199 +1,53 @@
 #![allow(clippy::unwrap_used)]
 
+mod support;
+
 use demonictutor::{
-    AdvanceTurnCommand, CardDefinitionId, CardInstanceId, CardType, CardWithCost,
-    DealOpeningHandsCommand, DeckId, DomainError, DrawCardCommand, GameError, GameId, GameService,
-    InMemoryEventBus, InMemoryEventStore, PlayLandCommand, PlayerDeck, PlayerDeckContents,
-    PlayerId, StartGameCommand,
+    CardInstanceId, DomainError, DrawCardCommand, GameError, PlayLandCommand, PlayerId,
+};
+use support::{
+    advance_n, advance_to_player_first_main, filled_library, land_card, setup_two_player_game,
 };
 
-fn player_deck(player: &str, deck: &str) -> PlayerDeck {
-    PlayerDeck::new(PlayerId::new(player), DeckId::new(deck))
-}
-
-fn player_deck_contents(player: &str, cards: Vec<CardWithCost>) -> PlayerDeckContents {
-    PlayerDeckContents::new(PlayerId::new(player), cards)
-}
-
-fn create_service() -> GameService<InMemoryEventStore, InMemoryEventBus> {
-    GameService::new(InMemoryEventStore::new(), InMemoryEventBus::new())
-}
-
 fn create_game_with_library_cards() -> demonictutor::Game {
-    let service = create_service();
-    let (mut game, _) = service
-        .start_game(StartGameCommand::new(
-            GameId::new("game-1"),
-            vec![
-                player_deck("player-1", "deck-1"),
-                player_deck("player-2", "deck-2"),
-            ],
-        ))
-        .unwrap();
-
-    let cmd = DealOpeningHandsCommand::new(vec![
-        player_deck_contents(
-            "player-1",
-            vec![
-                CardWithCost::new(CardDefinitionId::new("forest"), CardType::Land, 0),
-                CardWithCost::new(CardDefinitionId::new("card-2"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-3"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-4"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-5"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-6"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-7"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-8"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-9"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-10"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-11"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-12"), CardType::Creature, 0),
-            ],
-        ),
-        player_deck_contents(
-            "player-2",
-            vec![
-                CardWithCost::new(CardDefinitionId::new("mountain"), CardType::Land, 0),
-                CardWithCost::new(CardDefinitionId::new("card-2"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-3"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-4"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-5"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-6"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-7"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-8"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-9"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-10"), CardType::Creature, 0),
-            ],
-        ),
-    ]);
-
-    service.deal_opening_hands(&mut game, &cmd).unwrap();
-
+    let (.., game) = setup_two_player_game(
+        "game-1",
+        filled_library(vec![land_card("forest")], 12),
+        filled_library(vec![land_card("mountain")], 10),
+    );
     game
 }
 
 #[test]
 fn draw_card_works_in_main_phase() {
-    let service = create_service();
-    let (mut game, _) = service
-        .start_game(StartGameCommand::new(
-            GameId::new("game-1"),
-            vec![
-                player_deck("player-1", "deck-1"),
-                player_deck("player-2", "deck-2"),
-            ],
-        ))
-        .unwrap();
+    let (service, mut game) = setup_two_player_game(
+        "game-1",
+        filled_library(vec![land_card("forest")], 10),
+        filled_library(vec![land_card("mountain")], 10),
+    );
 
-    let cmd = DealOpeningHandsCommand::new(vec![
-        player_deck_contents(
-            "player-1",
-            vec![
-                CardWithCost::new(CardDefinitionId::new("forest"), CardType::Land, 0),
-                CardWithCost::new(CardDefinitionId::new("card-2"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-3"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-4"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-5"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-6"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-7"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-8"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-9"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-10"), CardType::Creature, 0),
-            ],
-        ),
-        player_deck_contents(
-            "player-2",
-            vec![
-                CardWithCost::new(CardDefinitionId::new("mountain"), CardType::Land, 0),
-                CardWithCost::new(CardDefinitionId::new("card-2"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-3"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-4"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-5"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-6"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-7"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-8"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-9"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-10"), CardType::Creature, 0),
-            ],
-        ),
-    ]);
+    advance_to_player_first_main(&service, &mut game, "player-2");
 
-    service.deal_opening_hands(&mut game, &cmd).unwrap();
-
-    let advance_cmd = AdvanceTurnCommand::new();
-    service.advance_turn(&mut game, advance_cmd).unwrap(); // Untap -> Draw
-
-    let advance_cmd = AdvanceTurnCommand::new();
-    service.advance_turn(&mut game, advance_cmd).unwrap(); // Draw -> FirstMain
-
-    for _ in 0..6 {
-        let advance_cmd = AdvanceTurnCommand::new();
-        service.advance_turn(&mut game, advance_cmd).unwrap();
-    }
-
-    let draw_cmd = DrawCardCommand::new(PlayerId::new("player-2"));
-    let result = service.draw_card(&mut game, draw_cmd);
-
+    let result = service.draw_card(&mut game, DrawCardCommand::new(PlayerId::new("player-2")));
     assert!(result.is_ok());
 }
 
 #[test]
 fn draw_card_moves_card_from_library_to_hand() {
-    let service = create_service();
-    let (mut game, _) = service
-        .start_game(StartGameCommand::new(
-            GameId::new("game-1"),
-            vec![
-                player_deck("player-1", "deck-1"),
-                player_deck("player-2", "deck-2"),
-            ],
-        ))
-        .unwrap();
+    let (service, mut game) = setup_two_player_game(
+        "game-1",
+        filled_library(vec![land_card("forest")], 10),
+        filled_library(vec![land_card("mountain")], 10),
+    );
 
-    let cmd = DealOpeningHandsCommand::new(vec![
-        player_deck_contents(
-            "player-1",
-            vec![
-                CardWithCost::new(CardDefinitionId::new("forest"), CardType::Land, 0),
-                CardWithCost::new(CardDefinitionId::new("card-2"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-3"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-4"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-5"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-6"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-7"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-8"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-9"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-10"), CardType::Creature, 0),
-            ],
-        ),
-        player_deck_contents(
-            "player-2",
-            vec![
-                CardWithCost::new(CardDefinitionId::new("mountain"), CardType::Land, 0),
-                CardWithCost::new(CardDefinitionId::new("card-2"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-3"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-4"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-5"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-6"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-7"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-8"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-9"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-10"), CardType::Creature, 0),
-            ],
-        ),
-    ]);
-
-    service.deal_opening_hands(&mut game, &cmd).unwrap();
-
-    for _ in 0..8 {
-        let advance_cmd = AdvanceTurnCommand::new();
-        service.advance_turn(&mut game, advance_cmd).unwrap();
-    }
+    advance_to_player_first_main(&service, &mut game, "player-2");
 
     let hand_before = game.players()[1].hand().cards().len();
     let lib_before = game.players()[1].library().len();
 
-    let draw_cmd = DrawCardCommand::new(PlayerId::new("player-2"));
-    service.draw_card(&mut game, draw_cmd).unwrap();
+    service
+        .draw_card(&mut game, DrawCardCommand::new(PlayerId::new("player-2")))
+        .unwrap();
 
     let hand_after = game.players()[1].hand().cards().len();
     let lib_after = game.players()[1].library().len();
@@ -204,171 +58,79 @@ fn draw_card_moves_card_from_library_to_hand() {
 
 #[test]
 fn draw_card_emits_event() {
-    let service = create_service();
-    let (mut game, _) = service
-        .start_game(StartGameCommand::new(
-            GameId::new("game-1"),
-            vec![
-                player_deck("player-1", "deck-1"),
-                player_deck("player-2", "deck-2"),
-            ],
-        ))
+    let (service, mut game) = setup_two_player_game(
+        "game-1",
+        filled_library(vec![land_card("forest")], 8),
+        filled_library(vec![land_card("mountain")], 10),
+    );
+
+    advance_to_player_first_main(&service, &mut game, "player-2");
+
+    let event = service
+        .draw_card(&mut game, DrawCardCommand::new(PlayerId::new("player-2")))
         .unwrap();
 
-    let cmd = DealOpeningHandsCommand::new(vec![
-        player_deck_contents(
-            "player-1",
-            vec![
-                CardWithCost::new(CardDefinitionId::new("forest"), CardType::Land, 0),
-                CardWithCost::new(CardDefinitionId::new("card-2"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-3"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-4"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-5"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-6"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-7"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-8"), CardType::Creature, 0),
-            ],
-        ),
-        player_deck_contents(
-            "player-2",
-            vec![
-                CardWithCost::new(CardDefinitionId::new("mountain"), CardType::Land, 0),
-                CardWithCost::new(CardDefinitionId::new("card-2"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-3"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-4"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-5"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-6"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-7"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-8"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-9"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-10"), CardType::Creature, 0),
-            ],
-        ),
-    ]);
-
-    service.deal_opening_hands(&mut game, &cmd).unwrap();
-
-    for _ in 0..8 {
-        let advance_cmd = AdvanceTurnCommand::new();
-        service.advance_turn(&mut game, advance_cmd).unwrap();
-    }
-
-    let draw_cmd = DrawCardCommand::new(PlayerId::new("player-2"));
-    let result = service.draw_card(&mut game, draw_cmd);
-
-    assert!(result.is_ok());
-    let event = result.unwrap();
-    assert_eq!(event.player_id.0, "player-2");
+    assert_eq!(event.player_id.as_str(), "player-2");
 }
 
 #[test]
 fn draw_card_fails_when_not_enough_cards() {
     let mut game = create_game_with_library_cards();
-    let service = create_service();
+    let service = support::create_service();
 
-    // Need more advances to reach player-2's FirstMain with new phases
-    for _ in 0..11 {
-        let advance_cmd = AdvanceTurnCommand::new();
-        service.advance_turn(&mut game, advance_cmd).unwrap();
-    }
+    advance_to_player_first_main(&service, &mut game, "player-2");
 
-    let draw_cmd = DrawCardCommand::new(PlayerId::new("player-2"));
-    let result = service.draw_card(&mut game, draw_cmd);
-    assert!(result.is_ok());
+    assert!(service
+        .draw_card(&mut game, DrawCardCommand::new(PlayerId::new("player-2")))
+        .is_ok());
+    assert!(service
+        .draw_card(&mut game, DrawCardCommand::new(PlayerId::new("player-2")))
+        .is_ok());
 
-    let draw_cmd = DrawCardCommand::new(PlayerId::new("player-2"));
-    let result = service.draw_card(&mut game, draw_cmd);
-    assert!(result.is_ok());
+    let result = service.draw_card(&mut game, DrawCardCommand::new(PlayerId::new("player-2")));
 
-    let draw_cmd = DrawCardCommand::new(PlayerId::new("player-2"));
-    let result = service.draw_card(&mut game, draw_cmd);
-
-    assert!(result.is_err());
-    let err = result.unwrap_err();
     assert!(matches!(
-        err,
-        DomainError::Game(GameError::NotEnoughCardsInLibrary { .. })
+        result,
+        Err(DomainError::Game(GameError::NotEnoughCardsInLibrary { .. }))
     ));
 }
 
 #[test]
 fn draw_card_fails_when_not_player_turn() {
-    let service = create_service();
-    let (mut game, _) = service
-        .start_game(StartGameCommand::new(
-            GameId::new("game-1"),
-            vec![
-                player_deck("player-1", "deck-1"),
-                player_deck("player-2", "deck-2"),
-            ],
-        ))
-        .unwrap();
+    let (service, mut game) = setup_two_player_game(
+        "game-1",
+        filled_library(vec![land_card("forest")], 8),
+        filled_library(vec![land_card("mountain")], 7),
+    );
 
-    let cmd = DealOpeningHandsCommand::new(vec![
-        player_deck_contents(
-            "player-1",
-            vec![
-                CardWithCost::new(CardDefinitionId::new("forest"), CardType::Land, 0),
-                CardWithCost::new(CardDefinitionId::new("card-2"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-3"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-4"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-5"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-6"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-7"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-8"), CardType::Creature, 0),
-            ],
-        ),
-        player_deck_contents(
-            "player-2",
-            vec![
-                CardWithCost::new(CardDefinitionId::new("mountain"), CardType::Land, 0),
-                CardWithCost::new(CardDefinitionId::new("card-2"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-3"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-4"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-5"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-6"), CardType::Creature, 0),
-                CardWithCost::new(CardDefinitionId::new("card-7"), CardType::Creature, 0),
-            ],
-        ),
-    ]);
+    let result = service.draw_card(&mut game, DrawCardCommand::new(PlayerId::new("player-2")));
 
-    service.deal_opening_hands(&mut game, &cmd).unwrap();
-
-    let draw_cmd = DrawCardCommand::new(PlayerId::new("player-2"));
-    let result = service.draw_card(&mut game, draw_cmd);
-
-    assert!(result.is_err());
     assert!(matches!(
-        result.unwrap_err(),
-        DomainError::Game(GameError::NotYourTurn { .. })
+        result,
+        Err(DomainError::Game(GameError::NotYourTurn { .. }))
     ));
 }
 
 #[test]
 fn draw_card_allows_playing_land_after_draw() {
     let mut game = create_game_with_library_cards();
-    let service = create_service();
+    let service = support::create_service();
 
-    // First advance out of Setup phase to Draw
-    for _ in 0..3 {
-        let advance_cmd = AdvanceTurnCommand::new();
-        service.advance_turn(&mut game, advance_cmd).unwrap();
-    }
+    advance_n(&service, &mut game, 3);
 
-    let draw_cmd = DrawCardCommand::new(PlayerId::new("player-1"));
-    service.draw_card(&mut game, draw_cmd).unwrap();
+    service
+        .draw_card(&mut game, DrawCardCommand::new(PlayerId::new("player-1")))
+        .unwrap();
 
-    // Now advance to player-2's FirstMain
-    for _ in 0..8 {
-        let advance_cmd = AdvanceTurnCommand::new();
-        service.advance_turn(&mut game, advance_cmd).unwrap();
-    }
+    advance_to_player_first_main(&service, &mut game, "player-2");
 
-    let land_cmd = PlayLandCommand::new(
-        PlayerId::new("player-2"),
-        CardInstanceId::new("game-1-player-2-0"),
+    let result = service.play_land(
+        &mut game,
+        PlayLandCommand::new(
+            PlayerId::new("player-2"),
+            CardInstanceId::new("game-1-player-2-0"),
+        ),
     );
-    let result = service.play_land(&mut game, land_cmd);
 
     assert!(result.is_ok());
 }
