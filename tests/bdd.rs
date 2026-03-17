@@ -58,6 +58,7 @@ async fn main() {
     GameplayWorld::run("features/stack/cast_instant_after_blockers.feature").await;
     GameplayWorld::run("features/stack/cast_second_instant_after_blockers.feature").await;
     GameplayWorld::run("features/stack/cast_instant_after_combat_damage.feature").await;
+    GameplayWorld::run("features/stack/cast_second_instant_after_combat_damage.feature").await;
     GameplayWorld::run("features/turn-flow/upkeep_priority_window.feature").await;
     GameplayWorld::run("features/turn-flow/draw_priority_window.feature").await;
     GameplayWorld::run("features/turn-flow/main_phase_priority_window.feature").await;

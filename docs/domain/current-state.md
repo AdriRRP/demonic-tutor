@@ -113,6 +113,7 @@ The domain currently includes:
 - combat damage resolution reopens priority for the active player while the game remains active
 - the non-active player may cast and resolve an instant after combat damage once the active player passes
 - the active player may cast and resolve an instant after combat damage resolves
+- the active player may cast a second instant after combat damage resolves before passing priority after the first
 
 The system intentionally excludes complex gameplay mechanics at this stage.
 

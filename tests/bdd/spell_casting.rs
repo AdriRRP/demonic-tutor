@@ -370,6 +370,13 @@ fn combat_damage_has_resolved_and_alice_still_has_an_instant_card_in_hand_with_p
     world.setup_priority_after_combat_damage_with_instant();
 }
 
+#[given("combat damage has resolved and Alice still has two instant cards in hand with priority")]
+fn combat_damage_has_resolved_and_alice_still_has_two_instant_cards_in_hand_with_priority(
+    world: &mut GameplayWorld,
+) {
+    world.setup_priority_after_combat_damage_with_two_instants();
+}
+
 #[when("Alice casts the instant spell")]
 fn alice_casts_the_instant_spell(world: &mut GameplayWorld) {
     world.cast_tracked_spell("Alice");

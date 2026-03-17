@@ -2,6 +2,8 @@
 mod cast_second_instant_after_attackers;
 #[path = "cast_second_instant_after_blockers.rs"]
 mod cast_second_instant_after_blockers;
+#[path = "cast_second_instant_after_combat_damage.rs"]
+mod cast_second_instant_after_combat_damage;
 #[path = "cast_second_instant_in_beginning_of_combat_window.rs"]
 mod cast_second_instant_in_beginning_of_combat_window;
 #[path = "cast_second_instant_in_draw_window.rs"]
