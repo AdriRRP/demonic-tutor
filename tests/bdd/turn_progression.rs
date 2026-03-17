@@ -9,7 +9,7 @@ fn a_two_player_game_is_in_phase(world: &mut GameplayWorld, phase: String) {
 
     let (player, turn) = match phase {
         Phase::EndStep => ("Alice", 3),
-        Phase::Draw => ("Alice", 1),
+        Phase::Untap | Phase::Upkeep | Phase::Draw => ("Alice", 1),
         _ => panic!("unsupported phase in turn-progression feature"),
     };
 

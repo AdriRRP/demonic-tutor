@@ -25,6 +25,7 @@ This is a repository-owned interpretation note, not a copy of the Comprehensive 
 - automatic draw happens in the Draw phase
 - if a player must draw from an empty library, the game ends immediately with `GameEnded(EmptyLibraryDraw)`
 - explicit draw effects are modeled separately from the automatic draw step, are limited to main phases, and may draw multiple cards one by one
+- entering `Upkeep` opens an empty priority window for the active player
 - if the active player is above the maximum hand size at `EndStep`, the turn cannot advance until they discard down to the maximum
 - marked damage is cleared automatically when the game leaves `EndStep` for the next turn
 - entering `FirstMain` or `SecondMain` opens an empty priority window for the active player
@@ -35,7 +36,7 @@ This is a repository-owned interpretation note, not a copy of the Comprehensive 
 
 ## Out of Scope
 
-- broader turn-flow priority windows beyond main phases and the currently supported combat-entry / post-declaration / post-damage windows
+- broader turn-flow priority windows beyond `Upkeep`, main phases, and the currently supported combat-entry / post-declaration / post-damage windows
 - skipped phases
 - extra turns
 - repeated cleanup loops from state-based actions or triggered abilities

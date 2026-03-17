@@ -182,6 +182,7 @@ The current model includes:
 - automatic destruction of creatures with 0 toughness through the shared review of supported state-based actions
 - minimal stack-aware spell casting and spell resolution
 - casting player retaining priority immediately after putting a spell on the stack
+- opening an empty priority window when entering `Upkeep`
 - opening empty priority windows when entering `FirstMain` and `SecondMain`
 - opening an empty priority window when entering `Combat`
 - reopening priority after attackers and blockers are declared in combat

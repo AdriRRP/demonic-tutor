@@ -63,9 +63,11 @@ impl GameplayWorld {
     pub fn phase_from_name(name: &str) -> Phase {
         match name {
             "Untap" => Phase::Untap,
+            "Upkeep" => Phase::Upkeep,
             "Draw" => Phase::Draw,
             "FirstMain" => Phase::FirstMain,
             "Combat" => Phase::Combat,
+            "SecondMain" => Phase::SecondMain,
             "EndStep" => Phase::EndStep,
             other => panic!("unsupported phase in BDD suite: {other}"),
         }

@@ -59,6 +59,7 @@ fn advance_turn_emits_event() {
     );
 
     advance_n_satisfying_cleanup(&service, &mut game, 2);
+    close_empty_priority_window(&service, &mut game);
     let outcome = service
         .advance_turn(&mut game, AdvanceTurnCommand::new())
         .unwrap();
@@ -93,6 +94,31 @@ fn advance_turn_opens_priority_when_entering_first_main() {
     assert!(matches!(outcome, AdvanceTurnOutcome::Progressed { .. }));
 
     assert_eq!(game.phase(), &Phase::FirstMain);
+    assert_eq!(
+        game.priority().unwrap().current_holder(),
+        &PlayerId::new("player-1")
+    );
+    assert!(game.stack().is_empty());
+}
+
+#[test]
+fn advance_turn_opens_priority_when_entering_upkeep() {
+    let (service, mut game) = setup_two_player_game(
+        "game-upkeep-priority-window",
+        filled_library(vec![land_card("forest")], 10),
+        filled_library(vec![land_card("mountain")], 10),
+    );
+
+    advance_n_raw(&service, &mut game, 1);
+    assert_eq!(game.phase(), &Phase::Untap);
+    assert!(game.priority().is_none());
+
+    let outcome = service
+        .advance_turn(&mut game, AdvanceTurnCommand::new())
+        .unwrap();
+    assert!(matches!(outcome, AdvanceTurnOutcome::Progressed { .. }));
+
+    assert_eq!(game.phase(), &Phase::Upkeep);
     assert_eq!(
         game.priority().unwrap().current_holder(),
         &PlayerId::new("player-1")
