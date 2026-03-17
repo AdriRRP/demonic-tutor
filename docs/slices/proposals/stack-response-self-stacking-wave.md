@@ -155,16 +155,16 @@ Implemented slice doc:
 
 ---
 
-### 10. Respond With Second Instant After Combat Damage
+### 10. Respond With Second Instant In End Of Combat Window
 
 Behavior:
-- after Alice passes the post-combat-damage window, Bob may cast two instants consecutively before passing
+- after Alice passes the `EndOfCombat` window, Bob may cast two instants consecutively before passing
 
 Feature:
-- `features/stack/respond_with_second_instant_after_combat_damage.feature`
+- `features/stack/respond_with_second_instant_in_end_of_combat_window.feature`
 
-Planned implemented slice doc:
-- `docs/slices/implemented/respond-with-second-instant-after-combat-damage.md`
+Implemented slice doc:
+- `docs/slices/implemented/respond-with-second-instant-in-end-of-combat-window.md`
 
 ---
 

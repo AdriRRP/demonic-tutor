@@ -541,9 +541,9 @@ fn bob_has_priority_after_combat_damage_with_an_instant_card_in_hand(world: &mut
     world.setup_non_active_priority_after_combat_damage_with_instant();
 }
 
-#[given("Bob has priority after combat damage with two instant cards in hand")]
-fn bob_has_priority_after_combat_damage_with_two_instant_cards_in_hand(world: &mut GameplayWorld) {
-    world.setup_non_active_priority_after_combat_damage_with_two_instants();
+#[given("Bob has priority in EndOfCombat with two instant cards in hand")]
+fn bob_has_priority_in_end_of_combat_with_two_instant_cards_in_hand(world: &mut GameplayWorld) {
+    world.setup_non_active_priority_in_end_of_combat_with_two_instants();
 }
 
 #[when("Bob casts the instant spell")]

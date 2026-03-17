@@ -6,12 +6,12 @@ Implemented
 
 ## Summary
 
-After combat damage resolves and the active player passes priority, the
-non-active player may cast and resolve an instant while holding priority.
+Once combat damage resolves and `EndOfCombat` opens, the non-active player may
+cast and resolve an instant after the active player passes priority.
 
 ## Supported Behavior
 
-- resolving combat damage reopens priority for the active player while the game remains active
+- resolving combat damage moves the game into `EndOfCombat` and reopens priority for the active player while the game remains active
 - after one pass with an empty stack, the non-active player becomes the priority holder
 - the non-active player may cast an instant while holding that priority
 - the instant resolves after two consecutive passes
@@ -19,5 +19,5 @@ non-active player may cast and resolve an instant while holding priority.
 
 ## Out Of Scope
 
-- broader post-damage combat timing beyond the current simplified `Combat` phase
-- non-instant responses after combat damage
+- broader end-of-combat timing beyond the current simplified `EndOfCombat` window
+- non-instant responses in `EndOfCombat`

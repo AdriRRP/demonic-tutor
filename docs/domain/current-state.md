@@ -130,9 +130,10 @@ The domain currently includes:
 - the non-active player may cast and resolve an instant after blockers are declared once the active player passes
 - the non-active player may cast a second instant in `CombatDamage` once the active player passes after blockers are declared
 - combat damage resolution moves the game into `EndOfCombat` and reopens priority for the active player while the game remains active
-- the non-active player may cast and resolve an instant after combat damage once the active player passes
-- the active player may cast and resolve an instant after combat damage resolves
-- the active player may cast a second instant after combat damage resolves before passing priority after the first
+- the non-active player may cast and resolve an instant in `EndOfCombat` once the active player passes
+- the non-active player may cast a second instant in `EndOfCombat` before passing priority after the first response
+- the active player may cast and resolve an instant in `EndOfCombat`
+- the active player may cast a second instant in `EndOfCombat` before passing priority after the first
 
 The system intentionally excludes complex gameplay mechanics at this stage.
 

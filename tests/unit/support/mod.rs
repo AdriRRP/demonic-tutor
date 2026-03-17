@@ -3,10 +3,11 @@
 #![allow(dead_code)]
 
 use demonictutor::{
-    AdvanceTurnCommand, AdvanceTurnOutcome, CardDefinitionId, DealOpeningHandsCommand, DeckId,
-    DiscardForCleanupCommand, Game, GameId, GameService, InMemoryEventBus, InMemoryEventStore,
-    LibraryCard, NonCreatureCardType, PassPriorityCommand, Phase, PlayerDeck, PlayerId,
-    PlayerLibrary, StartGameCommand,
+    AdvanceTurnCommand, AdvanceTurnOutcome, CardDefinitionId, CastSpellCommand,
+    DealOpeningHandsCommand, DeckId, DeclareAttackersCommand, DiscardForCleanupCommand, Game,
+    GameId, GameService, InMemoryEventBus, InMemoryEventStore, LibraryCard, NonCreatureCardType,
+    PassPriorityCommand, Phase, PlayerDeck, PlayerId, PlayerLibrary, ResolveCombatDamageCommand,
+    StartGameCommand,
 };
 
 pub type TestService = GameService<InMemoryEventStore, InMemoryEventBus>;
@@ -223,6 +224,54 @@ pub fn close_empty_priority_window(service: &TestService, game: &mut Game) {
     );
     service
         .pass_priority(game, PassPriorityCommand::new(second_holder))
+        .unwrap();
+}
+
+pub fn pass_priority_to_non_active_player_in_end_of_combat(service: &TestService, game: &mut Game) {
+    advance_to_player_first_main_satisfying_cleanup(service, game, "player-1");
+
+    let attacker_id = game
+        .players()
+        .iter()
+        .find(|player| player.id() == &PlayerId::new("player-1"))
+        .unwrap_or_else(|| panic!("player-1 should exist"))
+        .hand()
+        .cards()
+        .iter()
+        .find(|card| card.definition_id() == &CardDefinitionId::new("attacker"))
+        .unwrap_or_else(|| panic!("attacker should exist in player-1 hand"))
+        .id()
+        .clone();
+
+    service
+        .cast_spell(
+            game,
+            CastSpellCommand::new(PlayerId::new("player-1"), attacker_id.clone()),
+        )
+        .unwrap();
+    resolve_top_stack_with_passes(service, game);
+
+    advance_to_player_first_main_satisfying_cleanup(service, game, "player-2");
+    advance_to_player_first_main_satisfying_cleanup(service, game, "player-1");
+    advance_turn_raw(service, game);
+    close_empty_priority_window(service, game);
+    advance_turn_raw(service, game);
+    service
+        .declare_attackers(
+            game,
+            DeclareAttackersCommand::new(PlayerId::new("player-1"), vec![attacker_id]),
+        )
+        .unwrap();
+    close_empty_priority_window(service, game);
+    advance_turn_raw(service, game);
+    service
+        .resolve_combat_damage(
+            game,
+            ResolveCombatDamageCommand::new(PlayerId::new("player-1")),
+        )
+        .unwrap();
+    service
+        .pass_priority(game, PassPriorityCommand::new(PlayerId::new("player-1")))
         .unwrap();
 }
 

@@ -37,6 +37,7 @@ Current executable feature coverage:
 - `features/stack/respond_with_second_instant_in_draw_window.feature`
 - `features/stack/respond_with_second_instant_in_beginning_of_combat_window.feature`
 - `features/stack/respond_with_second_instant_in_end_step_window.feature`
+- `features/stack/respond_with_second_instant_in_end_of_combat_window.feature`
 - `features/stack/respond_with_second_instant_in_first_main_window.feature`
 - `features/stack/respond_with_second_instant_in_second_main_window.feature`
 - `features/stack/cast_instant_in_upkeep_window.feature`
@@ -90,11 +91,7 @@ Implemented reference features that are not currently executed:
 - `features/stack/cast_spell_goes_on_stack.feature`
 - `features/stack/pass_priority_resolves_top.feature`
 
-Proposed feature backlog currently staged for future slices:
-
-- `features/stack/respond_with_second_instant_in_first_main_window.feature`
-- `features/stack/respond_with_second_instant_in_second_main_window.feature`
-- `features/stack/respond_with_second_instant_after_combat_damage.feature`
+There is no currently staged proposed feature backlog for the completed stack response self-stacking wave.
 
 ## Required Header Convention
 

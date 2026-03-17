@@ -2222,7 +2222,7 @@ impl GameplayWorld {
         );
     }
 
-    pub fn setup_non_active_priority_after_combat_damage_with_two_instants(&mut self) {
+    pub fn setup_non_active_priority_in_end_of_combat_with_two_instants(&mut self) {
         self.reset_game_with_libraries(
             "bdd-post-combat-damage-response-two-instants",
             support::filled_library(
@@ -2236,10 +2236,11 @@ impl GameplayWorld {
             ),
             support::filled_library(
                 vec![
+                    LibraryCard::creature(CardDefinitionId::new("bdd-bob-buffer"), 0, 2, 2),
                     support::instant_card("bdd-window-instant-a", 0),
                     support::instant_card("bdd-window-instant-b", 0),
                 ],
-                7,
+                10,
             ),
         );
 
@@ -2270,6 +2271,7 @@ impl GameplayWorld {
         );
         support::advance_turn_raw(&service, self.game_mut());
         support::close_empty_priority_window(&service, self.game_mut());
+        support::advance_turn_raw(&service, self.game_mut());
         service
             .declare_attackers(
                 self.game_mut(),
