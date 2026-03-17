@@ -27,13 +27,13 @@ This is a repository-owned interpretation note, not a copy of the Comprehensive 
 - explicit draw effects are modeled separately from the automatic draw step, are limited to main phases, and may draw multiple cards one by one
 - if the active player is above the maximum hand size at `EndStep`, the turn cannot advance until they discard down to the maximum
 - marked damage is cleared automatically when the game leaves `EndStep` for the next turn
-- priority windows are currently opened by spell casting, not yet by general turn-flow windows
-- when a priority window is open, turn-flow actions are rejected until the window closes
+- entering `FirstMain` or `SecondMain` opens an empty priority window for the active player
+- turn-flow advancement is rejected while a priority window remains open
 - no distinct cleanup step phase is modeled yet
 
 ## Out of Scope
 
-- general turn-flow priority windows beyond spell casting
+- broader turn-flow priority windows beyond `FirstMain` and `SecondMain`
 - skipped phases
 - extra turns
 - repeated cleanup loops from state-based actions or triggered abilities

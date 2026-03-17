@@ -1,8 +1,8 @@
 #![allow(clippy::unwrap_used)]
 
 use crate::support::{
-    advance_to_player_first_main_satisfying_cleanup, cast_spell_and_resolve, filled_library,
-    setup_two_player_game,
+    advance_to_player_first_main_satisfying_cleanup, advance_turn_raw, cast_spell_and_resolve,
+    filled_library, setup_two_player_game,
 };
 use demonictutor::{
     CardDefinitionId, CardError, CardInstanceId, DeclareBlockersCommand, DomainError, GameError,
@@ -43,9 +43,7 @@ fn declare_blockers_fails_when_target_creature_is_not_attacking() {
     cast_spell_and_resolve(&service, &mut game, "player-2", blocker_id.clone());
 
     advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
-    service
-        .advance_turn(&mut game, demonictutor::AdvanceTurnCommand::new())
-        .unwrap();
+    advance_turn_raw(&service, &mut game);
 
     let error = service
         .declare_blockers(
@@ -72,9 +70,7 @@ fn resolve_combat_damage_fails_when_no_attackers_were_declared() {
     );
 
     advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
-    service
-        .advance_turn(&mut game, demonictutor::AdvanceTurnCommand::new())
-        .unwrap();
+    advance_turn_raw(&service, &mut game);
 
     let error = service
         .resolve_combat_damage(
@@ -120,9 +116,7 @@ fn declare_blockers_fails_when_the_same_blocker_is_assigned_more_than_once() {
     cast_spell_and_resolve(&service, &mut game, "player-2", blocker_id.clone());
 
     advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
-    service
-        .advance_turn(&mut game, demonictutor::AdvanceTurnCommand::new())
-        .unwrap();
+    advance_turn_raw(&service, &mut game);
     service
         .declare_attackers(
             &mut game,
@@ -186,9 +180,7 @@ fn declare_blockers_fails_when_multiple_blockers_target_the_same_attacker() {
     cast_spell_and_resolve(&service, &mut game, "player-2", right_blocker_id.clone());
 
     advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
-    service
-        .advance_turn(&mut game, demonictutor::AdvanceTurnCommand::new())
-        .unwrap();
+    advance_turn_raw(&service, &mut game);
     service
         .declare_attackers(
             &mut game,

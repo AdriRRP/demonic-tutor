@@ -24,6 +24,7 @@ pub use rules::{
     combat::ResolveCombatDamageOutcome,
     resource_actions::AdjustLifeOutcome,
     stack_priority::{CastSpellOutcome, PassPriorityOutcome, StackPriorityContext},
+    turn_flow::TurnProgressionContext,
     turn_flow::{AdvanceTurnOutcome, DrawCardsEffectOutcome},
 };
 
@@ -208,7 +209,7 @@ impl Game {
     /// See [`rules::resource_actions::play_land`].
     pub fn play_land(&mut self, cmd: PlayLandCommand) -> Result<LandPlayed, DomainError> {
         invariants::require_game_active(self.is_over())?;
-        invariants::require_no_open_priority_window(self.priority())?;
+        invariants::require_no_priority_with_pending_stack(self.priority(), self.stack.is_empty())?;
         rules::resource_actions::play_land(
             &self.id,
             &mut self.players,
@@ -228,12 +229,15 @@ impl Game {
     ) -> Result<rules::turn_flow::AdvanceTurnOutcome, DomainError> {
         invariants::require_no_open_priority_window(self.priority())?;
         rules::turn_flow::advance_turn(
-            &self.id,
-            &mut self.players,
-            &mut self.active_player,
-            &mut self.phase,
-            &mut self.turn_number,
-            &mut self.terminal_state,
+            TurnProgressionContext {
+                game_id: &self.id,
+                players: &mut self.players,
+                active_player: &mut self.active_player,
+                phase: &mut self.phase,
+                priority: &mut self.priority,
+                turn_number: &mut self.turn_number,
+                terminal_state: &mut self.terminal_state,
+            },
             cmd,
         )
     }
@@ -246,7 +250,11 @@ impl Game {
         &mut self,
         cmd: &DrawCardsEffectCommand,
     ) -> Result<rules::turn_flow::DrawCardsEffectOutcome, DomainError> {
-        invariants::require_no_open_priority_window(self.priority())?;
+        invariants::require_empty_stack_priority_action_window(
+            self.priority(),
+            self.stack.is_empty(),
+            &self.active_player,
+        )?;
         rules::turn_flow::draw_cards_effect(
             &self.id,
             &mut self.players,
@@ -266,7 +274,6 @@ impl Game {
         cmd: DiscardForCleanupCommand,
     ) -> Result<CardDiscarded, DomainError> {
         invariants::require_game_active(self.is_over())?;
-        invariants::require_no_open_priority_window(self.priority())?;
         rules::turn_flow::discard_for_cleanup(
             &self.id,
             &mut self.players,
@@ -285,7 +292,11 @@ impl Game {
         cmd: AdjustLifeCommand,
     ) -> Result<AdjustLifeOutcome, DomainError> {
         invariants::require_game_active(self.is_over())?;
-        invariants::require_no_open_priority_window(self.priority())?;
+        invariants::require_empty_stack_priority_action_window(
+            self.priority(),
+            self.stack.is_empty(),
+            &self.active_player,
+        )?;
         rules::resource_actions::adjust_life(
             &self.id,
             &mut self.players,
@@ -303,7 +314,7 @@ impl Game {
         cmd: TapLandCommand,
     ) -> Result<(LandTapped, ManaAdded), DomainError> {
         invariants::require_game_active(self.is_over())?;
-        invariants::require_no_open_priority_window(self.priority())?;
+        invariants::require_no_priority_with_pending_stack(self.priority(), self.stack.is_empty())?;
         rules::resource_actions::tap_land(
             &self.id,
             &mut self.players,

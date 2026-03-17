@@ -84,6 +84,7 @@ fn player_passes_priority(world: &mut GameplayWorld, player: String) {
     world.pass_priority(&player);
 }
 
+#[given("Alice has priority")]
 #[then("Alice has priority")]
 fn alice_has_priority(world: &mut GameplayWorld) {
     let priority = world
@@ -165,6 +166,7 @@ fn the_spell_has_not_resolved_yet(world: &mut GameplayWorld) {
     assert!(world.last_spell_cast.is_none());
 }
 
+#[given("Bob has priority")]
 #[then("Bob has priority")]
 fn bob_has_priority(world: &mut GameplayWorld) {
     let priority = world

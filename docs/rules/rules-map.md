@@ -161,6 +161,7 @@ The initial Gherkin pilot currently targets these rule areas:
 - `features/state-based-actions/zero_toughness_creature_dies.feature`
 - `features/stack/stack_foundation.feature`
 - `features/stack/respond_with_instant_spell.feature`
+- `features/turn-flow/main_phase_priority_window.feature`
 
 ---
 

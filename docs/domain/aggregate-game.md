@@ -179,10 +179,11 @@ The current model includes:
 - declare attackers and blockers in combat phase
 - marked combat damage on creatures
 - automatic destruction of creatures with lethal marked damage
-- automatic destruction of creatures with 0 toughness after creature-spell resolution
+- automatic destruction of creatures with 0 toughness through the shared review of supported state-based actions
 - minimal stack-aware spell casting and spell resolution
 - casting player retaining priority immediately after putting a spell on the stack
-- rejection of other gameplay actions while a priority window is open
+- opening empty priority windows when entering `FirstMain` and `SecondMain`
+- rejection of turn advancement while a priority window is open
 
 Card instances can be checked for whether they represent permanents (cards that can exist on the battlefield) using the `CardType::is_permanent()` method.
 

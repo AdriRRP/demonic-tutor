@@ -75,6 +75,31 @@ fn advance_turn_emits_event() {
 }
 
 #[test]
+fn advance_turn_opens_priority_when_entering_first_main() {
+    let (service, mut game) = setup_two_player_game(
+        "game-priority-window",
+        filled_library(vec![land_card("forest")], 10),
+        filled_library(vec![land_card("mountain")], 10),
+    );
+
+    advance_n_raw(&service, &mut game, 3);
+    assert_eq!(game.phase(), &Phase::Draw);
+    assert!(game.priority().is_none());
+
+    let outcome = service
+        .advance_turn(&mut game, AdvanceTurnCommand::new())
+        .unwrap();
+    assert!(matches!(outcome, AdvanceTurnOutcome::Progressed { .. }));
+
+    assert_eq!(game.phase(), &Phase::FirstMain);
+    assert_eq!(
+        game.priority().unwrap().current_holder(),
+        &PlayerId::new("player-1")
+    );
+    assert!(game.stack().is_empty());
+}
+
+#[test]
 fn advance_turn_resets_lands_played() {
     let mut game = create_game_with_land_in_hand();
     let service = crate::support::create_service();

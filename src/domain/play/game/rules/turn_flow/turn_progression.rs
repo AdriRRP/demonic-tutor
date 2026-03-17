@@ -6,7 +6,7 @@ use crate::domain::play::{
     commands::AdvanceTurnCommand,
     errors::{DomainError, GameError},
     events::{CardDrawn, DrawKind, GameEnded, TurnProgressed},
-    game::{invariants, model::Player, TerminalState},
+    game::{invariants, model::Player, PriorityState, TerminalState},
     ids::{GameId, PlayerId},
     phase::Phase,
 };
@@ -18,6 +18,16 @@ pub enum AdvanceTurnOutcome {
         card_drawn: Option<CardDrawn>,
     },
     GameEnded(GameEnded),
+}
+
+pub struct TurnProgressionContext<'a> {
+    pub game_id: &'a GameId,
+    pub players: &'a mut [Player],
+    pub active_player: &'a mut PlayerId,
+    pub phase: &'a mut Phase,
+    pub priority: &'a mut Option<PriorityState>,
+    pub turn_number: &'a mut u32,
+    pub terminal_state: &'a mut TerminalState,
 }
 
 fn rotate_to_next_player(
@@ -80,19 +90,28 @@ fn build_events(
     )
 }
 
+const fn opens_priority_window(phase: Phase) -> bool {
+    matches!(phase, Phase::FirstMain | Phase::SecondMain)
+}
+
 /// Advances the turn to the next phase and player.
 ///
 /// # Errors
 /// Returns an error if auto-draw fails.
 pub fn advance_turn(
-    game_id: &GameId,
-    players: &mut [Player],
-    active_player: &mut PlayerId,
-    phase: &mut Phase,
-    turn_number: &mut u32,
-    terminal_state: &mut TerminalState,
+    ctx: TurnProgressionContext<'_>,
     _cmd: AdvanceTurnCommand,
 ) -> Result<AdvanceTurnOutcome, DomainError> {
+    let TurnProgressionContext {
+        game_id,
+        players,
+        active_player,
+        phase,
+        priority,
+        turn_number,
+        terminal_state,
+    } = ctx;
+
     invariants::require_game_active(terminal_state.is_over())?;
     let from_phase = *phase;
     let from_turn = *turn_number;
@@ -119,6 +138,11 @@ pub fn advance_turn(
         rotate_to_next_player(players, active_player, turn_number)?;
         *phase = to_phase;
         to_phase_behavior.on_enter(players, active_player)?;
+        *priority = if opens_priority_window(to_phase) {
+            Some(PriorityState::new(active_player.clone()))
+        } else {
+            None
+        };
 
         let (turn_progressed, card_drawn) = build_events(
             game_id,
@@ -154,6 +178,11 @@ pub fn advance_turn(
 
     *phase = to_phase;
     to_phase_behavior.on_enter(players, active_player)?;
+    *priority = if opens_priority_window(to_phase) {
+        Some(PriorityState::new(active_player.clone()))
+    } else {
+        None
+    };
 
     let (turn_progressed, card_drawn) = build_events(
         game_id,

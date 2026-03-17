@@ -119,4 +119,4 @@ This proposal is for a minimal two-player stack and priority model. It aims to m
 The current landed implementation keeps two explicit temporary limits:
 
 - response spells are currently limited to instants
-- priority windows are currently opened by spell casting, not yet by the broader turn-flow engine
+- broader turn-flow priority windows beyond `FirstMain` and `SecondMain` are not yet implemented

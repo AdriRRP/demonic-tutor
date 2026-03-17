@@ -516,9 +516,7 @@ impl GameplayWorld {
             self.game_mut(),
             "player-1",
         );
-        service
-            .advance_turn(self.game_mut(), AdvanceTurnCommand::new())
-            .expect("advance to combat should succeed");
+        support::advance_turn_raw(&service, self.game_mut());
 
         service
             .declare_attackers(
@@ -626,9 +624,7 @@ impl GameplayWorld {
             self.game_mut(),
             "player-1",
         );
-        service
-            .advance_turn(self.game_mut(), AdvanceTurnCommand::new())
-            .expect("advance to combat should succeed");
+        support::advance_turn_raw(&service, self.game_mut());
         service
             .declare_attackers(
                 self.game_mut(),
@@ -774,6 +770,8 @@ impl GameplayWorld {
     pub fn advance_turn(&mut self) {
         self.pre_advance_hand_size = Some(self.player_hand_size("Alice"));
 
+        self.close_empty_priority_window_for_setup();
+
         match self.game_mut().advance_turn(AdvanceTurnCommand::new()) {
             Ok(AdvanceTurnOutcome::Progressed {
                 turn_progressed,
@@ -799,6 +797,29 @@ impl GameplayWorld {
         }
 
         self.post_advance_hand_size = Some(self.player_hand_size("Alice"));
+    }
+
+    fn close_empty_priority_window_for_setup(&mut self) {
+        if !self.game().has_open_priority_window() {
+            return;
+        }
+
+        assert!(
+            self.game().stack().is_empty(),
+            "BDD setup only auto-closes empty priority windows"
+        );
+
+        let first_holder = self.game().priority().map_or_else(
+            || panic!("priority window should be open"),
+            |p| p.current_holder().clone(),
+        );
+        self.pass_priority_by_id(first_holder);
+
+        let second_holder = self.game().priority().map_or_else(
+            || panic!("priority window should remain open after one pass"),
+            |p| p.current_holder().clone(),
+        );
+        self.pass_priority_by_id(second_holder);
     }
 
     pub fn cast_tracked_spell(&mut self, alias: &str) {
@@ -856,11 +877,12 @@ impl GameplayWorld {
     }
 
     pub fn pass_priority(&mut self, alias: &str) {
+        self.pass_priority_by_id(Self::player_id(alias));
+    }
+
+    fn pass_priority_by_id(&mut self, player_id: PlayerId) {
         let service = support::create_service();
-        match service.pass_priority(
-            self.game_mut(),
-            PassPriorityCommand::new(Self::player_id(alias)),
-        ) {
+        match service.pass_priority(self.game_mut(), PassPriorityCommand::new(player_id)) {
             Ok(outcome) => {
                 self.last_priority_passed = Some(outcome.priority_passed);
                 self.last_stack_top_resolved = outcome.stack_top_resolved;

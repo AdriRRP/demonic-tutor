@@ -66,20 +66,6 @@ fn next_stack_object_id(game_id: &GameId, next_stack_object_number: &mut u32) ->
     id
 }
 
-fn require_priority_holder(
-    priority: Option<&PriorityState>,
-    player_id: &PlayerId,
-) -> Result<(), DomainError> {
-    let priority = priority.ok_or(DomainError::Game(GameError::NoPriorityWindow))?;
-    if priority.current_holder() != player_id {
-        return Err(DomainError::Game(GameError::NotPriorityHolder {
-            current: priority.current_holder().clone(),
-            requested: player_id.clone(),
-        }));
-    }
-    Ok(())
-}
-
 fn require_cast_timing(
     active_player: &PlayerId,
     phase: Phase,
@@ -90,7 +76,7 @@ fn require_cast_timing(
     card_type: &CardType,
 ) -> Result<(), DomainError> {
     if let Some(priority) = priority {
-        require_priority_holder(Some(priority), player_id)?;
+        invariants::require_priority_holder(Some(priority), player_id)?;
 
         let stack_is_empty = stack.is_empty();
         let active_player_in_main =
@@ -291,7 +277,7 @@ pub fn pass_priority(
 
     let PassPriorityCommand { player_id } = cmd;
 
-    require_priority_holder(priority.as_ref(), &player_id)?;
+    invariants::require_priority_holder(priority.as_ref(), &player_id)?;
     let priority_passed = PriorityPassed::new(game_id.clone(), player_id.clone());
     let passes_in_row = priority
         .as_ref()

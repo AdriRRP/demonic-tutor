@@ -77,6 +77,7 @@ The domain currently includes:
 - casting spells onto an aggregate-owned stack zone
 - public priority passing for the currently open minimal stack windows
 - the casting player retains priority immediately after a spell is put on the stack
+- entering `FirstMain` or `SecondMain` opens an empty priority window for the active player
 - instant-speed spell responses for the current priority holder
 - resolving the top stack object after two consecutive passes
 
@@ -96,8 +97,9 @@ Current constraints include:
 - opening hand size is fixed to 7 cards
 - only a subset of zones are modeled (no exile)
 - spell responses during open priority windows are currently limited to instants
-- priority windows are currently opened by spell casting, not yet by general turn-flow windows
-- when a priority window is open, other gameplay actions are rejected until the window closes
+- priority windows are currently opened by spell casting and by entering `FirstMain` or `SecondMain`
+- outside stack-aware operations, general turn advancement still requires the priority window to be closed
+- broader priority windows for non-main-phase turn flow are not modeled yet
 - no triggered abilities
 - limited card behavior modeling
 - permanent spells resolve from the stack into the battlefield in the current simplified stack model
@@ -140,7 +142,7 @@ The project currently includes:
 - projections derived from gameplay events
 - State pattern for phase transitions
 - helper methods for event persistence and publishing
-- a Gherkin acceptance layer, with executable coverage for stack foundation, stack-based spell responses, turn progression, explicit multi-card draw effects, spell casting through the stack, combat damage, creature destruction, cleanup damage removal, cleanup hand-size discard, empty-library draw loss, and zero-life loss via `cucumber-rs`
+- a Gherkin acceptance layer, with executable coverage for stack foundation, stack-based spell responses, main-phase priority windows, turn progression, explicit multi-card draw effects, spell casting through the stack, combat damage, creature destruction, cleanup damage removal, cleanup hand-size discard, empty-library draw loss, and zero-life loss via `cucumber-rs`
 
 This architecture supports:
 

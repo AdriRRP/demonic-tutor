@@ -7,6 +7,7 @@ fn a_new_two_player_game_has_started(world: &mut GameplayWorld) {
     world.setup_started_game("bdd-stack-foundation");
 }
 
+#[given("the stack is empty")]
 #[then("the stack is empty")]
 fn the_stack_is_empty(world: &mut GameplayWorld) {
     assert!(world.game().stack().is_empty());
