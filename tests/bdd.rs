@@ -37,6 +37,7 @@ async fn main() {
     GameplayWorld::run("features/stack/cast_instant_in_end_step_window.feature").await;
     GameplayWorld::run("features/stack/cast_instant_in_beginning_of_combat_window.feature").await;
     GameplayWorld::run("features/stack/cast_instant_after_attackers.feature").await;
+    GameplayWorld::run("features/stack/cast_instant_after_blockers.feature").await;
     GameplayWorld::run("features/turn-flow/upkeep_priority_window.feature").await;
     GameplayWorld::run("features/turn-flow/draw_priority_window.feature").await;
     GameplayWorld::run("features/turn-flow/main_phase_priority_window.feature").await;
