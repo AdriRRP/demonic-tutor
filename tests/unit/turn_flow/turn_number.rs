@@ -1,19 +1,17 @@
 #![allow(clippy::unwrap_used)]
 
-mod support;
-
 use std::sync::Arc;
 
+use crate::support::{advance_n, filled_library, land_card, setup_two_player_game};
 use demonictutor::{
     AdvanceTurnCommand, DomainEvent, GameLogProjection, GameService, InMemoryEventBus,
     InMemoryEventStore,
 };
-use support::{advance_n, filled_library, land_card, setup_two_player_game};
 
 #[test]
 fn game_starts_with_turn_number_1() {
-    let service = support::create_service();
-    let game = support::start_two_player_game(&service, "game-1");
+    let service = crate::support::create_service();
+    let game = crate::support::start_two_player_game(&service, "game-1");
 
     assert_eq!(game.turn_number(), 1);
 }
@@ -44,7 +42,7 @@ fn advance_turn_emits_turn_progressed_event() {
     }));
 
     let service = GameService::new(InMemoryEventStore::new(), bus);
-    let mut game = support::start_two_player_game(&service, "game-1");
+    let mut game = crate::support::start_two_player_game(&service, "game-1");
 
     service
         .advance_turn(&mut game, AdvanceTurnCommand::new())

@@ -1,12 +1,10 @@
 #![allow(clippy::unwrap_used)]
 
-mod support;
-
-use demonictutor::{AdvanceTurnCommand, CardInstanceId, Phase, PlayLandCommand, PlayerId};
-use support::{
+use crate::support::{
     advance_n, advance_to_first_main, advance_to_player_first_main, filled_library, land_card,
     setup_two_player_game,
 };
+use demonictutor::{AdvanceTurnCommand, CardInstanceId, Phase, PlayLandCommand, PlayerId};
 
 fn create_game_with_land_in_hand() -> demonictutor::Game {
     let (.., game) = setup_two_player_game(
@@ -67,7 +65,7 @@ fn advance_turn_emits_event() {
 #[test]
 fn advance_turn_resets_lands_played() {
     let mut game = create_game_with_land_in_hand();
-    let service = support::create_service();
+    let service = crate::support::create_service();
 
     advance_to_player_first_main(&service, &mut game, "player-2");
     service
@@ -95,7 +93,7 @@ fn advance_turn_resets_lands_played() {
 #[test]
 fn advance_turn_allows_playing_land_after_turn_change() {
     let mut game = create_game_with_land_in_hand();
-    let service = support::create_service();
+    let service = crate::support::create_service();
 
     advance_to_first_main(&service, &mut game);
     assert!(service

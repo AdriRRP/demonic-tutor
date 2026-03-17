@@ -1,14 +1,12 @@
 #![allow(clippy::unwrap_used)]
 
-mod support;
-
+use crate::support::{
+    advance_to_first_main, advance_to_player_first_main, artifact_card, filled_library,
+    instant_card, land_card, setup_two_player_game, vanilla_creature,
+};
 use demonictutor::{
     CardError, CardInstanceId, CardType, CastSpellCommand, DomainError, Phase, PlayLandCommand,
     PlayerId, SpellCastOutcome, TapLandCommand,
-};
-use support::{
-    advance_to_first_main, advance_to_player_first_main, artifact_card, filled_library,
-    instant_card, land_card, setup_two_player_game, vanilla_creature,
 };
 
 #[test]

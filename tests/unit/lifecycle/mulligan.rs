@@ -1,11 +1,9 @@
 #![allow(clippy::unwrap_used)]
 
-mod support;
-
+use crate::support::{create_service, creature_library, setup_two_player_game};
 use demonictutor::{
     AdvanceTurnCommand, DomainError, GameError, MulliganCommand, Phase, PhaseError, PlayerId,
 };
-use support::{create_service, creature_library, setup_two_player_game};
 
 #[test]
 fn mulligan_hand_contains_exactly_seven_cards_after_mulligan() {
@@ -52,7 +50,7 @@ fn mulligan_fails_already_used() {
 #[test]
 fn mulligan_fails_not_enough_cards() {
     let service = create_service();
-    let mut game = support::start_two_player_game(&service, "game-1");
+    let mut game = crate::support::start_two_player_game(&service, "game-1");
 
     let result = service.mulligan(&mut game, MulliganCommand::new(PlayerId::new("player-1")));
 

@@ -1,14 +1,12 @@
 #![allow(clippy::unwrap_used)]
 
-mod support;
-
+use crate::support::{create_service, creature_library};
 use demonictutor::{CardDefinitionId, DomainError, GameError, LibraryCard, NonCreatureCardType};
-use support::{create_service, creature_library};
 
 #[test]
 fn deal_opening_hands_moves_cards_to_hand() {
     let (service, game) =
-        support::setup_two_player_game("game-1", creature_library(7), creature_library(7));
+        crate::support::setup_two_player_game("game-1", creature_library(7), creature_library(7));
 
     let p1_hand = game.players()[0].hand().cards();
     let p2_hand = game.players()[1].hand().cards();
@@ -23,14 +21,14 @@ fn deal_opening_hands_moves_cards_to_hand() {
 #[test]
 fn deal_opening_hands_emits_event_per_player() {
     let service = create_service();
-    let mut game = support::start_two_player_game(&service, "game-1");
+    let mut game = crate::support::start_two_player_game(&service, "game-1");
 
     let events = service
         .deal_opening_hands(
             &mut game,
             &demonictutor::DealOpeningHandsCommand::new(vec![
-                support::player_library("player-1", creature_library(7)),
-                support::player_library("player-2", creature_library(7)),
+                crate::support::player_library("player-1", creature_library(7)),
+                crate::support::player_library("player-2", creature_library(7)),
             ]),
         )
         .unwrap();
@@ -41,11 +39,11 @@ fn deal_opening_hands_emits_event_per_player() {
 #[test]
 fn deal_opening_hands_fails_when_not_enough_cards() {
     let service = create_service();
-    let mut game = support::start_two_player_game(&service, "game-1");
+    let mut game = crate::support::start_two_player_game(&service, "game-1");
 
     let result = service.deal_opening_hands(
         &mut game,
-        &demonictutor::DealOpeningHandsCommand::new(vec![support::player_library(
+        &demonictutor::DealOpeningHandsCommand::new(vec![crate::support::player_library(
             "player-1",
             creature_library(6),
         )]),
@@ -60,12 +58,12 @@ fn deal_opening_hands_fails_when_not_enough_cards() {
 #[test]
 fn deal_opening_hands_does_not_affect_other_player() {
     let service = create_service();
-    let mut game = support::start_two_player_game(&service, "game-1");
+    let mut game = crate::support::start_two_player_game(&service, "game-1");
 
     service
         .deal_opening_hands(
             &mut game,
-            &demonictutor::DealOpeningHandsCommand::new(vec![support::player_library(
+            &demonictutor::DealOpeningHandsCommand::new(vec![crate::support::player_library(
                 "player-1",
                 creature_library(7),
             )]),

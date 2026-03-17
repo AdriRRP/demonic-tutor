@@ -25,6 +25,8 @@ A slice typically includes:
 
 A slice should represent something that can be **observed in gameplay**.
 
+When useful, a slice may be preceded or accompanied by a Gherkin feature describing the supported behavior. In that case, the feature remains a behavior specification and the slice remains the implementation unit.
+
 Examples:
 
 - starting a game
@@ -33,6 +35,8 @@ Examples:
 - casting a spell
 
 Slices represent **capabilities**, not technical layers.
+
+Features and scenarios do not replace slices. They help specify behavior that slices implement.
 
 ---
 

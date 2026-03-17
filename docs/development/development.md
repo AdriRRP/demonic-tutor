@@ -150,6 +150,12 @@ Each slice should:
 * include tests for observable behavior
 * update documentation when necessary
 
+For rule-heavy areas, a slice may also be preceded by a focused Gherkin feature under `features/` as long as the feature:
+
+* describes observable behavior rather than copied rules text
+* references the relevant rules and slices
+* stays truthful about out-of-scope behavior
+
 Avoid introducing large frameworks or infrastructure before they are required by a slice.
 
 ---
@@ -203,9 +209,23 @@ Tests should:
 * remain focused and readable
 * avoid testing implementation details
 
+Repository test layout:
+
+* `tests/unit.rs` as the single conventional test target aggregating files under `tests/unit/`
+* `tests/unit/` for conventional Rust integration and behavior test modules, grouped by domain area such as `lifecycle`, `turn_flow`, `resource_actions`, `combat`, `infrastructure`, and `regressions`
+* `tests/bdd/` for executable Cucumber acceptance test runners
+
 Prefer small tests tied to domain behaviors over large integration scaffolding.
 
 BDD-style tests may be introduced when gameplay flows become complex.
+
+When `features/` are executable, keep them focused on acceptance-level behavior and continue using ordinary Rust tests for fine-grained invariants and edge cases.
+
+Current executable BDD pilot:
+
+```bash
+cargo test --test bdd_turn_progression
+```
 
 ---
 
@@ -219,6 +239,7 @@ Prefer:
 * narrow vertical slices
 * explicit modeling decisions
 * closing broad cleanups by synchronizing canonical docs, superseding stale history honestly, and updating reusable agent guidance when a lesson is likely to recur
+* using focused scenario files to clarify semantics before adding complex rule-heavy slices
 
 Avoid:
 

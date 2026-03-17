@@ -1,12 +1,10 @@
 #![allow(clippy::unwrap_used)]
 
-mod support;
-
+use crate::support::{
+    advance_n, advance_to_player_first_main, filled_library, land_card, setup_two_player_game,
+};
 use demonictutor::{
     CardInstanceId, DomainError, DrawCardCommand, GameError, PlayLandCommand, PlayerId,
-};
-use support::{
-    advance_n, advance_to_player_first_main, filled_library, land_card, setup_two_player_game,
 };
 
 fn create_game_with_library_cards() -> demonictutor::Game {
@@ -76,7 +74,7 @@ fn draw_card_emits_event() {
 #[test]
 fn draw_card_fails_when_not_enough_cards() {
     let mut game = create_game_with_library_cards();
-    let service = support::create_service();
+    let service = crate::support::create_service();
 
     advance_to_player_first_main(&service, &mut game, "player-2");
 
@@ -114,7 +112,7 @@ fn draw_card_fails_when_not_player_turn() {
 #[test]
 fn draw_card_allows_playing_land_after_draw() {
     let mut game = create_game_with_library_cards();
-    let service = support::create_service();
+    let service = crate::support::create_service();
 
     advance_n(&service, &mut game, 3);
 

@@ -1,21 +1,19 @@
 #![allow(clippy::unwrap_used)]
 
-mod support;
-
+use crate::support::{advance_to_first_main, create_service, filled_library, land_card};
 use demonictutor::{
     CardError, CardInstanceId, DomainError, GameService, InMemoryEventBus, InMemoryEventStore,
     PlayLandCommand, PlayerId, TapLandCommand,
 };
-use support::{advance_to_first_main, create_service, filled_library, land_card};
 
 fn create_game_with_land_on_battlefield() -> (
     demonictutor::Game,
     GameService<InMemoryEventStore, InMemoryEventBus>,
 ) {
     let service = create_service();
-    let mut game = support::start_two_player_game(&service, "game-1");
+    let mut game = crate::support::start_two_player_game(&service, "game-1");
 
-    support::deal_opening_hands(
+    crate::support::deal_opening_hands(
         &service,
         &mut game,
         filled_library(vec![land_card("forest")], 10),
@@ -39,7 +37,7 @@ fn create_game_with_land_on_battlefield() -> (
 #[test]
 fn players_start_with_zero_mana() {
     let service = create_service();
-    let game = support::start_two_player_game(&service, "game-1");
+    let game = crate::support::start_two_player_game(&service, "game-1");
 
     assert_eq!(game.players()[0].mana(), 0);
     assert_eq!(game.players()[1].mana(), 0);
@@ -113,7 +111,7 @@ fn tap_land_fails_for_non_land_card() {
 #[test]
 fn tap_land_fails_for_unknown_card() {
     let service = create_service();
-    let mut game = support::start_two_player_game(&service, "game-1");
+    let mut game = crate::support::start_two_player_game(&service, "game-1");
 
     let result = service.tap_land(
         &mut game,

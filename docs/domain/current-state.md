@@ -108,6 +108,7 @@ The project currently includes:
 - projections derived from gameplay events
 - State pattern for phase transitions
 - helper methods for event persistence and publishing
+- a Gherkin feature pilot, with executable turn-progression acceptance coverage via `cucumber-rs`
 
 This architecture supports:
 

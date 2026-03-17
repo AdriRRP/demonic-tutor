@@ -1,18 +1,16 @@
 #![allow(clippy::unwrap_used)]
 
-mod support;
-
+use crate::support::{advance_to_player_first_main, create_service, filled_library, land_card};
 use demonictutor::{
     CardError, CardInstanceId, DomainError, GameError, PhaseError, PlayLandCommand, PlayerId,
 };
-use support::{advance_to_player_first_main, create_service, filled_library, land_card};
 
 fn create_game_with_land_in_hand() -> (demonictutor::Game, CardInstanceId) {
     let service = create_service();
-    let mut game = support::start_two_player_game(&service, "game-1");
+    let mut game = crate::support::start_two_player_game(&service, "game-1");
     let land_card_id = CardInstanceId::new("game-1-player-2-0");
 
-    support::deal_opening_hands(
+    crate::support::deal_opening_hands(
         &service,
         &mut game,
         filled_library(vec![land_card("forest")], 10),

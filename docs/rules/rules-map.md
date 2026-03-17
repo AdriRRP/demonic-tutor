@@ -1,8 +1,11 @@
 # Rules Map — DemonicTutor
 
-This document maps implemented slices to the official Magic Comprehensive Rules.
+This document maps implemented repository behavior to the official Magic Comprehensive Rules.
 
-The goal is traceability between the domain model and the rule system.
+The goal is traceability between the domain model, features, slices, and the rule system.
+
+This file is a routing aid.
+It is not a literal restatement of the rules text.
 
 ---
 
@@ -87,3 +90,14 @@ The goal is traceability between the domain model and the rule system.
 ## Turn Number
 
 - 500
+
+---
+
+## Pilot Features
+
+The initial Gherkin pilot currently targets these rule areas:
+
+- `features/turn-flow/turn_progression.feature`
+- `features/spells/cast_creature_spell.feature`
+- `features/combat/combat_damage_marking.feature`
+- `features/combat/creature_destruction.feature` (proposed)
