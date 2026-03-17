@@ -764,6 +764,8 @@ impl GameplayWorld {
     }
 
     pub fn setup_non_active_priority_after_attackers_declared_with_instant(&mut self) {
+        let mut bob_cards = support::filled_library(Vec::new(), 7);
+        bob_cards.push(support::instant_card("bdd-window-instant", 0));
         self.reset_game_with_libraries(
             "bdd-combat-priority-attackers-response",
             support::filled_library(
@@ -775,7 +777,7 @@ impl GameplayWorld {
                 )],
                 10,
             ),
-            support::filled_library(vec![support::instant_card("bdd-window-instant", 0)], 10),
+            bob_cards,
         );
 
         let service = support::create_service();
@@ -798,8 +800,6 @@ impl GameplayWorld {
             self.game_mut(),
             "player-2",
         );
-        self.tracked_response_card_id =
-            Some(self.hand_card_by_definition("Bob", "bdd-window-instant"));
 
         support::advance_to_player_first_main_satisfying_cleanup(
             &service,
@@ -818,6 +818,8 @@ impl GameplayWorld {
             )
             .expect("declare attackers should succeed");
 
+        self.tracked_response_card_id =
+            Some(self.hand_card_by_definition("Bob", "bdd-window-instant"));
         self.pass_priority("Alice");
         self.tracked_attacker_id = Some(attacker_id);
         self.reset_observations();
@@ -1092,6 +1094,16 @@ impl GameplayWorld {
     }
 
     pub fn setup_non_active_priority_after_blockers_declared_with_instant(&mut self) {
+        let mut bob_cards = support::filled_library(
+            vec![LibraryCard::creature(
+                CardDefinitionId::new("bdd-blocker-priority"),
+                0,
+                2,
+                2,
+            )],
+            7,
+        );
+        bob_cards.push(support::instant_card("bdd-window-instant", 0));
         self.reset_game_with_libraries(
             "bdd-combat-priority-blockers-response",
             support::filled_library(
@@ -1103,13 +1115,7 @@ impl GameplayWorld {
                 )],
                 10,
             ),
-            support::filled_library(
-                vec![
-                    LibraryCard::creature(CardDefinitionId::new("bdd-blocker-priority"), 0, 2, 2),
-                    support::instant_card("bdd-window-instant", 0),
-                ],
-                10,
-            ),
+            bob_cards,
         );
 
         let service = support::create_service();
@@ -1133,8 +1139,6 @@ impl GameplayWorld {
             "player-2",
         );
         let blocker_id = self.hand_card_by_definition("Bob", "bdd-blocker-priority");
-        self.tracked_response_card_id =
-            Some(self.hand_card_by_definition("Bob", "bdd-window-instant"));
         service
             .cast_spell(
                 self.game_mut(),
@@ -1170,6 +1174,8 @@ impl GameplayWorld {
             )
             .expect("declare blockers should succeed");
 
+        self.tracked_response_card_id =
+            Some(self.hand_card_by_definition("Bob", "bdd-window-instant"));
         self.pass_priority("Alice");
         self.tracked_attacker_id = Some(attacker_id);
         self.tracked_blocker_id = Some(blocker_id);
@@ -1365,6 +1371,8 @@ impl GameplayWorld {
     }
 
     pub fn setup_non_active_priority_after_combat_damage_with_instant(&mut self) {
+        let mut bob_cards = support::filled_library(Vec::new(), 7);
+        bob_cards.push(support::instant_card("bdd-window-instant", 0));
         self.reset_game_with_libraries(
             "bdd-post-combat-damage-response",
             support::filled_library(
@@ -1376,7 +1384,7 @@ impl GameplayWorld {
                 )],
                 10,
             ),
-            support::filled_library(vec![support::instant_card("bdd-window-instant", 0)], 10),
+            bob_cards,
         );
 
         let service = support::create_service();
@@ -1399,8 +1407,6 @@ impl GameplayWorld {
             self.game_mut(),
             "player-2",
         );
-        self.tracked_response_card_id =
-            Some(self.hand_card_by_definition("Bob", "bdd-window-instant"));
         support::advance_to_player_first_main_satisfying_cleanup(
             &service,
             self.game_mut(),
@@ -1425,6 +1431,8 @@ impl GameplayWorld {
             )
             .expect("combat damage should resolve");
 
+        self.tracked_response_card_id =
+            Some(self.hand_card_by_definition("Bob", "bdd-window-instant"));
         self.pass_priority("Alice");
         self.tracked_attacker_id = Some(attacker_id);
         self.reset_observations();

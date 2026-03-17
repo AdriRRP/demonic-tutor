@@ -27,6 +27,7 @@ Current executable feature coverage:
 - `features/stack/respond_in_second_main_window.feature`
 - `features/stack/respond_in_end_step_window.feature`
 - `features/stack/respond_in_beginning_of_combat_window.feature`
+- `features/stack/respond_after_attackers.feature`
 - `features/stack/cast_instant_in_upkeep_window.feature`
 - `features/stack/cast_instant_in_draw_window.feature`
 - `features/stack/cast_instant_in_second_main_window.feature`
