@@ -185,6 +185,15 @@ It is not a literal restatement of the rules text.
 
 ---
 
+## Respond In Beginning Of Combat Window
+
+- 117
+- 506
+- 601
+- 608
+
+---
+
 ## Cast Instant In Draw Window
 
 - 117
