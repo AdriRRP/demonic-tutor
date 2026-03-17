@@ -375,8 +375,6 @@ pub fn resolve_combat_damage(
     }
 
     apply_damage_and_clear_combat_state(players, &damage_received);
-    let destroyed_creatures =
-        automatic_consequences::destroy_lethally_damaged_creatures(game_id, players);
     let player_life_change = if player_damage > 0 {
         let life_delta = i32::try_from(player_damage).map_err(|_| {
             DomainError::Game(GameError::InternalInvariantViolation(
@@ -386,20 +384,19 @@ pub fn resolve_combat_damage(
         Some(automatic_consequences::adjust_player_life(
             game_id,
             players,
-            terminal_state,
             &defender_player_id,
             -life_delta,
         )?)
     } else {
         None
     };
+    let state_based_actions =
+        automatic_consequences::check_state_based_actions(game_id, players, terminal_state)?;
 
     Ok(ResolveCombatDamageOutcome::new(
         CombatDamageResolved::new(game_id.clone(), cmd.player_id, damage_events),
-        player_life_change
-            .as_ref()
-            .map(|outcome| outcome.life_changed.clone()),
-        destroyed_creatures,
-        player_life_change.and_then(|outcome| outcome.game_ended),
+        player_life_change,
+        state_based_actions.creatures_died,
+        state_based_actions.game_ended,
     ))
 }

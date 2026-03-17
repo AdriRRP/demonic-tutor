@@ -64,6 +64,7 @@ The domain currently includes:
 - player life changes from combat damage
 - automatic destruction of creatures with lethal marked damage
 - automatic destruction of creatures with 0 toughness after creature-spell resolution
+- shared state-based action review after relevant gameplay actions for the currently supported SBA subset
 - cleanup-based removal of marked damage from surviving creatures
 - explicit cleanup discard to maximum hand size during `EndStep`
 - summoning sickness for creatures (removed for the active player's creatures at turn start)
@@ -123,6 +124,7 @@ The project currently includes:
 - composite turn progression events and draw events with explicit origin
 - explicit game-end events with reasons for terminal empty-library draw and zero life
 - shared life-change semantics reused by explicit life adjustment and combat damage
+- shared review of currently supported state-based actions after relevant gameplay actions
 - an event bus for event distribution
 - projections derived from gameplay events
 - State pattern for phase transitions

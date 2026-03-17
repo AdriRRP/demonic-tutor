@@ -23,7 +23,7 @@ This slice follows `CombatDamage` because:
 
 ## Supported Behavior
 
-- check creatures on the battlefield after combat damage resolution
+- check creatures with lethal damage through the shared state-based action review after relevant actions
 - destroy creatures whose marked damage is greater than or equal to toughness
 - move destroyed creatures from battlefield to graveyard
 - emit `CreatureDied` once per creature that dies
@@ -59,7 +59,7 @@ This slice follows `CombatDamage` because:
 
 ### Aggregate Impact
 
-- extend `Game` with automatic creature-destruction checking after combat damage resolution
+- extend `Game` with shared state-based action review that includes lethal-damage creature destruction
 
 ### Entity / Value Object Impact
 
@@ -121,4 +121,4 @@ This behavior belongs to the `Game` aggregate because it:
 
 ## Rules Support Statement
 
-This slice introduces a narrow automatic destruction rule for creatures with lethal damage already marked on them after combat damage resolution. It does not implement a general state-based action system, and it does not model regeneration, indestructible, or other rule modifications to destruction.
+This slice introduces a narrow automatic destruction rule for creatures with lethal damage already marked on them through the repository's shared state-based action review. It does not implement a general state-based action system, and it does not model regeneration, indestructible, or other rule modifications to destruction.

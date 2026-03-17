@@ -6,8 +6,10 @@ use crate::support::{
     vanilla_creature,
 };
 use demonictutor::{
-    CardDefinitionId, CardError, CardInstanceId, CardType, CastSpellCommand, DomainError,
-    LibraryCard, Phase, PlayLandCommand, PlayerId, SpellCastOutcome, TapLandCommand,
+    domain::play::game::{Player, TerminalState},
+    CardDefinitionId, CardError, CardInstance, CardInstanceId, CardType, CastSpellCommand, DeckId,
+    DomainError, Game, GameId, LibraryCard, Phase, PlayLandCommand, PlayerId, SpellCastOutcome,
+    TapLandCommand,
 };
 
 #[test]
@@ -194,6 +196,55 @@ fn cast_zero_toughness_creature_dies_immediately_after_entering_battlefield() {
     );
     assert_eq!(game.players()[0].battlefield().cards().len(), 0);
     assert_eq!(game.players()[0].graveyard().cards().len(), 1);
+}
+
+#[test]
+fn cast_spell_reviews_pending_state_based_actions_for_existing_zero_toughness_creatures() {
+    let service = crate::support::create_service();
+
+    let mut alice = Player::new(PlayerId::new("player-1"), DeckId::new("deck-1"));
+    alice.battlefield_mut().add(CardInstance::new_creature(
+        CardInstanceId::new("doomed-creature"),
+        CardDefinitionId::new("doomed-creature"),
+        0,
+        1,
+        0,
+    ));
+    alice.hand_mut().receive(vec![CardInstance::new(
+        CardInstanceId::new("supporting-spell"),
+        CardDefinitionId::new("supporting-spell"),
+        CardType::Instant,
+        0,
+    )]);
+
+    let bob = Player::new(PlayerId::new("player-2"), DeckId::new("deck-2"));
+    let mut game = Game::new(
+        GameId::new("game-sba-review"),
+        PlayerId::new("player-1"),
+        Phase::FirstMain,
+        1,
+        vec![alice, bob],
+        TerminalState::active(),
+    );
+
+    let outcome = service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(
+                PlayerId::new("player-1"),
+                CardInstanceId::new("supporting-spell"),
+            ),
+        )
+        .unwrap();
+
+    assert_eq!(outcome.creatures_died.len(), 1);
+    assert_eq!(
+        outcome.creatures_died[0].card_id,
+        CardInstanceId::new("doomed-creature")
+    );
+    assert!(outcome.game_ended.is_none());
+    assert_eq!(game.players()[0].battlefield().cards().len(), 0);
+    assert_eq!(game.players()[0].graveyard().cards().len(), 2);
 }
 
 #[test]

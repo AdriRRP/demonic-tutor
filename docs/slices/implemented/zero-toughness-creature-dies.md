@@ -34,7 +34,7 @@ This slice follows `CastSpell`, `CreatureDestruction`, and terminal game-state s
 
 - this slice only supports the current runtime representation of toughness `0`
 - it does not model negative toughness because creature toughness is currently represented as `u32`
-- the zero-toughness check is currently applied after creature-spell resolution
+- the zero-toughness check is currently reached through the shared state-based action review after relevant actions
 - the behavior remains automatic game logic, not a player command
 
 ---
@@ -103,4 +103,4 @@ This slice follows `CastSpell`, `CreatureDestruction`, and terminal game-state s
 
 ## Rules Support Statement
 
-This slice implements a narrow zero-toughness death check tied to the repository's current creature-spell resolution path. It does not yet implement a general state-based action engine, and because toughness is currently modeled as `u32`, it only represents the `0 toughness` portion of the full rule.
+This slice implements a narrow zero-toughness death rule through the repository's shared state-based action review. It does not yet implement a general state-based action engine, and because toughness is currently modeled as `u32`, it only represents the `0 toughness` portion of the full rule.

@@ -226,6 +226,7 @@ where
     ) -> Result<AdjustLifeOutcome, DomainError> {
         let outcome = game.adjust_life(cmd)?;
         let mut domain_events = vec![outcome.life_changed.clone().into()];
+        domain_events.extend(outcome.creatures_died.iter().cloned().map(Into::into));
         if let Some(game_ended) = &outcome.game_ended {
             domain_events.push(game_ended.clone().into());
         }
@@ -264,6 +265,9 @@ where
         let outcome = game.cast_spell(cmd)?;
         let mut domain_events = vec![outcome.spell_cast.clone().into()];
         domain_events.extend(outcome.creatures_died.iter().cloned().map(Into::into));
+        if let Some(game_ended) = &outcome.game_ended {
+            domain_events.push(game_ended.clone().into());
+        }
         self.persist_and_publish_events(game.id().as_str(), &domain_events)?;
 
         Ok(outcome)

@@ -1,8 +1,10 @@
 #![allow(clippy::unwrap_used)]
 
 use demonictutor::{
-    AdjustLifeCommand, DeckId, DomainError, GameEndReason, GameError, GameId, GameService,
-    InMemoryEventBus, InMemoryEventStore, PlayerDeck, PlayerId, StartGameCommand,
+    domain::play::game::{Player, TerminalState},
+    AdjustLifeCommand, CardDefinitionId, CardInstance, CardInstanceId, DeckId, DomainError, Game,
+    GameEndReason, GameError, GameId, GameService, InMemoryEventBus, InMemoryEventStore,
+    PlayerDeck, PlayerId, StartGameCommand,
 };
 
 fn player_deck(player: &str, deck: &str) -> PlayerDeck {
@@ -167,4 +169,48 @@ fn adjust_life_fails_for_unknown_player() {
         result.unwrap_err(),
         DomainError::Game(GameError::PlayerNotFound { .. })
     ));
+}
+
+#[test]
+fn adjust_life_reviews_pending_state_based_actions_for_existing_lethal_damage() {
+    let service = create_service();
+
+    let mut alice = Player::new(PlayerId::new("player-1"), DeckId::new("deck-1"));
+    let mut doomed_creature = CardInstance::new_creature(
+        CardInstanceId::new("doomed-creature"),
+        CardDefinitionId::new("doomed-creature"),
+        0,
+        2,
+        2,
+    );
+    doomed_creature.add_damage(2);
+    alice.battlefield_mut().add(doomed_creature);
+
+    let bob = Player::new(PlayerId::new("player-2"), DeckId::new("deck-2"));
+    let mut game = Game::new(
+        GameId::new("game-sba-life"),
+        PlayerId::new("player-1"),
+        demonictutor::Phase::FirstMain,
+        1,
+        vec![alice, bob],
+        TerminalState::active(),
+    );
+
+    let outcome = service
+        .adjust_life(
+            &mut game,
+            AdjustLifeCommand::new(PlayerId::new("player-1"), 1),
+        )
+        .unwrap();
+
+    assert_eq!(outcome.life_changed.from_life, 20);
+    assert_eq!(outcome.life_changed.to_life, 21);
+    assert_eq!(outcome.creatures_died.len(), 1);
+    assert_eq!(
+        outcome.creatures_died[0].card_id,
+        CardInstanceId::new("doomed-creature")
+    );
+    assert!(outcome.game_ended.is_none());
+    assert_eq!(game.players()[0].battlefield().cards().len(), 0);
+    assert_eq!(game.players()[0].graveyard().cards().len(), 1);
 }

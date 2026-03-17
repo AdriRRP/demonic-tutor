@@ -86,6 +86,15 @@ It is not a literal restatement of the rules text.
 
 ---
 
+## State-Based Actions Review
+
+- 704
+- 704.5a
+- 704.5f
+- 704.5g
+
+---
+
 ## Cleanup Hand Size Discard
 
 - 514.1

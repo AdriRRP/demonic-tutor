@@ -5,53 +5,42 @@ use crate::domain::play::{
 };
 
 #[derive(Debug, Clone)]
-pub struct LifeAdjustmentResult {
-    pub life_changed: LifeChanged,
+pub struct StateBasedActionsResult {
+    pub creatures_died: Vec<CreatureDied>,
     pub game_ended: Option<GameEnded>,
 }
 
-impl LifeAdjustmentResult {
+impl StateBasedActionsResult {
     #[must_use]
-    pub const fn new(life_changed: LifeChanged, game_ended: Option<GameEnded>) -> Self {
+    pub const fn new(creatures_died: Vec<CreatureDied>, game_ended: Option<GameEnded>) -> Self {
         Self {
-            life_changed,
+            creatures_died,
             game_ended,
         }
     }
 }
 
-/// Applies a life delta and resolves the automatic zero-life game loss when needed.
+/// Applies a life delta without resolving further automatic gameplay consequences.
 ///
 /// # Errors
-/// Returns an error if the target player is not found or the opposing player cannot be derived.
+/// Returns an error if the target player is not found.
 pub fn adjust_player_life(
     game_id: &GameId,
     players: &mut [Player],
-    terminal_state: &mut TerminalState,
     player_id: &PlayerId,
     life_delta: i32,
-) -> Result<LifeAdjustmentResult, crate::domain::play::errors::DomainError> {
+) -> Result<LifeChanged, crate::domain::play::errors::DomainError> {
     let player = invariants::find_player_mut(players, player_id)?;
     let old_life = player.life();
     player.adjust_life(life_delta);
     let new_life = player.life();
 
-    let life_changed = LifeChanged::new(game_id.clone(), player_id.clone(), old_life, new_life);
-
-    let game_ended = if new_life == 0 {
-        let winner = invariants::opposing_player_id(players, player_id)?;
-        terminal_state.end(winner.clone(), player_id.clone(), GameEndReason::ZeroLife);
-        Some(GameEnded::new(
-            game_id.clone(),
-            winner,
-            player_id.clone(),
-            GameEndReason::ZeroLife,
-        ))
-    } else {
-        None
-    };
-
-    Ok(LifeAdjustmentResult::new(life_changed, game_ended))
+    Ok(LifeChanged::new(
+        game_id.clone(),
+        player_id.clone(),
+        old_life,
+        new_life,
+    ))
 }
 
 /// Ends the game because a player attempted to draw from an empty library.
@@ -77,6 +66,35 @@ pub fn end_game_for_empty_library_draw(
         losing_player.clone(),
         GameEndReason::EmptyLibraryDraw,
     ))
+}
+
+fn end_game_for_zero_life(
+    game_id: &GameId,
+    players: &[Player],
+    terminal_state: &mut TerminalState,
+) -> Result<Option<GameEnded>, crate::domain::play::errors::DomainError> {
+    if terminal_state.is_over() {
+        return Ok(None);
+    }
+
+    let Some(losing_player) = players.iter().find(|player| player.life() == 0) else {
+        return Ok(None);
+    };
+
+    let losing_player_id = losing_player.id().clone();
+    let winning_player = invariants::opposing_player_id(players, &losing_player_id)?;
+    terminal_state.end(
+        winning_player.clone(),
+        losing_player_id.clone(),
+        GameEndReason::ZeroLife,
+    );
+
+    Ok(Some(GameEnded::new(
+        game_id.clone(),
+        winning_player,
+        losing_player_id,
+        GameEndReason::ZeroLife,
+    )))
 }
 
 pub fn destroy_zero_toughness_creatures(
@@ -137,4 +155,25 @@ pub fn destroy_lethally_damaged_creatures(
     }
 
     destroyed
+}
+
+/// Resolves the currently supported state-based actions after a relevant gameplay action.
+///
+/// The current review covers:
+/// - creatures with zero toughness
+/// - creatures with lethal marked damage
+/// - players at zero life
+///
+/// # Errors
+/// Returns an error if a derived opposing player cannot be determined while ending the game.
+pub fn check_state_based_actions(
+    game_id: &GameId,
+    players: &mut [Player],
+    terminal_state: &mut TerminalState,
+) -> Result<StateBasedActionsResult, crate::domain::play::errors::DomainError> {
+    let mut creatures_died = destroy_zero_toughness_creatures(game_id, players);
+    creatures_died.extend(destroy_lethally_damaged_creatures(game_id, players));
+    let game_ended = end_game_for_zero_life(game_id, players, terminal_state)?;
+
+    Ok(StateBasedActionsResult::new(creatures_died, game_ended))
 }

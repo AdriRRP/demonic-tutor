@@ -1,6 +1,6 @@
 use super::{
     super::{invariants, model::Player, TerminalState},
-    automatic_consequences::{self, LifeAdjustmentResult},
+    automatic_consequences::{self, StateBasedActionsResult},
 };
 use crate::domain::play::{
     cards::CardType,
@@ -17,6 +17,7 @@ use crate::domain::play::{
 #[derive(Debug, Clone)]
 pub struct AdjustLifeOutcome {
     pub life_changed: LifeChanged,
+    pub creatures_died: Vec<CreatureDied>,
     pub game_ended: Option<GameEnded>,
 }
 
@@ -24,23 +25,34 @@ pub struct AdjustLifeOutcome {
 pub struct CastSpellOutcome {
     pub spell_cast: SpellCast,
     pub creatures_died: Vec<CreatureDied>,
+    pub game_ended: Option<GameEnded>,
 }
 
 impl CastSpellOutcome {
     #[must_use]
-    pub const fn new(spell_cast: SpellCast, creatures_died: Vec<CreatureDied>) -> Self {
+    pub const fn new(
+        spell_cast: SpellCast,
+        creatures_died: Vec<CreatureDied>,
+        game_ended: Option<GameEnded>,
+    ) -> Self {
         Self {
             spell_cast,
             creatures_died,
+            game_ended,
         }
     }
 }
 
 impl AdjustLifeOutcome {
     #[must_use]
-    pub const fn new(life_changed: LifeChanged, game_ended: Option<GameEnded>) -> Self {
+    pub const fn new(
+        life_changed: LifeChanged,
+        creatures_died: Vec<CreatureDied>,
+        game_ended: Option<GameEnded>,
+    ) -> Self {
         Self {
             life_changed,
+            creatures_died,
             game_ended,
         }
     }
@@ -154,18 +166,18 @@ pub fn adjust_life(
         life_delta,
     } = cmd;
 
-    let LifeAdjustmentResult {
-        life_changed,
+    let life_changed =
+        automatic_consequences::adjust_player_life(game_id, players, &player_id, life_delta)?;
+    let StateBasedActionsResult {
+        creatures_died,
         game_ended,
-    } = automatic_consequences::adjust_player_life(
-        game_id,
-        players,
-        terminal_state,
-        &player_id,
-        life_delta,
-    )?;
+    } = automatic_consequences::check_state_based_actions(game_id, players, terminal_state)?;
 
-    Ok(AdjustLifeOutcome::new(life_changed, game_ended))
+    Ok(AdjustLifeOutcome::new(
+        life_changed,
+        creatures_died,
+        game_ended,
+    ))
 }
 
 /// Casts a spell from hand.
@@ -177,6 +189,7 @@ pub fn cast_spell(
     players: &mut [Player],
     active_player: &PlayerId,
     phase: &Phase,
+    terminal_state: &mut TerminalState,
     cmd: CastSpellCommand,
 ) -> Result<CastSpellOutcome, DomainError> {
     invariants::require_active_player(active_player, &cmd.player_id)?;
@@ -240,7 +253,14 @@ pub fn cast_spell(
         mana_cost,
         outcome,
     );
-    let creatures_died = automatic_consequences::destroy_zero_toughness_creatures(game_id, players);
+    let StateBasedActionsResult {
+        creatures_died,
+        game_ended,
+    } = automatic_consequences::check_state_based_actions(game_id, players, terminal_state)?;
 
-    Ok(CastSpellOutcome::new(spell_cast, creatures_died))
+    Ok(CastSpellOutcome::new(
+        spell_cast,
+        creatures_died,
+        game_ended,
+    ))
 }

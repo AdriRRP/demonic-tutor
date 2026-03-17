@@ -294,6 +294,7 @@ impl Game {
             &mut self.players,
             &self.active_player,
             &self.phase,
+            &mut self.terminal_state,
             cmd,
         )
     }
