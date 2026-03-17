@@ -543,7 +543,7 @@ impl GameplayWorld {
         }
     }
 
-    pub fn discard_tracked_card(&mut self, alias: &str) {
+    pub fn discard_tracked_card_for_cleanup(&mut self, alias: &str) {
         let service = support::create_service();
         let card_id = self
             .tracked_card_id

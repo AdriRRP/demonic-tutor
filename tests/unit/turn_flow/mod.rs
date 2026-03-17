@@ -1,7 +1,7 @@
 #[path = "advance_turn.rs"]
 mod advance_turn;
-#[path = "discard_card.rs"]
-mod discard_card;
+#[path = "discard_for_cleanup.rs"]
+mod discard_for_cleanup;
 #[path = "draw_card.rs"]
 mod draw_card;
 #[path = "turn_number.rs"]

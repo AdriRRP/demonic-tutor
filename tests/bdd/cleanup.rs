@@ -30,7 +30,7 @@ fn alice_still_has_eight_cards_in_hand(world: &mut GameplayWorld) {
 
 #[when("Alice discards one card for cleanup")]
 fn alice_discards_one_card_for_cleanup(world: &mut GameplayWorld) {
-    world.discard_tracked_card("Alice");
+    world.discard_tracked_card_for_cleanup("Alice");
 }
 
 #[then("the discarded card leaves Alice's hand")]
