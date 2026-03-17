@@ -9,12 +9,12 @@ use crate::{
         },
         errors::{DomainError, GameError},
         events::{
-            AttackersDeclared, BlockersDeclared, CardDiscarded, CombatDamageResolved, CreatureDied,
-            DomainEvent, GameStarted, LandPlayed, LandTapped, ManaAdded, MulliganTaken,
-            OpeningHandDealt,
+            AttackersDeclared, BlockersDeclared, CardDiscarded, DomainEvent, GameStarted,
+            LandPlayed, LandTapped, ManaAdded, MulliganTaken, OpeningHandDealt,
         },
         game::{
             AdjustLifeOutcome, AdvanceTurnOutcome, CastSpellOutcome, DrawCardEffectOutcome, Game,
+            ResolveCombatDamageOutcome,
         },
     },
 };
@@ -310,17 +310,24 @@ where
         &self,
         game: &mut Game,
         cmd: ResolveCombatDamageCommand,
-    ) -> Result<(CombatDamageResolved, Vec<CreatureDied>), DomainError> {
-        let (damage_event, destroyed_events) = game.resolve_combat_damage(cmd)?;
-        let mut domain_events = vec![damage_event.clone().into()];
+    ) -> Result<ResolveCombatDamageOutcome, DomainError> {
+        let outcome = game.resolve_combat_damage(cmd)?;
+        let mut domain_events = vec![outcome.combat_damage_resolved.clone().into()];
+        if let Some(life_changed) = &outcome.life_changed {
+            domain_events.push(life_changed.clone().into());
+        }
         domain_events.extend(
-            destroyed_events
+            outcome
+                .creatures_died
                 .iter()
                 .cloned()
                 .map(DomainEvent::CreatureDied),
         );
+        if let Some(game_ended) = &outcome.game_ended {
+            domain_events.push(game_ended.clone().into());
+        }
         self.persist_and_publish_events(game.id().as_str(), &domain_events)?;
 
-        Ok((damage_event, destroyed_events))
+        Ok(outcome)
     }
 }

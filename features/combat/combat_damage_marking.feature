@@ -21,3 +21,10 @@ Feature: Combat damage marking
     When combat damage resolves
     Then Bob loses life equal to the attacker's power
     And the game emits CombatDamageResolved
+
+  Scenario: Unblocked lethal combat damage ends the game
+    Given Alice attacks with an unblocked creature
+    And Bob is at 3 life as the defending player
+    When combat damage resolves
+    Then Bob loses the game due to zero life
+    And the game emits GameEnded for ZeroLife

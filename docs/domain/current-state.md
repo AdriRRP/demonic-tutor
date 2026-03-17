@@ -32,6 +32,7 @@ Implemented capabilities include:
 - declaring attackers in combat phase
 - declaring blockers in combat phase
 - resolving combat damage
+- applying unblocked combat damage to players through shared life-change semantics
 - destroying creatures automatically when marked combat damage is lethal
 - destroying creatures with 0 toughness automatically after creature-spell resolution
 - clearing marked damage from surviving creatures when the turn ends
@@ -60,6 +61,7 @@ The domain currently includes:
 - creature cards with power and toughness
 - creature spells entering the battlefield through `CastSpell`
 - creature damage tracking during combat
+- player life changes from combat damage
 - automatic destruction of creatures with lethal marked damage
 - automatic destruction of creatures with 0 toughness after creature-spell resolution
 - cleanup-based removal of marked damage from surviving creatures
@@ -120,6 +122,7 @@ The project currently includes:
 - domain events describing state transitions
 - composite turn progression events and draw events with explicit origin
 - explicit game-end events with reasons for terminal empty-library draw and zero life
+- shared life-change semantics reused by explicit life adjustment and combat damage
 - an event bus for event distribution
 - projections derived from gameplay events
 - State pattern for phase transitions

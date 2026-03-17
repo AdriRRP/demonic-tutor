@@ -1,7 +1,7 @@
 #![allow(clippy::unwrap_used)]
 
 use demonictutor::{
-    CardDefinitionId, CardError, CardInstanceId, CastSpellCommand, CreatureDied,
+    AdjustLifeCommand, CardDefinitionId, CardError, CardInstanceId, CastSpellCommand, CreatureDied,
     DealOpeningHandsCommand, DeckId, DeclareAttackersCommand, DeclareBlockersCommand, DomainError,
     Game, GameId, GameService, InMemoryEventBus, InMemoryEventStore, LibraryCard,
     NonCreatureCardType, Phase, PlayerDeck, PlayerId, PlayerLibrary, ResolveCombatDamageCommand,
@@ -243,7 +243,7 @@ fn combat_damage_marks_surviving_creatures_and_destroys_lethally_damaged_ones() 
         )
         .unwrap();
 
-    let (_, destroyed_creatures) = service
+    let outcome = service
         .resolve_combat_damage(
             &mut game,
             ResolveCombatDamageCommand::new(PlayerId::new("player-1"), assignments),
@@ -253,9 +253,9 @@ fn combat_damage_marks_surviving_creatures_and_destroys_lethally_damaged_ones() 
     assert_eq!(game.players()[0].battlefield().cards()[0].damage(), 2);
     assert!(game.players()[1].battlefield().cards().is_empty());
     assert_eq!(game.players()[1].graveyard().cards().len(), 1);
-    assert_eq!(destroyed_creatures.len(), 1);
+    assert_eq!(outcome.creatures_died.len(), 1);
     assert_eq!(
-        destroyed_creatures[0].card_id,
+        outcome.creatures_died[0].card_id,
         CardInstanceId::new("game-1-player-2-0")
     );
     assert!(!game.players()[0].battlefield().cards()[0].is_attacking());
@@ -337,20 +337,104 @@ fn creature_destruction_emits_one_event_per_destroyed_creature() {
         )
         .unwrap();
 
-    let (_, destroyed_creatures) = service
+    let outcome = service
         .resolve_combat_damage(
             &mut game,
             ResolveCombatDamageCommand::new(PlayerId::new("player-1"), assignments),
         )
         .unwrap();
 
-    assert_eq!(destroyed_creatures.len(), 2);
-    assert!(destroyed_creatures.iter().all(|event: &CreatureDied| {
+    assert_eq!(outcome.creatures_died.len(), 2);
+    assert!(outcome.creatures_died.iter().all(|event: &CreatureDied| {
         event.player_id == PlayerId::new("player-2")
             && (event.card_id == left_blocker_id || event.card_id == right_blocker_id)
     }));
     assert_eq!(game.players()[1].battlefield().cards().len(), 0);
     assert_eq!(game.players()[1].graveyard().cards().len(), 2);
+}
+
+#[test]
+fn unblocked_combat_damage_ends_the_game_when_it_reduces_a_player_to_zero_life() {
+    let (service, mut game) = setup_game(
+        vec![
+            LibraryCard::creature(CardDefinitionId::new("ogre"), 0, 3, 3),
+            LibraryCard::creature(CardDefinitionId::new("card-2"), 0, 2, 2),
+            LibraryCard::creature(CardDefinitionId::new("card-3"), 0, 2, 2),
+            LibraryCard::creature(CardDefinitionId::new("card-4"), 0, 2, 2),
+            LibraryCard::creature(CardDefinitionId::new("card-5"), 0, 2, 2),
+            LibraryCard::creature(CardDefinitionId::new("card-6"), 0, 2, 2),
+            LibraryCard::creature(CardDefinitionId::new("card-7"), 0, 2, 2),
+            LibraryCard::creature(CardDefinitionId::new("card-8"), 0, 2, 2),
+            LibraryCard::creature(CardDefinitionId::new("card-9"), 0, 2, 2),
+            LibraryCard::creature(CardDefinitionId::new("card-10"), 0, 2, 2),
+        ],
+        vec![
+            LibraryCard::creature(CardDefinitionId::new("card-1"), 0, 2, 2),
+            LibraryCard::creature(CardDefinitionId::new("card-2"), 0, 2, 2),
+            LibraryCard::creature(CardDefinitionId::new("card-3"), 0, 2, 2),
+            LibraryCard::creature(CardDefinitionId::new("card-4"), 0, 2, 2),
+            LibraryCard::creature(CardDefinitionId::new("card-5"), 0, 2, 2),
+            LibraryCard::creature(CardDefinitionId::new("card-6"), 0, 2, 2),
+            LibraryCard::creature(CardDefinitionId::new("card-7"), 0, 2, 2),
+            LibraryCard::creature(CardDefinitionId::new("card-8"), 0, 2, 2),
+            LibraryCard::creature(CardDefinitionId::new("card-9"), 0, 2, 2),
+            LibraryCard::creature(CardDefinitionId::new("card-10"), 0, 2, 2),
+        ],
+    );
+
+    let attacker_id = CardInstanceId::new("game-1-player-1-0");
+
+    advance_until(&service, &mut game, "player-1", Phase::FirstMain);
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), attacker_id.clone()),
+        )
+        .unwrap();
+
+    service
+        .adjust_life(
+            &mut game,
+            AdjustLifeCommand::new(PlayerId::new("player-2"), -17),
+        )
+        .unwrap();
+
+    advance_until(&service, &mut game, "player-2", Phase::FirstMain);
+    advance_until(&service, &mut game, "player-1", Phase::Combat);
+
+    service
+        .declare_attackers(
+            &mut game,
+            DeclareAttackersCommand::new(PlayerId::new("player-1"), vec![attacker_id]),
+        )
+        .unwrap();
+
+    let outcome = service
+        .resolve_combat_damage(
+            &mut game,
+            ResolveCombatDamageCommand::new(PlayerId::new("player-1"), Vec::new()),
+        )
+        .unwrap();
+
+    assert_eq!(
+        outcome.life_changed.as_ref().map(|event| event.to_life),
+        Some(0)
+    );
+    assert_eq!(
+        outcome
+            .game_ended
+            .as_ref()
+            .map(|event| event.loser_id.clone()),
+        Some(PlayerId::new("player-2"))
+    );
+    assert_eq!(
+        outcome
+            .game_ended
+            .as_ref()
+            .map(|event| event.winner_id.clone()),
+        Some(PlayerId::new("player-1"))
+    );
+    assert!(game.is_over());
 }
 
 #[test]

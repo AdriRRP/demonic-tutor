@@ -11,9 +11,8 @@ use crate::domain::play::{
     },
     errors::{DomainError, GameError},
     events::{
-        AttackersDeclared, BlockersDeclared, CardDiscarded, CombatDamageResolved, CreatureDied,
-        GameEndReason, GameStarted, LandPlayed, LandTapped, ManaAdded, MulliganTaken,
-        OpeningHandDealt,
+        AttackersDeclared, BlockersDeclared, CardDiscarded, GameEndReason, GameStarted, LandPlayed,
+        LandTapped, ManaAdded, MulliganTaken, OpeningHandDealt,
     },
     ids::{GameId, PlayerId},
     phase::Phase,
@@ -21,6 +20,7 @@ use crate::domain::play::{
 
 pub use model::Player;
 pub use rules::{
+    combat::ResolveCombatDamageOutcome,
     resource_actions::{AdjustLifeOutcome, CastSpellOutcome},
     turn_flow::{AdvanceTurnOutcome, DrawCardEffectOutcome},
 };
@@ -352,13 +352,14 @@ impl Game {
     pub fn resolve_combat_damage(
         &mut self,
         cmd: ResolveCombatDamageCommand,
-    ) -> Result<(CombatDamageResolved, Vec<CreatureDied>), DomainError> {
+    ) -> Result<ResolveCombatDamageOutcome, DomainError> {
         invariants::require_game_active(self.is_over())?;
         rules::combat::resolve_combat_damage(
             &self.id,
             &mut self.players,
             &self.active_player,
             &self.phase,
+            &mut self.terminal_state,
             cmd,
         )
     }

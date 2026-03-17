@@ -4,9 +4,9 @@ pub mod support;
 use demonictutor::{
     AdjustLifeCommand, AdvanceTurnCommand, AdvanceTurnOutcome, CardDefinitionId, CardDiscarded,
     CardDrawn, CardInstance, CardInstanceId, CastSpellCommand, CombatDamageResolved, CreatureDied,
-    DealOpeningHandsCommand, DiscardForCleanupCommand, Game, GameEnded, GameId, LibraryCard, Phase,
-    PlayLandCommand, PlayerId, ResolveCombatDamageCommand, SpellCast, StartGameCommand,
-    TapLandCommand, TurnProgressed,
+    DealOpeningHandsCommand, DiscardForCleanupCommand, Game, GameEnded, GameId, LibraryCard,
+    LifeChanged, Phase, PlayLandCommand, PlayerId, ResolveCombatDamageCommand, SpellCast,
+    StartGameCommand, TapLandCommand, TurnProgressed,
 };
 
 #[derive(Debug, Default, cucumber::World)]
@@ -18,6 +18,7 @@ pub struct GameplayWorld {
     pub last_card_discarded: Option<CardDiscarded>,
     pub last_spell_cast: Option<SpellCast>,
     pub last_combat_damage: Option<CombatDamageResolved>,
+    pub last_life_changed: Option<LifeChanged>,
     pub last_creature_died: Vec<CreatureDied>,
     pub last_error: Option<String>,
     pub pre_advance_hand_size: Option<usize>,
@@ -136,6 +137,7 @@ impl GameplayWorld {
         self.last_card_discarded = None;
         self.last_spell_cast = None;
         self.last_combat_damage = None;
+        self.last_life_changed = None;
         self.last_creature_died.clear();
         self.last_error = None;
         self.pre_advance_hand_size = None;
@@ -471,6 +473,21 @@ impl GameplayWorld {
         );
     }
 
+    pub fn setup_unblocked_combat_with_defender_life(&mut self, life: u32) {
+        self.setup_unblocked_combat();
+        let current_life = self.player_life("Bob");
+        let delta = life.cast_signed() - current_life.cast_signed();
+        let service = support::create_service();
+        let outcome = service
+            .adjust_life(
+                self.game_mut(),
+                AdjustLifeCommand::new(Self::player_id("Bob"), delta),
+            )
+            .expect("BDD combat life setup should succeed");
+        assert!(outcome.game_ended.is_none());
+        self.reset_observations();
+    }
+
     pub fn setup_lethal_damage_combat(&mut self) {
         self.setup_combat(
             "bdd-lethal-combat",
@@ -670,14 +687,18 @@ impl GameplayWorld {
             self.game_mut(),
             ResolveCombatDamageCommand::new(Self::player_id("Alice"), assignments),
         ) {
-            Ok((damage_event, died_events)) => {
-                self.last_combat_damage = Some(damage_event);
-                self.last_creature_died = died_events;
+            Ok(outcome) => {
+                self.last_combat_damage = Some(outcome.combat_damage_resolved);
+                self.last_life_changed = outcome.life_changed;
+                self.last_creature_died = outcome.creatures_died;
+                self.last_game_ended = outcome.game_ended;
                 self.last_error = None;
             }
             Err(error) => {
                 self.last_combat_damage = None;
+                self.last_life_changed = None;
                 self.last_creature_died.clear();
+                self.last_game_ended = None;
                 self.last_error = Some(error.to_string());
             }
         }

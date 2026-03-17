@@ -1,11 +1,14 @@
-use super::super::{invariants, model::Player};
+use super::{
+    super::{invariants, model::Player, TerminalState},
+    resource_actions,
+};
 use crate::domain::play::{
     cards::CardType,
     commands::{DeclareAttackersCommand, DeclareBlockersCommand, ResolveCombatDamageCommand},
     errors::{CardError, DomainError, GameError, PhaseError},
     events::{
         AttackersDeclared, BlockersDeclared, CombatDamageResolved, CreatureDied, DamageEvent,
-        DamageTarget,
+        DamageTarget, GameEnded, LifeChanged,
     },
     ids::{CardInstanceId, GameId, PlayerId},
     phase::Phase,
@@ -15,6 +18,31 @@ use std::collections::HashMap;
 type CombatantPower = (CardInstanceId, u32);
 type BlockAssignment = (CardInstanceId, CardInstanceId);
 type CombatAssignments = HashMap<CardInstanceId, Vec<CardInstanceId>>;
+
+#[derive(Debug, Clone)]
+pub struct ResolveCombatDamageOutcome {
+    pub combat_damage_resolved: CombatDamageResolved,
+    pub life_changed: Option<LifeChanged>,
+    pub creatures_died: Vec<CreatureDied>,
+    pub game_ended: Option<GameEnded>,
+}
+
+impl ResolveCombatDamageOutcome {
+    #[must_use]
+    pub const fn new(
+        combat_damage_resolved: CombatDamageResolved,
+        life_changed: Option<LifeChanged>,
+        creatures_died: Vec<CreatureDied>,
+        game_ended: Option<GameEnded>,
+    ) -> Self {
+        Self {
+            combat_damage_resolved,
+            life_changed,
+            creatures_died,
+            game_ended,
+        }
+    }
+}
 
 fn require_defending_player(
     active_player: &PlayerId,
@@ -280,8 +308,9 @@ pub fn resolve_combat_damage(
     players: &mut [Player],
     active_player: &PlayerId,
     phase: &Phase,
+    terminal_state: &mut TerminalState,
     cmd: ResolveCombatDamageCommand,
-) -> Result<(CombatDamageResolved, Vec<CreatureDied>), DomainError> {
+) -> Result<ResolveCombatDamageOutcome, DomainError> {
     invariants::require_active_player(active_player, &cmd.player_id)?;
     require_combat_phase(*phase)?;
 
@@ -296,13 +325,13 @@ pub fn resolve_combat_damage(
 
     let mut damage_events: Vec<DamageEvent> = Vec::new();
     let mut damage_received: HashMap<CardInstanceId, u32> = HashMap::new();
+    let mut player_damage = 0;
 
     for (attacker_id, power) in &attackers {
         let blocking_for_attacker = blockers_by_attacker.get(attacker_id);
 
         if blocking_for_attacker.is_none_or(Vec::is_empty) {
-            let player = &mut players[defender_idx];
-            player.lose_life(*power);
+            player_damage += *power;
             damage_events.push(DamageEvent {
                 source: attacker_id.clone(),
                 target: DamageTarget::Player(defender_player_id.clone()),
@@ -337,9 +366,29 @@ pub fn resolve_combat_damage(
 
     apply_damage_and_clear_combat_state(players, &damage_received);
     let destroyed_creatures = destroy_lethally_damaged_creatures(game_id, players);
+    let player_life_change = if player_damage > 0 {
+        let life_delta = i32::try_from(player_damage).map_err(|_| {
+            DomainError::Game(GameError::InternalInvariantViolation(
+                "combat damage should fit within i32 life adjustments".to_string(),
+            ))
+        })?;
+        Some(resource_actions::adjust_player_life(
+            game_id,
+            players,
+            terminal_state,
+            &defender_player_id,
+            -life_delta,
+        )?)
+    } else {
+        None
+    };
 
-    Ok((
+    Ok(ResolveCombatDamageOutcome::new(
         CombatDamageResolved::new(game_id.clone(), cmd.player_id, damage_events),
+        player_life_change
+            .as_ref()
+            .map(|outcome| outcome.life_changed.clone()),
         destroyed_creatures,
+        player_life_change.and_then(|outcome| outcome.game_ended),
     ))
 }

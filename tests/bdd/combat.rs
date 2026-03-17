@@ -48,9 +48,36 @@ fn bob_is_the_defending_player(world: &mut GameplayWorld) {
     assert_eq!(world.player("Bob").life(), 20);
 }
 
+#[given("Bob is at 3 life as the defending player")]
+fn bob_is_at_three_life_as_the_defending_player(world: &mut GameplayWorld) {
+    world.setup_unblocked_combat_with_defender_life(3);
+    assert_eq!(world.player("Bob").life(), 3);
+}
+
 #[then("Bob loses life equal to the attacker's power")]
 fn bob_loses_life_equal_to_the_attackers_power(world: &mut GameplayWorld) {
     assert_eq!(world.player_life("Bob"), 17);
+}
+
+#[then("Bob loses the game due to zero life")]
+fn bob_loses_the_game_due_to_zero_life(world: &mut GameplayWorld) {
+    let game_ended = world
+        .last_game_ended
+        .as_ref()
+        .expect("combat should emit GameEnded");
+    assert_eq!(game_ended.loser_id, GameplayWorld::player_id("Bob"));
+    assert_eq!(game_ended.winner_id, GameplayWorld::player_id("Alice"));
+    assert_eq!(world.player_life("Bob"), 0);
+    assert!(world.game().is_over());
+}
+
+#[then("the game emits GameEnded for ZeroLife")]
+fn the_game_emits_game_ended_for_zero_life(world: &mut GameplayWorld) {
+    let game_ended = world
+        .last_game_ended
+        .as_ref()
+        .expect("GameEnded event should exist");
+    assert_eq!(game_ended.reason, demonictutor::GameEndReason::ZeroLife);
 }
 
 #[given("a creature on the battlefield has damage marked on it equal to its toughness")]

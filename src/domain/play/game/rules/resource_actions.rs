@@ -70,6 +70,36 @@ impl AdjustLifeOutcome {
     }
 }
 
+pub(super) fn adjust_player_life(
+    game_id: &GameId,
+    players: &mut [Player],
+    terminal_state: &mut TerminalState,
+    player_id: &PlayerId,
+    life_delta: i32,
+) -> Result<AdjustLifeOutcome, DomainError> {
+    let player = invariants::find_player_mut(players, player_id)?;
+    let old_life = player.life();
+    player.adjust_life(life_delta);
+    let new_life = player.life();
+
+    let life_changed = LifeChanged::new(game_id.clone(), player_id.clone(), old_life, new_life);
+
+    let game_ended = if new_life == 0 {
+        let winner = invariants::opposing_player_id(players, player_id)?;
+        terminal_state.end(winner.clone(), player_id.clone(), GameEndReason::ZeroLife);
+        Some(GameEnded::new(
+            game_id.clone(),
+            winner,
+            player_id.clone(),
+            GameEndReason::ZeroLife,
+        ))
+    } else {
+        None
+    };
+
+    Ok(AdjustLifeOutcome::new(life_changed, game_ended))
+}
+
 /// Plays a land card from hand to battlefield.
 ///
 /// # Errors
@@ -173,31 +203,12 @@ pub fn adjust_life(
     terminal_state: &mut TerminalState,
     cmd: AdjustLifeCommand,
 ) -> Result<AdjustLifeOutcome, DomainError> {
-    let player = invariants::find_player_mut(players, &cmd.player_id)?;
-    let old_life = player.life();
-    player.adjust_life(cmd.life_delta);
-    let new_life = player.life();
+    let AdjustLifeCommand {
+        player_id,
+        life_delta,
+    } = cmd;
 
-    let life_changed = LifeChanged::new(game_id.clone(), cmd.player_id.clone(), old_life, new_life);
-
-    let game_ended = if new_life == 0 {
-        let winner = invariants::opposing_player_id(players, &cmd.player_id)?;
-        terminal_state.end(
-            winner.clone(),
-            cmd.player_id.clone(),
-            GameEndReason::ZeroLife,
-        );
-        Some(GameEnded::new(
-            game_id.clone(),
-            winner,
-            cmd.player_id,
-            GameEndReason::ZeroLife,
-        ))
-    } else {
-        None
-    };
-
-    Ok(AdjustLifeOutcome::new(life_changed, game_ended))
+    adjust_player_life(game_id, players, terminal_state, &player_id, life_delta)
 }
 
 /// Casts a spell from hand.

@@ -30,8 +30,11 @@ This slice follows `DeclareBlockers` because:
   - if unblocked, deal damage equal to power to the defending player
 - for each blocking creature:
   - deal damage equal to power to the attacking creature it blocks
+- route player life loss from unblocked combat damage through the same shared life semantics used by `AdjustLife`
 - mark damage on creatures
 - emit `CombatDamageResolved` event with damage details
+- emit `LifeChanged` when combat damage changes a player's life total
+- emit `GameEnded` when unblocked combat damage reduces a player to 0 life
 - clear attacking and blocking combat flags after damage resolves
 - allow a later narrow destruction pass to move lethally damaged creatures out of the battlefield
 
@@ -76,6 +79,7 @@ This slice follows `DeclareBlockers` because:
 
 ### Events
 - add `CombatDamageResolved` - contains list of (attacker, target, damage_amount)
+- reuse `LifeChanged` / `GameEnded` when combat damage changes player life
 
 ### Errors
 - add error variants for:
@@ -107,6 +111,7 @@ This behavior belongs to the `Game` aggregate because:
 
 - combat damage is dealt to blocking creatures
 - combat damage is dealt to player when unblocked
+- unblocked lethal combat damage ends the game through `ZeroLife`
 - creatures with damage >= toughness marked appropriately
 - combat participation flags are cleared after damage resolves
 - fails when no attackers declared
