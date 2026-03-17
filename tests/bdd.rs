@@ -32,6 +32,7 @@ use world::GameplayWorld;
 async fn main() {
     GameplayWorld::run("features/stack/stack_foundation.feature").await;
     GameplayWorld::run("features/stack/respond_with_instant_spell.feature").await;
+    GameplayWorld::run("features/stack/cast_instant_in_upkeep_window.feature").await;
     GameplayWorld::run("features/turn-flow/upkeep_priority_window.feature").await;
     GameplayWorld::run("features/turn-flow/draw_priority_window.feature").await;
     GameplayWorld::run("features/turn-flow/main_phase_priority_window.feature").await;

@@ -81,6 +81,7 @@ The domain currently includes:
 - public priority passing for the currently open minimal stack windows
 - the casting player retains priority immediately after a spell is put on the stack
 - entering `Upkeep` opens an empty priority window for the active player
+- the active player may cast and resolve an instant during that upkeep priority window
 - entering `Draw` opens an empty priority window for the active player after the automatic turn draw
 - entering `FirstMain` or `SecondMain` opens an empty priority window for the active player
 - entering `EndStep` opens an empty priority window for the active player before cleanup can finish the turn

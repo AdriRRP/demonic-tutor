@@ -1,5 +1,5 @@
 use cucumber::{given, then, when};
-use demonictutor::{CardInstance, CardType, SpellCastOutcome};
+use demonictutor::{CardInstance, CardType, Phase, SpellCastOutcome};
 
 use crate::world::GameplayWorld;
 
@@ -254,6 +254,32 @@ fn alice_has_a_land_card_in_hand(world: &mut GameplayWorld) {
         .expect("land card should be in hand");
 
     assert_eq!(card.card_type(), &CardType::Land);
+}
+
+#[given("Alice is the active player in Upkeep with an instant card in hand and priority")]
+fn alice_is_the_active_player_in_upkeep_with_an_instant_card_in_hand_and_priority(
+    world: &mut GameplayWorld,
+) {
+    world.setup_active_priority_window_with_instant("bdd-upkeep-instant-window", Phase::Upkeep);
+}
+
+#[given("Alice is the active player in Draw with an instant card in hand and priority")]
+fn alice_is_the_active_player_in_draw_with_an_instant_card_in_hand_and_priority(
+    world: &mut GameplayWorld,
+) {
+    world.setup_active_priority_window_with_instant("bdd-draw-instant-window", Phase::Draw);
+}
+
+#[given("Alice is the active player in EndStep with an instant card in hand and priority")]
+fn alice_is_the_active_player_in_end_step_with_an_instant_card_in_hand_and_priority(
+    world: &mut GameplayWorld,
+) {
+    world.setup_active_priority_window_with_instant("bdd-end-step-instant-window", Phase::EndStep);
+}
+
+#[when("Alice casts the instant spell")]
+fn alice_casts_the_instant_spell(world: &mut GameplayWorld) {
+    world.cast_tracked_spell("Alice");
 }
 
 #[when("Alice tries to cast the card as a spell")]
