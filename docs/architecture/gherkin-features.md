@@ -174,6 +174,7 @@ That pilot is now extended into a broader executable acceptance layer covering:
 - combat semantics
 - lethal creature destruction
 - cleanup-based damage removal
+- cleanup hand-size discard
 
 Current executable BDD coverage:
 
@@ -182,6 +183,7 @@ Current executable BDD coverage:
 - `features/combat/combat_damage_marking.feature`
 - `features/combat/creature_destruction.feature`
 - `features/turn-flow/cleanup_damage_removal.feature`
+- `features/turn-flow/cleanup_hand_size_discard.feature`
 - `tests/bdd.rs`
 
 Conventional Rust behavior tests remain separate under the aggregated `tests/unit.rs` target.
@@ -203,6 +205,7 @@ features/
   turn-flow/
     turn_progression.feature
     cleanup_damage_removal.feature
+    cleanup_hand_size_discard.feature
   spells/
     cast_creature_spell.feature
   combat/

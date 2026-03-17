@@ -2,10 +2,10 @@
 pub mod support;
 
 use demonictutor::{
-    AdvanceTurnCommand, CardDefinitionId, CardDrawn, CardInstance, CardInstanceId,
-    CastSpellCommand, CombatDamageResolved, CreatureDied, DealOpeningHandsCommand, Game, GameId,
-    LibraryCard, Phase, PlayLandCommand, PlayerId, ResolveCombatDamageCommand, SpellCast,
-    StartGameCommand, TapLandCommand, TurnProgressed,
+    AdvanceTurnCommand, CardDefinitionId, CardDiscarded, CardDrawn, CardInstance, CardInstanceId,
+    CastSpellCommand, CombatDamageResolved, CreatureDied, DealOpeningHandsCommand,
+    DiscardCardCommand, Game, GameId, LibraryCard, Phase, PlayLandCommand, PlayerId,
+    ResolveCombatDamageCommand, SpellCast, StartGameCommand, TapLandCommand, TurnProgressed,
 };
 
 #[derive(Debug, Default, cucumber::World)]
@@ -13,6 +13,7 @@ pub struct GameplayWorld {
     game: Option<Game>,
     pub last_turn_progressed: Option<TurnProgressed>,
     pub last_card_drawn: Option<CardDrawn>,
+    pub last_card_discarded: Option<CardDiscarded>,
     pub last_spell_cast: Option<SpellCast>,
     pub last_combat_damage: Option<CombatDamageResolved>,
     pub last_creature_died: Vec<CreatureDied>,
@@ -129,6 +130,7 @@ impl GameplayWorld {
     pub fn reset_observations(&mut self) {
         self.last_turn_progressed = None;
         self.last_card_drawn = None;
+        self.last_card_discarded = None;
         self.last_spell_cast = None;
         self.last_combat_damage = None;
         self.last_creature_died.clear();
@@ -186,6 +188,37 @@ impl GameplayWorld {
 
         let target_player = Self::player_id(target_player);
         for _ in 0..64 {
+            while self.game().phase() == &Phase::EndStep {
+                let active_player = self.game().active_player().clone();
+                let active_player_hand_size = self
+                    .game()
+                    .players()
+                    .iter()
+                    .find(|player| player.id() == &active_player)
+                    .expect("active player should exist")
+                    .hand()
+                    .cards()
+                    .len();
+
+                if active_player_hand_size <= 7 {
+                    break;
+                }
+
+                let card_id = self
+                    .game()
+                    .players()
+                    .iter()
+                    .find(|player| player.id() == &active_player)
+                    .expect("active player should exist")
+                    .hand()
+                    .cards()[0]
+                    .id()
+                    .clone();
+                self.game_mut()
+                    .discard_card(DiscardCardCommand::new(active_player, card_id))
+                    .expect("BDD state setup cleanup discard should succeed");
+            }
+
             if self.game().phase() == &target_phase
                 && self.game().active_player() == &target_player
                 && self.game().turn_number() == target_turn
@@ -398,9 +431,33 @@ impl GameplayWorld {
         self.resolve_combat_damage();
         let service = support::create_service();
         support::advance_n(&service, self.game_mut(), 2);
+        while self.player_hand_size("Alice") > 7 {
+            let card_id = self.player("Alice").hand().cards()[0].id().clone();
+            service
+                .discard_card(
+                    self.game_mut(),
+                    DiscardCardCommand::new(Self::player_id("Alice"), card_id),
+                )
+                .expect("BDD cleanup discard setup should succeed");
+        }
         self.tracked_card_id = self.tracked_attacker_id.clone();
         self.reset_observations();
         assert_eq!(self.game().phase(), &Phase::EndStep);
+    }
+
+    pub fn setup_end_step_with_eight_cards_in_hand(&mut self) {
+        self.reset_game_with_libraries(
+            "bdd-cleanup-discard",
+            support::creature_library(20),
+            support::creature_library(20),
+        );
+
+        let service = support::create_service();
+        support::advance_n(&service, self.game_mut(), 7);
+        self.tracked_card_id = Some(self.player("Alice").hand().cards()[0].id().clone());
+        self.reset_observations();
+        assert_eq!(self.game().phase(), &Phase::EndStep);
+        assert_eq!(self.player_hand_size("Alice"), 8);
     }
 
     pub fn advance_turn(&mut self) {
@@ -439,6 +496,28 @@ impl GameplayWorld {
             }
             Err(error) => {
                 self.last_spell_cast = None;
+                self.last_error = Some(error.to_string());
+            }
+        }
+    }
+
+    pub fn discard_tracked_card(&mut self, alias: &str) {
+        let service = support::create_service();
+        let card_id = self
+            .tracked_card_id
+            .clone()
+            .expect("tracked discard card should exist");
+
+        match service.discard_card(
+            self.game_mut(),
+            DiscardCardCommand::new(Self::player_id(alias), card_id),
+        ) {
+            Ok(event) => {
+                self.last_card_discarded = Some(event);
+                self.last_error = None;
+            }
+            Err(error) => {
+                self.last_card_discarded = None;
                 self.last_error = Some(error.to_string());
             }
         }

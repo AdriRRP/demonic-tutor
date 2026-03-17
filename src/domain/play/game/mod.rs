@@ -5,13 +5,14 @@ pub mod rules;
 use crate::domain::play::{
     commands::{
         AdjustLifeCommand, AdvanceTurnCommand, CastSpellCommand, DealOpeningHandsCommand,
-        DeclareAttackersCommand, DeclareBlockersCommand, DrawCardEffectCommand, MulliganCommand,
-        PlayLandCommand, ResolveCombatDamageCommand, StartGameCommand, TapLandCommand,
+        DeclareAttackersCommand, DeclareBlockersCommand, DiscardCardCommand, DrawCardEffectCommand,
+        MulliganCommand, PlayLandCommand, ResolveCombatDamageCommand, StartGameCommand,
+        TapLandCommand,
     },
     errors::{DomainError, GameError},
     events::{
-        AttackersDeclared, BlockersDeclared, CardDrawn, CombatDamageResolved, CreatureDied,
-        GameStarted, LandPlayed, LandTapped, LifeChanged, ManaAdded, MulliganTaken,
+        AttackersDeclared, BlockersDeclared, CardDiscarded, CardDrawn, CombatDamageResolved,
+        CreatureDied, GameStarted, LandPlayed, LandTapped, LifeChanged, ManaAdded, MulliganTaken,
         OpeningHandDealt, SpellCast, TurnProgressed,
     },
     ids::{GameId, PlayerId},
@@ -157,6 +158,20 @@ impl Game {
         cmd: DrawCardEffectCommand,
     ) -> Result<CardDrawn, DomainError> {
         rules::turn_flow::draw_card_effect(
+            &self.id,
+            &mut self.players,
+            &self.active_player,
+            &self.phase,
+            cmd,
+        )
+    }
+
+    /// Discards one card from hand during cleanup-related turn flow.
+    ///
+    /// # Errors
+    /// See [`rules::turn_flow::discard_card`].
+    pub fn discard_card(&mut self, cmd: DiscardCardCommand) -> Result<CardDiscarded, DomainError> {
+        rules::turn_flow::discard_card(
             &self.id,
             &mut self.players,
             &self.active_player,

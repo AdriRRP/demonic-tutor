@@ -1,8 +1,8 @@
 #![allow(clippy::unwrap_used)]
 
 use crate::support::{
-    advance_n, advance_to_first_main, advance_to_player_first_main, filled_library, land_card,
-    setup_two_player_game, vanilla_creature,
+    advance_n, advance_to_first_main, advance_to_player_first_main, advance_turn_allowing_cleanup,
+    filled_library, land_card, setup_two_player_game, vanilla_creature,
 };
 use demonictutor::{
     AdvanceTurnCommand, CardDefinitionId, CardInstanceId, CastSpellCommand,
@@ -42,9 +42,7 @@ fn advance_turn_changes_active_player() {
     ];
 
     for (player, phase) in expected {
-        service
-            .advance_turn(&mut game, AdvanceTurnCommand::new())
-            .unwrap();
+        advance_turn_allowing_cleanup(&service, &mut game);
         assert_eq!(game.active_player().as_str(), player);
         assert_eq!(game.phase(), &phase);
     }
@@ -159,9 +157,7 @@ fn advance_turn_clears_marked_damage_when_turn_ends() {
         .unwrap();
 
     advance_to_player_first_main(&service, &mut game, "player-1");
-    service
-        .advance_turn(&mut game, AdvanceTurnCommand::new())
-        .unwrap();
+    advance_turn_allowing_cleanup(&service, &mut game);
     assert_eq!(game.phase(), &Phase::Combat);
     assert_eq!(game.active_player(), &PlayerId::new("player-1"));
 

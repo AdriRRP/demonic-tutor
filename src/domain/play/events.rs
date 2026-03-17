@@ -21,6 +21,7 @@ pub enum DomainEvent {
     LandPlayed(LandPlayed),
     TurnProgressed(TurnProgressed),
     CardDrawn(CardDrawn),
+    CardDiscarded(CardDiscarded),
     MulliganTaken(MulliganTaken),
     LifeChanged(LifeChanged),
     LandTapped(LandTapped),
@@ -110,6 +111,24 @@ pub struct CardDrawn {
     pub player_id: PlayerId,
     pub card_id: CardInstanceId,
     pub draw_kind: DrawKind,
+}
+
+#[derive(Debug, Clone)]
+pub struct CardDiscarded {
+    pub game_id: GameId,
+    pub player_id: PlayerId,
+    pub card_id: CardInstanceId,
+}
+
+impl CardDiscarded {
+    #[must_use]
+    pub const fn new(game_id: GameId, player_id: PlayerId, card_id: CardInstanceId) -> Self {
+        Self {
+            game_id,
+            player_id,
+            card_id,
+        }
+    }
 }
 
 impl CardDrawn {
@@ -362,6 +381,7 @@ impl_domain_event_from!(OpeningHandDealt, OpeningHandDealt);
 impl_domain_event_from!(LandPlayed, LandPlayed);
 impl_domain_event_from!(TurnProgressed, TurnProgressed);
 impl_domain_event_from!(CardDrawn, CardDrawn);
+impl_domain_event_from!(CardDiscarded, CardDiscarded);
 impl_domain_event_from!(MulliganTaken, MulliganTaken);
 impl_domain_event_from!(LifeChanged, LifeChanged);
 impl_domain_event_from!(LandTapped, LandTapped);

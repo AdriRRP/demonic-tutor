@@ -3,9 +3,9 @@
 #![allow(dead_code)]
 
 use demonictutor::{
-    AdvanceTurnCommand, CardDefinitionId, DealOpeningHandsCommand, DeckId, Game, GameId,
-    GameService, InMemoryEventBus, InMemoryEventStore, LibraryCard, NonCreatureCardType, Phase,
-    PlayerDeck, PlayerId, PlayerLibrary, StartGameCommand,
+    AdvanceTurnCommand, CardDefinitionId, DealOpeningHandsCommand, DeckId, DiscardCardCommand,
+    Game, GameId, GameService, InMemoryEventBus, InMemoryEventStore, LibraryCard,
+    NonCreatureCardType, Phase, PlayerDeck, PlayerId, PlayerLibrary, StartGameCommand,
 };
 
 pub type TestService = GameService<InMemoryEventStore, InMemoryEventBus>;
@@ -104,17 +104,13 @@ pub fn setup_two_player_game(
 
 pub fn advance_n(service: &TestService, game: &mut Game, turns: usize) {
     for _ in 0..turns {
-        service
-            .advance_turn(game, AdvanceTurnCommand::new())
-            .unwrap();
+        advance_turn_allowing_cleanup(service, game);
     }
 }
 
 pub fn advance_to_first_main(service: &TestService, game: &mut Game) {
     while game.phase() != &Phase::FirstMain {
-        service
-            .advance_turn(game, AdvanceTurnCommand::new())
-            .unwrap();
+        advance_turn_allowing_cleanup(service, game);
     }
 }
 
@@ -126,10 +122,44 @@ pub fn advance_to_player_first_main(service: &TestService, game: &mut Game, play
             return;
         }
 
-        service
-            .advance_turn(game, AdvanceTurnCommand::new())
-            .unwrap();
+        advance_turn_allowing_cleanup(service, game);
     }
 
     panic!("failed to reach FirstMain for {player_id}");
+}
+
+pub fn advance_turn_allowing_cleanup(service: &TestService, game: &mut Game) {
+    while game.phase() == &Phase::EndStep {
+        let active_player = game.active_player().clone();
+        let active_hand_size = game
+            .players()
+            .iter()
+            .find(|player| player.id() == &active_player)
+            .unwrap_or_else(|| panic!("active player should exist: {active_player}"))
+            .hand()
+            .cards()
+            .len();
+
+        if active_hand_size <= 7 {
+            break;
+        }
+
+        let card_id = game
+            .players()
+            .iter()
+            .find(|player| player.id() == &active_player)
+            .unwrap_or_else(|| panic!("active player should exist: {active_player}"))
+            .hand()
+            .cards()[0]
+            .id()
+            .clone();
+
+        service
+            .discard_card(game, DiscardCardCommand::new(active_player, card_id))
+            .unwrap();
+    }
+
+    service
+        .advance_turn(game, AdvanceTurnCommand::new())
+        .unwrap();
 }

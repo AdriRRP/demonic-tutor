@@ -3,14 +3,14 @@ use crate::{
     domain::play::{
         commands::{
             AdjustLifeCommand, AdvanceTurnCommand, CastSpellCommand, DealOpeningHandsCommand,
-            DeclareAttackersCommand, DeclareBlockersCommand, DrawCardEffectCommand,
-            MulliganCommand, PlayLandCommand, ResolveCombatDamageCommand, StartGameCommand,
-            TapLandCommand,
+            DeclareAttackersCommand, DeclareBlockersCommand, DiscardCardCommand,
+            DrawCardEffectCommand, MulliganCommand, PlayLandCommand, ResolveCombatDamageCommand,
+            StartGameCommand, TapLandCommand,
         },
         errors::{DomainError, GameError},
         events::{
-            AttackersDeclared, BlockersDeclared, CardDrawn, CombatDamageResolved, CreatureDied,
-            DomainEvent, GameStarted, LandPlayed, LandTapped, LifeChanged, ManaAdded,
+            AttackersDeclared, BlockersDeclared, CardDiscarded, CardDrawn, CombatDamageResolved,
+            CreatureDied, DomainEvent, GameStarted, LandPlayed, LandTapped, LifeChanged, ManaAdded,
             MulliganTaken, OpeningHandDealt, SpellCast, TurnProgressed,
         },
         game::Game,
@@ -158,6 +158,22 @@ where
         cmd: DrawCardEffectCommand,
     ) -> Result<CardDrawn, DomainError> {
         let event = game.draw_card_effect(cmd)?;
+        self.persist_and_publish_event(game.id().as_str(), &event)?;
+
+        Ok(event)
+    }
+
+    /// Discards one card from hand during cleanup-related turn flow.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the command is invalid.
+    pub fn discard_card(
+        &self,
+        game: &mut Game,
+        cmd: DiscardCardCommand,
+    ) -> Result<CardDiscarded, DomainError> {
+        let event = game.discard_card(cmd)?;
         self.persist_and_publish_event(game.id().as_str(), &event)?;
 
         Ok(event)

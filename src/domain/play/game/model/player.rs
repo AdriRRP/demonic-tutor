@@ -3,6 +3,7 @@ use crate::domain::play::zones::{Battlefield, Graveyard, Hand, Library};
 
 const DEFAULT_STARTING_LIFE: u32 = 20;
 pub const OPENING_HAND_SIZE: usize = 7;
+pub const MAX_HAND_SIZE: usize = 7;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Player {
@@ -100,6 +101,11 @@ impl Player {
     #[must_use]
     pub const fn mulligan_used(&self) -> bool {
         self.mulligan_used
+    }
+
+    #[must_use]
+    pub fn hand_size(&self) -> usize {
+        self.hand.cards().len()
     }
 
     pub fn adjust_life(&mut self, delta: i32) {

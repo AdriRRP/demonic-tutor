@@ -24,15 +24,16 @@ This is a repository-owned interpretation note, not a copy of the Comprehensive 
 - automatic untap applies only to the active player's permanents
 - automatic draw happens in the Draw phase
 - explicit draw effects are modeled separately from the automatic draw step and are limited to main phases
+- if the active player is above the maximum hand size at `EndStep`, the turn cannot advance until they discard down to the maximum
 - marked damage is cleared automatically when the game leaves `EndStep` for the next turn
 - no priority windows are modeled
 - no stack-based turn interaction is modeled
-- no full cleanup step is modeled yet
+- no distinct cleanup step phase is modeled yet
 
 ## Out of Scope
 
 - priority
 - skipped phases
 - extra turns
-- full cleanup step semantics
+- repeated cleanup loops from state-based actions or triggered abilities
 - triggered abilities tied to phase transitions

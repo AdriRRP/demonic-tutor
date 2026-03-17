@@ -33,6 +33,16 @@ pub enum GameError {
     DuplicatePlayerLibrary(PlayerId),
     OpeningHandsAlreadyDealt,
     MulliganAlreadyUsed(PlayerId),
+    HandSizeLimitExceeded {
+        player: PlayerId,
+        hand_size: usize,
+        max_hand_size: usize,
+    },
+    DiscardNotRequired {
+        player: PlayerId,
+        hand_size: usize,
+        max_hand_size: usize,
+    },
     InternalInvariantViolation(String),
 }
 
@@ -71,6 +81,9 @@ pub enum PhaseError {
         phase: Phase,
     },
     InvalidForDraw {
+        phase: Phase,
+    },
+    InvalidForDiscard {
         phase: Phase,
     },
     InvalidForMulligan,
@@ -145,6 +158,24 @@ impl std::fmt::Display for GameError {
             Self::MulliganAlreadyUsed(pid) => {
                 write!(f, "player {} has already used mulligan", pid.as_str())
             }
+            Self::HandSizeLimitExceeded {
+                player,
+                hand_size,
+                max_hand_size,
+            } => write!(
+                f,
+                "player {} must discard down to {max_hand_size} cards before the turn can end (currently {hand_size})",
+                player.as_str()
+            ),
+            Self::DiscardNotRequired {
+                player,
+                hand_size,
+                max_hand_size,
+            } => write!(
+                f,
+                "player {} cannot discard for cleanup at hand size {hand_size}; maximum is {max_hand_size}",
+                player.as_str()
+            ),
             Self::InternalInvariantViolation(msg) => {
                 write!(f, "internal invariant violated: {msg}")
             }
@@ -189,6 +220,9 @@ impl std::fmt::Display for PhaseError {
                 write!(f, "cannot play card in phase {phase}")
             }
             Self::InvalidForDraw { phase } => write!(f, "cannot draw card in phase {phase}"),
+            Self::InvalidForDiscard { phase } => {
+                write!(f, "cannot discard card in phase {phase}")
+            }
             Self::InvalidForMulligan => write!(f, "cannot perform mulligan in current phase"),
             Self::InvalidForCombat => {
                 write!(f, "cannot declare attackers or blockers in current phase")

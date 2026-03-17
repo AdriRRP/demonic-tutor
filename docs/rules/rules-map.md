@@ -66,6 +66,13 @@ It is not a literal restatement of the rules text.
 
 ---
 
+## Cleanup Hand Size Discard
+
+- 514.1
+- 514.1a
+
+---
+
 ## Cast Non-Land Spells
 
 - 601.1

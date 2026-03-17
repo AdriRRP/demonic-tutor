@@ -2,9 +2,10 @@
 #![allow(clippy::significant_drop_tightening)]
 
 use demonictutor::{
-    CardDrawn, CardInstanceId, CardType, CreatureDied, DomainEvent, DrawKind, EventBus, EventStore,
-    GameId, GameLogProjection, GameStarted, InMemoryEventBus, InMemoryEventStore, LandPlayed,
-    MulliganTaken, OpeningHandDealt, PlayerId, SpellCast, SpellCastOutcome, TurnProgressed,
+    CardDiscarded, CardDrawn, CardInstanceId, CardType, CreatureDied, DomainEvent, DrawKind,
+    EventBus, EventStore, GameId, GameLogProjection, GameStarted, InMemoryEventBus,
+    InMemoryEventStore, LandPlayed, MulliganTaken, OpeningHandDealt, PlayerId, SpellCast,
+    SpellCastOutcome, TurnProgressed,
 };
 
 #[test]
@@ -189,6 +190,23 @@ fn projection_logs_creature_died_events() {
     assert!(logs[0].contains("card-7"));
     assert!(logs[0].contains("player-2"));
     assert!(logs[0].contains("died"));
+}
+
+#[test]
+fn projection_logs_card_discarded_events() {
+    let projection = GameLogProjection::new();
+
+    projection.handle(&DomainEvent::CardDiscarded(CardDiscarded::new(
+        GameId::new("game-1"),
+        PlayerId::new("player-1"),
+        CardInstanceId::new("card-9"),
+    )));
+
+    let logs = projection.logs();
+    assert_eq!(logs.len(), 1);
+    assert!(logs[0].contains("player-1"));
+    assert!(logs[0].contains("card-9"));
+    assert!(logs[0].contains("discarded"));
 }
 
 #[test]

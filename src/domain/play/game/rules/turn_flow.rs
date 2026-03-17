@@ -1,8 +1,9 @@
+use super::super::model::MAX_HAND_SIZE;
 use super::super::{invariants, model::Player};
 use crate::domain::play::{
-    commands::{AdvanceTurnCommand, DrawCardEffectCommand},
-    errors::{DomainError, GameError},
-    events::{CardDrawn, DrawKind, TurnProgressed},
+    commands::{AdvanceTurnCommand, DiscardCardCommand, DrawCardEffectCommand},
+    errors::{DomainError, GameError, PhaseError},
+    events::{CardDiscarded, CardDrawn, DrawKind, TurnProgressed},
     ids::{CardInstanceId, GameId, PlayerId},
     phase::Phase,
 };
@@ -231,6 +232,14 @@ fn clear_all_mana(players: &mut [Player]) {
     }
 }
 
+fn active_player_hand_size(
+    players: &[Player],
+    active_player: &PlayerId,
+) -> Result<usize, DomainError> {
+    let player_idx = invariants::find_player_index(players, active_player)?;
+    Ok(players[player_idx].hand_size())
+}
+
 fn build_events(
     game_id: &GameId,
     active_player: &PlayerId,
@@ -286,6 +295,46 @@ pub fn draw_card_effect(
     ))
 }
 
+/// Discards one card from hand to graveyard as an explicit cleanup action.
+///
+/// # Errors
+/// Returns an error if:
+/// - The player is not the active player
+/// - The phase is not `EndStep`
+/// - The player is not above the maximum hand size
+/// - The card is not in the player's hand
+pub fn discard_card(
+    game_id: &GameId,
+    players: &mut [Player],
+    active_player: &PlayerId,
+    phase: &Phase,
+    cmd: DiscardCardCommand,
+) -> Result<CardDiscarded, DomainError> {
+    invariants::require_active_player(active_player, &cmd.player_id)?;
+
+    if !matches!(phase, Phase::EndStep) {
+        return Err(DomainError::Phase(PhaseError::InvalidForDiscard {
+            phase: *phase,
+        }));
+    }
+
+    let player = invariants::find_player_mut(players, &cmd.player_id)?;
+    let hand_size = player.hand_size();
+    if hand_size <= MAX_HAND_SIZE {
+        return Err(DomainError::Game(GameError::DiscardNotRequired {
+            player: cmd.player_id.clone(),
+            hand_size,
+            max_hand_size: MAX_HAND_SIZE,
+        }));
+    }
+
+    let card = invariants::remove_card_from_hand(player, &cmd.player_id, &cmd.card_id)?;
+    let card_id = card.id().clone();
+    player.graveyard_mut().add(card);
+
+    Ok(CardDiscarded::new(game_id.clone(), cmd.player_id, card_id))
+}
+
 /// Advances the turn to the next phase and player.
 ///
 /// # Errors
@@ -300,6 +349,17 @@ pub fn advance_turn(
 ) -> Result<(TurnProgressed, Option<CardDrawn>), DomainError> {
     let from_phase = *phase;
     let from_turn = *turn_number;
+
+    if matches!(from_phase, Phase::EndStep) {
+        let hand_size = active_player_hand_size(players, active_player)?;
+        if hand_size > MAX_HAND_SIZE {
+            return Err(DomainError::Game(GameError::HandSizeLimitExceeded {
+                player: active_player.clone(),
+                hand_size,
+                max_hand_size: MAX_HAND_SIZE,
+            }));
+        }
+    }
 
     let current_phase_behavior = get_phase_behavior(from_phase);
     current_phase_behavior.on_exit(players, active_player)?;

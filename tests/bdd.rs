@@ -6,6 +6,8 @@
 #![allow(clippy::unreachable)]
 #![allow(clippy::unwrap_used)]
 
+#[path = "bdd/cleanup.rs"]
+mod cleanup;
 #[path = "bdd/combat.rs"]
 mod combat;
 #[path = "bdd/spell_casting.rs"]
@@ -25,4 +27,5 @@ async fn main() {
     GameplayWorld::run("features/combat/combat_damage_marking.feature").await;
     GameplayWorld::run("features/combat/creature_destruction.feature").await;
     GameplayWorld::run("features/turn-flow/cleanup_damage_removal.feature").await;
+    GameplayWorld::run("features/turn-flow/cleanup_hand_size_discard.feature").await;
 }

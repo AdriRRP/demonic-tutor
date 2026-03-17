@@ -1,3 +1,3 @@
 mod player;
 
-pub use player::{Player, OPENING_HAND_SIZE};
+pub use player::{Player, MAX_HAND_SIZE, OPENING_HAND_SIZE};

@@ -1,9 +1,9 @@
 #![allow(clippy::unwrap_used)]
 
 use demonictutor::{
-    AdvanceTurnCommand, CardDefinitionId, CardError, CardInstanceId, CastSpellCommand,
-    CreatureDied, DealOpeningHandsCommand, DeckId, DeclareAttackersCommand, DeclareBlockersCommand,
-    DomainError, Game, GameId, GameService, InMemoryEventBus, InMemoryEventStore, LibraryCard,
+    CardDefinitionId, CardError, CardInstanceId, CastSpellCommand, CreatureDied,
+    DealOpeningHandsCommand, DeckId, DeclareAttackersCommand, DeclareBlockersCommand, DomainError,
+    Game, GameId, GameService, InMemoryEventBus, InMemoryEventStore, LibraryCard,
     NonCreatureCardType, Phase, PlayerDeck, PlayerId, PlayerLibrary, ResolveCombatDamageCommand,
     StartGameCommand,
 };
@@ -33,9 +33,7 @@ fn advance_until(
             return;
         }
 
-        service
-            .advance_turn(game, AdvanceTurnCommand::new())
-            .unwrap();
+        crate::support::advance_turn_allowing_cleanup(service, game);
     }
 
     assert_eq!(game.active_player(), &target_player);

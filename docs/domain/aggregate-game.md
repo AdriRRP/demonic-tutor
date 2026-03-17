@@ -198,6 +198,7 @@ The `Game` aggregate currently guarantees:
 - card instances belong to exactly one player
 - cards cannot be drawn if not available
 - card movements maintain zone consistency
+- end-of-turn cleanup discard must reduce the active player's hand to the maximum before the turn can advance
 - gameplay operations emit domain events
 
 These invariants are enforced whenever commands are applied.

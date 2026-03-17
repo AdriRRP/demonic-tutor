@@ -52,6 +52,9 @@ impl GameLogProjection {
             DomainEvent::CardDrawn(e) => {
                 format!("Player {} drew a card via {:?}", e.player_id, e.draw_kind)
             }
+            DomainEvent::CardDiscarded(e) => {
+                format!("Player {} discarded card {}", e.player_id, e.card_id)
+            }
             DomainEvent::MulliganTaken(e) => {
                 format!("Player {} took a mulligan", e.player_id)
             }

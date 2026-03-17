@@ -7,7 +7,7 @@ Feature: Turn progression
   As the play bounded context
   The game progresses through explicit phases and turns
 
-  Scenario: End Step advances to the next player's Untap
+  Scenario: End Step advances to the next player's Untap when cleanup is satisfied
     Given a two-player game is in EndStep
     And Alice is the active player
     And the current turn number is 3

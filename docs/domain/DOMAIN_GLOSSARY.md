@@ -103,6 +103,22 @@ A zone containing cards that have been used, destroyed or discarded.
 
 ---
 
+## Maximum Hand Size
+
+The maximum number of cards a player may keep in hand when the turn ends.
+
+In the current DemonicTutor model, this maximum is 7 and cleanup discard is handled explicitly during `EndStep`.
+
+---
+
+## Discard
+
+To move a card from a player's hand to their graveyard.
+
+In the current runtime model, discard is supported only as explicit cleanup behavior when the active player is above the maximum hand size at end of turn.
+
+---
+
 ## Exile
 
 A zone containing cards removed from normal gameplay circulation.
