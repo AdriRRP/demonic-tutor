@@ -1,6 +1,6 @@
 use super::{
     super::{invariants, model::Player, TerminalState},
-    resource_actions,
+    automatic_consequences,
 };
 use crate::domain::play::{
     cards::CardType,
@@ -13,10 +13,11 @@ use crate::domain::play::{
     ids::{CardInstanceId, GameId, PlayerId},
     phase::Phase,
 };
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 type CombatantPower = (CardInstanceId, u32);
 type BlockAssignment = (CardInstanceId, CardInstanceId);
+type BlockingCombatantPower = (CardInstanceId, CardInstanceId, u32);
 type CombatAssignments = HashMap<CardInstanceId, Vec<CardInstanceId>>;
 
 #[derive(Debug, Clone)]
@@ -99,7 +100,7 @@ fn collect_attackers(player: &Player) -> Result<Vec<CombatantPower>, DomainError
         .collect()
 }
 
-fn collect_blockers(player: &Player) -> Result<Vec<CombatantPower>, DomainError> {
+fn collect_blockers(player: &Player) -> Result<Vec<BlockingCombatantPower>, DomainError> {
     player
         .battlefield()
         .cards()
@@ -112,8 +113,14 @@ fn collect_blockers(player: &Player) -> Result<Vec<CombatantPower>, DomainError>
                     card.id()
                 )))
             })?;
+            let attacker_id = card.blocking_target().cloned().ok_or_else(|| {
+                DomainError::Game(GameError::InternalInvariantViolation(format!(
+                    "blocking creature {} must have an assigned attacker",
+                    card.id()
+                )))
+            })?;
 
-            Ok((card.id().clone(), power))
+            Ok((card.id().clone(), attacker_id, power))
         })
         .collect()
 }
@@ -144,6 +151,18 @@ fn group_assignments_by_blocker(assignments: &[BlockAssignment]) -> CombatAssign
     grouped
 }
 
+fn blocking_assignments(player: &Player) -> Vec<BlockAssignment> {
+    player
+        .battlefield()
+        .cards()
+        .iter()
+        .filter_map(|card| {
+            card.blocking_target()
+                .map(|attacker_id| (card.id().clone(), attacker_id.clone()))
+        })
+        .collect()
+}
+
 fn apply_damage_and_clear_combat_state(
     players: &mut [Player],
     damage_received: &HashMap<CardInstanceId, u32>,
@@ -157,36 +176,6 @@ fn apply_damage_and_clear_combat_state(
             card.set_blocking(false);
         }
     }
-}
-
-fn destroy_lethally_damaged_creatures(
-    game_id: &GameId,
-    players: &mut [Player],
-) -> Vec<CreatureDied> {
-    let mut destroyed = Vec::new();
-
-    for player in players.iter_mut() {
-        let destroyed_ids = player
-            .battlefield()
-            .cards()
-            .iter()
-            .filter(|card| card.has_lethal_damage())
-            .map(|card| card.id().clone())
-            .collect::<Vec<_>>();
-
-        for card_id in destroyed_ids {
-            if let Some(card) = player.battlefield_mut().remove(&card_id) {
-                player.graveyard_mut().add(card);
-                destroyed.push(CreatureDied::new(
-                    game_id.clone(),
-                    player.id().clone(),
-                    card_id,
-                ));
-            }
-        }
-    }
-
-    destroyed
 }
 
 /// Declares attackers for the active player in combat.
@@ -263,11 +252,32 @@ pub fn declare_blockers(
     require_combat_phase(*phase)?;
 
     let defending_player_idx = find_defending_player_index(players, active_player)?;
+    let attacker_player_idx = invariants::find_player_index(players, active_player)?;
+    let declared_attackers = players[attacker_player_idx]
+        .battlefield()
+        .cards()
+        .iter()
+        .filter(|card| card.is_attacking())
+        .map(|card| card.id().clone())
+        .collect::<HashSet<_>>();
     let defender = &mut players[defending_player_idx];
     let battlefield = defender.battlefield_mut();
     let mut valid_blockers: Vec<(CardInstanceId, CardInstanceId)> = Vec::new();
+    let mut seen_blockers = HashSet::new();
 
     for (blocker_id, attacker_id) in &cmd.blocker_assignments {
+        if !seen_blockers.insert(blocker_id.clone()) {
+            return Err(DomainError::Game(GameError::DuplicateBlockerAssignment(
+                blocker_id.clone(),
+            )));
+        }
+
+        if !declared_attackers.contains(attacker_id) {
+            return Err(DomainError::Card(CardError::NotAttacking(
+                attacker_id.clone(),
+            )));
+        }
+
         let card = battlefield.card_mut(blocker_id).ok_or_else(|| {
             DomainError::Card(CardError::NotOnBattlefield {
                 player: cmd.player_id.clone(),
@@ -288,7 +298,7 @@ pub fn declare_blockers(
             }));
         }
 
-        card.set_blocking(true);
+        card.assign_blocking_target(attacker_id.clone());
         valid_blockers.push((blocker_id.clone(), attacker_id.clone()));
     }
 
@@ -319,9 +329,13 @@ pub fn resolve_combat_damage(
 
     let defender_player_id = players[defender_idx].id().clone();
     let attackers = collect_attackers(&players[player_idx])?;
+    if attackers.is_empty() {
+        return Err(DomainError::Game(GameError::NoAttackersDeclared));
+    }
     let blockers = collect_blockers(&players[defender_idx])?;
-    let blockers_by_attacker = group_assignments_by_attacker(&cmd.blocker_assignments);
-    let attackers_by_blocker = group_assignments_by_blocker(&cmd.blocker_assignments);
+    let assignments = blocking_assignments(&players[defender_idx]);
+    let blockers_by_attacker = group_assignments_by_attacker(&assignments);
+    let attackers_by_blocker = group_assignments_by_blocker(&assignments);
 
     let mut damage_events: Vec<DamageEvent> = Vec::new();
     let mut damage_received: HashMap<CardInstanceId, u32> = HashMap::new();
@@ -349,30 +363,27 @@ pub fn resolve_combat_damage(
         }
     }
 
-    for (blocker_id, power) in &blockers {
-        let attackers_blocked = attackers_by_blocker.get(blocker_id);
-
-        if let Some(attackers_blocked) = attackers_blocked.filter(|entries| !entries.is_empty()) {
-            for attacker_id in attackers_blocked {
-                *damage_received.entry(attacker_id.clone()).or_insert(0) += *power;
-                damage_events.push(DamageEvent {
-                    source: blocker_id.clone(),
-                    target: DamageTarget::Creature(attacker_id.clone()),
-                    damage_amount: *power,
-                });
-            }
+    for (blocker_id, attacker_id, power) in &blockers {
+        if attackers_by_blocker.contains_key(blocker_id) {
+            *damage_received.entry(attacker_id.clone()).or_insert(0) += *power;
+            damage_events.push(DamageEvent {
+                source: blocker_id.clone(),
+                target: DamageTarget::Creature(attacker_id.clone()),
+                damage_amount: *power,
+            });
         }
     }
 
     apply_damage_and_clear_combat_state(players, &damage_received);
-    let destroyed_creatures = destroy_lethally_damaged_creatures(game_id, players);
+    let destroyed_creatures =
+        automatic_consequences::destroy_lethally_damaged_creatures(game_id, players);
     let player_life_change = if player_damage > 0 {
         let life_delta = i32::try_from(player_damage).map_err(|_| {
             DomainError::Game(GameError::InternalInvariantViolation(
                 "combat damage should fit within i32 life adjustments".to_string(),
             ))
         })?;
-        Some(resource_actions::adjust_player_life(
+        Some(automatic_consequences::adjust_player_life(
             game_id,
             players,
             terminal_state,

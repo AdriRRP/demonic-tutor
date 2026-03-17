@@ -24,7 +24,8 @@ This slice follows `DeclareBlockers` because:
 ## Supported Behavior
 
 - accept a `ResolveCombatDamageCommand`
-- verify attackers and blockers have been declared
+- verify attackers have been declared
+- resolve blocking assignments from aggregate runtime state established during `DeclareBlockers`
 - for each attacking creature:
   - if blocked, deal damage equal to power to the blocking creature(s)
   - if unblocked, deal damage equal to power to the defending player
@@ -47,6 +48,7 @@ This slice follows `DeclareBlockers` because:
 - damage is calculated from creature's power at time of resolution
 - each attacking creature can only deal damage once
 - blocking creatures deal damage to their assigned attacker
+- combat damage resolution fails if no attackers were declared
 
 ---
 
@@ -72,7 +74,7 @@ This slice follows `DeclareBlockers` because:
 
 ### Entity / Value Object Impact
 - `CardInstance` - add `damage` field to track marked damage
-- possibly add `blocked_by` reference on attacking creatures
+- rely on blocker-to-attacker runtime assignments persisted by the blocking slice
 
 ### Commands
 - add `ResolveCombatDamageCommand`
@@ -140,7 +142,7 @@ This slice resolves and marks combat damage. The follow-on `CreatureDestruction`
 ## Open Questions
 
 1. Should we model damage as a transient value or persistent?
-2. How do we track which creature blocks which for damage assignment?
+2. When multiple blockers exist, how should attacker-side damage assignment order be introduced?
 
 ---
 

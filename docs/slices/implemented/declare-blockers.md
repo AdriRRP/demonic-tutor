@@ -30,7 +30,9 @@ This slice follows `DeclareAttackers` because:
   - is controlled by defending player
   - is not tapped
 - verify each target attacker exists and is attacking
-- assign blockers to attackers (one creature can block multiple attackers in Magic, but we'll start with one-to-one)
+- assign each blocking creature to exactly one attacking creature
+- allow multiple blockers to be assigned to the same attacker
+- persist blocker-to-attacker assignment in aggregate runtime state for later combat damage resolution
 - mark blocking creatures as blocked
 - emit `BlockersDeclared` event
 
@@ -41,15 +43,14 @@ This slice follows `DeclareAttackers` because:
 - only defending player may declare blockers
 - blockers must be untapped creatures controlled by defending player
 - cannot block creatures that are not attacking
-- blocking creatures become tapped after blocking
-- this slice does NOT resolve combat damage (future slice)
+- each blocking creature may appear at most once in the assignment list
+- this slice does NOT itself resolve combat damage
 
 ---
 
 ## Out of Scope
 
 - combat damage resolution
-- multiple blockers per attacker
 - trample
 - first strike / double strike
 - deathtouch
@@ -67,7 +68,7 @@ This slice follows `DeclareAttackers` because:
 - extend `Game` with `declare_blockers` behavior
 
 ### Entity / Value Object Impact
-- `CardInstance` - add `is_blocking` field
+- `CardInstance` - add `is_blocking` field and blocking target tracking
 
 ### Commands
 - add `DeclareBlockersCommand` - contains pairs of (blocker, target attacker)
@@ -108,7 +109,7 @@ This behavior belongs to the `Game` aggregate because:
 - declare blockers fails for attacking player
 - declare blockers fails for tapped creatures
 - declare blockers fails for non-attacking targets
-- blockers become tapped after declaration
+- declare blockers fails when the same blocker is assigned more than once
 - `BlockersDeclared` event is emitted
 
 ---
@@ -117,21 +118,19 @@ This behavior belongs to the `Game` aggregate because:
 
 - 509.1 — Declare blockers step
 - 509.2 — Blockers must be controlled by defending player
-- 509.3 — Creature can only block one creature (simplified)
-- 509.4 — Tapping blocking creatures
+- 509.3 — A blocking creature is assigned to the attacker it blocks
 
 ---
 
 ## Rules Support Statement
 
-This slice introduces the declare blockers step. It allows defenders to block attackers but does not resolve combat damage. Damage resolution is a future slice.
+This slice introduces the declare blockers step. It allows defenders to block attackers but does not itself resolve combat damage.
 
 ---
 
 ## Open Questions
 
-- Should we track which specific attacker each blocker is assigned to?
-- Should we allow multiple blockers per attacker (full rules)?
+- When multiple blockers exist on one attacker, how should attacker-side damage assignment order be modeled?
 
 ---
 

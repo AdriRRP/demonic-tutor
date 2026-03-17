@@ -73,7 +73,7 @@ impl Hand {
         self.0
             .iter()
             .position(|c| c.id() == card_id)
-            .map(|i| self.0.remove(i))
+            .map(|index| self.0.swap_remove(index))
     }
 }
 
@@ -104,7 +104,7 @@ impl Battlefield {
         self.0
             .iter()
             .position(|card| card.id() == card_id)
-            .map(|index| self.0.remove(index))
+            .map(|index| self.0.swap_remove(index))
     }
 
     pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut CardInstance> {

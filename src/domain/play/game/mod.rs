@@ -9,7 +9,7 @@ use crate::domain::play::{
         DrawCardEffectCommand, MulliganCommand, PlayLandCommand, ResolveCombatDamageCommand,
         StartGameCommand, TapLandCommand,
     },
-    errors::{DomainError, GameError},
+    errors::DomainError,
     events::{
         AttackersDeclared, BlockersDeclared, CardDiscarded, GameEndReason, GameStarted, LandPlayed,
         LandTapped, ManaAdded, MulliganTaken, OpeningHandDealt,
@@ -142,17 +142,6 @@ impl Game {
     #[must_use]
     pub const fn end_reason(&self) -> Option<GameEndReason> {
         self.terminal_state.end_reason()
-    }
-
-    /// Gets a mutable reference to a player by their ID.
-    ///
-    /// # Errors
-    /// Returns `DomainError::Game(GameError::PlayerNotFound)` if no player with the given ID exists.
-    pub fn get_player_mut(&mut self, player_id: &PlayerId) -> Result<&mut Player, DomainError> {
-        self.players
-            .iter_mut()
-            .find(|p| p.id() == player_id)
-            .ok_or_else(|| DomainError::Game(GameError::PlayerNotFound(player_id.clone())))
     }
 
     /// Starts a new game.

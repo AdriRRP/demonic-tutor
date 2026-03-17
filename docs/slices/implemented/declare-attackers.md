@@ -43,7 +43,7 @@ This slice is the natural next step after `RemoveSummoningSickness` because:
 - creatures cannot attack the turn they enter (summoning sickness)
 - creatures cannot attack if they are tapped
 - attacking creatures become tapped after attacking
-- this slice does NOT resolve combat damage (future slice)
+- this slice does NOT itself resolve combat damage
 
 ---
 
@@ -131,7 +131,7 @@ This behavior belongs to the `Game` aggregate because:
 
 ## Rules Support Statement
 
-This slice introduces the declare attackers step of the combat phase. It allows creatures to attack but does not resolve combat damage. Combat damage resolution and state-based actions are future slices.
+This slice introduces the declare attackers step of the combat phase. It allows creatures to attack but does not itself resolve combat damage.
 
 ---
 

@@ -1,11 +1,14 @@
-use super::super::{invariants, model::Player, TerminalState};
+use super::{
+    super::{invariants, model::Player, TerminalState},
+    automatic_consequences::{self, LifeAdjustmentResult},
+};
 use crate::domain::play::{
     cards::CardType,
     commands::{AdjustLifeCommand, CastSpellCommand, PlayLandCommand, TapLandCommand},
     errors::{CardError, DomainError, GameError, PhaseError},
     events::{
-        CreatureDied, GameEndReason, GameEnded, LandPlayed, LandTapped, LifeChanged, ManaAdded,
-        SpellCast, SpellCastOutcome,
+        CreatureDied, GameEnded, LandPlayed, LandTapped, LifeChanged, ManaAdded, SpellCast,
+        SpellCastOutcome,
     },
     ids::{GameId, PlayerId},
     phase::Phase,
@@ -33,33 +36,6 @@ impl CastSpellOutcome {
     }
 }
 
-fn destroy_zero_toughness_creatures(game_id: &GameId, players: &mut [Player]) -> Vec<CreatureDied> {
-    let mut died = Vec::new();
-
-    for player in players.iter_mut() {
-        let zero_toughness_ids = player
-            .battlefield()
-            .cards()
-            .iter()
-            .filter(|card| card.has_zero_toughness())
-            .map(|card| card.id().clone())
-            .collect::<Vec<_>>();
-
-        for card_id in zero_toughness_ids {
-            if let Some(card) = player.battlefield_mut().remove(&card_id) {
-                player.graveyard_mut().add(card);
-                died.push(CreatureDied::new(
-                    game_id.clone(),
-                    player.id().clone(),
-                    card_id,
-                ));
-            }
-        }
-    }
-
-    died
-}
-
 impl AdjustLifeOutcome {
     #[must_use]
     pub const fn new(life_changed: LifeChanged, game_ended: Option<GameEnded>) -> Self {
@@ -68,36 +44,6 @@ impl AdjustLifeOutcome {
             game_ended,
         }
     }
-}
-
-pub(super) fn adjust_player_life(
-    game_id: &GameId,
-    players: &mut [Player],
-    terminal_state: &mut TerminalState,
-    player_id: &PlayerId,
-    life_delta: i32,
-) -> Result<AdjustLifeOutcome, DomainError> {
-    let player = invariants::find_player_mut(players, player_id)?;
-    let old_life = player.life();
-    player.adjust_life(life_delta);
-    let new_life = player.life();
-
-    let life_changed = LifeChanged::new(game_id.clone(), player_id.clone(), old_life, new_life);
-
-    let game_ended = if new_life == 0 {
-        let winner = invariants::opposing_player_id(players, player_id)?;
-        terminal_state.end(winner.clone(), player_id.clone(), GameEndReason::ZeroLife);
-        Some(GameEnded::new(
-            game_id.clone(),
-            winner,
-            player_id.clone(),
-            GameEndReason::ZeroLife,
-        ))
-    } else {
-        None
-    };
-
-    Ok(AdjustLifeOutcome::new(life_changed, game_ended))
 }
 
 /// Plays a land card from hand to battlefield.
@@ -208,7 +154,18 @@ pub fn adjust_life(
         life_delta,
     } = cmd;
 
-    adjust_player_life(game_id, players, terminal_state, &player_id, life_delta)
+    let LifeAdjustmentResult {
+        life_changed,
+        game_ended,
+    } = automatic_consequences::adjust_player_life(
+        game_id,
+        players,
+        terminal_state,
+        &player_id,
+        life_delta,
+    )?;
+
+    Ok(AdjustLifeOutcome::new(life_changed, game_ended))
 }
 
 /// Casts a spell from hand.
@@ -283,7 +240,7 @@ pub fn cast_spell(
         mana_cost,
         outcome,
     );
-    let creatures_died = destroy_zero_toughness_creatures(game_id, players);
+    let creatures_died = automatic_consequences::destroy_zero_toughness_creatures(game_id, players);
 
     Ok(CastSpellOutcome::new(spell_cast, creatures_died))
 }

@@ -682,10 +682,9 @@ impl GameplayWorld {
 
     pub fn resolve_combat_damage(&mut self) {
         let service = support::create_service();
-        let assignments = self.blocker_assignments.clone();
         match service.resolve_combat_damage(
             self.game_mut(),
-            ResolveCombatDamageCommand::new(Self::player_id("Alice"), assignments),
+            ResolveCombatDamageCommand::new(Self::player_id("Alice")),
         ) {
             Ok(outcome) => {
                 self.last_combat_damage = Some(outcome.combat_damage_resolved);

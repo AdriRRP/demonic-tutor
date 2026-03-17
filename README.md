@@ -67,11 +67,18 @@ Current implemented capabilities include:
 
 - two-player game setup with opening hands and simplified London mulligan
 - full phase progression: `Setup -> Untap -> Upkeep -> Draw -> FirstMain -> Combat -> SecondMain -> EndStep`
-- land play, land tapping, and mana payment
+- land play, land tapping, mana payment, and cleanup discard when hand size exceeds the maximum
 - spell casting through a canonical `CastSpell` action for non-land cards
-- creature runtime state with power, toughness, summoning sickness, and combat damage tracking
-- attacker declaration, blocker declaration, and combat damage resolution
+- creature runtime state with power, toughness, summoning sickness, combat assignments, and combat damage tracking
+- attacker declaration, blocker declaration, and combat damage resolution derived from aggregate state
+- automatic gameplay consequences for:
+  - losing on empty-library draw
+  - losing at zero life
+  - creatures dying from lethal damage
+  - creatures with zero toughness dying immediately
+  - marked damage being cleared when the turn ends
 - event store, event bus, and gameplay log projection for replayable state changes
+- executable BDD coverage with `cucumber-rs` for supported gameplay features
 
 ## Version
 

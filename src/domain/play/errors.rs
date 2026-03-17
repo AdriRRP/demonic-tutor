@@ -19,6 +19,7 @@ pub enum GameError {
     },
     DuplicatePlayer(PlayerId),
     PlayerNotFound(PlayerId),
+    DuplicateBlockerAssignment(CardInstanceId),
     InsufficientMana {
         player: PlayerId,
         required: u32,
@@ -33,6 +34,7 @@ pub enum GameError {
     DuplicatePlayerLibrary(PlayerId),
     OpeningHandsAlreadyDealt,
     GameAlreadyEnded,
+    NoAttackersDeclared,
     MulliganAlreadyUsed(PlayerId),
     HandSizeLimitExceeded {
         player: PlayerId,
@@ -121,6 +123,9 @@ impl std::fmt::Display for GameError {
             }
             Self::DuplicatePlayer(pid) => write!(f, "duplicate player: {}", pid.as_str()),
             Self::PlayerNotFound(pid) => write!(f, "player not found: {}", pid.as_str()),
+            Self::DuplicateBlockerAssignment(card_id) => {
+                write!(f, "blocking creature {card_id} cannot be assigned more than once")
+            }
             Self::InsufficientMana {
                 player,
                 required,
@@ -157,6 +162,7 @@ impl std::fmt::Display for GameError {
                 write!(f, "opening hands have already been dealt")
             }
             Self::GameAlreadyEnded => write!(f, "the game has already ended"),
+            Self::NoAttackersDeclared => write!(f, "no attackers have been declared"),
             Self::MulliganAlreadyUsed(pid) => {
                 write!(f, "player {} has already used mulligan", pid.as_str())
             }
@@ -227,7 +233,10 @@ impl std::fmt::Display for PhaseError {
             }
             Self::InvalidForMulligan => write!(f, "cannot perform mulligan in current phase"),
             Self::InvalidForCombat => {
-                write!(f, "cannot declare attackers or blockers in current phase")
+                write!(
+                    f,
+                    "cannot declare attackers, declare blockers, or resolve combat damage in current phase"
+                )
             }
             Self::AlreadyPlayedLandThisTurn(pid) => {
                 write!(f, "player {pid} already played a land this turn")

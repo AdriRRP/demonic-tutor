@@ -70,6 +70,7 @@ struct CreatureState {
     toughness: u32,
     damage: u32,
     flags: u8,
+    blocking_target: Option<CardInstanceId>,
 }
 
 impl CreatureState {
@@ -79,6 +80,7 @@ impl CreatureState {
             toughness,
             damage: 0,
             flags: FLAG_SUMMONING_SICKNESS,
+            blocking_target: None,
         }
     }
 
@@ -234,9 +236,27 @@ impl CardInstance {
         }
     }
 
-    pub const fn set_blocking(&mut self, blocking: bool) {
+    pub fn set_blocking(&mut self, blocking: bool) {
         if let Some(creature) = &mut self.creature {
             creature.set_flag(FLAG_BLOCKING, blocking);
+            if !blocking {
+                creature.blocking_target = None;
+            }
+        }
+    }
+
+    #[must_use]
+    pub const fn blocking_target(&self) -> Option<&CardInstanceId> {
+        match &self.creature {
+            Some(creature) => creature.blocking_target.as_ref(),
+            None => None,
+        }
+    }
+
+    pub fn assign_blocking_target(&mut self, attacker_id: CardInstanceId) {
+        if let Some(creature) = &mut self.creature {
+            creature.set_flag(FLAG_BLOCKING, true);
+            creature.blocking_target = Some(attacker_id);
         }
     }
 

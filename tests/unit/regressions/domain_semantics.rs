@@ -239,14 +239,14 @@ fn combat_damage_marks_surviving_creatures_and_destroys_lethally_damaged_ones() 
     service
         .declare_blockers(
             &mut game,
-            DeclareBlockersCommand::new(PlayerId::new("player-2"), assignments.clone()),
+            DeclareBlockersCommand::new(PlayerId::new("player-2"), assignments),
         )
         .unwrap();
 
     let outcome = service
         .resolve_combat_damage(
             &mut game,
-            ResolveCombatDamageCommand::new(PlayerId::new("player-1"), assignments),
+            ResolveCombatDamageCommand::new(PlayerId::new("player-1")),
         )
         .unwrap();
 
@@ -325,7 +325,7 @@ fn creature_destruction_emits_one_event_per_destroyed_creature() {
         )
         .unwrap();
 
-    let assignments = vec![
+    let blocker_assignments = vec![
         (left_blocker_id.clone(), attacker_id.clone()),
         (right_blocker_id.clone(), attacker_id),
     ];
@@ -333,14 +333,14 @@ fn creature_destruction_emits_one_event_per_destroyed_creature() {
     service
         .declare_blockers(
             &mut game,
-            DeclareBlockersCommand::new(PlayerId::new("player-2"), assignments.clone()),
+            DeclareBlockersCommand::new(PlayerId::new("player-2"), blocker_assignments),
         )
         .unwrap();
 
     let outcome = service
         .resolve_combat_damage(
             &mut game,
-            ResolveCombatDamageCommand::new(PlayerId::new("player-1"), assignments),
+            ResolveCombatDamageCommand::new(PlayerId::new("player-1")),
         )
         .unwrap();
 
@@ -412,7 +412,7 @@ fn unblocked_combat_damage_ends_the_game_when_it_reduces_a_player_to_zero_life()
     let outcome = service
         .resolve_combat_damage(
             &mut game,
-            ResolveCombatDamageCommand::new(PlayerId::new("player-1"), Vec::new()),
+            ResolveCombatDamageCommand::new(PlayerId::new("player-1")),
         )
         .unwrap();
 

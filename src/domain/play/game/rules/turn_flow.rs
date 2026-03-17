@@ -1,11 +1,12 @@
-use super::super::model::MAX_HAND_SIZE;
-use super::super::{invariants, model::Player, TerminalState};
+use super::{
+    super::model::MAX_HAND_SIZE,
+    super::{invariants, model::Player, TerminalState},
+    automatic_consequences,
+};
 use crate::domain::play::{
     commands::{AdvanceTurnCommand, DiscardForCleanupCommand, DrawCardEffectCommand},
     errors::{DomainError, GameError, PhaseError},
-    events::{
-        CardDiscarded, CardDrawn, DiscardKind, DrawKind, GameEndReason, GameEnded, TurnProgressed,
-    },
+    events::{CardDiscarded, CardDrawn, DiscardKind, DrawKind, GameEnded, TurnProgressed},
     ids::{CardInstanceId, GameId, PlayerId},
     phase::Phase,
 };
@@ -239,27 +240,6 @@ fn auto_draw_card(
     )))
 }
 
-fn game_ended_for_empty_library_draw(
-    game_id: &GameId,
-    players: &[Player],
-    terminal_state: &mut TerminalState,
-    losing_player: &PlayerId,
-) -> Result<GameEnded, DomainError> {
-    let winning_player = invariants::opposing_player_id(players, losing_player)?;
-    terminal_state.end(
-        winning_player.clone(),
-        losing_player.clone(),
-        GameEndReason::EmptyLibraryDraw,
-    );
-
-    Ok(GameEnded::new(
-        game_id.clone(),
-        winning_player,
-        losing_player.clone(),
-        GameEndReason::EmptyLibraryDraw,
-    ))
-}
-
 fn clear_all_mana(players: &mut [Player]) {
     for player in players {
         player.clear_mana();
@@ -322,8 +302,13 @@ pub fn draw_card_effect(
 
     let player_idx = invariants::find_player_index(players, &cmd.player_id)?;
     let Some(card_id) = draw_one_card(&mut players[player_idx]) else {
-        return game_ended_for_empty_library_draw(game_id, players, terminal_state, &cmd.player_id)
-            .map(DrawCardEffectOutcome::GameEnded);
+        return automatic_consequences::end_game_for_empty_library_draw(
+            game_id,
+            players,
+            terminal_state,
+            &cmd.player_id,
+        )
+        .map(DrawCardEffectOutcome::GameEnded);
     };
 
     Ok(DrawCardEffectOutcome::CardDrawn(CardDrawn::new(
@@ -442,8 +427,13 @@ pub fn advance_turn(
     };
 
     if current_phase_behavior.triggers_auto_draw() && card_drawn_event.is_none() {
-        return game_ended_for_empty_library_draw(game_id, players, terminal_state, active_player)
-            .map(AdvanceTurnOutcome::GameEnded);
+        return automatic_consequences::end_game_for_empty_library_draw(
+            game_id,
+            players,
+            terminal_state,
+            active_player,
+        )
+        .map(AdvanceTurnOutcome::GameEnded);
     }
 
     *phase = to_phase;

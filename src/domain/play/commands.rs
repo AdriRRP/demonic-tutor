@@ -301,18 +301,11 @@ impl DeclareBlockersCommand {
 #[derive(Debug, Clone)]
 pub struct ResolveCombatDamageCommand {
     pub player_id: PlayerId,
-    pub blocker_assignments: Vec<(CardInstanceId, CardInstanceId)>,
 }
 
 impl ResolveCombatDamageCommand {
     #[must_use]
-    pub const fn new(
-        player_id: PlayerId,
-        blocker_assignments: Vec<(CardInstanceId, CardInstanceId)>,
-    ) -> Self {
-        Self {
-            player_id,
-            blocker_assignments,
-        }
+    pub const fn new(player_id: PlayerId) -> Self {
+        Self { player_id }
     }
 }

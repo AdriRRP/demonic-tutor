@@ -112,14 +112,6 @@ impl Player {
         self.life = self.life.saturating_add_signed(delta);
     }
 
-    pub fn gain_life(&mut self, amount: u32) {
-        self.life = self.life.saturating_add(amount);
-    }
-
-    pub fn lose_life(&mut self, amount: u32) {
-        self.life = self.life.saturating_sub(amount);
-    }
-
     pub fn add_mana(&mut self, amount: u32) {
         self.mana = self.mana.saturating_add(amount);
     }

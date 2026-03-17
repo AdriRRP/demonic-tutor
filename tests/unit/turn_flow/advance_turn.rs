@@ -182,14 +182,14 @@ fn advance_turn_clears_marked_damage_when_turn_ends() {
     service
         .declare_blockers(
             &mut game,
-            DeclareBlockersCommand::new(PlayerId::new("player-2"), assignments.clone()),
+            DeclareBlockersCommand::new(PlayerId::new("player-2"), assignments),
         )
         .unwrap();
 
     service
         .resolve_combat_damage(
             &mut game,
-            ResolveCombatDamageCommand::new(PlayerId::new("player-1"), assignments),
+            ResolveCombatDamageCommand::new(PlayerId::new("player-1")),
         )
         .unwrap();
 

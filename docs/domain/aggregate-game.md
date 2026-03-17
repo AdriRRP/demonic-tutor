@@ -161,6 +161,7 @@ Fields include:
 - has_summoning_sickness (for creatures)
 - is_attacking (for creatures)
 - is_blocking (for creatures)
+- blocking target (for blocking creatures)
 - damage marked on the creature
 
 Responsibilities:
@@ -346,6 +347,7 @@ src/domain/play/game/
     ├── lifecycle.rs        # start game, opening hands, mulligan
     ├── turn_flow.rs        # phases, draws, turn progression
     ├── resource_actions.rs # lands, mana, spells, creatures, life
+    ├── automatic_consequences.rs # minimal automatic consequences and game-end checks
     └── combat.rs
 ```
 
