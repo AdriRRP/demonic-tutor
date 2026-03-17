@@ -23,6 +23,7 @@ This is a repository-owned interpretation note, not a copy of the Comprehensive 
 - turn progression emits `TurnProgressed`
 - automatic untap applies only to the active player's permanents
 - automatic draw happens in the Draw phase
+- explicit draw effects are modeled separately from the automatic draw step and are limited to main phases
 - no priority windows are modeled
 - no stack-based turn interaction is modeled
 - no cleanup step is modeled yet

@@ -1,6 +1,6 @@
 use super::super::{invariants, model::Player};
 use crate::domain::play::{
-    commands::{AdvanceTurnCommand, DrawCardCommand},
+    commands::{AdvanceTurnCommand, DrawCardEffectCommand},
     errors::{DomainError, GameError},
     events::{CardDrawn, DrawKind, TurnProgressed},
     ids::{CardInstanceId, GameId, PlayerId},
@@ -225,6 +225,12 @@ fn auto_draw_card(
     )))
 }
 
+fn clear_all_mana(players: &mut [Player]) {
+    for player in players {
+        player.clear_mana();
+    }
+}
+
 fn build_events(
     game_id: &GameId,
     active_player: &PlayerId,
@@ -247,26 +253,23 @@ fn build_events(
     )
 }
 
-/// Draws a card from the player's library to their hand.
+/// Resolves an explicit draw effect by moving one card from library to hand.
 ///
 /// # Errors
 /// Returns an error if:
 /// - The player is not the active player
 /// - The phase is not valid for drawing
 /// - The player has no cards in their library
-pub fn draw_card(
+pub fn draw_card_effect(
     game_id: &GameId,
     players: &mut [Player],
     active_player: &PlayerId,
     phase: &Phase,
-    cmd: DrawCardCommand,
+    cmd: DrawCardEffectCommand,
 ) -> Result<CardDrawn, DomainError> {
     invariants::require_active_player(active_player, &cmd.player_id)?;
 
-    if !matches!(
-        phase,
-        Phase::Untap | Phase::Draw | Phase::FirstMain | Phase::SecondMain
-    ) {
+    if !matches!(phase, Phase::FirstMain | Phase::SecondMain) {
         return Err(DomainError::Phase(
             crate::domain::play::errors::PhaseError::InvalidForDraw { phase: *phase },
         ));
@@ -279,7 +282,7 @@ pub fn draw_card(
         game_id.clone(),
         cmd.player_id,
         card_id,
-        DrawKind::ExplicitAction,
+        DrawKind::ExplicitEffect,
     ))
 }
 
@@ -300,6 +303,7 @@ pub fn advance_turn(
 
     let current_phase_behavior = get_phase_behavior(from_phase);
     current_phase_behavior.on_exit(players, active_player)?;
+    clear_all_mana(players);
 
     let to_phase = current_phase_behavior.next_phase();
     let to_phase_behavior = get_phase_behavior(to_phase);

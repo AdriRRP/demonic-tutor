@@ -10,7 +10,8 @@ Enable lands to produce mana for future spell casting.
 - Players have a mana pool (starts at 0)
 - Lands can be tapped to produce 1 mana each
 - Tapped lands cannot be tapped again until untapped
-- Lands played this turn cannot be tapped (future: untap step)
+- Mana production is currently limited to the active player's `FirstMain` and `SecondMain`
+- Mana pools are cleared when the game advances to the next phase or turn
 
 ### Commands
 
@@ -24,6 +25,8 @@ pub struct TapLandCommand {
 - Card must be on the battlefield
 - Card must be a Land type
 - Card must not already be tapped
+- Player must be the active player
+- Current phase must be `FirstMain` or `SecondMain`
 - Produces 1 generic mana for the active player
 
 ### Events
@@ -62,7 +65,7 @@ pub struct ManaAdded {
 
 ## Rules Support Statement
 
-This slice implements mana production from lands per rules 605.1 and 605.3a. This implements basic mana production. Mana types, color identity, and untap steps are not implemented.
+This slice implements mana production from lands per rules 605.1 and 605.3a. This implements basic mana production. Mana types, color identity, priority timing, and mana burn are not implemented.
 
 ## Tests
 

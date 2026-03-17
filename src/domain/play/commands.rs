@@ -180,11 +180,11 @@ impl AdvanceTurnCommand {
 }
 
 #[derive(Debug, Clone)]
-pub struct DrawCardCommand {
+pub struct DrawCardEffectCommand {
     pub player_id: PlayerId,
 }
 
-impl DrawCardCommand {
+impl DrawCardEffectCommand {
     #[must_use]
     pub const fn new(player_id: PlayerId) -> Self {
         Self { player_id }

@@ -30,8 +30,8 @@ The system must be able to:
 | Phase | Allowed Actions |
 |-------|----------------|
 | `Phase::Setup` | `MulliganCommand`, `DealOpeningHandsCommand` |
-| `Phase::FirstMain` | `PlayLandCommand`, `CastSpellCommand`, `DrawCardCommand`, `AdvanceTurnCommand` |
-| `Phase::SecondMain` | `PlayLandCommand`, `CastSpellCommand`, `DrawCardCommand`, `AdvanceTurnCommand` |
+| `Phase::FirstMain` | `PlayLandCommand`, `CastSpellCommand`, `DrawCardEffectCommand`, `AdvanceTurnCommand` |
+| `Phase::SecondMain` | `PlayLandCommand`, `CastSpellCommand`, `DrawCardEffectCommand`, `AdvanceTurnCommand` |
 
 Mulligan is only valid during `Phase::Setup`.
 

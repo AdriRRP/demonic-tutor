@@ -5,7 +5,7 @@ pub mod rules;
 use crate::domain::play::{
     commands::{
         AdjustLifeCommand, AdvanceTurnCommand, CastSpellCommand, DealOpeningHandsCommand,
-        DeclareAttackersCommand, DeclareBlockersCommand, DrawCardCommand, MulliganCommand,
+        DeclareAttackersCommand, DeclareBlockersCommand, DrawCardEffectCommand, MulliganCommand,
         PlayLandCommand, ResolveCombatDamageCommand, StartGameCommand, TapLandCommand,
     },
     errors::{DomainError, GameError},
@@ -148,12 +148,15 @@ impl Game {
         )
     }
 
-    /// Draws a card from library to hand.
+    /// Resolves an explicit draw effect.
     ///
     /// # Errors
-    /// See [`rules::turn_flow::draw_card`].
-    pub fn draw_card(&mut self, cmd: DrawCardCommand) -> Result<CardDrawn, DomainError> {
-        rules::turn_flow::draw_card(
+    /// See [`rules::turn_flow::draw_card_effect`].
+    pub fn draw_card_effect(
+        &mut self,
+        cmd: DrawCardEffectCommand,
+    ) -> Result<CardDrawn, DomainError> {
+        rules::turn_flow::draw_card_effect(
             &self.id,
             &mut self.players,
             &self.active_player,
@@ -178,7 +181,13 @@ impl Game {
         &mut self,
         cmd: TapLandCommand,
     ) -> Result<(LandTapped, ManaAdded), DomainError> {
-        rules::resource_actions::tap_land(&self.id, &mut self.players, cmd)
+        rules::resource_actions::tap_land(
+            &self.id,
+            &mut self.players,
+            &self.active_player,
+            &self.phase,
+            cmd,
+        )
     }
 
     /// Casts a spell.

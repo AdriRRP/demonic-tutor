@@ -218,6 +218,9 @@ fn cast_spell_fails_with_insufficient_mana() {
             demonictutor::GameError::InsufficientMana { .. }
         ))
     ));
+    assert_eq!(game.players()[0].hand().cards().len(), 8);
+    assert_eq!(game.players()[0].graveyard().cards().len(), 0);
+    assert_eq!(game.players()[0].battlefield().cards().len(), 0);
 }
 
 #[test]

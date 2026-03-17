@@ -4,7 +4,7 @@ use crate::support::{
     advance_n, advance_to_player_first_main, filled_library, land_card, setup_two_player_game,
 };
 use demonictutor::{
-    CardInstanceId, DomainError, DrawCardCommand, GameError, PlayLandCommand, PlayerId,
+    CardInstanceId, DomainError, DrawCardEffectCommand, GameError, Phase, PlayLandCommand, PlayerId,
 };
 
 fn create_game_with_library_cards() -> demonictutor::Game {
@@ -17,7 +17,7 @@ fn create_game_with_library_cards() -> demonictutor::Game {
 }
 
 #[test]
-fn draw_card_works_in_main_phase() {
+fn draw_card_effect_works_in_main_phase() {
     let (service, mut game) = setup_two_player_game(
         "game-1",
         filled_library(vec![land_card("forest")], 10),
@@ -26,12 +26,15 @@ fn draw_card_works_in_main_phase() {
 
     advance_to_player_first_main(&service, &mut game, "player-2");
 
-    let result = service.draw_card(&mut game, DrawCardCommand::new(PlayerId::new("player-2")));
+    let result = service.draw_card_effect(
+        &mut game,
+        DrawCardEffectCommand::new(PlayerId::new("player-2")),
+    );
     assert!(result.is_ok());
 }
 
 #[test]
-fn draw_card_moves_card_from_library_to_hand() {
+fn draw_card_effect_moves_card_from_library_to_hand() {
     let (service, mut game) = setup_two_player_game(
         "game-1",
         filled_library(vec![land_card("forest")], 10),
@@ -44,7 +47,10 @@ fn draw_card_moves_card_from_library_to_hand() {
     let lib_before = game.players()[1].library().len();
 
     service
-        .draw_card(&mut game, DrawCardCommand::new(PlayerId::new("player-2")))
+        .draw_card_effect(
+            &mut game,
+            DrawCardEffectCommand::new(PlayerId::new("player-2")),
+        )
         .unwrap();
 
     let hand_after = game.players()[1].hand().cards().len();
@@ -55,7 +61,7 @@ fn draw_card_moves_card_from_library_to_hand() {
 }
 
 #[test]
-fn draw_card_emits_event() {
+fn draw_card_effect_emits_event() {
     let (service, mut game) = setup_two_player_game(
         "game-1",
         filled_library(vec![land_card("forest")], 8),
@@ -65,27 +71,39 @@ fn draw_card_emits_event() {
     advance_to_player_first_main(&service, &mut game, "player-2");
 
     let event = service
-        .draw_card(&mut game, DrawCardCommand::new(PlayerId::new("player-2")))
+        .draw_card_effect(
+            &mut game,
+            DrawCardEffectCommand::new(PlayerId::new("player-2")),
+        )
         .unwrap();
 
     assert_eq!(event.player_id.as_str(), "player-2");
 }
 
 #[test]
-fn draw_card_fails_when_not_enough_cards() {
+fn draw_card_effect_fails_when_not_enough_cards() {
     let mut game = create_game_with_library_cards();
     let service = crate::support::create_service();
 
     advance_to_player_first_main(&service, &mut game, "player-2");
 
     assert!(service
-        .draw_card(&mut game, DrawCardCommand::new(PlayerId::new("player-2")))
+        .draw_card_effect(
+            &mut game,
+            DrawCardEffectCommand::new(PlayerId::new("player-2"))
+        )
         .is_ok());
     assert!(service
-        .draw_card(&mut game, DrawCardCommand::new(PlayerId::new("player-2")))
+        .draw_card_effect(
+            &mut game,
+            DrawCardEffectCommand::new(PlayerId::new("player-2"))
+        )
         .is_ok());
 
-    let result = service.draw_card(&mut game, DrawCardCommand::new(PlayerId::new("player-2")));
+    let result = service.draw_card_effect(
+        &mut game,
+        DrawCardEffectCommand::new(PlayerId::new("player-2")),
+    );
 
     assert!(matches!(
         result,
@@ -94,14 +112,17 @@ fn draw_card_fails_when_not_enough_cards() {
 }
 
 #[test]
-fn draw_card_fails_when_not_player_turn() {
+fn draw_card_effect_fails_when_not_player_turn() {
     let (service, mut game) = setup_two_player_game(
         "game-1",
         filled_library(vec![land_card("forest")], 8),
         filled_library(vec![land_card("mountain")], 7),
     );
 
-    let result = service.draw_card(&mut game, DrawCardCommand::new(PlayerId::new("player-2")));
+    let result = service.draw_card_effect(
+        &mut game,
+        DrawCardEffectCommand::new(PlayerId::new("player-2")),
+    );
 
     assert!(matches!(
         result,
@@ -110,14 +131,17 @@ fn draw_card_fails_when_not_player_turn() {
 }
 
 #[test]
-fn draw_card_allows_playing_land_after_draw() {
+fn draw_card_effect_allows_playing_land_after_draw() {
     let mut game = create_game_with_library_cards();
     let service = crate::support::create_service();
 
-    advance_n(&service, &mut game, 3);
+    advance_to_player_first_main(&service, &mut game, "player-1");
 
     service
-        .draw_card(&mut game, DrawCardCommand::new(PlayerId::new("player-1")))
+        .draw_card_effect(
+            &mut game,
+            DrawCardEffectCommand::new(PlayerId::new("player-1")),
+        )
         .unwrap();
 
     advance_to_player_first_main(&service, &mut game, "player-2");
@@ -131,4 +155,30 @@ fn draw_card_allows_playing_land_after_draw() {
     );
 
     assert!(result.is_ok());
+}
+
+#[test]
+fn draw_card_effect_fails_outside_main_phases() {
+    let (service, mut game) = setup_two_player_game(
+        "game-1",
+        filled_library(vec![land_card("forest")], 10),
+        filled_library(vec![land_card("mountain")], 10),
+    );
+
+    advance_n(&service, &mut game, 2);
+    assert_eq!(game.phase(), &Phase::Upkeep);
+
+    let result = service.draw_card_effect(
+        &mut game,
+        DrawCardEffectCommand::new(PlayerId::new("player-1")),
+    );
+
+    assert!(matches!(
+        result,
+        Err(DomainError::Phase(
+            demonictutor::PhaseError::InvalidForDraw {
+                phase: Phase::Upkeep
+            }
+        ))
+    ));
 }

@@ -10,7 +10,7 @@ pub use domain::play::{
     cards::{CardInstance, CardType},
     commands::{
         AdjustLifeCommand, AdvanceTurnCommand, CastSpellCommand, DealOpeningHandsCommand,
-        DeclareAttackersCommand, DeclareBlockersCommand, DrawCardCommand, LibraryCard,
+        DeclareAttackersCommand, DeclareBlockersCommand, DrawCardEffectCommand, LibraryCard,
         MulliganCommand, NonCreatureCardType, PlayLandCommand, PlayerDeck, PlayerLibrary,
         ResolveCombatDamageCommand, StartGameCommand, TapLandCommand,
     },

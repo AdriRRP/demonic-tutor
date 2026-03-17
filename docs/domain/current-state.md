@@ -20,6 +20,7 @@ Implemented capabilities include:
 - dealing opening hands
 - mulligan support (London Mulligan - simplified)
 - drawing cards (auto-draw in Draw phase)
+- resolving explicit draw effects during main phases
 - playing lands
 - tapping lands for mana
 - casting non-land spells that require mana
@@ -50,12 +51,14 @@ The domain currently includes:
 - basic zones (library, hand, battlefield, graveyard)
 - mana production from lands
 - non-land spell casting with mana cost
+- transient mana pools cleared when the game advances to the next phase or turn
 - creature cards with power and toughness
 - creature spells entering the battlefield through `CastSpell`
 - creature damage tracking during combat
 - automatic destruction of creatures with lethal marked damage
 - summoning sickness for creatures (removed for the active player's creatures at turn start)
 - turn and phase progression
+- explicit draw effects as a simplified non-stack entrypoint
 
 The system intentionally excludes complex gameplay mechanics at this stage.
 
@@ -77,6 +80,7 @@ Current constraints include:
 - no triggered abilities
 - limited card behavior modeling
 - non-land permanents currently enter the battlefield through simplified spell resolution without stack handling
+- mana production is simplified to active-player main phases and generic mana only
 
 These constraints are expected to evolve in future slices.
 

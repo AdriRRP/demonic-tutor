@@ -19,8 +19,10 @@ Assign opening hands to all players in a started game.
 ## Invariants currently enforced
 
 * all referenced players must exist in the game
+* every player in the game must provide exactly one opening-hand library
 * all players must have enough cards to receive an opening hand
 * no partial state changes are allowed on failure
+* opening hands can only be dealt once for a given started game
 * opening hand size is exactly 7 for this slice
 * creature `LibraryCard` values always carry explicit power and toughness by type
 

@@ -13,7 +13,7 @@ The play context had modeled a single `advance_turn` operation with three separa
 
 In practice those three events were always emitted together from one domain operation, which made replay and projection logic reconstruct a single semantic fact from multiple technical pieces.
 
-The context also emitted `CardDrawn` both for the automatic draw step and for the explicit draw command, but without indicating the origin of the draw.
+The context also emitted `CardDrawn` both for the automatic draw step and for the explicit draw-effect command, but without indicating the origin of the draw.
 
 ## Decision
 
@@ -30,7 +30,7 @@ This event carries:
 `CardDrawn` remains a distinct event, but now includes `DrawKind` so projections and replay models can distinguish:
 
 - `TurnStep`
-- `ExplicitAction`
+- `ExplicitEffect`
 
 ## Consequences
 

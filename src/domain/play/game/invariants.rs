@@ -42,12 +42,19 @@ pub(super) fn hand_card_type(
     player_id: &PlayerId,
     card_id: &CardInstanceId,
 ) -> Result<CardType, DomainError> {
+    hand_card(player, player_id, card_id).map(|card| card.card_type().clone())
+}
+
+pub(super) fn hand_card<'a>(
+    player: &'a Player,
+    player_id: &PlayerId,
+    card_id: &CardInstanceId,
+) -> Result<&'a CardInstance, DomainError> {
     player
         .hand()
         .cards()
         .iter()
         .find(|card| card.id() == card_id)
-        .map(|card| card.card_type().clone())
         .ok_or_else(|| {
             DomainError::Card(CardError::NotInHand {
                 player: player_id.clone(),

@@ -29,6 +29,9 @@ pub enum GameError {
         available: usize,
         requested: usize,
     },
+    MissingPlayerLibrary(PlayerId),
+    DuplicatePlayerLibrary(PlayerId),
+    OpeningHandsAlreadyDealt,
     MulliganAlreadyUsed(PlayerId),
     InternalInvariantViolation(String),
 }
@@ -122,6 +125,23 @@ impl std::fmt::Display for GameError {
                 "not enough cards in library for player {}: have {available}, need {requested}",
                 player.as_str()
             ),
+            Self::MissingPlayerLibrary(pid) => {
+                write!(
+                    f,
+                    "missing opening-hand library for player {}",
+                    pid.as_str()
+                )
+            }
+            Self::DuplicatePlayerLibrary(pid) => {
+                write!(
+                    f,
+                    "duplicate opening-hand library for player {}",
+                    pid.as_str()
+                )
+            }
+            Self::OpeningHandsAlreadyDealt => {
+                write!(f, "opening hands have already been dealt")
+            }
             Self::MulliganAlreadyUsed(pid) => {
                 write!(f, "player {} has already used mulligan", pid.as_str())
             }

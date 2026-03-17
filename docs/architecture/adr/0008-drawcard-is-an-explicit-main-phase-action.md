@@ -56,4 +56,4 @@ This decision is an intentional simplification of the draw mechanism.
 
 Future slices may introduce additional phases or automatic behaviors that replace or constrain this explicit action.
 
-This ADR has been superseded by the later turn-phase and draw-origin decisions, which introduced automatic draw during turn progression while preserving explicit draw as a separate action.
+This ADR has been superseded by the later turn-phase and draw-origin decisions, which introduced automatic draw during turn progression while preserving explicit draw as a separate effect-oriented entrypoint.

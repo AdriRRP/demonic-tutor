@@ -101,7 +101,7 @@ impl TurnProgressed {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DrawKind {
     TurnStep,
-    ExplicitAction,
+    ExplicitEffect,
 }
 
 #[derive(Debug, Clone)]

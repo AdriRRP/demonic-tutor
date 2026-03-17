@@ -3,8 +3,9 @@ use crate::{
     domain::play::{
         commands::{
             AdjustLifeCommand, AdvanceTurnCommand, CastSpellCommand, DealOpeningHandsCommand,
-            DeclareAttackersCommand, DeclareBlockersCommand, DrawCardCommand, MulliganCommand,
-            PlayLandCommand, ResolveCombatDamageCommand, StartGameCommand, TapLandCommand,
+            DeclareAttackersCommand, DeclareBlockersCommand, DrawCardEffectCommand,
+            MulliganCommand, PlayLandCommand, ResolveCombatDamageCommand, StartGameCommand,
+            TapLandCommand,
         },
         errors::{DomainError, GameError},
         events::{
@@ -146,17 +147,17 @@ where
         Ok(turn_event)
     }
 
-    /// Draws a card from the player's library.
+    /// Resolves an explicit draw effect for the active player.
     ///
     /// # Errors
     ///
     /// Returns an error if the command is invalid.
-    pub fn draw_card(
+    pub fn draw_card_effect(
         &self,
         game: &mut Game,
-        cmd: DrawCardCommand,
+        cmd: DrawCardEffectCommand,
     ) -> Result<CardDrawn, DomainError> {
-        let event = game.draw_card(cmd)?;
+        let event = game.draw_card_effect(cmd)?;
         self.persist_and_publish_event(game.id().as_str(), &event)?;
 
         Ok(event)

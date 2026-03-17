@@ -118,6 +118,10 @@ impl Player {
         self.mana = self.mana.saturating_add(amount);
     }
 
+    pub fn clear_mana(&mut self) {
+        self.mana = 0;
+    }
+
     pub fn spend_mana(&mut self, amount: u32) -> bool {
         if self.mana >= amount {
             self.mana -= amount;

@@ -2,14 +2,14 @@
 
 ## Goal
 
-Allow the active player to draw exactly one card from their library into their hand.
+Provide a simplified explicit draw effect entrypoint that lets the active player draw exactly one card from their library into their hand.
 
 ## Supported behavior
 
-* accept `DrawCardCommand`
+* accept `DrawCardEffectCommand`
 * verify that the referenced player exists
 * verify that the referenced player is the active player
-* verify that the current phase allows drawing
+* verify that the current phase is an explicit action window
 * draw exactly one card from library
 * move that card into the player's hand
 * emit `CardDrawn` with explicit `DrawKind`
@@ -17,7 +17,7 @@ Allow the active player to draw exactly one card from their library into their h
 ## Invariants currently enforced
 
 * only the active player may draw through this command
-* drawing is only allowed during `Phase::Untap`, `Phase::Draw`, `Phase::FirstMain`, or `Phase::SecondMain`
+* explicit draw effects are only allowed during `Phase::FirstMain` or `Phase::SecondMain`
 * drawing fails if the library has no available cards
 
 ## Out of scope
@@ -37,8 +37,8 @@ Allow the active player to draw exactly one card from their library into their h
 
 ## Rules Support Statement
 
-This slice implements a minimal explicit draw action per rules 121.1 and 121.2. The current model also includes automatic turn-step draw, and this command remains as an explicit draw entrypoint distinct from the automatic draw flow.
+This slice implements a minimal explicit draw effect per rules 121.1 and 121.2. The current model also includes automatic turn-step draw, and this command remains as a simplified effect-oriented entrypoint distinct from the automatic draw flow.
 
 ## Notes
 
-This slice intentionally models a minimal explicit draw action, not the full Magic draw step. The event now distinguishes explicit draws from automatic turn-step draws.
+This slice intentionally models a minimal explicit draw effect, not the full Magic draw step. The event now distinguishes explicit effects from automatic turn-step draws.

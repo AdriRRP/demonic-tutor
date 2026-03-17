@@ -56,22 +56,70 @@ fn deal_opening_hands_fails_when_not_enough_cards() {
 }
 
 #[test]
-fn deal_opening_hands_does_not_affect_other_player() {
+fn deal_opening_hands_fails_when_a_player_library_is_missing() {
+    let service = create_service();
+    let mut game = crate::support::start_two_player_game(&service, "game-1");
+
+    let result = service.deal_opening_hands(
+        &mut game,
+        &demonictutor::DealOpeningHandsCommand::new(vec![crate::support::player_library(
+            "player-1",
+            creature_library(7),
+        )]),
+    );
+
+    assert!(matches!(
+        result,
+        Err(DomainError::Game(GameError::MissingPlayerLibrary(_)))
+    ));
+}
+
+#[test]
+fn deal_opening_hands_fails_when_a_player_library_is_duplicated() {
+    let service = create_service();
+    let mut game = crate::support::start_two_player_game(&service, "game-1");
+
+    let result = service.deal_opening_hands(
+        &mut game,
+        &demonictutor::DealOpeningHandsCommand::new(vec![
+            crate::support::player_library("player-1", creature_library(7)),
+            crate::support::player_library("player-1", creature_library(7)),
+        ]),
+    );
+
+    assert!(matches!(
+        result,
+        Err(DomainError::Game(GameError::DuplicatePlayerLibrary(_)))
+    ));
+}
+
+#[test]
+fn deal_opening_hands_fails_when_hands_were_already_dealt() {
     let service = create_service();
     let mut game = crate::support::start_two_player_game(&service, "game-1");
 
     service
         .deal_opening_hands(
             &mut game,
-            &demonictutor::DealOpeningHandsCommand::new(vec![crate::support::player_library(
-                "player-1",
-                creature_library(7),
-            )]),
+            &demonictutor::DealOpeningHandsCommand::new(vec![
+                crate::support::player_library("player-1", creature_library(7)),
+                crate::support::player_library("player-2", creature_library(7)),
+            ]),
         )
         .unwrap();
 
-    assert_eq!(game.players()[0].hand().cards().len(), 7);
-    assert_eq!(game.players()[1].hand().cards().len(), 0);
+    let result = service.deal_opening_hands(
+        &mut game,
+        &demonictutor::DealOpeningHandsCommand::new(vec![
+            crate::support::player_library("player-1", creature_library(7)),
+            crate::support::player_library("player-2", creature_library(7)),
+        ]),
+    );
+
+    assert!(matches!(
+        result,
+        Err(DomainError::Game(GameError::OpeningHandsAlreadyDealt))
+    ));
 }
 
 #[test]

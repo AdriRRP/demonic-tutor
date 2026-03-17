@@ -61,7 +61,7 @@ Be explicit and concrete.
 
 Examples:
 
-- accept a `DrawCardCommand`
+- accept a `DrawCardEffectCommand`
 - verify the player exists
 - verify the player is the active player
 - draw exactly one card from the player library into the hand
@@ -205,7 +205,7 @@ State clearly what this slice means for actual Magic rules support.
 
 Use wording like:
 
-- “This slice introduces a minimal explicit draw action.”
+- “This slice introduces a minimal explicit draw effect.”
 - “This slice does not model the full draw step.”
 - “This slice supports a simplified legality model only.”
 
@@ -255,7 +255,7 @@ This slice enables direct hand progression and supports later gameplay actions t
 
 ## Supported Behavior
 
-- accept `DrawCardCommand`
+- accept `DrawCardEffectCommand`
 - verify player exists
 - verify player is active
 - draw exactly one card
@@ -282,7 +282,7 @@ This slice enables direct hand progression and supports later gameplay actions t
 - extend `Game` with explicit draw behavior
 
 ### Commands
-- add `DrawCardCommand`
+- add `DrawCardEffectCommand`
 
 ### Events
 - add `CardDrawn`
@@ -305,4 +305,4 @@ This behavior belongs to the `Game` aggregate because it affects gameplay legali
 
 ## Rules Support Statement
 
-This slice introduces a minimal explicit draw action and does not model the full Magic draw step.
+This slice introduces a minimal explicit draw effect and does not model the full Magic draw step.

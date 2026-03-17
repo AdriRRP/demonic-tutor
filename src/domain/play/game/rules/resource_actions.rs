@@ -55,8 +55,18 @@ pub fn play_land(
 pub fn tap_land(
     game_id: &GameId,
     players: &mut [Player],
+    active_player: &PlayerId,
+    phase: &Phase,
     cmd: TapLandCommand,
 ) -> Result<(LandTapped, ManaAdded), DomainError> {
+    invariants::require_active_player(active_player, &cmd.player_id)?;
+
+    if !matches!(phase, Phase::FirstMain | Phase::SecondMain) {
+        return Err(DomainError::Phase(PhaseError::InvalidForPlayingCard {
+            phase: *phase,
+        }));
+    }
+
     let player = invariants::find_player_mut(players, &cmd.player_id)?;
 
     let card = player
@@ -140,15 +150,18 @@ pub fn cast_spell(
         return Err(DomainError::Card(CardError::CannotCastLand(card_id)));
     }
 
-    let card = invariants::remove_card_from_hand(player, &cmd.player_id, &card_id)?;
-    let mana_cost = card.mana_cost();
-    if !player.spend_mana(mana_cost) {
+    let hand_card = invariants::hand_card(player, &cmd.player_id, &card_id)?;
+    let mana_cost = hand_card.mana_cost();
+    if player.mana() < mana_cost {
         return Err(DomainError::Game(GameError::InsufficientMana {
             player: cmd.player_id.clone(),
             required: mana_cost,
             available: player.mana(),
         }));
     }
+    let card = invariants::remove_card_from_hand(player, &cmd.player_id, &card_id)?;
+    let spent = player.spend_mana(mana_cost);
+    debug_assert!(spent, "mana was checked before removing the card from hand");
 
     let outcome = match card_type {
         CardType::Creature

@@ -10,6 +10,7 @@ Require mana payment for casting spells.
 - Cards have a mana cost (u32)
 - Player must have enough mana to cast a spell
 - Mana is deducted from player's mana pool when a spell is cast
+- A failed cast due to insufficient mana leaves the card in hand
 
 ### Domain Changes
 
@@ -37,7 +38,7 @@ Returned when player tries to cast a spell without enough mana.
 
 ## Rules Support Statement
 
-This slice implements mana cost payment per rules 202.1 and 202.1a. This implements basic mana cost deduction. Color mana, alternative costs, and cost adjustments are not implemented.
+This slice implements mana cost payment per rules 202.1 and 202.1a. This implements basic mana cost deduction. Color mana, alternative costs, cost adjustments, and stack-based payment timing are not implemented.
 
 ## Tests
 

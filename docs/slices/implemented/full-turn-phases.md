@@ -17,7 +17,7 @@ Expand the turn model to include all standard Magic phases: Setup, Untap, Upkeep
 The earlier simplified model (Setup → Main → Combat → Ending) was too limited. The introduction of `mulligan-with-setup.md` re-introduced the `Setup` and `Upkeep` phases. This slice records the transition toward the current full turn structure.
 
 1. Combat damage is now implemented, requiring proper phase structure
-2. Draw should happen at start of turn, not as explicit command
+2. Draw should happen at start of turn, not as a normal gameplay action
 3. Two main phases (pre-combat and post-combat) are needed for proper game flow
 4. End step is needed for end-of-turn effects (future)
 
@@ -26,7 +26,7 @@ The earlier simplified model (Setup → Main → Combat → Ending) was too limi
 ## Supported Behavior
 
 - expand `Phase` enum to: Untap, Draw, FirstMain, Combat, SecondMain, EndStep
-- auto-draw at start of turn (Draw phase) - replaces explicit DrawCardCommand for normal turn draw
+- auto-draw at start of turn (Draw phase) - replaces explicit draw commands for normal turn draw
 - untap the active player's permanents at start of turn (Untap phase) - automatic
 - phase progression via AdvanceTurnCommand:
   - Untap → Draw
@@ -90,7 +90,7 @@ pub enum Phase {
 
 ### Events
 - `TurnProgressed` captures phase and turn changes as one semantic event
-- `CardDrawn` includes `DrawKind` to distinguish turn-step draws from explicit draws
+- `CardDrawn` includes `DrawKind` to distinguish turn-step draws from explicit draw effects
 
 ---
 
@@ -147,7 +147,7 @@ This slice introduces the full Magic turn structure with six phases. It replaces
 
 ## Open Questions
 
-1. Should we keep explicit DrawCardCommand as alternative to auto-draw?
+1. Should we keep an explicit draw-effect command as alternative to auto-draw?
 2. Do we need separate BeginCombat/EndCombat steps?
 3. Should damage clear at end of turn? (rule 703.4n)
 

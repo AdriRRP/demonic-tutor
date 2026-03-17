@@ -88,12 +88,42 @@ fn validate_player_libraries(
     players: &[Player],
     cmd: &DealOpeningHandsCommand,
 ) -> Result<(), DomainError> {
+    let mut seen_players = HashSet::new();
+
     for player_library in &cmd.player_libraries {
+        if !seen_players.insert(player_library.player_id.clone()) {
+            return Err(DomainError::Game(GameError::DuplicatePlayerLibrary(
+                player_library.player_id.clone(),
+            )));
+        }
         validate_player_exists(players, &player_library.player_id)?;
         validate_opening_hand_size(player_library)?;
     }
 
+    if cmd.player_libraries.len() != players.len() {
+        for player in players {
+            if !seen_players.contains(player.id()) {
+                return Err(DomainError::Game(GameError::MissingPlayerLibrary(
+                    player.id().clone(),
+                )));
+            }
+        }
+    }
+
     Ok(())
+}
+
+fn require_opening_hands_not_dealt(players: &[Player]) -> Result<(), DomainError> {
+    if players.iter().any(|player| {
+        !player.hand().cards().is_empty()
+            || !player.library().is_empty()
+            || !player.battlefield().cards().is_empty()
+            || !player.graveyard().cards().is_empty()
+    }) {
+        Err(DomainError::Game(GameError::OpeningHandsAlreadyDealt))
+    } else {
+        Ok(())
+    }
 }
 
 fn find_player_index(players: &[Player], player_id: &PlayerId) -> Result<usize, DomainError> {
@@ -192,6 +222,7 @@ pub fn deal_opening_hands(
     cmd: &DealOpeningHandsCommand,
     game_id: &GameId,
 ) -> Result<Vec<OpeningHandDealt>, DomainError> {
+    require_opening_hands_not_dealt(players)?;
     validate_player_libraries(players, cmd)?;
     let runtime_libraries = build_runtime_libraries(game_id, cmd);
 

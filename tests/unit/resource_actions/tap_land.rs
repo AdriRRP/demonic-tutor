@@ -2,8 +2,8 @@
 
 use crate::support::{advance_to_first_main, create_service, filled_library, land_card};
 use demonictutor::{
-    CardError, CardInstanceId, DomainError, GameService, InMemoryEventBus, InMemoryEventStore,
-    PlayLandCommand, PlayerId, TapLandCommand,
+    AdvanceTurnCommand, CardError, CardInstanceId, DomainError, GameService, InMemoryEventBus,
+    InMemoryEventStore, Phase, PlayLandCommand, PlayerId, TapLandCommand,
 };
 
 fn create_game_with_land_on_battlefield() -> (
@@ -110,8 +110,12 @@ fn tap_land_fails_for_non_land_card() {
 
 #[test]
 fn tap_land_fails_for_unknown_card() {
-    let service = create_service();
-    let mut game = crate::support::start_two_player_game(&service, "game-1");
+    let (service, mut game) = crate::support::setup_two_player_game(
+        "game-1",
+        filled_library(vec![land_card("forest")], 10),
+        filled_library(vec![land_card("mountain")], 10),
+    );
+    advance_to_first_main(&service, &mut game);
 
     let result = service.tap_land(
         &mut game,
@@ -125,4 +129,76 @@ fn tap_land_fails_for_unknown_card() {
         result,
         Err(DomainError::Card(CardError::NotOnBattlefield { .. }))
     ));
+}
+
+#[test]
+fn tap_land_fails_when_not_players_turn() {
+    let (mut game, service) = create_game_with_land_on_battlefield();
+
+    let result = service.tap_land(
+        &mut game,
+        TapLandCommand::new(
+            PlayerId::new("player-2"),
+            CardInstanceId::new("game-1-player-1-0"),
+        ),
+    );
+
+    assert!(matches!(
+        result,
+        Err(DomainError::Game(
+            demonictutor::GameError::NotYourTurn { .. }
+        ))
+    ));
+}
+
+#[test]
+fn tap_land_fails_outside_main_phases() {
+    let (mut game, service) = create_game_with_land_on_battlefield();
+
+    service
+        .advance_turn(&mut game, AdvanceTurnCommand::new())
+        .unwrap();
+
+    assert_eq!(game.phase(), &Phase::Combat);
+
+    let result = service.tap_land(
+        &mut game,
+        TapLandCommand::new(
+            PlayerId::new("player-1"),
+            CardInstanceId::new("game-1-player-1-0"),
+        ),
+    );
+
+    assert!(matches!(
+        result,
+        Err(DomainError::Phase(
+            demonictutor::PhaseError::InvalidForPlayingCard {
+                phase: Phase::Combat
+            }
+        ))
+    ));
+}
+
+#[test]
+fn advance_turn_clears_mana_pools() {
+    let (mut game, service) = create_game_with_land_on_battlefield();
+
+    service
+        .tap_land(
+            &mut game,
+            TapLandCommand::new(
+                PlayerId::new("player-1"),
+                CardInstanceId::new("game-1-player-1-0"),
+            ),
+        )
+        .unwrap();
+
+    assert_eq!(game.players()[0].mana(), 1);
+
+    service
+        .advance_turn(&mut game, AdvanceTurnCommand::new())
+        .unwrap();
+
+    assert_eq!(game.players()[0].mana(), 0);
+    assert_eq!(game.players()[1].mana(), 0);
 }
