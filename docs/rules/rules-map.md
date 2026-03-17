@@ -77,6 +77,12 @@ It is not a literal restatement of the rules text.
 
 ---
 
+## Declare Attackers Step
+
+- 508
+
+---
+
 ## Upkeep Priority Window
 
 - 117
