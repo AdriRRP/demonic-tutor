@@ -531,6 +531,11 @@ fn bob_has_priority_after_blockers_are_declared_with_two_instant_cards_in_hand(
     world.setup_non_active_priority_after_blockers_declared_with_two_instants();
 }
 
+#[given("Bob has priority in CombatDamage with two instant cards in hand")]
+fn bob_has_priority_in_combat_damage_with_two_instant_cards_in_hand(world: &mut GameplayWorld) {
+    world.setup_non_active_priority_in_combat_damage_with_two_instants();
+}
+
 #[given("Bob has priority after combat damage with an instant card in hand")]
 fn bob_has_priority_after_combat_damage_with_an_instant_card_in_hand(world: &mut GameplayWorld) {
     world.setup_non_active_priority_after_combat_damage_with_instant();

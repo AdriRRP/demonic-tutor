@@ -195,6 +195,16 @@ It is not a literal restatement of the rules text.
 
 ---
 
+## Respond With Second Instant In Combat Damage Window
+
+- 117
+- 509
+- 510
+- 601
+- 608
+
+---
+
 ## Cast Instant In Upkeep Window
 
 - 117

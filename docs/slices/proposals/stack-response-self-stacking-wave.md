@@ -142,16 +142,16 @@ Implemented slice doc:
 
 ---
 
-### 9. Respond With Second Instant After Blockers
+### 9. Respond With Second Instant In Combat Damage Window
 
 Behavior:
-- after Alice passes the post-blockers combat window, Bob may cast two instants consecutively before passing
+- after Alice passes from the post-blocker handoff, Bob may cast two instants consecutively before passing in `CombatDamage`
 
 Feature:
-- `features/stack/respond_with_second_instant_after_blockers.feature`
+- `features/stack/respond_with_second_instant_in_combat_damage_window.feature`
 
-Planned implemented slice doc:
-- `docs/slices/implemented/respond-with-second-instant-after-blockers.md`
+Implemented slice doc:
+- `docs/slices/implemented/respond-with-second-instant-in-combat-damage-window.md`
 
 ---
 

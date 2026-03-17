@@ -45,6 +45,10 @@ async fn main() {
     )
     .await;
     GameplayWorld::run("features/stack/respond_after_blockers.feature").await;
+    GameplayWorld::run(
+        "features/stack/respond_with_second_instant_in_combat_damage_window.feature",
+    )
+    .await;
     GameplayWorld::run("features/stack/respond_after_combat_damage.feature").await;
     GameplayWorld::run("features/stack/respond_with_second_instant_spell.feature").await;
     GameplayWorld::run("features/stack/respond_with_second_instant_in_upkeep_window.feature").await;
