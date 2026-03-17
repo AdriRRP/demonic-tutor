@@ -13,7 +13,7 @@ use crate::domain::play::{
     events::{
         AttackersDeclared, BlockersDeclared, CardDiscarded, CombatDamageResolved, CreatureDied,
         GameEndReason, GameStarted, LandPlayed, LandTapped, ManaAdded, MulliganTaken,
-        OpeningHandDealt, SpellCast,
+        OpeningHandDealt,
     },
     ids::{GameId, PlayerId},
     phase::Phase,
@@ -21,7 +21,7 @@ use crate::domain::play::{
 
 pub use model::Player;
 pub use rules::{
-    resource_actions::AdjustLifeOutcome,
+    resource_actions::{AdjustLifeOutcome, CastSpellOutcome},
     turn_flow::{AdvanceTurnOutcome, DrawCardEffectOutcome},
 };
 
@@ -298,7 +298,7 @@ impl Game {
     ///
     /// # Errors
     /// See [`rules::resource_actions::cast_spell`].
-    pub fn cast_spell(&mut self, cmd: CastSpellCommand) -> Result<SpellCast, DomainError> {
+    pub fn cast_spell(&mut self, cmd: CastSpellCommand) -> Result<CastSpellOutcome, DomainError> {
         invariants::require_game_active(self.is_over())?;
         rules::resource_actions::cast_spell(
             &self.id,

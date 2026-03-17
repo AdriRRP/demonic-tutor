@@ -14,6 +14,8 @@ mod combat;
 mod life;
 #[path = "bdd/spell_casting.rs"]
 mod spell_casting;
+#[path = "bdd/state_based_actions.rs"]
+mod state_based_actions;
 #[path = "bdd/turn_progression.rs"]
 mod turn_progression;
 #[path = "bdd/world.rs"]
@@ -27,6 +29,7 @@ async fn main() {
     GameplayWorld::run("features/turn-flow/lose_on_empty_draw.feature").await;
     GameplayWorld::run("features/turn-flow/turn_progression.feature").await;
     GameplayWorld::run("features/spells/cast_creature_spell.feature").await;
+    GameplayWorld::run("features/state-based-actions/zero_toughness_creature_dies.feature").await;
     GameplayWorld::run("features/combat/combat_damage_marking.feature").await;
     GameplayWorld::run("features/combat/creature_destruction.feature").await;
     GameplayWorld::run("features/turn-flow/cleanup_damage_removal.feature").await;

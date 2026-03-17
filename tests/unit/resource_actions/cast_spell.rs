@@ -6,8 +6,8 @@ use crate::support::{
     vanilla_creature,
 };
 use demonictutor::{
-    CardError, CardInstanceId, CardType, CastSpellCommand, DomainError, Phase, PlayLandCommand,
-    PlayerId, SpellCastOutcome, TapLandCommand,
+    CardDefinitionId, CardError, CardInstanceId, CardType, CastSpellCommand, DomainError,
+    LibraryCard, Phase, PlayLandCommand, PlayerId, SpellCastOutcome, TapLandCommand,
 };
 
 #[test]
@@ -21,20 +21,21 @@ fn cast_instant_moves_card_from_hand_to_graveyard() {
     advance_to_first_main_satisfying_cleanup(&service, &mut game);
 
     let card_id = CardInstanceId::new("game-1-player-1-0");
-    let event = service
+    let outcome = service
         .cast_spell(
             &mut game,
             CastSpellCommand::new(PlayerId::new("player-1"), card_id.clone()),
         )
         .unwrap();
 
-    assert_eq!(event.card_id, card_id);
-    assert!(matches!(event.card_type, CardType::Instant));
-    assert_eq!(event.mana_cost_paid, 0);
+    assert_eq!(outcome.spell_cast.card_id, card_id);
+    assert!(matches!(outcome.spell_cast.card_type, CardType::Instant));
+    assert_eq!(outcome.spell_cast.mana_cost_paid, 0);
     assert!(matches!(
-        event.outcome,
+        outcome.spell_cast.outcome,
         SpellCastOutcome::ResolvedToGraveyard
     ));
+    assert!(outcome.creatures_died.is_empty());
     assert_eq!(game.players()[0].hand().cards().len(), 7);
     assert_eq!(game.players()[0].battlefield().cards().len(), 0);
     assert_eq!(game.players()[0].graveyard().cards().len(), 1);
@@ -97,7 +98,7 @@ fn cast_creature_spell_moves_card_to_battlefield() {
 
     advance_to_first_main_satisfying_cleanup(&service, &mut game);
 
-    let event = service
+    let outcome = service
         .cast_spell(
             &mut game,
             CastSpellCommand::new(
@@ -107,12 +108,13 @@ fn cast_creature_spell_moves_card_to_battlefield() {
         )
         .unwrap();
 
-    assert!(matches!(event.card_type, CardType::Creature));
-    assert_eq!(event.mana_cost_paid, 0);
+    assert!(matches!(outcome.spell_cast.card_type, CardType::Creature));
+    assert_eq!(outcome.spell_cast.mana_cost_paid, 0);
     assert!(matches!(
-        event.outcome,
+        outcome.spell_cast.outcome,
         SpellCastOutcome::EnteredBattlefield
     ));
+    assert!(outcome.creatures_died.is_empty());
     assert_eq!(game.players()[0].battlefield().cards().len(), 1);
     assert_eq!(game.players()[0].graveyard().cards().len(), 0);
 }
@@ -127,7 +129,7 @@ fn cast_artifact_spell_moves_card_to_battlefield() {
 
     advance_to_first_main_satisfying_cleanup(&service, &mut game);
 
-    let event = service
+    let outcome = service
         .cast_spell(
             &mut game,
             CastSpellCommand::new(
@@ -137,14 +139,61 @@ fn cast_artifact_spell_moves_card_to_battlefield() {
         )
         .unwrap();
 
-    assert!(matches!(event.card_type, CardType::Artifact));
-    assert_eq!(event.mana_cost_paid, 0);
+    assert!(matches!(outcome.spell_cast.card_type, CardType::Artifact));
+    assert_eq!(outcome.spell_cast.mana_cost_paid, 0);
     assert!(matches!(
-        event.outcome,
+        outcome.spell_cast.outcome,
         SpellCastOutcome::EnteredBattlefield
     ));
+    assert!(outcome.creatures_died.is_empty());
     assert_eq!(game.players()[0].battlefield().cards().len(), 1);
     assert_eq!(game.players()[0].graveyard().cards().len(), 0);
+}
+
+#[test]
+fn cast_zero_toughness_creature_dies_immediately_after_entering_battlefield() {
+    let (service, mut game) = setup_two_player_game(
+        "game-1",
+        filled_library(
+            vec![LibraryCard::creature(
+                CardDefinitionId::new("zero-toughness-creature"),
+                0,
+                1,
+                0,
+            )],
+            10,
+        ),
+        filled_library(vec![land_card("mountain")], 10),
+    );
+
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
+
+    let outcome = service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(
+                PlayerId::new("player-1"),
+                CardInstanceId::new("game-1-player-1-0"),
+            ),
+        )
+        .unwrap();
+
+    assert!(matches!(outcome.spell_cast.card_type, CardType::Creature));
+    assert!(matches!(
+        outcome.spell_cast.outcome,
+        SpellCastOutcome::EnteredBattlefield
+    ));
+    assert_eq!(outcome.creatures_died.len(), 1);
+    assert_eq!(
+        outcome.creatures_died[0].player_id,
+        PlayerId::new("player-1")
+    );
+    assert_eq!(
+        outcome.creatures_died[0].card_id,
+        CardInstanceId::new("game-1-player-1-0")
+    );
+    assert_eq!(game.players()[0].battlefield().cards().len(), 0);
+    assert_eq!(game.players()[0].graveyard().cards().len(), 1);
 }
 
 #[test]
@@ -264,7 +313,8 @@ fn cast_spell_succeeds_with_sufficient_mana() {
         ),
     );
 
-    let event = result.unwrap();
-    assert_eq!(event.mana_cost_paid, 1);
+    let outcome = result.unwrap();
+    assert_eq!(outcome.spell_cast.mana_cost_paid, 1);
+    assert!(outcome.creatures_died.is_empty());
     assert_eq!(game.players()[1].mana(), 0);
 }

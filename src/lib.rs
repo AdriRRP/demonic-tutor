@@ -21,7 +21,7 @@ pub use domain::play::{
         GameStarted, LandPlayed, LandTapped, LifeChanged, ManaAdded, MulliganTaken,
         OpeningHandDealt, SpellCast, SpellCastOutcome, TurnProgressed,
     },
-    game::{AdjustLifeOutcome, AdvanceTurnOutcome, DrawCardEffectOutcome, Game},
+    game::{AdjustLifeOutcome, AdvanceTurnOutcome, CastSpellOutcome, DrawCardEffectOutcome, Game},
     ids::{CardDefinitionId, CardInstanceId, DeckId, GameId, PlayerId},
     phase::Phase,
     zones::{Battlefield, Graveyard, Hand, Library},

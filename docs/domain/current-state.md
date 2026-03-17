@@ -33,6 +33,7 @@ Implemented capabilities include:
 - declaring blockers in combat phase
 - resolving combat damage
 - destroying creatures automatically when marked combat damage is lethal
+- destroying creatures with 0 toughness automatically after creature-spell resolution
 - clearing marked damage from surviving creatures when the turn ends
 - discarding down to the maximum hand size before the turn can advance out of `EndStep`
 - tracking player life totals
@@ -60,6 +61,7 @@ The domain currently includes:
 - creature spells entering the battlefield through `CastSpell`
 - creature damage tracking during combat
 - automatic destruction of creatures with lethal marked damage
+- automatic destruction of creatures with 0 toughness after creature-spell resolution
 - cleanup-based removal of marked damage from surviving creatures
 - explicit cleanup discard to maximum hand size during `EndStep`
 - summoning sickness for creatures (removed for the active player's creatures at turn start)
@@ -140,7 +142,7 @@ The next gameplay expansion requires choosing which domain capability to introdu
 Possible directions include:
 
 - stack and priority system
-- broader state-based actions beyond lethal creature damage
+- broader state-based actions beyond lethal creature damage and zero-toughness creature death
 - broader game-loss and game-end conditions beyond empty-library draw and zero life
 - richer cleanup and end-of-turn semantics
 

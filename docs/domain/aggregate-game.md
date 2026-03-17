@@ -176,6 +176,7 @@ The current model includes:
 - declare attackers and blockers in combat phase
 - marked combat damage on creatures
 - automatic destruction of creatures with lethal marked damage
+- automatic destruction of creatures with 0 toughness after creature-spell resolution
 
 Card instances can be checked for whether they represent permanents (cards that can exist on the battlefield) using the `CardType::is_permanent()` method.
 
@@ -200,6 +201,7 @@ The `Game` aggregate currently guarantees:
 - cards cannot be drawn if not available
 - the game ends if a required draw cannot happen because the relevant library is empty
 - the game ends if a player's life total reaches 0
+- creatures with 0 toughness die when the runtime performs its current zero-toughness check
 - card movements maintain zone consistency
 - end-of-turn cleanup discard must reduce the active player's hand to the maximum before the turn can advance
 - gameplay actions are rejected once the game is in a terminal state
@@ -221,6 +223,7 @@ The aggregate root must enforce:
 - phase progression rules
 - active-player-only automatic turn updates
 - terminal game tracking for empty-library draw and zero-life loss
+- zero-toughness creature death after current creature-spell resolution checks
 - lethal-damage creature destruction after combat damage resolution
 - correct event emission
 

@@ -80,6 +80,12 @@ It is not a literal restatement of the rules text.
 
 ---
 
+## Zero-Toughness Creature Dies
+
+- 704.5f
+
+---
+
 ## Cleanup Hand Size Discard
 
 - 514.1
@@ -126,6 +132,7 @@ The initial Gherkin pilot currently targets these rule areas:
 - `features/turn-flow/cleanup_hand_size_discard.feature`
 - `features/turn-flow/lose_on_empty_draw.feature`
 - `features/life/lose_on_zero_life.feature`
+- `features/state-based-actions/zero_toughness_creature_dies.feature`
 
 ---
 

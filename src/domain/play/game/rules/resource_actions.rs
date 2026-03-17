@@ -4,8 +4,8 @@ use crate::domain::play::{
     commands::{AdjustLifeCommand, CastSpellCommand, PlayLandCommand, TapLandCommand},
     errors::{CardError, DomainError, GameError, PhaseError},
     events::{
-        GameEndReason, GameEnded, LandPlayed, LandTapped, LifeChanged, ManaAdded, SpellCast,
-        SpellCastOutcome,
+        CreatureDied, GameEndReason, GameEnded, LandPlayed, LandTapped, LifeChanged, ManaAdded,
+        SpellCast, SpellCastOutcome,
     },
     ids::{GameId, PlayerId},
     phase::Phase,
@@ -15,6 +15,49 @@ use crate::domain::play::{
 pub struct AdjustLifeOutcome {
     pub life_changed: LifeChanged,
     pub game_ended: Option<GameEnded>,
+}
+
+#[derive(Debug, Clone)]
+pub struct CastSpellOutcome {
+    pub spell_cast: SpellCast,
+    pub creatures_died: Vec<CreatureDied>,
+}
+
+impl CastSpellOutcome {
+    #[must_use]
+    pub const fn new(spell_cast: SpellCast, creatures_died: Vec<CreatureDied>) -> Self {
+        Self {
+            spell_cast,
+            creatures_died,
+        }
+    }
+}
+
+fn destroy_zero_toughness_creatures(game_id: &GameId, players: &mut [Player]) -> Vec<CreatureDied> {
+    let mut died = Vec::new();
+
+    for player in players.iter_mut() {
+        let zero_toughness_ids = player
+            .battlefield()
+            .cards()
+            .iter()
+            .filter(|card| card.has_zero_toughness())
+            .map(|card| card.id().clone())
+            .collect::<Vec<_>>();
+
+        for card_id in zero_toughness_ids {
+            if let Some(card) = player.battlefield_mut().remove(&card_id) {
+                player.graveyard_mut().add(card);
+                died.push(CreatureDied::new(
+                    game_id.clone(),
+                    player.id().clone(),
+                    card_id,
+                ));
+            }
+        }
+    }
+
+    died
 }
 
 impl AdjustLifeOutcome {
@@ -167,7 +210,7 @@ pub fn cast_spell(
     active_player: &PlayerId,
     phase: &Phase,
     cmd: CastSpellCommand,
-) -> Result<SpellCast, DomainError> {
+) -> Result<CastSpellOutcome, DomainError> {
     invariants::require_active_player(active_player, &cmd.player_id)?;
 
     if !matches!(phase, Phase::FirstMain | Phase::SecondMain) {
@@ -221,12 +264,15 @@ pub fn cast_spell(
         }
     };
 
-    Ok(SpellCast::new(
+    let spell_cast = SpellCast::new(
         game_id.clone(),
         cmd.player_id,
         card_id,
         card_type,
         mana_cost,
         outcome,
-    ))
+    );
+    let creatures_died = destroy_zero_toughness_creatures(game_id, players);
+
+    Ok(CastSpellOutcome::new(spell_cast, creatures_died))
 }

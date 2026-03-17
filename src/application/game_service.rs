@@ -11,9 +11,11 @@ use crate::{
         events::{
             AttackersDeclared, BlockersDeclared, CardDiscarded, CombatDamageResolved, CreatureDied,
             DomainEvent, GameStarted, LandPlayed, LandTapped, ManaAdded, MulliganTaken,
-            OpeningHandDealt, SpellCast,
+            OpeningHandDealt,
         },
-        game::{AdjustLifeOutcome, AdvanceTurnOutcome, DrawCardEffectOutcome, Game},
+        game::{
+            AdjustLifeOutcome, AdvanceTurnOutcome, CastSpellOutcome, DrawCardEffectOutcome, Game,
+        },
     },
 };
 
@@ -258,11 +260,13 @@ where
         &self,
         game: &mut Game,
         cmd: CastSpellCommand,
-    ) -> Result<SpellCast, DomainError> {
-        let event = game.cast_spell(cmd)?;
-        self.persist_and_publish_event(game.id().as_str(), &event)?;
+    ) -> Result<CastSpellOutcome, DomainError> {
+        let outcome = game.cast_spell(cmd)?;
+        let mut domain_events = vec![outcome.spell_cast.clone().into()];
+        domain_events.extend(outcome.creatures_died.iter().cloned().map(Into::into));
+        self.persist_and_publish_events(game.id().as_str(), &domain_events)?;
 
-        Ok(event)
+        Ok(outcome)
     }
 
     /// Declares attacking creatures.

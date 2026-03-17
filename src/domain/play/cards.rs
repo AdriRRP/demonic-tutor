@@ -256,6 +256,14 @@ impl CardInstance {
         }
     }
 
+    #[must_use]
+    pub const fn has_zero_toughness(&self) -> bool {
+        match &self.creature {
+            Some(creature) => creature.toughness == 0,
+            None => false,
+        }
+    }
+
     pub const fn add_damage(&mut self, damage: u32) {
         if let Some(creature) = &mut self.creature {
             creature.damage += damage;
