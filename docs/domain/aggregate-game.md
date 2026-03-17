@@ -345,10 +345,11 @@ src/domain/play/game/
 └── rules/
     ├── mod.rs
     ├── lifecycle.rs        # start game, opening hands, mulligan
-    ├── turn_flow.rs        # phases, draws, turn progression
+    ├── game_effects.rs     # direct life and game-end helpers reused by rules
     ├── resource_actions.rs # lands, mana, spells, creatures, life
-    ├── automatic_consequences.rs # minimal automatic consequences and game-end checks
+    ├── state_based_actions.rs # shared review of supported state-based actions
     └── combat.rs
+    └── turn_flow/          # phases, turn progression, draw effects, cleanup
 ```
 
 This organization keeps the aggregate cohesive while avoiding monolithic files.

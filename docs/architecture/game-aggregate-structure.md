@@ -30,10 +30,16 @@ src/domain/play/game/
 └── rules/
     ├── mod.rs
     ├── lifecycle.rs        # Start game, opening hands, mulligan
-    ├── turn_flow.rs        # Phases, draws, turn progression
+    ├── game_effects.rs     # Direct life and game-end helpers reused by rules
     ├── resource_actions.rs # Lands, mana, spells, creatures, life
-    ├── automatic_consequences.rs # Minimal state-based consequences and game-end checks
+    ├── state_based_actions.rs # Shared review of supported state-based actions
     └── combat.rs           # Attacking, blocking, combat damage
+    └── turn_flow/
+        ├── mod.rs
+        ├── phase_behavior.rs
+        ├── turn_progression.rs
+        ├── draw_effects.rs
+        └── cleanup.rs
 ```
 
 ---
@@ -45,7 +51,7 @@ src/domain/play/game/
 - **Discoverability** — New developers can find relevant code quickly.
 - **DDD alignment** — Modules reflect the domain language, not technical categories.
 - **Rust coherence** — `mod.rs` stays small while internal modules separate aggregate state, rules, and invariants.
-- **Semantic consistency** — Automatic game consequences stay centralized instead of being duplicated across turn flow, resource, and combat code.
+- **Semantic consistency** — Shared state-based action review and direct game effects stay explicit instead of being duplicated across turn flow, resource, and combat code.
 
 ---
 

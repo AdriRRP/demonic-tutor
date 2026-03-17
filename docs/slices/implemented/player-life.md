@@ -46,6 +46,7 @@ Emitted whenever a player's life total changes.
 The current runtime returns an `AdjustLifeOutcome` containing:
 
 - the required `LifeChanged` event
+- zero or more `CreatureDied` events if a supported state-based action was pending
 - an optional `GameEnded` if the player's life reached 0
 
 ## Domain Changes
@@ -71,5 +72,6 @@ This slice implements player life tracking per rules 118.1 and 118.2. This suppo
 - AdjustLifeCommand with positive value increases life
 - Life cannot go below 0
 - Reaching 0 life ends the game
+- Supported pending creature deaths may also be resolved through shared state-based action review
 - AdjustLifeCommand fails for unknown player
 - LifeChanged event is emitted correctly

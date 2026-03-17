@@ -1,6 +1,6 @@
 use super::{
     super::{invariants, model::Player, TerminalState},
-    automatic_consequences,
+    game_effects, state_based_actions,
 };
 use crate::domain::play::{
     cards::CardType,
@@ -381,7 +381,7 @@ pub fn resolve_combat_damage(
                 "combat damage should fit within i32 life adjustments".to_string(),
             ))
         })?;
-        Some(automatic_consequences::adjust_player_life(
+        Some(game_effects::adjust_player_life(
             game_id,
             players,
             &defender_player_id,
@@ -391,7 +391,7 @@ pub fn resolve_combat_damage(
         None
     };
     let state_based_actions =
-        automatic_consequences::check_state_based_actions(game_id, players, terminal_state)?;
+        state_based_actions::check_state_based_actions(game_id, players, terminal_state)?;
 
     Ok(ResolveCombatDamageOutcome::new(
         CombatDamageResolved::new(game_id.clone(), cmd.player_id, damage_events),

@@ -1,7 +1,7 @@
 use super::super::{invariants, model::Player, TerminalState};
 use crate::domain::play::{
-    events::{CreatureDied, GameEndReason, GameEnded, LifeChanged},
-    ids::{GameId, PlayerId},
+    events::{CreatureDied, GameEndReason, GameEnded},
+    ids::GameId,
 };
 
 #[derive(Debug, Clone)]
@@ -18,54 +18,6 @@ impl StateBasedActionsResult {
             game_ended,
         }
     }
-}
-
-/// Applies a life delta without resolving further automatic gameplay consequences.
-///
-/// # Errors
-/// Returns an error if the target player is not found.
-pub fn adjust_player_life(
-    game_id: &GameId,
-    players: &mut [Player],
-    player_id: &PlayerId,
-    life_delta: i32,
-) -> Result<LifeChanged, crate::domain::play::errors::DomainError> {
-    let player = invariants::find_player_mut(players, player_id)?;
-    let old_life = player.life();
-    player.adjust_life(life_delta);
-    let new_life = player.life();
-
-    Ok(LifeChanged::new(
-        game_id.clone(),
-        player_id.clone(),
-        old_life,
-        new_life,
-    ))
-}
-
-/// Ends the game because a player attempted to draw from an empty library.
-///
-/// # Errors
-/// Returns an error if the losing player has no opposing player in the current game state.
-pub fn end_game_for_empty_library_draw(
-    game_id: &GameId,
-    players: &[Player],
-    terminal_state: &mut TerminalState,
-    losing_player: &PlayerId,
-) -> Result<GameEnded, crate::domain::play::errors::DomainError> {
-    let winning_player = invariants::opposing_player_id(players, losing_player)?;
-    terminal_state.end(
-        winning_player.clone(),
-        losing_player.clone(),
-        GameEndReason::EmptyLibraryDraw,
-    );
-
-    Ok(GameEnded::new(
-        game_id.clone(),
-        winning_player,
-        losing_player.clone(),
-        GameEndReason::EmptyLibraryDraw,
-    ))
 }
 
 fn end_game_for_zero_life(
@@ -97,10 +49,7 @@ fn end_game_for_zero_life(
     )))
 }
 
-pub fn destroy_zero_toughness_creatures(
-    game_id: &GameId,
-    players: &mut [Player],
-) -> Vec<CreatureDied> {
+fn destroy_zero_toughness_creatures(game_id: &GameId, players: &mut [Player]) -> Vec<CreatureDied> {
     let mut died = Vec::new();
 
     for player in players.iter_mut() {
@@ -127,7 +76,7 @@ pub fn destroy_zero_toughness_creatures(
     died
 }
 
-pub fn destroy_lethally_damaged_creatures(
+fn destroy_lethally_damaged_creatures(
     game_id: &GameId,
     players: &mut [Player],
 ) -> Vec<CreatureDied> {

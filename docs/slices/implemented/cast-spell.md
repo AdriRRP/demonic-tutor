@@ -51,13 +51,13 @@ pub struct SpellCast {
 
 Emitted when a spell is cast successfully, including the spell card type, the mana cost paid, and whether it entered the battlefield or resolved to the graveyard in the simplified model.
 
-`CastSpell` now returns a runtime outcome that may also include `CreatureDied` events when a creature with 0 toughness immediately dies after entering the battlefield under the repository's current narrow state-based check.
+`CastSpell` now returns a runtime outcome that may also include `CreatureDied` events or `GameEnded` when the shared review of currently supported state-based actions produces additional automatic consequences.
 
 ## Domain Changes
 
 - `CardType` enum expanded with specific types
 - `Game::cast_spell()` handles spell casting
-- zero-toughness creature checks run immediately after creature-spell resolution
+- supported state-based actions are reviewed after spell resolution
 - New error: `CannotCastLand` - when trying to cast a land as a spell
 
 ## Rules Reference
@@ -67,7 +67,7 @@ Emitted when a spell is cast successfully, including the spell card type, the ma
 
 ## Rules Support Statement
 
-This slice implements a simplified spell-casting model. Permanent non-land spells enter the battlefield, while instants and sorceries resolve directly to the graveyard. The current runtime also performs a narrow automatic check for creatures with 0 toughness after creature-spell resolution, moving them to the graveyard with `CreatureDied`. The full casting process (targets, modes, stack, timing, alternative costs, and resolution rules) is not implemented.
+This slice implements a simplified spell-casting model. Permanent non-land spells enter the battlefield, while instants and sorceries resolve directly to the graveyard. The current runtime also triggers the shared review of currently supported state-based actions after spell resolution, which can produce `CreatureDied` or `GameEnded` in addition to `SpellCast`. The full casting process (targets, modes, stack, timing, alternative costs, and resolution rules) is not implemented.
 
 ## Tests
 

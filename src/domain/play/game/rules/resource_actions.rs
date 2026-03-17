@@ -1,6 +1,7 @@
 use super::{
     super::{invariants, model::Player, TerminalState},
-    automatic_consequences::{self, StateBasedActionsResult},
+    game_effects,
+    state_based_actions::{self, StateBasedActionsResult},
 };
 use crate::domain::play::{
     cards::CardType,
@@ -166,12 +167,11 @@ pub fn adjust_life(
         life_delta,
     } = cmd;
 
-    let life_changed =
-        automatic_consequences::adjust_player_life(game_id, players, &player_id, life_delta)?;
+    let life_changed = game_effects::adjust_player_life(game_id, players, &player_id, life_delta)?;
     let StateBasedActionsResult {
         creatures_died,
         game_ended,
-    } = automatic_consequences::check_state_based_actions(game_id, players, terminal_state)?;
+    } = state_based_actions::check_state_based_actions(game_id, players, terminal_state)?;
 
     Ok(AdjustLifeOutcome::new(
         life_changed,
@@ -256,7 +256,7 @@ pub fn cast_spell(
     let StateBasedActionsResult {
         creatures_died,
         game_ended,
-    } = automatic_consequences::check_state_based_actions(game_id, players, terminal_state)?;
+    } = state_based_actions::check_state_based_actions(game_id, players, terminal_state)?;
 
     Ok(CastSpellOutcome::new(
         spell_cast,
