@@ -29,6 +29,13 @@ fn cast_and_resolve(
     crate::support::cast_spell_and_resolve(service, game, player_id, card_id);
 }
 
+fn close_empty_priority_window(
+    service: &GameService<InMemoryEventStore, InMemoryEventBus>,
+    game: &mut Game,
+) {
+    crate::support::close_empty_priority_window(service, game);
+}
+
 fn advance_until(
     service: &GameService<InMemoryEventStore, InMemoryEventBus>,
     game: &mut Game,
@@ -224,6 +231,7 @@ fn combat_damage_marks_surviving_creatures_and_destroys_lethally_damaged_ones() 
             DeclareAttackersCommand::new(PlayerId::new("player-1"), vec![attacker_id.clone()]),
         )
         .unwrap();
+    close_empty_priority_window(&service, &mut game);
 
     let assignments = vec![(blocker_id, attacker_id)];
 
@@ -233,6 +241,7 @@ fn combat_damage_marks_surviving_creatures_and_destroys_lethally_damaged_ones() 
             DeclareBlockersCommand::new(PlayerId::new("player-2"), assignments),
         )
         .unwrap();
+    close_empty_priority_window(&service, &mut game);
 
     let outcome = service
         .resolve_combat_damage(
@@ -305,6 +314,7 @@ fn creature_destruction_emits_one_event_per_destroyed_creature() {
             ),
         )
         .unwrap();
+    close_empty_priority_window(&service, &mut game);
 
     let blocker_assignments = vec![
         (left_blocker_id.clone(), left_attacker_id),
@@ -317,6 +327,7 @@ fn creature_destruction_emits_one_event_per_destroyed_creature() {
             DeclareBlockersCommand::new(PlayerId::new("player-2"), blocker_assignments),
         )
         .unwrap();
+    close_empty_priority_window(&service, &mut game);
 
     let outcome = service
         .resolve_combat_damage(
@@ -384,6 +395,7 @@ fn unblocked_combat_damage_ends_the_game_when_it_reduces_a_player_to_zero_life()
             DeclareAttackersCommand::new(PlayerId::new("player-1"), vec![attacker_id]),
         )
         .unwrap();
+    close_empty_priority_window(&service, &mut game);
 
     let outcome = service
         .resolve_combat_damage(

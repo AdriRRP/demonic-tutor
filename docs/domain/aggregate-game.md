@@ -183,6 +183,7 @@ The current model includes:
 - minimal stack-aware spell casting and spell resolution
 - casting player retaining priority immediately after putting a spell on the stack
 - opening empty priority windows when entering `FirstMain` and `SecondMain`
+- reopening priority after attackers and blockers are declared in combat
 - rejection of turn advancement while a priority window is open
 
 Card instances can be checked for whether they represent permanents (cards that can exist on the battlefield) using the `CardType::is_permanent()` method.

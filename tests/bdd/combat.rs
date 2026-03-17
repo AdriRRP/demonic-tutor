@@ -7,6 +7,16 @@ fn alice_attacks_with_a_creature(world: &mut GameplayWorld) {
     world.setup_blocked_damage_marking();
 }
 
+#[given("Alice has declared attackers in Combat")]
+fn alice_has_declared_attackers_in_combat(world: &mut GameplayWorld) {
+    world.setup_priority_after_attackers_declared();
+}
+
+#[given("Bob has declared blockers in Combat")]
+fn bob_has_declared_blockers_in_combat(world: &mut GameplayWorld) {
+    world.setup_priority_after_blockers_declared();
+}
+
 #[given(
     "Alice attacks with a creature and Bob has two creatures that could block the same attacker"
 )]

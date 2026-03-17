@@ -1,12 +1,13 @@
 #![allow(clippy::unwrap_used)]
+#![allow(clippy::expect_used)]
 
 use crate::support::{
     advance_to_player_first_main_satisfying_cleanup, advance_turn_raw, cast_spell_and_resolve,
-    filled_library, setup_two_player_game,
+    close_empty_priority_window, filled_library, setup_two_player_game,
 };
 use demonictutor::{
-    CardDefinitionId, CardError, CardInstanceId, DeclareBlockersCommand, DomainError, GameError,
-    LibraryCard, PlayerId, ResolveCombatDamageCommand,
+    CardDefinitionId, CardError, CardInstanceId, DeclareAttackersCommand, DeclareBlockersCommand,
+    DomainError, GameError, LibraryCard, PlayerId, ResolveCombatDamageCommand,
 };
 
 #[test]
@@ -44,6 +45,7 @@ fn declare_blockers_fails_when_target_creature_is_not_attacking() {
 
     advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
     advance_turn_raw(&service, &mut game);
+    close_empty_priority_window(&service, &mut game);
 
     let error = service
         .declare_blockers(
@@ -71,6 +73,7 @@ fn resolve_combat_damage_fails_when_no_attackers_were_declared() {
 
     advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
     advance_turn_raw(&service, &mut game);
+    close_empty_priority_window(&service, &mut game);
 
     let error = service
         .resolve_combat_damage(
@@ -126,6 +129,7 @@ fn declare_blockers_fails_when_the_same_blocker_is_assigned_more_than_once() {
             ),
         )
         .unwrap();
+    close_empty_priority_window(&service, &mut game);
 
     let error = service
         .declare_blockers(
@@ -190,6 +194,7 @@ fn declare_blockers_fails_when_multiple_blockers_target_the_same_attacker() {
             ),
         )
         .unwrap();
+    close_empty_priority_window(&service, &mut game);
 
     let error = service
         .declare_blockers(
@@ -210,4 +215,90 @@ fn declare_blockers_fails_when_multiple_blockers_target_the_same_attacker() {
             attacker_id
         ))
     );
+}
+
+#[test]
+fn declare_attackers_opens_priority_for_the_active_player() {
+    let (service, mut game) = setup_two_player_game(
+        "game-1",
+        filled_library(Vec::new(), 10),
+        filled_library(Vec::new(), 10),
+    );
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
+    advance_turn_raw(&service, &mut game);
+    close_empty_priority_window(&service, &mut game);
+
+    service
+        .declare_attackers(
+            &mut game,
+            DeclareAttackersCommand::new(PlayerId::new("player-1"), Vec::new()),
+        )
+        .unwrap();
+
+    assert!(
+        game.priority().is_some(),
+        "priority should open after attackers"
+    );
+    let priority = game.priority().expect("asserted above");
+    assert_eq!(priority.current_holder(), &PlayerId::new("player-1"));
+}
+
+#[test]
+fn declare_blockers_opens_priority_for_the_active_player() {
+    let (service, mut game) = setup_two_player_game(
+        "game-1",
+        filled_library(
+            vec![LibraryCard::creature(
+                CardDefinitionId::new("attacker"),
+                0,
+                2,
+                2,
+            )],
+            10,
+        ),
+        filled_library(
+            vec![LibraryCard::creature(
+                CardDefinitionId::new("blocker"),
+                0,
+                2,
+                2,
+            )],
+            10,
+        ),
+    );
+
+    let attacker_id = CardInstanceId::new("game-1-player-1-0");
+    let blocker_id = CardInstanceId::new("game-1-player-2-0");
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
+    cast_spell_and_resolve(&service, &mut game, "player-1", attacker_id.clone());
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-2");
+    cast_spell_and_resolve(&service, &mut game, "player-2", blocker_id.clone());
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
+    advance_turn_raw(&service, &mut game);
+    close_empty_priority_window(&service, &mut game);
+    service
+        .declare_attackers(
+            &mut game,
+            DeclareAttackersCommand::new(PlayerId::new("player-1"), vec![attacker_id.clone()]),
+        )
+        .unwrap();
+    close_empty_priority_window(&service, &mut game);
+
+    service
+        .declare_blockers(
+            &mut game,
+            DeclareBlockersCommand::new(PlayerId::new("player-2"), vec![(blocker_id, attacker_id)]),
+        )
+        .unwrap();
+
+    assert!(
+        game.priority().is_some(),
+        "priority should open after blockers"
+    );
+    let priority = game.priority().expect("asserted above");
+    assert_eq!(priority.current_holder(), &PlayerId::new("player-1"));
 }

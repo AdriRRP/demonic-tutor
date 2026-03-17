@@ -3,7 +3,8 @@
 use crate::support::{
     advance_n_raw, advance_n_satisfying_cleanup, advance_to_first_main_satisfying_cleanup,
     advance_to_player_first_main_satisfying_cleanup, advance_turn_satisfying_cleanup,
-    cast_spell_and_resolve, filled_library, land_card, setup_two_player_game, vanilla_creature,
+    cast_spell_and_resolve, close_empty_priority_window, filled_library, land_card,
+    setup_two_player_game, vanilla_creature,
 };
 use demonictutor::{
     AdvanceTurnCommand, AdvanceTurnOutcome, CardDefinitionId, CardInstanceId,
@@ -192,6 +193,7 @@ fn advance_turn_clears_marked_damage_when_turn_ends() {
             DeclareAttackersCommand::new(PlayerId::new("player-1"), vec![attacker_id.clone()]),
         )
         .unwrap();
+    close_empty_priority_window(&service, &mut game);
 
     let assignments = vec![(blocker_id, attacker_id)];
     service
@@ -200,6 +202,7 @@ fn advance_turn_clears_marked_damage_when_turn_ends() {
             DeclareBlockersCommand::new(PlayerId::new("player-2"), assignments),
         )
         .unwrap();
+    close_empty_priority_window(&service, &mut game);
 
     service
         .resolve_combat_damage(

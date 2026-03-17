@@ -379,13 +379,15 @@ impl Game {
     ) -> Result<AttackersDeclared, DomainError> {
         invariants::require_game_active(self.is_over())?;
         invariants::require_no_open_priority_window(self.priority())?;
-        rules::combat::declare_attackers(
+        let event = rules::combat::declare_attackers(
             &self.id,
             &mut self.players,
             &self.active_player,
             &self.phase,
             cmd,
-        )
+        )?;
+        self.priority = Some(PriorityState::new(self.active_player.clone()));
+        Ok(event)
     }
 
     /// Declares blockers in combat.
@@ -398,13 +400,15 @@ impl Game {
     ) -> Result<BlockersDeclared, DomainError> {
         invariants::require_game_active(self.is_over())?;
         invariants::require_no_open_priority_window(self.priority())?;
-        rules::combat::declare_blockers(
+        let event = rules::combat::declare_blockers(
             &self.id,
             &mut self.players,
             &self.active_player,
             &self.phase,
             cmd,
-        )
+        )?;
+        self.priority = Some(PriorityState::new(self.active_player.clone()));
+        Ok(event)
     }
 
     /// Resolves combat damage.

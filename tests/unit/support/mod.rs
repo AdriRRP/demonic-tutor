@@ -168,7 +168,7 @@ pub fn advance_turn_raw(service: &TestService, game: &mut Game) {
     assert!(matches!(outcome, AdvanceTurnOutcome::Progressed { .. }));
 }
 
-fn close_empty_priority_window(service: &TestService, game: &mut Game) {
+pub fn close_empty_priority_window(service: &TestService, game: &mut Game) {
     if !game.has_open_priority_window() {
         return;
     }

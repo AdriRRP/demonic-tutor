@@ -152,6 +152,7 @@ The initial Gherkin pilot currently targets these rule areas:
 - `features/turn-flow/draw_multiple_cards.feature`
 - `features/spells/cast_creature_spell.feature`
 - `features/combat/combat_damage_marking.feature`
+- `features/combat/combat_priority_windows.feature`
 - `features/combat/single_blocker_per_attacker.feature`
 - `features/combat/creature_destruction.feature`
 - `features/turn-flow/cleanup_damage_removal.feature`

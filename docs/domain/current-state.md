@@ -33,6 +33,7 @@ Implemented capabilities include:
 - declaring attackers in combat phase
 - declaring blockers in combat phase
 - blocking currently supports at most one blocker per attacking creature
+- opening priority windows after attackers and blockers are declared
 - resolving combat damage
 - applying unblocked combat damage to players through shared life-change semantics
 - destroying creatures automatically when marked combat damage is lethal
@@ -80,6 +81,7 @@ The domain currently includes:
 - entering `FirstMain` or `SecondMain` opens an empty priority window for the active player
 - instant-speed spell responses for the current priority holder
 - resolving the top stack object after two consecutive passes
+- combat actions reopen priority after attackers and blockers are declared
 
 The system intentionally excludes complex gameplay mechanics at this stage.
 
@@ -100,6 +102,7 @@ Current constraints include:
 - priority windows are currently opened by spell casting and by entering `FirstMain` or `SecondMain`
 - outside stack-aware operations, general turn advancement still requires the priority window to be closed
 - broader priority windows for non-main-phase turn flow are not modeled yet
+- combat still uses a single `Combat` phase rather than full combat-step windows
 - no triggered abilities
 - limited card behavior modeling
 - permanent spells resolve from the stack into the battlefield in the current simplified stack model

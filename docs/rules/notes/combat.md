@@ -17,6 +17,8 @@ This is a repository-owned interpretation note, not a copy of the Comprehensive 
 
 - attackers are declared in `Combat`
 - blockers are declared in `Combat`
+- declaring attackers opens a priority window for the active player
+- declaring blockers opens a priority window for the active player
 - blocker-to-attacker assignments are stored in runtime combat state and reused during damage resolution
 - the current combat model supports at most one blocker per attacker
 - combat damage is assigned and marked on the creatures that receive it
@@ -31,11 +33,12 @@ This is a repository-owned interpretation note, not a copy of the Comprehensive 
 - double strike
 - trample
 - multiple blockers per attacker
-- combat tricks on the stack
+- full begin-combat / declare-attackers / declare-blockers / damage / end-combat step structure
 - a general state-based action engine
 
 ## Related Features
 
+- `features/combat/combat_priority_windows.feature`
 - `features/combat/combat_damage_marking.feature`
 - `features/combat/creature_destruction.feature`
 - `features/turn-flow/cleanup_damage_removal.feature`
