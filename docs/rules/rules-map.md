@@ -167,6 +167,15 @@ It is not a literal restatement of the rules text.
 
 ---
 
+## Respond In Second Main Window
+
+- 117
+- 505
+- 601
+- 608
+
+---
+
 ## Cast Instant In Draw Window
 
 - 117

@@ -1,5 +1,6 @@
 #![allow(clippy::expect_used)]
 #![allow(clippy::missing_const_for_fn)]
+#![allow(clippy::large_stack_frames)]
 #![allow(clippy::needless_pass_by_ref_mut)]
 #![allow(clippy::needless_pass_by_value)]
 #![allow(clippy::panic)]
@@ -35,6 +36,7 @@ async fn main() {
     GameplayWorld::run("features/stack/respond_in_upkeep_window.feature").await;
     GameplayWorld::run("features/stack/respond_in_draw_window.feature").await;
     GameplayWorld::run("features/stack/respond_in_first_main_window.feature").await;
+    GameplayWorld::run("features/stack/respond_in_second_main_window.feature").await;
     GameplayWorld::run("features/stack/cast_instant_in_upkeep_window.feature").await;
     GameplayWorld::run("features/stack/cast_instant_in_draw_window.feature").await;
     GameplayWorld::run("features/stack/cast_instant_in_second_main_window.feature").await;
