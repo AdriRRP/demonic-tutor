@@ -4,7 +4,8 @@ use crate::domain::play::{
     commands::{DeclareAttackersCommand, DeclareBlockersCommand, ResolveCombatDamageCommand},
     errors::{CardError, DomainError, GameError, PhaseError},
     events::{
-        AttackersDeclared, BlockersDeclared, CombatDamageResolved, DamageEvent, DamageTarget,
+        AttackersDeclared, BlockersDeclared, CombatDamageResolved, CreatureDied, DamageEvent,
+        DamageTarget,
     },
     ids::{CardInstanceId, GameId, PlayerId},
     phase::Phase,
@@ -130,6 +131,36 @@ fn apply_damage_and_clear_combat_state(
     }
 }
 
+fn destroy_lethally_damaged_creatures(
+    game_id: &GameId,
+    players: &mut [Player],
+) -> Vec<CreatureDied> {
+    let mut destroyed = Vec::new();
+
+    for player in players.iter_mut() {
+        let destroyed_ids = player
+            .battlefield()
+            .cards()
+            .iter()
+            .filter(|card| card.has_lethal_damage())
+            .map(|card| card.id().clone())
+            .collect::<Vec<_>>();
+
+        for card_id in destroyed_ids {
+            if let Some(card) = player.battlefield_mut().remove(&card_id) {
+                player.graveyard_mut().add(card);
+                destroyed.push(CreatureDied::new(
+                    game_id.clone(),
+                    player.id().clone(),
+                    card_id,
+                ));
+            }
+        }
+    }
+
+    destroyed
+}
+
 /// Declares attackers for the active player in combat.
 ///
 /// # Errors
@@ -250,7 +281,7 @@ pub fn resolve_combat_damage(
     active_player: &PlayerId,
     phase: &Phase,
     cmd: ResolveCombatDamageCommand,
-) -> Result<CombatDamageResolved, DomainError> {
+) -> Result<(CombatDamageResolved, Vec<CreatureDied>), DomainError> {
     invariants::require_active_player(active_player, &cmd.player_id)?;
     require_combat_phase(*phase)?;
 
@@ -305,10 +336,10 @@ pub fn resolve_combat_damage(
     }
 
     apply_damage_and_clear_combat_state(players, &damage_received);
+    let destroyed_creatures = destroy_lethally_damaged_creatures(game_id, players);
 
-    Ok(CombatDamageResolved::new(
-        game_id.clone(),
-        cmd.player_id,
-        damage_events,
+    Ok((
+        CombatDamageResolved::new(game_id.clone(), cmd.player_id, damage_events),
+        destroyed_creatures,
     ))
 }

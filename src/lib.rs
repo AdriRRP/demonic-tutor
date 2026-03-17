@@ -16,9 +16,9 @@ pub use domain::play::{
     },
     errors::{CardError, DomainError, GameError, PhaseError, PlayerError},
     events::{
-        AttackersDeclared, BlockersDeclared, CardDrawn, CombatDamageResolved, DamageEvent,
-        DomainEvent, DrawKind, GameStarted, LandPlayed, LandTapped, LifeChanged, ManaAdded,
-        MulliganTaken, OpeningHandDealt, SpellCast, SpellCastOutcome, TurnProgressed,
+        AttackersDeclared, BlockersDeclared, CardDrawn, CombatDamageResolved, CreatureDied,
+        DamageEvent, DomainEvent, DrawKind, GameStarted, LandPlayed, LandTapped, LifeChanged,
+        ManaAdded, MulliganTaken, OpeningHandDealt, SpellCast, SpellCastOutcome, TurnProgressed,
     },
     game::Game,
     ids::{CardDefinitionId, CardInstanceId, DeckId, GameId, PlayerId},

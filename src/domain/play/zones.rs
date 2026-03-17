@@ -99,6 +99,14 @@ impl Battlefield {
         self.0.iter_mut().find(|c| c.id() == card_id)
     }
 
+    #[must_use]
+    pub fn remove(&mut self, card_id: &CardInstanceId) -> Option<CardInstance> {
+        self.0
+            .iter()
+            .position(|card| card.id() == card_id)
+            .map(|index| self.0.remove(index))
+    }
+
     pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut CardInstance> {
         self.0.iter_mut()
     }

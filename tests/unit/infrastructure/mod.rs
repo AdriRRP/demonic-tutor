@@ -2,8 +2,8 @@
 #![allow(clippy::significant_drop_tightening)]
 
 use demonictutor::{
-    CardDrawn, CardInstanceId, CardType, DomainEvent, DrawKind, EventBus, EventStore, GameId,
-    GameLogProjection, GameStarted, InMemoryEventBus, InMemoryEventStore, LandPlayed,
+    CardDrawn, CardInstanceId, CardType, CreatureDied, DomainEvent, DrawKind, EventBus, EventStore,
+    GameId, GameLogProjection, GameStarted, InMemoryEventBus, InMemoryEventStore, LandPlayed,
     MulliganTaken, OpeningHandDealt, PlayerId, SpellCast, SpellCastOutcome, TurnProgressed,
 };
 
@@ -172,6 +172,23 @@ fn projection_logs_multiple_events() {
     assert!(logs[5].starts_with("Player"));
     assert!(logs[6].contains("Creature"));
     assert!(logs[6].contains("3 mana"));
+}
+
+#[test]
+fn projection_logs_creature_died_events() {
+    let projection = GameLogProjection::new();
+
+    projection.handle(&DomainEvent::CreatureDied(CreatureDied::new(
+        GameId::new("game-1"),
+        PlayerId::new("player-2"),
+        CardInstanceId::new("card-7"),
+    )));
+
+    let logs = projection.logs();
+    assert_eq!(logs.len(), 1);
+    assert!(logs[0].contains("card-7"));
+    assert!(logs[0].contains("player-2"));
+    assert!(logs[0].contains("died"));
 }
 
 #[test]

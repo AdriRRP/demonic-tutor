@@ -19,7 +19,8 @@ This is a repository-owned interpretation note, not a copy of the Comprehensive 
 - blockers are declared in `Combat`
 - combat damage is assigned and marked on the creatures that receive it
 - player life changes from unblocked combat damage are supported
-- damage remains marked as runtime state
+- creatures with lethal marked damage are destroyed automatically and moved to graveyard
+- surviving creatures keep damage marked as runtime state
 
 ## Out of Scope
 
@@ -27,13 +28,10 @@ This is a repository-owned interpretation note, not a copy of the Comprehensive 
 - double strike
 - trample
 - combat tricks on the stack
-- creature destruction from lethal damage
 - cleanup-based damage removal
+- a general state-based action engine
 
-## Next Natural Feature
+## Related Features
 
-The next narrow combat behavior to introduce is creature destruction from lethal marked damage.
-
-Related proposed feature:
-
+- `features/combat/combat_damage_marking.feature`
 - `features/combat/creature_destruction.feature`

@@ -8,9 +8,9 @@ use crate::{
         },
         errors::{DomainError, GameError},
         events::{
-            AttackersDeclared, BlockersDeclared, CardDrawn, CombatDamageResolved, DomainEvent,
-            GameStarted, LandPlayed, LandTapped, LifeChanged, ManaAdded, MulliganTaken,
-            OpeningHandDealt, SpellCast, TurnProgressed,
+            AttackersDeclared, BlockersDeclared, CardDrawn, CombatDamageResolved, CreatureDied,
+            DomainEvent, GameStarted, LandPlayed, LandTapped, LifeChanged, ManaAdded,
+            MulliganTaken, OpeningHandDealt, SpellCast, TurnProgressed,
         },
         game::Game,
     },
@@ -268,10 +268,17 @@ where
         &self,
         game: &mut Game,
         cmd: ResolveCombatDamageCommand,
-    ) -> Result<CombatDamageResolved, DomainError> {
-        let event = game.resolve_combat_damage(cmd)?;
-        self.persist_and_publish_event(game.id().as_str(), &event)?;
+    ) -> Result<(CombatDamageResolved, Vec<CreatureDied>), DomainError> {
+        let (damage_event, destroyed_events) = game.resolve_combat_damage(cmd)?;
+        let mut domain_events = vec![damage_event.clone().into()];
+        domain_events.extend(
+            destroyed_events
+                .iter()
+                .cloned()
+                .map(DomainEvent::CreatureDied),
+        );
+        self.persist_and_publish_events(game.id().as_str(), &domain_events)?;
 
-        Ok(event)
+        Ok((damage_event, destroyed_events))
     }
 }

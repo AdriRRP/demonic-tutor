@@ -174,6 +174,7 @@ The current model includes:
 - summoning sickness tracking and automatic removal at turn start
 - declare attackers and blockers in combat phase
 - marked combat damage on creatures
+- automatic destruction of creatures with lethal marked damage
 
 Card instances can be checked for whether they represent permanents (cards that can exist on the battlefield) using the `CardType::is_permanent()` method.
 
@@ -214,6 +215,7 @@ The aggregate root must enforce:
 - turn progression rules
 - phase progression rules
 - active-player-only automatic turn updates
+- lethal-damage creature destruction after combat damage resolution
 - correct event emission
 
 The aggregate must remain:

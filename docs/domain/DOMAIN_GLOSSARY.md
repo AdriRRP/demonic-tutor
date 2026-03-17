@@ -183,6 +183,14 @@ Damage is marked on a creature and persists until end of turn or regeneration.
 
 ---
 
+## Dies
+
+A creature dies when it is put into its owner's graveyard from the battlefield.
+
+In DemonicTutor, `CreatureDied` is the domain event used when a creature with lethal marked damage leaves the battlefield for the graveyard.
+
+---
+
 # Gameplay Structure
 
 ## Turn

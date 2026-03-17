@@ -29,6 +29,7 @@ pub enum DomainEvent {
     AttackersDeclared(AttackersDeclared),
     BlockersDeclared(BlockersDeclared),
     CombatDamageResolved(CombatDamageResolved),
+    CreatureDied(CreatureDied),
 }
 
 // Game lifecycle events
@@ -311,6 +312,24 @@ pub struct CombatDamageResolved {
 }
 
 #[derive(Debug, Clone)]
+pub struct CreatureDied {
+    pub game_id: GameId,
+    pub player_id: PlayerId,
+    pub card_id: CardInstanceId,
+}
+
+impl CreatureDied {
+    #[must_use]
+    pub const fn new(game_id: GameId, player_id: PlayerId, card_id: CardInstanceId) -> Self {
+        Self {
+            game_id,
+            player_id,
+            card_id,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct DamageEvent {
     pub source: CardInstanceId,
     pub target: DamageTarget,
@@ -351,3 +370,4 @@ impl_domain_event_from!(SpellCast, SpellCast);
 impl_domain_event_from!(AttackersDeclared, AttackersDeclared);
 impl_domain_event_from!(BlockersDeclared, BlockersDeclared);
 impl_domain_event_from!(CombatDamageResolved, CombatDamageResolved);
+impl_domain_event_from!(CreatureDied, CreatureDied);

@@ -10,9 +10,9 @@ use crate::domain::play::{
     },
     errors::{DomainError, GameError},
     events::{
-        AttackersDeclared, BlockersDeclared, CardDrawn, CombatDamageResolved, GameStarted,
-        LandPlayed, LandTapped, LifeChanged, ManaAdded, MulliganTaken, OpeningHandDealt, SpellCast,
-        TurnProgressed,
+        AttackersDeclared, BlockersDeclared, CardDrawn, CombatDamageResolved, CreatureDied,
+        GameStarted, LandPlayed, LandTapped, LifeChanged, ManaAdded, MulliganTaken,
+        OpeningHandDealt, SpellCast, TurnProgressed,
     },
     ids::{GameId, PlayerId},
     phase::Phase,
@@ -236,7 +236,7 @@ impl Game {
     pub fn resolve_combat_damage(
         &mut self,
         cmd: ResolveCombatDamageCommand,
-    ) -> Result<CombatDamageResolved, DomainError> {
+    ) -> Result<(CombatDamageResolved, Vec<CreatureDied>), DomainError> {
         rules::combat::resolve_combat_damage(
             &self.id,
             &mut self.players,

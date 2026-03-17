@@ -17,7 +17,7 @@ This slice follows `DeclareBlockers` because:
 1. Attackers and blockers are already declared
 2. Creatures have power and toughness modeled
 3. Without damage resolution, combat has no meaningful outcome
-4. It unlocks creature destruction and enables actual gameplay interaction
+4. It enables meaningful combat consequences and creature destruction
 
 ---
 
@@ -33,6 +33,7 @@ This slice follows `DeclareBlockers` because:
 - mark damage on creatures
 - emit `CombatDamageResolved` event with damage details
 - clear attacking and blocking combat flags after damage resolves
+- allow a later narrow destruction pass to move lethally damaged creatures out of the battlefield
 
 ---
 
@@ -55,7 +56,7 @@ This slice follows `DeclareBlockers` because:
 - indestructible (prevents destruction)
 - damage prevention / replacement effects
 - multiple blockers per attacker
-- state-based actions (creature destruction) — future slice
+- general state-based actions beyond lethal damage destruction
 - combat phase steps / priority
 - stack
 
@@ -125,9 +126,9 @@ This behavior belongs to the `Game` aggregate because:
 
 ---
 
-## Rules Support Statement
+## Relationship With CreatureDestruction
 
-This slice introduces explicit combat damage resolution. It calculates damage based on creature power and marks damage on creatures. Creature destruction from state-based actions is not yet implemented — that will be a future slice.
+This slice resolves and marks combat damage. The follow-on `CreatureDestruction` slice consumes that marked damage to destroy creatures whose damage is lethal and move them to graveyard.
 
 ---
 

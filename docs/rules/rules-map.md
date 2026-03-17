@@ -100,4 +100,11 @@ The initial Gherkin pilot currently targets these rule areas:
 - `features/turn-flow/turn_progression.feature`
 - `features/spells/cast_creature_spell.feature`
 - `features/combat/combat_damage_marking.feature`
-- `features/combat/creature_destruction.feature` (proposed)
+- `features/combat/creature_destruction.feature`
+
+---
+
+## Creature Destruction
+
+- 704
+- 704.5g

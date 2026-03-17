@@ -91,6 +91,9 @@ impl GameLogProjection {
             DomainEvent::CombatDamageResolved(e) => {
                 format!("Combat damage resolved: {:?}", e.damage_events)
             }
+            DomainEvent::CreatureDied(e) => {
+                format!("Creature {} controlled by {} died", e.card_id, e.player_id)
+            }
         };
 
         if let Ok(mut logs) = self.logs.write() {

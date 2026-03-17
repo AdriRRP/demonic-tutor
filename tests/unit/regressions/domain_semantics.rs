@@ -2,8 +2,8 @@
 
 use demonictutor::{
     AdvanceTurnCommand, CardDefinitionId, CardError, CardInstanceId, CastSpellCommand,
-    DealOpeningHandsCommand, DeckId, DeclareAttackersCommand, DeclareBlockersCommand, DomainError,
-    Game, GameId, GameService, InMemoryEventBus, InMemoryEventStore, LibraryCard,
+    CreatureDied, DealOpeningHandsCommand, DeckId, DeclareAttackersCommand, DeclareBlockersCommand,
+    DomainError, Game, GameId, GameService, InMemoryEventBus, InMemoryEventStore, LibraryCard,
     NonCreatureCardType, Phase, PlayerDeck, PlayerId, PlayerLibrary, ResolveCombatDamageCommand,
     StartGameCommand,
 };
@@ -180,7 +180,7 @@ fn untap_only_updates_the_active_players_board_state() {
 }
 
 #[test]
-fn combat_damage_marks_damage_on_the_creatures_that_received_it() {
+fn combat_damage_marks_surviving_creatures_and_destroys_lethally_damaged_ones() {
     let (service, mut game) = setup_game(
         vec![
             LibraryCard::creature(CardDefinitionId::new("ogre"), 0, 3, 3),
@@ -245,7 +245,7 @@ fn combat_damage_marks_damage_on_the_creatures_that_received_it() {
         )
         .unwrap();
 
-    service
+    let (_, destroyed_creatures) = service
         .resolve_combat_damage(
             &mut game,
             ResolveCombatDamageCommand::new(PlayerId::new("player-1"), assignments),
@@ -253,9 +253,106 @@ fn combat_damage_marks_damage_on_the_creatures_that_received_it() {
         .unwrap();
 
     assert_eq!(game.players()[0].battlefield().cards()[0].damage(), 2);
-    assert_eq!(game.players()[1].battlefield().cards()[0].damage(), 3);
+    assert!(game.players()[1].battlefield().cards().is_empty());
+    assert_eq!(game.players()[1].graveyard().cards().len(), 1);
+    assert_eq!(destroyed_creatures.len(), 1);
+    assert_eq!(
+        destroyed_creatures[0].card_id,
+        CardInstanceId::new("game-1-player-2-0")
+    );
     assert!(!game.players()[0].battlefield().cards()[0].is_attacking());
-    assert!(!game.players()[1].battlefield().cards()[0].is_blocking());
+}
+
+#[test]
+fn creature_destruction_emits_one_event_per_destroyed_creature() {
+    let (service, mut game) = setup_game(
+        vec![
+            LibraryCard::creature(CardDefinitionId::new("rhino"), 0, 4, 5),
+            LibraryCard::creature(CardDefinitionId::new("card-2"), 0, 2, 2),
+            LibraryCard::creature(CardDefinitionId::new("card-3"), 0, 2, 2),
+            LibraryCard::creature(CardDefinitionId::new("card-4"), 0, 2, 2),
+            LibraryCard::creature(CardDefinitionId::new("card-5"), 0, 2, 2),
+            LibraryCard::creature(CardDefinitionId::new("card-6"), 0, 2, 2),
+            LibraryCard::creature(CardDefinitionId::new("card-7"), 0, 2, 2),
+            LibraryCard::creature(CardDefinitionId::new("card-8"), 0, 2, 2),
+            LibraryCard::creature(CardDefinitionId::new("card-9"), 0, 2, 2),
+            LibraryCard::creature(CardDefinitionId::new("card-10"), 0, 2, 2),
+        ],
+        vec![
+            LibraryCard::creature(CardDefinitionId::new("guard-a"), 0, 2, 2),
+            LibraryCard::creature(CardDefinitionId::new("guard-b"), 0, 2, 2),
+            LibraryCard::creature(CardDefinitionId::new("card-3"), 0, 2, 2),
+            LibraryCard::creature(CardDefinitionId::new("card-4"), 0, 2, 2),
+            LibraryCard::creature(CardDefinitionId::new("card-5"), 0, 2, 2),
+            LibraryCard::creature(CardDefinitionId::new("card-6"), 0, 2, 2),
+            LibraryCard::creature(CardDefinitionId::new("card-7"), 0, 2, 2),
+            LibraryCard::creature(CardDefinitionId::new("card-8"), 0, 2, 2),
+            LibraryCard::creature(CardDefinitionId::new("card-9"), 0, 2, 2),
+            LibraryCard::creature(CardDefinitionId::new("card-10"), 0, 2, 2),
+        ],
+    );
+
+    let attacker_id = CardInstanceId::new("game-1-player-1-0");
+    let left_blocker_id = CardInstanceId::new("game-1-player-2-0");
+    let right_blocker_id = CardInstanceId::new("game-1-player-2-1");
+
+    advance_until(&service, &mut game, "player-1", Phase::FirstMain);
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), attacker_id.clone()),
+        )
+        .unwrap();
+
+    advance_until(&service, &mut game, "player-2", Phase::FirstMain);
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-2"), left_blocker_id.clone()),
+        )
+        .unwrap();
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-2"), right_blocker_id.clone()),
+        )
+        .unwrap();
+
+    advance_until(&service, &mut game, "player-1", Phase::Combat);
+
+    service
+        .declare_attackers(
+            &mut game,
+            DeclareAttackersCommand::new(PlayerId::new("player-1"), vec![attacker_id.clone()]),
+        )
+        .unwrap();
+
+    let assignments = vec![
+        (left_blocker_id.clone(), attacker_id.clone()),
+        (right_blocker_id.clone(), attacker_id),
+    ];
+
+    service
+        .declare_blockers(
+            &mut game,
+            DeclareBlockersCommand::new(PlayerId::new("player-2"), assignments.clone()),
+        )
+        .unwrap();
+
+    let (_, destroyed_creatures) = service
+        .resolve_combat_damage(
+            &mut game,
+            ResolveCombatDamageCommand::new(PlayerId::new("player-1"), assignments),
+        )
+        .unwrap();
+
+    assert_eq!(destroyed_creatures.len(), 2);
+    assert!(destroyed_creatures.iter().all(|event: &CreatureDied| {
+        event.player_id == PlayerId::new("player-2")
+            && (event.card_id == left_blocker_id || event.card_id == right_blocker_id)
+    }));
+    assert_eq!(game.players()[1].battlefield().cards().len(), 0);
+    assert_eq!(game.players()[1].graveyard().cards().len(), 2);
 }
 
 #[test]

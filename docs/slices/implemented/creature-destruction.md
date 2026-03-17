@@ -12,11 +12,11 @@ Destroy creatures automatically when they have lethal damage marked on them, mov
 
 ## Why This Slice Exists Now
 
-This slice is the next sensible step after `CombatDamage` because:
+This slice follows `CombatDamage` because:
 
 1. combat already marks damage on creatures
 2. the runtime already tracks toughness and graveyard zones
-3. combat still lacks lasting battlefield consequences
+3. combat still needs lasting battlefield consequences
 4. the behavior is observable, narrow, and semantically important
 
 ---
@@ -26,7 +26,7 @@ This slice is the next sensible step after `CombatDamage` because:
 - check creatures on the battlefield after combat damage resolution
 - destroy creatures whose marked damage is greater than or equal to toughness
 - move destroyed creatures from battlefield to graveyard
-- emit `CreatureDestroyed` once per destroyed creature
+- emit `CreatureDied` once per creature that dies
 - keep creatures with nonlethal damage on the battlefield
 
 ---
@@ -63,8 +63,8 @@ This slice is the next sensible step after `CombatDamage` because:
 
 ### Entity / Value Object Impact
 
-- no new entity required
-- existing creature damage and toughness state becomes semantically actionable
+- `CardInstance` exposes lethal-damage semantics
+- `Battlefield` supports removing destroyed permanents cleanly
 
 ### Commands
 
@@ -72,7 +72,7 @@ This slice is the next sensible step after `CombatDamage` because:
 
 ### Events
 
-- add `CreatureDestroyed`
+- add `CreatureDied`
 
 ### Errors
 
@@ -107,7 +107,7 @@ This behavior belongs to the `Game` aggregate because it:
 - destroys a creature with lethal marked damage
 - keeps a creature with nonlethal marked damage alive
 - moves destroyed creatures to graveyard
-- emits `CreatureDestroyed` for each destroyed creature
+- emits `CreatureDied` for each creature that dies
 - does not require a separate player command
 
 ---
@@ -121,4 +121,4 @@ This behavior belongs to the `Game` aggregate because it:
 
 ## Rules Support Statement
 
-This slice introduces a narrow automatic destruction rule for creatures with lethal damage already marked on them. It does not implement a general state-based action system, and it does not model regeneration, indestructible, or other rule modifications to destruction.
+This slice introduces a narrow automatic destruction rule for creatures with lethal damage already marked on them after combat damage resolution. It does not implement a general state-based action system, and it does not model regeneration, indestructible, or other rule modifications to destruction.
