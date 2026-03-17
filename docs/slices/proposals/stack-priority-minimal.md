@@ -116,7 +116,7 @@ src/domain/play/game/
 
 This proposal is for a minimal two-player stack and priority model. It aims to make spell casting and resolution semantically real without attempting full Magic timing support in one iteration.
 
-The first landed implementation keeps two explicit temporary limits:
+The current landed implementation keeps two explicit temporary limits:
 
-- only the active player may cast spells
-- opponents may pass priority but cannot yet cast response spells
+- response spells are currently limited to instants
+- priority windows are currently opened by spell casting, not yet by the broader turn-flow engine

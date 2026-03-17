@@ -160,10 +160,39 @@ pub fn advance_to_player_first_main_satisfying_cleanup(
 }
 
 pub fn advance_turn_raw(service: &TestService, game: &mut Game) {
+    close_empty_priority_window(service, game);
+
     let outcome = service
         .advance_turn(game, AdvanceTurnCommand::new())
         .unwrap();
     assert!(matches!(outcome, AdvanceTurnOutcome::Progressed { .. }));
+}
+
+fn close_empty_priority_window(service: &TestService, game: &mut Game) {
+    if !game.has_open_priority_window() {
+        return;
+    }
+
+    assert!(
+        game.stack().is_empty(),
+        "cannot close a priority window while the stack is still non-empty"
+    );
+
+    let first_holder = game.priority().map_or_else(
+        || panic!("priority window should be open"),
+        |p| p.current_holder().clone(),
+    );
+    service
+        .pass_priority(game, PassPriorityCommand::new(first_holder))
+        .unwrap();
+
+    let second_holder = game.priority().map_or_else(
+        || panic!("priority window should remain open after one pass"),
+        |p| p.current_holder().clone(),
+    );
+    service
+        .pass_priority(game, PassPriorityCommand::new(second_holder))
+        .unwrap();
 }
 
 pub fn satisfy_cleanup_discard(service: &TestService, game: &mut Game) {
@@ -234,4 +263,5 @@ pub fn cast_spell_and_resolve(
         )
         .unwrap();
     resolve_top_stack_with_passes(service, game);
+    close_empty_priority_window(service, game);
 }

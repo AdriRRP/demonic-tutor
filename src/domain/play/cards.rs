@@ -33,6 +33,11 @@ impl CardType {
     }
 
     #[must_use]
+    pub const fn is_instant(&self) -> bool {
+        matches!(self, Self::Instant)
+    }
+
+    #[must_use]
     pub const fn is_permanent(&self) -> bool {
         matches!(
             self,

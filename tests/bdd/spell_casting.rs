@@ -37,6 +37,25 @@ fn alice_has_a_creature_card_in_hand_with_valid_power_and_toughness(world: &mut 
     assert_eq!(card.creature_stats(), Some((2, 2)));
 }
 
+#[given("Alice has cast a creature spell and Bob has priority with an instant in hand")]
+fn alice_has_cast_a_creature_spell_and_bob_has_priority_with_an_instant_in_hand(
+    world: &mut GameplayWorld,
+) {
+    world.setup_spell_response_stack();
+    world.ensure_tracked_land_provides_mana();
+    world.cast_tracked_spell("Alice");
+    bob_has_priority(world);
+}
+
+#[given("Alice has cast an instant spell and Bob has priority with a creature card in hand")]
+fn alice_has_cast_an_instant_spell_and_bob_has_priority_with_a_creature_card_in_hand(
+    world: &mut GameplayWorld,
+) {
+    world.setup_invalid_noninstant_response();
+    world.cast_tracked_spell("Alice");
+    bob_has_priority(world);
+}
+
 #[given("Alice has enough mana to pay its cost")]
 fn alice_has_enough_mana_to_pay_its_cost(world: &mut GameplayWorld) {
     world.ensure_tracked_land_provides_mana();
@@ -46,6 +65,16 @@ fn alice_has_enough_mana_to_pay_its_cost(world: &mut GameplayWorld) {
 #[when("Alice casts the creature spell")]
 fn alice_casts_the_creature_spell(world: &mut GameplayWorld) {
     world.cast_tracked_spell("Alice");
+}
+
+#[when("Bob casts the instant response spell")]
+fn bob_casts_the_instant_response_spell(world: &mut GameplayWorld) {
+    world.cast_tracked_response_spell("Bob");
+}
+
+#[when("Bob tries to cast the creature response spell")]
+fn bob_tries_to_cast_the_creature_response_spell(world: &mut GameplayWorld) {
+    world.cast_tracked_response_spell("Bob");
 }
 
 #[when(expr = "{word} passes priority")]
@@ -75,6 +104,46 @@ fn the_spell_is_on_the_stack_under_alices_control(world: &mut GameplayWorld) {
         .expect("stack should contain a spell");
     assert_eq!(event.player_id, GameplayWorld::player_id("Alice"));
     assert_eq!(top.controller_id(), &GameplayWorld::player_id("Alice"));
+}
+
+#[then("Bob's instant is on top of the stack under Bob's control")]
+fn bobs_instant_is_on_top_of_the_stack_under_bobs_control(world: &mut GameplayWorld) {
+    let top = world
+        .game()
+        .stack()
+        .top()
+        .expect("stack should contain a top spell");
+    assert_eq!(top.controller_id(), &GameplayWorld::player_id("Bob"));
+}
+
+#[then("Alice has priority again")]
+fn alice_has_priority_again(world: &mut GameplayWorld) {
+    let priority = world
+        .game()
+        .priority()
+        .expect("priority window should be open");
+    assert_eq!(
+        priority.current_holder(),
+        &GameplayWorld::player_id("Alice")
+    );
+}
+
+#[then("Alice's original spell remains on the stack")]
+fn alices_original_spell_remains_on_the_stack(world: &mut GameplayWorld) {
+    let tracked_card_id = world
+        .tracked_card_id
+        .as_ref()
+        .expect("original tracked card should exist");
+    assert_eq!(world.game().stack().len(), 1);
+    assert_eq!(
+        world
+            .game()
+            .stack()
+            .top()
+            .expect("stack should contain original spell")
+            .source_card_id(),
+        tracked_card_id
+    );
 }
 
 #[then("the spell has not resolved yet")]
@@ -137,6 +206,20 @@ fn the_game_emits_spell_cast_with_outcome(world: &mut GameplayWorld, outcome: St
             SpellCastOutcome::ResolvedToGraveyard
         )
     ));
+}
+
+#[then("the action is rejected because only instant responses are currently supported")]
+fn the_action_is_rejected_because_only_instant_responses_are_currently_supported(
+    world: &mut GameplayWorld,
+) {
+    let error = world
+        .last_error
+        .as_ref()
+        .expect("response cast should be rejected");
+    assert!(
+        error.contains("only supports instant response spells"),
+        "unexpected error: {error}"
+    );
 }
 
 #[given("Alice has a land card in hand")]

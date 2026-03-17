@@ -29,6 +29,7 @@ pub enum GameError {
     PriorityWindowOpen {
         current_holder: PlayerId,
     },
+    OnlyInstantSpellsSupportedAsResponses(CardInstanceId),
     NoPriorityWindow,
     NotPriorityHolder {
         current: PlayerId,
@@ -154,6 +155,10 @@ impl std::fmt::Display for GameError {
             Self::PriorityWindowOpen { current_holder } => write!(
                 f,
                 "a priority window is currently open and waiting on {current_holder}"
+            ),
+            Self::OnlyInstantSpellsSupportedAsResponses(card_id) => write!(
+                f,
+                "current stack timing only supports instant response spells; card {card_id} is not an instant"
             ),
             Self::NoPriorityWindow => write!(f, "no priority window is currently open"),
             Self::NotPriorityHolder { current, requested } => {

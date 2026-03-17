@@ -20,12 +20,13 @@ This is a repository-owned interpretation note, not a copy of the Comprehensive 
 - casting currently puts spell cards onto the stack
 - permanent spells currently resolve from the stack to the battlefield
 - instants and sorceries currently resolve from the stack to the graveyard
+- the priority holder may currently cast an instant spell as a response
 - mana cost must be payable before a spell can be cast
 - creature spells must carry valid power and toughness before entering the battlefield
 
 ## Out of Scope
 
-- non-active-player responses with new spells
+- response spells other than instants
 - targets
 - modes
 - replacement effects

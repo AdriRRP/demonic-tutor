@@ -1,0 +1,36 @@
+# Slice — Respond With Instant Spell
+
+## Goal
+
+Allow the current priority holder to cast an instant spell in response to a spell already on the stack.
+
+## Supported behavior
+
+- when a priority window is open, the current holder may cast an instant spell from hand
+- the response spell is put on top of the stack
+- priority then passes to the other player
+- two consecutive passes resolve the top stack object first
+- after the top resolves and the game is still active, priority reopens for the active player
+
+## Explicit limits
+
+- response spells are currently limited to `CardType::Instant`
+- non-instant response spells are rejected
+- priority windows are still opened only by spell casting, not by general turn flow
+- targets, modes, activated abilities, and triggered abilities remain out of scope
+
+## Domain changes
+
+- `Game::cast_spell()` now allows instant responses from the current priority holder
+- `Game::pass_priority()` reopens priority for the active player after top-of-stack resolution when the game remains active
+- `GameError::OnlyInstantSpellsSupportedAsResponses` documents the current temporary timing limit
+
+## Rules support statement
+
+This slice extends the minimal stack model with real spell responses. The current priority holder may respond with an instant spell, that response becomes the new top object on the stack, and the stack continues to resolve in LIFO order through consecutive passes. Broader response timing is still intentionally unsupported.
+
+## Tests
+
+- the opponent may cast an instant response while holding priority
+- a response spell resolves before the original spell beneath it
+- non-instant response spells are rejected explicitly

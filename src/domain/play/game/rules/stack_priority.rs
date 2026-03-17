@@ -80,6 +80,45 @@ fn require_priority_holder(
     Ok(())
 }
 
+fn require_cast_timing(
+    active_player: &PlayerId,
+    phase: Phase,
+    stack: &StackZone,
+    priority: Option<&PriorityState>,
+    player_id: &PlayerId,
+    card_id: &crate::domain::play::ids::CardInstanceId,
+    card_type: &CardType,
+) -> Result<(), DomainError> {
+    if let Some(priority) = priority {
+        require_priority_holder(Some(priority), player_id)?;
+
+        let stack_is_empty = stack.is_empty();
+        let active_player_in_main =
+            player_id == active_player && matches!(phase, Phase::FirstMain | Phase::SecondMain);
+        if stack_is_empty && active_player_in_main {
+            return Ok(());
+        }
+
+        if card_type.is_instant() {
+            return Ok(());
+        }
+
+        return Err(DomainError::Game(
+            GameError::OnlyInstantSpellsSupportedAsResponses(card_id.clone()),
+        ));
+    }
+
+    invariants::require_active_player(active_player, player_id)?;
+
+    if !matches!(phase, Phase::FirstMain | Phase::SecondMain) {
+        return Err(DomainError::Phase(PhaseError::InvalidForPlayingCard {
+            phase,
+        }));
+    }
+
+    Ok(())
+}
+
 fn resolve_spell_from_stack(
     game_id: &GameId,
     players: &mut [Player],
@@ -168,24 +207,22 @@ pub fn cast_spell(
 
     let CastSpellCommand { player_id, card_id } = cmd;
 
-    invariants::require_active_player(active_player, &player_id)?;
-
-    if !matches!(phase, Phase::FirstMain | Phase::SecondMain) {
-        return Err(DomainError::Phase(PhaseError::InvalidForPlayingCard {
-            phase: *phase,
-        }));
-    }
-
-    if priority.is_some() {
-        require_priority_holder(priority.as_ref(), &player_id)?;
-    }
-
     let player = invariants::find_player_mut(players, &player_id)?;
     let card_type = invariants::hand_card_type(player, &player_id, &card_id)?;
 
     if card_type.is_land() {
         return Err(DomainError::Card(CardError::CannotCastLand(card_id)));
     }
+
+    require_cast_timing(
+        active_player,
+        *phase,
+        stack,
+        priority.as_ref(),
+        &player_id,
+        &card_id,
+        &card_type,
+    )?;
 
     let hand_card = invariants::hand_card(player, &player_id, &card_id)?;
     if matches!(card_type, CardType::Creature) && hand_card.creature_stats().is_none() {
@@ -246,6 +283,7 @@ pub fn pass_priority(
     let StackPriorityContext {
         game_id,
         players,
+        active_player,
         stack,
         priority,
         terminal_state,
@@ -294,7 +332,11 @@ pub fn pass_priority(
     let (stack_top_resolved, spell_cast, creatures_died, game_ended) =
         resolve_spell_from_stack(game_id, players, terminal_state, &stack_object)?;
 
-    *priority = None;
+    if terminal_state.is_over() {
+        *priority = None;
+    } else {
+        *priority = Some(PriorityState::new(active_player.clone()));
+    }
 
     Ok(PassPriorityOutcome {
         priority_passed,
@@ -302,6 +344,6 @@ pub fn pass_priority(
         spell_cast: Some(spell_cast),
         creatures_died,
         game_ended,
-        priority_still_open: false,
+        priority_still_open: priority.is_some(),
     })
 }

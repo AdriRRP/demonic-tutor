@@ -190,7 +190,7 @@ The current model intentionally omits:
 - rules text
 - triggered abilities
 - counters
-- non-active-player spell responses while they hold priority
+- non-instant spell responses while a priority window is open
 
 These may be introduced incrementally in future slices.
 

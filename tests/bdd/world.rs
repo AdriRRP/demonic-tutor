@@ -29,6 +29,7 @@ pub struct GameplayWorld {
     pub pre_advance_hand_size: Option<usize>,
     pub post_advance_hand_size: Option<usize>,
     pub tracked_card_id: Option<CardInstanceId>,
+    pub tracked_response_card_id: Option<CardInstanceId>,
     pub tracked_attacker_id: Option<CardInstanceId>,
     pub tracked_blocker_id: Option<CardInstanceId>,
     pub blocker_assignments: Vec<(CardInstanceId, CardInstanceId)>,
@@ -155,6 +156,7 @@ impl GameplayWorld {
 
     pub fn reset_tracking(&mut self) {
         self.tracked_card_id = None;
+        self.tracked_response_card_id = None;
         self.tracked_attacker_id = None;
         self.tracked_blocker_id = None;
         self.blocker_assignments.clear();
@@ -342,6 +344,57 @@ impl GameplayWorld {
         );
         self.tracked_card_id = Some(self.hand_card_by_definition("Alice", "bdd-grizzly-bears"));
         self.tracked_blocker_id = Some(self.hand_card_by_definition("Alice", "bdd-forest"));
+    }
+
+    pub fn setup_spell_response_stack(&mut self) {
+        self.reset_game_with_libraries(
+            "bdd-spell-response",
+            support::filled_library(
+                vec![
+                    LibraryCard::creature(CardDefinitionId::new("bdd-primary-creature"), 1, 2, 2),
+                    support::land_card("bdd-forest"),
+                ],
+                10,
+            ),
+            support::filled_library(vec![support::instant_card("bdd-response-instant", 0)], 10),
+        );
+
+        let service = support::create_service();
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-1",
+        );
+        self.tracked_card_id = Some(self.hand_card_by_definition("Alice", "bdd-primary-creature"));
+        self.tracked_blocker_id = Some(self.hand_card_by_definition("Alice", "bdd-forest"));
+        self.tracked_response_card_id =
+            Some(self.hand_card_by_definition("Bob", "bdd-response-instant"));
+    }
+
+    pub fn setup_invalid_noninstant_response(&mut self) {
+        self.reset_game_with_libraries(
+            "bdd-invalid-response",
+            support::filled_library(vec![support::instant_card("bdd-primary-instant", 0)], 10),
+            support::filled_library(
+                vec![LibraryCard::creature(
+                    CardDefinitionId::new("bdd-response-creature"),
+                    0,
+                    2,
+                    2,
+                )],
+                10,
+            ),
+        );
+
+        let service = support::create_service();
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-1",
+        );
+        self.tracked_card_id = Some(self.hand_card_by_definition("Alice", "bdd-primary-instant"));
+        self.tracked_response_card_id =
+            Some(self.hand_card_by_definition("Bob", "bdd-response-creature"));
     }
 
     pub fn setup_cast_zero_toughness_creature_spell(&mut self) {
@@ -774,6 +827,30 @@ impl GameplayWorld {
                 self.last_stack_top_resolved = None;
                 self.last_creature_died.clear();
                 self.last_error = Some(error.to_string());
+            }
+        }
+    }
+
+    pub fn cast_tracked_response_spell(&mut self, alias: &str) {
+        let service = support::create_service();
+        let card_id = self
+            .tracked_response_card_id
+            .clone()
+            .expect("tracked response spell card should exist");
+
+        match service.cast_spell(
+            self.game_mut(),
+            CastSpellCommand::new(Self::player_id(alias), card_id),
+        ) {
+            Ok(outcome) => {
+                self.last_spell_put_on_stack = Some(outcome.spell_put_on_stack);
+                self.last_spell_cast = None;
+                self.last_error = None;
+            }
+            Err(error) => {
+                self.last_error = Some(error.to_string());
+                self.last_spell_put_on_stack = None;
+                self.last_spell_cast = None;
             }
         }
     }

@@ -8,8 +8,8 @@ use crate::support::{
 use demonictutor::{
     domain::play::game::{Player, TerminalState},
     CardDefinitionId, CardError, CardInstance, CardInstanceId, CardType, CastSpellCommand, DeckId,
-    DomainError, Game, GameId, LibraryCard, Phase, PlayLandCommand, PlayerId, SpellCastOutcome,
-    TapLandCommand,
+    DomainError, Game, GameError, GameId, LibraryCard, Phase, PlayLandCommand, PlayerId,
+    SpellCastOutcome, TapLandCommand,
 };
 
 fn resolve_current_stack(
@@ -93,6 +93,119 @@ fn passing_priority_twice_resolves_an_instant_from_stack_to_graveyard() {
     assert!(outcome.creatures_died.is_empty());
     assert_eq!(game.stack().len(), 0);
     assert_eq!(game.players()[0].graveyard().cards().len(), 1);
+    assert_eq!(
+        game.priority().unwrap().current_holder(),
+        &PlayerId::new("player-1")
+    );
+}
+
+#[test]
+fn opponent_can_cast_an_instant_response_while_holding_priority() {
+    let (service, mut game) = setup_two_player_game(
+        "game-respond-instant",
+        filled_library(
+            vec![vanilla_creature("grizzly-bears"), land_card("forest")],
+            10,
+        ),
+        filled_library(vec![instant_card("shock", 0)], 10),
+    );
+
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
+
+    let alice_land = CardInstanceId::new("game-respond-instant-player-1-1");
+    service
+        .play_land(
+            &mut game,
+            PlayLandCommand::new(PlayerId::new("player-1"), alice_land.clone()),
+        )
+        .unwrap();
+    service
+        .tap_land(
+            &mut game,
+            TapLandCommand::new(PlayerId::new("player-1"), alice_land),
+        )
+        .unwrap();
+
+    let alice_spell = CardInstanceId::new("game-respond-instant-player-1-0");
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), alice_spell.clone()),
+        )
+        .unwrap();
+
+    let bob_spell = CardInstanceId::new("game-respond-instant-player-2-0");
+    let response = service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-2"), bob_spell.clone()),
+        )
+        .unwrap();
+
+    assert_eq!(response.spell_put_on_stack.card_id, bob_spell);
+    assert_eq!(game.stack().len(), 2);
+    assert_eq!(
+        game.stack().top().unwrap().controller_id(),
+        &PlayerId::new("player-2")
+    );
+    assert_eq!(
+        game.priority().unwrap().current_holder(),
+        &PlayerId::new("player-1")
+    );
+
+    let response_resolution = resolve_current_stack(&service, &mut game);
+    let response_spell_cast = response_resolution.spell_cast.unwrap();
+    assert_eq!(
+        response_spell_cast.card_id,
+        CardInstanceId::new("game-respond-instant-player-2-0")
+    );
+    assert_eq!(game.stack().len(), 1);
+    assert_eq!(game.stack().top().unwrap().source_card_id(), &alice_spell);
+    assert_eq!(
+        game.priority().unwrap().current_holder(),
+        &PlayerId::new("player-1")
+    );
+
+    let original_resolution = resolve_current_stack(&service, &mut game);
+    let original_spell_cast = original_resolution.spell_cast.unwrap();
+    assert_eq!(original_spell_cast.card_id, alice_spell);
+    assert_eq!(game.stack().len(), 0);
+}
+
+#[test]
+fn opponent_cannot_cast_a_creature_as_a_response() {
+    let (service, mut game) = setup_two_player_game(
+        "game-respond-creature",
+        filled_library(vec![instant_card("giant-growth", 0)], 10),
+        filled_library(vec![vanilla_creature("grizzly-bears")], 10),
+    );
+
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
+
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(
+                PlayerId::new("player-1"),
+                CardInstanceId::new("game-respond-creature-player-1-0"),
+            ),
+        )
+        .unwrap();
+
+    let result = service.cast_spell(
+        &mut game,
+        CastSpellCommand::new(
+            PlayerId::new("player-2"),
+            CardInstanceId::new("game-respond-creature-player-2-0"),
+        ),
+    );
+
+    assert!(matches!(
+        result,
+        Err(DomainError::Game(GameError::OnlyInstantSpellsSupportedAsResponses(card_id)))
+            if card_id == CardInstanceId::new("game-respond-creature-player-2-0")
+    ));
+    assert_eq!(game.stack().len(), 1);
 }
 
 #[test]

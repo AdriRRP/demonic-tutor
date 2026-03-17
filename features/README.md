@@ -20,6 +20,7 @@ Some features may also be executable through `cucumber-rs`.
 Current executable feature coverage:
 
 - `features/stack/stack_foundation.feature`
+- `features/stack/respond_with_instant_spell.feature`
 - `features/turn-flow/turn_progression.feature`
 - `features/turn-flow/draw_multiple_cards.feature`
 - `features/spells/cast_creature_spell.feature`

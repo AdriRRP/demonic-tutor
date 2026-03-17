@@ -31,6 +31,7 @@ use world::GameplayWorld;
 #[tokio::main]
 async fn main() {
     GameplayWorld::run("features/stack/stack_foundation.feature").await;
+    GameplayWorld::run("features/stack/respond_with_instant_spell.feature").await;
     GameplayWorld::run("features/turn-flow/lose_on_empty_draw.feature").await;
     GameplayWorld::run("features/turn-flow/turn_progression.feature").await;
     GameplayWorld::run("features/turn-flow/draw_multiple_cards.feature").await;

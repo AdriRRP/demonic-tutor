@@ -76,6 +76,7 @@ The domain currently includes:
 - terminal game state when a player loses by empty-library draw or zero life
 - casting spells onto an aggregate-owned stack zone
 - public priority passing for the currently open minimal stack windows
+- instant-speed spell responses for the current priority holder
 - resolving the top stack object after two consecutive passes
 
 The system intentionally excludes complex gameplay mechanics at this stage.
@@ -93,7 +94,7 @@ Current constraints include:
 - matches support exactly two players
 - opening hand size is fixed to 7 cards
 - only a subset of zones are modeled (no exile)
-- only the active player may cast spells in the current minimal stack model
+- spell responses during open priority windows are currently limited to instants
 - priority windows are currently opened by spell casting, not yet by general turn-flow windows
 - when a priority window is open, other gameplay actions are rejected until the window closes
 - no triggered abilities
@@ -138,7 +139,7 @@ The project currently includes:
 - projections derived from gameplay events
 - State pattern for phase transitions
 - helper methods for event persistence and publishing
-- a Gherkin acceptance layer, with executable coverage for stack foundation, turn progression, explicit multi-card draw effects, spell casting through the stack, combat damage, creature destruction, cleanup damage removal, cleanup hand-size discard, empty-library draw loss, and zero-life loss via `cucumber-rs`
+- a Gherkin acceptance layer, with executable coverage for stack foundation, stack-based spell responses, turn progression, explicit multi-card draw effects, spell casting through the stack, combat damage, creature destruction, cleanup damage removal, cleanup hand-size discard, empty-library draw loss, and zero-life loss via `cucumber-rs`
 
 This architecture supports:
 
