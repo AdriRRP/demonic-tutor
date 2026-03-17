@@ -102,6 +102,7 @@ The domain currently includes:
 - the active player may cast and resolve an instant after attackers are declared
 - the non-active player may cast and resolve an instant after attackers are declared once the active player passes
 - the active player may cast and resolve an instant after blockers are declared
+- the non-active player may cast and resolve an instant after blockers are declared once the active player passes
 - combat damage resolution reopens priority for the active player while the game remains active
 - the active player may cast and resolve an instant after combat damage resolves
 
