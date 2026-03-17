@@ -41,6 +41,7 @@ async fn main() {
     GameplayWorld::run("features/stack/respond_in_beginning_of_combat_window.feature").await;
     GameplayWorld::run("features/stack/respond_after_attackers.feature").await;
     GameplayWorld::run("features/stack/respond_after_blockers.feature").await;
+    GameplayWorld::run("features/stack/respond_after_combat_damage.feature").await;
     GameplayWorld::run("features/stack/cast_instant_in_upkeep_window.feature").await;
     GameplayWorld::run("features/stack/cast_instant_in_draw_window.feature").await;
     GameplayWorld::run("features/stack/cast_instant_in_second_main_window.feature").await;
