@@ -78,7 +78,7 @@ pub fn play_land(
     })?;
 
     player.battlefield_mut().add(card);
-    *player.lands_played_this_turn_mut() += 1;
+    player.record_land_played();
 
     Ok(LandPlayed::new(game_id.clone(), cmd.player_id, card_id))
 }

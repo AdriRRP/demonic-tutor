@@ -236,7 +236,7 @@ pub fn resolve_combat_damage(
 
         if blocking_for_attacker.is_empty() {
             let player = &mut players[defender_idx];
-            *player.life_mut() = player.life().saturating_sub(*power);
+            player.lose_life(*power);
             damage_events.push(DamageEvent {
                 source: attacker_id.clone(),
                 target: DamageTarget::Player(defender_player_id.clone()),

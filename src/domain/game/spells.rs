@@ -72,7 +72,7 @@ pub fn cast_spell(
     })?;
 
     let mana_cost = card.mana_cost();
-    if player.mana() < mana_cost {
+    if !player.spend_mana(mana_cost) {
         return Err(DomainError::Game(GameError::InsufficientMana {
             player: cmd.player_id,
             required: mana_cost,
@@ -80,7 +80,6 @@ pub fn cast_spell(
         }));
     }
 
-    *player.mana_mut() -= mana_cost;
     player.battlefield_mut().add(card);
 
     Ok(SpellCast::new(game_id.clone(), cmd.player_id, card_id))

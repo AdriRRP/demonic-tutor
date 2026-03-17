@@ -2,6 +2,7 @@ use crate::domain::ids::{DeckId, PlayerId};
 use crate::domain::zones::{Battlefield, Hand, Library};
 
 const DEFAULT_STARTING_LIFE: u32 = 20;
+pub const OPENING_HAND_SIZE: usize = 7;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Player {
@@ -16,6 +17,7 @@ pub struct Player {
     mulligan_used: bool,
 }
 
+#[allow(clippy::missing_const_for_fn)]
 impl Player {
     #[must_use]
     pub const fn new(id: PlayerId, deck_id: DeckId) -> Self {
@@ -47,9 +49,17 @@ impl Player {
         &self.hand
     }
 
+    pub fn hand_mut(&mut self) -> &mut Hand {
+        &mut self.hand
+    }
+
     #[must_use]
     pub const fn library(&self) -> &Library {
         &self.library
+    }
+
+    pub fn library_mut(&mut self) -> &mut Library {
+        &mut self.library
     }
 
     #[must_use]
@@ -57,13 +67,13 @@ impl Player {
         &self.battlefield
     }
 
+    pub fn battlefield_mut(&mut self) -> &mut Battlefield {
+        &mut self.battlefield
+    }
+
     #[must_use]
     pub const fn life(&self) -> u32 {
         self.life
-    }
-
-    pub const fn life_mut(&mut self) -> &mut u32 {
-        &mut self.life
     }
 
     #[must_use]
@@ -71,29 +81,9 @@ impl Player {
         self.mana
     }
 
-    pub const fn mana_mut(&mut self) -> &mut u32 {
-        &mut self.mana
-    }
-
     #[must_use]
     pub const fn lands_played_this_turn(&self) -> usize {
         self.lands_played_this_turn
-    }
-
-    pub const fn library_mut(&mut self) -> &mut Library {
-        &mut self.library
-    }
-
-    pub const fn hand_mut(&mut self) -> &mut Hand {
-        &mut self.hand
-    }
-
-    pub const fn battlefield_mut(&mut self) -> &mut Battlefield {
-        &mut self.battlefield
-    }
-
-    pub const fn lands_played_this_turn_mut(&mut self) -> &mut usize {
-        &mut self.lands_played_this_turn
     }
 
     #[must_use]
@@ -101,7 +91,48 @@ impl Player {
         self.mulligan_used
     }
 
-    pub const fn mulligan_used_mut(&mut self) -> &mut bool {
-        &mut self.mulligan_used
+    pub fn set_life(&mut self, new_life: u32) {
+        self.life = new_life;
+    }
+
+    pub fn change_life(&mut self, delta: i32) {
+        self.life = self.life.saturating_add(delta.unsigned_abs());
+    }
+
+    pub fn gain_life(&mut self, amount: u32) {
+        self.life = self.life.saturating_add(amount);
+    }
+
+    pub fn lose_life(&mut self, amount: u32) {
+        self.life = self.life.saturating_sub(amount);
+    }
+
+    pub fn add_mana(&mut self, amount: u32) {
+        self.mana = self.mana.saturating_add(amount);
+    }
+
+    pub fn spend_mana(&mut self, amount: u32) -> bool {
+        if self.mana >= amount {
+            self.mana -= amount;
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn record_land_played(&mut self) {
+        self.lands_played_this_turn += 1;
+    }
+
+    pub fn reset_lands_played(&mut self) {
+        self.lands_played_this_turn = 0;
+    }
+
+    pub fn use_mulligan(&mut self) {
+        self.mulligan_used = true;
+    }
+
+    pub fn reset_mulligan(&mut self) {
+        self.mulligan_used = false;
     }
 }

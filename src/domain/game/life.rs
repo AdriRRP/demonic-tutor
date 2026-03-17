@@ -23,12 +23,12 @@ pub fn set_life(
 
     let old_life = player.life();
     let change = cmd.life_change;
-    let new_life = if change >= 0 {
-        old_life.saturating_add(change.unsigned_abs())
+    if change >= 0 {
+        player.gain_life(change.unsigned_abs());
     } else {
-        old_life.saturating_sub(change.unsigned_abs())
-    };
-    *player.life_mut() = new_life;
+        player.lose_life(change.unsigned_abs());
+    }
+    let new_life = player.life();
 
     Ok(LifeChanged::new(
         game_id.clone(),

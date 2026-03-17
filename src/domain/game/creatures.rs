@@ -61,15 +61,13 @@ pub fn play_creature(
     let toughness = card.toughness().unwrap_or(0);
 
     let mana_cost = card.mana_cost();
-    if player.mana() < mana_cost {
+    if !player.spend_mana(mana_cost) {
         return Err(DomainError::Game(GameError::InsufficientMana {
             player: cmd.player_id,
             required: mana_cost,
             available: player.mana(),
         }));
     }
-
-    *player.mana_mut() -= mana_cost;
 
     player.battlefield_mut().add(card);
 

@@ -78,7 +78,6 @@ impl PhaseBehavior for UntapPhase {
         players: &mut [Player],
         _active_player: &PlayerId,
     ) -> Result<(), DomainError> {
-        // Untap all permanents, remove summoning sickness, and reset lands played for all players
         for player in players.iter_mut() {
             player
                 .battlefield_mut()
@@ -88,7 +87,7 @@ impl PhaseBehavior for UntapPhase {
                     card.untap();
                     card.remove_summoning_sickness();
                 });
-            *player.lands_played_this_turn_mut() = 0;
+            player.reset_lands_played();
         }
 
         Ok(())

@@ -1,4 +1,4 @@
-use super::player::Player;
+use super::player::{Player, OPENING_HAND_SIZE};
 use crate::domain::{
     cards::CardInstance,
     commands::DealOpeningHandsCommand,
@@ -18,8 +18,6 @@ pub fn deal_opening_hands(
     cmd: &DealOpeningHandsCommand,
     game_id: &super::GameId,
 ) -> Result<Vec<OpeningHandDealt>, DomainError> {
-    let hand_size = 7;
-
     for pc in &cmd.player_cards {
         let player_exists = players.iter().any(|p| p.id() == &pc.player_id);
         if !player_exists {
@@ -30,11 +28,11 @@ pub fn deal_opening_hands(
     }
 
     for pc in &cmd.player_cards {
-        if pc.cards.len() < hand_size {
+        if pc.cards.len() < OPENING_HAND_SIZE {
             return Err(DomainError::Game(GameError::NotEnoughCardsInLibrary {
                 player: pc.player_id.clone(),
                 available: pc.cards.len(),
-                requested: hand_size,
+                requested: OPENING_HAND_SIZE,
             }));
         }
     }
@@ -82,13 +80,16 @@ pub fn deal_opening_hands(
 
         player.library_mut().receive(cards);
 
-        let drawn_cards = player.library_mut().draw(hand_size).ok_or_else(|| {
-            DomainError::Game(GameError::NotEnoughCardsInLibrary {
-                player: pc.player_id.clone(),
-                available: player.library().len(),
-                requested: hand_size,
-            })
-        })?;
+        let drawn_cards = player
+            .library_mut()
+            .draw(OPENING_HAND_SIZE)
+            .ok_or_else(|| {
+                DomainError::Game(GameError::NotEnoughCardsInLibrary {
+                    player: pc.player_id.clone(),
+                    available: player.library().len(),
+                    requested: OPENING_HAND_SIZE,
+                })
+            })?;
 
         player.hand_mut().receive(drawn_cards);
 

@@ -1,4 +1,4 @@
-use super::player::Player;
+use super::player::{Player, OPENING_HAND_SIZE};
 use super::Phase;
 use crate::domain::{
     commands::MulliganCommand,
@@ -38,12 +38,11 @@ pub fn mulligan(
         )));
     }
 
-    let hand_size = 7;
-    if player.library().len() < hand_size {
+    if player.library().len() < OPENING_HAND_SIZE {
         return Err(DomainError::Game(GameError::NotEnoughCardsInLibrary {
             player: cmd.player_id,
             available: player.library().len(),
-            requested: hand_size,
+            requested: OPENING_HAND_SIZE,
         }));
     }
 
@@ -51,16 +50,19 @@ pub fn mulligan(
     player.library_mut().receive(hand_cards);
     player.library_mut().shuffle();
 
-    let drawn_cards = player.library_mut().draw(hand_size).ok_or_else(|| {
-        DomainError::Game(GameError::NotEnoughCardsInLibrary {
-            player: cmd.player_id.clone(),
-            available: player.library().len(),
-            requested: hand_size,
-        })
-    })?;
+    let drawn_cards = player
+        .library_mut()
+        .draw(OPENING_HAND_SIZE)
+        .ok_or_else(|| {
+            DomainError::Game(GameError::NotEnoughCardsInLibrary {
+                player: cmd.player_id.clone(),
+                available: player.library().len(),
+                requested: OPENING_HAND_SIZE,
+            })
+        })?;
 
     player.hand_mut().receive(drawn_cards);
-    *player.mulligan_used_mut() = true;
+    player.use_mulligan();
 
     Ok(MulliganTaken::new(game_id.clone(), cmd.player_id))
 }

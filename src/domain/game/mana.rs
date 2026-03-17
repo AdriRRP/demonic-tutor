@@ -52,7 +52,7 @@ pub fn tap_land(
 
     card.tap();
 
-    *player.mana_mut() += 1;
+    player.add_mana(1);
     let new_mana = player.mana();
 
     Ok((
