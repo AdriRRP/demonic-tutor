@@ -30,6 +30,7 @@ Current executable feature coverage:
 - `features/stack/respond_after_attackers.feature`
 - `features/stack/respond_after_blockers.feature`
 - `features/stack/respond_after_combat_damage.feature`
+- `features/stack/respond_with_second_instant_spell.feature`
 - `features/stack/cast_instant_in_upkeep_window.feature`
 - `features/stack/cast_second_instant_in_upkeep_window.feature`
 - `features/stack/cast_instant_in_draw_window.feature`
@@ -76,7 +77,6 @@ Implemented reference features that are not currently executed:
 
 Proposed feature backlog currently staged for future slices:
 
-- `features/stack/respond_with_second_instant_spell.feature`
 - `features/stack/respond_with_second_instant_in_upkeep_window.feature`
 - `features/stack/respond_with_second_instant_in_draw_window.feature`
 - `features/stack/respond_with_second_instant_in_first_main_window.feature`

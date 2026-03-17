@@ -82,6 +82,7 @@ The domain currently includes:
 - casting spells onto an aggregate-owned stack zone
 - public priority passing for the currently open minimal stack windows
 - the casting player retains priority immediately after a spell is put on the stack
+- the responding player may cast a second instant while retaining priority on an existing stack
 - entering `Upkeep` opens an empty priority window for the active player
 - the active player may cast and resolve an instant during that upkeep priority window
 - the active player may cast a second instant in `Upkeep` before passing priority after the first

@@ -30,6 +30,7 @@ pub struct GameplayWorld {
     pub post_advance_hand_size: Option<usize>,
     pub tracked_card_id: Option<CardInstanceId>,
     pub tracked_response_card_id: Option<CardInstanceId>,
+    pub tracked_second_response_card_id: Option<CardInstanceId>,
     pub tracked_attacker_id: Option<CardInstanceId>,
     pub tracked_blocker_id: Option<CardInstanceId>,
     pub blocker_assignments: Vec<(CardInstanceId, CardInstanceId)>,
@@ -160,6 +161,7 @@ impl GameplayWorld {
     pub fn reset_tracking(&mut self) {
         self.tracked_card_id = None;
         self.tracked_response_card_id = None;
+        self.tracked_second_response_card_id = None;
         self.tracked_attacker_id = None;
         self.tracked_blocker_id = None;
         self.blocker_assignments.clear();
@@ -374,6 +376,60 @@ impl GameplayWorld {
             Some(self.hand_card_by_definition("Bob", "bdd-response-instant"));
     }
 
+    pub fn setup_spell_response_stack_with_two_instants(&mut self) {
+        self.reset_game_with_libraries(
+            "bdd-spell-response-two-instants",
+            support::filled_library(
+                vec![
+                    LibraryCard::creature(CardDefinitionId::new("bdd-primary-creature"), 1, 2, 2),
+                    support::land_card("bdd-forest"),
+                ],
+                10,
+            ),
+            support::filled_library(
+                vec![
+                    support::instant_card("bdd-response-instant-a", 0),
+                    support::instant_card("bdd-response-instant-b", 0),
+                ],
+                10,
+            ),
+        );
+
+        let service = support::create_service();
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-1",
+        );
+
+        let original_spell = self.hand_card_by_definition("Alice", "bdd-primary-creature");
+        self.tracked_card_id = Some(original_spell.clone());
+        self.tracked_blocker_id = Some(self.hand_card_by_definition("Alice", "bdd-forest"));
+        self.tracked_response_card_id =
+            Some(self.hand_card_by_definition("Bob", "bdd-response-instant-a"));
+        self.tracked_second_response_card_id =
+            Some(self.hand_card_by_definition("Bob", "bdd-response-instant-b"));
+
+        self.ensure_tracked_land_provides_mana();
+        let outcome = service
+            .cast_spell(
+                self.game_mut(),
+                CastSpellCommand::new(Self::player_id("Alice"), original_spell),
+            )
+            .expect("primary spell cast should succeed");
+        self.last_spell_put_on_stack = Some(outcome.spell_put_on_stack);
+        self.pass_priority("Alice");
+        self.reset_observations();
+        assert_eq!(
+            self.game()
+                .priority()
+                .expect("response window should be open")
+                .current_holder(),
+            &Self::player_id("Bob")
+        );
+        assert_eq!(self.game().stack().len(), 1);
+    }
+
     pub fn setup_invalid_noninstant_response(&mut self) {
         self.reset_game_with_libraries(
             "bdd-invalid-response",
@@ -532,6 +588,69 @@ impl GameplayWorld {
 
         self.tracked_response_card_id =
             Some(self.hand_card_by_definition("Bob", "bdd-window-instant"));
+        self.pass_priority("Alice");
+        self.reset_observations();
+        assert_eq!(self.game().phase(), &phase);
+        assert_eq!(
+            self.game()
+                .priority()
+                .expect("target phase should have an open priority window")
+                .current_holder(),
+            &Self::player_id("Bob")
+        );
+        assert!(self.game().stack().is_empty());
+    }
+
+    pub fn setup_non_active_priority_window_with_two_instants(
+        &mut self,
+        game_id: &str,
+        phase: Phase,
+    ) {
+        self.reset_game_with_libraries(
+            game_id,
+            support::filled_library(Vec::new(), 10),
+            support::filled_library(
+                vec![
+                    support::instant_card("bdd-window-instant-a", 0),
+                    support::instant_card("bdd-window-instant-b", 0),
+                ],
+                10,
+            ),
+        );
+
+        let service = support::create_service();
+        for _ in 0..64 {
+            while self.game().phase() == &Phase::EndStep && phase != Phase::EndStep {
+                let active_player = self.game().active_player().clone();
+                let hand_size = self
+                    .game()
+                    .players()
+                    .iter()
+                    .find(|player| player.id() == &active_player)
+                    .expect("active player should exist")
+                    .hand()
+                    .cards()
+                    .len();
+                if hand_size <= 7 {
+                    break;
+                }
+                self.satisfy_cleanup_for_setup();
+            }
+
+            if self.game().phase() == &phase
+                && self.game().active_player() == &Self::player_id("Alice")
+                && self.game().turn_number() == 1
+            {
+                break;
+            }
+
+            support::advance_turn_raw(&service, self.game_mut());
+        }
+
+        self.tracked_response_card_id =
+            Some(self.hand_card_by_definition("Bob", "bdd-window-instant-a"));
+        self.tracked_second_response_card_id =
+            Some(self.hand_card_by_definition("Bob", "bdd-window-instant-b"));
         self.pass_priority("Alice");
         self.reset_observations();
         assert_eq!(self.game().phase(), &phase);
@@ -949,6 +1068,70 @@ impl GameplayWorld {
         self.reset_observations();
     }
 
+    pub fn setup_non_active_priority_after_attackers_declared_with_two_instants(&mut self) {
+        let mut bob_cards = support::filled_library(Vec::new(), 7);
+        bob_cards.push(support::instant_card("bdd-window-instant-a", 0));
+        bob_cards.push(support::instant_card("bdd-window-instant-b", 0));
+        self.reset_game_with_libraries(
+            "bdd-combat-priority-attackers-response-two-instants",
+            support::filled_library(
+                vec![LibraryCard::creature(
+                    CardDefinitionId::new("bdd-attacker-priority"),
+                    0,
+                    2,
+                    2,
+                )],
+                10,
+            ),
+            bob_cards,
+        );
+
+        let service = support::create_service();
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-1",
+        );
+        let attacker_id = self.hand_card_by_definition("Alice", "bdd-attacker-priority");
+        service
+            .cast_spell(
+                self.game_mut(),
+                CastSpellCommand::new(Self::player_id("Alice"), attacker_id.clone()),
+            )
+            .expect("attacker cast should succeed");
+        support::resolve_top_stack_with_passes(&service, self.game_mut());
+
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-2",
+        );
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-1",
+        );
+        support::advance_turn_raw(&service, self.game_mut());
+        support::close_empty_priority_window(&service, self.game_mut());
+        service
+            .declare_attackers(
+                self.game_mut(),
+                demonictutor::DeclareAttackersCommand::new(
+                    Self::player_id("Alice"),
+                    vec![attacker_id.clone()],
+                ),
+            )
+            .expect("declare attackers should succeed");
+
+        self.tracked_response_card_id =
+            Some(self.hand_card_by_definition("Bob", "bdd-window-instant-a"));
+        self.tracked_second_response_card_id =
+            Some(self.hand_card_by_definition("Bob", "bdd-window-instant-b"));
+        self.pass_priority("Alice");
+        self.tracked_attacker_id = Some(attacker_id);
+        self.reset_observations();
+    }
+
     pub fn setup_priority_when_entering_combat(&mut self) {
         self.reset_game_with_libraries(
             "bdd-beginning-combat-priority",
@@ -1056,6 +1239,44 @@ impl GameplayWorld {
         );
         self.tracked_response_card_id =
             Some(self.hand_card_by_definition("Bob", "bdd-window-instant"));
+        support::close_empty_priority_window(&service, self.game_mut());
+        support::advance_turn_raw(&service, self.game_mut());
+
+        self.pass_priority("Alice");
+        self.reset_observations();
+        assert_eq!(self.game().phase(), &Phase::Combat);
+        assert_eq!(
+            self.game()
+                .priority()
+                .expect("combat should open priority")
+                .current_holder(),
+            &Self::player_id("Bob")
+        );
+    }
+
+    pub fn setup_non_active_priority_when_entering_combat_with_two_instants(&mut self) {
+        self.reset_game_with_libraries(
+            "bdd-beginning-combat-response-two-instants",
+            support::filled_library(Vec::new(), 10),
+            support::filled_library(
+                vec![
+                    support::instant_card("bdd-window-instant-a", 0),
+                    support::instant_card("bdd-window-instant-b", 0),
+                ],
+                10,
+            ),
+        );
+
+        let service = support::create_service();
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-1",
+        );
+        self.tracked_response_card_id =
+            Some(self.hand_card_by_definition("Bob", "bdd-window-instant-a"));
+        self.tracked_second_response_card_id =
+            Some(self.hand_card_by_definition("Bob", "bdd-window-instant-b"));
         support::close_empty_priority_window(&service, self.game_mut());
         support::advance_turn_raw(&service, self.game_mut());
 
@@ -1454,6 +1675,106 @@ impl GameplayWorld {
         self.reset_observations();
     }
 
+    pub fn setup_non_active_priority_after_blockers_declared_with_two_instants(&mut self) {
+        let mut bob_cards = support::filled_library(
+            vec![LibraryCard::creature(
+                CardDefinitionId::new("bdd-blocker-priority"),
+                0,
+                2,
+                2,
+            )],
+            7,
+        );
+        bob_cards.push(support::instant_card("bdd-window-instant-a", 0));
+        bob_cards.push(support::instant_card("bdd-window-instant-b", 0));
+        self.reset_game_with_libraries(
+            "bdd-combat-priority-blockers-response-two-instants",
+            support::filled_library(
+                vec![LibraryCard::creature(
+                    CardDefinitionId::new("bdd-attacker-priority"),
+                    0,
+                    2,
+                    2,
+                )],
+                10,
+            ),
+            bob_cards,
+        );
+
+        let service = support::create_service();
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-1",
+        );
+        let attacker_id = self.hand_card_by_definition("Alice", "bdd-attacker-priority");
+        service
+            .cast_spell(
+                self.game_mut(),
+                CastSpellCommand::new(Self::player_id("Alice"), attacker_id.clone()),
+            )
+            .expect("attacker cast should succeed");
+        support::resolve_top_stack_with_passes(&service, self.game_mut());
+
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-2",
+        );
+        let blocker_id = self.hand_card_by_definition("Bob", "bdd-blocker-priority");
+        service
+            .cast_spell(
+                self.game_mut(),
+                CastSpellCommand::new(Self::player_id("Bob"), blocker_id.clone()),
+            )
+            .expect("blocker cast should succeed");
+        support::resolve_top_stack_with_passes(&service, self.game_mut());
+
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-1",
+        );
+        support::advance_turn_raw(&service, self.game_mut());
+        support::close_empty_priority_window(&service, self.game_mut());
+        service
+            .declare_attackers(
+                self.game_mut(),
+                demonictutor::DeclareAttackersCommand::new(
+                    Self::player_id("Alice"),
+                    vec![attacker_id.clone()],
+                ),
+            )
+            .expect("declare attackers should succeed");
+        support::close_empty_priority_window(&service, self.game_mut());
+        service
+            .declare_blockers(
+                self.game_mut(),
+                demonictutor::DeclareBlockersCommand::new(
+                    Self::player_id("Bob"),
+                    vec![(blocker_id.clone(), attacker_id.clone())],
+                ),
+            )
+            .expect("declare blockers should succeed");
+
+        self.tracked_response_card_id =
+            Some(self.hand_card_by_definition("Bob", "bdd-window-instant-a"));
+        self.tracked_second_response_card_id =
+            Some(self.hand_card_by_definition("Bob", "bdd-window-instant-b"));
+        self.pass_priority("Alice");
+        self.tracked_attacker_id = Some(attacker_id);
+        self.tracked_blocker_id = Some(blocker_id);
+        self.blocker_assignments = vec![(
+            self.tracked_blocker_id
+                .clone()
+                .expect("blocker should exist"),
+            self.tracked_attacker_id
+                .clone()
+                .expect("attacker should exist"),
+        )];
+        self.reset_observations();
+    }
+
     pub fn setup_blocked_damage_marking(&mut self) {
         self.setup_combat(
             "bdd-blocked-combat",
@@ -1784,6 +2105,85 @@ impl GameplayWorld {
         );
     }
 
+    pub fn setup_non_active_priority_after_combat_damage_with_two_instants(&mut self) {
+        let mut bob_cards = support::filled_library(Vec::new(), 7);
+        bob_cards.push(support::instant_card("bdd-window-instant-a", 0));
+        bob_cards.push(support::instant_card("bdd-window-instant-b", 0));
+        self.reset_game_with_libraries(
+            "bdd-post-combat-damage-response-two-instants",
+            support::filled_library(
+                vec![LibraryCard::creature(
+                    CardDefinitionId::new("bdd-attacker-unblocked"),
+                    0,
+                    3,
+                    3,
+                )],
+                10,
+            ),
+            bob_cards,
+        );
+
+        let service = support::create_service();
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-1",
+        );
+        let attacker_id = self.hand_card_by_definition("Alice", "bdd-attacker-unblocked");
+        service
+            .cast_spell(
+                self.game_mut(),
+                CastSpellCommand::new(Self::player_id("Alice"), attacker_id.clone()),
+            )
+            .expect("attacker cast should succeed");
+        support::resolve_top_stack_with_passes(&service, self.game_mut());
+
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-2",
+        );
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-1",
+        );
+        support::advance_turn_raw(&service, self.game_mut());
+        support::close_empty_priority_window(&service, self.game_mut());
+        service
+            .declare_attackers(
+                self.game_mut(),
+                demonictutor::DeclareAttackersCommand::new(
+                    Self::player_id("Alice"),
+                    vec![attacker_id.clone()],
+                ),
+            )
+            .expect("declare attackers should succeed");
+        support::close_empty_priority_window(&service, self.game_mut());
+        service
+            .resolve_combat_damage(
+                self.game_mut(),
+                ResolveCombatDamageCommand::new(Self::player_id("Alice")),
+            )
+            .expect("combat damage should resolve");
+
+        self.tracked_response_card_id =
+            Some(self.hand_card_by_definition("Bob", "bdd-window-instant-a"));
+        self.tracked_second_response_card_id =
+            Some(self.hand_card_by_definition("Bob", "bdd-window-instant-b"));
+        self.pass_priority("Alice");
+        self.tracked_attacker_id = Some(attacker_id);
+        self.reset_observations();
+        assert_eq!(self.game().phase(), &Phase::Combat);
+        assert_eq!(
+            self.game()
+                .priority()
+                .expect("combat damage should reopen priority")
+                .current_holder(),
+            &Self::player_id("Bob")
+        );
+    }
+
     pub fn setup_unblocked_combat_with_defender_life(&mut self, life: u32) {
         self.setup_unblocked_combat();
         let current_life = self.player_life("Bob");
@@ -1988,6 +2388,30 @@ impl GameplayWorld {
             .tracked_response_card_id
             .clone()
             .expect("tracked response spell card should exist");
+
+        match service.cast_spell(
+            self.game_mut(),
+            CastSpellCommand::new(Self::player_id(alias), card_id),
+        ) {
+            Ok(outcome) => {
+                self.last_spell_put_on_stack = Some(outcome.spell_put_on_stack);
+                self.last_spell_cast = None;
+                self.last_error = None;
+            }
+            Err(error) => {
+                self.last_error = Some(error.to_string());
+                self.last_spell_put_on_stack = None;
+                self.last_spell_cast = None;
+            }
+        }
+    }
+
+    pub fn cast_tracked_second_response_spell(&mut self, alias: &str) {
+        let service = support::create_service();
+        let card_id = self
+            .tracked_second_response_card_id
+            .clone()
+            .expect("tracked second response spell card should exist");
 
         match service.cast_spell(
             self.game_mut(),

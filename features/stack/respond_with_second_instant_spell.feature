@@ -1,6 +1,6 @@
-# status: proposed
+# status: implemented
 # rules: 117, 601, 608
-# slices: stack-response-self-stacking-wave.md
+# slices: respond-with-second-instant-spell.md
 
 Feature: Respond with a second instant while holding priority on an existing stack
 
@@ -11,4 +11,6 @@ Feature: Respond with a second instant while holding priority on an existing sta
     Then the stack contains Alice's original spell below two spells controlled by Bob
     When Bob passes priority
     And Alice passes priority
-    Then the top spell resolves first and Bob's first response remains on the stack
+    Then the game emits StackTopResolved
+    And Bob's original response remains on the stack above Alice's original spell
+    And Alice has priority again
