@@ -32,7 +32,7 @@ This slice follows `DeclareBlockers` because:
   - deal damage equal to power to the attacking creature it blocks
 - mark damage on creatures
 - emit `CombatDamageResolved` event with damage details
-- untap all creatures after combat
+- clear attacking and blocking combat flags after damage resolves
 
 ---
 
@@ -107,7 +107,7 @@ This behavior belongs to the `Game` aggregate because:
 - combat damage is dealt to blocking creatures
 - combat damage is dealt to player when unblocked
 - creatures with damage >= toughness marked appropriately
-- all creatures untap after combat
+- combat participation flags are cleared after damage resolves
 - fails when no attackers declared
 - `CombatDamageResolved` event emitted correctly
 

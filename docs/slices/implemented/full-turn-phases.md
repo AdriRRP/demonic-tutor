@@ -2,7 +2,7 @@
 
 FullTurnPhases
 
-> **Note**: This slice has been superseded by `mulligan-with-setup.md` which adds Setup and Upkeep phases.
+> **Note**: This is a historical slice. Its phase expansion remains part of the current model, but the later `mulligan-with-setup.md` slice extended it with Setup and Upkeep and therefore superseded this document as the live source for turn structure.
 
 ---
 
@@ -14,7 +14,7 @@ Expand the turn model to include all standard Magic phases: Setup, Untap, Upkeep
 
 ## Why This Slice Exists Now
 
-The current simplified model (Setup → Main → Combat → Ending) was too limited. The introduction of `mulligan-with-setup.md` re-introduced the `Setup` and `Upkeep` phases. This slice ensures the full turn structure is accurately reflected.
+The earlier simplified model (Setup → Main → Combat → Ending) was too limited. The introduction of `mulligan-with-setup.md` re-introduced the `Setup` and `Upkeep` phases. This slice records the transition toward the current full turn structure.
 
 1. Combat damage is now implemented, requiring proper phase structure
 2. Draw should happen at start of turn, not as explicit command
@@ -27,7 +27,7 @@ The current simplified model (Setup → Main → Combat → Ending) was too limi
 
 - expand `Phase` enum to: Untap, Draw, FirstMain, Combat, SecondMain, EndStep
 - auto-draw at start of turn (Draw phase) - replaces explicit DrawCardCommand for normal turn draw
-- untap all permanents at start of turn (Untap phase) - automatic
+- untap the active player's permanents at start of turn (Untap phase) - automatic
 - phase progression via AdvanceTurnCommand:
   - Untap → Draw
   - Draw → FirstMain
@@ -89,7 +89,8 @@ pub enum Phase {
 - existing commands work in appropriate phases
 
 ### Events
-- add PhaseUntap, PhaseDraw events (optional, or reuse PhaseChanged)
+- `TurnProgressed` captures phase and turn changes as one semantic event
+- `CardDrawn` includes `DrawKind` to distinguish turn-step draws from explicit draws
 
 ---
 

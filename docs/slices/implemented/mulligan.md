@@ -1,5 +1,9 @@
 # Slice 6 — Mulligan
 
+## Status
+
+Superseded by [`mulligan-with-setup.md`](./mulligan-with-setup.md).
+
 ## Goal
 
 Allow a player to return their hand to their library, shuffle it, and draw a new 7-card hand before the game begins.
@@ -26,11 +30,12 @@ The system must be able to:
 | Phase | Allowed Actions |
 |-------|----------------|
 | `Phase::Setup` | `MulliganCommand`, `DealOpeningHandsCommand` |
-| `Phase::Main` | `PlayLandCommand`, `DrawCardCommand`, `AdvanceTurnCommand` |
+| `Phase::FirstMain` | `PlayLandCommand`, `CastSpellCommand`, `DrawCardCommand`, `AdvanceTurnCommand` |
+| `Phase::SecondMain` | `PlayLandCommand`, `CastSpellCommand`, `DrawCardCommand`, `AdvanceTurnCommand` |
 
 Mulligan is only valid during `Phase::Setup`.
 
-This slice does not finalize the setup flow. The exact transition from `Setup` to `Main` is out of scope for this slice.
+This historical slice does not describe the full current setup flow. See `mulligan-with-setup.md` for the current integrated turn/setup model.
 
 ## Simplification
 

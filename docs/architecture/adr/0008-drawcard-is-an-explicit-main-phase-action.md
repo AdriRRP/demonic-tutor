@@ -1,7 +1,7 @@
 # ADR 0008 — Card draw is modeled as an explicit player action
 
 ## Status
-Accepted
+Superseded
 
 ## Context
 
@@ -30,7 +30,7 @@ Card draw is modeled as an **explicit command-driven action**.
 The action has the following constraints:
 
 - the active player performs the draw
-- the action is valid only during `Phase::Main`
+- the action is modeled explicitly by command
 - exactly one card is drawn from the player's library
 
 This provides a minimal mechanism for evolving the player's hand while maintaining domain legality.
@@ -54,4 +54,6 @@ This provides a minimal mechanism for evolving the player's hand while maintaini
 
 This decision is an intentional simplification of the draw mechanism.
 
-Future slices may introduce additional phases or automatic behaviors that replace this explicit action.
+Future slices may introduce additional phases or automatic behaviors that replace or constrain this explicit action.
+
+This ADR has been superseded by the later turn-phase and draw-origin decisions, which introduced automatic draw during turn progression while preserving explicit draw as a separate action.

@@ -22,9 +22,10 @@ Implemented capabilities include:
 - drawing cards (auto-draw in Draw phase)
 - playing lands
 - tapping lands for mana
-- casting spells that require mana
-- playing creatures with power and toughness
-- summoning sickness for creatures (removed at turn start)
+- casting non-land spells that require mana
+- casting creature spells that enter the battlefield with power and toughness
+- resolving instants and sorceries to graveyard
+- summoning sickness for creatures (removed for the active player's battlefield at turn start)
 - declaring attackers in combat phase
 - declaring blockers in combat phase
 - resolving combat damage (without creature destruction)
@@ -45,11 +46,13 @@ The domain currently includes:
 - game sessions
 - players
 - card instances
-- basic zones (library, hand, battlefield)
+- basic zones (library, hand, battlefield, graveyard)
 - mana production from lands
-- spell casting with mana cost
+- non-land spell casting with mana cost
 - creature cards with power and toughness
-- summoning sickness for creatures (removed at turn start)
+- creature spells entering the battlefield through `CastSpell`
+- creature damage tracking during combat
+- summoning sickness for creatures (removed for the active player's creatures at turn start)
 - turn and phase progression
 
 The system intentionally excludes complex gameplay mechanics at this stage.
@@ -66,11 +69,12 @@ Current constraints include:
 
 - matches support exactly two players
 - opening hand size is fixed to 7 cards
-- only a subset of zones are modeled
+- only a subset of zones are modeled (no exile or stack zone behavior)
 - no stack resolution
 - no priority system
 - no triggered abilities
 - limited card behavior modeling
+- non-land permanents currently enter the battlefield through simplified spell resolution without stack handling
 
 These constraints are expected to evolve in future slices.
 
@@ -96,11 +100,13 @@ The project currently includes:
 
 - a core `Game` aggregate with centralized player access
 - command-driven gameplay operations
+- play-owned library initialization data for opening hands
+- type-safe library initialization data with distinct creature and non-creature variants
 - domain events describing state transitions
+- composite turn progression events and draw events with explicit origin
 - an event bus for event distribution
 - projections derived from gameplay events
 - State pattern for phase transitions
-- Command pattern for unified command processing
 - helper methods for event persistence and publishing
 
 This architecture supports:
@@ -109,7 +115,6 @@ This architecture supports:
 - observability
 - deterministic state transitions
 - State pattern for phase behavior encapsulation
-- Command pattern for consistent command processing
 
 ---
 

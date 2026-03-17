@@ -71,6 +71,7 @@ Check that documented behavior matches:
 Potential issue:
 
 - docs claim more legality or timing support than code provides
+- docs preserve a convenience action as if it were still canonical after the model has converged on the real game action
 
 ---
 
@@ -81,7 +82,7 @@ Check whether temporary simplifications are stated clearly.
 Examples:
 
 - explicit draw action instead of full draw step
-- simplified turn model
+- historical simplified turn model versus the current phase model
 - no stack
 - no priority
 - two-player only
@@ -89,6 +90,7 @@ Examples:
 Potential issue:
 
 - simplified behavior presented as if it were real full rules support
+- stale slice docs still presented as live behavior after later slices superseded them
 
 ---
 
@@ -117,6 +119,7 @@ Potential issue:
 
 - a slice about tapping lands implies mana system completeness
 - a spell-casting slice implies timing, stack, or abilities support
+- a convenience command implies a domain action that is no longer canonical
 
 ---
 
@@ -191,6 +194,7 @@ Prefer:
 - updating current-state
 - updating slice docs
 - updating or superseding ADRs if needed
+- marking historical slice docs as superseded when they no longer describe live behavior
 
 Do not expand implementation just to satisfy wording.
 

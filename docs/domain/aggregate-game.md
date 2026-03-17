@@ -118,7 +118,7 @@ Represents permanents currently in play.
 
 Responsibilities:
 
-- receive cards played or cast
+- receive permanents played or cast
 - expose battlefield state
 
 Current implementation:
@@ -126,6 +126,21 @@ Current implementation:
 - collection of `CardInstance`
 
 The battlefield currently models only a minimal subset of permanent state.
+
+---
+
+## Graveyard
+
+Represents cards that have resolved or otherwise left active play.
+
+Responsibilities:
+
+- receive instants and sorceries after simplified resolution
+- preserve card history once they leave the active battlefield model
+
+Current implementation:
+
+- collection of `CardInstance`
 
 ---
 
@@ -145,6 +160,7 @@ Fields include:
 - has_summoning_sickness (for creatures)
 - is_attacking (for creatures)
 - is_blocking (for creatures)
+- damage marked on the creature
 
 Responsibilities:
 
@@ -157,6 +173,7 @@ The current model includes:
 - power and toughness for creature cards
 - summoning sickness tracking and automatic removal at turn start
 - declare attackers and blockers in combat phase
+- marked combat damage on creatures
 
 Card instances can be checked for whether they represent permanents (cards that can exist on the battlefield) using the `CardType::is_permanent()` method.
 
@@ -164,7 +181,6 @@ The current model intentionally omits:
 
 - rules text
 - triggered abilities
-- damage tracking
 - counters
 - stack interactions
 
@@ -194,8 +210,10 @@ The aggregate root must enforce:
 - player existence
 - player uniqueness
 - valid card movement between zones
+- creature spell validation including power/toughness presence before battlefield entry
 - turn progression rules
 - phase progression rules
+- active-player-only automatic turn updates
 - correct event emission
 
 The aggregate must remain:
@@ -306,20 +324,18 @@ This means:
 Example structure (guideline, not requirement):
 
 ```
-src/domain/game/
+src/domain/play/game/
 ├── mod.rs
-├── aggregate.rs    # main impl block
-├── state.rs        # state management
-├── phases.rs       # phase logic
-├── start_game.rs   # game initialization
-├── opening_hands.rs
-├── mulligan.rs
-├── draw.rs
-├── lands.rs
-├── mana.rs
-├── spells.rs
-├── turns.rs
-└── life.rs
+├── invariants.rs   # aggregate legality checks and internal lookups
+├── model/
+│   ├── mod.rs
+│   └── player.rs   # aggregate-owned entity internals
+└── rules/
+    ├── mod.rs
+    ├── lifecycle.rs        # start game, opening hands, mulligan
+    ├── turn_flow.rs        # phases, draws, turn progression
+    ├── resource_actions.rs # lands, mana, spells, creatures, life
+    └── combat.rs
 ```
 
 This organization keeps the aggregate cohesive while avoiding monolithic files.

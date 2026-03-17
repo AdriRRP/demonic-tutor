@@ -9,12 +9,12 @@ Require mana payment for casting spells.
 ### Mana Cost
 - Cards have a mana cost (u32)
 - Player must have enough mana to cast a spell
-- Mana is deducted from player's mana pool when spell is cast
+- Mana is deducted from player's mana pool when a spell is cast
 
 ### Domain Changes
 
 - `CardInstance` gains `mana_cost: u32` field
-- `PlayerDeckContents` now accepts `(CardDefinitionId, CardType, mana_cost)` tuples
+- `PlayerLibrary` now accepts `(CardDefinitionId, CardType, mana_cost)` tuples
 - `Game::cast_spell()` checks mana availability before casting
 
 ### Errors

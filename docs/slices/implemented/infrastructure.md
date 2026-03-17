@@ -26,7 +26,7 @@ Add basic event-driven infrastructure to support:
 - Inspectable for debugging or future serialization
 
 ### GameService (updated)
-- Generic over `EventStore` and `EventBus` traits
+- Generic over `EventStore` and `EventBus` ports
 - Persists events after each command execution
 - Publishes events to the bus for subscribers
 - Returns domain events to callers
@@ -34,17 +34,19 @@ Add basic event-driven infrastructure to support:
 ## Architecture
 
 ```
-Application → Domain(Traits) ← Infrastructure(Impl)
+Application(Ports) → Domain ← Infrastructure(Implementations)
 
 src/application/
-  └── traits.rs     # EventBus, EventStore traits
+  └── ports.rs      # EventBus, EventStore ports
 
 src/infrastructure/
-  ├── event_bus.rs   # InMemoryEventBus
-  ├── event_store.rs # InMemoryEventStore
-  └── projection.rs  # GameLogProjection
+  ├── events/
+  │   ├── bus.rs     # InMemoryEventBus
+  │   └── store.rs   # InMemoryEventStore
+  └── projections/
+      └── game_log.rs # GameLogProjection
 
-src/domain/
+src/domain/play/
   └── events.rs     # DomainEvent enum
 ```
 

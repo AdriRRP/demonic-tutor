@@ -12,18 +12,18 @@ Automatically remove summoning sickness from all creatures controlled by a playe
 
 ## Why This Slice Exists Now
 
-This slice is the natural next step after `PlayCreature` because:
+This slice is the natural next step after creature spells can enter the battlefield because:
 
 1. Creatures currently enter with summoning sickness but it is never removed
 2. Without this slice, creatures can never attack
-3. It completes the creature lifecycle introduced in PlayCreature
+3. It completes the creature lifecycle introduced when creature spells started resolving to the battlefield
 4. It's a simple, automatic behavior that doesn't require complex combat logic
 
 ---
 
 ## Supported Behavior
 
-- at the beginning of each player's turn, automatically remove summoning sickness from all creatures they control
+- at the beginning of each player's turn, automatically remove summoning sickness from the active player's creatures
 - this happens as part of the turn advancement (Beginning phase)
 - creatures that entered the battlefield in previous turns become able to attack
 
@@ -56,8 +56,8 @@ This slice is the natural next step after `PlayCreature` because:
 ## Domain Impact
 
 ### Aggregate Impact
-- modify `Game::advance_turn` to call a new method that removes summoning sickness from player creatures before switching the active player
-- or add a new method `remove_summoning_sickness` that is called at the start of each player's turn
+- modify `Game::advance_turn` so the Untap phase updates only the active player's battlefield state
+- or add a new method `remove_summoning_sickness` that is called at the start of the active player's turn
 
 ### Entity / Value Object Impact
 - `CardInstance` already has `remove_summoning_sickness()` method

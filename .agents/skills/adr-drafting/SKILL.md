@@ -65,6 +65,7 @@ An ADR is justified when at least one is true:
 - it records a temporary simplification that constrains future design
 - it supersedes an earlier architectural assumption
 - it reduces repeated ambiguity in future work
+- it establishes the canonical domain entrypoint where the model previously had duplicates
 
 An ADR is usually not justified for:
 
@@ -162,6 +163,10 @@ If a prior ADR is no longer accurate:
 - reference it
 - mark the new relationship clearly
 - do not silently contradict the old decision
+
+This also applies when older slices or operational guidance still describe superseded behavior.
+
+If the ADR establishes a canonical gameplay action, check whether older commands, events, slices, or operational guidance now need to be retired or marked superseded.
 
 ---
 

@@ -12,17 +12,17 @@ Allow the active player to draw exactly one card from their library into their h
 * verify that the current phase allows drawing
 * draw exactly one card from library
 * move that card into the player's hand
-* emit `CardDrawn`
+* emit `CardDrawn` with explicit `DrawKind`
 
 ## Invariants currently enforced
 
 * only the active player may draw through this command
-* drawing is only allowed during `Phase::Main` or `Phase::Setup`
+* drawing is only allowed during `Phase::Untap`, `Phase::Draw`, `Phase::FirstMain`, or `Phase::SecondMain`
 * drawing fails if the library has no available cards
 
 ## Out of scope
 
-* automatic draw step
+* replacing the automatic draw step
 * drawing multiple cards
 * decking / losing from empty library
 * replacement effects
@@ -37,8 +37,8 @@ Allow the active player to draw exactly one card from their library into their h
 
 ## Rules Support Statement
 
-This slice implements a minimal explicit draw action per rules 121.1 and 121.2, not the full Magic draw step.
+This slice implements a minimal explicit draw action per rules 121.1 and 121.2. The current model also includes automatic turn-step draw, and this command remains as an explicit draw entrypoint distinct from the automatic draw flow.
 
 ## Notes
 
-This slice intentionally models a minimal explicit draw action, not the full Magic draw step.
+This slice intentionally models a minimal explicit draw action, not the full Magic draw step. The event now distinguishes explicit draws from automatic turn-step draws.

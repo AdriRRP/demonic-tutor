@@ -1,5 +1,7 @@
 # Slice Proposal — Release 0.2.0
 
+> **Note**: Historical proposal. This document records an earlier planning snapshot and does not describe the repository's current truth.
+
 This document proposes atomic slices for a meaningful playtesting release (0.2.0).
 
 ## Current State (0.1.0)

@@ -13,7 +13,7 @@ This document describes the recommended internal organization of the `Game` aggr
 ## Guiding Principles
 
 - **Aggregate boundary remains unchanged** — The `Game` aggregate root stays cohesive regardless of internal file organization.
-- **Modules follow domain capabilities** — Group code by behavior (lands, mana, combat) not by generic categories (helpers, utils).
+- **Modules follow domain capabilities** — Group code by behavior and internal aggregate concerns, not by generic categories (`helpers`, `utils`).
 - **The file structure is a guideline** — It may evolve as the system grows. Do not treat it as a rigid constraint.
 
 ---
@@ -21,22 +21,18 @@ This document describes the recommended internal organization of the `Game` aggr
 ## Recommended Structure
 
 ```
-src/domain/game/
-├── mod.rs           # Re-exports and aggregates
-├── aggregate.rs     # Main impl Game block
-├── state.rs         # State transitions and invariants
-├── phases.rs        # Phase-specific logic
-├── start_game.rs    # Game initialization
-├── opening_hands.rs # Dealing opening hands
-├── mulligan.rs      # Mulligan handling
-├── draw.rs          # Drawing cards
-├── lands.rs         # Playing and managing lands
-├── mana.rs          # Mana production and usage
-├── spells.rs        # Casting spells
-├── creatures.rs     # Creature-specific behavior
-├── combat.rs        # Attacking and blocking
-├── turns.rs         # Turn progression
-└── life.rs          # Life total management
+src/domain/play/game/
+├── mod.rs             # Aggregate facade and command entrypoints
+├── invariants.rs      # Aggregate legality checks and internal lookups
+├── model/
+│   ├── mod.rs
+│   └── player.rs      # Aggregate-owned entity internals
+└── rules/
+    ├── mod.rs
+    ├── lifecycle.rs        # Start game, opening hands, mulligan
+    ├── turn_flow.rs        # Phases, draws, turn progression
+    ├── resource_actions.rs # Lands, mana, spells, creatures, life
+    └── combat.rs           # Attacking, blocking, combat damage
 ```
 
 ---
@@ -47,6 +43,7 @@ src/domain/game/
 - **Maintainability** — Changes related to a capability stay localized.
 - **Discoverability** — New developers can find relevant code quickly.
 - **DDD alignment** — Modules reflect the domain language, not technical categories.
+- **Rust coherence** — `mod.rs` stays small while internal modules separate aggregate state, rules, and invariants.
 
 ---
 

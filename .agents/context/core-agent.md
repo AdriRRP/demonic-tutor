@@ -41,6 +41,9 @@ Prefer:
 - explicit naming
 - deterministic logic
 - incremental change
+- semantically canonical domain actions
+- removal of duplicate entrypoints once the real domain model is clear
+- internal optimizations hidden behind stable, readable domain APIs
 
 Avoid:
 
@@ -48,6 +51,7 @@ Avoid:
 - speculative abstractions
 - hidden assumptions
 - unrelated edits
+- keeping obsolete commands, events, or docs alive once they are no longer canonical
 
 ---
 
@@ -59,6 +63,7 @@ Agents must not:
 - invent mechanics not grounded in canonical documentation
 - bypass aggregate ownership
 - violate ubiquitous language
+- preserve a technically convenient model when it contradicts real domain semantics
 
 Do not infer future rule support from glossary terms, ADRs, or long-term vision.
 
@@ -81,6 +86,10 @@ If a change affects multiple concerns, verify whether it requires updates to:
 - glossary
 - context map
 - ADRs
+- operational agent context
+- reusable skills
+
+When a session establishes a stable new design rule, naming rule, or repository-closing workflow, update the operational context or skills before ending the work so the lesson persists across sessions.
 
 Documentation updates are required only when the owned truth of that document has changed.
 
@@ -96,6 +105,14 @@ Agent outputs should be:
 - easy to revert
 
 Prefer explicit localized changes over clever or wide-reaching edits.
+
+When a broad cleanup is explicitly requested, keep the cleanup structured:
+
+1. audit inconsistencies
+2. fix canonical truth
+3. fix operational agent context
+4. validate the whole repository
+5. ensure historical docs are marked honestly when they are no longer the live source of truth
 
 ---
 

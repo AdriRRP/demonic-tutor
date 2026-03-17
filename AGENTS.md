@@ -115,6 +115,17 @@ Load:
 
 - `docs/development/development.md`
 
+### Repository curation and release preparation
+
+Load:
+
+- `docs/domain/current-state.md`
+- `docs/domain/aggregate-game.md`
+- relevant implemented slice documentation
+- relevant ADRs
+- `.agents/context/core-agent.md`
+- relevant skills under `.agents/skills/`
+
 These routing rules are examples.  
 Agents must always prefer **minimal context loading**.
 
@@ -128,6 +139,9 @@ Agents must:
 - never imply unsupported Magic rules
 - preserve aggregate boundaries
 - maintain ubiquitous language consistency
+- prefer the **domain-canonical action** over temporary convenience commands
+- remove duplicate domain entrypoints when one concept is the real source of truth
+- keep domain events expressive enough for replay and analysis without reconstructing basic intent from hidden state
 
 When domain truth is unclear, agents must defer to canonical documentation rather than infer behavior.
 
@@ -140,6 +154,13 @@ When the `Game` aggregate grows, new behaviors should preferably be added as **i
 Dividing the aggregate's implementation into modules does **not** create new aggregates. The aggregate boundary remains unchanged.
 
 Agents should not infer new aggregates just because code is split into modules.
+
+Internal representation may be optimized for memory or locality, but those optimizations must preserve:
+
+- explicit domain APIs
+- reviewability
+- deterministic behavior
+- ubiquitous language at the boundary of the model
 
 ---
 
@@ -160,3 +181,5 @@ Skills live under:
 Prefer creating a **skill** rather than introducing a new agent.
 
 Skills must reference canonical documentation instead of duplicating domain knowledge.
+
+When a session uncovers a repeated design mistake, inconsistency pattern, or closing workflow that is likely to recur, agents should prefer updating an existing skill or adding a new one before ending the work.

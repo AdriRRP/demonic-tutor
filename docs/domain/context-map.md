@@ -91,7 +91,7 @@ Examples include:
 * CardDefinition
 * DeckEntry
 
-Deck data is consumed by the Play context when initializing a game.
+Deck data is consumed by the Play context when initializing a game, then translated into play-owned runtime library data before gameplay begins.
 
 After initialization, deck definitions are not modified by gameplay.
 

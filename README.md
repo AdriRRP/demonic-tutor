@@ -18,20 +18,15 @@ The project is designed as a practical laboratory for:
 
 This repository is in active development.
 
-Twelve vertical slices have been implemented:
+Current implemented capabilities include:
 
-1. **StartGame** — Initialize a game with two players
-2. **DrawOpeningHands** — Deal opening hands to players
-3. **Mulligan** — Redraw opening hand during setup phase
-4. **PlayLand** — Play a land from hand to battlefield
-5. **TapLand** — Tap lands to produce mana
-6. **CastSpell** — Cast non-land spells from hand
-7. **PlayCreature** — Play creatures with power and toughness
-8. **AdvanceTurn** — Advance to the next player's turn
-9. **Turn Number** — Track turn progression
-10. **DeclareAttackers** — Declare attacking creatures
-11. **DeclareBlockers** — Declare blocking creatures
-12. **CombatDamage** — Resolve combat damage
+- two-player game setup with opening hands and simplified London mulligan
+- full phase progression: `Setup -> Untap -> Upkeep -> Draw -> FirstMain -> Combat -> SecondMain -> EndStep`
+- land play, land tapping, and mana payment
+- spell casting through a canonical `CastSpell` action for non-land cards
+- creature runtime state with power, toughness, summoning sickness, and combat damage tracking
+- attacker declaration, blocker declaration, and combat damage resolution
+- event store, event bus, and gameplay log projection for replayable state changes
 
 ## Version
 
@@ -62,6 +57,6 @@ Breadth, advanced UX and richer rules support come later.
 
 ## Development
 
-See `docs/development.md` for quality commands and panic-free policy.
+See `docs/development/development.md` for quality commands and panic-free policy.
 
 Quick check: `./scripts/check-all.sh`

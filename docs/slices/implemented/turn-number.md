@@ -9,27 +9,30 @@ Track the turn count in the game.
 ### Turn Number
 - Games start with `turn_number = 1`
 - Turn number increments by 1 each time `advance_turn` is called
-- `TurnNumberChanged` event is emitted when turn advances
+- `TurnProgressed` event includes the old and new turn number when turn advances
 
 ### Events
 
-#### TurnNumberChanged
+#### TurnProgressed
 ```rust
-pub struct TurnNumberChanged {
+pub struct TurnProgressed {
     pub game_id: GameId,
+    pub active_player: PlayerId,
     pub from_turn: u32,
     pub to_turn: u32,
+    pub from_phase: Phase,
+    pub to_phase: Phase,
 }
 ```
 
-Emitted whenever the turn number changes.
+Emitted whenever `advance_turn` progresses the game state.
 
 ## Domain Changes
 
 - `Game` struct gains `turn_number: u32` field
 - Default turn number: 1
-- `Game::advance_turn()` now returns `(TurnAdvanced, TurnNumberChanged)`
-- GameService publishes both events to EventStore and EventBus
+- `Game::advance_turn()` now returns `(TurnProgressed, Option<CardDrawn>)`
+- GameService publishes the composite turn event and optional draw event
 
 ## Rules Reference
 
@@ -43,4 +46,4 @@ This slice implements turn number tracking as a simple counter. The full turn st
 
 - Game starts with turn number 1
 - advance_turn increments turn number to 2
-- TurnNumberChanged event is emitted with correct values
+- TurnProgressed event is emitted with correct values

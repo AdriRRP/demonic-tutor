@@ -2,18 +2,20 @@
 
 ## Goal
 
-Enable casting spells (creatures, instants, sorceries, etc.) from hand to battlefield.
+Enable casting non-land spells from hand with simplified resolution.
 
 ## Supported behavior
 
-### Card Types
-- `CardType::Land` - lands
-- `CardType::Creature` - creature cards
+### Supported Card Types
+- `CardType::Creature` - creature spells
 - `CardType::Instant` - instant spells
 - `CardType::Sorcery` - sorcery spells
-- `CardType::Enchantment` - enchantment cards
-- `CardType::Artifact` - artifact cards
-- `CardType::Planeswalker` - planeswalker cards
+- `CardType::Enchantment` - enchantment spells
+- `CardType::Artifact` - artifact spells
+- `CardType::Planeswalker` - planeswalker spells
+
+### Rejected Card Types
+- `CardType::Land` - lands are played with `PlayLandCommand`
 
 Helper methods:
 - `CardType::is_land()` - returns true for Land type
@@ -30,7 +32,7 @@ pub struct CastSpellCommand {
 ```
 
 - Card must be in the player's hand
-- Card must NOT be a land (lands are played with PlayLandCommand)
+- Card must not be a land
 - Player must be the active player
 
 ### Events
@@ -41,15 +43,18 @@ pub struct SpellCast {
     pub game_id: GameId,
     pub player_id: PlayerId,
     pub card_id: CardInstanceId,
+    pub card_type: CardType,
+    pub mana_cost_paid: u32,
+    pub outcome: SpellCastOutcome,
 }
 ```
 
-Emitted when a spell is cast successfully.
+Emitted when a spell is cast successfully, including the spell card type, the mana cost paid, and whether it entered the battlefield or resolved to the graveyard in the simplified model.
 
 ## Domain Changes
 
 - `CardType` enum expanded with specific types
-- `Game::cast_spell()` method handles spell casting
+- `Game::cast_spell()` handles spell casting
 - New error: `CannotCastLand` - when trying to cast a land as a spell
 
 ## Rules Reference
@@ -59,11 +64,12 @@ Emitted when a spell is cast successfully.
 
 ## Rules Support Statement
 
-This slice implements a simplified spell-casting model in which cards are moved from hand into play according to the current game model. The full casting process (targets, modes, stack, timing, alternative costs, and resolution rules) is not implemented.
+This slice implements a simplified spell-casting model. Permanent non-land spells enter the battlefield, while instants and sorceries resolve directly to the graveyard. The full casting process (targets, modes, stack, timing, alternative costs, and resolution rules) is not implemented.
 
 ## Tests
 
-- CastSpellCommand moves card from hand to battlefield
+- CastSpellCommand moves permanent spells from hand to battlefield
+- CastSpellCommand moves instants and sorceries from hand to graveyard
 - CastSpellCommand emits SpellCast event
 - CastSpellCommand fails for land cards (CannotCastLand)
 - CastSpellCommand fails when not player's turn (NotYourTurn)

@@ -17,6 +17,7 @@ Typical use cases:
 - after changing bounded context ownership
 - after refining architectural boundaries
 - before finalizing a reviewable change set
+- after a broad cleanup that should influence future agent behavior
 
 This skill does not define project truth.
 It checks whether already-owned truth must be synchronized.
@@ -71,6 +72,9 @@ Use this ownership model when checking synchronization.
 | `docs/architecture/vertical-slices.md` | slice policy and slice index |
 | `docs/slices/*` | behavior and scope of a specific implemented or proposed slice |
 | `docs/architecture/adr/*` | accepted architectural decisions and rationale |
+| `AGENTS.md` | agent entrypoint and repository-wide operational routing |
+| `.agents/context/*` | operational working posture for future sessions |
+| `.agents/skills/*` | reusable workflows and guardrails for repeated tasks |
 
 If a change does not alter the owned truth of a document, do not update it.
 
@@ -127,6 +131,7 @@ This is one of the most commonly affected documents.
 - new invariants or legality rules are introduced
 - out-of-scope boundaries change
 - tests or domain impact materially change
+- a once-live convenience action is replaced by a canonical domain action and the old slice must become historical
 
 Update only the slice documents directly affected.
 
@@ -161,6 +166,19 @@ Do not treat it as a second current-state document.
 
 Do not create ADRs for routine implementation details.
 
+### Update operational agent context when:
+
+- a repeated design error or drift pattern has become clear
+- a stable workflow should be repeated in future sessions
+- agents need new guardrails to preserve semantics, consistency, or repository hygiene
+- a broad curation or release-preparation pattern should become standard closing behavior
+
+### Update skills when:
+
+- a workflow is now recurrent
+- repeated cleanup or verification can be standardized
+- future work would benefit from narrower, reusable instructions
+
 ---
 
 ## Sync Procedure
@@ -177,6 +195,7 @@ State clearly what changed:
 - architecture
 - slice status
 - constraints
+- operational workflow or repository guardrails
 
 ### Step 2 — Identify possible truth owners
 

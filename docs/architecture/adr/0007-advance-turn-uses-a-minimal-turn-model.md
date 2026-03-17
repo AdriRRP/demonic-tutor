@@ -1,7 +1,7 @@
 # ADR 0007 — Turn progression uses a minimal turn model
 
 ## Status
-Accepted
+Superseded
 
 ## Context
 
@@ -55,3 +55,5 @@ This model provides a deterministic mechanism for repeating turn-limited actions
 This decision introduces the minimal infrastructure required for turn progression.
 
 Future slices will refine the turn model by introducing additional phases and rules when required.
+
+This ADR has been superseded by the later full phase model and composite turn progression decisions.

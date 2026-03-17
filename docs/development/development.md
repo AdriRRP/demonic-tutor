@@ -131,6 +131,9 @@ In particular:
 * the domain core must not depend on **UI, storage or network concerns**
 * aggregates enforce **domain invariants**
 * infrastructure must remain **separate from domain logic**
+* the public domain model should prefer **canonical game semantics** over convenience APIs
+* duplicate commands or events representing the same real-world concept should be removed once the canonical form is clear
+* broad semantic refactors should close with repository curation so code, canonical docs, ADRs, and agent guidance agree before commit or release
 
 When in doubt, prefer **clear domain modeling over technical shortcuts**.
 
@@ -160,7 +163,7 @@ Use grouped imports to keep modules readable.
 Example:
 
 ```rust
-use crate::domain::{
+use crate::domain::play::{
     commands::{Cmd1, Cmd2},
     errors::DomainError,
     events::Event,
@@ -184,6 +187,7 @@ Avoid:
 * clever abstractions
 * speculative infrastructure
 * unnecessary generalization
+* semantically misleading shortcuts that are easier to code but harder to justify in the ubiquitous language
 
 New concepts should only be introduced when required by the active slice.
 
@@ -214,12 +218,19 @@ Prefer:
 * small, reviewable changes
 * narrow vertical slices
 * explicit modeling decisions
+* closing broad cleanups by synchronizing canonical docs, superseding stale history honestly, and updating reusable agent guidance when a lesson is likely to recur
 
 Avoid:
 
 * speculative architecture
 * premature abstraction
 * large refactors without clear benefit
+
+When a refactor is justified, prefer refactors that:
+
+* eliminate semantic duplication
+* improve replayability and event clarity
+* preserve stable public APIs while simplifying internal structure
 
 ---
 
@@ -229,7 +240,7 @@ When an `impl`, trait, or module grows to affect readability or maintainability,
 
 Prefer:
 
-- modules organized by domain behavior (e.g., `lands.rs`, `mana.rs`, `spells.rs`)
+- modules organized by domain behavior or aggregate concern (e.g., `rules/resource_actions.rs`, `rules/combat.rs`, `invariants.rs`)
 - focused files with clear responsibilities
 
 Avoid:
@@ -238,3 +249,37 @@ Avoid:
 - generic `helpers.rs`, `utils.rs`, or `common.rs` modules without domain context
 
 This applies especially to the `Game` aggregate: dividing its implementation into internal modules does not change the aggregate boundary.
+
+---
+
+# Event Design
+
+Domain events should be semantically useful outside the aggregate.
+
+Prefer payloads that make replay, logging, and analytics understandable without forcing consumers to reconstruct basic intent from hidden state.
+
+In practice, this means events should usually carry enough information to answer:
+
+- what happened
+- who caused it
+- what kind of domain object was involved
+- what meaningful result or outcome occurred
+
+Avoid splitting one domain fact into multiple technical delta events unless those deltas are independently meaningful.
+
+---
+
+# Runtime Representation
+
+Internal data structures may be optimized for memory and locality when the model grows, but those optimizations should remain behind stable, explicit domain methods.
+
+Prefer:
+
+- compact internal state when it reduces repeated allocation or per-entity footprint
+- shared storage for frequently cloned identifiers
+- encapsulation that preserves readable domain APIs
+
+Avoid:
+
+- leaking memory-oriented encodings into the public domain interface
+- bit-level or packed representations that make domain behavior harder to review without a clear payoff

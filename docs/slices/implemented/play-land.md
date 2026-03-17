@@ -20,7 +20,7 @@ Allow the active player to play a land from hand under a minimal but meaningful 
 ## Invariants currently enforced
 
 * only the active player may play a land
-* lands may only be played during `Phase::Main`
+* lands may only be played during `Phase::FirstMain` or `Phase::SecondMain`
 * only cards in hand may be played as lands
 * only cards with `CardType::Land` may be played as lands
 * a player may play at most one land per turn in the current model
@@ -32,8 +32,6 @@ Allow the active player to play a land from hand under a minimal but meaningful 
 * spell casting
 * abilities
 * combat
-* turn progression beyond the minimal active-player model
-* multiple main phases
 * effects that allow additional land plays
 * card text execution
 

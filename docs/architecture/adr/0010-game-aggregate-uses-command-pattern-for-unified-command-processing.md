@@ -1,7 +1,7 @@
 # ADR 0010 — Game aggregate uses Command pattern for unified command processing
 
 ## Status
-Accepted
+Superseded
 
 ## Context
 
@@ -58,3 +58,7 @@ Migration was implemented gradually to minimize disruption, keeping backward com
 ## Update (2026-03-16)
 
 The pattern was renamed from `CommandHandler` to `Command` for better semantics, and the trait was moved to the application layer since commands represent user intents at the application level, not domain concepts.
+
+## Update (2026-03-17)
+
+Superseded by ADR 0011, which returns command handling to explicit application service methods and aggregate operations after the generic trait-based command layer proved more duplicative than simplifying.

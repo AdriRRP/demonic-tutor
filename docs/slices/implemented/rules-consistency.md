@@ -18,7 +18,7 @@ Fix rules inconsistencies between documented state and actual implementation. Im
 - Update "next modeling decision" section
 
 ### Implementation
-- `src/domain/game/combat.rs` - Implement `declare_blockers` method
+- `src/domain/play/game/rules/combat.rs` - Implement `declare_blockers` method
 - Ensure blockers can only be declared in Main phase (after fix)
 - Ensure blocking creatures are controlled by defending player
 - Ensure blocking creatures are not tapped

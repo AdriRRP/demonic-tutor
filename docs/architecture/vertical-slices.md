@@ -83,7 +83,6 @@ Example:
 ```
 StartGameCommand
 PlayLandCommand
-PlayCreatureCommand
 DeclareAttackersCommand
 CastSpellCommand
 
@@ -106,7 +105,6 @@ Examples:
 ```
 GameStarted
 LandPlayed
-CreatureEnteredBattlefield
 AttackersDeclared
 CardDrawn
 SpellCast
@@ -155,6 +153,7 @@ Prefer:
 - explicit domain events
 - deterministic behavior
 - small domain extensions
+- canonical gameplay actions over convenience duplicates
 
 Avoid:
 
@@ -162,6 +161,7 @@ Avoid:
 - speculative mechanics
 - implicit state transitions
 - infrastructure leaking into domain code
+- duplicate commands or events once one domain-canonical action or fact is clearly established
 
 ---
 
@@ -265,8 +265,6 @@ AdvanceTurn
 TapLand
 ↓
 CastSpell
-↓
-PlayCreature
 ↓
 RemoveSummoningSickness
 ↓

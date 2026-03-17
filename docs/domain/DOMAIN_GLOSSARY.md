@@ -145,7 +145,9 @@ A card or token that exists on the battlefield. Permanents include lands, creatu
 
 ## Spell
 
-A card type that has an effect and then goes to the graveyard upon resolution.
+A card on the stack.
+
+In the current runtime model, non-land cards are cast as spells. Permanent spells currently enter the battlefield directly, while instants and sorceries resolve directly to the graveyard because the stack is not yet modeled explicitly.
 
 ---
 

@@ -8,22 +8,22 @@ Add player life tracking to support future damage and win conditions.
 
 ### Player Life
 - Players start with 20 life
-- Life can be modified by `SetLifeCommand`
+- Life can be modified by `AdjustLifeCommand`
 - Life change uses `i32`: positive values gain life, negative values lose life
 - Life cannot go below 0 (saturating arithmetic)
 
 ### Commands
 
-#### SetLifeCommand
+#### AdjustLifeCommand
 ```rust
-pub struct SetLifeCommand {
+pub struct AdjustLifeCommand {
     pub player_id: PlayerId,
-    pub life_change: i32,
+    pub life_delta: i32,
 }
 ```
 
-- `life_change > 0`: gain life
-- `life_change < 0`: lose life
+- `life_delta > 0`: gain life
+- `life_delta < 0`: lose life
 - Valid for any player in the game
 
 ### Events
@@ -44,7 +44,7 @@ Emitted whenever a player's life total changes.
 
 - `Player` struct gains `life: u32` field
 - Default starting life: 20
-- `Game::set_life()` method handles life modification
+- `Game::adjust_life()` method handles life modification
 - Life uses `saturating_add_signed` to prevent underflow
 
 ## Rules Reference
@@ -59,8 +59,8 @@ This slice implements player life tracking per rules 118.1 and 118.2. This suppo
 ## Tests
 
 - Players start with 20 life
-- SetLifeCommand with negative value decreases life
-- SetLifeCommand with positive value increases life
+- AdjustLifeCommand with negative value decreases life
+- AdjustLifeCommand with positive value increases life
 - Life cannot go below 0
-- SetLifeCommand fails for unknown player
+- AdjustLifeCommand fails for unknown player
 - LifeChanged event is emitted correctly

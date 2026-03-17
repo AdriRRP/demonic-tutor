@@ -49,6 +49,7 @@ Verify that the proposed change preserves:
 - aggregate ownership
 - ubiquitous language
 - domain rule locality
+- canonical domain actions and event language
 
 The goal is not to block change, but to ensure that the domain model remains coherent.
 
@@ -73,6 +74,8 @@ Potential issues:
 - new terms that duplicate existing concepts
 - implementation jargon appearing as domain language
 - inconsistent naming across slices
+- convenience commands that contradict real game terminology
+- duplicate public actions that split one real domain action across multiple names
 
 If new domain terms appear, they may require glossary updates.
 
@@ -109,6 +112,8 @@ Potential violations:
 - rules implemented in helpers
 - legality checks outside aggregates
 - domain logic in controllers or infrastructure
+- duplicate commands for one real domain action when one entrypoint should be canonical
+- event streams that require consumers to reconstruct basic intent from technical deltas instead of explicit domain facts
 
 ---
 
@@ -163,6 +168,7 @@ Common anti-patterns:
 - generic “rule engines”
 - generic “card effect systems”
 - “flexible frameworks” anticipating unknown rules
+- preserving semantically wrong shortcuts because they are already implemented
 
 Unless justified, prefer **specific behavior over speculative infrastructure**.
 
@@ -215,6 +221,11 @@ Classify issues as:
 If issues exist, suggest the smallest possible correction that restores DDD integrity.
 
 Avoid proposing large architectural refactors unless strictly necessary.
+
+Prefer:
+
+- collapsing duplicate actions into the canonical domain action
+- enriching existing events instead of creating parallel near-duplicate events
 
 ---
 

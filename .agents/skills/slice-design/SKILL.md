@@ -53,6 +53,8 @@ A good slice:
 - preserves aggregate and bounded-context ownership
 - does not imply unsupported Magic rules
 - is easy to review and test
+- uses the semantically correct domain action names
+- prefers extending an existing canonical action over adding a second public command for the same game concept
 
 A bad slice:
 
@@ -61,6 +63,7 @@ A bad slice:
 - broadens rules support implicitly
 - leaks infrastructure or UI concerns into the domain
 - prepares for hypothetical future mechanics without active need
+- introduces duplicate commands or events for one real game concept
 
 ---
 
@@ -111,6 +114,7 @@ Avoid:
 - new aggregates without strong justification
 - speculative domain objects
 - modeling full subsystems too early
+- adding a convenience command when an existing canonical action can absorb the behavior
 
 ---
 
@@ -182,6 +186,7 @@ Check whether the slice changes:
 - glossary terms
 - context map
 - current-state documentation
+- whether an older slice should become superseded instead of staying live
 
 ### Step 6 — Identify relevant Magic Comprehensive Rules
 

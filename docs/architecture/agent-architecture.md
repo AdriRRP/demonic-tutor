@@ -155,6 +155,8 @@ Examples:
 
 Historical documentation informs reasoning but does not override current truth.
 
+When historical documents are superseded but still valuable, they should be marked explicitly instead of silently left looking current.
+
 ---
 
 ### Skills
@@ -168,6 +170,7 @@ Skills should:
 - remain narrow in scope
 - reference canonical documentation
 - produce reviewable outputs
+- capture repeated repository workflows and guardrails that reduce future drift
 
 Skills must not redefine architecture or domain rules.
 
@@ -186,6 +189,8 @@ The core agent:
 - respects domain boundaries
 - produces small reviewable changes
 - invokes skills when needed
+- helps keep code, docs, and agent context synchronized when stable design lessons emerge
+- prefers turning repeated semantic corrections into durable repository guidance before closing broad refactors or release-preparation work
 
 The agent operates within rules defined by canonical documentation.
 
@@ -257,6 +262,12 @@ Stable elements are:
 - canonical documentation
 - one core agent
 - skills as the extension mechanism
+
+Operational refinements may still occur, especially when:
+
+- repeated review findings expose avoidable design drift
+- repository cleanup workflows become recurrent
+- agents need clearer guidance to preserve semantics, consistency, and long-term maintainability
 
 Future evolution should follow this order:
 
