@@ -38,6 +38,7 @@ fn active_player_can_cast_a_second_instant_before_passing_after_combat_damage() 
     advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
     crate::support::advance_turn_raw(&service, &mut game);
     close_empty_priority_window(&service, &mut game);
+    crate::support::advance_turn_raw(&service, &mut game);
     service
         .declare_attackers(
             &mut game,
@@ -45,6 +46,7 @@ fn active_player_can_cast_a_second_instant_before_passing_after_combat_damage() 
         )
         .unwrap();
     close_empty_priority_window(&service, &mut game);
+    crate::support::advance_turn_raw(&service, &mut game);
     service
         .resolve_combat_damage(
             &mut game,
@@ -52,7 +54,7 @@ fn active_player_can_cast_a_second_instant_before_passing_after_combat_damage() 
         )
         .unwrap();
 
-    assert_eq!(game.phase(), &Phase::Combat);
+    assert_eq!(game.phase(), &Phase::EndOfCombat);
     assert_eq!(
         game.priority().unwrap().current_holder(),
         &PlayerId::new("player-1")

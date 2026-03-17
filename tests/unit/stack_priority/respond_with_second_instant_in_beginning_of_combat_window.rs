@@ -30,7 +30,7 @@ fn responding_player_can_cast_a_second_instant_before_passing_at_beginning_of_co
         )
         .unwrap();
 
-    assert_eq!(game.phase(), &Phase::Combat);
+    assert_eq!(game.phase(), &Phase::BeginningOfCombat);
     assert_eq!(
         game.priority().unwrap().current_holder(),
         &PlayerId::new("player-2")

@@ -2,9 +2,10 @@
 
 use crate::support::{
     advance_n_raw, advance_n_satisfying_cleanup, advance_to_first_main_satisfying_cleanup,
-    advance_to_player_first_main_satisfying_cleanup, advance_turn_satisfying_cleanup,
-    cast_spell_and_resolve, close_empty_priority_window, filled_library, land_card,
-    setup_two_player_game, vanilla_creature,
+    advance_to_player_first_main_satisfying_cleanup, advance_to_player_phase_satisfying_cleanup,
+    advance_turn_raw, advance_turn_satisfying_cleanup, cast_spell_and_resolve,
+    close_empty_priority_window, filled_library, land_card, setup_two_player_game,
+    vanilla_creature,
 };
 use demonictutor::{
     AdvanceTurnCommand, AdvanceTurnOutcome, CardDefinitionId, CardInstanceId,
@@ -37,7 +38,11 @@ fn advance_turn_changes_active_player() {
         ("player-1", Phase::Upkeep),
         ("player-1", Phase::Draw),
         ("player-1", Phase::FirstMain),
-        ("player-1", Phase::Combat),
+        ("player-1", Phase::BeginningOfCombat),
+        ("player-1", Phase::DeclareAttackers),
+        ("player-1", Phase::DeclareBlockers),
+        ("player-1", Phase::CombatDamage),
+        ("player-1", Phase::EndOfCombat),
         ("player-1", Phase::SecondMain),
         ("player-1", Phase::EndStep),
         ("player-2", Phase::Untap),
@@ -175,7 +180,7 @@ fn advance_turn_opens_priority_when_entering_combat() {
         .unwrap();
     assert!(matches!(outcome, AdvanceTurnOutcome::Progressed { .. }));
 
-    assert_eq!(game.phase(), &Phase::Combat);
+    assert_eq!(game.phase(), &Phase::BeginningOfCombat);
     assert_eq!(
         game.priority().unwrap().current_holder(),
         &PlayerId::new("player-1")
@@ -191,7 +196,7 @@ fn advance_turn_opens_priority_when_entering_end_step() {
         filled_library(vec![land_card("mountain")], 10),
     );
 
-    advance_n_raw(&service, &mut game, 6);
+    advance_to_player_phase_satisfying_cleanup(&service, &mut game, "player-1", Phase::SecondMain);
     assert_eq!(game.phase(), &Phase::SecondMain);
     assert!(game.priority().is_some());
 
@@ -232,7 +237,7 @@ fn advance_turn_resets_lands_played() {
     assert_eq!(game.players()[0].lands_played_this_turn(), 0);
     assert_eq!(game.players()[1].lands_played_this_turn(), 1);
 
-    advance_n_satisfying_cleanup(&service, &mut game, 4);
+    advance_to_player_phase_satisfying_cleanup(&service, &mut game, "player-2", Phase::Untap);
 
     assert_eq!(game.players()[1].lands_played_this_turn(), 0);
 }
@@ -293,9 +298,10 @@ fn advance_turn_clears_marked_damage_when_turn_ends() {
 
     advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
     advance_turn_satisfying_cleanup(&service, &mut game);
-    assert_eq!(game.phase(), &Phase::Combat);
+    assert_eq!(game.phase(), &Phase::BeginningOfCombat);
     assert_eq!(game.active_player(), &PlayerId::new("player-1"));
     close_empty_priority_window(&service, &mut game);
+    advance_turn_raw(&service, &mut game);
 
     service
         .declare_attackers(
@@ -323,7 +329,7 @@ fn advance_turn_clears_marked_damage_when_turn_ends() {
 
     assert_eq!(game.players()[0].battlefield().cards()[0].damage(), 2);
 
-    advance_n_satisfying_cleanup(&service, &mut game, 3);
+    advance_to_player_phase_satisfying_cleanup(&service, &mut game, "player-2", Phase::Untap);
 
     assert_eq!(game.phase(), &Phase::Untap);
     assert_eq!(game.players()[0].battlefield().cards()[0].damage(), 0);

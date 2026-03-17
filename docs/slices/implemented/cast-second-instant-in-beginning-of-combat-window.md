@@ -2,11 +2,11 @@
 
 ## Goal
 
-Allow the active player to cast a second instant spell at the beginning of `Combat` before passing priority after the first spell is put on the stack.
+Allow the active player to cast a second instant spell at the beginning of `BeginningOfCombat` before passing priority after the first spell is put on the stack.
 
 ## Supported Behavior
 
-- entering `Combat` opens an empty priority window for the active player
+- entering `BeginningOfCombat` opens an empty priority window for the active player
 - after the first instant is cast, the caster keeps priority
 - while still holding priority, the active player may cast a second instant
 - the second instant is placed on top of the stack
@@ -14,14 +14,14 @@ Allow the active player to cast a second instant spell at the beginning of `Comb
 
 ## Explicit Limits
 
-- this slice only proves self-stacking by the active player at the beginning of `Combat`
-- it does not yet introduce full combat-step timing
+- this slice only proves self-stacking by the active player at the beginning of `BeginningOfCombat`
+- it now sits on top of the explicit combat-subphase foundation
 - it does not add attack declaration interactions beyond the existing priority window
 
 ## Domain Changes
 
 - no new public command is introduced
-- the existing stack and priority model is now covered for consecutive instant casts when entering `Combat`
+- the existing stack and priority model is now covered for consecutive instant casts when entering `BeginningOfCombat`
 
 ## Rules Support Statement
 
@@ -29,6 +29,6 @@ This slice proves that the minimal stack model works consistently in the beginni
 
 ## Tests
 
-- the active player may cast a second instant while retaining priority at the beginning of `Combat`
+- the active player may cast a second instant while retaining priority at the beginning of `BeginningOfCombat`
 - both spells remain on the stack under the active player's control until passes begin
 - the top spell resolves first and the original spell remains on the stack afterward

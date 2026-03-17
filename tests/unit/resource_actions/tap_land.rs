@@ -160,7 +160,7 @@ fn tap_land_fails_outside_main_phases() {
 
     advance_turn_raw(&service, &mut game);
 
-    assert_eq!(game.phase(), &Phase::Combat);
+    assert_eq!(game.phase(), &Phase::BeginningOfCombat);
 
     let result = service.tap_land(
         &mut game,
@@ -174,7 +174,7 @@ fn tap_land_fails_outside_main_phases() {
         result,
         Err(DomainError::Phase(
             demonictutor::PhaseError::InvalidForPlayingCard {
-                phase: Phase::Combat
+                phase: Phase::BeginningOfCombat
             }
         ))
     ));

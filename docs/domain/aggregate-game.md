@@ -187,9 +187,10 @@ The current model includes:
 - opening an empty priority window when entering `Draw` after the automatic turn draw
 - opening empty priority windows when entering `FirstMain` and `SecondMain`
 - opening an empty priority window when entering `EndStep`
-- opening an empty priority window when entering `Combat`
+- opening an empty priority window when entering `BeginningOfCombat`
+- moving combat state through `DeclareAttackers`, `DeclareBlockers`, `CombatDamage`, and `EndOfCombat`
 - reopening priority after attackers and blockers are declared in combat
-- reopening priority after combat damage resolves when the game remains active
+- reopening priority after combat damage resolves when the game remains active in `EndOfCombat`
 - active-player self-stacking of multiple instants in the currently supported stack windows
 - rejection of turn advancement while a priority window is open
 
@@ -311,7 +312,7 @@ Current constraints include:
 - opening hand size is fixed to 7
 - deck contents are provided externally
 - shuffle behavior is minimal
-- combat still uses a single `Combat` phase instead of full combat-step modeling
+- combat now uses explicit subphases, but remains intentionally simplified compared with full rules-complete combat-step modeling
 - stack interactions are intentionally limited to the current minimal spell-and-priority slices
 - only a minimal subset of card behavior exists
 

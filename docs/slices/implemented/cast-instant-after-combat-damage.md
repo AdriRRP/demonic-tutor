@@ -10,12 +10,12 @@ Allow the active player to cast and resolve an instant spell during the priority
 - during that combat priority window, the active player may cast an instant spell from hand
 - the instant is put on the stack and the caster keeps priority
 - after two consecutive passes, the instant resolves from the stack to the graveyard
-- when the game remains active, priority reopens for the active player in `Combat`
+- when the game remains active, priority reopens for the active player in `EndOfCombat`
 
 ## Explicit Limits
 
 - this slice only formalizes instant casting after combat damage resolves
-- the runtime still uses one `Combat` phase rather than full combat-step structure
+- the runtime now uses explicit combat subphases, and this slice lives in `EndOfCombat`
 - post-damage triggered abilities and broader combat-end timing remain out of scope
 
 ## Domain Changes
@@ -25,7 +25,7 @@ Allow the active player to cast and resolve an instant spell during the priority
 
 ## Rules Support Statement
 
-This slice proves that the minimal stack model remains coherent after combat damage. Once damage resolves and the game stays active, the active player may cast a zero-cost instant, resolve it through the standard two-pass flow, and remain in `Combat` with priority reopened before leaving combat for `SecondMain`.
+This slice proves that the minimal stack model remains coherent after combat damage. Once damage resolves and the game stays active, the active player may cast a zero-cost instant, resolve it through the standard two-pass flow, and remain in `EndOfCombat` with priority reopened before leaving combat for `SecondMain`.
 
 ## Tests
 

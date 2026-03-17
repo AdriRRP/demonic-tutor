@@ -117,7 +117,7 @@ This behavior belongs to the `Game` aggregate because:
 - turn progresses through all phases in order
 - auto-draw happens in Draw phase
 - lands/spells work in correct main phases
-- combat works in Combat phase
+- combat now traverses explicit subphases from `BeginningOfCombat` through `EndOfCombat`
 - lands can be played once across both main phases
 
 ---
@@ -141,7 +141,7 @@ This behavior belongs to the `Game` aggregate because:
 
 ## Rules Support Statement
 
-This slice introduces the full Magic turn structure with six phases. It replaces the simplified phase model with: Untap → Draw → FirstMain → Combat → SecondMain → EndStep. Automatic actions (untap, draw) happen in their respective phases. Priority, stack, and triggered abilities remain out of scope.
+This slice introduced the broader turn skeleton that later slices refined. The runtime now uses: Untap → Upkeep → Draw → FirstMain → BeginningOfCombat → DeclareAttackers → DeclareBlockers → CombatDamage → EndOfCombat → SecondMain → EndStep. Automatic actions still happen in their respective phases, while later slices layered in explicit priority windows and minimal stack behavior.
 
 ---
 

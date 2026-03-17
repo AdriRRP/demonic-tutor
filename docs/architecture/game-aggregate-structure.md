@@ -39,8 +39,8 @@ src/domain/play/game/
     │   ├── mod.rs
     │   ├── casting.rs
     │   ├── passing.rs
-    │   └── resolution.rs
-    └── combat.rs           # Attacking, blocking, combat damage
+│   └── resolution.rs
+    └── combat.rs           # Combat subphases, attacking, blocking, combat damage
     └── turn_flow/
         ├── mod.rs
         ├── phase_behavior.rs
@@ -60,6 +60,7 @@ src/domain/play/game/
 - **Rust coherence** — `mod.rs` stays small while internal modules separate aggregate state, rules, and invariants.
 - **Semantic consistency** — Shared state-based action review and direct game effects stay explicit instead of being duplicated across turn flow, resource, and combat code.
 - **Incremental stack evolution** — Stack and priority can grow from aggregate-owned model state through small explicit slices instead of a generic rules engine.
+- **Explicit turn semantics** — When a timing area grows cognitively, prefer explicit subphases and focused modules over hiding distinct moments behind one broad phase name.
 
 ---
 

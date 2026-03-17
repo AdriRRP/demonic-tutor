@@ -30,13 +30,13 @@ Implemented capabilities include:
 - casting creature spells that enter the battlefield with power and toughness
 - resolving instants and sorceries to graveyard
 - summoning sickness for creatures (removed for the active player's battlefield at turn start)
-- declaring attackers in combat phase
-- declaring blockers in combat phase
+- declaring attackers in `DeclareAttackers`
+- declaring blockers in `DeclareBlockers`
 - blocking currently supports at most one blocker per attacking creature
-- opening priority windows across `Upkeep`, `Draw`, `FirstMain`, `Combat`, `SecondMain`, and `EndStep`
-- opening a priority window when entering `Combat`
+- opening priority windows across `Upkeep`, `Draw`, `FirstMain`, `BeginningOfCombat`, `EndOfCombat`, `SecondMain`, and `EndStep`
+- opening a priority window when entering `BeginningOfCombat`
 - opening priority windows after attackers and blockers are declared
-- reopening priority after combat damage resolves while the game remains active
+- reopening priority after combat damage resolves while the game remains active in `EndOfCombat`
 - allowing instant responses and active-player self-stacking in the currently supported stack windows
 - resolving combat damage
 - applying unblocked combat damage to players through shared life-change semantics
@@ -46,7 +46,7 @@ Implemented capabilities include:
 - discarding down to the maximum hand size before the turn can advance out of `EndStep`
 - tracking player life totals
 - advancing turns
-- full phase progression using State pattern (Setup, Untap, Upkeep, Draw, FirstMain, Combat, SecondMain, EndStep)
+- full phase progression using State pattern (Setup, Untap, Upkeep, Draw, FirstMain, BeginningOfCombat, DeclareAttackers, DeclareBlockers, CombatDamage, EndOfCombat, SecondMain, EndStep)
 
 These capabilities correspond to the slices currently implemented in the system.
 
@@ -109,19 +109,19 @@ The domain currently includes:
 - the active player may cast a second instant in `EndStep` before passing priority after the first
 - instant-speed spell responses for the current priority holder
 - resolving the top stack object after two consecutive passes
-- entering `Combat` opens an empty priority window for the active player
+- entering `BeginningOfCombat` opens an empty priority window for the active player
 - the non-active player may cast and resolve an instant at the beginning of `Combat` after the active player passes
 - the non-active player may cast a second instant at the beginning of `Combat` before passing priority after the first response
 - the active player may cast and resolve an instant at the beginning of `Combat`
 - the active player may cast a second instant at the beginning of `Combat` before passing priority after the first
-- combat actions reopen priority after attackers and blockers are declared
+- combat actions reopen priority after attackers and blockers are declared, moving the game into `DeclareBlockers` and `CombatDamage`
 - the active player may cast and resolve an instant after attackers are declared
 - the active player may cast a second instant after attackers are declared before passing priority after the first
 - the non-active player may cast and resolve an instant after attackers are declared once the active player passes
 - the active player may cast and resolve an instant after blockers are declared
 - the active player may cast a second instant after blockers are declared before passing priority after the first
 - the non-active player may cast and resolve an instant after blockers are declared once the active player passes
-- combat damage resolution reopens priority for the active player while the game remains active
+- combat damage resolution moves the game into `EndOfCombat` and reopens priority for the active player while the game remains active
 - the non-active player may cast and resolve an instant after combat damage once the active player passes
 - the active player may cast and resolve an instant after combat damage resolves
 - the active player may cast a second instant after combat damage resolves before passing priority after the first
@@ -142,10 +142,10 @@ Current constraints include:
 - opening hand size is fixed to 7 cards
 - only a subset of zones are modeled (no exile)
 - spell responses during open priority windows are currently limited to instants
-- priority windows are currently opened by spell casting, by entering `Upkeep`, `Draw`, `FirstMain`, `Combat`, `SecondMain`, or `EndStep`, after attackers or blockers are declared, and after combat damage resolves if the game remains active
+- priority windows are currently opened by spell casting, by entering `Upkeep`, `Draw`, `FirstMain`, `BeginningOfCombat`, `SecondMain`, or `EndStep`, after attackers or blockers are declared, and after combat damage resolves if the game remains active
 - outside stack-aware operations, general turn advancement still requires the priority window to be closed
 - broader priority windows for non-main-phase turn flow beyond `Upkeep`, `Draw`, `EndStep`, and the current combat windows are not modeled yet
-- combat still uses a single `Combat` phase rather than full combat-step windows
+- combat now uses explicit subphases, but still omits many richer combat mechanics and triggered timing details
 - no triggered abilities
 - limited card behavior modeling
 - permanent spells resolve from the stack into the battlefield in the current simplified stack model

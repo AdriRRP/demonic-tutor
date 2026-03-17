@@ -96,7 +96,8 @@ const fn opens_priority_window(phase: Phase) -> bool {
         Phase::Upkeep
             | Phase::Draw
             | Phase::FirstMain
-            | Phase::Combat
+            | Phase::BeginningOfCombat
+            | Phase::EndOfCombat
             | Phase::SecondMain
             | Phase::EndStep
     )

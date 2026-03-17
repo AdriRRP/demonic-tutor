@@ -7,11 +7,11 @@ Implemented
 ## Summary
 
 After the active player passes the empty priority window that opens when the
-game enters `Combat`, the non-active player may cast and resolve an instant.
+game enters `BeginningOfCombat`, the non-active player may cast and resolve an instant.
 
 ## Supported Behavior
 
-- entering `Combat` opens priority for the active player
+- entering `BeginningOfCombat` opens priority for the active player
 - after one pass with an empty stack, the non-active player becomes the priority holder
 - the non-active player may cast an instant while holding that priority
 - the instant resolves after two consecutive passes
@@ -19,5 +19,5 @@ game enters `Combat`, the non-active player may cast and resolve an instant.
 
 ## Out Of Scope
 
-- broader combat-step timing beyond the current simplified `Combat` phase
+- broader combat-step timing beyond the current simplified combat-subphase model
 - non-instant responses and triggered beginning-of-combat abilities

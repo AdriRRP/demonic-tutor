@@ -1,3 +1,5 @@
+#[path = "combat_subphases.rs"]
+mod combat_subphases;
 #[path = "declare_blockers.rs"]
 mod declare_blockers;
 #[path = "permanent_type.rs"]

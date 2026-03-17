@@ -386,6 +386,7 @@ impl Game {
             &self.phase,
             cmd,
         )?;
+        self.phase = Phase::DeclareBlockers;
         self.priority = Some(PriorityState::new(self.active_player.clone()));
         Ok(event)
     }
@@ -407,6 +408,7 @@ impl Game {
             &self.phase,
             cmd,
         )?;
+        self.phase = Phase::CombatDamage;
         self.priority = Some(PriorityState::new(self.active_player.clone()));
         Ok(event)
     }
@@ -430,6 +432,7 @@ impl Game {
             cmd,
         )?;
 
+        self.phase = Phase::EndOfCombat;
         self.priority = if self.is_over() {
             None
         } else {

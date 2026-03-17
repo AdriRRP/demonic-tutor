@@ -223,8 +223,9 @@ fn combat_damage_marks_surviving_creatures_and_destroys_lethally_damaged_ones() 
     advance_until(&service, &mut game, "player-2", Phase::FirstMain);
     cast_and_resolve(&service, &mut game, "player-2", blocker_id.clone());
 
-    advance_until(&service, &mut game, "player-1", Phase::Combat);
+    advance_until(&service, &mut game, "player-1", Phase::BeginningOfCombat);
     close_empty_priority_window(&service, &mut game);
+    crate::support::advance_turn_raw(&service, &mut game);
 
     service
         .declare_attackers(
@@ -304,8 +305,9 @@ fn creature_destruction_emits_one_event_per_destroyed_creature() {
     cast_and_resolve(&service, &mut game, "player-2", left_blocker_id.clone());
     cast_and_resolve(&service, &mut game, "player-2", right_blocker_id.clone());
 
-    advance_until(&service, &mut game, "player-1", Phase::Combat);
+    advance_until(&service, &mut game, "player-1", Phase::BeginningOfCombat);
     close_empty_priority_window(&service, &mut game);
+    crate::support::advance_turn_raw(&service, &mut game);
 
     service
         .declare_attackers(
@@ -389,8 +391,9 @@ fn unblocked_combat_damage_ends_the_game_when_it_reduces_a_player_to_zero_life()
         .unwrap();
 
     advance_until(&service, &mut game, "player-2", Phase::FirstMain);
-    advance_until(&service, &mut game, "player-1", Phase::Combat);
+    advance_until(&service, &mut game, "player-1", Phase::BeginningOfCombat);
     close_empty_priority_window(&service, &mut game);
+    crate::support::advance_turn_raw(&service, &mut game);
 
     service
         .declare_attackers(
@@ -399,6 +402,7 @@ fn unblocked_combat_damage_ends_the_game_when_it_reduces_a_player_to_zero_life()
         )
         .unwrap();
     close_empty_priority_window(&service, &mut game);
+    crate::support::advance_turn_raw(&service, &mut game);
 
     let outcome = service
         .resolve_combat_damage(

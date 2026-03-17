@@ -59,8 +59,24 @@ fn require_defending_player(
     Ok(())
 }
 
-const fn require_combat_phase(phase: Phase) -> Result<(), DomainError> {
-    if !matches!(phase, Phase::Combat) {
+const fn require_attackers_step(phase: Phase) -> Result<(), DomainError> {
+    if !matches!(phase, Phase::DeclareAttackers) {
+        return Err(DomainError::Phase(PhaseError::InvalidForCombat));
+    }
+
+    Ok(())
+}
+
+const fn require_blockers_step(phase: Phase) -> Result<(), DomainError> {
+    if !matches!(phase, Phase::DeclareBlockers) {
+        return Err(DomainError::Phase(PhaseError::InvalidForCombat));
+    }
+
+    Ok(())
+}
+
+const fn require_combat_damage_step(phase: Phase) -> Result<(), DomainError> {
+    if !matches!(phase, Phase::CombatDamage) {
         return Err(DomainError::Phase(PhaseError::InvalidForCombat));
     }
 
@@ -190,7 +206,7 @@ pub fn declare_attackers(
     cmd: DeclareAttackersCommand,
 ) -> Result<AttackersDeclared, DomainError> {
     invariants::require_active_player(active_player, &cmd.player_id)?;
-    require_combat_phase(*phase)?;
+    require_attackers_step(*phase)?;
 
     let player_idx = invariants::find_player_index(players, &cmd.player_id)?;
     let player = &mut players[player_idx];
@@ -249,7 +265,7 @@ pub fn declare_blockers(
     cmd: DeclareBlockersCommand,
 ) -> Result<BlockersDeclared, DomainError> {
     require_defending_player(active_player, &cmd.player_id)?;
-    require_combat_phase(*phase)?;
+    require_blockers_step(*phase)?;
 
     let defending_player_idx = find_defending_player_index(players, active_player)?;
     let attacker_player_idx = invariants::find_player_index(players, active_player)?;
@@ -329,7 +345,7 @@ pub fn resolve_combat_damage(
     cmd: ResolveCombatDamageCommand,
 ) -> Result<ResolveCombatDamageOutcome, DomainError> {
     invariants::require_active_player(active_player, &cmd.player_id)?;
-    require_combat_phase(*phase)?;
+    require_combat_damage_step(*phase)?;
 
     let player_idx = invariants::find_player_index(players, &cmd.player_id)?;
     let defender_idx = find_defending_player_index(players, &cmd.player_id)?;

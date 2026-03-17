@@ -1,24 +1,25 @@
 #![allow(clippy::unwrap_used)]
 
 use crate::support::{
-    advance_to_player_first_main_satisfying_cleanup, close_empty_priority_window, filled_library,
-    instant_card, resolve_top_stack_with_passes, setup_two_player_game,
+    advance_to_player_first_main_satisfying_cleanup, advance_turn_raw, close_empty_priority_window,
+    filled_library, resolve_top_stack_with_passes, setup_two_player_game,
 };
 use demonictutor::{
     CardDefinitionId, CardInstanceId, CastSpellCommand, DeclareAttackersCommand,
-    DeclareBlockersCommand, LibraryCard, Phase, PlayerId,
+    DeclareBlockersCommand, LibraryCard, Phase, PlayerId, ResolveCombatDamageCommand,
 };
 
 #[test]
-fn active_player_can_cast_a_second_instant_before_passing_after_blockers() {
+fn combat_uses_explicit_subphases_in_order() {
     let (service, mut game) = setup_two_player_game(
-        "game-second-after-blockers",
+        "game-combat-subphases",
         filled_library(
-            vec![
-                LibraryCard::creature(CardDefinitionId::new("attacker"), 0, 2, 2),
-                instant_card("after-blockers-a", 0),
-                instant_card("after-blockers-b", 0),
-            ],
+            vec![LibraryCard::creature(
+                CardDefinitionId::new("attacker"),
+                0,
+                2,
+                2,
+            )],
             10,
         ),
         filled_library(
@@ -32,8 +33,10 @@ fn active_player_can_cast_a_second_instant_before_passing_after_blockers() {
         ),
     );
 
+    let attacker_id = CardInstanceId::new("game-combat-subphases-player-1-0");
+    let blocker_id = CardInstanceId::new("game-combat-subphases-player-2-0");
+
     advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
-    let attacker_id = CardInstanceId::new("game-second-after-blockers-player-1-0");
     service
         .cast_spell(
             &mut game,
@@ -43,7 +46,6 @@ fn active_player_can_cast_a_second_instant_before_passing_after_blockers() {
     resolve_top_stack_with_passes(&service, &mut game);
 
     advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-2");
-    let blocker_id = CardInstanceId::new("game-second-after-blockers-player-2-0");
     service
         .cast_spell(
             &mut game,
@@ -53,15 +55,29 @@ fn active_player_can_cast_a_second_instant_before_passing_after_blockers() {
     resolve_top_stack_with_passes(&service, &mut game);
 
     advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
-    crate::support::advance_turn_raw(&service, &mut game);
+    advance_turn_raw(&service, &mut game);
+    assert_eq!(game.phase(), &Phase::BeginningOfCombat);
+    assert_eq!(
+        game.priority().unwrap().current_holder(),
+        &PlayerId::new("player-1")
+    );
+
     close_empty_priority_window(&service, &mut game);
-    crate::support::advance_turn_raw(&service, &mut game);
+    advance_turn_raw(&service, &mut game);
+    assert_eq!(game.phase(), &Phase::DeclareAttackers);
+
     service
         .declare_attackers(
             &mut game,
             DeclareAttackersCommand::new(PlayerId::new("player-1"), vec![attacker_id.clone()]),
         )
         .unwrap();
+    assert_eq!(game.phase(), &Phase::DeclareBlockers);
+    assert_eq!(
+        game.priority().unwrap().current_holder(),
+        &PlayerId::new("player-1")
+    );
+
     close_empty_priority_window(&service, &mut game);
     service
         .declare_blockers(
@@ -69,37 +85,20 @@ fn active_player_can_cast_a_second_instant_before_passing_after_blockers() {
             DeclareBlockersCommand::new(PlayerId::new("player-2"), vec![(blocker_id, attacker_id)]),
         )
         .unwrap();
-
     assert_eq!(game.phase(), &Phase::CombatDamage);
     assert_eq!(
         game.priority().unwrap().current_holder(),
         &PlayerId::new("player-1")
     );
 
+    close_empty_priority_window(&service, &mut game);
     service
-        .cast_spell(
+        .resolve_combat_damage(
             &mut game,
-            CastSpellCommand::new(
-                PlayerId::new("player-1"),
-                CardInstanceId::new("game-second-after-blockers-player-1-1"),
-            ),
+            ResolveCombatDamageCommand::new(PlayerId::new("player-1")),
         )
         .unwrap();
-    service
-        .cast_spell(
-            &mut game,
-            CastSpellCommand::new(
-                PlayerId::new("player-1"),
-                CardInstanceId::new("game-second-after-blockers-player-1-2"),
-            ),
-        )
-        .unwrap();
-
-    assert_eq!(game.stack().len(), 2);
-    assert_eq!(
-        game.stack().top().unwrap().source_card_id(),
-        &CardInstanceId::new("game-second-after-blockers-player-1-2")
-    );
+    assert_eq!(game.phase(), &Phase::EndOfCombat);
     assert_eq!(
         game.priority().unwrap().current_holder(),
         &PlayerId::new("player-1")

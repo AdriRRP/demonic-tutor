@@ -59,6 +59,16 @@ It is not a literal restatement of the rules text.
 
 ---
 
+## Combat Subphases Foundation
+
+- 506
+- 507
+- 508
+- 509
+- 510
+
+---
+
 ## Upkeep Priority Window
 
 - 117

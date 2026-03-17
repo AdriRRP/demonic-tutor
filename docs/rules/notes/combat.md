@@ -15,12 +15,18 @@ This is a repository-owned interpretation note, not a copy of the Comprehensive 
 
 ## Current DemonicTutor Interpretation
 
-- attackers are declared in `Combat`
-- blockers are declared in `Combat`
-- entering `Combat` opens a priority window for the active player before attackers are declared
+- combat currently uses explicit subphases:
+  - `BeginningOfCombat`
+  - `DeclareAttackers`
+  - `DeclareBlockers`
+  - `CombatDamage`
+  - `EndOfCombat`
+- attackers are declared in `DeclareAttackers`
+- blockers are declared in `DeclareBlockers`
+- entering `BeginningOfCombat` opens a priority window for the active player before attackers are declared
 - declaring attackers opens a priority window for the active player
 - declaring blockers opens a priority window for the active player
-- resolving combat damage reopens a priority window for the active player when the game remains active
+- resolving combat damage moves the game into `EndOfCombat` and reopens a priority window for the active player when the game remains active
 - blocker-to-attacker assignments are stored in runtime combat state and reused during damage resolution
 - the current combat model supports at most one blocker per attacker
 - combat damage is assigned and marked on the creatures that receive it
@@ -35,7 +41,7 @@ This is a repository-owned interpretation note, not a copy of the Comprehensive 
 - double strike
 - trample
 - multiple blockers per attacker
-- full begin-combat / declare-attackers / declare-blockers / damage / end-combat step structure
+- rules-complete combat timing beyond the currently supported explicit subphases
 - a general state-based action engine
 
 ## Related Features

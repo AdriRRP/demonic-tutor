@@ -159,6 +159,37 @@ pub fn advance_to_player_first_main_satisfying_cleanup(
     panic!("failed to reach FirstMain for {player_id}");
 }
 
+pub fn advance_to_phase_satisfying_cleanup(service: &TestService, game: &mut Game, phase: Phase) {
+    for _ in 0..64 {
+        if game.phase() == &phase {
+            return;
+        }
+
+        advance_turn_satisfying_cleanup(service, game);
+    }
+
+    panic!("failed to reach phase {phase}");
+}
+
+pub fn advance_to_player_phase_satisfying_cleanup(
+    service: &TestService,
+    game: &mut Game,
+    player_id: &str,
+    phase: Phase,
+) {
+    let player_id = PlayerId::new(player_id);
+
+    for _ in 0..64 {
+        if game.active_player() == &player_id && game.phase() == &phase {
+            return;
+        }
+
+        advance_turn_satisfying_cleanup(service, game);
+    }
+
+    panic!("failed to reach {phase} for {player_id}");
+}
+
 pub fn advance_turn_raw(service: &TestService, game: &mut Game) {
     close_empty_priority_window(service, game);
 

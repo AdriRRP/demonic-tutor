@@ -67,7 +67,11 @@ impl GameplayWorld {
             "Upkeep" => Phase::Upkeep,
             "Draw" => Phase::Draw,
             "FirstMain" => Phase::FirstMain,
-            "Combat" => Phase::Combat,
+            "Combat" | "BeginningOfCombat" => Phase::BeginningOfCombat,
+            "DeclareAttackers" => Phase::DeclareAttackers,
+            "DeclareBlockers" => Phase::DeclareBlockers,
+            "CombatDamage" => Phase::CombatDamage,
+            "EndOfCombat" => Phase::EndOfCombat,
             "SecondMain" => Phase::SecondMain,
             "EndStep" => Phase::EndStep,
             other => panic!("unsupported phase in BDD suite: {other}"),
@@ -797,6 +801,7 @@ impl GameplayWorld {
         );
         support::advance_turn_raw(&service, self.game_mut());
         support::close_empty_priority_window(&service, self.game_mut());
+        support::advance_turn_raw(&service, self.game_mut());
 
         service
             .declare_attackers(
@@ -870,6 +875,7 @@ impl GameplayWorld {
         );
         support::advance_turn_raw(&service, self.game_mut());
         support::close_empty_priority_window(&service, self.game_mut());
+        support::advance_turn_raw(&service, self.game_mut());
         service
             .declare_attackers(
                 self.game_mut(),
@@ -925,6 +931,7 @@ impl GameplayWorld {
         );
         support::advance_turn_raw(&service, self.game_mut());
         support::close_empty_priority_window(&service, self.game_mut());
+        support::advance_turn_raw(&service, self.game_mut());
         service
             .declare_attackers(
                 self.game_mut(),
@@ -983,6 +990,7 @@ impl GameplayWorld {
         );
         support::advance_turn_raw(&service, self.game_mut());
         support::close_empty_priority_window(&service, self.game_mut());
+        support::advance_turn_raw(&service, self.game_mut());
         service
             .declare_attackers(
                 self.game_mut(),
@@ -995,7 +1003,7 @@ impl GameplayWorld {
 
         self.tracked_attacker_id = Some(attacker_id);
         self.reset_observations();
-        assert_eq!(self.game().phase(), &Phase::Combat);
+        assert_eq!(self.game().phase(), &Phase::DeclareBlockers);
         assert_eq!(
             self.game()
                 .priority()
@@ -1051,6 +1059,7 @@ impl GameplayWorld {
         );
         support::advance_turn_raw(&service, self.game_mut());
         support::close_empty_priority_window(&service, self.game_mut());
+        support::advance_turn_raw(&service, self.game_mut());
         service
             .declare_attackers(
                 self.game_mut(),
@@ -1113,6 +1122,7 @@ impl GameplayWorld {
         );
         support::advance_turn_raw(&service, self.game_mut());
         support::close_empty_priority_window(&service, self.game_mut());
+        support::advance_turn_raw(&service, self.game_mut());
         service
             .declare_attackers(
                 self.game_mut(),
@@ -1149,7 +1159,7 @@ impl GameplayWorld {
         support::advance_turn_raw(&service, self.game_mut());
 
         self.reset_observations();
-        assert_eq!(self.game().phase(), &Phase::Combat);
+        assert_eq!(self.game().phase(), &Phase::BeginningOfCombat);
         assert_eq!(
             self.game()
                 .priority()
@@ -1177,7 +1187,7 @@ impl GameplayWorld {
 
         self.tracked_card_id = Some(self.hand_card_by_definition("Alice", "bdd-window-instant"));
         self.reset_observations();
-        assert_eq!(self.game().phase(), &Phase::Combat);
+        assert_eq!(self.game().phase(), &Phase::BeginningOfCombat);
         assert_eq!(
             self.game()
                 .priority()
@@ -1213,7 +1223,7 @@ impl GameplayWorld {
         self.tracked_response_card_id =
             Some(self.hand_card_by_definition("Alice", "bdd-window-instant-b"));
         self.reset_observations();
-        assert_eq!(self.game().phase(), &Phase::Combat);
+        assert_eq!(self.game().phase(), &Phase::BeginningOfCombat);
         assert_eq!(
             self.game()
                 .priority()
@@ -1244,7 +1254,7 @@ impl GameplayWorld {
 
         self.pass_priority("Alice");
         self.reset_observations();
-        assert_eq!(self.game().phase(), &Phase::Combat);
+        assert_eq!(self.game().phase(), &Phase::BeginningOfCombat);
         assert_eq!(
             self.game()
                 .priority()
@@ -1282,7 +1292,7 @@ impl GameplayWorld {
 
         self.pass_priority("Alice");
         self.reset_observations();
-        assert_eq!(self.game().phase(), &Phase::Combat);
+        assert_eq!(self.game().phase(), &Phase::BeginningOfCombat);
         assert_eq!(
             self.game()
                 .priority()
@@ -1351,6 +1361,7 @@ impl GameplayWorld {
         );
         support::advance_turn_raw(&service, self.game_mut());
         support::close_empty_priority_window(&service, self.game_mut());
+        support::advance_turn_raw(&service, self.game_mut());
         service
             .declare_attackers(
                 self.game_mut(),
@@ -1442,6 +1453,7 @@ impl GameplayWorld {
         );
         support::advance_turn_raw(&service, self.game_mut());
         support::close_empty_priority_window(&service, self.game_mut());
+        support::advance_turn_raw(&service, self.game_mut());
         service
             .declare_attackers(
                 self.game_mut(),
@@ -1536,6 +1548,7 @@ impl GameplayWorld {
         );
         support::advance_turn_raw(&service, self.game_mut());
         support::close_empty_priority_window(&service, self.game_mut());
+        support::advance_turn_raw(&service, self.game_mut());
         service
             .declare_attackers(
                 self.game_mut(),
@@ -1567,7 +1580,7 @@ impl GameplayWorld {
                 .expect("attacker should exist"),
         )];
         self.reset_observations();
-        assert_eq!(self.game().phase(), &Phase::Combat);
+        assert_eq!(self.game().phase(), &Phase::CombatDamage);
         assert_eq!(
             self.game()
                 .priority()
@@ -1639,6 +1652,7 @@ impl GameplayWorld {
         );
         support::advance_turn_raw(&service, self.game_mut());
         support::close_empty_priority_window(&service, self.game_mut());
+        support::advance_turn_raw(&service, self.game_mut());
         service
             .declare_attackers(
                 self.game_mut(),
@@ -1737,6 +1751,7 @@ impl GameplayWorld {
         );
         support::advance_turn_raw(&service, self.game_mut());
         support::close_empty_priority_window(&service, self.game_mut());
+        support::advance_turn_raw(&service, self.game_mut());
         service
             .declare_attackers(
                 self.game_mut(),
@@ -1855,6 +1870,7 @@ impl GameplayWorld {
         );
         support::advance_turn_raw(&service, self.game_mut());
         support::close_empty_priority_window(&service, self.game_mut());
+        support::advance_turn_raw(&service, self.game_mut());
         service
             .declare_attackers(
                 self.game_mut(),
@@ -1926,6 +1942,7 @@ impl GameplayWorld {
         );
         support::advance_turn_raw(&service, self.game_mut());
         support::close_empty_priority_window(&service, self.game_mut());
+        support::advance_turn_raw(&service, self.game_mut());
         service
             .declare_attackers(
                 self.game_mut(),
@@ -1936,6 +1953,7 @@ impl GameplayWorld {
             )
             .expect("declare attackers should succeed");
         support::close_empty_priority_window(&service, self.game_mut());
+        support::advance_turn_raw(&service, self.game_mut());
         service
             .resolve_combat_damage(
                 self.game_mut(),
@@ -1945,7 +1963,7 @@ impl GameplayWorld {
 
         self.tracked_attacker_id = Some(attacker_id);
         self.reset_observations();
-        assert_eq!(self.game().phase(), &Phase::Combat);
+        assert_eq!(self.game().phase(), &Phase::EndOfCombat);
         assert_eq!(
             self.game()
                 .priority()
@@ -1999,6 +2017,7 @@ impl GameplayWorld {
         );
         support::advance_turn_raw(&service, self.game_mut());
         support::close_empty_priority_window(&service, self.game_mut());
+        support::advance_turn_raw(&service, self.game_mut());
         service
             .declare_attackers(
                 self.game_mut(),
@@ -2009,6 +2028,7 @@ impl GameplayWorld {
             )
             .expect("declare attackers should succeed");
         support::close_empty_priority_window(&service, self.game_mut());
+        support::advance_turn_raw(&service, self.game_mut());
         service
             .resolve_combat_damage(
                 self.game_mut(),
@@ -2018,7 +2038,7 @@ impl GameplayWorld {
 
         self.tracked_attacker_id = Some(attacker_id);
         self.reset_observations();
-        assert_eq!(self.game().phase(), &Phase::Combat);
+        assert_eq!(self.game().phase(), &Phase::EndOfCombat);
         assert_eq!(
             self.game()
                 .priority()
@@ -2073,6 +2093,7 @@ impl GameplayWorld {
         );
         support::advance_turn_raw(&service, self.game_mut());
         support::close_empty_priority_window(&service, self.game_mut());
+        support::advance_turn_raw(&service, self.game_mut());
         service
             .declare_attackers(
                 self.game_mut(),
@@ -2083,6 +2104,7 @@ impl GameplayWorld {
             )
             .expect("declare attackers should succeed");
         support::close_empty_priority_window(&service, self.game_mut());
+        support::advance_turn_raw(&service, self.game_mut());
         service
             .resolve_combat_damage(
                 self.game_mut(),
@@ -2095,7 +2117,7 @@ impl GameplayWorld {
         self.pass_priority("Alice");
         self.tracked_attacker_id = Some(attacker_id);
         self.reset_observations();
-        assert_eq!(self.game().phase(), &Phase::Combat);
+        assert_eq!(self.game().phase(), &Phase::EndOfCombat);
         assert_eq!(
             self.game()
                 .priority()
@@ -2160,6 +2182,7 @@ impl GameplayWorld {
             )
             .expect("declare attackers should succeed");
         support::close_empty_priority_window(&service, self.game_mut());
+        support::advance_turn_raw(&service, self.game_mut());
         service
             .resolve_combat_damage(
                 self.game_mut(),
@@ -2174,7 +2197,7 @@ impl GameplayWorld {
         self.pass_priority("Alice");
         self.tracked_attacker_id = Some(attacker_id);
         self.reset_observations();
-        assert_eq!(self.game().phase(), &Phase::Combat);
+        assert_eq!(self.game().phase(), &Phase::EndOfCombat);
         assert_eq!(
             self.game()
                 .priority()
@@ -2269,7 +2292,12 @@ impl GameplayWorld {
         );
 
         let service = support::create_service();
-        support::advance_n_raw(&service, self.game_mut(), 7);
+        support::advance_to_player_phase_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-1",
+            Phase::EndStep,
+        );
         self.tracked_card_id = Some(self.player("Alice").hand().cards()[0].id().clone());
         self.reset_observations();
         assert_eq!(self.game().phase(), &Phase::EndStep);
@@ -2521,6 +2549,9 @@ impl GameplayWorld {
     pub fn resolve_combat_damage(&mut self) {
         let service = support::create_service();
         support::close_empty_priority_window(&service, self.game_mut());
+        if self.game().phase() == &Phase::DeclareBlockers {
+            support::advance_turn_raw(&service, self.game_mut());
+        }
         match service.resolve_combat_damage(
             self.game_mut(),
             ResolveCombatDamageCommand::new(Self::player_id("Alice")),

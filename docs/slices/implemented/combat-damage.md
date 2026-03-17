@@ -44,7 +44,7 @@ This slice follows `DeclareBlockers` because:
 ## Invariants / Legality Rules
 
 - only the active player may trigger damage resolution
-- damage resolution happens in Combat phase after attackers and blockers declared
+- damage resolution happens in `CombatDamage` after attackers and blockers declared
 - damage is calculated from creature's power at time of resolution
 - each attacking creature can only deal damage once
 - blocking creatures deal damage to their assigned attacker
@@ -62,7 +62,7 @@ This slice follows `DeclareBlockers` because:
 - damage prevention / replacement effects
 - multiple blockers per attacker
 - general state-based actions beyond lethal damage destruction
-- combat phase steps / priority
+- richer combat timing beyond the currently supported explicit subphases and windows
 - stack
 
 ---

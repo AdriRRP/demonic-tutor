@@ -46,6 +46,8 @@ fn declare_blockers_fails_when_target_creature_is_not_attacking() {
     advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
     advance_turn_raw(&service, &mut game);
     close_empty_priority_window(&service, &mut game);
+    advance_turn_raw(&service, &mut game);
+    advance_turn_raw(&service, &mut game);
 
     let error = service
         .declare_blockers(
@@ -74,6 +76,9 @@ fn resolve_combat_damage_fails_when_no_attackers_were_declared() {
     advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
     advance_turn_raw(&service, &mut game);
     close_empty_priority_window(&service, &mut game);
+    advance_turn_raw(&service, &mut game);
+    advance_turn_raw(&service, &mut game);
+    advance_turn_raw(&service, &mut game);
 
     let error = service
         .resolve_combat_damage(
@@ -121,6 +126,7 @@ fn declare_blockers_fails_when_the_same_blocker_is_assigned_more_than_once() {
     advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
     advance_turn_raw(&service, &mut game);
     close_empty_priority_window(&service, &mut game);
+    advance_turn_raw(&service, &mut game);
     service
         .declare_attackers(
             &mut game,
@@ -187,6 +193,7 @@ fn declare_blockers_fails_when_multiple_blockers_target_the_same_attacker() {
     advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
     advance_turn_raw(&service, &mut game);
     close_empty_priority_window(&service, &mut game);
+    advance_turn_raw(&service, &mut game);
     service
         .declare_attackers(
             &mut game,
@@ -230,6 +237,7 @@ fn declare_attackers_opens_priority_for_the_active_player() {
     advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
     advance_turn_raw(&service, &mut game);
     close_empty_priority_window(&service, &mut game);
+    advance_turn_raw(&service, &mut game);
 
     service
         .declare_attackers(
@@ -282,6 +290,7 @@ fn declare_blockers_opens_priority_for_the_active_player() {
     advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
     advance_turn_raw(&service, &mut game);
     close_empty_priority_window(&service, &mut game);
+    advance_turn_raw(&service, &mut game);
     service
         .declare_attackers(
             &mut game,
@@ -330,6 +339,7 @@ fn resolve_combat_damage_opens_priority_for_the_active_player() {
     advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
     advance_turn_raw(&service, &mut game);
     close_empty_priority_window(&service, &mut game);
+    advance_turn_raw(&service, &mut game);
     service
         .declare_attackers(
             &mut game,
@@ -337,6 +347,7 @@ fn resolve_combat_damage_opens_priority_for_the_active_player() {
         )
         .unwrap();
     close_empty_priority_window(&service, &mut game);
+    advance_turn_raw(&service, &mut game);
 
     service
         .resolve_combat_damage(
@@ -345,7 +356,7 @@ fn resolve_combat_damage_opens_priority_for_the_active_player() {
         )
         .unwrap();
 
-    assert_eq!(game.phase(), &demonictutor::Phase::Combat);
+    assert_eq!(game.phase(), &demonictutor::Phase::EndOfCombat);
     let priority = game
         .priority()
         .expect("combat damage should reopen priority");

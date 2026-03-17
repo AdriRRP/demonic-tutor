@@ -31,7 +31,11 @@ struct UntapPhase;
 struct UpkeepPhase;
 struct DrawPhase;
 struct FirstMainPhase;
-struct CombatPhase;
+struct BeginningOfCombatPhase;
+struct DeclareAttackersPhase;
+struct DeclareBlockersPhase;
+struct CombatDamagePhase;
+struct EndOfCombatPhase;
 struct SecondMainPhase;
 struct EndStepPhase;
 
@@ -99,7 +103,7 @@ impl PhaseBehavior for DrawPhase {
 
 impl PhaseBehavior for FirstMainPhase {
     fn next_phase(&self) -> Phase {
-        Phase::Combat
+        Phase::BeginningOfCombat
     }
     fn requires_player_change(&self) -> bool {
         false
@@ -109,7 +113,55 @@ impl PhaseBehavior for FirstMainPhase {
     }
 }
 
-impl PhaseBehavior for CombatPhase {
+impl PhaseBehavior for BeginningOfCombatPhase {
+    fn next_phase(&self) -> Phase {
+        Phase::DeclareAttackers
+    }
+    fn requires_player_change(&self) -> bool {
+        false
+    }
+    fn triggers_auto_draw(&self) -> bool {
+        false
+    }
+}
+
+impl PhaseBehavior for DeclareAttackersPhase {
+    fn next_phase(&self) -> Phase {
+        Phase::DeclareBlockers
+    }
+    fn requires_player_change(&self) -> bool {
+        false
+    }
+    fn triggers_auto_draw(&self) -> bool {
+        false
+    }
+}
+
+impl PhaseBehavior for DeclareBlockersPhase {
+    fn next_phase(&self) -> Phase {
+        Phase::CombatDamage
+    }
+    fn requires_player_change(&self) -> bool {
+        false
+    }
+    fn triggers_auto_draw(&self) -> bool {
+        false
+    }
+}
+
+impl PhaseBehavior for CombatDamagePhase {
+    fn next_phase(&self) -> Phase {
+        Phase::EndOfCombat
+    }
+    fn requires_player_change(&self) -> bool {
+        false
+    }
+    fn triggers_auto_draw(&self) -> bool {
+        false
+    }
+}
+
+impl PhaseBehavior for EndOfCombatPhase {
     fn next_phase(&self) -> Phase {
         Phase::SecondMain
     }
@@ -184,7 +236,11 @@ pub(super) fn get_phase_behavior(phase: Phase) -> &'static dyn PhaseBehavior {
         Phase::Upkeep => &UpkeepPhase,
         Phase::Draw => &DrawPhase,
         Phase::FirstMain => &FirstMainPhase,
-        Phase::Combat => &CombatPhase,
+        Phase::BeginningOfCombat => &BeginningOfCombatPhase,
+        Phase::DeclareAttackers => &DeclareAttackersPhase,
+        Phase::DeclareBlockers => &DeclareBlockersPhase,
+        Phase::CombatDamage => &CombatDamagePhase,
+        Phase::EndOfCombat => &EndOfCombatPhase,
         Phase::SecondMain => &SecondMainPhase,
         Phase::EndStep => &EndStepPhase,
     }

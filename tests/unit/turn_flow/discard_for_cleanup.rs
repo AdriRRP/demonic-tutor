@@ -1,8 +1,8 @@
 #![allow(clippy::unwrap_used)]
 
 use crate::support::{
-    advance_n_raw, advance_to_player_first_main_satisfying_cleanup, close_empty_priority_window,
-    creature_library, setup_two_player_game,
+    advance_to_player_first_main_satisfying_cleanup, advance_to_player_phase_satisfying_cleanup,
+    close_empty_priority_window, creature_library, setup_two_player_game,
 };
 use demonictutor::{
     AdvanceTurnCommand, AdvanceTurnOutcome, DiscardForCleanupCommand, DiscardKind, DomainError,
@@ -13,7 +13,7 @@ fn setup_game_with_eight_cards_in_hand() -> (crate::support::TestService, demoni
     let (service, mut game) =
         setup_two_player_game("game-1", creature_library(20), creature_library(20));
 
-    advance_n_raw(&service, &mut game, 7);
+    advance_to_player_phase_satisfying_cleanup(&service, &mut game, "player-1", Phase::EndStep);
 
     assert_eq!(game.phase(), &Phase::EndStep);
     assert_eq!(game.players()[0].hand().cards().len(), 8);

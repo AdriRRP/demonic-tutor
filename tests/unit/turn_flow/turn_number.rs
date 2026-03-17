@@ -3,11 +3,11 @@
 use std::sync::Arc;
 
 use crate::support::{
-    advance_n_satisfying_cleanup, filled_library, land_card, setup_two_player_game,
+    advance_to_player_phase_satisfying_cleanup, filled_library, land_card, setup_two_player_game,
 };
 use demonictutor::{
     AdvanceTurnCommand, AdvanceTurnOutcome, DomainEvent, GameLogProjection, GameService,
-    InMemoryEventBus, InMemoryEventStore,
+    InMemoryEventBus, InMemoryEventStore, Phase,
 };
 
 #[test]
@@ -28,7 +28,7 @@ fn advance_turn_increments_turn_number() {
 
     assert_eq!(game.turn_number(), 1);
 
-    advance_n_satisfying_cleanup(&service, &mut game, 8);
+    advance_to_player_phase_satisfying_cleanup(&service, &mut game, "player-2", Phase::Untap);
 
     assert_eq!(game.turn_number(), 2);
 }
