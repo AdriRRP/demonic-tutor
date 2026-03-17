@@ -92,6 +92,7 @@ The domain currently includes:
 - entering `Combat` opens an empty priority window for the active player
 - the active player may cast and resolve an instant at the beginning of `Combat`
 - combat actions reopen priority after attackers and blockers are declared
+- the active player may cast and resolve an instant after attackers are declared
 - combat damage resolution reopens priority for the active player while the game remains active
 
 The system intentionally excludes complex gameplay mechanics at this stage.

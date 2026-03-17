@@ -25,6 +25,7 @@ Current executable feature coverage:
 - `features/stack/cast_instant_in_draw_window.feature`
 - `features/stack/cast_instant_in_end_step_window.feature`
 - `features/stack/cast_instant_in_beginning_of_combat_window.feature`
+- `features/stack/cast_instant_after_attackers.feature`
 - `features/turn-flow/upkeep_priority_window.feature`
 - `features/turn-flow/draw_priority_window.feature`
 - `features/turn-flow/main_phase_priority_window.feature`
