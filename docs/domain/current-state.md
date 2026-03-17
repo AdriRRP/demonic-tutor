@@ -97,6 +97,7 @@ The domain currently includes:
 - the active player may cast and resolve an instant during that first-main priority window
 - the active player may cast a second instant in `FirstMain` before passing priority after the first
 - the non-active player may cast and resolve an instant in `FirstMain` after the active player passes
+- the non-active player may cast a second instant in `FirstMain` before passing priority after the first response
 - the active player may cast and resolve an instant during that second-main priority window
 - the active player may cast a second instant in `SecondMain` before passing priority after the first
 - the non-active player may cast and resolve an instant in `SecondMain` after the active player passes
