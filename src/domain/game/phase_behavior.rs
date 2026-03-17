@@ -1,11 +1,11 @@
-use crate::domain::{errors::DomainError, ids::PlayerId};
+use crate::domain::{errors::DomainError, ids::PlayerId, phase::Phase};
 
 use super::player::Player;
 
 /// Trait defining behavior specific to each game phase.
 pub trait PhaseBehavior {
     /// Returns the next phase in the turn sequence.
-    fn next_phase(&self) -> crate::domain::game::Phase;
+    fn next_phase(&self) -> Phase;
 
     /// Returns whether this phase triggers a player change.
     fn requires_player_change(&self) -> bool;
@@ -44,8 +44,8 @@ pub trait PhaseBehavior {
 pub struct SetupPhase;
 
 impl PhaseBehavior for SetupPhase {
-    fn next_phase(&self) -> crate::domain::game::Phase {
-        crate::domain::game::Phase::Untap
+    fn next_phase(&self) -> Phase {
+        Phase::Untap
     }
 
     fn requires_player_change(&self) -> bool {
@@ -61,8 +61,8 @@ impl PhaseBehavior for SetupPhase {
 pub struct UntapPhase;
 
 impl PhaseBehavior for UntapPhase {
-    fn next_phase(&self) -> crate::domain::game::Phase {
-        crate::domain::game::Phase::Upkeep
+    fn next_phase(&self) -> Phase {
+        Phase::Upkeep
     }
 
     fn requires_player_change(&self) -> bool {
@@ -98,8 +98,8 @@ impl PhaseBehavior for UntapPhase {
 pub struct UpkeepPhase;
 
 impl PhaseBehavior for UpkeepPhase {
-    fn next_phase(&self) -> crate::domain::game::Phase {
-        crate::domain::game::Phase::Draw
+    fn next_phase(&self) -> Phase {
+        Phase::Draw
     }
 
     fn requires_player_change(&self) -> bool {
@@ -115,8 +115,8 @@ impl PhaseBehavior for UpkeepPhase {
 pub struct DrawPhase;
 
 impl PhaseBehavior for DrawPhase {
-    fn next_phase(&self) -> crate::domain::game::Phase {
-        crate::domain::game::Phase::FirstMain
+    fn next_phase(&self) -> Phase {
+        Phase::FirstMain
     }
 
     fn requires_player_change(&self) -> bool {
@@ -132,8 +132,8 @@ impl PhaseBehavior for DrawPhase {
 pub struct FirstMainPhase;
 
 impl PhaseBehavior for FirstMainPhase {
-    fn next_phase(&self) -> crate::domain::game::Phase {
-        crate::domain::game::Phase::Combat
+    fn next_phase(&self) -> Phase {
+        Phase::Combat
     }
 
     fn requires_player_change(&self) -> bool {
@@ -149,8 +149,8 @@ impl PhaseBehavior for FirstMainPhase {
 pub struct CombatPhase;
 
 impl PhaseBehavior for CombatPhase {
-    fn next_phase(&self) -> crate::domain::game::Phase {
-        crate::domain::game::Phase::SecondMain
+    fn next_phase(&self) -> Phase {
+        Phase::SecondMain
     }
 
     fn requires_player_change(&self) -> bool {
@@ -166,8 +166,8 @@ impl PhaseBehavior for CombatPhase {
 pub struct SecondMainPhase;
 
 impl PhaseBehavior for SecondMainPhase {
-    fn next_phase(&self) -> crate::domain::game::Phase {
-        crate::domain::game::Phase::EndStep
+    fn next_phase(&self) -> Phase {
+        Phase::EndStep
     }
 
     fn requires_player_change(&self) -> bool {
@@ -183,8 +183,8 @@ impl PhaseBehavior for SecondMainPhase {
 pub struct EndStepPhase;
 
 impl PhaseBehavior for EndStepPhase {
-    fn next_phase(&self) -> crate::domain::game::Phase {
-        crate::domain::game::Phase::Untap
+    fn next_phase(&self) -> Phase {
+        Phase::Untap
     }
 
     fn requires_player_change(&self) -> bool {
@@ -214,15 +214,15 @@ impl PhaseBehavior for EndStepPhase {
 
 /// Converts a Phase enum to its corresponding `PhaseBehavior` implementation.
 #[must_use]
-pub fn get_phase_behavior(phase: &crate::domain::game::Phase) -> &'static dyn PhaseBehavior {
+pub fn get_phase_behavior(phase: &Phase) -> &'static dyn PhaseBehavior {
     match phase {
-        crate::domain::game::Phase::Setup => &SetupPhase,
-        crate::domain::game::Phase::Untap => &UntapPhase,
-        crate::domain::game::Phase::Upkeep => &UpkeepPhase,
-        crate::domain::game::Phase::Draw => &DrawPhase,
-        crate::domain::game::Phase::FirstMain => &FirstMainPhase,
-        crate::domain::game::Phase::Combat => &CombatPhase,
-        crate::domain::game::Phase::SecondMain => &SecondMainPhase,
-        crate::domain::game::Phase::EndStep => &EndStepPhase,
+        Phase::Setup => &SetupPhase,
+        Phase::Untap => &UntapPhase,
+        Phase::Upkeep => &UpkeepPhase,
+        Phase::Draw => &DrawPhase,
+        Phase::FirstMain => &FirstMainPhase,
+        Phase::Combat => &CombatPhase,
+        Phase::SecondMain => &SecondMainPhase,
+        Phase::EndStep => &EndStepPhase,
     }
 }

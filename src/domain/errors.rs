@@ -1,6 +1,6 @@
 use crate::domain::{
-    game::Phase,
     ids::{CardInstanceId, PlayerId},
+    phase::Phase,
 };
 
 #[derive(Debug, PartialEq, Eq)]

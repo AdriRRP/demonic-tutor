@@ -1,4 +1,7 @@
-use crate::domain::ids::{CardInstanceId, GameId, PlayerId};
+use crate::domain::{
+    ids::{CardInstanceId, GameId, PlayerId},
+    phase::Phase,
+};
 
 #[derive(Debug, Clone)]
 pub enum DomainEvent {
@@ -157,17 +160,13 @@ impl TurnNumberChanged {
 #[derive(Debug, Clone)]
 pub struct PhaseChanged {
     pub game_id: GameId,
-    pub from_phase: crate::domain::game::Phase,
-    pub to_phase: crate::domain::game::Phase,
+    pub from_phase: Phase,
+    pub to_phase: Phase,
 }
 
 impl PhaseChanged {
     #[must_use]
-    pub const fn new(
-        game_id: GameId,
-        from_phase: crate::domain::game::Phase,
-        to_phase: crate::domain::game::Phase,
-    ) -> Self {
+    pub const fn new(game_id: GameId, from_phase: Phase, to_phase: Phase) -> Self {
         Self {
             game_id,
             from_phase,

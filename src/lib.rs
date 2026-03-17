@@ -21,7 +21,8 @@ pub use domain::{
         LifeChanged, ManaAdded, MulliganTaken, OpeningHandDealt, PhaseChanged, SpellCast,
         TurnAdvanced, TurnNumberChanged,
     },
-    game::{Game, Phase},
+    game::Game,
     ids::{CardDefinitionId, CardInstanceId, DeckId, GameId, PlayerId},
+    phase::Phase,
     zones::{Battlefield, Hand},
 };
