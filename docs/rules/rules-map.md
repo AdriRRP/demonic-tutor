@@ -432,6 +432,14 @@ It is not a literal restatement of the rules text.
 
 ---
 
+## Reject Sorcery Response
+
+- 117
+- 307.1
+- 601
+
+---
+
 ## Cast Second Instant In Second Main Window
 
 - 117

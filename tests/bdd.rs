@@ -75,6 +75,7 @@ async fn main() {
     GameplayWorld::run("features/stack/cast_sorcery_in_main_window.feature").await;
     GameplayWorld::run("features/stack/cast_second_instant_in_first_main_window.feature").await;
     GameplayWorld::run("features/stack/cast_instant_in_second_main_window.feature").await;
+    GameplayWorld::run("features/stack/reject_sorcery_response.feature").await;
     GameplayWorld::run("features/stack/cast_second_instant_in_second_main_window.feature").await;
     GameplayWorld::run("features/stack/cast_instant_in_end_step_window.feature").await;
     GameplayWorld::run("features/stack/cast_second_instant_in_end_step_window.feature").await;

@@ -20,6 +20,8 @@ mod cast_second_instant_in_second_main_window;
 mod cast_second_instant_in_upkeep_window;
 #[path = "cast_sorcery_in_main_window.rs"]
 mod cast_sorcery_in_main_window;
+#[path = "reject_sorcery_response.rs"]
+mod reject_sorcery_response;
 #[path = "respond_with_second_instant_in_beginning_of_combat_window.rs"]
 mod respond_with_second_instant_in_beginning_of_combat_window;
 #[path = "respond_with_second_instant_in_combat_damage_window.rs"]
