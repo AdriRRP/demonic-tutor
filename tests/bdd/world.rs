@@ -723,6 +723,63 @@ impl GameplayWorld {
         assert!(self.game().stack().is_empty());
     }
 
+    pub fn setup_active_priority_window_with_planeswalker(
+        &mut self,
+        game_id: &str,
+        phase: Phase,
+    ) {
+        self.reset_game_with_libraries(
+            game_id,
+            support::filled_library(
+                vec![support::planeswalker_card("bdd-window-planeswalker", 0)],
+                10,
+            ),
+            support::filled_library(Vec::new(), 10),
+        );
+
+        let service = support::create_service();
+        for _ in 0..64 {
+            while self.game().phase() == &Phase::EndStep && phase != Phase::EndStep {
+                let active_player = self.game().active_player().clone();
+                let hand_size = self
+                    .game()
+                    .players()
+                    .iter()
+                    .find(|player| player.id() == &active_player)
+                    .expect("active player should exist")
+                    .hand()
+                    .cards()
+                    .len();
+                if hand_size <= 7 {
+                    break;
+                }
+                self.satisfy_cleanup_for_setup();
+            }
+
+            if self.game().phase() == &phase
+                && self.game().active_player() == &Self::player_id("Alice")
+                && self.game().turn_number() == 1
+            {
+                break;
+            }
+
+            support::advance_turn_raw(&service, self.game_mut());
+        }
+
+        self.tracked_card_id =
+            Some(self.hand_card_by_definition("Alice", "bdd-window-planeswalker"));
+        self.reset_observations();
+        assert_eq!(self.game().phase(), &phase);
+        assert_eq!(
+            self.game()
+                .priority()
+                .expect("target phase should have an open priority window")
+                .current_holder(),
+            &Self::player_id("Alice")
+        );
+        assert!(self.game().stack().is_empty());
+    }
+
     pub fn setup_non_active_priority_window_with_instant(&mut self, game_id: &str, phase: Phase) {
         self.reset_game_with_libraries(
             game_id,

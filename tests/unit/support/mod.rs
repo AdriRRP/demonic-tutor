@@ -60,6 +60,14 @@ pub fn enchantment_card(name: &str, mana_cost: u32) -> LibraryCard {
     )
 }
 
+pub fn planeswalker_card(name: &str, mana_cost: u32) -> LibraryCard {
+    LibraryCard::non_creature(
+        CardDefinitionId::new(name),
+        NonCreatureCardType::Planeswalker,
+        mana_cost,
+    )
+}
+
 pub fn vanilla_creature(name: &str) -> LibraryCard {
     LibraryCard::creature(CardDefinitionId::new(name), 0, 2, 2)
 }

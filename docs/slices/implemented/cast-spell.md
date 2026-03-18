@@ -108,3 +108,5 @@ This slice now implements a minimal stack-aware spell-casting model. Casting mov
 - CastSpellCommand fails for land cards (CannotCastLand)
 - CastSpellCommand fails when not player's turn (NotYourTurn)
 - CastSpellCommand fails when card not in hand (CardNotInHand)
+- executable coverage now exists for sorcery-speed casting of sorceries, artifacts, enchantments,
+  and planeswalkers in empty main-phase windows

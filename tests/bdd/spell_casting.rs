@@ -74,6 +74,7 @@ fn alice_has_cast_an_instant_spell_and_still_holds_priority_with_bobs_sorcery_ca
     alice_has_priority(world);
 }
 
+
 #[given("Alice has enough mana to pay its cost")]
 fn alice_has_enough_mana_to_pay_its_cost(world: &mut GameplayWorld) {
     world.ensure_tracked_land_provides_mana();
@@ -100,6 +101,11 @@ fn alice_casts_the_enchantment_spell(world: &mut GameplayWorld) {
     world.cast_tracked_spell("Alice");
 }
 
+#[when("Alice casts the planeswalker spell")]
+fn alice_casts_the_planeswalker_spell(world: &mut GameplayWorld) {
+    world.cast_tracked_spell("Alice");
+}
+
 #[when("Bob casts the instant response spell")]
 fn bob_casts_the_instant_response_spell(world: &mut GameplayWorld) {
     world.cast_tracked_response_spell("Bob");
@@ -114,6 +120,7 @@ fn bob_tries_to_cast_the_creature_response_spell(world: &mut GameplayWorld) {
 fn bob_tries_to_cast_the_sorcery_response_spell(world: &mut GameplayWorld) {
     world.cast_tracked_response_spell("Bob");
 }
+
 
 #[when(expr = "{word} passes priority")]
 fn player_passes_priority(world: &mut GameplayWorld, player: String) {
@@ -346,6 +353,16 @@ fn alice_is_the_active_player_in_first_main_with_an_enchantment_card_in_hand_and
     );
 }
 
+#[given("Alice is the active player in FirstMain with a planeswalker card in hand and priority")]
+fn alice_is_the_active_player_in_first_main_with_a_planeswalker_card_in_hand_and_priority(
+    world: &mut GameplayWorld,
+) {
+    world.setup_active_priority_window_with_planeswalker(
+        "bdd-first-main-planeswalker-window",
+        Phase::FirstMain,
+    );
+}
+
 #[given("Alice is the active player in SecondMain with an instant card in hand and priority")]
 fn alice_is_the_active_player_in_second_main_with_an_instant_card_in_hand_and_priority(
     world: &mut GameplayWorld,
@@ -382,6 +399,16 @@ fn alice_is_the_active_player_in_second_main_with_an_enchantment_card_in_hand_an
 ) {
     world.setup_active_priority_window_with_enchantment(
         "bdd-second-main-enchantment-window",
+        Phase::SecondMain,
+    );
+}
+
+#[given("Alice is the active player in SecondMain with a planeswalker card in hand and priority")]
+fn alice_is_the_active_player_in_second_main_with_a_planeswalker_card_in_hand_and_priority(
+    world: &mut GameplayWorld,
+) {
+    world.setup_active_priority_window_with_planeswalker(
+        "bdd-second-main-planeswalker-window",
         Phase::SecondMain,
     );
 }
