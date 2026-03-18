@@ -7,6 +7,33 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ---
 
+## [0.3.0] - 2026-03-18
+
+### Added
+
+- **Minimal stack and priority gameplay**: spells are now cast onto a real aggregate-owned stack, `PassPriority` is public, and `StackTopResolved` marks top-of-stack resolution after two consecutive passes
+- **Priority windows across turn flow**: explicit empty priority windows now open in `Upkeep`, `Draw`, `FirstMain`, `BeginningOfCombat`, `EndOfCombat`, `SecondMain`, and `EndStep`
+- **Priority windows across combat flow**: attackers, blockers, and combat damage now reopen priority coherently as combat progresses
+- **Instant-speed interaction across supported windows**: the active player can cast instants, the non-active player can respond after the first pass, and the current priority holder can self-stack a second instant in the supported windows
+- **Explicit combat subphases**: the turn model now uses `BeginningOfCombat`, `DeclareAttackers`, `DeclareBlockers`, `CombatDamage`, and `EndOfCombat`
+- **Sorcery-speed spell support in main phases**: sorceries, creatures, artifacts, enchantments, and planeswalkers now resolve through the stack in empty `FirstMain` and `SecondMain` windows for the active player
+- **Minimal explicit targeted instant subset**: supported instant spells can target a player or creature, validate that target at cast time, and preserve it on the stack object until resolution
+- **Targeted gameplay effects outside the stack**: explicit draw effects can now target any player, and explicit life effects now distinguish `caster` and `target`
+
+### Changed
+
+- **Combat semantics**: combat now advances through explicit subphases instead of a single monolithic `Combat` phase
+- **Timing semantics**: sorcery-speed legality is centralized and now consistently requires the active player's empty main-phase window
+- **Targeted damage resolution**: targeted instant damage to players reuses shared life-change semantics, while targeted creature damage marks damage first and relies on shared SBA review for lethal destruction
+- **Domain language layout**: play commands and events are now split internally by sublanguage while preserving the `play` bounded context and aggregate ownership
+- **Repository truthfulness**: stack design docs, slice docs, current-state docs, public summaries, and agent guidance now describe the current stack/targeting model more honestly and mark older design notes as historical when appropriate
+
+### Quality
+
+- Executable BDD coverage expanded substantially across stack, combat, timing, targeting, draw, life, and game-end semantics
+- Strict repository validation remains clean through `./scripts/check-all.sh`
+- Canonical docs, agent context, and skills were synchronized with the current stack/priority and targeting model before release
+
 ## [0.2.0] - 2026-03-17
 
 ### Added
