@@ -146,6 +146,11 @@ fn bob_tries_to_cast_the_planeswalker_response_spell(world: &mut GameplayWorld) 
     world.cast_tracked_response_spell("Bob");
 }
 
+#[when("Bob tries to cast the artifact spell")]
+fn bob_tries_to_cast_the_artifact_spell(world: &mut GameplayWorld) {
+    world.cast_tracked_response_spell("Bob");
+}
+
 #[when(expr = "{word} passes priority")]
 fn player_passes_priority(world: &mut GameplayWorld, player: String) {
     world.pass_priority(&player);
@@ -613,6 +618,14 @@ fn bob_has_priority_in_second_main_with_an_instant_card_in_hand(world: &mut Game
     world.setup_non_active_priority_window_with_instant(
         "bdd-second-main-response-window",
         Phase::SecondMain,
+    );
+}
+
+#[given("Bob has priority in FirstMain with an artifact card in hand")]
+fn bob_has_priority_in_first_main_with_an_artifact_card_in_hand(world: &mut GameplayWorld) {
+    world.setup_non_active_priority_window_with_artifact(
+        "bdd-first-main-artifact-priority-window",
+        Phase::FirstMain,
     );
 }
 

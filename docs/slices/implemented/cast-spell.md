@@ -36,6 +36,7 @@ pub struct CastSpellCommand {
 - Outside an open priority window, casting remains limited to the active player in `FirstMain` or `SecondMain`
 - During an open priority window, the current holder may cast any spell at sorcery speed only if they are the active player in `FirstMain` or `SecondMain` and the stack is empty
 - During any other supported response timing, only instant spells may be cast in the current minimal stack model
+- The non-active player may still hold priority in an empty main-phase window, but only instant-speed casting is supported there
 
 #### PassPriorityCommand
 ```rust

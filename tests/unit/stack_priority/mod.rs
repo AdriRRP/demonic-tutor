@@ -30,6 +30,8 @@ mod cast_second_instant_in_upkeep_window;
 mod cast_sorcery_in_main_window;
 #[path = "reject_planeswalker_response.rs"]
 mod reject_planeswalker_response;
+#[path = "sorcery_speed_spells_require_active_player_priority.rs"]
+mod sorcery_speed_spells_require_active_player_priority;
 #[path = "reject_sorcery_response.rs"]
 mod reject_sorcery_response;
 #[path = "respond_with_second_instant_in_beginning_of_combat_window.rs"]

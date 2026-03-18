@@ -488,6 +488,17 @@ It is not a literal restatement of the rules text.
 
 ---
 
+## Sorcery-Speed Spells Require Active-Player Priority
+
+- 117
+- 302.1
+- 303.1
+- 306.1
+- 307.1
+- 601
+
+---
+
 ## Cast Second Instant In Second Main Window
 
 - 117

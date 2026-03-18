@@ -54,6 +54,7 @@ Current executable feature coverage:
 - `features/stack/cast_instant_in_second_main_window.feature`
 - `features/stack/reject_sorcery_response.feature`
 - `features/stack/reject_planeswalker_response.feature`
+- `features/stack/sorcery_speed_spells_require_active_player_priority.feature`
 - `features/stack/cast_second_instant_in_second_main_window.feature`
 - `features/stack/cast_instant_in_end_step_window.feature`
 - `features/stack/cast_second_instant_in_end_step_window.feature`
