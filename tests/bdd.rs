@@ -73,6 +73,7 @@ async fn main() {
     GameplayWorld::run("features/stack/cast_second_instant_in_draw_window.feature").await;
     GameplayWorld::run("features/stack/cast_instant_in_first_main_window.feature").await;
     GameplayWorld::run("features/stack/cast_sorcery_in_main_window.feature").await;
+    GameplayWorld::run("features/stack/cast_creature_in_second_main_window.feature").await;
     GameplayWorld::run("features/stack/cast_artifact_in_main_window.feature").await;
     GameplayWorld::run("features/stack/cast_enchantment_in_main_window.feature").await;
     GameplayWorld::run("features/stack/cast_planeswalker_in_main_window.feature").await;

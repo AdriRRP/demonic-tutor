@@ -414,6 +414,16 @@ It is not a literal restatement of the rules text.
 
 ---
 
+## Cast Creature In Second Main Window
+
+- 117
+- 302.1
+- 302.2
+- 601
+- 608
+
+---
+
 ## Cast Artifact In Main Window
 
 - 117

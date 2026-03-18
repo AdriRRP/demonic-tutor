@@ -37,6 +37,16 @@ fn alice_has_a_creature_card_in_hand_with_valid_power_and_toughness(world: &mut 
     assert_eq!(card.creature_stats(), Some((2, 2)));
 }
 
+#[given("Alice is the active player in SecondMain with a creature card in hand and priority")]
+fn alice_is_the_active_player_in_second_main_with_a_creature_card_in_hand_and_priority(
+    world: &mut GameplayWorld,
+) {
+    world.setup_active_priority_window_with_creature(
+        "bdd-second-main-creature-window",
+        Phase::SecondMain,
+    );
+}
+
 #[given("Alice has cast a creature spell and still holds priority with Bob's instant in hand")]
 fn alice_has_cast_a_creature_spell_and_still_holds_priority_with_bobs_instant_in_hand(
     world: &mut GameplayWorld,

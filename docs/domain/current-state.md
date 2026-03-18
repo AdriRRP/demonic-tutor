@@ -95,6 +95,7 @@ The domain currently includes:
 - the non-active player may cast a second instant in `Draw` before passing priority after the first response
 - entering `FirstMain` or `SecondMain` opens an empty priority window for the active player
 - the active player may cast and resolve a sorcery during an empty `FirstMain` priority window
+- the active player may cast and resolve a creature during an empty `FirstMain` priority window
 - the active player may cast and resolve an artifact during an empty `FirstMain` priority window
 - the active player may cast and resolve an enchantment during an empty `FirstMain` priority window
 - the active player may cast and resolve a planeswalker during an empty `FirstMain` priority window
@@ -103,6 +104,7 @@ The domain currently includes:
 - the non-active player may cast and resolve an instant in `FirstMain` after the active player passes
 - the non-active player may cast a second instant in `FirstMain` before passing priority after the first response
 - the active player may cast and resolve a sorcery during an empty `SecondMain` priority window
+- the active player may cast and resolve a creature during an empty `SecondMain` priority window
 - the active player may cast and resolve an artifact during an empty `SecondMain` priority window
 - the active player may cast and resolve an enchantment during an empty `SecondMain` priority window
 - the active player may cast and resolve a planeswalker during an empty `SecondMain` priority window

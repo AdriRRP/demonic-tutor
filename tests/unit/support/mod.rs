@@ -72,6 +72,10 @@ pub fn vanilla_creature(name: &str) -> LibraryCard {
     LibraryCard::creature(CardDefinitionId::new(name), 0, 2, 2)
 }
 
+pub fn creature_card(name: &str, mana_cost: u32, power: u32, toughness: u32) -> LibraryCard {
+    LibraryCard::creature(CardDefinitionId::new(name), mana_cost, power, toughness)
+}
+
 pub fn filled_library(seed_cards: Vec<LibraryCard>, total_cards: usize) -> Vec<LibraryCard> {
     assert!(seed_cards.len() <= total_cards);
 
