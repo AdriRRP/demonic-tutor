@@ -89,7 +89,7 @@ fn instant_spells_resolve_to_graveyard_not_battlefield() {
     let (service, mut game) = setup_game(
         vec![
             LibraryCard::non_creature(
-                CardDefinitionId::new("shock"),
+                CardDefinitionId::new("giant-growth"),
                 NonCreatureCardType::Instant,
                 0,
             ),

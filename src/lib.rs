@@ -26,7 +26,7 @@ pub use domain::play::{
     game::{
         AdjustPlayerLifeEffectOutcome, AdvanceTurnOutcome, CastSpellOutcome,
         DrawCardsEffectOutcome, Game, PassPriorityOutcome, PriorityState, SpellOnStack,
-        StackObject, StackObjectKind, StackZone,
+        SpellTarget, StackObject, StackObjectKind, StackZone,
     },
     ids::{CardDefinitionId, CardInstanceId, DeckId, GameId, PlayerId, StackObjectId},
     phase::Phase,

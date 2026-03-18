@@ -29,11 +29,13 @@ Helper methods:
 pub struct CastSpellCommand {
     pub player_id: PlayerId,
     pub card_id: CardInstanceId,
+    pub target: Option<SpellTarget>,
 }
 ```
 
 - Card must be in the player's hand
 - Card must not be a land
+- spells that require explicit targets must provide one when cast
 - Outside an open priority window, casting remains limited to the active player in `FirstMain` or `SecondMain`
 - During an open priority window, the current holder may cast any spell at sorcery speed only if they are the active player in `FirstMain` or `SecondMain` and the stack is empty
 - During any other supported response timing, only instant spells may be cast in the current minimal stack model
@@ -60,6 +62,7 @@ pub struct SpellPutOnStack {
     pub card_type: CardType,
     pub mana_cost_paid: u32,
     pub stack_object_id: StackObjectId,
+    pub target: Option<SpellTarget>,
 }
 ```
 
@@ -81,7 +84,7 @@ pub struct SpellCast {
 
 Emitted when the top spell on the stack resolves successfully, including the spell card type, the mana cost paid, and whether it entered the battlefield or resolved to the graveyard in the simplified model.
 
-`PassPriority` may now produce `SpellCast`, `CreatureDied`, or `GameEnded` when resolution and the shared review of currently supported state-based actions produce additional automatic consequences.
+`PassPriority` may now produce `SpellCast`, `LifeChanged`, `CreatureDied`, or `GameEnded` when resolution and the shared review of currently supported state-based actions produce additional automatic consequences.
 
 ## Domain Changes
 
@@ -89,6 +92,7 @@ Emitted when the top spell on the stack resolves successfully, including the spe
 - `Game::cast_spell()` now puts a spell card on the stack
 - `Game::pass_priority()` advances the current minimal priority loop
 - supported state-based actions are reviewed after spell resolution
+- spells may now carry an explicit player or creature target in the current targeted-spell subset
 - New error: `CannotCastLand` - when trying to cast a land as a spell
 
 ## Rules Reference
@@ -98,7 +102,7 @@ Emitted when the top spell on the stack resolves successfully, including the spe
 
 ## Rules Support Statement
 
-This slice now implements a minimal stack-aware spell-casting model. Casting moves a spell card from hand onto the stack, and the casting player keeps priority immediately afterward. Resolution happens only after two consecutive passes. Permanent spells resolve from the stack to the battlefield, while instants and sorceries resolve from the stack to the graveyard. The current runtime also triggers the shared review of currently supported state-based actions after spell resolution, which can produce `CreatureDied` or `GameEnded` in addition to `SpellCast`. Sorcery-speed spells are currently supported only for the active player in `FirstMain` or `SecondMain` when the stack is empty; non-instant responses, targets, and modes remain out of scope.
+This slice now implements a minimal stack-aware spell-casting model. Casting moves a spell card from hand onto the stack, and the casting player keeps priority immediately afterward. Resolution happens only after two consecutive passes. Permanent spells resolve from the stack to the battlefield, while instants and sorceries resolve from the stack to the graveyard. The current runtime also triggers the shared review of currently supported state-based actions after spell resolution, which can produce `LifeChanged`, `CreatureDied`, or `GameEnded` in addition to `SpellCast`. Sorcery-speed spells are currently supported only for the active player in `FirstMain` or `SecondMain` when the stack is empty. A targeted subset of instant spells can now target a player or creature explicitly; broader targeting, modes, and replacement effects remain out of scope.
 
 ## Tests
 

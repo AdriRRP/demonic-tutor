@@ -6,7 +6,7 @@ use demonictutor::{
     CardDiscarded, CardDrawn, CardInstance, CardInstanceId, CastSpellCommand, CombatDamageResolved,
     CreatureDied, DealOpeningHandsCommand, DiscardForCleanupCommand, DrawCardsEffectCommand, Game,
     GameEnded, GameId, LibraryCard, LifeChanged, PassPriorityCommand, Phase, PlayLandCommand,
-    PlayerId, PriorityPassed, ResolveCombatDamageCommand, SpellCast, SpellPutOnStack,
+    PlayerId, PriorityPassed, ResolveCombatDamageCommand, SpellCast, SpellPutOnStack, SpellTarget,
     StackTopResolved, StartGameCommand, TapLandCommand, TurnProgressed,
 };
 
@@ -353,6 +353,76 @@ impl GameplayWorld {
         );
         self.tracked_card_id = Some(self.hand_card_by_definition("Alice", "bdd-grizzly-bears"));
         self.tracked_blocker_id = Some(self.hand_card_by_definition("Alice", "bdd-forest"));
+    }
+
+    pub fn setup_targeted_player_spell(&mut self) {
+        self.reset_game_with_libraries(
+            "bdd-targeted-player-spell",
+            support::filled_library(vec![support::instant_card("bdd-shock", 0)], 10),
+            support::filled_library(Vec::new(), 10),
+        );
+
+        let service = support::create_service();
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-1",
+        );
+        self.tracked_card_id = Some(self.hand_card_by_definition("Alice", "bdd-shock"));
+    }
+
+    pub fn setup_lethal_targeted_player_spell(&mut self) {
+        self.setup_targeted_player_spell();
+        let service = support::create_service();
+        service
+            .adjust_player_life_effect(
+                self.game_mut(),
+                AdjustPlayerLifeEffectCommand::new(
+                    Self::player_id("Alice"),
+                    Self::player_id("Bob"),
+                    -18,
+                ),
+            )
+            .expect("setup life adjustment should succeed");
+        self.reset_observations();
+    }
+
+    pub fn setup_targeted_creature_spell(&mut self) {
+        self.reset_game_with_libraries(
+            "bdd-targeted-creature-spell",
+            support::filled_library(
+                vec![
+                    support::land_card("bdd-mountain"),
+                    support::instant_card("bdd-shock", 0),
+                ],
+                10,
+            ),
+            support::filled_library(vec![support::creature_card("bdd-bear", 0, 2, 2)], 10),
+        );
+
+        let service = support::create_service();
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-2",
+        );
+        let creature_id = self.hand_card_by_definition("Bob", "bdd-bear");
+        service
+            .cast_spell(
+                self.game_mut(),
+                CastSpellCommand::new(Self::player_id("Bob"), creature_id.clone()),
+            )
+            .expect("setup creature spell cast should succeed");
+        self.pass_priority("Bob");
+        self.pass_priority("Alice");
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-1",
+        );
+        self.tracked_card_id = Some(self.hand_card_by_definition("Alice", "bdd-shock"));
+        self.tracked_blocker_id = Some(creature_id);
+        self.reset_observations();
     }
 
     pub fn setup_spell_response_stack(&mut self) {
@@ -2864,6 +2934,89 @@ impl GameplayWorld {
         }
     }
 
+    pub fn cast_tracked_spell_targeting_player(&mut self, alias: &str, target_alias: &str) {
+        let service = support::create_service();
+        let card_id = self
+            .tracked_card_id
+            .clone()
+            .expect("tracked spell card should exist");
+
+        match service.cast_spell(
+            self.game_mut(),
+            CastSpellCommand::new(Self::player_id(alias), card_id)
+                .with_target(SpellTarget::Player(Self::player_id(target_alias))),
+        ) {
+            Ok(outcome) => {
+                self.last_spell_put_on_stack = Some(outcome.spell_put_on_stack);
+                self.last_spell_cast = None;
+                self.last_error = None;
+            }
+            Err(error) => {
+                self.last_spell_put_on_stack = None;
+                self.last_spell_cast = None;
+                self.last_error = Some(error.to_string());
+            }
+        }
+    }
+
+    pub fn cast_tracked_spell_targeting_missing_player(&mut self, alias: &str) {
+        let service = support::create_service();
+        let card_id = self
+            .tracked_card_id
+            .clone()
+            .expect("tracked spell card should exist");
+
+        match service.cast_spell(
+            self.game_mut(),
+            CastSpellCommand::new(Self::player_id(alias), card_id)
+                .with_target(SpellTarget::Player(PlayerId::new("missing-player"))),
+        ) {
+            Ok(outcome) => {
+                self.last_spell_put_on_stack = Some(outcome.spell_put_on_stack);
+                self.last_spell_cast = None;
+                self.last_error = None;
+            }
+            Err(error) => {
+                self.last_spell_put_on_stack = None;
+                self.last_spell_cast = None;
+                self.last_error = Some(error.to_string());
+            }
+        }
+    }
+
+    pub fn cast_tracked_spell_without_target(&mut self, alias: &str) {
+        self.cast_tracked_spell(alias);
+    }
+
+    pub fn cast_tracked_spell_targeting_tracked_creature(&mut self, alias: &str) {
+        let service = support::create_service();
+        let card_id = self
+            .tracked_card_id
+            .clone()
+            .expect("tracked spell card should exist");
+        let target_id = self
+            .tracked_blocker_id
+            .clone()
+            .expect("tracked creature target should exist");
+
+        match service.cast_spell(
+            self.game_mut(),
+            CastSpellCommand::new(Self::player_id(alias), card_id)
+                .with_target(SpellTarget::Creature(target_id)),
+        ) {
+            Ok(outcome) => {
+                self.last_spell_put_on_stack = Some(outcome.spell_put_on_stack);
+                self.last_spell_cast = None;
+                self.last_error = None;
+            }
+            Err(error) => {
+                self.last_spell_put_on_stack = None;
+                self.last_spell_cast = None;
+                self.last_error = Some(error.to_string());
+            }
+        }
+    }
+
     pub fn cast_tracked_response_spell(&mut self, alias: &str) {
         let service = support::create_service();
         let card_id = self
@@ -2923,6 +3076,7 @@ impl GameplayWorld {
                 self.last_priority_passed = Some(outcome.priority_passed);
                 self.last_stack_top_resolved = outcome.stack_top_resolved;
                 self.last_spell_cast = outcome.spell_cast;
+                self.last_life_changed = outcome.life_changed;
                 self.last_creature_died = outcome.creatures_died;
                 self.last_game_ended = outcome.game_ended;
                 self.last_error = None;
@@ -2931,6 +3085,7 @@ impl GameplayWorld {
                 self.last_priority_passed = None;
                 self.last_stack_top_resolved = None;
                 self.last_spell_cast = None;
+                self.last_life_changed = None;
                 self.last_creature_died.clear();
                 self.last_game_ended = None;
                 self.last_error = Some(error.to_string());

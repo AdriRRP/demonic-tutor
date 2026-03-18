@@ -1,4 +1,7 @@
-use super::{CastSpellOutcome, StackPriorityContext};
+use super::{
+    spell_effects::{spell_effect, SpellEffect},
+    CastSpellOutcome, StackPriorityContext,
+};
 use crate::domain::play::{
     cards::CardType,
     commands::CastSpellCommand,
@@ -6,7 +9,9 @@ use crate::domain::play::{
     events::SpellPutOnStack,
     game::{
         invariants,
-        model::{PriorityState, SpellOnStack, StackObject, StackObjectKind, StackZone},
+        model::{
+            PriorityState, SpellOnStack, SpellTarget, StackObject, StackObjectKind, StackZone,
+        },
     },
     ids::{CardInstanceId, GameId, PlayerId, StackObjectId},
     phase::Phase,
@@ -61,6 +66,57 @@ fn require_cast_timing(
     Ok(())
 }
 
+fn validate_spell_target(
+    players: &[crate::domain::play::game::Player],
+    card_id: &CardInstanceId,
+    effect: &SpellEffect,
+    target: Option<&SpellTarget>,
+) -> Result<(), DomainError> {
+    if effect.requires_target() {
+        let Some(target) = target else {
+            return Err(DomainError::Game(GameError::MissingSpellTarget(
+                card_id.clone(),
+            )));
+        };
+
+        if !effect.accepts_target(target) {
+            return Err(DomainError::Game(GameError::SpellDoesNotUseTargets(
+                card_id.clone(),
+            )));
+        }
+
+        match target {
+            SpellTarget::Player(player_id) => {
+                invariants::find_player_index(players, player_id)?;
+            }
+            SpellTarget::Creature(card_id) => {
+                let found = players.iter().any(|player| {
+                    player
+                        .battlefield()
+                        .cards()
+                        .iter()
+                        .any(|card| card.id() == card_id)
+                });
+                if !found {
+                    return Err(DomainError::Game(GameError::InvalidCreatureTarget(
+                        card_id.clone(),
+                    )));
+                }
+            }
+        }
+
+        return Ok(());
+    }
+
+    if target.is_some() {
+        return Err(DomainError::Game(GameError::SpellDoesNotUseTargets(
+            card_id.clone(),
+        )));
+    }
+
+    Ok(())
+}
+
 /// Puts a spell card from hand onto the stack and opens a priority window.
 ///
 /// # Errors
@@ -82,10 +138,26 @@ pub fn cast_spell(
         ..
     } = ctx;
 
-    let CastSpellCommand { player_id, card_id } = cmd;
+    let CastSpellCommand {
+        player_id,
+        card_id,
+        target,
+    } = cmd;
 
-    let player = invariants::find_player_mut(players, &player_id)?;
-    let card_type = invariants::hand_card_type(player, &player_id, &card_id)?;
+    let player_idx = invariants::find_player_index(players, &player_id)?;
+    let hand_card = players[player_idx]
+        .hand()
+        .cards()
+        .iter()
+        .find(|card| card.id() == &card_id)
+        .cloned()
+        .ok_or_else(|| {
+            DomainError::Card(CardError::NotInHand {
+                player: player_id.clone(),
+                card: card_id.clone(),
+            })
+        })?;
+    let card_type = hand_card.card_type().clone();
 
     if card_type.is_land() {
         return Err(DomainError::Card(CardError::CannotCastLand(card_id)));
@@ -101,7 +173,9 @@ pub fn cast_spell(
         &card_type,
     )?;
 
-    let hand_card = invariants::hand_card(player, &player_id, &card_id)?;
+    let effect = spell_effect(&hand_card);
+    validate_spell_target(players, &card_id, &effect, target.as_ref())?;
+
     if matches!(card_type, CardType::Creature) && hand_card.creature_stats().is_none() {
         return Err(DomainError::Game(GameError::InternalInvariantViolation(
             format!(
@@ -112,6 +186,7 @@ pub fn cast_spell(
     }
 
     let mana_cost = hand_card.mana_cost();
+    let player = &mut players[player_idx];
     if player.mana() < mana_cost {
         return Err(DomainError::Game(GameError::InsufficientMana {
             player: player_id.clone(),
@@ -129,7 +204,7 @@ pub fn cast_spell(
         stack_object_id.clone(),
         player_id.clone(),
         card_id.clone(),
-        StackObjectKind::Spell(SpellOnStack::new(card, mana_cost)),
+        StackObjectKind::Spell(SpellOnStack::new(card, mana_cost, target.clone())),
     ));
 
     *priority = Some(PriorityState::new(player_id.clone()));
@@ -142,6 +217,7 @@ pub fn cast_spell(
             card_type,
             mana_cost,
             stack_object_id,
+            target,
         ),
     })
 }

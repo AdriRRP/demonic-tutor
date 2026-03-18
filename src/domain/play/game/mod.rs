@@ -19,7 +19,9 @@ use crate::domain::play::{
 };
 
 pub use model::Player;
-pub use model::{PriorityState, SpellOnStack, StackObject, StackObjectKind, StackZone};
+pub use model::{
+    PriorityState, SpellOnStack, SpellTarget, StackObject, StackObjectKind, StackZone,
+};
 pub use rules::{
     combat::ResolveCombatDamageOutcome,
     resource_actions::AdjustPlayerLifeEffectOutcome,

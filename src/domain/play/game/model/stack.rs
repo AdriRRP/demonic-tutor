@@ -3,6 +3,12 @@ use crate::domain::play::{
     ids::{CardInstanceId, PlayerId, StackObjectId},
 };
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum SpellTarget {
+    Player(PlayerId),
+    Creature(CardInstanceId),
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct StackZone {
     objects: Vec<StackObject>,
@@ -99,14 +105,16 @@ pub enum StackObjectKind {
 pub struct SpellOnStack {
     card: CardInstance,
     mana_cost_paid: u32,
+    target: Option<SpellTarget>,
 }
 
 impl SpellOnStack {
     #[must_use]
-    pub const fn new(card: CardInstance, mana_cost_paid: u32) -> Self {
+    pub const fn new(card: CardInstance, mana_cost_paid: u32, target: Option<SpellTarget>) -> Self {
         Self {
             card,
             mana_cost_paid,
+            target,
         }
     }
 
@@ -126,7 +134,17 @@ impl SpellOnStack {
     }
 
     #[must_use]
+    pub const fn target(&self) -> Option<&SpellTarget> {
+        self.target.as_ref()
+    }
+
+    #[must_use]
     pub fn into_card(self) -> CardInstance {
         self.card
+    }
+
+    #[must_use]
+    pub fn into_target(self) -> Option<SpellTarget> {
+        self.target
     }
 }

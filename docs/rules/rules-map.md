@@ -192,6 +192,38 @@ It is not a literal restatement of the rules text.
 
 ---
 
+## Spell Target Foundation
+
+- 114
+- 601.2c
+
+---
+
+## Targeted Instant Damage To Player
+
+- 114
+- 118
+- 608.2
+- 609.1
+
+---
+
+## Targeted Player Damage Can End The Game
+
+- 104.3b
+- 704.5a
+
+---
+
+## Targeted Instant Damage To Creature
+
+- 114
+- 120
+- 608.2
+- 704.5g
+
+---
+
 ## Respond With Second Instant In Declare Blockers Window
 
 - 117

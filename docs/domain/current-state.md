@@ -29,6 +29,7 @@ Implemented capabilities include:
 - casting spells that require mana
 - casting creature spells that enter the battlefield with power and toughness
 - resolving instants and sorceries to graveyard
+- supporting a minimal targeted instant subset against players or creatures
 - summoning sickness for creatures (removed for the active player's battlefield at turn start)
 - declaring attackers in `DeclareAttackers`
 - declaring blockers in `DeclareBlockers`
@@ -101,6 +102,7 @@ The domain currently includes:
 - the active player may cast and resolve an enchantment during an empty `FirstMain` priority window
 - the active player may cast and resolve a planeswalker during an empty `FirstMain` priority window
 - the active player may cast and resolve an instant during that first-main priority window
+- the active player may cast and resolve a targeted instant at a player or creature in the current targeted-spell subset
 - the active player may cast a second instant in `FirstMain` before passing priority after the first
 - the non-active player may cast and resolve an instant in `FirstMain` after the active player passes
 - the non-active player may cast a second instant in `FirstMain` before passing priority after the first response
@@ -113,6 +115,9 @@ The domain currently includes:
 - the active player may cast a second instant in `SecondMain` before passing priority after the first
 - the non-active player may cast and resolve an instant in `SecondMain` after the active player passes
 - the non-active player may cast a second instant in `SecondMain` before passing priority after the first response
+- supported targeted instants currently require an explicit player or creature target when cast
+- supported targeted instant damage to a player emits `LifeChanged` on resolution
+- supported targeted instant damage to a creature marks damage and then relies on shared SBA review for lethal destruction
 - entering `EndStep` opens an empty priority window for the active player before cleanup can finish the turn
 - the non-active player may cast and resolve an instant in `EndStep` after the active player passes
 - the non-active player may cast a second instant in `EndStep` before passing priority after the first response
@@ -162,6 +167,7 @@ Current constraints include:
 - opening hand size is fixed to 7 cards
 - only a subset of zones are modeled (no exile)
 - spell responses during open priority windows are currently limited to instants
+- the current targeted-spell subset is intentionally tiny and card-definition-driven
 - sorcery-speed spells are currently supported only for the active player in `FirstMain` or `SecondMain` while the stack is empty
 - priority windows are currently opened by spell casting, by entering `Upkeep`, `Draw`, `FirstMain`, `BeginningOfCombat`, `SecondMain`, or `EndStep`, after attackers or blockers are declared, and after combat damage resolves if the game remains active
 - outside stack-aware operations, general turn advancement still requires the priority window to be closed

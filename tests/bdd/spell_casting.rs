@@ -37,6 +37,35 @@ fn alice_has_a_creature_card_in_hand_with_valid_power_and_toughness(world: &mut 
     assert_eq!(card.creature_stats(), Some((2, 2)));
 }
 
+#[given("Alice is the active player in FirstMain with a targeted instant spell in hand")]
+fn alice_is_the_active_player_in_first_main_with_a_targeted_instant_spell_in_hand(
+    world: &mut GameplayWorld,
+) {
+    world.setup_targeted_player_spell();
+}
+
+#[given("Bob is a valid target player")]
+fn bob_is_a_valid_target_player(_world: &mut GameplayWorld) {}
+
+#[given("Alice is the active player in FirstMain with a lethal targeted instant spell in hand")]
+fn alice_is_the_active_player_in_first_main_with_a_lethal_targeted_instant_spell_in_hand(
+    world: &mut GameplayWorld,
+) {
+    world.setup_lethal_targeted_player_spell();
+}
+
+#[given("Bob is at 2 life")]
+fn bob_is_at_2_life(world: &mut GameplayWorld) {
+    assert_eq!(world.player_life("Bob"), 2);
+}
+
+#[given("Alice is the active player in FirstMain with a targeted instant spell and Bob's creature on the battlefield")]
+fn alice_is_the_active_player_in_first_main_with_a_targeted_instant_spell_and_bobs_creature_on_the_battlefield(
+    world: &mut GameplayWorld,
+) {
+    world.setup_targeted_creature_spell();
+}
+
 #[given("Alice is the active player in SecondMain with a creature card in hand and priority")]
 fn alice_is_the_active_player_in_second_main_with_a_creature_card_in_hand_and_priority(
     world: &mut GameplayWorld,
@@ -104,6 +133,26 @@ fn alice_has_enough_mana_to_pay_its_cost(world: &mut GameplayWorld) {
 #[when("Alice casts the creature spell")]
 fn alice_casts_the_creature_spell(world: &mut GameplayWorld) {
     world.cast_tracked_spell("Alice");
+}
+
+#[when("Alice casts the targeted instant spell targeting Bob")]
+fn alice_casts_the_targeted_instant_spell_targeting_bob(world: &mut GameplayWorld) {
+    world.cast_tracked_spell_targeting_player("Alice", "Bob");
+}
+
+#[when("Alice casts the targeted instant spell without a target")]
+fn alice_casts_the_targeted_instant_spell_without_a_target(world: &mut GameplayWorld) {
+    world.cast_tracked_spell_without_target("Alice");
+}
+
+#[when("Alice casts the targeted instant spell targeting a missing player")]
+fn alice_casts_the_targeted_instant_spell_targeting_a_missing_player(world: &mut GameplayWorld) {
+    world.cast_tracked_spell_targeting_missing_player("Alice");
+}
+
+#[when("Alice casts the targeted instant spell targeting Bob's creature")]
+fn alice_casts_the_targeted_instant_spell_targeting_bobs_creature(world: &mut GameplayWorld) {
+    world.cast_tracked_spell_targeting_tracked_creature("Alice");
 }
 
 #[when("Alice casts the sorcery spell")]
@@ -193,6 +242,20 @@ fn the_spell_is_on_the_stack_under_alices_control(world: &mut GameplayWorld) {
     assert_eq!(top.controller_id(), &GameplayWorld::player_id("Alice"));
 }
 
+#[then("the spell is on the stack targeting Bob")]
+fn the_spell_is_on_the_stack_targeting_bob(world: &mut GameplayWorld) {
+    let event = world
+        .last_spell_put_on_stack
+        .as_ref()
+        .expect("expected targeted spell on stack");
+    assert_eq!(
+        event.target,
+        Some(demonictutor::SpellTarget::Player(GameplayWorld::player_id(
+            "Bob"
+        )))
+    );
+}
+
 #[then("Bob's instant is on top of the stack under Bob's control")]
 fn bobs_instant_is_on_top_of_the_stack_under_bobs_control(world: &mut GameplayWorld) {
     let top = world
@@ -236,6 +299,52 @@ fn alices_original_spell_remains_on_the_stack(world: &mut GameplayWorld) {
 #[then("the spell has not resolved yet")]
 fn the_spell_has_not_resolved_yet(world: &mut GameplayWorld) {
     assert!(world.last_spell_cast.is_none());
+}
+
+#[then("Bob loses 2 life")]
+fn bob_loses_2_life(world: &mut GameplayWorld) {
+    let event = world
+        .last_life_changed
+        .as_ref()
+        .expect("expected life changed event");
+    assert_eq!(event.player_id, GameplayWorld::player_id("Bob"));
+    assert_eq!(event.from_life, 20);
+    assert_eq!(event.to_life, 18);
+}
+
+#[then("the game ends with Bob losing")]
+fn the_game_ends_with_bob_losing(world: &mut GameplayWorld) {
+    let event = world
+        .last_game_ended
+        .as_ref()
+        .expect("expected game end event");
+    assert_eq!(event.loser_id, GameplayWorld::player_id("Bob"));
+}
+
+#[then("casting fails because the spell target is missing")]
+fn casting_fails_because_the_spell_target_is_missing(world: &mut GameplayWorld) {
+    assert!(world
+        .last_error
+        .as_ref()
+        .is_some_and(|error| error.contains("requires an explicit target")));
+}
+
+#[then("casting fails because the target player does not exist")]
+fn casting_fails_because_the_target_player_does_not_exist(world: &mut GameplayWorld) {
+    assert!(world
+        .last_error
+        .as_ref()
+        .is_some_and(|error| error.contains("missing-player")));
+}
+
+#[then("Bob's creature dies")]
+fn bobs_creature_dies(world: &mut GameplayWorld) {
+    assert_eq!(world.last_creature_died.len(), 1);
+    let creature_id = world
+        .tracked_blocker_id
+        .as_ref()
+        .expect("tracked creature target should exist");
+    assert_eq!(world.last_creature_died[0].card_id, *creature_id);
 }
 
 #[given("Bob has priority")]

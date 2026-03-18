@@ -133,7 +133,7 @@ fn opponent_can_cast_an_instant_response_after_the_caster_passes_priority() {
             vec![vanilla_creature("grizzly-bears"), land_card("forest")],
             10,
         ),
-        filled_library(vec![instant_card("shock", 0)], 10),
+        filled_library(vec![instant_card("giant-growth", 0)], 10),
     );
 
     advance_to_first_main_satisfying_cleanup(&service, &mut game);

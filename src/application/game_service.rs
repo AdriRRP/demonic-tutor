@@ -135,6 +135,9 @@ where
         if let Some(spell_cast) = &outcome.spell_cast {
             domain_events.push(spell_cast.clone().into());
         }
+        if let Some(life_changed) = &outcome.life_changed {
+            domain_events.push(life_changed.clone().into());
+        }
         domain_events.extend(outcome.creatures_died.iter().cloned().map(Into::into));
         if let Some(game_ended) = &outcome.game_ended {
             domain_events.push(game_ended.clone().into());

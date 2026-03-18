@@ -165,6 +165,7 @@ Fields include:
 - is_blocking (for creatures)
 - blocking target (for blocking creatures)
 - damage marked on the creature
+- optional explicit spell target while the card is represented on the stack
 
 Responsibilities:
 
@@ -181,6 +182,7 @@ The current model includes:
 - automatic destruction of creatures with lethal marked damage
 - automatic destruction of creatures with 0 toughness through the shared review of supported state-based actions
 - minimal stack-aware spell casting and spell resolution
+- explicit player or creature targeting for the currently supported targeted-spell subset
 - casting player retaining priority immediately after putting a spell on the stack
 - instant responses by the current priority holder in the currently supported windows
 - opening an empty priority window when entering `Upkeep`
@@ -241,6 +243,7 @@ The aggregate root must enforce:
 - terminal game tracking for empty-library draw and zero-life loss
 - ownership of stack and priority state
 - minimal priority-window legality for currently supported stack interactions
+- explicit spell-target validation for the currently supported targeted-spell subset
 - zero-toughness creature death after current creature-spell resolution checks
 - lethal-damage creature destruction after combat damage resolution
 - correct event emission

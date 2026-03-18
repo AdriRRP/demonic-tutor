@@ -115,9 +115,13 @@ impl GameLogProjection {
     }
 
     fn log_spell_put_on_stack(event: &crate::domain::play::events::SpellPutOnStack) -> String {
+        let target_suffix = event
+            .target
+            .as_ref()
+            .map_or_else(String::new, |target| format!(" targeting {target:?}"));
         format!(
-            "Player {} put {:?} spell {} on the stack for {} mana",
-            event.player_id, event.card_type, event.card_id, event.mana_cost_paid
+            "Player {} put {:?} spell {} on the stack for {} mana{}",
+            event.player_id, event.card_type, event.card_id, event.mana_cost_paid, target_suffix
         )
     }
 

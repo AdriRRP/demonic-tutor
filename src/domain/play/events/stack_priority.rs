@@ -1,5 +1,6 @@
 use crate::domain::play::{
     cards::CardType,
+    game::SpellTarget,
     ids::{CardInstanceId, GameId, PlayerId, StackObjectId},
 };
 
@@ -11,6 +12,7 @@ pub struct SpellPutOnStack {
     pub card_type: CardType,
     pub mana_cost_paid: u32,
     pub stack_object_id: StackObjectId,
+    pub target: Option<SpellTarget>,
 }
 
 impl SpellPutOnStack {
@@ -22,6 +24,7 @@ impl SpellPutOnStack {
         card_type: CardType,
         mana_cost_paid: u32,
         stack_object_id: StackObjectId,
+        target: Option<SpellTarget>,
     ) -> Self {
         Self {
             game_id,
@@ -30,6 +33,7 @@ impl SpellPutOnStack {
             card_type,
             mana_cost_paid,
             stack_object_id,
+            target,
         }
     }
 }

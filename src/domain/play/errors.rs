@@ -45,6 +45,9 @@ pub enum GameError {
     OpeningHandsAlreadyDealt,
     GameAlreadyEnded,
     InvalidDrawCount(u32),
+    MissingSpellTarget(CardInstanceId),
+    SpellDoesNotUseTargets(CardInstanceId),
+    InvalidCreatureTarget(CardInstanceId),
     NoAttackersDeclared,
     MulliganAlreadyUsed(PlayerId),
     HandSizeLimitExceeded {
@@ -173,26 +176,21 @@ impl std::fmt::Display for GameError {
                 "not enough cards in library for player {}: have {available}, need {requested}",
                 player.as_str()
             ),
-            Self::MissingPlayerLibrary(pid) => {
-                write!(
-                    f,
-                    "missing opening-hand library for player {}",
-                    pid.as_str()
-                )
-            }
-            Self::DuplicatePlayerLibrary(pid) => {
-                write!(
-                    f,
-                    "duplicate opening-hand library for player {}",
-                    pid.as_str()
-                )
-            }
-            Self::OpeningHandsAlreadyDealt => {
-                write!(f, "opening hands have already been dealt")
-            }
+            Self::MissingPlayerLibrary(pid) => write_player_library_error(f, "missing", pid),
+            Self::DuplicatePlayerLibrary(pid) => write_player_library_error(f, "duplicate", pid),
+            Self::OpeningHandsAlreadyDealt => write!(f, "opening hands have already been dealt"),
             Self::GameAlreadyEnded => write!(f, "the game has already ended"),
             Self::InvalidDrawCount(requested) => {
                 write!(f, "draw effect must request at least one card, got {requested}")
+            }
+            Self::MissingSpellTarget(card_id) => {
+                write!(f, "spell {card_id} requires an explicit target")
+            }
+            Self::SpellDoesNotUseTargets(card_id) => {
+                write!(f, "spell {card_id} does not use explicit targets in the current model")
+            }
+            Self::InvalidCreatureTarget(card_id) => {
+                write!(f, "creature target {card_id} is not on the battlefield")
             }
             Self::NoAttackersDeclared => write!(f, "no attackers have been declared"),
             Self::MulliganAlreadyUsed(pid) => {
@@ -221,6 +219,18 @@ impl std::fmt::Display for GameError {
             }
         }
     }
+}
+
+fn write_player_library_error(
+    f: &mut std::fmt::Formatter<'_>,
+    adjective: &str,
+    pid: &PlayerId,
+) -> std::fmt::Result {
+    write!(
+        f,
+        "{adjective} opening-hand library for player {}",
+        pid.as_str()
+    )
 }
 
 impl std::fmt::Display for CardError {
