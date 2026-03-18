@@ -38,6 +38,11 @@ impl CardType {
     }
 
     #[must_use]
+    pub const fn is_sorcery_speed_spell(&self) -> bool {
+        self.is_spell_card() && !self.is_instant()
+    }
+
+    #[must_use]
     pub const fn is_permanent(&self) -> bool {
         matches!(
             self,

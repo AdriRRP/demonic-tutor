@@ -20,6 +20,7 @@ Enable casting spell cards from hand with minimal stack-aware resolution.
 Helper methods:
 - `CardType::is_land()` - returns true for Land type
 - `CardType::is_spell_card()` - returns true for all spell card types
+- `CardType::is_sorcery_speed_spell()` - returns true for spell card types that currently require the active player's empty main-phase window
 
 ### Commands
 

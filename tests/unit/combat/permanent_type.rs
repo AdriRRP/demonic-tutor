@@ -93,3 +93,18 @@ fn test_is_permanent_returns_false_for_non_permanent_types() {
         "Sorcery should not be permanent"
     );
 }
+
+#[test]
+fn test_is_sorcery_speed_spell_returns_true_for_noninstant_spells() {
+    assert!(CardType::Creature.is_sorcery_speed_spell());
+    assert!(CardType::Sorcery.is_sorcery_speed_spell());
+    assert!(CardType::Artifact.is_sorcery_speed_spell());
+    assert!(CardType::Enchantment.is_sorcery_speed_spell());
+    assert!(CardType::Planeswalker.is_sorcery_speed_spell());
+}
+
+#[test]
+fn test_is_sorcery_speed_spell_returns_false_for_land_and_instant() {
+    assert!(!CardType::Land.is_sorcery_speed_spell());
+    assert!(!CardType::Instant.is_sorcery_speed_spell());
+}

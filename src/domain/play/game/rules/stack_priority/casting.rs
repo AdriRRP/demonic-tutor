@@ -34,14 +34,14 @@ fn require_cast_timing(
     if let Some(priority) = priority {
         invariants::require_priority_holder(Some(priority), player_id)?;
 
-        let stack_is_empty = stack.is_empty();
-        let active_player_in_main =
-            player_id == active_player && matches!(phase, Phase::FirstMain | Phase::SecondMain);
-        if stack_is_empty && active_player_in_main {
+        if card_type.is_instant() {
             return Ok(());
         }
 
-        if card_type.is_instant() {
+        let active_player_in_empty_main_phase_window = stack.is_empty()
+            && player_id == active_player
+            && matches!(phase, Phase::FirstMain | Phase::SecondMain);
+        if card_type.is_sorcery_speed_spell() && active_player_in_empty_main_phase_window {
             return Ok(());
         }
 
