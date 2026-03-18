@@ -89,6 +89,7 @@ Current executable feature coverage:
 - `features/turn-flow/cleanup_damage_removal.feature`
 - `features/turn-flow/cleanup_hand_size_discard.feature`
 - `features/turn-flow/lose_on_empty_draw.feature`
+- `features/life/adjust_player_life_effect.feature`
 - `features/life/lose_on_zero_life.feature`
 - `features/state-based-actions/zero_toughness_creature_dies.feature`
 - `features/state-based-actions/state_based_actions_review.feature`

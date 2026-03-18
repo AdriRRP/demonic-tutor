@@ -1,9 +1,9 @@
 #![allow(clippy::unwrap_used)]
 
 use demonictutor::{
-    AdjustLifeCommand, CardDefinitionId, CardError, CardInstanceId, CastSpellCommand, CreatureDied,
-    DealOpeningHandsCommand, DeckId, DeclareAttackersCommand, DeclareBlockersCommand, DomainError,
-    Game, GameId, GameService, InMemoryEventBus, InMemoryEventStore, LibraryCard,
+    AdjustPlayerLifeEffectCommand, CardDefinitionId, CardError, CardInstanceId, CastSpellCommand,
+    CreatureDied, DealOpeningHandsCommand, DeckId, DeclareAttackersCommand, DeclareBlockersCommand,
+    DomainError, Game, GameId, GameService, InMemoryEventBus, InMemoryEventStore, LibraryCard,
     NonCreatureCardType, Phase, PlayerDeck, PlayerId, PlayerLibrary, ResolveCombatDamageCommand,
     StartGameCommand,
 };
@@ -384,9 +384,13 @@ fn unblocked_combat_damage_ends_the_game_when_it_reduces_a_player_to_zero_life()
     cast_and_resolve(&service, &mut game, "player-1", attacker_id.clone());
 
     service
-        .adjust_life(
+        .adjust_player_life_effect(
             &mut game,
-            AdjustLifeCommand::new(PlayerId::new("player-2"), -17),
+            AdjustPlayerLifeEffectCommand::new(
+                PlayerId::new("player-1"),
+                PlayerId::new("player-2"),
+                -17,
+            ),
         )
         .unwrap();
 

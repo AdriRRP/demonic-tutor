@@ -9,10 +9,10 @@ pub use infrastructure::{GameLogProjection, InMemoryEventBus, InMemoryEventStore
 pub use domain::play::{
     cards::{CardInstance, CardType},
     commands::{
-        AdjustLifeCommand, AdvanceTurnCommand, CastSpellCommand, DealOpeningHandsCommand,
-        DeclareAttackersCommand, DeclareBlockersCommand, DiscardForCleanupCommand,
-        DrawCardsEffectCommand, LibraryCard, MulliganCommand, NonCreatureCardType,
-        PassPriorityCommand, PlayLandCommand, PlayerDeck, PlayerLibrary,
+        AdjustPlayerLifeEffectCommand, AdvanceTurnCommand, CastSpellCommand,
+        DealOpeningHandsCommand, DeclareAttackersCommand, DeclareBlockersCommand,
+        DiscardForCleanupCommand, DrawCardsEffectCommand, LibraryCard, MulliganCommand,
+        NonCreatureCardType, PassPriorityCommand, PlayLandCommand, PlayerDeck, PlayerLibrary,
         ResolveCombatDamageCommand, StartGameCommand, TapLandCommand,
     },
     errors::{CardError, DomainError, GameError, PhaseError, PlayerError},
@@ -24,8 +24,9 @@ pub use domain::play::{
         StackTopResolved, TurnProgressed,
     },
     game::{
-        AdjustLifeOutcome, AdvanceTurnOutcome, CastSpellOutcome, DrawCardsEffectOutcome, Game,
-        PassPriorityOutcome, PriorityState, SpellOnStack, StackObject, StackObjectKind, StackZone,
+        AdjustPlayerLifeEffectOutcome, AdvanceTurnOutcome, CastSpellOutcome,
+        DrawCardsEffectOutcome, Game, PassPriorityOutcome, PriorityState, SpellOnStack,
+        StackObject, StackObjectKind, StackZone,
     },
     ids::{CardDefinitionId, CardInstanceId, DeckId, GameId, PlayerId, StackObjectId},
     phase::Phase,

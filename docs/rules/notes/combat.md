@@ -30,7 +30,7 @@ This is a repository-owned interpretation note, not a copy of the Comprehensive 
 - blocker-to-attacker assignments are stored in runtime combat state and reused during damage resolution
 - the current combat model supports at most one blocker per attacker
 - combat damage is assigned and marked on the creatures that receive it
-- player life changes from unblocked combat damage are supported through the same life-adjustment semantics used elsewhere in the aggregate
+- player life changes from unblocked combat damage are supported through the same life-change semantics used by explicit targeted life effects elsewhere in the aggregate
 - unblocked combat damage can end the game when it reduces a defending player to 0 life
 - creatures with lethal marked damage are destroyed automatically through the shared state-based action review and moved to graveyard
 - surviving creatures keep damage marked until the turn ends, then lose it automatically

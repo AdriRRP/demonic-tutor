@@ -2,10 +2,10 @@ use crate::{
     application::{EventBus, EventStore},
     domain::play::{
         commands::{
-            AdjustLifeCommand, AdvanceTurnCommand, CastSpellCommand, DealOpeningHandsCommand,
-            DeclareAttackersCommand, DeclareBlockersCommand, DiscardForCleanupCommand,
-            DrawCardsEffectCommand, MulliganCommand, PassPriorityCommand, PlayLandCommand,
-            ResolveCombatDamageCommand, StartGameCommand, TapLandCommand,
+            AdjustPlayerLifeEffectCommand, AdvanceTurnCommand, CastSpellCommand,
+            DealOpeningHandsCommand, DeclareAttackersCommand, DeclareBlockersCommand,
+            DiscardForCleanupCommand, DrawCardsEffectCommand, MulliganCommand, PassPriorityCommand,
+            PlayLandCommand, ResolveCombatDamageCommand, StartGameCommand, TapLandCommand,
         },
         errors::{DomainError, GameError},
         events::{
@@ -13,8 +13,8 @@ use crate::{
             LandPlayed, LandTapped, ManaAdded, MulliganTaken, OpeningHandDealt,
         },
         game::{
-            AdjustLifeOutcome, AdvanceTurnOutcome, CastSpellOutcome, DrawCardsEffectOutcome, Game,
-            PassPriorityOutcome, ResolveCombatDamageOutcome,
+            AdjustPlayerLifeEffectOutcome, AdvanceTurnOutcome, CastSpellOutcome,
+            DrawCardsEffectOutcome, Game, PassPriorityOutcome, ResolveCombatDamageOutcome,
         },
     },
 };
@@ -112,7 +112,9 @@ where
         domain_events
     }
 
-    fn domain_events_for_adjust_life(outcome: &AdjustLifeOutcome) -> Vec<DomainEvent> {
+    fn domain_events_for_adjust_player_life_effect(
+        outcome: &AdjustPlayerLifeEffectOutcome,
+    ) -> Vec<DomainEvent> {
         let mut domain_events = vec![outcome.life_changed.clone().into()];
         domain_events.extend(outcome.creatures_died.iter().cloned().map(Into::into));
         if let Some(game_ended) = &outcome.game_ended {
@@ -270,18 +272,18 @@ where
         Ok(event)
     }
 
-    /// Adjusts a player's life total by a signed delta.
+    /// Resolves an explicit life effect from a caster onto a target player.
     ///
     /// # Errors
     ///
     /// Returns an error if the command is invalid.
-    pub fn adjust_life(
+    pub fn adjust_player_life_effect(
         &self,
         game: &mut Game,
-        cmd: AdjustLifeCommand,
-    ) -> Result<AdjustLifeOutcome, DomainError> {
-        let outcome = game.adjust_life(cmd)?;
-        let domain_events = Self::domain_events_for_adjust_life(&outcome);
+        cmd: AdjustPlayerLifeEffectCommand,
+    ) -> Result<AdjustPlayerLifeEffectOutcome, DomainError> {
+        let outcome = game.adjust_player_life_effect(cmd)?;
+        let domain_events = Self::domain_events_for_adjust_player_life_effect(&outcome);
         self.persist_and_publish_events(game.id().as_str(), &domain_events)?;
 
         Ok(outcome)

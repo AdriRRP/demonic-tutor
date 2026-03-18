@@ -45,6 +45,7 @@ Implemented capabilities include:
 - clearing marked damage from surviving creatures when the turn ends
 - discarding down to the maximum hand size before the turn can advance out of `EndStep`
 - tracking player life totals
+- resolving explicit targeted life effects
 - advancing turns
 - full phase progression using State pattern (Setup, Untap, Upkeep, Draw, FirstMain, BeginningOfCombat, DeclareAttackers, DeclareBlockers, CombatDamage, EndOfCombat, SecondMain, EndStep)
 
@@ -201,7 +202,7 @@ The project currently includes:
 - domain events describing state transitions
 - composite turn progression events and draw events with explicit origin
 - explicit game-end events with reasons for terminal empty-library draw and zero life
-- shared life-change semantics reused by explicit life adjustment and combat damage
+- shared life-change semantics reused by explicit targeted life effects and combat damage
 - shared review of currently supported state-based actions after relevant gameplay actions
 - aggregate-owned stack zone and priority state with minimal public stack behavior
 - an event bus for event distribution

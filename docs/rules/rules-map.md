@@ -163,6 +163,13 @@ It is not a literal restatement of the rules text.
 
 ---
 
+## Player Life
+
+- 118.1
+- 118.2
+
+---
+
 ## Zero-Toughness Creature Dies
 
 - 704.5f

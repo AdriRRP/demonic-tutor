@@ -5,7 +5,7 @@ use super::{
 };
 use crate::domain::play::{
     cards::CardType,
-    commands::{AdjustLifeCommand, PlayLandCommand, TapLandCommand},
+    commands::{AdjustPlayerLifeEffectCommand, PlayLandCommand, TapLandCommand},
     errors::{CardError, DomainError, PhaseError},
     events::{CreatureDied, GameEnded, LandPlayed, LandTapped, LifeChanged, ManaAdded},
     ids::{GameId, PlayerId},
@@ -13,13 +13,13 @@ use crate::domain::play::{
 };
 
 #[derive(Debug, Clone)]
-pub struct AdjustLifeOutcome {
+pub struct AdjustPlayerLifeEffectOutcome {
     pub life_changed: LifeChanged,
     pub creatures_died: Vec<CreatureDied>,
     pub game_ended: Option<GameEnded>,
 }
 
-impl AdjustLifeOutcome {
+impl AdjustPlayerLifeEffectOutcome {
     #[must_use]
     pub const fn new(
         life_changed: LifeChanged,
@@ -131,24 +131,27 @@ pub fn tap_land(
 ///
 /// # Errors
 /// Returns an error if the player is not found.
-pub fn adjust_life(
+pub fn adjust_player_life_effect(
     game_id: &GameId,
     players: &mut [Player],
     terminal_state: &mut TerminalState,
-    cmd: AdjustLifeCommand,
-) -> Result<AdjustLifeOutcome, DomainError> {
-    let AdjustLifeCommand {
-        player_id,
+    cmd: AdjustPlayerLifeEffectCommand,
+) -> Result<AdjustPlayerLifeEffectOutcome, DomainError> {
+    let AdjustPlayerLifeEffectCommand {
+        caster_id,
+        target_player_id,
         life_delta,
     } = cmd;
 
-    let life_changed = game_effects::adjust_player_life(game_id, players, &player_id, life_delta)?;
+    invariants::find_player_index(players, &caster_id)?;
+    let life_changed =
+        game_effects::adjust_player_life(game_id, players, &target_player_id, life_delta)?;
     let StateBasedActionsResult {
         creatures_died,
         game_ended,
     } = state_based_actions::check_state_based_actions(game_id, players, terminal_state)?;
 
-    Ok(AdjustLifeOutcome::new(
+    Ok(AdjustPlayerLifeEffectOutcome::new(
         life_changed,
         creatures_died,
         game_ended,

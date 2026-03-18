@@ -4,10 +4,10 @@ pub mod rules;
 
 use crate::domain::play::{
     commands::{
-        AdjustLifeCommand, AdvanceTurnCommand, CastSpellCommand, DealOpeningHandsCommand,
-        DeclareAttackersCommand, DeclareBlockersCommand, DiscardForCleanupCommand,
-        DrawCardsEffectCommand, MulliganCommand, PassPriorityCommand, PlayLandCommand,
-        ResolveCombatDamageCommand, StartGameCommand, TapLandCommand,
+        AdjustPlayerLifeEffectCommand, AdvanceTurnCommand, CastSpellCommand,
+        DealOpeningHandsCommand, DeclareAttackersCommand, DeclareBlockersCommand,
+        DiscardForCleanupCommand, DrawCardsEffectCommand, MulliganCommand, PassPriorityCommand,
+        PlayLandCommand, ResolveCombatDamageCommand, StartGameCommand, TapLandCommand,
     },
     errors::DomainError,
     events::{
@@ -22,7 +22,7 @@ pub use model::Player;
 pub use model::{PriorityState, SpellOnStack, StackObject, StackObjectKind, StackZone};
 pub use rules::{
     combat::ResolveCombatDamageOutcome,
-    resource_actions::AdjustLifeOutcome,
+    resource_actions::AdjustPlayerLifeEffectOutcome,
     stack_priority::{CastSpellOutcome, PassPriorityOutcome, StackPriorityContext},
     turn_flow::TurnProgressionContext,
     turn_flow::{AdvanceTurnOutcome, DrawCardsEffectOutcome},
@@ -283,21 +283,21 @@ impl Game {
         )
     }
 
-    /// Adjusts a player's life total by a signed delta.
+    /// Resolves an explicit life effect from a caster onto a target player.
     ///
     /// # Errors
-    /// See [`rules::resource_actions::adjust_life`].
-    pub fn adjust_life(
+    /// See [`rules::resource_actions::adjust_player_life_effect`].
+    pub fn adjust_player_life_effect(
         &mut self,
-        cmd: AdjustLifeCommand,
-    ) -> Result<AdjustLifeOutcome, DomainError> {
+        cmd: AdjustPlayerLifeEffectCommand,
+    ) -> Result<AdjustPlayerLifeEffectOutcome, DomainError> {
         invariants::require_game_active(self.is_over())?;
         invariants::require_empty_stack_priority_action_window(
             self.priority(),
             self.stack.is_empty(),
             &self.active_player,
         )?;
-        rules::resource_actions::adjust_life(
+        rules::resource_actions::adjust_player_life_effect(
             &self.id,
             &mut self.players,
             &mut self.terminal_state,

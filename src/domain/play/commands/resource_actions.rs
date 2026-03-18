@@ -14,16 +14,18 @@ impl PlayLandCommand {
 }
 
 #[derive(Debug, Clone)]
-pub struct AdjustLifeCommand {
-    pub player_id: PlayerId,
+pub struct AdjustPlayerLifeEffectCommand {
+    pub caster_id: PlayerId,
+    pub target_player_id: PlayerId,
     pub life_delta: i32,
 }
 
-impl AdjustLifeCommand {
+impl AdjustPlayerLifeEffectCommand {
     #[must_use]
-    pub const fn new(player_id: PlayerId, life_delta: i32) -> Self {
+    pub const fn new(caster_id: PlayerId, target_player_id: PlayerId, life_delta: i32) -> Self {
         Self {
-            player_id,
+            caster_id,
+            target_player_id,
             life_delta,
         }
     }

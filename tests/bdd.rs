@@ -114,5 +114,6 @@ async fn main() {
     GameplayWorld::run("features/combat/creature_destruction.feature").await;
     GameplayWorld::run("features/turn-flow/cleanup_damage_removal.feature").await;
     GameplayWorld::run("features/turn-flow/cleanup_hand_size_discard.feature").await;
+    GameplayWorld::run("features/life/adjust_player_life_effect.feature").await;
     GameplayWorld::run("features/life/lose_on_zero_life.feature").await;
 }

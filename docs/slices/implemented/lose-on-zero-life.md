@@ -23,7 +23,7 @@ This slice follows `PlayerLife` and `LoseOnEmptyDraw` because:
 
 ## Supported Behavior
 
-- end the game if `AdjustLifeCommand` reduces a player's life total to 0
+- end the game if `AdjustPlayerLifeEffectCommand` reduces a target player's life total to 0
 - emit `LifeChanged`
 - emit `GameEnded` with `GameEndReason::ZeroLife`
 - record the terminal game state with winner, loser, and reason
@@ -56,7 +56,7 @@ This slice follows `PlayerLife` and `LoseOnEmptyDraw` because:
 
 ### Aggregate Impact
 
-- extend `AdjustLife` so life changes can also produce terminal game state
+- extend explicit targeted life effects so life changes can also produce terminal game state
 
 ### Entity / Value Object Impact
 
@@ -103,7 +103,7 @@ This behavior belongs to the `Game` aggregate because it:
 ## Test Impact
 
 - reducing a player to 0 life ends the game
-- `AdjustLife` still emits `LifeChanged`
+- explicit targeted life effects still emit `LifeChanged`
 - `GameEnded` carries `ZeroLife`
 - later gameplay actions fail once the game has ended
 - BDD covers the zero-life loss scenario
@@ -119,4 +119,4 @@ This behavior belongs to the `Game` aggregate because it:
 
 ## Rules Support Statement
 
-This slice implements a narrow game-loss condition for zero life. The repository still does not model a full state-based action engine; instead, this condition is applied immediately after the explicit life change supported by the current runtime.
+This slice implements a narrow game-loss condition for zero life. The repository still does not model a full state-based action engine; instead, this condition is applied immediately after the explicit targeted life change supported by the current runtime.

@@ -2,9 +2,9 @@
 
 use demonictutor::{
     domain::play::game::{Player, TerminalState},
-    AdjustLifeCommand, CardDefinitionId, CardInstance, CardInstanceId, DeckId, DomainError, Game,
-    GameEndReason, GameError, GameId, GameService, InMemoryEventBus, InMemoryEventStore,
-    PlayerDeck, PlayerId, StartGameCommand,
+    AdjustPlayerLifeEffectCommand, CardDefinitionId, CardInstance, CardInstanceId, DeckId,
+    DomainError, Game, GameEndReason, GameError, GameId, GameService, InMemoryEventBus,
+    InMemoryEventStore, PlayerDeck, PlayerId, StartGameCommand,
 };
 
 fn player_deck(player: &str, deck: &str) -> PlayerDeck {
@@ -45,8 +45,12 @@ fn adjust_life_deltas_player_life() {
         ))
         .unwrap();
 
-    let cmd = AdjustLifeCommand::new(PlayerId::new("player-1"), -5);
-    let result = service.adjust_life(&mut game, cmd);
+    let cmd = AdjustPlayerLifeEffectCommand::new(
+        PlayerId::new("player-1"),
+        PlayerId::new("player-1"),
+        -5,
+    );
+    let result = service.adjust_player_life_effect(&mut game, cmd);
 
     assert!(result.is_ok());
     let outcome = result.unwrap();
@@ -72,8 +76,9 @@ fn adjust_life_gains_life() {
         ))
         .unwrap();
 
-    let cmd = AdjustLifeCommand::new(PlayerId::new("player-1"), 3);
-    let result = service.adjust_life(&mut game, cmd);
+    let cmd =
+        AdjustPlayerLifeEffectCommand::new(PlayerId::new("player-1"), PlayerId::new("player-1"), 3);
+    let result = service.adjust_player_life_effect(&mut game, cmd);
 
     assert!(result.is_ok());
     let outcome = result.unwrap();
@@ -97,8 +102,12 @@ fn adjust_life_cannot_go_below_zero_and_ends_the_game() {
         ))
         .unwrap();
 
-    let cmd = AdjustLifeCommand::new(PlayerId::new("player-1"), -30);
-    let result = service.adjust_life(&mut game, cmd);
+    let cmd = AdjustPlayerLifeEffectCommand::new(
+        PlayerId::new("player-1"),
+        PlayerId::new("player-1"),
+        -30,
+    );
+    let result = service.adjust_player_life_effect(&mut game, cmd);
 
     assert!(result.is_ok());
     let outcome = result.unwrap();
@@ -130,16 +139,20 @@ fn gameplay_actions_fail_after_zero_life_game_end() {
         .unwrap();
 
     let outcome = service
-        .adjust_life(
+        .adjust_player_life_effect(
             &mut game,
-            AdjustLifeCommand::new(PlayerId::new("player-1"), -20),
+            AdjustPlayerLifeEffectCommand::new(
+                PlayerId::new("player-1"),
+                PlayerId::new("player-1"),
+                -20,
+            ),
         )
         .unwrap();
     assert!(outcome.game_ended.is_some());
 
-    let result = service.adjust_life(
+    let result = service.adjust_player_life_effect(
         &mut game,
-        AdjustLifeCommand::new(PlayerId::new("player-2"), 1),
+        AdjustPlayerLifeEffectCommand::new(PlayerId::new("player-2"), PlayerId::new("player-2"), 1),
     );
 
     assert_eq!(
@@ -161,10 +174,40 @@ fn adjust_life_fails_for_unknown_player() {
         ))
         .unwrap();
 
-    let cmd = AdjustLifeCommand::new(PlayerId::new("unknown-player"), 10);
-    let result = service.adjust_life(&mut game, cmd);
+    let cmd = AdjustPlayerLifeEffectCommand::new(
+        PlayerId::new("unknown-player"),
+        PlayerId::new("player-1"),
+        10,
+    );
+    let result = service.adjust_player_life_effect(&mut game, cmd);
 
     assert!(result.is_err());
+    assert!(matches!(
+        result.unwrap_err(),
+        DomainError::Game(GameError::PlayerNotFound { .. })
+    ));
+}
+
+#[test]
+fn adjust_life_fails_for_unknown_target_player() {
+    let service = create_service();
+    let (mut game, _) = service
+        .start_game(StartGameCommand::new(
+            GameId::new("game-1"),
+            vec![
+                player_deck("player-1", "deck-1"),
+                player_deck("player-2", "deck-2"),
+            ],
+        ))
+        .unwrap();
+
+    let cmd = AdjustPlayerLifeEffectCommand::new(
+        PlayerId::new("player-1"),
+        PlayerId::new("unknown-player"),
+        10,
+    );
+    let result = service.adjust_player_life_effect(&mut game, cmd);
+
     assert!(matches!(
         result.unwrap_err(),
         DomainError::Game(GameError::PlayerNotFound { .. })
@@ -197,9 +240,13 @@ fn adjust_life_reviews_pending_state_based_actions_for_existing_lethal_damage() 
     );
 
     let outcome = service
-        .adjust_life(
+        .adjust_player_life_effect(
             &mut game,
-            AdjustLifeCommand::new(PlayerId::new("player-1"), 1),
+            AdjustPlayerLifeEffectCommand::new(
+                PlayerId::new("player-1"),
+                PlayerId::new("player-1"),
+                1,
+            ),
         )
         .unwrap();
 
@@ -213,4 +260,64 @@ fn adjust_life_reviews_pending_state_based_actions_for_existing_lethal_damage() 
     assert!(outcome.game_ended.is_none());
     assert_eq!(game.players()[0].battlefield().cards().len(), 0);
     assert_eq!(game.players()[0].graveyard().cards().len(), 1);
+}
+
+#[test]
+fn adjust_player_life_effect_can_target_another_player() {
+    let service = create_service();
+    let (mut game, _) = service
+        .start_game(StartGameCommand::new(
+            GameId::new("game-1"),
+            vec![
+                player_deck("player-1", "deck-1"),
+                player_deck("player-2", "deck-2"),
+            ],
+        ))
+        .unwrap();
+
+    let outcome = service
+        .adjust_player_life_effect(
+            &mut game,
+            AdjustPlayerLifeEffectCommand::new(
+                PlayerId::new("player-1"),
+                PlayerId::new("player-2"),
+                -4,
+            ),
+        )
+        .unwrap();
+
+    assert_eq!(outcome.life_changed.player_id, PlayerId::new("player-2"));
+    assert_eq!(outcome.life_changed.from_life, 20);
+    assert_eq!(outcome.life_changed.to_life, 16);
+    assert_eq!(game.players()[1].life(), 16);
+}
+
+#[test]
+fn adjust_player_life_effect_can_gain_life_for_another_player() {
+    let service = create_service();
+    let (mut game, _) = service
+        .start_game(StartGameCommand::new(
+            GameId::new("game-1"),
+            vec![
+                player_deck("player-1", "deck-1"),
+                player_deck("player-2", "deck-2"),
+            ],
+        ))
+        .unwrap();
+
+    let outcome = service
+        .adjust_player_life_effect(
+            &mut game,
+            AdjustPlayerLifeEffectCommand::new(
+                PlayerId::new("player-1"),
+                PlayerId::new("player-2"),
+                3,
+            ),
+        )
+        .unwrap();
+
+    assert_eq!(outcome.life_changed.player_id, PlayerId::new("player-2"));
+    assert_eq!(outcome.life_changed.from_life, 20);
+    assert_eq!(outcome.life_changed.to_life, 23);
+    assert_eq!(game.players()[1].life(), 23);
 }

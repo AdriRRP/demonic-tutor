@@ -1,6 +1,6 @@
 # status: implemented
 # rules: 104.3b, 704.5a
-# slices: lose-on-zero-life.md, player-life.md
+# slices: adjust-player-life-effect.md, lose-on-zero-life.md, player-life.md
 
 Feature: A player loses when their life total reaches zero
   In order to keep life semantics truthful

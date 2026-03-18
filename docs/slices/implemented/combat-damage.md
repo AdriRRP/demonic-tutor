@@ -31,7 +31,7 @@ This slice follows `DeclareBlockers` because:
   - if unblocked, deal damage equal to power to the defending player
 - for each blocking creature:
   - deal damage equal to power to the attacking creature it blocks
-- route player life loss from unblocked combat damage through the same shared life semantics used by `AdjustLife`
+- route player life loss from unblocked combat damage through the same shared life semantics used by explicit targeted life effects
 - mark damage on creatures
 - emit `CombatDamageResolved` event with damage details
 - emit `LifeChanged` when combat damage changes a player's life total

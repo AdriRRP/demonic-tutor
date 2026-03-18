@@ -2,12 +2,12 @@
 pub mod support;
 
 use demonictutor::{
-    AdjustLifeCommand, AdvanceTurnCommand, AdvanceTurnOutcome, CardDefinitionId, CardDiscarded,
-    CardDrawn, CardInstance, CardInstanceId, CastSpellCommand, CombatDamageResolved, CreatureDied,
-    DealOpeningHandsCommand, DiscardForCleanupCommand, DrawCardsEffectCommand, Game, GameEnded,
-    GameId, LibraryCard, LifeChanged, PassPriorityCommand, Phase, PlayLandCommand, PlayerId,
-    PriorityPassed, ResolveCombatDamageCommand, SpellCast, SpellPutOnStack, StackTopResolved,
-    StartGameCommand, TapLandCommand, TurnProgressed,
+    AdjustPlayerLifeEffectCommand, AdvanceTurnCommand, AdvanceTurnOutcome, CardDefinitionId,
+    CardDiscarded, CardDrawn, CardInstance, CardInstanceId, CastSpellCommand, CombatDamageResolved,
+    CreatureDied, DealOpeningHandsCommand, DiscardForCleanupCommand, DrawCardsEffectCommand, Game,
+    GameEnded, GameId, LibraryCard, LifeChanged, PassPriorityCommand, Phase, PlayLandCommand,
+    PlayerId, PriorityPassed, ResolveCombatDamageCommand, SpellCast, SpellPutOnStack,
+    StackTopResolved, StartGameCommand, TapLandCommand, TurnProgressed,
 };
 
 #[derive(Debug, Default, cucumber::World)]
@@ -2659,9 +2659,13 @@ impl GameplayWorld {
         let delta = life.cast_signed() - current_life.cast_signed();
         let service = support::create_service();
         let outcome = service
-            .adjust_life(
+            .adjust_player_life_effect(
                 self.game_mut(),
-                AdjustLifeCommand::new(Self::player_id("Bob"), delta),
+                AdjustPlayerLifeEffectCommand::new(
+                    Self::player_id("Alice"),
+                    Self::player_id("Bob"),
+                    delta,
+                ),
             )
             .expect("BDD combat life setup should succeed");
         assert!(outcome.game_ended.is_none());
@@ -2761,9 +2765,13 @@ impl GameplayWorld {
         let delta = life.cast_signed() - current_life.cast_signed();
         let service = support::create_service();
         let outcome = service
-            .adjust_life(
+            .adjust_player_life_effect(
                 self.game_mut(),
-                AdjustLifeCommand::new(Self::player_id(alias), delta),
+                AdjustPlayerLifeEffectCommand::new(
+                    Self::player_id("Alice"),
+                    Self::player_id(alias),
+                    delta,
+                ),
             )
             .expect("BDD setup life adjustment should succeed");
 
@@ -2957,11 +2965,24 @@ impl GameplayWorld {
     }
 
     pub fn adjust_life(&mut self, alias: &str, delta: i32) {
+        self.adjust_player_life_effect(alias, alias, delta);
+    }
+
+    pub fn adjust_player_life_effect(
+        &mut self,
+        caster_alias: &str,
+        target_alias: &str,
+        delta: i32,
+    ) {
         let service = support::create_service();
 
-        match service.adjust_life(
+        match service.adjust_player_life_effect(
             self.game_mut(),
-            AdjustLifeCommand::new(Self::player_id(alias), delta),
+            AdjustPlayerLifeEffectCommand::new(
+                Self::player_id(caster_alias),
+                Self::player_id(target_alias),
+                delta,
+            ),
         ) {
             Ok(outcome) => {
                 self.last_game_ended = outcome.game_ended;
