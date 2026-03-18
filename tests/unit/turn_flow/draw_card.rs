@@ -30,7 +30,7 @@ fn draw_cards_effect_works_in_main_phase() {
 
     let result = service.draw_cards_effect(
         &mut game,
-        &DrawCardsEffectCommand::new(PlayerId::new("player-2"), 1),
+        &DrawCardsEffectCommand::new(PlayerId::new("player-2"), PlayerId::new("player-2"), 1),
     );
     assert!(matches!(
         result,
@@ -57,7 +57,7 @@ fn draw_cards_effect_moves_cards_from_library_to_hand() {
     let outcome = service
         .draw_cards_effect(
             &mut game,
-            &DrawCardsEffectCommand::new(PlayerId::new("player-2"), 2),
+            &DrawCardsEffectCommand::new(PlayerId::new("player-2"), PlayerId::new("player-2"), 2),
         )
         .unwrap();
     assert_eq!(outcome.cards_drawn.len(), 2);
@@ -83,7 +83,7 @@ fn draw_cards_effect_emits_one_event_per_drawn_card() {
     let outcome = service
         .draw_cards_effect(
             &mut game,
-            &DrawCardsEffectCommand::new(PlayerId::new("player-2"), 2),
+            &DrawCardsEffectCommand::new(PlayerId::new("player-2"), PlayerId::new("player-2"), 2),
         )
         .unwrap();
     assert_eq!(outcome.cards_drawn.len(), 2);
@@ -91,6 +91,35 @@ fn draw_cards_effect_emits_one_event_per_drawn_card() {
         .cards_drawn
         .iter()
         .all(|event| event.player_id.as_str() == "player-2"));
+}
+
+#[test]
+fn draw_cards_effect_can_target_another_player() {
+    let (service, mut game) = setup_two_player_game(
+        "game-1",
+        filled_library(vec![land_card("forest")], 10),
+        filled_library(vec![land_card("mountain")], 10),
+    );
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
+
+    let bob_hand_before = game.players()[1].hand().cards().len();
+    let bob_library_before = game.players()[1].library().len();
+
+    let outcome = service
+        .draw_cards_effect(
+            &mut game,
+            &DrawCardsEffectCommand::new(PlayerId::new("player-1"), PlayerId::new("player-2"), 2),
+        )
+        .unwrap();
+
+    assert_eq!(outcome.cards_drawn.len(), 2);
+    assert!(outcome
+        .cards_drawn
+        .iter()
+        .all(|event| event.player_id == PlayerId::new("player-2")));
+    assert_eq!(game.players()[1].hand().cards().len(), bob_hand_before + 2);
+    assert_eq!(game.players()[1].library().len(), bob_library_before - 2);
 }
 
 #[test]
@@ -102,7 +131,45 @@ fn draw_cards_effect_ends_the_game_when_the_library_runs_out_mid_effect() {
 
     let result = service.draw_cards_effect(
         &mut game,
-        &DrawCardsEffectCommand::new(PlayerId::new("player-2"), 3),
+        &DrawCardsEffectCommand::new(PlayerId::new("player-2"), PlayerId::new("player-2"), 3),
+    );
+
+    let outcome = result.unwrap();
+    assert_eq!(outcome.cards_drawn.len(), 2);
+    assert_eq!(
+        outcome
+            .game_ended
+            .as_ref()
+            .map(|event| event.loser_id.clone()),
+        Some(PlayerId::new("player-2"))
+    );
+    assert_eq!(
+        outcome
+            .game_ended
+            .as_ref()
+            .map(|event| event.winner_id.clone()),
+        Some(PlayerId::new("player-1"))
+    );
+    assert_eq!(
+        outcome.game_ended.as_ref().map(|event| event.reason),
+        Some(GameEndReason::EmptyLibraryDraw)
+    );
+    assert!(game.is_over());
+}
+
+#[test]
+fn draw_cards_effect_ends_the_game_when_the_target_library_runs_out_mid_effect() {
+    let (service, mut game) = setup_two_player_game(
+        "game-1",
+        filled_library(vec![land_card("forest")], 10),
+        filled_library(vec![land_card("mountain")], 9),
+    );
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
+
+    let result = service.draw_cards_effect(
+        &mut game,
+        &DrawCardsEffectCommand::new(PlayerId::new("player-1"), PlayerId::new("player-2"), 3),
     );
 
     let outcome = result.unwrap();
@@ -138,7 +205,7 @@ fn draw_cards_effect_fails_when_not_player_turn() {
 
     let result = service.draw_cards_effect(
         &mut game,
-        &DrawCardsEffectCommand::new(PlayerId::new("player-2"), 1),
+        &DrawCardsEffectCommand::new(PlayerId::new("player-2"), PlayerId::new("player-2"), 1),
     );
 
     assert!(matches!(
@@ -157,7 +224,7 @@ fn draw_cards_effect_allows_playing_land_after_draw() {
     let outcome = service
         .draw_cards_effect(
             &mut game,
-            &DrawCardsEffectCommand::new(PlayerId::new("player-1"), 1),
+            &DrawCardsEffectCommand::new(PlayerId::new("player-1"), PlayerId::new("player-1"), 1),
         )
         .unwrap();
     assert_eq!(outcome.cards_drawn.len(), 1);
@@ -186,7 +253,7 @@ fn gameplay_actions_fail_after_the_game_has_ended() {
     let outcome = service
         .draw_cards_effect(
             &mut game,
-            &DrawCardsEffectCommand::new(PlayerId::new("player-2"), 3),
+            &DrawCardsEffectCommand::new(PlayerId::new("player-2"), PlayerId::new("player-2"), 3),
         )
         .unwrap();
     assert_eq!(outcome.cards_drawn.len(), 2);
@@ -219,7 +286,7 @@ fn draw_cards_effect_fails_outside_main_phases() {
 
     let result = service.draw_cards_effect(
         &mut game,
-        &DrawCardsEffectCommand::new(PlayerId::new("player-1"), 1),
+        &DrawCardsEffectCommand::new(PlayerId::new("player-1"), PlayerId::new("player-1"), 1),
     );
 
     assert!(matches!(
@@ -244,7 +311,7 @@ fn draw_cards_effect_fails_when_zero_cards_are_requested() {
 
     let result = service.draw_cards_effect(
         &mut game,
-        &DrawCardsEffectCommand::new(PlayerId::new("player-1"), 0),
+        &DrawCardsEffectCommand::new(PlayerId::new("player-1"), PlayerId::new("player-1"), 0),
     );
 
     assert_eq!(
@@ -274,7 +341,7 @@ fn draw_cards_effect_fails_while_priority_window_is_open() {
 
     let result = service.draw_cards_effect(
         &mut game,
-        &DrawCardsEffectCommand::new(PlayerId::new("player-1"), 1),
+        &DrawCardsEffectCommand::new(PlayerId::new("player-1"), PlayerId::new("player-1"), 1),
     );
 
     assert!(matches!(

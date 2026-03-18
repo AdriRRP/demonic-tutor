@@ -24,7 +24,7 @@ This slice follows explicit draw effects and automatic draw-step support because
 ## Supported Behavior
 
 - end the game if the active player reaches the draw step and cannot draw from an empty library
-- end the game if an explicit draw effect requires a draw from an empty library
+- end the game if an explicit draw effect requires a target player to draw from an empty library
 - record the terminal game state with winner, loser, and `GameEndReason::EmptyLibraryDraw`
 - emit `GameEnded`
 - reject subsequent gameplay actions once the game has ended
@@ -105,7 +105,7 @@ This behavior belongs to the `Game` aggregate because it:
 ## Test Impact
 
 - game ends when the active player cannot perform the automatic draw step
-- game ends when an explicit draw effect tries to draw from an empty library
+- game ends when an explicit draw effect tries to draw from the target player's empty library
 - terminal winner, loser, and reason are recorded correctly
 - later gameplay actions fail once the game has ended
 - projections log `GameEnded`
@@ -121,4 +121,4 @@ This behavior belongs to the `Game` aggregate because it:
 
 ## Rules Support Statement
 
-This slice implements a narrow game-loss condition for required draws from an empty library. It currently applies to the automatic draw step and to the simplified explicit draw-effect entrypoint, including multi-card effects that overrun the library mid-resolution. It does not yet implement the broader set of game-loss conditions or replacement effects that can modify draw behavior.
+This slice implements a narrow game-loss condition for required draws from an empty library. It currently applies to the automatic draw step and to the simplified explicit draw-effect entrypoint, including multi-card effects that overrun the targeted library mid-resolution. It does not yet implement the broader set of game-loss conditions or replacement effects that can modify draw behavior.

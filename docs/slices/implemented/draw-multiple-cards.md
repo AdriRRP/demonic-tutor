@@ -6,7 +6,7 @@ DrawMultipleCards
 
 ## Goal
 
-Extend explicit draw effects so they can draw more than one card through a single canonical command.
+Extend explicit draw effects so they can draw more than one card through a single canonical command onto a chosen target player.
 
 ---
 
@@ -18,17 +18,18 @@ The project already supports:
 - explicit one-card draw effects
 - game loss when a player must draw from an empty library
 
-Allowing an explicit effect to draw multiple cards is a small but useful extension that reuses those semantics without introducing stack or priority.
+Allowing an explicit effect to draw multiple cards onto a chosen player is a small but useful extension that reuses those semantics without introducing stack or priority.
 
 ---
 
 ## Supported Behavior
 
 - replace the single-card explicit draw command with `DrawCardsEffectCommand`
+- let the active player choose the target player for the draw effect
 - require an explicit draw count of at least one
 - draw cards one by one
 - emit one `CardDrawn` event per completed draw
-- if the effect tries to draw from an empty library mid-resolution, emit `GameEnded(EmptyLibraryDraw)` after completed draws remain applied
+- if the effect tries to draw from the target player's empty library mid-resolution, emit `GameEnded(EmptyLibraryDraw)` after completed draws remain applied
 
 ---
 
@@ -37,7 +38,7 @@ Allowing an explicit effect to draw multiple cards is a small but useful extensi
 - only the active player may use the explicit draw-effect command
 - explicit draw effects are only allowed during `FirstMain` and `SecondMain`
 - draw count must be at least one
-- completed draws are not rolled back if the effect later ends the game on an empty library
+- completed draws are not rolled back if the effect later ends the game on the target player's empty library
 
 ---
 
@@ -95,4 +96,4 @@ Allowing an explicit effect to draw multiple cards is a small but useful extensi
 
 ## Rules Support Statement
 
-DemonicTutor supports explicit multi-card draw effects as a simplified non-stack action window. Those effects resolve one draw at a time and reuse the existing empty-library loss semantics when they overrun the library.
+DemonicTutor supports explicit multi-card draw effects as a simplified non-stack action window. The active player chooses the target player, the effect resolves one draw at a time on that target, and it reuses the existing empty-library loss semantics when that target library is overrun.

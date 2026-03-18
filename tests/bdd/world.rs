@@ -2930,12 +2930,16 @@ impl GameplayWorld {
         }
     }
 
-    pub fn draw_cards_effect(&mut self, alias: &str, count: u32) {
+    pub fn draw_cards_effect(&mut self, caster_alias: &str, target_alias: &str, count: u32) {
         let service = support::create_service();
 
         match service.draw_cards_effect(
             self.game_mut(),
-            &DrawCardsEffectCommand::new(Self::player_id(alias), count),
+            &DrawCardsEffectCommand::new(
+                Self::player_id(caster_alias),
+                Self::player_id(target_alias),
+                count,
+            ),
         ) {
             Ok(outcome) => {
                 self.last_card_drawn = outcome.cards_drawn.last().cloned();

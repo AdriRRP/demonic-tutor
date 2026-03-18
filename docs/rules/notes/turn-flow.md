@@ -24,7 +24,7 @@ This is a repository-owned interpretation note, not a copy of the Comprehensive 
 - automatic untap applies only to the active player's permanents
 - automatic draw happens when the game advances from `Upkeep` into `Draw`
 - if a player must draw from an empty library, the game ends immediately with `GameEnded(EmptyLibraryDraw)`
-- explicit draw effects are modeled separately from the automatic draw step, are limited to main phases, and may draw multiple cards one by one
+- explicit draw effects are modeled separately from the automatic draw step, are limited to main phases, may target any player, and may draw multiple cards one by one
 - entering `Upkeep` opens an empty priority window for the active player
 - entering `Draw` opens an empty priority window for the active player after the automatic turn draw
 - if the active player is above the maximum hand size at `EndStep`, the turn cannot advance until they discard down to the maximum

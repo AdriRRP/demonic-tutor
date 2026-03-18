@@ -221,7 +221,7 @@ where
         Ok(outcome)
     }
 
-    /// Resolves an explicit draw effect for the active player.
+    /// Resolves an explicit draw effect from the active player onto a target player.
     ///
     /// # Errors
     ///

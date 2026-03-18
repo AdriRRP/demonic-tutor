@@ -20,8 +20,8 @@ Implemented capabilities include:
 - dealing opening hands
 - mulligan support (London Mulligan - simplified)
 - drawing cards (auto-draw when entering `Draw`)
-- resolving explicit draw effects during main phases
-- resolving explicit draw effects that draw multiple cards one by one
+- resolving explicit draw effects during main phases onto any player
+- resolving explicit draw effects that draw multiple cards one by one onto the chosen player
 - ending the game when a player must draw from an empty library
 - ending the game when a player reaches 0 life
 - playing lands
@@ -77,7 +77,7 @@ The domain currently includes:
 - explicit cleanup discard to maximum hand size during `EndStep`
 - summoning sickness for creatures (removed for the active player's creatures at turn start)
 - turn and phase progression
-- explicit draw effects as a simplified non-stack entrypoint, including multi-card draw
+- explicit draw effects as a simplified non-stack entrypoint, including multi-card targeted draw
 - terminal game state when a player loses by empty-library draw or zero life
 - casting spells onto an aggregate-owned stack zone
 - public priority passing for the currently open minimal stack windows

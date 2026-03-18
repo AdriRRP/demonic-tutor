@@ -12,15 +12,17 @@ impl AdvanceTurnCommand {
 
 #[derive(Debug, Clone)]
 pub struct DrawCardsEffectCommand {
-    pub player_id: PlayerId,
+    pub caster_id: PlayerId,
+    pub target_player_id: PlayerId,
     pub draw_count: u32,
 }
 
 impl DrawCardsEffectCommand {
     #[must_use]
-    pub const fn new(player_id: PlayerId, draw_count: u32) -> Self {
+    pub const fn new(caster_id: PlayerId, target_player_id: PlayerId, draw_count: u32) -> Self {
         Self {
-            player_id,
+            caster_id,
+            target_player_id,
             draw_count,
         }
     }

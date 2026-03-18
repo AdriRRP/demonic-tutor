@@ -10,6 +10,12 @@ Feature: Explicit draw effects can draw multiple cards
     Then Alice draws 2 cards from the explicit effect
     And the game emits 2 CardDrawn events with draw kind ExplicitEffect
 
+  Scenario: The active player can target another player with an explicit draw effect
+    Given Alice is the active player in FirstMain and Bob has at least two cards in his library for an explicit draw effect
+    When Alice makes Bob draw 2 cards through an explicit draw effect
+    Then Bob draws 2 cards from the explicit effect
+    And the game emits 2 CardDrawn events with draw kind ExplicitEffect
+
   Scenario: An explicit effect ends the game if it tries to draw past an empty library
     Given Alice is the active player in FirstMain with only one card in her library for an explicit draw effect
     When Alice draws 2 cards through an explicit draw effect
