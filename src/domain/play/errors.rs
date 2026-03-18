@@ -89,6 +89,11 @@ pub enum CardError {
         card: CardInstanceId,
     },
     NotAttacking(CardInstanceId),
+    CannotBlockFlyingWithoutFlyingOrReach {
+        player: PlayerId,
+        blocker: CardInstanceId,
+        attacker: CardInstanceId,
+    },
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -254,10 +259,23 @@ impl std::fmt::Display for CardError {
                     "creature {card} has summoning sickness and cannot attack"
                 )
             }
-            Self::NotControlledBy { player, card } => {
-                write!(f, "creature {card} is not controlled by player {player}")
+            Self::NotControlledBy { player: _, card } => {
+                write!(
+                    f,
+                    "creature {card} is not controlled by the attacking player"
+                )
             }
             Self::NotAttacking(card) => write!(f, "creature {card} is not an attacking creature"),
+            Self::CannotBlockFlyingWithoutFlyingOrReach {
+                player: _,
+                blocker,
+                attacker,
+            } => {
+                write!(
+                    f,
+                    "creature {blocker} cannot block flying creature {attacker} without flying or reach"
+                )
+            }
         }
     }
 }

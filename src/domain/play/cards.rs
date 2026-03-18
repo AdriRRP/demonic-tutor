@@ -81,6 +81,8 @@ struct CreatureState {
     damage: u32,
     flags: u8,
     blocking_target: Option<CardInstanceId>,
+    flying: bool,
+    reach: bool,
 }
 
 impl CreatureState {
@@ -91,6 +93,20 @@ impl CreatureState {
             damage: 0,
             flags: FLAG_SUMMONING_SICKNESS,
             blocking_target: None,
+            flying: false,
+            reach: false,
+        }
+    }
+
+    const fn new_with_keywords(power: u32, toughness: u32, flying: bool, reach: bool) -> Self {
+        Self {
+            power,
+            toughness,
+            damage: 0,
+            flags: FLAG_SUMMONING_SICKNESS,
+            blocking_target: None,
+            flying,
+            reach,
         }
     }
 
@@ -150,6 +166,28 @@ impl CardInstance {
             mana_cost,
             flags: 0,
             creature: Some(CreatureState::new(power, toughness)),
+        }
+    }
+
+    #[must_use]
+    pub const fn new_creature_with_keywords(
+        id: CardInstanceId,
+        definition_id: CardDefinitionId,
+        mana_cost: u32,
+        power: u32,
+        toughness: u32,
+        flying: bool,
+        reach: bool,
+    ) -> Self {
+        Self {
+            id,
+            definition_id,
+            card_type: CardType::Creature,
+            mana_cost,
+            flags: 0,
+            creature: Some(CreatureState::new_with_keywords(
+                power, toughness, flying, reach,
+            )),
         }
     }
 
@@ -303,6 +341,22 @@ impl CardInstance {
     pub const fn clear_damage(&mut self) {
         if let Some(creature) = &mut self.creature {
             creature.damage = 0;
+        }
+    }
+
+    #[must_use]
+    pub const fn has_flying(&self) -> bool {
+        match &self.creature {
+            Some(creature) => creature.flying,
+            None => false,
+        }
+    }
+
+    #[must_use]
+    pub const fn has_reach(&self) -> bool {
+        match &self.creature {
+            Some(creature) => creature.reach,
+            None => false,
         }
     }
 }

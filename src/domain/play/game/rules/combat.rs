@@ -274,8 +274,8 @@ pub fn declare_blockers(
         .cards()
         .iter()
         .filter(|card| card.is_attacking())
-        .map(|card| card.id().clone())
-        .collect::<HashSet<_>>();
+        .map(|card| (card.id().clone(), card.has_flying()))
+        .collect::<HashMap<_, _>>();
     let defender = &mut players[defending_player_idx];
     let battlefield = defender.battlefield_mut();
     let mut valid_blockers: Vec<(CardInstanceId, CardInstanceId)> = Vec::new();
@@ -295,11 +295,16 @@ pub fn declare_blockers(
             ));
         }
 
-        if !declared_attackers.contains(attacker_id) {
+        if !declared_attackers.contains_key(attacker_id) {
             return Err(DomainError::Card(CardError::NotAttacking(
                 attacker_id.clone(),
             )));
         }
+
+        let attacker_has_flying = declared_attackers
+            .get(attacker_id)
+            .copied()
+            .unwrap_or(false);
 
         let card = battlefield.card_mut(blocker_id).ok_or_else(|| {
             DomainError::Card(CardError::NotOnBattlefield {
@@ -319,6 +324,16 @@ pub fn declare_blockers(
                 player: cmd.player_id.clone(),
                 card: blocker_id.clone(),
             }));
+        }
+
+        if attacker_has_flying && !card.has_flying() && !card.has_reach() {
+            return Err(DomainError::Card(
+                CardError::CannotBlockFlyingWithoutFlyingOrReach {
+                    player: cmd.player_id.clone(),
+                    blocker: blocker_id.clone(),
+                    attacker: attacker_id.clone(),
+                },
+            ));
         }
 
         card.assign_blocking_target(attacker_id.clone());

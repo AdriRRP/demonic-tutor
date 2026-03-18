@@ -742,6 +742,19 @@ The initial Gherkin pilot currently targets these rule areas:
 
 ---
 
+## Keyword Abilities
+
+- 702.2 — Flying
+- 702.2b — blocking restriction for flying creatures
+- 702.2c — reach allows blocking flying creatures
+- 702.2d — reach
+
+Relevant features:
+
+- `features/combat/keyword_abilities.feature`
+
+---
+
 ## Creature Destruction
 
 - 704

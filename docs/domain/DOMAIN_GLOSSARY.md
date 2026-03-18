@@ -127,6 +127,22 @@ Cards can be moved to exile from the battlefield or graveyard. Exiled cards are 
 
 ---
 
+## Flying
+
+A keyword ability that restricts which creatures can block the flying creature.
+
+A creature with Flying cannot be blocked except by creatures with Flying or Reach. Flying does not grant any ability to block flying creatures.
+
+---
+
+## Reach
+
+A keyword ability that allows a creature to block creatures with Flying.
+
+A creature with Reach can block creatures with Flying. Reach does not grant Flying to the creature.
+
+---
+
 ## Stack
 
 A conceptual zone where spells and abilities wait to resolve.
