@@ -90,6 +90,11 @@ fn alice_casts_the_sorcery_spell(world: &mut GameplayWorld) {
     world.cast_tracked_spell("Alice");
 }
 
+#[when("Alice casts the artifact spell")]
+fn alice_casts_the_artifact_spell(world: &mut GameplayWorld) {
+    world.cast_tracked_spell("Alice");
+}
+
 #[when("Bob casts the instant response spell")]
 fn bob_casts_the_instant_response_spell(world: &mut GameplayWorld) {
     world.cast_tracked_response_spell("Bob");
@@ -316,6 +321,16 @@ fn alice_is_the_active_player_in_first_main_with_a_sorcery_card_in_hand_and_prio
     );
 }
 
+#[given("Alice is the active player in FirstMain with an artifact card in hand and priority")]
+fn alice_is_the_active_player_in_first_main_with_an_artifact_card_in_hand_and_priority(
+    world: &mut GameplayWorld,
+) {
+    world.setup_active_priority_window_with_artifact(
+        "bdd-first-main-artifact-window",
+        Phase::FirstMain,
+    );
+}
+
 #[given("Alice is the active player in SecondMain with an instant card in hand and priority")]
 fn alice_is_the_active_player_in_second_main_with_an_instant_card_in_hand_and_priority(
     world: &mut GameplayWorld,
@@ -332,6 +347,16 @@ fn alice_is_the_active_player_in_second_main_with_a_sorcery_card_in_hand_and_pri
 ) {
     world.setup_active_priority_window_with_sorcery(
         "bdd-second-main-sorcery-window",
+        Phase::SecondMain,
+    );
+}
+
+#[given("Alice is the active player in SecondMain with an artifact card in hand and priority")]
+fn alice_is_the_active_player_in_second_main_with_an_artifact_card_in_hand_and_priority(
+    world: &mut GameplayWorld,
+) {
+    world.setup_active_priority_window_with_artifact(
+        "bdd-second-main-artifact-window",
         Phase::SecondMain,
     );
 }

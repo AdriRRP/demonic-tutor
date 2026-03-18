@@ -414,6 +414,16 @@ It is not a literal restatement of the rules text.
 
 ---
 
+## Cast Artifact In Main Window
+
+- 117
+- 301.1
+- 301.2
+- 601
+- 608
+
+---
+
 ## Cast Second Instant In First Main Window
 
 - 117
