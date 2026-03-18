@@ -900,11 +900,7 @@ impl GameplayWorld {
         assert!(self.game().stack().is_empty());
     }
 
-    pub fn setup_non_active_priority_window_with_artifact(
-        &mut self,
-        game_id: &str,
-        phase: Phase,
-    ) {
+    pub fn setup_non_active_priority_window_with_artifact(&mut self, game_id: &str, phase: Phase) {
         self.reset_game_with_libraries(
             game_id,
             support::filled_library(Vec::new(), 10),

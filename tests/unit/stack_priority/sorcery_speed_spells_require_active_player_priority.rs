@@ -21,8 +21,11 @@ fn non_active_player_cannot_cast_sorcery_speed_spells_in_an_empty_main_phase_win
         10,
     );
 
-    let (service, mut game) =
-        setup_two_player_game("game-sorcery-speed-priority", filled_library(Vec::new(), 10), player_two_library);
+    let (service, mut game) = setup_two_player_game(
+        "game-sorcery-speed-priority",
+        filled_library(Vec::new(), 10),
+        player_two_library,
+    );
 
     advance_to_first_main_satisfying_cleanup(&service, &mut game);
 
@@ -34,9 +37,7 @@ fn non_active_player_cannot_cast_sorcery_speed_spells_in_an_empty_main_phase_win
         .unwrap();
 
     for suffix in 0..5 {
-        let card_id = CardInstanceId::new(format!(
-            "game-sorcery-speed-priority-player-2-{suffix}"
-        ));
+        let card_id = CardInstanceId::new(format!("game-sorcery-speed-priority-player-2-{suffix}"));
         let result = service.cast_spell(
             &mut game,
             CastSpellCommand::new(PlayerId::new("player-2"), card_id.clone()),
