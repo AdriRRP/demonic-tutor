@@ -154,6 +154,13 @@ For stack/priority slices that widen an existing window, explicitly decide wheth
 
 If only one or two are in scope, state the exclusions explicitly.
 
+For spell-effect slices that add explicit targets or richer resolution semantics, also decide explicitly:
+
+- who chooses the target and when
+- what makes the target legal at cast time
+- whether resolution reuses shared life, damage, or SBA paths
+- whether the relevant instant/sorcery timing windows now need broader wording
+
 ---
 
 ### Stage 3 — Check semantic integrity

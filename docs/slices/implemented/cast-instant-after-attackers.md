@@ -16,7 +16,7 @@ Allow the active player to cast and resolve an instant spell during the priority
 
 - this slice only formalizes instant casting after attackers are declared
 - blockers are still declared only after the current combat priority window has been closed
-- targeting, combat tricks with rules text, and broader combat-step structure remain out of scope
+- the currently supported targeted instant subset is allowed, but richer combat tricks, abilities, and broader combat timing remain out of scope
 
 ## Domain Changes
 
@@ -25,7 +25,7 @@ Allow the active player to cast and resolve an instant spell during the priority
 
 ## Rules Support Statement
 
-This slice proves that the minimal stack model works in the first post-declaration combat window. After attackers are declared, the active player may cast a zero-cost instant, resolve it through the standard two-pass flow, and remain in `Combat` with priority reopened before blockers are declared.
+This slice proves that the minimal stack model works in the first post-declaration combat window. After attackers are declared, the active player may cast a zero-cost instant, resolve it through the standard two-pass flow, and remain in `DeclareBlockers` timing with priority reopened before blockers are declared.
 
 ## Tests
 

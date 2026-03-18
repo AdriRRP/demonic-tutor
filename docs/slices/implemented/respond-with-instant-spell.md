@@ -18,7 +18,7 @@ Allow the current priority holder to cast an instant spell in response to a spel
 - response spells are currently limited to `CardType::Instant`
 - non-instant response spells are rejected
 - response timing is still limited to the currently implemented priority windows
-- targets, modes, activated abilities, and triggered abilities remain out of scope
+- the currently supported targeted instant subset is allowed, but broader targeting, modes, activated abilities, and triggered abilities remain out of scope
 
 ## Domain changes
 

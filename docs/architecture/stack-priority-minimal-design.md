@@ -1,5 +1,7 @@
 # Stack and Priority — Minimal Design
 
+> **Note**: Historical design note. The repository has substantially landed this plan and later expanded it with broader priority windows, explicit combat subphases, targeted instant support, and richer response/self-stacking coverage. Use this document to understand the original design intent, not as the live source of truth.
+
 ## Purpose
 
 This document proposes the first coherent design for introducing stack and priority into DemonicTutor.
@@ -14,7 +16,7 @@ The goal is to make the next gameplay expansion deliberate, reviewable, and incr
 
 The current gameplay core is already rich enough that further growth without stack and priority would start to distort real Magic semantics.
 
-Today the model still simplifies these areas:
+At the time this design was written, the model still simplified these areas:
 
 - spell cards resolve immediately after casting
 - explicit draw effects are direct commands rather than stack objects
@@ -63,7 +65,7 @@ The first stack/priority implementation should explicitly leave out:
 - triggered abilities
 - activated abilities on the stack
 - replacement effects
-- targeting
+- explicit spell targeting
 - modes
 - responses with cards other than simple spell casting
 - combat tricks beyond what falls out naturally from instant-speed casting

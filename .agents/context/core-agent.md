@@ -111,6 +111,16 @@ When extending support for a new priority window, verify whether the repository 
 
 Do not assume one of those behaviors automatically makes the others true; add or explicitly reject each one.
 
+When extending spells with real stack-borne effects, verify the whole semantic corridor together:
+
+- casting legality and timing
+- target requirements and target validation
+- resolution behavior and downstream automatic consequences
+- executable features and BDD coverage
+- current-state, rules-map, slice docs, and public summaries
+
+Do not close a targeting-capable spell slice with only the runtime change while the timing, legality, or documentation story still describes the pre-targeting model.
+
 When new gameplay semantics are introduced through stack, combat, or state-based actions, verify whether:
 
 - feature headers still reflect reality

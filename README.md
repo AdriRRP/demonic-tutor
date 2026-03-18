@@ -66,14 +66,14 @@ This repository is in active development.
 Current implemented capabilities include:
 
 - two-player game setup with opening hands and simplified London mulligan
-- full phase progression: `Setup -> Untap -> Upkeep -> Draw -> FirstMain -> Combat -> SecondMain -> EndStep`
+- full phase progression: `Setup -> Untap -> Upkeep -> Draw -> FirstMain -> BeginningOfCombat -> DeclareAttackers -> DeclareBlockers -> CombatDamage -> EndOfCombat -> SecondMain -> EndStep`
 - land play, land tapping, mana payment, and cleanup discard when hand size exceeds the maximum
 - spell casting through a canonical `CastSpell` action for spell cards, while lands are played
 - minimal stack and priority support, including `SpellPutOnStack`, `PassPriority`, and `StackTopResolved`
-- minimal explicit targeting for supported instant spells against players or creatures
-- empty priority windows on `Upkeep`, `Draw`, `FirstMain`, `Combat`, `SecondMain`, and `EndStep`
+- minimal explicit targeting for the currently supported targeted instant subset against players or creatures
+- empty priority windows on `Upkeep`, `Draw`, `FirstMain`, `BeginningOfCombat`, `EndOfCombat`, `SecondMain`, and `EndStep`
 - reopened combat priority windows after attackers, blockers, and combat damage
-- active-player instant casting, non-active instant responses, and active-player self-stacking across the currently supported stack windows
+- active-player instant casting, non-active instant responses, and self-stacking by the current priority holder across the currently supported stack windows
 - targeted instant damage to players and creatures through the shared stack-resolution path
 - creature runtime state with power, toughness, summoning sickness, combat assignments, and combat damage tracking
 - attacker declaration, blocker declaration, and combat damage resolution derived from aggregate state

@@ -2,20 +2,20 @@
 
 ## Goal
 
-Allow the active player to cast and resolve an instant spell during the empty priority window opened when the game enters `Combat`.
+Allow the active player to cast and resolve an instant spell during the empty priority window opened when the game enters `BeginningOfCombat`.
 
 ## Supported Behavior
 
-- when `Combat` opens its entry priority window, the active player may cast an instant spell from hand
+- when `BeginningOfCombat` opens its entry priority window, the active player may cast an instant spell from hand
 - the instant is put on the stack and the caster keeps priority
 - after two consecutive passes, the instant resolves from the stack to the graveyard
-- when the game remains active, priority reopens for the active player in `Combat`
+- when the game remains active, priority reopens for the active player in `BeginningOfCombat`
 
 ## Explicit Limits
 
 - this slice only formalizes instant casting in the beginning-of-combat window
-- the runtime still does not split combat into full Magic substeps
-- combat tricks that depend on targeting, abilities, or damage-prevention semantics remain out of scope
+- the current supported targeted instant subset is allowed in that window
+- richer combat tricks, abilities, and damage-prevention semantics remain out of scope
 
 ## Domain Changes
 
@@ -24,10 +24,10 @@ Allow the active player to cast and resolve an instant spell during the empty pr
 
 ## Rules Support Statement
 
-This slice proves that the minimal stack model works in the first combat timing window. Once the game enters `Combat`, the active player may cast a zero-cost instant, resolve it through the standard two-pass flow, and remain in `Combat` with priority reopened for the active player before attackers are declared.
+This slice proves that the minimal stack model works in the first combat timing window. Once the game enters `BeginningOfCombat`, the active player may cast a zero-cost instant, resolve it through the standard two-pass flow, and remain in `BeginningOfCombat` with priority reopened for the active player before attackers are declared.
 
 ## Tests
 
-- the active player may cast an instant at the beginning of `Combat`
+- the active player may cast an instant at the beginning of `BeginningOfCombat`
 - the instant resolves from the stack to the graveyard through the normal two-pass flow
 - priority reopens for the active player after the stack resolves while the game remains active

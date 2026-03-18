@@ -29,7 +29,7 @@ Implemented capabilities include:
 - casting spells that require mana
 - casting creature spells that enter the battlefield with power and toughness
 - resolving instants and sorceries to graveyard
-- supporting a minimal targeted instant subset against players or creatures
+- supporting a minimal targeted instant subset against players or creatures through the current stack windows
 - summoning sickness for creatures (removed for the active player's battlefield at turn start)
 - declaring attackers in `DeclareAttackers`
 - declaring blockers in `DeclareBlockers`
@@ -102,7 +102,7 @@ The domain currently includes:
 - the active player may cast and resolve an enchantment during an empty `FirstMain` priority window
 - the active player may cast and resolve a planeswalker during an empty `FirstMain` priority window
 - the active player may cast and resolve an instant during that first-main priority window
-- the active player may cast and resolve a targeted instant at a player or creature in the current targeted-spell subset
+- the current priority holder may cast and resolve a targeted instant at a player or creature in the current targeted-spell subset whenever that holder can legally cast an instant in the current window
 - the active player may cast a second instant in `FirstMain` before passing priority after the first
 - the non-active player may cast and resolve an instant in `FirstMain` after the active player passes
 - the non-active player may cast a second instant in `FirstMain` before passing priority after the first response
@@ -131,10 +131,10 @@ The domain currently includes:
 - an empty `DeclareBlockers` step may advance into `CombatDamage`
 - an empty `CombatDamage` step may advance into `EndOfCombat`
 - closing the empty `EndOfCombat` window advances the game into `SecondMain`
-- the non-active player may cast and resolve an instant at the beginning of `Combat` after the active player passes
-- the non-active player may cast a second instant at the beginning of `Combat` before passing priority after the first response
-- the active player may cast and resolve an instant at the beginning of `Combat`
-- the active player may cast a second instant at the beginning of `Combat` before passing priority after the first
+- the non-active player may cast and resolve an instant at the beginning of `BeginningOfCombat` after the active player passes
+- the non-active player may cast a second instant at the beginning of `BeginningOfCombat` before passing priority after the first response
+- the active player may cast and resolve an instant at the beginning of `BeginningOfCombat`
+- the active player may cast a second instant at the beginning of `BeginningOfCombat` before passing priority after the first
 - combat actions reopen priority after attackers and blockers are declared, moving the game into `DeclareBlockers` and `CombatDamage`
 - the explicit combat corridor now reopens priority coherently as combat progresses from `DeclareAttackers` to `DeclareBlockers`, from `DeclareBlockers` to `CombatDamage`, and from resolved combat damage to `EndOfCombat`
 - the active player may cast and resolve an instant after attackers are declared
@@ -168,6 +168,7 @@ Current constraints include:
 - only a subset of zones are modeled (no exile)
 - spell responses during open priority windows are currently limited to instants
 - the current targeted-spell subset is intentionally tiny and card-definition-driven
+- the current targeted-spell subset currently supports only simple player-or-creature damage instants
 - sorcery-speed spells are currently supported only for the active player in `FirstMain` or `SecondMain` while the stack is empty
 - priority windows are currently opened by spell casting, by entering `Upkeep`, `Draw`, `FirstMain`, `BeginningOfCombat`, `SecondMain`, or `EndStep`, after attackers or blockers are declared, and after combat damage resolves if the game remains active
 - outside stack-aware operations, general turn advancement still requires the priority window to be closed
