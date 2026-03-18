@@ -470,6 +470,14 @@ It is not a literal restatement of the rules text.
 
 ---
 
+## Reject Planeswalker Response
+
+- 117
+- 306.1
+- 601
+
+---
+
 ## Cast Second Instant In Second Main Window
 
 - 117

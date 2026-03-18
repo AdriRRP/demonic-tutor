@@ -2,10 +2,10 @@
 mod cast_artifact_in_main_window;
 #[path = "cast_enchantment_in_main_window.rs"]
 mod cast_enchantment_in_main_window;
-#[path = "cast_planeswalker_in_main_window.rs"]
-mod cast_planeswalker_in_main_window;
 #[path = "cast_instant_in_first_main_window.rs"]
 mod cast_instant_in_first_main_window;
+#[path = "cast_planeswalker_in_main_window.rs"]
+mod cast_planeswalker_in_main_window;
 #[path = "cast_second_instant_after_attackers.rs"]
 mod cast_second_instant_after_attackers;
 #[path = "cast_second_instant_after_blockers.rs"]
@@ -26,6 +26,8 @@ mod cast_second_instant_in_second_main_window;
 mod cast_second_instant_in_upkeep_window;
 #[path = "cast_sorcery_in_main_window.rs"]
 mod cast_sorcery_in_main_window;
+#[path = "reject_planeswalker_response.rs"]
+mod reject_planeswalker_response;
 #[path = "reject_sorcery_response.rs"]
 mod reject_sorcery_response;
 #[path = "respond_with_second_instant_in_beginning_of_combat_window.rs"]

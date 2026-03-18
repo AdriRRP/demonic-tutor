@@ -74,6 +74,16 @@ fn alice_has_cast_an_instant_spell_and_still_holds_priority_with_bobs_sorcery_ca
     alice_has_priority(world);
 }
 
+#[given(
+    "Alice has cast an instant spell and still holds priority with Bob's planeswalker card in hand"
+)]
+fn alice_has_cast_an_instant_spell_and_still_holds_priority_with_bobs_planeswalker_card_in_hand(
+    world: &mut GameplayWorld,
+) {
+    world.setup_invalid_planeswalker_response();
+    world.cast_tracked_spell("Alice");
+    alice_has_priority(world);
+}
 
 #[given("Alice has enough mana to pay its cost")]
 fn alice_has_enough_mana_to_pay_its_cost(world: &mut GameplayWorld) {
@@ -121,6 +131,10 @@ fn bob_tries_to_cast_the_sorcery_response_spell(world: &mut GameplayWorld) {
     world.cast_tracked_response_spell("Bob");
 }
 
+#[when("Bob tries to cast the planeswalker response spell")]
+fn bob_tries_to_cast_the_planeswalker_response_spell(world: &mut GameplayWorld) {
+    world.cast_tracked_response_spell("Bob");
+}
 
 #[when(expr = "{word} passes priority")]
 fn player_passes_priority(world: &mut GameplayWorld, player: String) {

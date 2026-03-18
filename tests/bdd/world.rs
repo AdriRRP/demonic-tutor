@@ -478,6 +478,27 @@ impl GameplayWorld {
             Some(self.hand_card_by_definition("Bob", "bdd-response-sorcery"));
     }
 
+    pub fn setup_invalid_planeswalker_response(&mut self) {
+        self.reset_game_with_libraries(
+            "bdd-invalid-planeswalker-response",
+            support::filled_library(vec![support::instant_card("bdd-primary-instant", 0)], 10),
+            support::filled_library(
+                vec![support::planeswalker_card("bdd-response-planeswalker", 0)],
+                10,
+            ),
+        );
+
+        let service = support::create_service();
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-1",
+        );
+        self.tracked_card_id = Some(self.hand_card_by_definition("Alice", "bdd-primary-instant"));
+        self.tracked_response_card_id =
+            Some(self.hand_card_by_definition("Bob", "bdd-response-planeswalker"));
+    }
+
     pub fn setup_cast_zero_toughness_creature_spell(&mut self) {
         self.reset_game_with_libraries(
             "bdd-cast-zero-toughness-creature",
@@ -723,11 +744,7 @@ impl GameplayWorld {
         assert!(self.game().stack().is_empty());
     }
 
-    pub fn setup_active_priority_window_with_planeswalker(
-        &mut self,
-        game_id: &str,
-        phase: Phase,
-    ) {
+    pub fn setup_active_priority_window_with_planeswalker(&mut self, game_id: &str, phase: Phase) {
         self.reset_game_with_libraries(
             game_id,
             support::filled_library(
