@@ -68,7 +68,7 @@ Represents a participant in the match.
 
 Responsibilities:
 
-- hold references to the player's deck identity
+- hold runtime-owned gameplay state and player identity
 - manage personal card zones
 - track life total
 - track per-turn state
@@ -257,9 +257,11 @@ The aggregate must remain:
 
 Several concerns intentionally live outside the aggregate.
 
-## Deck Context
+## Deck Input Contract
 
-Responsible for:
+The aggregate consumes deck-oriented setup input but does not own a separate deck model.
+
+Responsible outside the aggregate:
 
 - deck construction
 - deck legality
@@ -290,7 +292,7 @@ Responsible for:
 
 ---
 
-## Analytics
+## Projections / Analytics Read Side
 
 Responsible for:
 

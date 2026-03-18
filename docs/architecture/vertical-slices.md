@@ -200,7 +200,7 @@ Other contexts may observe slices through events.
 Example:
 
 ```
-Play → emits events → Analytics
+Play → emits events → Projections / Analytics read side
 
 ```
 

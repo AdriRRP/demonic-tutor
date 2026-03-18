@@ -9,25 +9,25 @@ The goal is to establish clear domain boundaries and prevent responsibility leak
 ```mermaid
 flowchart LR
 
-Deck["Deck Context"]
+Deck["Deck Input Contract"]
 Play["Play Context"]
-Analytics["Analytics Context"]
+ReadSide["Projections / Analytics Read Side"]
 
-Deck -->|deck definitions| Play
-Play -->|domain events| Analytics
-````
+Deck -->|setup data translated at boundary| Play
+Play -->|domain events| ReadSide
+```
 
 ---
 
-# Bounded Contexts
+# Implemented vs Conceptual Boundaries
 
-The system is divided into three primary bounded contexts:
+The current repository has:
 
-* **Play**
-* **Deck**
-* **Analytics**
+* **one fully implemented bounded context: `Play`**
+* **one conceptual upstream contract: deck-oriented input**
+* **one downstream observational read side: projections and analytics**
 
-Each context owns its own model, language and responsibilities.
+This distinction matters: the map should describe the current modeled system, not only its future intent.
 
 ---
 
@@ -68,9 +68,9 @@ Game
 
 ---
 
-# Deck Context (Supporting Domain)
+# Deck Input Contract (Conceptual Upstream)
 
-The **Deck context** models deck definitions independently from gameplay.
+Deck data exists conceptually as an upstream source of truth, but it is **not yet implemented as a separate bounded context inside this repository**.
 
 Responsibilities include:
 
@@ -83,27 +83,21 @@ Decks are **static structures** used to initialize gameplay.
 
 ---
 
-## Core Concepts
+## Current Repository Boundary
 
-Examples include:
-
-* Deck
-* CardDefinition
-* DeckEntry
-
-Deck data is consumed by the Play context when initializing a game, then translated into play-owned runtime library data before gameplay begins.
+Gameplay initialization accepts setup-oriented input and translates it into play-owned runtime library data before gameplay begins.
 
 After initialization, deck definitions are not modified by gameplay.
 
 ---
 
-# Analytics Context (Generic Domain)
+# Projections / Analytics Read Side (Downstream Observational Area)
 
-The **Analytics context** derives insights from gameplay events.
+Analytics currently exists as projections and read-side processing derived from gameplay events.
 
 It does not influence gameplay legality.
 
-Its role is strictly **observational**.
+Its role is strictly **observational**, and it is not yet modeled as a fully separate bounded context with its own ubiquitous language and invariants.
 
 Responsibilities include:
 
@@ -112,19 +106,19 @@ Responsibilities include:
 * replay models
 * gameplay metrics
 
-Analytics models are projections derived from domain events.
+Current analytics concerns are projections derived from domain events.
 
 ---
 
 # Context Relationships
 
-The contexts interact in a simple directional flow:
+The current repository follows a simple directional flow:
 
 ```
-Deck → Play → Analytics
+Deck input → Play → Projections / Analytics
 ```
 
-### Deck → Play
+### Deck Input Contract → Play
 
 Relationship:
 
@@ -132,13 +126,13 @@ Relationship:
 Upstream → Downstream
 ```
 
-Deck provides deck definitions required to initialize a match.
+Deck-oriented input provides setup data required to initialize a match.
 
-Play depends on deck data but does not modify it.
+Play consumes that input and translates it into play-owned runtime data before the match begins.
 
 ---
 
-### Play → Analytics
+### Play → Projections / Analytics
 
 Relationship:
 
@@ -148,9 +142,9 @@ Publisher → Subscriber
 
 Play produces domain events during gameplay.
 
-Analytics subscribes to those events to derive projections and statistics.
+Read-side consumers subscribe to those events to derive projections and statistics.
 
-Analytics never modifies gameplay state.
+They never modify gameplay state.
 
 ---
 
@@ -158,17 +152,17 @@ Analytics never modifies gameplay state.
 
 The integration model is intentionally simple.
 
-Deck data is read when a game starts.
+Deck-oriented input is read when a game starts and translated at the application/domain boundary.
 
 Play produces domain events.
 
-Analytics subscribes to those events.
+Read-side consumers subscribe to those events.
 
 This architecture enables:
 
 * replayability
 * observability
-* separation between gameplay and analysis
+* separation between gameplay and read-side analysis
 * incremental feature growth
 
 ---
@@ -177,13 +171,14 @@ This architecture enables:
 
 New contexts may be introduced as the system evolves.
 
-Possible future contexts include:
+Possible future fully separated contexts include:
 
-* **Rules Engine**
-* **Replay Engine**
+* **Deck**
+* **Analytics**
+* **Replay**
 * **AI Analysis**
 
-New contexts should be introduced only when the current contexts can no longer evolve safely without responsibility overlap.
+They should be introduced only when the current boundaries can no longer evolve safely without responsibility overlap.
 
 ---
 

@@ -141,9 +141,9 @@ They are derived views of the event stream.
 
 ---
 
-## Analytics
+## Analytics / Read Side
 
-Analytics extract insights from gameplay events.
+Analytics currently extract insights from gameplay events through projections and other read-side processing.
 
 Examples:
 
@@ -154,7 +154,7 @@ Examples:
 
 Analytics operate on projections or event streams.
 
-They remain separate from gameplay rule enforcement.
+They remain separate from gameplay rule enforcement. In the current repository, this is primarily an observational read side rather than a fully separate bounded context.
 
 ---
 
