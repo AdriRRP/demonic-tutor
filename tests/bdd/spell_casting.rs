@@ -95,6 +95,11 @@ fn alice_casts_the_artifact_spell(world: &mut GameplayWorld) {
     world.cast_tracked_spell("Alice");
 }
 
+#[when("Alice casts the enchantment spell")]
+fn alice_casts_the_enchantment_spell(world: &mut GameplayWorld) {
+    world.cast_tracked_spell("Alice");
+}
+
 #[when("Bob casts the instant response spell")]
 fn bob_casts_the_instant_response_spell(world: &mut GameplayWorld) {
     world.cast_tracked_response_spell("Bob");
@@ -331,6 +336,16 @@ fn alice_is_the_active_player_in_first_main_with_an_artifact_card_in_hand_and_pr
     );
 }
 
+#[given("Alice is the active player in FirstMain with an enchantment card in hand and priority")]
+fn alice_is_the_active_player_in_first_main_with_an_enchantment_card_in_hand_and_priority(
+    world: &mut GameplayWorld,
+) {
+    world.setup_active_priority_window_with_enchantment(
+        "bdd-first-main-enchantment-window",
+        Phase::FirstMain,
+    );
+}
+
 #[given("Alice is the active player in SecondMain with an instant card in hand and priority")]
 fn alice_is_the_active_player_in_second_main_with_an_instant_card_in_hand_and_priority(
     world: &mut GameplayWorld,
@@ -357,6 +372,16 @@ fn alice_is_the_active_player_in_second_main_with_an_artifact_card_in_hand_and_p
 ) {
     world.setup_active_priority_window_with_artifact(
         "bdd-second-main-artifact-window",
+        Phase::SecondMain,
+    );
+}
+
+#[given("Alice is the active player in SecondMain with an enchantment card in hand and priority")]
+fn alice_is_the_active_player_in_second_main_with_an_enchantment_card_in_hand_and_priority(
+    world: &mut GameplayWorld,
+) {
+    world.setup_active_priority_window_with_enchantment(
+        "bdd-second-main-enchantment-window",
         Phase::SecondMain,
     );
 }

@@ -1,5 +1,7 @@
 #[path = "cast_artifact_in_main_window.rs"]
 mod cast_artifact_in_main_window;
+#[path = "cast_enchantment_in_main_window.rs"]
+mod cast_enchantment_in_main_window;
 #[path = "cast_instant_in_first_main_window.rs"]
 mod cast_instant_in_first_main_window;
 #[path = "cast_second_instant_after_attackers.rs"]
