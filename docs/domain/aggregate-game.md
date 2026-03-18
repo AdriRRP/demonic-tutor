@@ -147,6 +147,21 @@ Current implementation:
 
 ---
 
+## Exile
+
+Represents cards removed from normal gameplay circulation.
+
+Responsibilities:
+
+- receive cards exiled from battlefield or graveyard
+- expose exiled cards for gameplay inspection
+
+Current implementation:
+
+- collection of `CardInstance`
+
+---
+
 ## CardInstance
 
 Represents a concrete instance of a card inside a match.

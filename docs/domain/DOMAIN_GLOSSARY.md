@@ -123,6 +123,8 @@ In the current runtime model, discard is supported only as explicit cleanup beha
 
 A zone containing cards removed from normal gameplay circulation.
 
+Cards can be moved to exile from the battlefield or graveyard. Exiled cards are face up and may be examined by any player.
+
 ---
 
 ## Stack

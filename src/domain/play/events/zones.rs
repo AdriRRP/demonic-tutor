@@ -1,0 +1,50 @@
+use crate::domain::play::ids::{CardInstanceId, GameId, PlayerId};
+
+#[derive(Debug, Clone)]
+pub enum ZoneType {
+    Library,
+    Hand,
+    Battlefield,
+    Graveyard,
+    Exile,
+    Stack,
+}
+
+impl ZoneType {
+    #[must_use]
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            Self::Library => "library",
+            Self::Hand => "hand",
+            Self::Battlefield => "battlefield",
+            Self::Graveyard => "graveyard",
+            Self::Exile => "exile",
+            Self::Stack => "stack",
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct CardExiled {
+    pub game_id: GameId,
+    pub player_id: PlayerId,
+    pub card_id: CardInstanceId,
+    pub origin_zone: ZoneType,
+}
+
+impl CardExiled {
+    #[must_use]
+    pub const fn new(
+        game_id: GameId,
+        player_id: PlayerId,
+        card_id: CardInstanceId,
+        origin_zone: ZoneType,
+    ) -> Self {
+        Self {
+            game_id,
+            player_id,
+            card_id,
+            origin_zone,
+        }
+    }
+}

@@ -3,6 +3,7 @@ mod lifecycle;
 mod resource_actions;
 mod stack_priority;
 mod turn_flow;
+mod zones;
 
 pub use combat::{
     AttackersDeclared, BlockersDeclared, CombatDamageResolved, CreatureDied, DamageEvent,
@@ -16,6 +17,7 @@ pub use stack_priority::{
 pub use turn_flow::{
     CardDiscarded, CardDrawn, DiscardKind, DrawKind, MulliganTaken, TurnProgressed,
 };
+pub use zones::{CardExiled, ZoneType};
 
 macro_rules! impl_domain_event_from {
     ($event_type:ident, $variant:ident) => {
@@ -48,6 +50,7 @@ pub enum DomainEvent {
     BlockersDeclared(BlockersDeclared),
     CombatDamageResolved(CombatDamageResolved),
     CreatureDied(CreatureDied),
+    CardExiled(CardExiled),
 }
 
 impl_domain_event_from!(GameStarted, GameStarted);
@@ -69,3 +72,4 @@ impl_domain_event_from!(AttackersDeclared, AttackersDeclared);
 impl_domain_event_from!(BlockersDeclared, BlockersDeclared);
 impl_domain_event_from!(CombatDamageResolved, CombatDamageResolved);
 impl_domain_event_from!(CreatureDied, CreatureDied);
+impl_domain_event_from!(CardExiled, CardExiled);

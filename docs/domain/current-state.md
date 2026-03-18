@@ -63,7 +63,7 @@ The domain currently includes:
 - game sessions
 - players
 - card instances
-- basic zones (library, hand, battlefield, graveyard)
+- basic zones (library, hand, battlefield, graveyard, exile)
 - mana production from lands
 - spell casting with mana cost
 - transient mana pools cleared when the game advances to the next phase or turn
@@ -77,6 +77,7 @@ The domain currently includes:
 - shared state-based action review after relevant gameplay actions for the currently supported SBA subset
 - cleanup-based removal of marked damage from surviving creatures
 - explicit cleanup discard to maximum hand size during `EndStep`
+- exile zone as a player-owned zone where cards can be moved from battlefield or graveyard
 - summoning sickness for creatures (removed for the active player's creatures at turn start)
 - turn and phase progression
 - explicit draw effects as a simplified non-stack entrypoint, including multi-card targeted draw
@@ -165,7 +166,7 @@ Current constraints include:
 
 - matches support exactly two players
 - opening hand size is fixed to 7 cards
-- only a subset of zones are modeled (no exile)
+- only a subset of zones are modeled (library, hand, battlefield, graveyard, exile)
 - spell responses during open priority windows are currently limited to instants
 - the current targeted-spell subset is intentionally tiny and card-definition-driven
 - the current targeted-spell subset currently supports only simple player-or-creature damage instants

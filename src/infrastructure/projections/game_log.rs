@@ -77,6 +77,12 @@ impl GameLogProjection {
             DomainEvent::CreatureDied(e) => {
                 format!("Creature {} controlled by {} died", e.card_id, e.player_id)
             }
+            DomainEvent::CardExiled(e) => {
+                format!(
+                    "Card {} controlled by {} was exiled from {:?}",
+                    e.card_id, e.player_id, e.origin_zone
+                )
+            }
         }
     }
 

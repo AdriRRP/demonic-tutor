@@ -94,6 +94,7 @@ Current executable feature coverage:
 - `features/life/lose_on_zero_life.feature`
 - `features/state-based-actions/zero_toughness_creature_dies.feature`
 - `features/state-based-actions/state_based_actions_review.feature`
+- `features/zones/exile_zone.feature`
 - runner: `tests/bdd.rs`
 
 Implemented reference features that are not currently executed:

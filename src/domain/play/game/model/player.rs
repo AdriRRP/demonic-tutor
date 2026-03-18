@@ -1,5 +1,5 @@
 use crate::domain::play::ids::{DeckId, PlayerId};
-use crate::domain::play::zones::{Battlefield, Graveyard, Hand, Library};
+use crate::domain::play::zones::{Battlefield, Exile, Graveyard, Hand, Library};
 
 const DEFAULT_STARTING_LIFE: u32 = 20;
 pub const OPENING_HAND_SIZE: usize = 7;
@@ -13,6 +13,7 @@ pub struct Player {
     hand: Hand,
     battlefield: Battlefield,
     graveyard: Graveyard,
+    exile: Exile,
     life: u32,
     mana: u32,
     lands_played_this_turn: usize,
@@ -30,6 +31,7 @@ impl Player {
             hand: Hand::new(),
             battlefield: Battlefield::new(),
             graveyard: Graveyard::new(),
+            exile: Exile::new(),
             life: DEFAULT_STARTING_LIFE,
             mana: 0,
             lands_played_this_turn: 0,
@@ -81,6 +83,15 @@ impl Player {
 
     pub fn graveyard_mut(&mut self) -> &mut Graveyard {
         &mut self.graveyard
+    }
+
+    #[must_use]
+    pub const fn exile(&self) -> &Exile {
+        &self.exile
+    }
+
+    pub fn exile_mut(&mut self) -> &mut Exile {
+        &mut self.exile
     }
 
     #[must_use]

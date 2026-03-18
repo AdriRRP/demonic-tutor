@@ -129,4 +129,39 @@ impl Graveyard {
     pub fn cards(&self) -> &[CardInstance] {
         &self.0
     }
+
+    #[must_use]
+    pub fn remove(&mut self, card_id: &CardInstanceId) -> Option<CardInstance> {
+        self.0
+            .iter()
+            .position(|card| card.id() == card_id)
+            .map(|index| self.0.swap_remove(index))
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct Exile(Vec<CardInstance>);
+
+impl Exile {
+    #[must_use]
+    pub const fn new() -> Self {
+        Self(Vec::new())
+    }
+
+    pub fn add(&mut self, card: CardInstance) {
+        self.0.push(card);
+    }
+
+    #[must_use]
+    pub fn cards(&self) -> &[CardInstance] {
+        &self.0
+    }
+
+    #[must_use]
+    pub fn remove(&mut self, card_id: &CardInstanceId) -> Option<CardInstance> {
+        self.0
+            .iter()
+            .position(|card| card.id() == card_id)
+            .map(|index| self.0.swap_remove(index))
+    }
 }

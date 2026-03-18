@@ -733,6 +733,15 @@ The initial Gherkin pilot currently targets these rule areas:
 
 ---
 
+## Exile Zone
+
+- 406
+- 406.1
+- 406.2
+- 406.3
+
+---
+
 ## Creature Destruction
 
 - 704
