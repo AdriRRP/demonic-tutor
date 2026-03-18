@@ -34,7 +34,8 @@ pub struct CastSpellCommand {
 - Card must be in the player's hand
 - Card must not be a land
 - Outside an open priority window, casting remains limited to the active player in `FirstMain` or `SecondMain`
-- During an open priority window, the current holder may cast only instant spells in the current minimal stack model
+- During an open priority window, the current holder may cast any spell at sorcery speed only if they are the active player in `FirstMain` or `SecondMain` and the stack is empty
+- During any other supported response timing, only instant spells may be cast in the current minimal stack model
 
 #### PassPriorityCommand
 ```rust
@@ -95,7 +96,7 @@ Emitted when the top spell on the stack resolves successfully, including the spe
 
 ## Rules Support Statement
 
-This slice now implements a minimal stack-aware spell-casting model. Casting moves a spell card from hand onto the stack, and the casting player keeps priority immediately afterward. Resolution happens only after two consecutive passes. Permanent spells resolve from the stack to the battlefield, while instants and sorceries resolve from the stack to the graveyard. The current runtime also triggers the shared review of currently supported state-based actions after spell resolution, which can produce `CreatureDied` or `GameEnded` in addition to `SpellCast`. The current priority-holder may now cast instant response spells, but broader timing rules, non-instant responses, targets, and modes remain out of scope.
+This slice now implements a minimal stack-aware spell-casting model. Casting moves a spell card from hand onto the stack, and the casting player keeps priority immediately afterward. Resolution happens only after two consecutive passes. Permanent spells resolve from the stack to the battlefield, while instants and sorceries resolve from the stack to the graveyard. The current runtime also triggers the shared review of currently supported state-based actions after spell resolution, which can produce `CreatureDied` or `GameEnded` in addition to `SpellCast`. Sorcery-speed spells are currently supported only for the active player in `FirstMain` or `SecondMain` when the stack is empty; non-instant responses, targets, and modes remain out of scope.
 
 ## Tests
 

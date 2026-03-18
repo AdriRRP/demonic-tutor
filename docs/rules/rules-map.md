@@ -404,6 +404,16 @@ It is not a literal restatement of the rules text.
 
 ---
 
+## Cast Sorcery In Main Window
+
+- 117
+- 307.1
+- 307.5
+- 601
+- 608
+
+---
+
 ## Cast Second Instant In First Main Window
 
 - 117

@@ -76,6 +76,11 @@ fn alice_casts_the_creature_spell(world: &mut GameplayWorld) {
     world.cast_tracked_spell("Alice");
 }
 
+#[when("Alice casts the sorcery spell")]
+fn alice_casts_the_sorcery_spell(world: &mut GameplayWorld) {
+    world.cast_tracked_spell("Alice");
+}
+
 #[when("Bob casts the instant response spell")]
 fn bob_casts_the_instant_response_spell(world: &mut GameplayWorld) {
     world.cast_tracked_response_spell("Bob");
@@ -85,6 +90,7 @@ fn bob_casts_the_instant_response_spell(world: &mut GameplayWorld) {
 fn bob_tries_to_cast_the_creature_response_spell(world: &mut GameplayWorld) {
     world.cast_tracked_response_spell("Bob");
 }
+
 
 #[when(expr = "{word} passes priority")]
 fn player_passes_priority(world: &mut GameplayWorld, player: String) {
@@ -287,12 +293,32 @@ fn alice_is_the_active_player_in_first_main_with_an_instant_card_in_hand_and_pri
     );
 }
 
+#[given("Alice is the active player in FirstMain with a sorcery card in hand and priority")]
+fn alice_is_the_active_player_in_first_main_with_a_sorcery_card_in_hand_and_priority(
+    world: &mut GameplayWorld,
+) {
+    world.setup_active_priority_window_with_sorcery(
+        "bdd-first-main-sorcery-window",
+        Phase::FirstMain,
+    );
+}
+
 #[given("Alice is the active player in SecondMain with an instant card in hand and priority")]
 fn alice_is_the_active_player_in_second_main_with_an_instant_card_in_hand_and_priority(
     world: &mut GameplayWorld,
 ) {
     world.setup_active_priority_window_with_instant(
         "bdd-second-main-instant-window",
+        Phase::SecondMain,
+    );
+}
+
+#[given("Alice is the active player in SecondMain with a sorcery card in hand and priority")]
+fn alice_is_the_active_player_in_second_main_with_a_sorcery_card_in_hand_and_priority(
+    world: &mut GameplayWorld,
+) {
+    world.setup_active_priority_window_with_sorcery(
+        "bdd-second-main-sorcery-window",
         Phase::SecondMain,
     );
 }

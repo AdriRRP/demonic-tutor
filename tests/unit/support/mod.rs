@@ -36,6 +36,14 @@ pub fn instant_card(name: &str, mana_cost: u32) -> LibraryCard {
     )
 }
 
+pub fn sorcery_card(name: &str, mana_cost: u32) -> LibraryCard {
+    LibraryCard::non_creature(
+        CardDefinitionId::new(name),
+        NonCreatureCardType::Sorcery,
+        mana_cost,
+    )
+}
+
 pub fn artifact_card(name: &str, mana_cost: u32) -> LibraryCard {
     LibraryCard::non_creature(
         CardDefinitionId::new(name),

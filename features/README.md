@@ -45,6 +45,7 @@ Current executable feature coverage:
 - `features/stack/cast_instant_in_draw_window.feature`
 - `features/stack/cast_second_instant_in_draw_window.feature`
 - `features/stack/cast_instant_in_first_main_window.feature`
+- `features/stack/cast_sorcery_in_main_window.feature`
 - `features/stack/cast_second_instant_in_first_main_window.feature`
 - `features/stack/cast_instant_in_second_main_window.feature`
 - `features/stack/cast_second_instant_in_second_main_window.feature`
