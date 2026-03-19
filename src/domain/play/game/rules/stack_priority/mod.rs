@@ -23,7 +23,6 @@ pub struct StackPriorityContext<'a> {
     pub phase: &'a Phase,
     pub stack: &'a mut super::super::model::StackZone,
     pub priority: &'a mut Option<PriorityState>,
-    pub next_stack_object_number: &'a mut u32,
     pub terminal_state: &'a mut TerminalState,
 }
 

@@ -1,6 +1,6 @@
 use crate::domain::play::{
     cards::{CardInstance, CardType},
-    ids::{CardInstanceId, PlayerId, StackObjectId},
+    ids::{CardInstanceId, GameId, PlayerId, StackObjectId},
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -9,9 +9,16 @@ pub enum SpellTarget {
     Creature(CardInstanceId),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct StackZone {
     objects: Vec<StackObject>,
+    next_object_number: u32,
+}
+
+impl Default for StackZone {
+    fn default() -> Self {
+        Self::empty()
+    }
 }
 
 impl StackZone {
@@ -19,7 +26,18 @@ impl StackZone {
     pub const fn empty() -> Self {
         Self {
             objects: Vec::new(),
+            next_object_number: 1,
         }
+    }
+
+    pub fn next_id(&mut self, game_id: &GameId) -> StackObjectId {
+        let id = StackObjectId::new(format!(
+            "{}-stack-{}",
+            game_id.as_str(),
+            self.next_object_number
+        ));
+        self.next_object_number += 1;
+        id
     }
 
     #[must_use]

@@ -84,7 +84,6 @@ pub struct Game {
     players: Vec<Player>,
     stack: StackZone,
     priority: Option<PriorityState>,
-    next_stack_object_number: u32,
     terminal_state: TerminalState,
 }
 
@@ -106,7 +105,6 @@ impl Game {
             players,
             stack: StackZone::empty(),
             priority: None,
-            next_stack_object_number: 1,
             terminal_state,
         }
     }
@@ -341,7 +339,6 @@ impl Game {
                 phase: &self.phase,
                 stack: &mut self.stack,
                 priority: &mut self.priority,
-                next_stack_object_number: &mut self.next_stack_object_number,
                 terminal_state: &mut self.terminal_state,
             },
             cmd,
@@ -365,7 +362,6 @@ impl Game {
                 phase: &self.phase,
                 stack: &mut self.stack,
                 priority: &mut self.priority,
-                next_stack_object_number: &mut self.next_stack_object_number,
                 terminal_state: &mut self.terminal_state,
             },
             cmd,

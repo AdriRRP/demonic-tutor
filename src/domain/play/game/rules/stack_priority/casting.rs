@@ -13,19 +13,9 @@ use crate::domain::play::{
             PriorityState, SpellOnStack, SpellTarget, StackObject, StackObjectKind, StackZone,
         },
     },
-    ids::{CardInstanceId, GameId, PlayerId, StackObjectId},
+    ids::{CardInstanceId, PlayerId},
     phase::Phase,
 };
-
-fn next_stack_object_id(game_id: &GameId, next_stack_object_number: &mut u32) -> StackObjectId {
-    let id = StackObjectId::new(format!(
-        "{}-stack-{}",
-        game_id.as_str(),
-        *next_stack_object_number
-    ));
-    *next_stack_object_number += 1;
-    id
-}
 
 fn require_cast_timing(
     active_player: &PlayerId,
@@ -134,7 +124,6 @@ pub fn cast_spell(
         phase,
         stack,
         priority,
-        next_stack_object_number,
         ..
     } = ctx;
 
@@ -199,7 +188,7 @@ pub fn cast_spell(
     let spent = player.spend_mana(mana_cost);
     debug_assert!(spent, "mana was checked before removing the card from hand");
 
-    let stack_object_id = next_stack_object_id(game_id, next_stack_object_number);
+    let stack_object_id = stack.next_id(game_id);
     stack.push(StackObject::new(
         stack_object_id.clone(),
         player_id.clone(),
