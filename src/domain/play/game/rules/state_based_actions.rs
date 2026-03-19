@@ -113,6 +113,8 @@ fn destroy_lethally_damaged_creatures(
 /// - creatures with lethal marked damage
 /// - players at zero life
 ///
+/// State-based actions are resolved iteratively until no further changes occur.
+///
 /// # Errors
 /// Returns an error if a derived opposing player cannot be determined while ending the game.
 pub fn check_state_based_actions(
@@ -120,9 +122,34 @@ pub fn check_state_based_actions(
     players: &mut [Player],
     terminal_state: &mut TerminalState,
 ) -> Result<StateBasedActionsResult, crate::domain::play::errors::DomainError> {
-    let mut creatures_died = destroy_zero_toughness_creatures(game_id, players);
-    creatures_died.extend(destroy_lethally_damaged_creatures(game_id, players));
-    let game_ended = end_game_for_zero_life(game_id, players, terminal_state)?;
+    let mut total_creatures_died = Vec::new();
+    let mut final_game_ended = None;
 
-    Ok(StateBasedActionsResult::new(creatures_died, game_ended))
+    loop {
+        let mut changes = false;
+
+        let died = destroy_zero_toughness_creatures(game_id, players);
+        if !died.is_empty() {
+            changes = true;
+            total_creatures_died.extend(died);
+        }
+
+        let destroyed = destroy_lethally_damaged_creatures(game_id, players);
+        if !destroyed.is_empty() {
+            changes = true;
+            total_creatures_died.extend(destroyed);
+        }
+
+        let ended = end_game_for_zero_life(game_id, players, terminal_state)?;
+        if let Some(event) = ended {
+            changes = true;
+            final_game_ended = Some(event);
+        }
+
+        if !changes || terminal_state.is_over() {
+            break;
+        }
+    }
+
+    Ok(StateBasedActionsResult::new(total_creatures_died, final_game_ended))
 }
