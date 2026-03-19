@@ -79,7 +79,6 @@ struct CreatureState {
     power: u32,
     toughness: u32,
     damage: u32,
-    flags: u8,
     blocking_target: Option<CardInstanceId>,
     flying: bool,
     reach: bool,
@@ -91,7 +90,6 @@ impl CreatureState {
             power,
             toughness,
             damage: 0,
-            flags: FLAG_SUMMONING_SICKNESS,
             blocking_target: None,
             flying: false,
             reach: false,
@@ -103,22 +101,9 @@ impl CreatureState {
             power,
             toughness,
             damage: 0,
-            flags: FLAG_SUMMONING_SICKNESS,
             blocking_target: None,
             flying,
             reach,
-        }
-    }
-
-    const fn has_flag(&self, flag: u8) -> bool {
-        self.flags & flag != 0
-    }
-
-    const fn set_flag(&mut self, flag: u8, enabled: bool) {
-        if enabled {
-            self.flags |= flag;
-        } else {
-            self.flags &= !flag;
         }
     }
 }
@@ -164,7 +149,7 @@ impl CardInstance {
             definition_id,
             card_type: CardType::Creature,
             mana_cost,
-            flags: 0,
+            flags: FLAG_SUMMONING_SICKNESS,
             creature: Some(CreatureState::new(power, toughness)),
         }
     }
@@ -184,7 +169,7 @@ impl CardInstance {
             definition_id,
             card_type: CardType::Creature,
             mana_cost,
-            flags: 0,
+            flags: FLAG_SUMMONING_SICKNESS,
             creature: Some(CreatureState::new_with_keywords(
                 power, toughness, flying, reach,
             )),
@@ -242,26 +227,17 @@ impl CardInstance {
 
     #[must_use]
     pub const fn has_summoning_sickness(&self) -> bool {
-        match &self.creature {
-            Some(creature) => creature.has_flag(FLAG_SUMMONING_SICKNESS),
-            None => false,
-        }
+        self.creature.is_some() && (self.flags & FLAG_SUMMONING_SICKNESS != 0)
     }
 
     #[must_use]
     pub const fn is_attacking(&self) -> bool {
-        match &self.creature {
-            Some(creature) => creature.has_flag(FLAG_ATTACKING),
-            None => false,
-        }
+        self.creature.is_some() && (self.flags & FLAG_ATTACKING != 0)
     }
 
     #[must_use]
     pub const fn is_blocking(&self) -> bool {
-        match &self.creature {
-            Some(creature) => creature.has_flag(FLAG_BLOCKING),
-            None => false,
-        }
+        self.creature.is_some() && (self.flags & FLAG_BLOCKING != 0)
     }
 
     pub const fn tap(&mut self) {
@@ -273,21 +249,27 @@ impl CardInstance {
     }
 
     pub const fn remove_summoning_sickness(&mut self) {
-        if let Some(creature) = &mut self.creature {
-            creature.set_flag(FLAG_SUMMONING_SICKNESS, false);
+        if self.creature.is_some() {
+            self.flags &= !FLAG_SUMMONING_SICKNESS;
         }
     }
 
     pub const fn set_attacking(&mut self, attacking: bool) {
-        if let Some(creature) = &mut self.creature {
-            creature.set_flag(FLAG_ATTACKING, attacking);
+        if self.creature.is_some() {
+            if attacking {
+                self.flags |= FLAG_ATTACKING;
+            } else {
+                self.flags &= !FLAG_ATTACKING;
+            }
         }
     }
 
     pub fn set_blocking(&mut self, blocking: bool) {
         if let Some(creature) = &mut self.creature {
-            creature.set_flag(FLAG_BLOCKING, blocking);
-            if !blocking {
+            if blocking {
+                self.flags |= FLAG_BLOCKING;
+            } else {
+                self.flags &= !FLAG_BLOCKING;
                 creature.blocking_target = None;
             }
         }
@@ -303,7 +285,7 @@ impl CardInstance {
 
     pub fn assign_blocking_target(&mut self, attacker_id: CardInstanceId) {
         if let Some(creature) = &mut self.creature {
-            creature.set_flag(FLAG_BLOCKING, true);
+            self.flags |= FLAG_BLOCKING;
             creature.blocking_target = Some(attacker_id);
         }
     }
