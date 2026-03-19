@@ -376,17 +376,22 @@ Example structure (guideline, not requirement):
 ```
 src/domain/play/game/
 ├── mod.rs
-├── invariants.rs   # aggregate legality checks and internal lookups
+├── invariants.rs   # pure aggregate legality checks
+├── helpers.rs      # state-modifying lookups and internal helpers
 ├── model/
 │   ├── mod.rs
-│   └── player.rs   # aggregate-owned entity internals
+│   ├── player.rs         # aggregate-owned entity internals
+│   ├── priority.rs
+│   ├── stack.rs
+│   └── terminal_state.rs # game outcome state
 └── rules/
     ├── mod.rs
     ├── lifecycle.rs        # start game, opening hands, mulligan
     ├── game_effects.rs     # direct life and game-end helpers reused by rules
     ├── resource_actions.rs # lands, mana, spells, creatures, life
     ├── state_based_actions.rs # shared review of supported state-based actions
-    └── combat.rs
+    ├── combat.rs
+    ├── stack_priority/     # casting, passing, resolution, spell effects
     └── turn_flow/          # phases, turn progression, draw effects, cleanup
 ```
 
