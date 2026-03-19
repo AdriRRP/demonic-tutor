@@ -270,7 +270,7 @@ pub fn mulligan(
         ));
     }
 
-    let player = super::super::invariants::find_player_mut(players, &cmd.player_id)?;
+    let player = super::super::helpers::find_player_mut(players, &cmd.player_id)?;
 
     if player.mulligan_used() {
         return Err(DomainError::Game(GameError::MulliganAlreadyUsed(

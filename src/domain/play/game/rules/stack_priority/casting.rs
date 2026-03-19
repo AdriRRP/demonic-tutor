@@ -8,7 +8,7 @@ use crate::domain::play::{
     errors::{CardError, DomainError, GameError, PhaseError},
     events::SpellPutOnStack,
     game::{
-        invariants,
+        helpers, invariants,
         model::{
             PriorityState, SpellOnStack, SpellTarget, StackObject, StackObjectKind, StackZone,
         },
@@ -87,7 +87,7 @@ fn validate_spell_target(
 
         match target {
             SpellTarget::Player(player_id) => {
-                invariants::find_player_index(players, player_id)?;
+                helpers::find_player_index(players, player_id)?;
             }
             SpellTarget::Creature(card_id) => {
                 let found = players.iter().any(|player| {
@@ -144,7 +144,7 @@ pub fn cast_spell(
         target,
     } = cmd;
 
-    let player_idx = invariants::find_player_index(players, &player_id)?;
+    let player_idx = helpers::find_player_index(players, &player_id)?;
     let hand_card = players[player_idx]
         .hand()
         .cards()
@@ -195,7 +195,7 @@ pub fn cast_spell(
         }));
     }
 
-    let card = invariants::remove_card_from_hand(player, &player_id, &card_id)?;
+    let card = helpers::remove_card_from_hand(player, &player_id, &card_id)?;
     let spent = player.spend_mana(mana_cost);
     debug_assert!(spent, "mana was checked before removing the card from hand");
 

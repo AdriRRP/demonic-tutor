@@ -6,7 +6,7 @@ use crate::domain::play::{
     commands::AdvanceTurnCommand,
     errors::{DomainError, GameError},
     events::{CardDrawn, DrawKind, GameEnded, TurnProgressed},
-    game::{invariants, model::Player, PriorityState, TerminalState},
+    game::{helpers, invariants, model::Player, PriorityState, TerminalState},
     ids::{GameId, PlayerId},
     phase::Phase,
 };
@@ -55,7 +55,7 @@ fn auto_draw_card(
     players: &mut [Player],
     active_player: &PlayerId,
 ) -> Result<Option<CardDrawn>, DomainError> {
-    let player_idx = invariants::find_player_index(players, active_player)?;
+    let player_idx = helpers::find_player_index(players, active_player)?;
     let Some(card_id) = draw_one_card(&mut players[player_idx]) else {
         return Ok(None);
     };

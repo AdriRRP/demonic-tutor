@@ -1,4 +1,4 @@
-use super::super::{invariants, model::Player, TerminalState};
+use super::super::{helpers, model::Player, TerminalState};
 use crate::domain::play::{
     events::{GameEndReason, GameEnded, LifeChanged},
     ids::{GameId, PlayerId},
@@ -14,7 +14,7 @@ pub fn adjust_player_life(
     player_id: &PlayerId,
     life_delta: i32,
 ) -> Result<LifeChanged, crate::domain::play::errors::DomainError> {
-    let player = invariants::find_player_mut(players, player_id)?;
+    let player = helpers::find_player_mut(players, player_id)?;
     let old_life = player.life();
     player.adjust_life(life_delta);
     let new_life = player.life();
@@ -37,7 +37,7 @@ pub fn end_game_for_empty_library_draw(
     terminal_state: &mut TerminalState,
     losing_player: &PlayerId,
 ) -> Result<GameEnded, crate::domain::play::errors::DomainError> {
-    let winning_player = invariants::opposing_player_id(players, losing_player)?;
+    let winning_player = helpers::opposing_player_id(players, losing_player)?;
     terminal_state.end(
         winning_player.clone(),
         losing_player.clone(),

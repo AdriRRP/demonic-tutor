@@ -1,5 +1,5 @@
 use super::{
-    super::{invariants, model::Player, TerminalState},
+    super::{helpers, invariants, model::Player, TerminalState},
     game_effects, state_based_actions,
 };
 use crate::domain::play::{
@@ -208,7 +208,7 @@ pub fn declare_attackers(
     invariants::require_active_player(active_player, &cmd.player_id)?;
     require_attackers_step(*phase)?;
 
-    let player_idx = invariants::find_player_index(players, &cmd.player_id)?;
+    let player_idx = helpers::find_player_index(players, &cmd.player_id)?;
     let player = &mut players[player_idx];
     let battlefield = player.battlefield_mut();
     let mut valid_attackers: Vec<CardInstanceId> = Vec::new();
@@ -268,7 +268,7 @@ pub fn declare_blockers(
     require_blockers_step(*phase)?;
 
     let defending_player_idx = find_defending_player_index(players, active_player)?;
-    let attacker_player_idx = invariants::find_player_index(players, active_player)?;
+    let attacker_player_idx = helpers::find_player_index(players, active_player)?;
     let declared_attackers = players[attacker_player_idx]
         .battlefield()
         .cards()
@@ -362,7 +362,7 @@ pub fn resolve_combat_damage(
     invariants::require_active_player(active_player, &cmd.player_id)?;
     require_combat_damage_step(*phase)?;
 
-    let player_idx = invariants::find_player_index(players, &cmd.player_id)?;
+    let player_idx = helpers::find_player_index(players, &cmd.player_id)?;
     let defender_idx = find_defending_player_index(players, &cmd.player_id)?;
 
     let defender_player_id = players[defender_idx].id().clone();

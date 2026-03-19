@@ -2,7 +2,7 @@ use crate::domain::play::{
     commands::DrawCardsEffectCommand,
     errors::{DomainError, GameError},
     events::{CardDrawn, DrawKind, GameEnded},
-    game::{invariants, model::Player, TerminalState},
+    game::{helpers, invariants, model::Player, TerminalState},
     ids::{CardInstanceId, GameId, PlayerId},
     phase::Phase,
 };
@@ -59,7 +59,7 @@ pub fn draw_cards_effect(
         return Err(DomainError::Game(GameError::InvalidDrawCount(0)));
     }
 
-    let target_player_idx = invariants::find_player_index(players, &cmd.target_player_id)?;
+    let target_player_idx = helpers::find_player_index(players, &cmd.target_player_id)?;
     let mut cards_drawn = Vec::new();
 
     for _ in 0..cmd.draw_count {

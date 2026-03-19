@@ -1,4 +1,4 @@
-use super::super::{invariants, model::Player, TerminalState};
+use super::super::{helpers, model::Player, TerminalState};
 use crate::domain::play::{
     events::{CreatureDied, GameEndReason, GameEnded},
     ids::GameId,
@@ -34,7 +34,7 @@ fn end_game_for_zero_life(
     };
 
     let losing_player_id = losing_player.id().clone();
-    let winning_player = invariants::opposing_player_id(players, &losing_player_id)?;
+    let winning_player = helpers::opposing_player_id(players, &losing_player_id)?;
     terminal_state.end(
         winning_player.clone(),
         losing_player_id.clone(),

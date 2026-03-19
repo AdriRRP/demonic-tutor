@@ -1,5 +1,5 @@
 use super::{
-    super::{invariants, model::Player, TerminalState},
+    super::{helpers, invariants, model::Player, TerminalState},
     game_effects,
     state_based_actions::{self, StateBasedActionsResult},
 };
@@ -51,7 +51,7 @@ pub fn play_land(
         return Err(DomainError::Phase(PhaseError::InvalidForLand));
     }
 
-    let player = invariants::find_player_mut(players, &cmd.player_id)?;
+    let player = helpers::find_player_mut(players, &cmd.player_id)?;
 
     if player.lands_played_this_turn() > 0 {
         return Err(DomainError::Phase(PhaseError::AlreadyPlayedLandThisTurn(
@@ -60,13 +60,13 @@ pub fn play_land(
     }
 
     let card_id = cmd.card_id.clone();
-    let card_type = invariants::hand_card_type(player, &cmd.player_id, &card_id)?;
+    let card_type = helpers::hand_card_type(player, &cmd.player_id, &card_id)?;
 
     if !card_type.is_land() {
         return Err(DomainError::Card(CardError::NotALand(card_id)));
     }
 
-    let card = invariants::remove_card_from_hand(player, &cmd.player_id, &card_id)?;
+    let card = helpers::remove_card_from_hand(player, &cmd.player_id, &card_id)?;
 
     player.battlefield_mut().add(card);
     player.record_land_played();
@@ -93,7 +93,7 @@ pub fn tap_land(
         }));
     }
 
-    let player = invariants::find_player_mut(players, &cmd.player_id)?;
+    let player = helpers::find_player_mut(players, &cmd.player_id)?;
 
     let card = player
         .battlefield_mut()
@@ -143,7 +143,7 @@ pub fn adjust_player_life_effect(
         life_delta,
     } = cmd;
 
-    invariants::find_player_index(players, &caster_id)?;
+    helpers::find_player_index(players, &caster_id)?;
     let life_changed =
         game_effects::adjust_player_life(game_id, players, &target_player_id, life_delta)?;
     let StateBasedActionsResult {

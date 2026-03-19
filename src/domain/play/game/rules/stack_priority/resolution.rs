@@ -1,6 +1,6 @@
 use super::super::{
     super::{
-        invariants,
+        helpers,
         model::{StackObject, StackObjectKind},
         Player, TerminalState,
     },
@@ -96,7 +96,7 @@ pub(super) fn resolve_spell_from_stack(
     let effect = spell_effect(&card);
     let card_type = card.card_type().clone();
 
-    let player = invariants::find_player_mut(players, &controller_id)?;
+    let player = helpers::find_player_mut(players, &controller_id)?;
     let outcome = match card_type {
         CardType::Creature
         | CardType::Enchantment

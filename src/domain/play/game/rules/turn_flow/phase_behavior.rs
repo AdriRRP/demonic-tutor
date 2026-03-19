@@ -1,5 +1,5 @@
 use crate::domain::play::game::{
-    invariants,
+    helpers,
     model::{Player, MAX_HAND_SIZE},
 };
 use crate::domain::play::{errors::DomainError, ids::PlayerId, phase::Phase};
@@ -67,7 +67,7 @@ impl PhaseBehavior for UntapPhase {
         players: &mut [Player],
         active_player: &PlayerId,
     ) -> Result<(), DomainError> {
-        let player = invariants::find_player_mut(players, active_player)?;
+        let player = helpers::find_player_mut(players, active_player)?;
         player.battlefield_mut().iter_mut().for_each(|card| {
             card.untap();
             card.remove_summoning_sickness();
@@ -215,7 +215,7 @@ pub(super) fn active_player_hand_size(
     players: &[Player],
     active_player: &PlayerId,
 ) -> Result<usize, DomainError> {
-    let player_idx = invariants::find_player_index(players, active_player)?;
+    let player_idx = helpers::find_player_index(players, active_player)?;
     Ok(players[player_idx].hand_size())
 }
 

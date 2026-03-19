@@ -1,4 +1,5 @@
 use crate::domain::play::game::{
+    helpers,
     invariants,
     model::{Player, MAX_HAND_SIZE},
 };
@@ -33,7 +34,7 @@ pub fn discard_for_cleanup(
         }));
     }
 
-    let player = invariants::find_player_mut(players, &cmd.player_id)?;
+    let player = helpers::find_player_mut(players, &cmd.player_id)?;
     let hand_size = player.hand_size();
     if hand_size <= MAX_HAND_SIZE {
         return Err(DomainError::Game(GameError::DiscardNotRequired {
@@ -43,7 +44,7 @@ pub fn discard_for_cleanup(
         }));
     }
 
-    let card = invariants::remove_card_from_hand(player, &cmd.player_id, &cmd.card_id)?;
+    let card = helpers::remove_card_from_hand(player, &cmd.player_id, &cmd.card_id)?;
     let card_id = card.id().clone();
     player.graveyard_mut().add(card);
 
