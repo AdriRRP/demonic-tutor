@@ -23,7 +23,7 @@ mod stack_foundation;
 mod state_based_actions;
 #[path = "bdd/turn_progression.rs"]
 mod turn_progression;
-#[path = "bdd/world.rs"]
+#[path = "bdd/world/mod.rs"]
 mod world;
 
 use cucumber::World as _;
