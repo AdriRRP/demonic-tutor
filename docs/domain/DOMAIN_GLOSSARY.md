@@ -181,6 +181,8 @@ The explicit legal-target rule carried by a supported targeted spell.
 
 The current runtime supports a small closed set of legal-target rules such as `Player`, `Creature`, or `PlayerOrCreature`.
 
+Legal-target evaluation is shared between casting and resolution for the current targeted-spell subset.
+
 ---
 
 # Card Types

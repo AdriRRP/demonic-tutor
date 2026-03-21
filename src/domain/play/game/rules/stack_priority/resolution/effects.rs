@@ -2,6 +2,7 @@ use super::super::super::{
     super::{Player, TerminalState},
     state_based_actions::{self, StateBasedActionsResult},
 };
+use super::super::spell_effects::{evaluate_target_legality, SpellTargetLegality};
 use crate::domain::play::{
     cards::{SpellResolutionProfile, SupportedSpellRules},
     errors::{DomainError, GameError},
@@ -11,19 +12,6 @@ use crate::domain::play::{
 };
 
 type SpellResolutionSideEffects = (Option<LifeChanged>, Vec<CreatureDied>, Option<GameEnded>);
-
-fn can_apply_to_target(players: &[Player], target: &SpellTarget) -> bool {
-    match target {
-        SpellTarget::Player(player_id) => players.iter().any(|player| player.id() == player_id),
-        SpellTarget::Creature(card_id) => players.iter().any(|player| {
-            player
-                .battlefield()
-                .cards()
-                .iter()
-                .any(|card| card.id() == card_id)
-        }),
-    }
-}
 
 fn apply_damage_to_creature(players: &mut [Player], target_id: &CardInstanceId, damage: u32) {
     for player in players.iter_mut() {
@@ -58,15 +46,34 @@ pub(super) fn apply_supported_spell_rules(
             review_state_based_actions(game_id, players, terminal_state)
         }
         SpellResolutionProfile::DealDamage { damage } => {
-            let Some(target) = target else {
-                return Err(DomainError::Game(GameError::InternalInvariantViolation(
-                    "targeted spell resolved without target".to_string(),
-                )));
+            let legality =
+                evaluate_target_legality(players, supported_spell_rules.targeting(), target);
+            let target = match (legality, target) {
+                (SpellTargetLegality::Legal, Some(target)) => target,
+                (SpellTargetLegality::Legal, None) => {
+                    return Err(DomainError::Game(GameError::InternalInvariantViolation(
+                        "legal targeted spell resolution requires an attached target".to_string(),
+                    )));
+                }
+                (SpellTargetLegality::MissingRequiredTarget, _) => {
+                    return Err(DomainError::Game(GameError::InternalInvariantViolation(
+                        "targeted spell resolved without target".to_string(),
+                    )));
+                }
+                (SpellTargetLegality::NoTargetRequired, _) => {
+                    return Err(DomainError::Game(GameError::InternalInvariantViolation(
+                        "damage spell resolved without a targeting profile".to_string(),
+                    )));
+                }
+                (
+                    SpellTargetLegality::IllegalTargetKind
+                    | SpellTargetLegality::MissingPlayer(_)
+                    | SpellTargetLegality::MissingCreature(_),
+                    _,
+                ) => {
+                    return review_state_based_actions(game_id, players, terminal_state);
+                }
             };
-
-            if !can_apply_to_target(players, target) {
-                return review_state_based_actions(game_id, players, terminal_state);
-            }
 
             let life_changed = match target {
                 SpellTarget::Player(player_id) => {

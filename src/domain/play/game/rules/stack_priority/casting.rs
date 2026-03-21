@@ -1,5 +1,5 @@
 use super::{
-    spell_effects::{accepts_target, supported_spell_rules},
+    spell_effects::{evaluate_target_legality, supported_spell_rules, SpellTargetLegality},
     CastSpellOutcome, StackPriorityContext,
 };
 use crate::domain::play::{
@@ -66,50 +66,22 @@ fn validate_spell_target(
     target: Option<&SpellTarget>,
 ) -> Result<(), DomainError> {
     let targeting = supported_spell_rules.targeting();
-
-    if targeting.requires_target() {
-        let Some(target) = target else {
-            return Err(DomainError::Game(GameError::MissingSpellTarget(
-                card_id.clone(),
-            )));
-        };
-
-        if !accepts_target(targeting, target) {
-            return Err(DomainError::Game(GameError::IllegalSpellTarget(
-                card_id.clone(),
-            )));
+    match evaluate_target_legality(players, targeting, target) {
+        SpellTargetLegality::NoTargetRequired | SpellTargetLegality::Legal => Ok(()),
+        SpellTargetLegality::MissingRequiredTarget => Err(DomainError::Game(
+            GameError::MissingSpellTarget(card_id.clone()),
+        )),
+        SpellTargetLegality::IllegalTargetKind => Err(DomainError::Game(
+            GameError::IllegalSpellTarget(card_id.clone()),
+        )),
+        SpellTargetLegality::MissingPlayer(player_id) => {
+            helpers::find_player_index(players, &player_id)?;
+            Ok(())
         }
-
-        match target {
-            SpellTarget::Player(player_id) => {
-                helpers::find_player_index(players, player_id)?;
-            }
-            SpellTarget::Creature(card_id) => {
-                let found = players.iter().any(|player| {
-                    player
-                        .battlefield()
-                        .cards()
-                        .iter()
-                        .any(|card| card.id() == card_id)
-                });
-                if !found {
-                    return Err(DomainError::Game(GameError::InvalidCreatureTarget(
-                        card_id.clone(),
-                    )));
-                }
-            }
-        }
-
-        return Ok(());
+        SpellTargetLegality::MissingCreature(target_card_id) => Err(DomainError::Game(
+            GameError::InvalidCreatureTarget(target_card_id),
+        )),
     }
-
-    if target.is_some() {
-        return Err(DomainError::Game(GameError::IllegalSpellTarget(
-            card_id.clone(),
-        )));
-    }
-
-    Ok(())
 }
 
 /// Puts a spell card from hand onto the stack and opens a priority window.
