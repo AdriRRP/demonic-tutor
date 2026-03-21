@@ -4,3 +4,5 @@ mod deal_opening_hands;
 mod mulligan;
 #[path = "start_game.rs"]
 mod start_game;
+#[path = "zones.rs"]
+mod zones;

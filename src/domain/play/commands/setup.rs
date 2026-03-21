@@ -53,6 +53,14 @@ pub enum LibraryCard {
         power: u32,
         toughness: u32,
     },
+    CreatureWithKeywords {
+        definition_id: CardDefinitionId,
+        mana_cost: u32,
+        power: u32,
+        toughness: u32,
+        flying: bool,
+        reach: bool,
+    },
 }
 
 impl LibraryCard {
@@ -85,6 +93,25 @@ impl LibraryCard {
     }
 
     #[must_use]
+    pub const fn creature_with_keywords(
+        definition_id: CardDefinitionId,
+        mana_cost: u32,
+        power: u32,
+        toughness: u32,
+        flying: bool,
+        reach: bool,
+    ) -> Self {
+        Self::CreatureWithKeywords {
+            definition_id,
+            mana_cost,
+            power,
+            toughness,
+            flying,
+            reach,
+        }
+    }
+
+    #[must_use]
     pub fn to_card_instance(&self, card_id: CardInstanceId) -> CardInstance {
         match self {
             Self::Creature {
@@ -98,6 +125,22 @@ impl LibraryCard {
                 *mana_cost,
                 *power,
                 *toughness,
+            ),
+            Self::CreatureWithKeywords {
+                definition_id,
+                mana_cost,
+                power,
+                toughness,
+                flying,
+                reach,
+            } => CardInstance::new_creature_with_keywords(
+                card_id,
+                definition_id.clone(),
+                *mana_cost,
+                *power,
+                *toughness,
+                *flying,
+                *reach,
             ),
             Self::NonCreature {
                 definition_id,

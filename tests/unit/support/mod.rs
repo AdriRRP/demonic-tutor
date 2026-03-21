@@ -76,6 +76,24 @@ pub fn creature_card(name: &str, mana_cost: u32, power: u32, toughness: u32) -> 
     LibraryCard::creature(CardDefinitionId::new(name), mana_cost, power, toughness)
 }
 
+pub fn creature_card_with_keywords(
+    name: &str,
+    mana_cost: u32,
+    power: u32,
+    toughness: u32,
+    flying: bool,
+    reach: bool,
+) -> LibraryCard {
+    LibraryCard::creature_with_keywords(
+        CardDefinitionId::new(name),
+        mana_cost,
+        power,
+        toughness,
+        flying,
+        reach,
+    )
+}
+
 pub fn filled_library(seed_cards: Vec<LibraryCard>, total_cards: usize) -> Vec<LibraryCard> {
     assert!(seed_cards.len() <= total_cards);
 
@@ -252,6 +270,12 @@ pub fn close_empty_priority_window(service: &TestService, game: &mut Game) {
     );
     service
         .pass_priority(game, PassPriorityCommand::new(second_holder))
+        .unwrap();
+}
+
+pub fn pass_priority(service: &TestService, game: &mut Game, player_id: &str) {
+    service
+        .pass_priority(game, PassPriorityCommand::new(PlayerId::new(player_id)))
         .unwrap();
 }
 

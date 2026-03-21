@@ -4,13 +4,14 @@ use crate::{
         commands::{
             AdjustPlayerLifeEffectCommand, AdvanceTurnCommand, CastSpellCommand,
             DealOpeningHandsCommand, DeclareAttackersCommand, DeclareBlockersCommand,
-            DiscardForCleanupCommand, DrawCardsEffectCommand, MulliganCommand, PassPriorityCommand,
-            PlayLandCommand, ResolveCombatDamageCommand, StartGameCommand, TapLandCommand,
+            DiscardForCleanupCommand, DrawCardsEffectCommand, ExileCardCommand, MulliganCommand,
+            PassPriorityCommand, PlayLandCommand, ResolveCombatDamageCommand, StartGameCommand,
+            TapLandCommand,
         },
         errors::{DomainError, GameError},
         events::{
-            AttackersDeclared, BlockersDeclared, CardDiscarded, DomainEvent, GameStarted,
-            LandPlayed, LandTapped, ManaAdded, MulliganTaken, OpeningHandDealt,
+            AttackersDeclared, BlockersDeclared, CardDiscarded, CardExiled, DomainEvent,
+            GameStarted, LandPlayed, LandTapped, ManaAdded, MulliganTaken, OpeningHandDealt,
         },
         game::{
             AdjustPlayerLifeEffectOutcome, AdvanceTurnOutcome, CastSpellOutcome,
@@ -254,6 +255,22 @@ where
         cmd: DiscardForCleanupCommand,
     ) -> Result<CardDiscarded, DomainError> {
         let event = game.discard_for_cleanup(cmd)?;
+        self.persist_and_publish_event(game.id().as_str(), &event)?;
+
+        Ok(event)
+    }
+
+    /// Exiles a card.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the command is invalid.
+    pub fn exile_card(
+        &self,
+        game: &mut Game,
+        cmd: &ExileCardCommand,
+    ) -> Result<CardExiled, DomainError> {
+        let event = game.exile_card(cmd)?;
         self.persist_and_publish_event(game.id().as_str(), &event)?;
 
         Ok(event)

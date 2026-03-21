@@ -65,7 +65,7 @@ This slice follows the existing zone model foundation because:
 ### Aggregate Impact
 
 - extend `Player` with `exile: Exile`
-- extend `Game` with `exile_card` helper that moves a card to exile
+- extend `Game` with `exile_card` behavior that moves a card to exile
 - expose `exile()` accessor on `Player`
 
 ### Entity / Value Object Impact
@@ -74,8 +74,9 @@ This slice follows the existing zone model foundation because:
 
 ### Commands
 
-- no new public command required for initial exile introduction
-- exile happens as part of spell/ability resolution in future slices
+- add `ExileCardCommand`
+- the current minimal runtime exposes exile as a direct public effect entrypoint for battlefield/graveyard moves
+- future spell or ability slices should reuse that zone-transition path rather than duplicating exile semantics
 
 ### Events
 
@@ -91,7 +92,7 @@ pub struct CardExiled {
 
 ### Errors
 
-- no new public error required
+- no new public error type required beyond existing zone/card legality failures
 
 ---
 
@@ -184,4 +185,4 @@ impl Game {
 
 ## Rules Support Statement
 
-This slice introduces the exile zone as a foundational zone model without exile-linked abilities, face-down exile, or return-from-exile behavior. Future slices will extend exile mechanics incrementally.
+This slice introduces the exile zone as a foundational zone model and also exposes a minimal public exile action for moving cards from battlefield or graveyard into exile. Exile-linked abilities, face-down exile, and return-from-exile behavior remain future work.

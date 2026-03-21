@@ -14,9 +14,9 @@ This is a repository-owned interpretation note, not a copy of the Comprehensive 
 
 - each player owns an exile zone
 - cards can be moved to exile from:
-  - the stack (spells or abilities that exile as part of their resolution)
   - the battlefield (permanents exiled by effects)
   - the graveyard (cards exiled from graveyard)
+- the current runtime exposes a direct `ExileCard` command as a minimal public effect entrypoint for those moves
 - exiled cards are kept face up by default
 - any player may examine cards in exile
 - the aggregate maintains an ordered collection of `CardInstance` per player's exile zone

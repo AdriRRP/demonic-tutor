@@ -20,7 +20,7 @@ fn alice_is_in_first_main_with_one_card_for_explicit_draw(world: &mut GameplayWo
 
 #[when(expr = "Alice draws {int} cards through an explicit draw effect")]
 fn alice_draws_cards_through_an_explicit_draw_effect(world: &mut GameplayWorld, count: u32) {
-    world.draw_cards_effect("Alice", "Alice", count);
+    world.draw_cards_effect("Alice", count);
 }
 
 #[when(expr = "Alice makes Bob draw {int} cards through an explicit draw effect")]
@@ -28,7 +28,7 @@ fn alice_makes_bob_draw_cards_through_an_explicit_draw_effect(
     world: &mut GameplayWorld,
     count: u32,
 ) {
-    world.draw_cards_effect("Alice", "Bob", count);
+    world.draw_cards_effect("Bob", count);
 }
 
 #[then(expr = "Alice draws {int} cards from the explicit effect")]

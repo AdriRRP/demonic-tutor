@@ -137,22 +137,22 @@ fn alice_casts_the_creature_spell(world: &mut GameplayWorld) {
 
 #[when("Alice casts the targeted instant spell targeting Bob")]
 fn alice_casts_the_targeted_instant_spell_targeting_bob(world: &mut GameplayWorld) {
-    world.cast_tracked_spell_targeting_player("Alice", "Bob");
+    world.cast_tracked_targeted_player_spell("Alice", "Bob");
 }
 
 #[when("Alice casts the targeted instant spell without a target")]
 fn alice_casts_the_targeted_instant_spell_without_a_target(world: &mut GameplayWorld) {
-    world.cast_tracked_spell_without_target("Alice");
+    world.try_cast_tracked_spell("Alice");
 }
 
 #[when("Alice casts the targeted instant spell targeting a missing player")]
 fn alice_casts_the_targeted_instant_spell_targeting_a_missing_player(world: &mut GameplayWorld) {
-    world.cast_tracked_spell_targeting_missing_player("Alice");
+    world.try_cast_tracked_targeted_player_spell("Alice", "missing-player");
 }
 
 #[when("Alice casts the targeted instant spell targeting Bob's creature")]
 fn alice_casts_the_targeted_instant_spell_targeting_bobs_creature(world: &mut GameplayWorld) {
-    world.cast_tracked_spell_targeting_tracked_creature("Alice");
+    world.cast_tracked_targeted_creature_spell("Alice");
 }
 
 #[when("Alice casts the sorcery spell")]
@@ -182,22 +182,22 @@ fn bob_casts_the_instant_response_spell(world: &mut GameplayWorld) {
 
 #[when("Bob tries to cast the creature response spell")]
 fn bob_tries_to_cast_the_creature_response_spell(world: &mut GameplayWorld) {
-    world.cast_tracked_response_spell("Bob");
+    world.try_cast_tracked_response_spell("Bob");
 }
 
 #[when("Bob tries to cast the sorcery response spell")]
 fn bob_tries_to_cast_the_sorcery_response_spell(world: &mut GameplayWorld) {
-    world.cast_tracked_response_spell("Bob");
+    world.try_cast_tracked_response_spell("Bob");
 }
 
 #[when("Bob tries to cast the planeswalker response spell")]
 fn bob_tries_to_cast_the_planeswalker_response_spell(world: &mut GameplayWorld) {
-    world.cast_tracked_response_spell("Bob");
+    world.try_cast_tracked_response_spell("Bob");
 }
 
 #[when("Bob tries to cast the artifact spell")]
 fn bob_tries_to_cast_the_artifact_spell(world: &mut GameplayWorld) {
-    world.cast_tracked_response_spell("Bob");
+    world.try_cast_tracked_response_spell("Bob");
 }
 
 #[when(expr = "{word} passes priority")]
@@ -920,7 +920,7 @@ fn bobs_original_response_remains_on_the_stack_above_alices_original_spell(
 
 #[when("Alice tries to cast the card as a spell")]
 fn alice_tries_to_cast_the_card_as_a_spell(world: &mut GameplayWorld) {
-    world.cast_tracked_spell("Alice");
+    world.try_cast_tracked_spell("Alice");
 }
 
 #[then("the action is rejected")]

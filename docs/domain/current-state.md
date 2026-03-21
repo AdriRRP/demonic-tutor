@@ -30,6 +30,7 @@ Implemented capabilities include:
 - casting creature spells that enter the battlefield with power and toughness
 - resolving instants and sorceries to graveyard
 - supporting a minimal targeted instant subset against players or creatures through the current stack windows
+- moving cards explicitly to exile from battlefield or graveyard
 - summoning sickness for creatures (removed for the active player's battlefield at turn start)
 - declaring attackers in `DeclareAttackers`
 - declaring blockers in `DeclareBlockers`
@@ -79,6 +80,7 @@ The domain currently includes:
 - cleanup-based removal of marked damage from surviving creatures
 - explicit cleanup discard to maximum hand size during `EndStep`
 - exile zone as a player-owned zone where cards can be moved from battlefield or graveyard
+- explicit exile effects that move a chosen card from battlefield or graveyard into its owner's exile zone
 - summoning sickness for creatures (removed for the active player's creatures at turn start)
 - turn and phase progression
 - explicit draw effects as a simplified non-stack entrypoint, including multi-card targeted draw

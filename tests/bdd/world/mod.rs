@@ -6,9 +6,9 @@ mod queries;
 mod setup;
 
 use demonictutor::{
-    CardDrawn, CardDiscarded, CardInstanceId, CombatDamageResolved,
-    CreatureDied, Game, GameEnded, LifeChanged, PriorityPassed,
-    SpellCast, SpellPutOnStack, StackTopResolved, TurnProgressed,
+    CardDiscarded, CardDrawn, CardExiled, CardInstanceId, CombatDamageResolved, CreatureDied, Game,
+    GameEnded, LifeChanged, PriorityPassed, SpellCast, SpellPutOnStack, StackTopResolved,
+    TurnProgressed,
 };
 
 #[derive(Debug, Default, cucumber::World)]
@@ -19,6 +19,7 @@ pub struct GameplayWorld {
     pub last_card_drawn: Option<CardDrawn>,
     pub last_cards_drawn: Vec<CardDrawn>,
     pub last_card_discarded: Option<CardDiscarded>,
+    pub last_card_exiled: Option<CardExiled>,
     pub last_spell_put_on_stack: Option<SpellPutOnStack>,
     pub last_spell_cast: Option<SpellCast>,
     pub last_priority_passed: Option<PriorityPassed>,

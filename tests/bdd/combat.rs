@@ -39,17 +39,17 @@ fn bob_blocks_with_a_creature(world: &mut GameplayWorld) {
 
 #[when("combat damage resolves")]
 fn combat_damage_resolves(world: &mut GameplayWorld) {
-    world.resolve_combat_damage();
+    world.resolve_combat_damage("Alice");
 }
 
 #[when("Bob tries to assign both blockers to that attacker")]
 fn bob_tries_to_assign_both_blockers_to_that_attacker(world: &mut GameplayWorld) {
-    world.try_declare_multiple_blockers_on_one_attacker();
+    world.try_declare_multiple_blockers_on_one_attacker("Bob");
 }
 
 #[when("combat damage resolution finishes")]
 fn combat_damage_resolution_finishes(world: &mut GameplayWorld) {
-    world.resolve_combat_damage();
+    world.resolve_combat_damage("Alice");
 }
 
 #[then("the attacker's damage is marked on the blocking creature")]
@@ -99,6 +99,11 @@ fn bob_is_at_three_life_as_the_defending_player(world: &mut GameplayWorld) {
 
 #[then("Bob loses life equal to the attacker's power")]
 fn bob_loses_life_equal_to_the_attackers_power(world: &mut GameplayWorld) {
+    assert_eq!(world.player_life("Bob"), 17);
+}
+
+#[then("Bob loses 3 life")]
+fn bob_loses_3_life(world: &mut GameplayWorld) {
     assert_eq!(world.player_life("Bob"), 17);
 }
 
@@ -192,4 +197,101 @@ fn the_game_advances_from_end_step_to_the_next_players_untap(world: &mut Gamepla
 fn that_surviving_creature_has_no_damage_marked_on_it(world: &mut GameplayWorld) {
     assert_eq!(world.game().phase().to_owned(), demonictutor::Phase::Untap);
     assert_eq!(world.tracked_card("Alice").damage(), 0);
+}
+
+#[given("Alice attacks with a flying creature")]
+fn alice_attacks_with_a_flying_creature(world: &mut GameplayWorld) {
+    world.setup_flying_attack_and_block();
+}
+
+#[given("Bob controls a creature with flying")]
+fn bob_controls_a_creature_with_flying(world: &mut GameplayWorld) {
+    assert!(world.tracked_blocker().has_flying());
+}
+
+#[when("Bob declares that creature as a blocker against the flying attacker")]
+fn bob_declares_that_creature_as_a_blocker_against_the_flying_attacker(world: &mut GameplayWorld) {
+    let attacker_id = world.tracked_attacker_id.clone().unwrap();
+    let blocker_id = world.tracked_blocker_id.clone().unwrap();
+    world.declare_blocker_against("Bob", &blocker_id, &attacker_id);
+}
+
+#[then("the blocker assignment is accepted")]
+fn the_blocker_assignment_is_accepted(world: &mut GameplayWorld) {
+    assert!(world.last_error.is_none());
+    assert_eq!(world.game().phase(), &demonictutor::Phase::CombatDamage);
+}
+
+#[given("Bob controls a creature with reach")]
+fn bob_controls_a_creature_with_reach(world: &mut GameplayWorld) {
+    world.setup_flying_attack_and_reach_block();
+    assert!(world.tracked_blocker().has_reach());
+}
+
+#[given("Bob controls a creature without flying or reach")]
+fn bob_controls_a_creature_without_flying_or_reach(world: &mut GameplayWorld) {
+    world.setup_flying_attack_and_nonflying_block();
+    assert!(!world.tracked_blocker().has_flying());
+    assert!(!world.tracked_blocker().has_reach());
+}
+
+#[when("Bob tries to declare that creature as a blocker against the flying attacker")]
+fn bob_tries_to_declare_that_creature_as_a_blocker_against_the_flying_attacker(
+    world: &mut GameplayWorld,
+) {
+    let attacker_id = world.tracked_attacker_id.clone().unwrap();
+    let blocker_id = world.tracked_blocker_id.clone().unwrap();
+    world.try_declare_blocker_against("Bob", &blocker_id, &attacker_id);
+}
+
+#[then("the action is rejected because the blocker cannot block flying creatures")]
+fn the_action_is_rejected_because_the_blocker_cannot_block_flying_creatures(
+    world: &mut GameplayWorld,
+) {
+    let error = world
+        .last_error
+        .as_ref()
+        .expect("action should be rejected");
+    assert!(error.contains("cannot block flying creature"));
+}
+
+#[given("Alice attacks with a non-flying creature")]
+fn alice_attacks_with_a_non_flying_creature(world: &mut GameplayWorld) {
+    world.setup_nonflying_attack_and_block();
+}
+
+#[given("Bob controls a non-flying creature")]
+fn bob_controls_a_non_flying_creature(world: &mut GameplayWorld) {
+    assert!(!world.tracked_blocker().has_flying());
+}
+
+#[when("Bob declares that creature as a blocker")]
+fn bob_declares_that_creature_as_a_blocker(world: &mut GameplayWorld) {
+    let attacker_id = world.tracked_attacker_id.clone().unwrap();
+    let blocker_id = world.tracked_blocker_id.clone().unwrap();
+    world.declare_blocker_against("Bob", &blocker_id, &attacker_id);
+}
+
+#[given("Bob controls a creature with both flying and reach")]
+fn bob_controls_a_creature_with_both_flying_and_reach(world: &mut GameplayWorld) {
+    world.setup_flying_and_reach_block();
+    assert!(world.tracked_blocker().has_flying());
+    assert!(world.tracked_blocker().has_reach());
+}
+
+#[given("Alice attacks with a flying creature that has 3 power")]
+fn alice_attacks_with_a_flying_creature_with_power(world: &mut GameplayWorld) {
+    world.setup_unblocked_flying_attack();
+    assert_eq!(world.tracked_attacker().power(), Some(3));
+    assert!(world.tracked_attacker().has_flying());
+}
+
+#[given("Bob has no creatures that can block flying")]
+fn bob_has_no_blockers_for_flying(world: &mut GameplayWorld) {
+    assert!(world.player("Bob").battlefield().cards().is_empty());
+}
+
+#[given("the flying attacker is unblocked")]
+fn the_flying_attacker_is_unblocked(world: &mut GameplayWorld) {
+    assert!(world.blocker_assignments.is_empty());
 }

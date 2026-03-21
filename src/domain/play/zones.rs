@@ -43,6 +43,10 @@ impl Library {
         let mut rng = rand::make_rng::<rand::rngs::StdRng>();
         self.0.make_contiguous().shuffle(&mut rng);
     }
+
+    pub fn iter(&self) -> impl Iterator<Item = &CardInstance> {
+        self.0.iter()
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]

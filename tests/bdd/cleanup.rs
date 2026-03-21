@@ -14,7 +14,7 @@ fn alice_is_active_in_end_step_and_has_eight_cards_in_hand(world: &mut GameplayW
 
 #[when("Alice tries to advance the turn")]
 fn alice_tries_to_advance_the_turn(world: &mut GameplayWorld) {
-    world.advance_turn();
+    world.try_advance_turn();
 }
 
 #[then("the action is rejected because cleanup discard is still required")]

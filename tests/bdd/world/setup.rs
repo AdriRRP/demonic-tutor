@@ -1,9 +1,8 @@
-use super::GameplayWorld;
 use super::support;
+use super::GameplayWorld;
 use demonictutor::{
-    AdjustPlayerLifeEffectCommand, CardDefinitionId, CastSpellCommand,
-    DiscardForCleanupCommand, GameId, LibraryCard, Phase,
-    ResolveCombatDamageCommand, StartGameCommand,
+    AdjustPlayerLifeEffectCommand, CardDefinitionId, CastSpellCommand, DiscardForCleanupCommand,
+    GameId, LibraryCard, Phase, ResolveCombatDamageCommand, StartGameCommand,
 };
 
 impl GameplayWorld {
@@ -2191,6 +2190,15 @@ impl GameplayWorld {
             None,
             None,
         );
+
+        let service = support::create_service();
+        support::advance_to_phase_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            Phase::CombatDamage,
+        );
+        support::close_empty_priority_window(&service, self.game_mut());
+        self.reset_observations();
     }
 
     pub fn setup_priority_after_combat_damage_with_instant(&mut self) {
@@ -2568,7 +2576,7 @@ impl GameplayWorld {
                 2,
             )),
         );
-        self.resolve_combat_damage();
+        self.resolve_combat_damage("Alice");
         let service = support::create_service();
         support::advance_n_satisfying_cleanup(&service, self.game_mut(), 2);
         while self.player_hand_size("Alice") > 7 {
@@ -2627,6 +2635,254 @@ impl GameplayWorld {
             .expect("BDD setup life adjustment should succeed");
 
         assert!(outcome.game_ended.is_none());
+        self.reset_observations();
+    }
+
+    fn setup_keyword_combat(
+        &mut self,
+        game_id: &str,
+        attacker_card: LibraryCard,
+        blocker_card: LibraryCard,
+    ) {
+        self.reset_game_with_libraries(
+            game_id,
+            support::filled_library(vec![attacker_card], 10),
+            support::filled_library(vec![blocker_card], 10),
+        );
+
+        let service = support::create_service();
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-1",
+        );
+        let attacker_id = self.hand_card_by_definition("Alice", "attacker");
+        service
+            .cast_spell(
+                self.game_mut(),
+                CastSpellCommand::new(Self::player_id("Alice"), attacker_id.clone()),
+            )
+            .expect("attacker cast should succeed");
+        support::resolve_top_stack_with_passes(&service, self.game_mut());
+
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-2",
+        );
+        let blocker_id = self.hand_card_by_definition("Bob", "blocker");
+        service
+            .cast_spell(
+                self.game_mut(),
+                CastSpellCommand::new(Self::player_id("Bob"), blocker_id.clone()),
+            )
+            .expect("blocker cast should succeed");
+        support::resolve_top_stack_with_passes(&service, self.game_mut());
+
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-1",
+        );
+        support::advance_to_phase_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            Phase::DeclareAttackers,
+        );
+        service
+            .declare_attackers(
+                self.game_mut(),
+                demonictutor::DeclareAttackersCommand::new(
+                    Self::player_id("Alice"),
+                    vec![attacker_id.clone()],
+                ),
+            )
+            .expect("declare attackers should succeed");
+
+        support::advance_to_phase_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            Phase::DeclareBlockers,
+        );
+
+        self.tracked_attacker_id = Some(attacker_id);
+        self.tracked_blocker_id = Some(blocker_id);
+    }
+
+    pub fn setup_flying_attack_and_block(&mut self) {
+        self.setup_keyword_combat(
+            "bdd-flying-block",
+            support::creature_card_with_keywords("attacker", 0, 2, 2, true, false),
+            support::creature_card_with_keywords("blocker", 0, 2, 2, true, false),
+        );
+        let service = support::create_service();
+        support::advance_to_phase_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            Phase::DeclareBlockers,
+        );
+        support::close_empty_priority_window(&service, self.game_mut());
+        self.reset_observations();
+    }
+
+    pub fn setup_flying_attack_and_reach_block(&mut self) {
+        self.setup_keyword_combat(
+            "bdd-reach-block",
+            support::creature_card_with_keywords("attacker", 0, 2, 2, true, false),
+            support::creature_card_with_keywords("blocker", 0, 2, 2, false, true),
+        );
+        let service = support::create_service();
+        support::advance_to_phase_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            Phase::DeclareBlockers,
+        );
+        support::close_empty_priority_window(&service, self.game_mut());
+        self.reset_observations();
+    }
+
+    pub fn setup_flying_attack_and_nonflying_block(&mut self) {
+        self.setup_keyword_combat(
+            "bdd-nonflying-block",
+            support::creature_card_with_keywords("attacker", 0, 2, 2, true, false),
+            support::creature_card_with_keywords("blocker", 0, 2, 2, false, false),
+        );
+        let service = support::create_service();
+        support::advance_to_phase_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            Phase::DeclareBlockers,
+        );
+        support::close_empty_priority_window(&service, self.game_mut());
+        self.reset_observations();
+    }
+
+    pub fn setup_nonflying_attack_and_block(&mut self) {
+        self.setup_keyword_combat(
+            "bdd-nonflying-attacker",
+            support::creature_card_with_keywords("attacker", 0, 2, 2, false, false),
+            support::creature_card_with_keywords("blocker", 0, 2, 2, false, false),
+        );
+        let service = support::create_service();
+        support::advance_to_phase_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            Phase::DeclareBlockers,
+        );
+        support::close_empty_priority_window(&service, self.game_mut());
+        self.reset_observations();
+    }
+
+    pub fn setup_flying_and_reach_block(&mut self) {
+        self.setup_keyword_combat(
+            "bdd-flying-reach-block",
+            support::creature_card_with_keywords("attacker", 0, 2, 2, true, false),
+            support::creature_card_with_keywords("blocker", 0, 2, 2, true, true),
+        );
+        let service = support::create_service();
+        support::advance_to_phase_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            Phase::DeclareBlockers,
+        );
+        support::close_empty_priority_window(&service, self.game_mut());
+        self.reset_observations();
+    }
+
+    pub fn setup_unblocked_flying_attack(&mut self) {
+        self.setup_combat(
+            "bdd-unblocked-flying",
+            "attacker",
+            support::creature_card_with_keywords("attacker", 0, 3, 2, true, false),
+            None,
+            None,
+        );
+        let service = support::create_service();
+        support::advance_to_phase_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            Phase::CombatDamage,
+        );
+        support::close_empty_priority_window(&service, self.game_mut());
+        self.reset_observations();
+    }
+
+    pub fn setup_creature_on_battlefield(&mut self, alias: &str) {
+        self.reset_game_with_libraries(
+            "bdd-exile-setup",
+            support::filled_library(vec![support::creature_card("bdd-creature", 0, 2, 2)], 40),
+            support::filled_library(Vec::new(), 40),
+        );
+
+        let service = support::create_service();
+        let player_id = Self::player_id(alias);
+        let player_label = if player_id == demonictutor::PlayerId::new("player-1") {
+            "player-1"
+        } else {
+            "player-2"
+        };
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            player_label,
+        );
+
+        let card_id = self.player(alias).hand().cards()[0].id().clone();
+        service
+            .cast_spell(
+                self.game_mut(),
+                demonictutor::CastSpellCommand::new(player_id, card_id.clone()),
+            )
+            .unwrap();
+        support::resolve_top_stack_with_passes(&service, self.game_mut());
+
+        self.tracked_card_id = Some(card_id);
+        self.reset_observations();
+    }
+
+    pub fn setup_creature_in_graveyard(&mut self, alias: &str) {
+        self.reset_game_with_libraries(
+            "bdd-exile-graveyard-setup",
+            support::filled_library(vec![support::creature_card("bdd-creature", 0, 2, 2)], 40),
+            support::filled_library(Vec::new(), 40),
+        );
+
+        let service = support::create_service();
+        let player_id = Self::player_id(alias);
+        let player_label = if player_id == demonictutor::PlayerId::new("player-1") {
+            "player-1"
+        } else {
+            "player-2"
+        };
+        support::advance_to_player_phase_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            player_label,
+            Phase::EndStep,
+        );
+
+        let card_id = self.player(alias).hand().cards()[0].id().clone();
+        service
+            .discard_for_cleanup(
+                self.game_mut(),
+                demonictutor::DiscardForCleanupCommand::new(player_id, card_id.clone()),
+            )
+            .unwrap();
+
+        self.tracked_card_id = Some(card_id);
+        self.reset_observations();
+    }
+
+    pub fn setup_creature_in_exile(&mut self, alias: &str) {
+        self.setup_creature_on_battlefield(alias);
+        let card_id = self.tracked_card_id.clone().unwrap();
+        let service = support::create_service();
+        service
+            .exile_card(
+                self.game_mut(),
+                &demonictutor::ExileCardCommand::new(Self::player_id(alias), card_id, true),
+            )
+            .unwrap();
         self.reset_observations();
     }
 }

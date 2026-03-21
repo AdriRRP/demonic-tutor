@@ -191,6 +191,7 @@ Responsibilities:
 The current model includes:
 
 - power and toughness for creature cards
+- creature keyword flags for the currently supported `Flying` and `Reach` subset
 - summoning sickness tracking and automatic removal at turn start
 - declare attackers and blockers in combat phase
 - marked combat damage on creatures
@@ -210,6 +211,7 @@ The current model includes:
 - reopening priority after combat damage resolves when the game remains active in `EndOfCombat`
 - active-player self-stacking of multiple instants in the currently supported stack windows
 - rejection of turn advancement while a priority window is open
+- explicit exile from battlefield or graveyard into a player-owned exile zone
 
 Card instances can be checked for whether they represent permanents (cards that can exist on the battlefield) using the `CardType::is_permanent()` method.
 
@@ -251,6 +253,7 @@ The aggregate root must enforce:
 - player existence
 - player uniqueness
 - valid card movement between zones
+- legal blocking constraints for the currently supported `Flying` and `Reach` keyword subset
 - creature spell validation including power/toughness presence before battlefield entry
 - turn progression rules
 - phase progression rules

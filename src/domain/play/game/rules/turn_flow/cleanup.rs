@@ -1,6 +1,5 @@
 use crate::domain::play::game::{
-    helpers,
-    invariants,
+    helpers, invariants,
     model::{Player, MAX_HAND_SIZE},
 };
 use crate::domain::play::{

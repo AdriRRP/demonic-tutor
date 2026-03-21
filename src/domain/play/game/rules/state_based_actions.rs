@@ -151,5 +151,8 @@ pub fn check_state_based_actions(
         }
     }
 
-    Ok(StateBasedActionsResult::new(total_creatures_died, final_game_ended))
+    Ok(StateBasedActionsResult::new(
+        total_creatures_died,
+        final_game_ended,
+    ))
 }

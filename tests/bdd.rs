@@ -25,6 +25,8 @@ mod state_based_actions;
 mod turn_progression;
 #[path = "bdd/world/mod.rs"]
 mod world;
+#[path = "bdd/zones.rs"]
+mod zones;
 
 use cucumber::World as _;
 use world::GameplayWorld;
@@ -117,4 +119,6 @@ async fn main() {
     GameplayWorld::run("features/turn-flow/cleanup_hand_size_discard.feature").await;
     GameplayWorld::run("features/life/adjust_player_life_effect.feature").await;
     GameplayWorld::run("features/life/lose_on_zero_life.feature").await;
+    GameplayWorld::run("features/combat/keyword_abilities.feature").await;
+    GameplayWorld::run("features/zones/exile_zone.feature").await;
 }

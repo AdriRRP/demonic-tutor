@@ -1,7 +1,5 @@
 use super::GameplayWorld;
-use demonictutor::{
-    CardDefinitionId, CardInstance, CardInstanceId, Game, Phase, PlayerId,
-};
+use demonictutor::{CardDefinitionId, CardInstance, CardInstanceId, Game, Phase, PlayerId};
 
 impl GameplayWorld {
     pub fn is_initialized(&self) -> bool {
@@ -133,5 +131,13 @@ impl GameplayWorld {
             .as_ref()
             .expect("tracked blocker should exist");
         self.battlefield_card("Bob", blocker_id)
+    }
+
+    pub fn exile_contains(&self, alias: &str, card_id: &CardInstanceId) -> bool {
+        self.player(alias)
+            .exile()
+            .cards()
+            .iter()
+            .any(|card: &CardInstance| card.id() == card_id)
     }
 }

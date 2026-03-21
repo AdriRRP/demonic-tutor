@@ -151,6 +151,7 @@ This behavior belongs to the `Game` aggregate because:
 - a flying creature cannot be blocked by a creature without flying or reach
 - a non-flying creature can block a non-flying attacker
 - a creature with both flying and reach behaves as flying
+- executable BDD coverage mirrors those blocking legality scenarios plus an unblocked flying attacker dealing player damage
 
 ---
 
@@ -204,4 +205,4 @@ let mut creature = CardInstance::new_creature_with_keywords(
 
 ## Rules Support Statement
 
-This slice introduces Flying and Reach as creature-level keywords that affect blocking legality. No other keyword abilities are modeled. Future slices will add trample, first strike, and other combat-relevant keywords incrementally.
+This slice introduces Flying and Reach as creature-level keywords that affect blocking legality and now has executable unit and BDD coverage for the supported interaction set. No other keyword abilities are modeled. Future slices will add trample, first strike, and other combat-relevant keywords incrementally.

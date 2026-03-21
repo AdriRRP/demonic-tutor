@@ -76,6 +76,8 @@ Current implemented capabilities include:
 - active-player instant casting, non-active instant responses, and self-stacking by the current priority holder across the currently supported stack windows
 - targeted instant damage to players and creatures through the shared stack-resolution path
 - creature runtime state with power, toughness, summoning sickness, combat assignments, and combat damage tracking
+- explicit exile effects moving cards from battlefield or graveyard into a player-owned exile zone
+- Flying and Reach keyword abilities affecting blocking legality
 - attacker declaration, blocker declaration, and combat damage resolution derived from aggregate state
 - automatic gameplay consequences for:
   - losing on empty-library draw

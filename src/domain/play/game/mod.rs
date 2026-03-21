@@ -7,13 +7,14 @@ use crate::domain::play::{
     commands::{
         AdjustPlayerLifeEffectCommand, AdvanceTurnCommand, CastSpellCommand,
         DealOpeningHandsCommand, DeclareAttackersCommand, DeclareBlockersCommand,
-        DiscardForCleanupCommand, DrawCardsEffectCommand, MulliganCommand, PassPriorityCommand,
-        PlayLandCommand, ResolveCombatDamageCommand, StartGameCommand, TapLandCommand,
+        DiscardForCleanupCommand, DrawCardsEffectCommand, ExileCardCommand, MulliganCommand,
+        PassPriorityCommand, PlayLandCommand, ResolveCombatDamageCommand, StartGameCommand,
+        TapLandCommand,
     },
     errors::DomainError,
     events::{
-        AttackersDeclared, BlockersDeclared, CardDiscarded, GameEndReason, GameStarted, LandPlayed,
-        LandTapped, ManaAdded, MulliganTaken, OpeningHandDealt,
+        AttackersDeclared, BlockersDeclared, CardDiscarded, CardExiled, GameEndReason, GameStarted,
+        LandPlayed, LandTapped, ManaAdded, MulliganTaken, OpeningHandDealt,
     },
     ids::{GameId, PlayerId},
     phase::Phase,
@@ -21,7 +22,8 @@ use crate::domain::play::{
 
 pub use model::Player;
 pub use model::{
-    PriorityState, SpellOnStack, SpellTarget, StackObject, StackObjectKind, StackZone, TerminalState,
+    PriorityState, SpellOnStack, SpellTarget, StackObject, StackObjectKind, StackZone,
+    TerminalState,
 };
 pub use rules::{
     combat::ResolveCombatDamageOutcome,
@@ -240,6 +242,29 @@ impl Game {
         )
     }
 
+    /// Exiles a card from battlefield or graveyard.
+    ///
+    /// # Errors
+    /// See [`rules::zones::exile_card_from_battlefield`] and [`rules::zones::exile_card_from_graveyard`].
+    pub fn exile_card(&mut self, cmd: &ExileCardCommand) -> Result<CardExiled, DomainError> {
+        invariants::require_game_active(self.is_over())?;
+        if cmd.from_battlefield {
+            rules::zones::exile_card_from_battlefield(
+                &self.id,
+                &mut self.players,
+                &cmd.player_id,
+                &cmd.card_id,
+            )
+        } else {
+            rules::zones::exile_card_from_graveyard(
+                &self.id,
+                &mut self.players,
+                &cmd.player_id,
+                &cmd.card_id,
+            )
+        }
+    }
+
     /// Resolves an explicit life effect from a caster onto a target player.
     ///
     /// # Errors
@@ -395,5 +420,14 @@ impl Game {
         };
 
         Ok(outcome)
+    }
+
+    /// Resets all blocker states.
+    pub fn reset_blockers(&mut self) {
+        for player in &mut self.players {
+            for card in player.battlefield_mut().iter_mut() {
+                card.set_blocking(false);
+            }
+        }
     }
 }
