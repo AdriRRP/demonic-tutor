@@ -90,6 +90,24 @@ fn alice_has_cast_an_instant_spell_and_still_holds_priority_with_bobs_own_turn_a
     );
 }
 
+#[given(
+    "Alice has cast an instant spell and still holds priority with Bob's own-turn enchantment card in hand"
+)]
+fn alice_has_cast_an_instant_spell_and_still_holds_priority_with_bobs_own_turn_enchantment_card_in_hand(
+    world: &mut GameplayWorld,
+) {
+    world.setup_invalid_own_turn_enchantment_response();
+    world.cast_tracked_spell("Alice");
+    let priority = world
+        .game()
+        .priority()
+        .expect("priority window should be open");
+    assert_eq!(
+        priority.current_holder(),
+        &GameplayWorld::player_id("Alice")
+    );
+}
+
 #[given("Bob has priority in FirstMain with an artifact card in hand")]
 fn bob_has_priority_in_first_main_with_an_artifact_card_in_hand(world: &mut GameplayWorld) {
     world.setup_non_active_priority_window_with_artifact(
@@ -115,6 +133,11 @@ fn bob_tries_to_cast_the_planeswalker_response_spell(world: &mut GameplayWorld) 
 
 #[when("Bob tries to cast the artifact spell")]
 fn bob_tries_to_cast_the_artifact_spell(world: &mut GameplayWorld) {
+    world.try_cast_tracked_response_spell("Bob");
+}
+
+#[when("Bob tries to cast the enchantment spell")]
+fn bob_tries_to_cast_the_enchantment_spell(world: &mut GameplayWorld) {
     world.try_cast_tracked_response_spell("Bob");
 }
 

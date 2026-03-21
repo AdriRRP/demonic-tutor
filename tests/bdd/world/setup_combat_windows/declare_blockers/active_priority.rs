@@ -41,6 +41,21 @@ impl GameplayWorld {
         self.reset_observations();
     }
 
+    pub fn setup_priority_after_blockers_declared_with_own_turn_artifact(&mut self) {
+        prepare_priority_after_blockers_declared(
+            self,
+            "bdd-combat-priority-blockers-own-turn-artifact",
+            vec![
+                attacker_card(),
+                support::own_turn_priority_artifact_card("bdd-window-own-turn-artifact", 0),
+            ],
+            vec![blocker_card()],
+        );
+        self.tracked_card_id =
+            Some(self.hand_card_by_definition("Alice", "bdd-window-own-turn-artifact"));
+        self.reset_observations();
+    }
+
     pub fn setup_priority_after_blockers_declared_with_blocking_creature_spell(&mut self) {
         prepare_priority_after_blockers_declared(
             self,

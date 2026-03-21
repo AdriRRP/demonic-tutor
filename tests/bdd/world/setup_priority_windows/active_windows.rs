@@ -77,6 +77,29 @@ impl GameplayWorld {
         self.assert_priority_window(phase, "Alice");
     }
 
+    pub fn setup_active_priority_window_with_own_turn_enchantment(
+        &mut self,
+        game_id: &str,
+        phase: Phase,
+    ) {
+        self.reset_game_with_libraries(
+            game_id,
+            support::filled_library(
+                vec![support::own_turn_priority_enchantment_card(
+                    "bdd-window-own-turn-enchantment",
+                    0,
+                )],
+                10,
+            ),
+            support::filled_library(Vec::new(), 10),
+        );
+        self.advance_to_turn_one_priority_window(phase);
+        self.tracked_card_id =
+            Some(self.hand_card_by_definition("Alice", "bdd-window-own-turn-enchantment"));
+        self.reset_observations();
+        self.assert_priority_window(phase, "Alice");
+    }
+
     pub fn setup_active_priority_window_with_enchantment(&mut self, game_id: &str, phase: Phase) {
         self.reset_game_with_libraries(
             game_id,

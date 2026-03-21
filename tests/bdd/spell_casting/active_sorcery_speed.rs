@@ -43,6 +43,44 @@ fn alice_is_the_active_player_in_upkeep_with_an_own_turn_priority_artifact_card_
     );
 }
 
+#[given("Alice is the active player in BeginningOfCombat with an own-turn-priority artifact card in hand and priority")]
+fn alice_is_the_active_player_in_beginning_of_combat_with_an_own_turn_priority_artifact_card_in_hand_and_priority(
+    world: &mut GameplayWorld,
+) {
+    world.setup_priority_when_entering_combat_with_own_turn_artifact();
+}
+
+#[given("Alice is the active player after declaring attackers with an own-turn-priority artifact card in hand and priority")]
+fn alice_is_the_active_player_after_declaring_attackers_with_an_own_turn_priority_artifact_card_in_hand_and_priority(
+    world: &mut GameplayWorld,
+) {
+    world.setup_priority_after_attackers_declared_with_own_turn_artifact();
+}
+
+#[given("Alice is the active player after declaring blockers with an own-turn-priority artifact card in hand and priority")]
+fn alice_is_the_active_player_after_declaring_blockers_with_an_own_turn_priority_artifact_card_in_hand_and_priority(
+    world: &mut GameplayWorld,
+) {
+    world.setup_priority_after_blockers_declared_with_own_turn_artifact();
+}
+
+#[given("Alice is the active player after combat damage with an own-turn-priority artifact card in hand and priority")]
+fn alice_is_the_active_player_after_combat_damage_with_an_own_turn_priority_artifact_card_in_hand_and_priority(
+    world: &mut GameplayWorld,
+) {
+    world.setup_priority_after_combat_damage_with_own_turn_artifact();
+}
+
+#[given("Alice is the active player in Upkeep with an own-turn-priority enchantment card in hand and priority")]
+fn alice_is_the_active_player_in_upkeep_with_an_own_turn_priority_enchantment_card_in_hand_and_priority(
+    world: &mut GameplayWorld,
+) {
+    world.setup_active_priority_window_with_own_turn_enchantment(
+        "bdd-upkeep-own-turn-enchantment-window",
+        Phase::Upkeep,
+    );
+}
+
 #[given("Alice is the active player in FirstMain with an enchantment card in hand and priority")]
 fn alice_is_the_active_player_in_first_main_with_an_enchantment_card_in_hand_and_priority(
     world: &mut GameplayWorld,

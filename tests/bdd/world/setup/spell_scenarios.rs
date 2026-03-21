@@ -336,6 +336,30 @@ impl GameplayWorld {
             Some(self.hand_card_by_definition("Bob", "bdd-response-own-turn-artifact"));
     }
 
+    pub fn setup_invalid_own_turn_enchantment_response(&mut self) {
+        self.reset_game_with_libraries(
+            "bdd-invalid-own-turn-enchantment-response",
+            support::filled_library(vec![support::instant_card("bdd-primary-instant", 0)], 10),
+            support::filled_library(
+                vec![support::own_turn_priority_enchantment_card(
+                    "bdd-response-own-turn-enchantment",
+                    0,
+                )],
+                10,
+            ),
+        );
+
+        let service = support::create_service();
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-1",
+        );
+        self.tracked_card_id = Some(self.hand_card_by_definition("Alice", "bdd-primary-instant"));
+        self.tracked_response_card_id =
+            Some(self.hand_card_by_definition("Bob", "bdd-response-own-turn-enchantment"));
+    }
+
     pub fn setup_cast_zero_toughness_creature_spell(&mut self) {
         self.reset_game_with_libraries(
             "bdd-cast-zero-toughness-creature",

@@ -171,6 +171,15 @@ pub fn own_turn_priority_artifact_card(name: &str, mana_cost: u32) -> LibraryCar
         .with_casting_rule(CastingRule::OpenPriorityWindowDuringOwnTurn)
 }
 
+pub fn own_turn_priority_enchantment_card(name: &str, mana_cost: u32) -> LibraryCard {
+    LibraryCard::new(
+        CardDefinitionId::new(name),
+        CardType::Enchantment,
+        mana_cost,
+    )
+    .with_casting_rule(CastingRule::OpenPriorityWindowDuringOwnTurn)
+}
+
 pub fn creature_card_with_keywords(
     name: &str,
     mana_cost: u32,

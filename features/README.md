@@ -178,12 +178,18 @@ The following features are currently executed by `tests/bdd.rs`, grouped by area
 - `features/stack/cast_flash_creature_after_blockers.feature`
 - `features/stack/cast_flash_creature_after_combat_damage.feature`
 - `features/stack/cast_own_turn_priority_artifact_in_upkeep_window.feature`
+- `features/stack/cast_own_turn_priority_artifact_in_beginning_of_combat_window.feature`
+- `features/stack/cast_own_turn_priority_artifact_after_attackers.feature`
+- `features/stack/cast_own_turn_priority_artifact_after_blockers.feature`
+- `features/stack/cast_own_turn_priority_artifact_after_combat_damage.feature`
+- `features/stack/cast_own_turn_priority_enchantment_in_upkeep_window.feature`
 - `features/stack/target_blocking_creature_spell.feature`
 - `features/stack/target_controlled_attacking_creature_spell.feature`
 - `features/stack/target_controlled_blocking_creature_spell.feature`
 - `features/stack/target_opponents_blocking_creature_spell.feature`
 - `features/stack/target_opponents_attacking_creature_spell.feature`
 - `features/stack/reject_own_turn_priority_artifact_response.feature`
+- `features/stack/reject_own_turn_priority_enchantment_response.feature`
 
 ### Turn flow
 
