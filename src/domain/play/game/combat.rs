@@ -79,13 +79,4 @@ impl Game {
 
         Ok(outcome)
     }
-
-    /// Resets all blocker states.
-    pub fn reset_blockers(&mut self) {
-        for player in &mut self.players {
-            for card in player.battlefield_mut().iter_mut() {
-                card.set_blocking(false);
-            }
-        }
-    }
 }
