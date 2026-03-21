@@ -70,5 +70,7 @@ mod respond_with_second_instant_spell;
 mod sorcery_speed_spells_require_active_player_priority;
 #[path = "stack_foundation.rs"]
 mod stack_foundation;
+#[path = "target_blocking_creature_spell_foundation.rs"]
+mod target_blocking_creature_spell_foundation;
 #[path = "targeted_spells.rs"]
 mod targeted_spells;

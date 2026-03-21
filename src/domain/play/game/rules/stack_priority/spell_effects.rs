@@ -137,6 +137,13 @@ pub fn evaluate_target_legality(
                                 SpellTargetLegality::IllegalTargetRule
                             }
                         }
+                        Some(CreatureTargetRule::BlockingCreature) => {
+                            if target_creature.is_blocking() {
+                                SpellTargetLegality::Legal
+                            } else {
+                                SpellTargetLegality::IllegalTargetRule
+                            }
+                        }
                         None => SpellTargetLegality::IllegalTargetKind,
                     }
                 }
