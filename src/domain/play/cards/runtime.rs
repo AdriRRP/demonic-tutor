@@ -156,7 +156,7 @@ impl CardInstance {
     }
 
     #[must_use]
-    pub const fn casting_permission_profile(&self) -> CastingPermissionProfile {
+    pub const fn casting_permission_profile(&self) -> Option<CastingPermissionProfile> {
         self.face.definition.casting_permission()
     }
 

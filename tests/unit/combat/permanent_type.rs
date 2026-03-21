@@ -99,31 +99,31 @@ fn test_is_permanent_returns_false_for_non_permanent_types() {
 #[test]
 fn test_casting_permission_profile_for_card_type_matches_supported_model() {
     assert_eq!(
-        CastingPermissionProfile::for_card_type(&CardType::Instant),
-        CastingPermissionProfile::OpenPriorityWindow
+        CastingPermissionProfile::for_spell_card_type(&CardType::Instant),
+        Some(CastingPermissionProfile::OpenPriorityWindow)
     );
     assert_eq!(
-        CastingPermissionProfile::for_card_type(&CardType::Creature),
-        CastingPermissionProfile::ActivePlayerEmptyMainPhaseWindow
+        CastingPermissionProfile::for_spell_card_type(&CardType::Creature),
+        Some(CastingPermissionProfile::ActivePlayerEmptyMainPhaseWindow)
     );
     assert_eq!(
-        CastingPermissionProfile::for_card_type(&CardType::Sorcery),
-        CastingPermissionProfile::ActivePlayerEmptyMainPhaseWindow
+        CastingPermissionProfile::for_spell_card_type(&CardType::Sorcery),
+        Some(CastingPermissionProfile::ActivePlayerEmptyMainPhaseWindow)
     );
     assert_eq!(
-        CastingPermissionProfile::for_card_type(&CardType::Artifact),
-        CastingPermissionProfile::ActivePlayerEmptyMainPhaseWindow
+        CastingPermissionProfile::for_spell_card_type(&CardType::Artifact),
+        Some(CastingPermissionProfile::ActivePlayerEmptyMainPhaseWindow)
     );
     assert_eq!(
-        CastingPermissionProfile::for_card_type(&CardType::Enchantment),
-        CastingPermissionProfile::ActivePlayerEmptyMainPhaseWindow
+        CastingPermissionProfile::for_spell_card_type(&CardType::Enchantment),
+        Some(CastingPermissionProfile::ActivePlayerEmptyMainPhaseWindow)
     );
     assert_eq!(
-        CastingPermissionProfile::for_card_type(&CardType::Planeswalker),
-        CastingPermissionProfile::ActivePlayerEmptyMainPhaseWindow
+        CastingPermissionProfile::for_spell_card_type(&CardType::Planeswalker),
+        Some(CastingPermissionProfile::ActivePlayerEmptyMainPhaseWindow)
     );
     assert_eq!(
-        CastingPermissionProfile::for_card_type(&CardType::Land),
-        CastingPermissionProfile::ActivePlayerEmptyMainPhaseWindow
+        CastingPermissionProfile::for_spell_card_type(&CardType::Land),
+        None
     );
 }

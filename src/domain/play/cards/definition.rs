@@ -5,7 +5,7 @@ use crate::domain::play::ids::CardDefinitionId;
 pub struct CardDefinition {
     id: CardDefinitionId,
     mana_cost: u32,
-    casting_permission: CastingPermissionProfile,
+    casting_permission: Option<CastingPermissionProfile>,
     supported_spell_rules: SupportedSpellRules,
 }
 
@@ -15,7 +15,7 @@ impl CardDefinition {
         Self {
             id,
             mana_cost,
-            casting_permission: CastingPermissionProfile::ActivePlayerEmptyMainPhaseWindow,
+            casting_permission: None,
             supported_spell_rules: SupportedSpellRules::none(),
         }
     }
@@ -25,7 +25,7 @@ impl CardDefinition {
         Self {
             id,
             mana_cost,
-            casting_permission: CastingPermissionProfile::for_card_type(card_type),
+            casting_permission: CastingPermissionProfile::for_spell_card_type(card_type),
             supported_spell_rules: SupportedSpellRules::none(),
         }
     }
@@ -50,7 +50,7 @@ impl CardDefinition {
     }
 
     #[must_use]
-    pub const fn casting_permission(&self) -> CastingPermissionProfile {
+    pub const fn casting_permission(&self) -> Option<CastingPermissionProfile> {
         self.casting_permission
     }
 

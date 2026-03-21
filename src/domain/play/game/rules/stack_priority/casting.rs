@@ -152,11 +152,16 @@ pub fn cast_spell(
             })
         })?;
     let card_type = hand_card.card_type().clone();
-    let casting_permission = hand_card.casting_permission_profile();
-
     if card_type.is_land() {
         return Err(DomainError::Card(CardError::CannotCastLand(card_id)));
     }
+
+    let casting_permission = hand_card.casting_permission_profile().ok_or_else(|| {
+        DomainError::Game(GameError::InternalInvariantViolation(format!(
+            "spell card {} must define casting permission",
+            hand_card.id()
+        )))
+    })?;
 
     require_cast_timing(
         active_player,

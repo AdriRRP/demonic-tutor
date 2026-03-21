@@ -20,7 +20,7 @@ Enable casting spell cards from hand with minimal stack-aware resolution.
 Helper methods:
 - `CardType::is_land()` - returns true for Land type
 - `CardType::is_spell_card()` - returns true for all spell card types
-- `CastingPermissionProfile::for_card_type()` - derives the currently supported casting permission model for a spell card type
+- `CastingPermissionProfile::for_spell_card_type()` - derives the currently supported casting permission model for a spell card type
 
 ### Commands
 

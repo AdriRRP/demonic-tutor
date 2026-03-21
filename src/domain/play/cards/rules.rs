@@ -42,15 +42,15 @@ pub enum CastingPermissionProfile {
 
 impl CastingPermissionProfile {
     #[must_use]
-    pub const fn for_card_type(card_type: &CardType) -> Self {
+    pub const fn for_spell_card_type(card_type: &CardType) -> Option<Self> {
         match card_type {
-            CardType::Instant => Self::OpenPriorityWindow,
+            CardType::Instant => Some(Self::OpenPriorityWindow),
             CardType::Creature
             | CardType::Sorcery
             | CardType::Enchantment
             | CardType::Artifact
-            | CardType::Planeswalker
-            | CardType::Land => Self::ActivePlayerEmptyMainPhaseWindow,
+            | CardType::Planeswalker => Some(Self::ActivePlayerEmptyMainPhaseWindow),
+            CardType::Land => None,
         }
     }
 
