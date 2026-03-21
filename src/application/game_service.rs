@@ -20,6 +20,50 @@ use crate::{
     },
 };
 
+#[derive(Default)]
+struct DomainEvents {
+    items: Vec<DomainEvent>,
+}
+
+impl DomainEvents {
+    fn with<T>(event: T) -> Self
+    where
+        T: Into<DomainEvent>,
+    {
+        Self {
+            items: vec![event.into()],
+        }
+    }
+
+    fn push<T>(&mut self, event: T)
+    where
+        T: Into<DomainEvent>,
+    {
+        self.items.push(event.into());
+    }
+
+    fn push_optional<T>(&mut self, event: Option<T>)
+    where
+        T: Into<DomainEvent>,
+    {
+        if let Some(event) = event {
+            self.push(event);
+        }
+    }
+
+    fn extend<T, I>(&mut self, events: I)
+    where
+        T: Into<DomainEvent>,
+        I: IntoIterator<Item = T>,
+    {
+        self.items.extend(events.into_iter().map(Into::into));
+    }
+
+    fn into_vec(self) -> Vec<DomainEvent> {
+        self.items
+    }
+}
+
 pub struct GameService<E, B>
 where
     E: EventStore,
@@ -90,38 +134,28 @@ where
                 turn_progressed,
                 card_drawn,
             } => {
-                let mut domain_events = vec![turn_progressed.clone().into()];
-                if let Some(draw_event) = card_drawn {
-                    domain_events.push(draw_event.clone().into());
-                }
-                domain_events
+                let mut domain_events = DomainEvents::with(turn_progressed.clone());
+                domain_events.push_optional(card_drawn.clone());
+                domain_events.into_vec()
             }
             AdvanceTurnOutcome::GameEnded(game_ended) => vec![game_ended.clone().into()],
         }
     }
 
     fn domain_events_for_draw_cards_effect(outcome: &DrawCardsEffectOutcome) -> Vec<DomainEvent> {
-        let mut domain_events = outcome
-            .cards_drawn
-            .iter()
-            .cloned()
-            .map(Into::into)
-            .collect::<Vec<_>>();
-        if let Some(game_ended) = &outcome.game_ended {
-            domain_events.push(game_ended.clone().into());
-        }
-        domain_events
+        let mut domain_events = DomainEvents::default();
+        domain_events.extend(outcome.cards_drawn.iter().cloned());
+        domain_events.push_optional(outcome.game_ended.clone());
+        domain_events.into_vec()
     }
 
     fn domain_events_for_adjust_player_life_effect(
         outcome: &AdjustPlayerLifeEffectOutcome,
     ) -> Vec<DomainEvent> {
-        let mut domain_events = vec![outcome.life_changed.clone().into()];
-        domain_events.extend(outcome.creatures_died.iter().cloned().map(Into::into));
-        if let Some(game_ended) = &outcome.game_ended {
-            domain_events.push(game_ended.clone().into());
-        }
-        domain_events
+        let mut domain_events = DomainEvents::with(outcome.life_changed.clone());
+        domain_events.extend(outcome.creatures_died.iter().cloned());
+        domain_events.push_optional(outcome.game_ended.clone());
+        domain_events.into_vec()
     }
 
     fn domain_events_for_cast_spell(outcome: &CastSpellOutcome) -> Vec<DomainEvent> {
@@ -129,41 +163,23 @@ where
     }
 
     fn domain_events_for_pass_priority(outcome: &PassPriorityOutcome) -> Vec<DomainEvent> {
-        let mut domain_events = vec![outcome.priority_passed.clone().into()];
-        if let Some(stack_top_resolved) = &outcome.stack_top_resolved {
-            domain_events.push(stack_top_resolved.clone().into());
-        }
-        if let Some(spell_cast) = &outcome.spell_cast {
-            domain_events.push(spell_cast.clone().into());
-        }
-        if let Some(life_changed) = &outcome.life_changed {
-            domain_events.push(life_changed.clone().into());
-        }
-        domain_events.extend(outcome.creatures_died.iter().cloned().map(Into::into));
-        if let Some(game_ended) = &outcome.game_ended {
-            domain_events.push(game_ended.clone().into());
-        }
-        domain_events
+        let mut domain_events = DomainEvents::with(outcome.priority_passed.clone());
+        domain_events.push_optional(outcome.stack_top_resolved.clone());
+        domain_events.push_optional(outcome.spell_cast.clone());
+        domain_events.push_optional(outcome.life_changed.clone());
+        domain_events.extend(outcome.creatures_died.iter().cloned());
+        domain_events.push_optional(outcome.game_ended.clone());
+        domain_events.into_vec()
     }
 
     fn domain_events_for_resolve_combat_damage(
         outcome: &ResolveCombatDamageOutcome,
     ) -> Vec<DomainEvent> {
-        let mut domain_events = vec![outcome.combat_damage_resolved.clone().into()];
-        if let Some(life_changed) = &outcome.life_changed {
-            domain_events.push(life_changed.clone().into());
-        }
-        domain_events.extend(
-            outcome
-                .creatures_died
-                .iter()
-                .cloned()
-                .map(DomainEvent::CreatureDied),
-        );
-        if let Some(game_ended) = &outcome.game_ended {
-            domain_events.push(game_ended.clone().into());
-        }
-        domain_events
+        let mut domain_events = DomainEvents::with(outcome.combat_damage_resolved.clone());
+        domain_events.push_optional(outcome.life_changed.clone());
+        domain_events.extend(outcome.creatures_died.iter().cloned());
+        domain_events.push_optional(outcome.game_ended.clone());
+        domain_events.into_vec()
     }
 
     /// Starts a new game.
@@ -320,7 +336,9 @@ where
         cmd: TapLandCommand,
     ) -> Result<(LandTapped, ManaAdded), DomainError> {
         let (land_event, mana_event) = game.tap_land(cmd)?;
-        let domain_events = vec![land_event.clone().into(), mana_event.clone().into()];
+        let mut domain_events = DomainEvents::with(land_event.clone());
+        domain_events.push(mana_event.clone());
+        let domain_events = domain_events.into_vec();
         self.persist_and_publish_events(game.id().as_str(), &domain_events)?;
 
         Ok((land_event, mana_event))
