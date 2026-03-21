@@ -173,7 +173,7 @@ Current constraints include:
 - opening hand size is fixed to 7 cards
 - only a subset of zones are modeled (library, hand, battlefield, graveyard, exile)
 - spell responses during open priority windows are currently limited to instants
-- the current targeted-spell subset is intentionally tiny and driven by explicit card-face legal-target and resolution profiles
+- the current targeted-spell subset is intentionally tiny and driven by explicit card-face legal-target rules and resolution profiles
 - the current targeted-spell subset currently supports only simple player-or-creature damage instants
 - sorcery-speed spells are currently supported only for the active player in `FirstMain` or `SecondMain` while the stack is empty
 - priority windows are currently opened by spell casting, by entering `Upkeep`, `Draw`, `FirstMain`, `BeginningOfCombat`, `SecondMain`, or `EndStep`, after attackers or blockers are declared, and after combat damage resolves if the game remains active

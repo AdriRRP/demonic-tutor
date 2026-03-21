@@ -6,7 +6,7 @@ mod runtime;
 pub use definition::CardDefinition;
 pub use keywords::{KeywordAbility, KeywordAbilitySet};
 pub use rules::{
-    CardType, CastingPermissionProfile, SpellResolutionProfile, SpellTargetKind,
-    SpellTargetRestriction, SpellTargetingProfile, SupportedSpellRules,
+    CardType, CastingPermissionProfile, SpellResolutionProfile, SpellTargetKind, SpellTargetRule,
+    SpellTargetingProfile, SupportedSpellRules,
 };
 pub use runtime::CardInstance;
