@@ -38,6 +38,21 @@ fn create_game_with_land_on_battlefield() -> (
     (game, service)
 }
 
+fn hand_card_id_by_definition(
+    game: &demonictutor::Game,
+    player_index: usize,
+    definition_id: &str,
+) -> CardInstanceId {
+    game.players()[player_index]
+        .hand()
+        .cards()
+        .iter()
+        .find(|card| card.definition_id() == &demonictutor::CardDefinitionId::new(definition_id))
+        .unwrap()
+        .id()
+        .clone()
+}
+
 #[test]
 fn players_start_with_zero_mana() {
     let service = create_service();
@@ -191,12 +206,7 @@ fn tap_land_fails_while_the_stack_is_not_empty() {
         ),
     );
 
-    assert!(matches!(
-        result,
-        Err(DomainError::Game(
-            demonictutor::GameError::PriorityWindowOpen { .. }
-        ))
-    ));
+    assert!(result.is_ok());
 }
 
 #[test]
@@ -286,6 +296,56 @@ fn tap_land_fails_in_upkeep_after_the_active_player_passes_priority() {
             demonictutor::GameError::NotPriorityHolder { .. }
         ))
     ));
+}
+
+#[test]
+fn non_active_player_can_tap_a_land_while_holding_priority_on_an_open_stack() {
+    let alice_cards = vec![instant_card("alice-shock", 0); 10];
+    let bob_cards = vec![land_card("mountain"); 10];
+
+    let (service, mut game) =
+        setup_two_player_game("game-tap-land-response-window", alice_cards, bob_cards);
+    advance_to_player_phase_satisfying_cleanup(&service, &mut game, "player-2", Phase::FirstMain);
+
+    let bob_land = hand_card_id_by_definition(&game, 1, "mountain");
+    service
+        .play_land(
+            &mut game,
+            PlayLandCommand::new(PlayerId::new("player-2"), bob_land.clone()),
+        )
+        .unwrap();
+
+    advance_to_player_phase_satisfying_cleanup(&service, &mut game, "player-1", Phase::FirstMain);
+    let alice_spell = hand_card_id_by_definition(&game, 0, "alice-shock");
+
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), alice_spell),
+        )
+        .unwrap();
+    service
+        .pass_priority(
+            &mut game,
+            PassPriorityCommand::new(PlayerId::new("player-1")),
+        )
+        .unwrap();
+
+    assert_eq!(
+        game.priority().unwrap().current_holder(),
+        &PlayerId::new("player-2")
+    );
+
+    let result = service.tap_land(
+        &mut game,
+        TapLandCommand::new(PlayerId::new("player-2"), bob_land),
+    );
+
+    assert!(result.is_ok());
+    let (_, mana_event) = result.unwrap();
+    assert_eq!(mana_event.amount, 1);
+    assert_eq!(mana_event.new_mana_total, 1);
+    assert_eq!(game.players()[1].mana(), 1);
 }
 
 #[test]

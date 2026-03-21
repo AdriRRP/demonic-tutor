@@ -86,7 +86,9 @@ pub fn tap_land(
     priority: Option<&crate::domain::play::game::PriorityState>,
     cmd: TapLandCommand,
 ) -> Result<(LandTapped, ManaAdded), DomainError> {
-    invariants::require_active_player(active_player, &cmd.player_id)?;
+    if priority.is_none() {
+        invariants::require_active_player(active_player, &cmd.player_id)?;
+    }
 
     if priority.is_none() && !matches!(phase, Phase::FirstMain | Phase::SecondMain) {
         return Err(DomainError::Phase(PhaseError::InvalidForPlayingCard {
