@@ -73,22 +73,15 @@ impl StackZone {
 pub struct StackObject {
     id: StackObjectId,
     controller_id: PlayerId,
-    source_card_id: CardInstanceId,
     kind: StackObjectKind,
 }
 
 impl StackObject {
     #[must_use]
-    pub const fn new(
-        id: StackObjectId,
-        controller_id: PlayerId,
-        source_card_id: CardInstanceId,
-        kind: StackObjectKind,
-    ) -> Self {
+    pub const fn new(id: StackObjectId, controller_id: PlayerId, kind: StackObjectKind) -> Self {
         Self {
             id,
             controller_id,
-            source_card_id,
             kind,
         }
     }
@@ -105,7 +98,9 @@ impl StackObject {
 
     #[must_use]
     pub const fn source_card_id(&self) -> &CardInstanceId {
-        &self.source_card_id
+        match &self.kind {
+            StackObjectKind::Spell(spell) => spell.card().id(),
+        }
     }
 
     #[must_use]

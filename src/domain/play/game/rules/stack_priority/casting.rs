@@ -192,7 +192,6 @@ pub fn cast_spell(
     stack.push(StackObject::new(
         stack_object_id.clone(),
         player_id.clone(),
-        card_id.clone(),
         StackObjectKind::Spell(SpellOnStack::new(card, mana_cost, target.clone())),
     ));
 
