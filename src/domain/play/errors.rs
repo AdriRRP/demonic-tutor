@@ -1,5 +1,5 @@
 use crate::domain::play::{
-    cards::CastingPermissionProfile,
+    cards::{CastingPermissionProfile, CastingRule},
     ids::{CardInstanceId, PlayerId},
     phase::Phase,
 };
@@ -249,12 +249,12 @@ fn write_casting_permission_error(
     card: &CardInstanceId,
     permission: CastingPermissionProfile,
 ) -> std::fmt::Result {
-    if permission.allows_open_priority_window_cast() {
+    if permission.supports(CastingRule::OpenPriorityWindow) {
         write!(
             f,
             "card {card} cannot be cast under an open-priority casting permission in the current window"
         )
-    } else if permission.allows_active_player_empty_main_phase_cast() {
+    } else if permission.supports(CastingRule::ActivePlayerEmptyMainPhaseWindow) {
         write!(
             f,
             "card {card} cannot be cast under an active-player empty-main-phase casting permission in the current window"

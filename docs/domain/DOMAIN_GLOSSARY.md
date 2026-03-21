@@ -49,7 +49,7 @@ The conceptual identity of a card.
 
 A card definition describes what a card *is* independently of any specific game.
 
-Examples include card name, type, mana cost, supported spell-casting permissions for spell cards, supported targeting, and supported resolution used by the runtime.
+Examples include card name, type, mana cost, supported casting rules for spell cards, supported targeting, and supported resolution used by the runtime.
 
 ---
 

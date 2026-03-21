@@ -38,6 +38,12 @@ const PERMISSION_OPEN_PRIORITY_WINDOW: u8 = 1 << 0;
 const PERMISSION_ACTIVE_PLAYER_EMPTY_MAIN_PHASE_WINDOW: u8 = 1 << 1;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CastingRule {
+    OpenPriorityWindow,
+    ActivePlayerEmptyMainPhaseWindow,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct CastingPermissionProfile(u8);
 
 impl CastingPermissionProfile {
@@ -71,13 +77,23 @@ impl CastingPermissionProfile {
     }
 
     #[must_use]
+    pub const fn supports(self, rule: CastingRule) -> bool {
+        match rule {
+            CastingRule::OpenPriorityWindow => self.0 & PERMISSION_OPEN_PRIORITY_WINDOW != 0,
+            CastingRule::ActivePlayerEmptyMainPhaseWindow => {
+                self.0 & PERMISSION_ACTIVE_PLAYER_EMPTY_MAIN_PHASE_WINDOW != 0
+            }
+        }
+    }
+
+    #[must_use]
     pub const fn allows_open_priority_window_cast(self) -> bool {
-        self.0 & PERMISSION_OPEN_PRIORITY_WINDOW != 0
+        self.supports(CastingRule::OpenPriorityWindow)
     }
 
     #[must_use]
     pub const fn allows_active_player_empty_main_phase_cast(self) -> bool {
-        self.0 & PERMISSION_ACTIVE_PLAYER_EMPTY_MAIN_PHASE_WINDOW != 0
+        self.supports(CastingRule::ActivePlayerEmptyMainPhaseWindow)
     }
 }
 

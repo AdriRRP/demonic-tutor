@@ -126,7 +126,7 @@ The domain currently includes:
 - supported targeted instants currently do not apply their effect if their only legal creature target is gone on resolution
 - legal-target evaluation for the current targeted-spell subset is shared between cast-time validation and resolution-time revalidation
 - supported spell targeting and resolution are currently carried as explicit card-face profiles rather than inferred from card-definition strings during resolution
-- supported spell-card casting permissions are currently carried as explicit card-face data rather than inferred only from `CardType`
+- supported spell-card casting rules are currently carried as explicit card-face data rather than inferred only from `CardType`
 - card definitions are currently created through card-type-aware constructors so supported spell cards receive casting-permission semantics when the face is built
 - entering `EndStep` opens an empty priority window for the active player before cleanup can finish the turn
 - the non-active player may cast and resolve an instant in `EndStep` after the active player passes

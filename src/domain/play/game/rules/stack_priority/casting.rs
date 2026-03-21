@@ -5,7 +5,7 @@ use super::{
     CastSpellOutcome, StackPriorityContext,
 };
 use crate::domain::play::{
-    cards::{CardType, CastingPermissionProfile, SupportedSpellRules},
+    cards::{CardType, CastingPermissionProfile, CastingRule, SupportedSpellRules},
     commands::CastSpellCommand,
     errors::{CardError, DomainError, GameError, PhaseError},
     events::SpellPutOnStack,
@@ -31,14 +31,14 @@ fn require_cast_timing(
     if let Some(priority) = priority {
         invariants::require_priority_holder(Some(priority), player_id)?;
 
-        if casting_permission.allows_open_priority_window_cast() {
+        if casting_permission.supports(CastingRule::OpenPriorityWindow) {
             return Ok(());
         }
 
         let active_player_in_empty_main_phase_window = stack.is_empty()
             && player_id == active_player
             && matches!(phase, Phase::FirstMain | Phase::SecondMain);
-        if casting_permission.allows_active_player_empty_main_phase_cast()
+        if casting_permission.supports(CastingRule::ActivePlayerEmptyMainPhaseWindow)
             && active_player_in_empty_main_phase_window
         {
             return Ok(());

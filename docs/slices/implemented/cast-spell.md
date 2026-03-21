@@ -20,7 +20,7 @@ Enable casting spell cards from hand with minimal stack-aware resolution.
 Helper methods:
 - `CardType::is_land()` - returns true for Land type
 - `CardType::is_spell_card()` - returns true for all spell card types
-- `CastingPermissionProfile::for_spell_card_type()` - derives the currently supported casting permission model for a spell card type
+- `CastingPermissionProfile::for_spell_card_type()` - derives the currently supported casting-rule model for a spell card type
 
 ### Commands
 
@@ -39,8 +39,8 @@ pub struct CastSpellCommand {
 - a provided target must be legal for that spell's supported targeting rule
 - Outside an open priority window, casting remains limited to the active player in `FirstMain` or `SecondMain`
 - During an open priority window, spells with the active-player empty-main-phase permission may be cast only by the active player in `FirstMain` or `SecondMain` while the stack is empty
-- During any other supported response timing, only spells with open-priority casting permission may be cast in the current minimal stack model
-- The non-active player may still hold priority in an empty main-phase window, but only spells with open-priority casting permission are supported there
+- During any other supported response timing, only spells whose supported casting rules allow an open-priority window may be cast in the current minimal stack model
+- The non-active player may still hold priority in an empty main-phase window, but only spells whose supported casting rules allow an open-priority window are supported there
 
 #### PassPriorityCommand
 ```rust
@@ -103,7 +103,7 @@ Emitted when the top spell on the stack resolves successfully, including the spe
 
 ## Rules Support Statement
 
-This slice now implements a minimal stack-aware spell-casting model. Casting moves a spell card from hand onto the stack, and the casting player keeps priority immediately afterward. Resolution happens only after two consecutive passes. Permanent spells resolve from the stack to the battlefield, while instants and sorceries resolve from the stack to the graveyard. The current runtime also triggers the shared review of currently supported state-based actions after spell resolution, which can produce `LifeChanged`, `CreatureDied`, or `GameEnded` in addition to `SpellCast`. Spells with the active-player empty-main-phase casting permission are currently supported only for the active player in `FirstMain` or `SecondMain` when the stack is empty. A targeted subset of spells can now target a player or creature explicitly; broader targeting, modes, and replacement effects remain out of scope.
+This slice now implements a minimal stack-aware spell-casting model. Casting moves a spell card from hand onto the stack, and the casting player keeps priority immediately afterward. Resolution happens only after two consecutive passes. Permanent spells resolve from the stack to the battlefield, while instants and sorceries resolve from the stack to the graveyard. The current runtime also triggers the shared review of currently supported state-based actions after spell resolution, which can produce `LifeChanged`, `CreatureDied`, or `GameEnded` in addition to `SpellCast`. Spells whose supported casting rules require an active-player empty main-phase window are currently supported only for the active player in `FirstMain` or `SecondMain` when the stack is empty. A targeted subset of spells can now target a player or creature explicitly; broader targeting, modes, and replacement effects remain out of scope.
 
 ## Tests
 
