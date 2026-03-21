@@ -58,6 +58,73 @@ impl GameplayWorld {
         );
     }
 
+    pub fn setup_priority_when_entering_combat_with_flash_artifact(&mut self) {
+        self.reset_game_with_libraries(
+            "bdd-beginning-combat-flash-artifact",
+            support::filled_library(
+                vec![support::flash_artifact_card("bdd-window-flash-artifact", 0)],
+                10,
+            ),
+            support::filled_library(Vec::new(), 10),
+        );
+
+        let service = support::create_service();
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-1",
+        );
+        support::close_empty_priority_window(&service, self.game_mut());
+        support::advance_turn_raw(&service, self.game_mut());
+
+        self.tracked_card_id =
+            Some(self.hand_card_by_definition("Alice", "bdd-window-flash-artifact"));
+        self.reset_observations();
+        assert_eq!(self.game().phase(), &Phase::BeginningOfCombat);
+        assert_eq!(
+            self.game()
+                .priority()
+                .expect("combat should open priority")
+                .current_holder(),
+            &Self::player_id("Alice")
+        );
+    }
+
+    pub fn setup_priority_when_entering_combat_with_flash_enchantment(&mut self) {
+        self.reset_game_with_libraries(
+            "bdd-beginning-combat-flash-enchantment",
+            support::filled_library(
+                vec![support::flash_enchantment_card(
+                    "bdd-window-flash-enchantment",
+                    0,
+                )],
+                10,
+            ),
+            support::filled_library(Vec::new(), 10),
+        );
+
+        let service = support::create_service();
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-1",
+        );
+        support::close_empty_priority_window(&service, self.game_mut());
+        support::advance_turn_raw(&service, self.game_mut());
+
+        self.tracked_card_id =
+            Some(self.hand_card_by_definition("Alice", "bdd-window-flash-enchantment"));
+        self.reset_observations();
+        assert_eq!(self.game().phase(), &Phase::BeginningOfCombat);
+        assert_eq!(
+            self.game()
+                .priority()
+                .expect("combat should open priority")
+                .current_holder(),
+            &Self::player_id("Alice")
+        );
+    }
+
     pub fn setup_priority_when_entering_combat_with_own_turn_artifact(&mut self) {
         self.reset_game_with_libraries(
             "bdd-beginning-combat-own-turn-artifact",

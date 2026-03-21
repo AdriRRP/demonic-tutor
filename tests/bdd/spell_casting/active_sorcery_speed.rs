@@ -71,6 +71,13 @@ fn alice_is_the_active_player_after_combat_damage_with_an_own_turn_priority_arti
     world.setup_priority_after_combat_damage_with_own_turn_artifact();
 }
 
+#[given("Alice is the active player in BeginningOfCombat with a flash artifact card in hand and priority")]
+fn alice_is_the_active_player_in_beginning_of_combat_with_a_flash_artifact_card_in_hand_and_priority(
+    world: &mut GameplayWorld,
+) {
+    world.setup_priority_when_entering_combat_with_flash_artifact();
+}
+
 #[given("Alice is the active player in Upkeep with an own-turn-priority enchantment card in hand and priority")]
 fn alice_is_the_active_player_in_upkeep_with_an_own_turn_priority_enchantment_card_in_hand_and_priority(
     world: &mut GameplayWorld,
@@ -107,6 +114,13 @@ fn alice_is_the_active_player_after_combat_damage_with_an_own_turn_priority_ench
     world: &mut GameplayWorld,
 ) {
     world.setup_priority_after_combat_damage_with_own_turn_enchantment();
+}
+
+#[given("Alice is the active player in BeginningOfCombat with a flash enchantment card in hand and priority")]
+fn alice_is_the_active_player_in_beginning_of_combat_with_a_flash_enchantment_card_in_hand_and_priority(
+    world: &mut GameplayWorld,
+) {
+    world.setup_priority_when_entering_combat_with_flash_enchantment();
 }
 
 #[given("Alice is the active player in FirstMain with an enchantment card in hand and priority")]
