@@ -1,23 +1,128 @@
-# Gameplay Features
+# Gameplay Features — DemonicTutor
 
-This directory contains Gherkin-style behavior specifications for DemonicTutor.
+This directory contains repository-owned Gherkin specifications for DemonicTutor gameplay.
 
-These files are not a literal copy of the Magic Comprehensive Rules.
+These files are not a literal transcription of the Magic Comprehensive Rules. They describe the **observable behavior the repository supports or intentionally tracks historically**.
 
-They describe **repository-supported gameplay behavior** using the ubiquitous language of the `play` bounded context.
+## What feature files are for
 
-## Purpose
-
-Features exist to make behavior:
+Feature files exist to make gameplay behavior:
 
 - readable
-- traceable to rules references
-- mappable to slices
-- easier to preserve across refactors
+- reviewable
+- traceable to slices and rule areas
+- harder to accidentally regress during refactors
 
-Some features may also be executable through `cucumber-rs`.
+Some features are executable with `cucumber-rs`; others are kept as reference or historical artifacts when that gives the repository a clearer semantic record.
 
-Current executable feature coverage:
+## Status model
+
+Each feature should begin with metadata comments describing:
+
+- `status`
+- `rules`
+- `slices`
+
+Example:
+
+```gherkin
+# status: implemented
+# rules: 601.1, 601.2
+# slices: cast-spell.md, pay-mana-cost.md
+```
+
+Allowed status values:
+
+- `implemented`
+- `proposed`
+- `historical`
+
+## Execution
+
+Executable BDD suite:
+
+```bash
+cargo test --test bdd
+```
+
+Conventional unit and integration-style behavior tests:
+
+```bash
+cargo test --test unit
+```
+
+Repository-wide validation:
+
+```bash
+./scripts/check-all.sh
+```
+
+## Feature organization
+
+The directory is grouped by gameplay area rather than by testing technology.
+
+### `features/stack/`
+
+Stack and priority behavior:
+
+- stack foundation
+- active-player instant casting in supported windows
+- non-active instant responses after the first pass
+- self-stacking by the current priority holder
+- sorcery-speed legality in main phases
+- targeted instant subset against players and creatures
+
+### `features/turn-flow/`
+
+Turn and step progression:
+
+- upkeep, draw, main-phase, and end-step priority windows
+- draw progression
+- cleanup discard
+- cleanup damage removal
+- losing on empty draw
+
+### `features/combat/`
+
+Combat behavior:
+
+- explicit combat subphases
+- beginning of combat and combat-step progression
+- declare attackers / declare blockers steps
+- combat damage
+- single-blocker simplification
+- creature destruction after damage
+- keyword-ability blocking legality
+
+### `features/life/`
+
+Life total behavior:
+
+- explicit targeted life effects
+- losing at zero life
+
+### `features/state-based-actions/`
+
+Currently supported SBA subset:
+
+- zero-toughness creature death
+- shared state-based-actions review
+
+### `features/zones/`
+
+Zone behavior outside the core battlefield/hand/library loop:
+
+- exile zone and explicit exile action
+
+### `features/spells/`
+
+Spell-behavior files that predate or complement the current stack organization.
+
+## Current executable coverage
+
+The following features are currently executed by `tests/bdd.rs`, grouped by area.
+
+### Stack
 
 - `features/stack/stack_foundation.feature`
 - `features/stack/respond_with_instant_spell.feature`
@@ -67,13 +172,21 @@ Current executable feature coverage:
 - `features/stack/cast_second_instant_after_blockers.feature`
 - `features/stack/cast_instant_after_combat_damage.feature`
 - `features/stack/cast_second_instant_after_combat_damage.feature`
+
+### Turn flow
+
 - `features/turn-flow/upkeep_priority_window.feature`
 - `features/turn-flow/draw_priority_window.feature`
 - `features/turn-flow/main_phase_priority_window.feature`
 - `features/turn-flow/end_step_priority_window.feature`
 - `features/turn-flow/turn_progression.feature`
 - `features/turn-flow/draw_multiple_cards.feature`
-- `features/spells/cast_creature_spell.feature`
+- `features/turn-flow/cleanup_damage_removal.feature`
+- `features/turn-flow/cleanup_hand_size_discard.feature`
+- `features/turn-flow/lose_on_empty_draw.feature`
+
+### Combat
+
 - `features/combat/combat_priority_windows.feature`
 - `features/combat/combat_subphases_foundation.feature`
 - `features/combat/beginning_of_combat_step.feature`
@@ -88,72 +201,59 @@ Current executable feature coverage:
 - `features/combat/single_blocker_per_attacker.feature`
 - `features/combat/keyword_abilities.feature`
 - `features/combat/creature_destruction.feature`
-- `features/turn-flow/cleanup_damage_removal.feature`
-- `features/turn-flow/cleanup_hand_size_discard.feature`
-- `features/turn-flow/lose_on_empty_draw.feature`
+
+### Spells
+
+- `features/spells/cast_creature_spell.feature`
+
+### Life
+
 - `features/life/adjust_player_life_effect.feature`
 - `features/life/lose_on_zero_life.feature`
+
+### State-based actions
+
 - `features/state-based-actions/zero_toughness_creature_dies.feature`
 - `features/state-based-actions/state_based_actions_review.feature`
-- `features/zones/exile_zone.feature`
-- runner: `tests/bdd.rs`
 
-Implemented reference features that are not currently executed:
+### Zones
+
+- `features/zones/exile_zone.feature`
+
+Runner:
+
+- `tests/bdd.rs`
+
+## Implemented reference features not currently executed
+
+These features remain useful as repository history or semantic reference, but are not currently wired into the executable BDD suite:
 
 - `features/stack/cast_spell_goes_on_stack.feature`
 - `features/stack/pass_priority_resolves_top.feature`
 
-There is no currently staged proposed feature backlog for the completed stack response self-stacking wave.
-
-## Required Header Convention
-
-Each feature should start with metadata comments containing:
-
-- `status`
-- `rules`
-- `slices`
-
-Example:
-
-```gherkin
-# status: implemented
-# rules: 601.1, 601.2
-# slices: cast-spell.md, pay-mana-cost.md
-```
-
-## Writing Rules
+## Writing guidance
 
 Prefer:
 
 - observable behavior
 - canonical gameplay actions
 - current supported semantics
+- repository terminology from the domain glossary
 
 Avoid:
 
 - implementation detail
 - speculative mechanics
-- hidden assumptions about stack or priority
+- hidden assumptions about unsupported timing or targeting
 - literal rulebook transcription
 
-## Status Values
+## Relationship to slices and rules docs
 
-- `implemented`
-- `proposed`
-- `historical`
+Feature files are only one part of the repository’s truth model.
 
-## Execution
+- `features/` describes behavior
+- `docs/slices/` explains why a capability was added and what remains out of scope
+- `docs/rules/` explains the repository-owned rules interpretation behind supported behavior
+- `docs/domain/current-state.md` summarizes the live support set
 
-Executable feature pilots live alongside normal Rust tests.
-
-Current command:
-
-```bash
-cargo test --test bdd
-```
-
-Conventional non-BDD behavior tests are aggregated under:
-
-```bash
-cargo test --test unit
-```
+For the rules side of the story, see [`/Users/adrianramos/Repos/demonictutor/docs/rules/README.md`]( /Users/adrianramos/Repos/demonictutor/docs/rules/README.md ).

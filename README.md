@@ -50,73 +50,143 @@
 [![Security](https://github.com/AdriRRP/demonic-tutor/actions/workflows/security.yml/badge.svg)](https://github.com/AdriRRP/demonic-tutor/actions/workflows/security.yml)
 [![codecov](https://codecov.io/gh/AdriRRP/demonic-tutor/branch/main/graph/badge.svg)](https://codecov.io/gh/AdriRRP/demonic-tutor)
 
-DemonicTutor is a client-side application for playing, observing and analyzing Magic: The Gathering deck behavior through real game sessions, event logging and live statistics.
+DemonicTutor is a Rust-first, client-oriented laboratory for modeling, playing, observing, and analyzing **a deliberately small, explicit subset of Magic: The Gathering**. It is not trying to implement all of Magic at once; it is trying to build a coherent, replayable, rules-aware gameplay core that can grow safely through vertical slices.
 
-The project is designed as a practical laboratory for:
-- deck testing
-- game observability
-- replayability
-- rules-aware domain modeling
-- analytics derived from actual play
+## What this repository is for
 
-## Current status
+- model gameplay with strong Domain-Driven Design boundaries
+- exercise real play flows instead of only card-level simulation
+- make gameplay observable through domain events, projections, and executable features
+- evolve rules support incrementally without overstating what is implemented
+- keep the core compatible with browser-oriented constraints and eventual WebAssembly use
 
-This repository is in active development.
+## Current state
 
-Current implemented capabilities include:
+The current runtime supports a meaningful minimal playtest loop, including:
 
 - two-player game setup with opening hands and simplified London mulligan
-- full phase progression: `Setup -> Untap -> Upkeep -> Draw -> FirstMain -> BeginningOfCombat -> DeclareAttackers -> DeclareBlockers -> CombatDamage -> EndOfCombat -> SecondMain -> EndStep`
-- land play, land tapping, mana payment, and cleanup discard when hand size exceeds the maximum
-- spell casting through a canonical `CastSpell` action for spell cards, while lands are played
-- minimal stack and priority support, including `SpellPutOnStack`, `PassPriority`, and `StackTopResolved`
-- minimal explicit targeting for the currently supported targeted instant subset against players or creatures
-- empty priority windows on `Upkeep`, `Draw`, `FirstMain`, `BeginningOfCombat`, `EndOfCombat`, `SecondMain`, and `EndStep`
-- reopened combat priority windows after attackers, blockers, and combat damage
-- active-player instant casting, non-active instant responses, and self-stacking by the current priority holder across the currently supported stack windows
-- targeted instant damage to players and creatures through the shared stack-resolution path
-- creature runtime state with power, toughness, summoning sickness, combat assignments, and combat damage tracking
-- explicit exile effects moving cards from battlefield or graveyard into a player-owned exile zone
-- Flying and Reach keyword abilities affecting blocking legality
-- attacker declaration, blocker declaration, and combat damage resolution derived from aggregate state
-- automatic gameplay consequences for:
-  - losing on empty-library draw
-  - losing at zero life
-  - creatures dying from lethal damage
-  - creatures with zero toughness dying immediately
-  - marked damage being cleared when the turn ends
-- event store, event bus, and gameplay log projection for replayable state changes
-- executable BDD coverage with `cucumber-rs` for supported gameplay features
+- full phase progression:
+  `Setup -> Untap -> Upkeep -> Draw -> FirstMain -> BeginningOfCombat -> DeclareAttackers -> DeclareBlockers -> CombatDamage -> EndOfCombat -> SecondMain -> EndStep`
+- land play, land tapping, mana payment, and cleanup discard
+- spell casting through a canonical `CastSpell` action
+- minimal stack and priority support with explicit stack objects and public `PassPriority`
+- empty priority windows in the currently supported turn and combat moments
+- active-player instant casting, non-active instant responses, and self-stacking in the supported windows
+- sorcery-speed spells for the active player in empty main-phase windows
+- minimal targeted instant support against players and creatures
+- combat with explicit subphases, attacker/blocker declaration, damage resolution, and single-blocker-per-attacker simplification
+- keyword abilities `Flying` and `Reach` for blocking legality
+- player-owned `Exile` zone
+- shared automatic consequences for zero life, empty-library draw, lethal damage, zero toughness, and cleanup damage removal
+- in-memory event store, event bus, gameplay log projection, and executable BDD coverage
 
-## Version
+For the authoritative snapshot, read [`docs/domain/current-state.md`](/Users/adrianramos/Repos/demonictutor/docs/domain/current-state.md).
 
-See `CHANGELOG.md` for release history and current version.
+## What this repository is not
+
+- not a full Magic rules engine
+- not a card database or comprehensive oracle implementation
+- not a generic board-game framework
+- not a “simulate everything first, design later” prototype
+
+Unsupported behavior must remain explicit. If code and docs disagree, the code wins and the docs must be reconciled.
+
+## Architecture in one minute
+
+The project is organized around a single implemented bounded context, `play`.
+
+- `src/domain/play/`
+  the gameplay core, with the `Game` aggregate as the central consistency boundary
+- `src/application/`
+  orchestration between commands, aggregate calls, event persistence, and event publication
+- `src/infrastructure/`
+  in-memory event store, event bus, and projections
+- `docs/domain/`
+  canonical domain truth
+- `docs/architecture/`
+  structural and evolutionary guidance
+- `docs/slices/`
+  implemented and proposed vertical slices
+- `features/`
+  repository-owned gameplay specifications, many of them executable with Cucumber
+- `.agents/`
+  operational context and reusable skills for agent-assisted work
+
+For the architectural picture, start with:
+
+- [`docs/domain/aggregate-game.md`](/Users/adrianramos/Repos/demonictutor/docs/domain/aggregate-game.md)
+- [`docs/architecture/system-overview.md`](/Users/adrianramos/Repos/demonictutor/docs/architecture/system-overview.md)
+- [`docs/architecture/vertical-slices.md`](/Users/adrianramos/Repos/demonictutor/docs/architecture/vertical-slices.md)
+
+## Source of truth
+
+When repository sources disagree, precedence is:
+
+1. code in `src/`
+2. accepted ADRs
+3. canonical documentation
+4. operational agent context
+5. skills
+
+That rule matters because this repository deliberately keeps documentation honest and incremental.
+
+## How to navigate the repository
+
+### If you are new to the project
+
+Read, in order:
+
+1. [`PROJECT.md`](/Users/adrianramos/Repos/demonictutor/PROJECT.md)
+2. [`CONSTRAINTS.md`](/Users/adrianramos/Repos/demonictutor/CONSTRAINTS.md)
+3. [`docs/README.md`](/Users/adrianramos/Repos/demonictutor/docs/README.md)
+4. [`docs/domain/current-state.md`](/Users/adrianramos/Repos/demonictutor/docs/domain/current-state.md)
+
+### If you want the domain model
+
+- [`docs/domain/DOMAIN_GLOSSARY.md`](/Users/adrianramos/Repos/demonictutor/docs/domain/DOMAIN_GLOSSARY.md)
+- [`docs/domain/context-map.md`](/Users/adrianramos/Repos/demonictutor/docs/domain/context-map.md)
+- [`docs/domain/aggregate-game.md`](/Users/adrianramos/Repos/demonictutor/docs/domain/aggregate-game.md)
+- [`docs/domain/current-state.md`](/Users/adrianramos/Repos/demonictutor/docs/domain/current-state.md)
+
+### If you want rules support and gameplay specs
+
+- [`docs/rules/README.md`](/Users/adrianramos/Repos/demonictutor/docs/rules/README.md)
+- [`docs/rules/rules-map.md`](/Users/adrianramos/Repos/demonictutor/docs/rules/rules-map.md)
+- [`features/README.md`](/Users/adrianramos/Repos/demonictutor/features/README.md)
+
+### If you are working with agents
+
+Start with:
+
+1. [`AGENTS.md`](/Users/adrianramos/Repos/demonictutor/AGENTS.md)
+2. [`docs/architecture/agent-architecture.md`](/Users/adrianramos/Repos/demonictutor/docs/architecture/agent-architecture.md)
+3. [`.agents/context/core-agent.md`](/Users/adrianramos/Repos/demonictutor/.agents/context/core-agent.md)
+
+## Development workflow
+
+The repository grows through **small, coherent vertical slices**. Broad refactors are allowed when they clearly improve semantic clarity, cognitive load, or architectural honesty, but they still close like slices: code, tests, docs, and agent context must end aligned.
+
+Useful commands:
+
+```bash
+./scripts/check-all.sh
+cargo test --test unit
+cargo test --test bdd
+```
+
+The authoritative development guidance lives in [`docs/development/development.md`](/Users/adrianramos/Repos/demonictutor/docs/development/development.md).
+
+## Documentation map
+
+- [`docs/README.md`](/Users/adrianramos/Repos/demonictutor/docs/README.md): full documentation map
+- [`docs/rules/README.md`](/Users/adrianramos/Repos/demonictutor/docs/rules/README.md): how rules notes and rules mapping are used
+- [`features/README.md`](/Users/adrianramos/Repos/demonictutor/features/README.md): how feature files are organized and executed
+
+## Releases
+
+- release history: [`CHANGELOG.md`](/Users/adrianramos/Repos/demonictutor/CHANGELOG.md)
+- current crate version: [`Cargo.toml`](/Users/adrianramos/Repos/demonictutor/Cargo.toml)
 
 ## Guiding idea
 
-DemonicTutor is not intended to be a full implementation of all Magic rules from the beginning.
-
-It is intended to become:
-- a precise and fast gameplay core
-- a replayable event-driven system
-- a deck analysis tool based on real sessions
-- a solid Rust + WebAssembly learning project
-
-## Initial documentation
-
-- `PROJECT.md` defines the product vision and scope.
-- `CONSTRAINTS.md` defines technical and modeling restrictions.
-- `docs/domain/DOMAIN_GLOSSARY.md` defines the initial ubiquitous language.
-
-## Development philosophy
-
-The system will be developed incrementally, with narrow vertical slices and explicit decisions.
-
-The first priority is correctness and clarity of the domain model.
-Breadth, advanced UX and richer rules support come later.
-
-## Development
-
-See `docs/development/development.md` for quality commands and panic-free policy.
-
-Quick check: `./scripts/check-all.sh`
+The long-term value of DemonicTutor is not “how many rules it already supports”, but **how honestly and cleanly it supports each rule it does model**. The repository optimizes for explicit semantics, replayable behavior, and maintainable growth.

@@ -1,142 +1,141 @@
 # Documentation Map — DemonicTutor
 
-This directory contains the canonical documentation of the DemonicTutor project.
+This directory contains the repository’s documentation system: canonical truth, architecture, rules interpretation notes, slice history, and development guidance.
 
-The documentation is organized by responsibility to keep the system understandable as it evolves.
+The goal of this map is simple: help a human or an agent find the right document quickly without loading the whole tree indiscriminately.
 
-Agents should rely on `AGENTS.md` for routing and context loading.  
-This document primarily helps human contributors navigate the documentation.
+## How to use this directory
 
----
+If you only need one rule:
 
-# Project-Level Documents
+- use **canonical docs** to understand what the repository currently claims as true
+- use **slice docs** to understand how that truth evolved
+- use **rules docs** to understand the repository-owned interpretation of Magic rules behind supported behavior
+- use **development and agent docs** to understand how to change the system safely
 
-These documents live in the repository root.
+## Documentation layers
 
-| Document | Purpose |
-|--------|--------|
-| `PROJECT.md` | Defines the vision and identity of the project |
-| `CONSTRAINTS.md` | Defines architectural and modeling limits |
-| `SECURITY.md` | Security reporting and threat model |
-| `AGENTS.md` | Entry point for agents working in the repository |
+### 1. Canonical project truth
 
----
+These files define the stable truth of the repository.
 
-# Domain Documentation
+- [`/Users/adrianramos/Repos/demonictutor/PROJECT.md`]( /Users/adrianramos/Repos/demonictutor/PROJECT.md )
+  product identity and long-term intent
+- [`/Users/adrianramos/Repos/demonictutor/CONSTRAINTS.md`]( /Users/adrianramos/Repos/demonictutor/CONSTRAINTS.md )
+  non-negotiable modeling and architectural limits
+- [`/Users/adrianramos/Repos/demonictutor/docs/domain/DOMAIN_GLOSSARY.md`]( /Users/adrianramos/Repos/demonictutor/docs/domain/DOMAIN_GLOSSARY.md )
+  ubiquitous language
+- [`/Users/adrianramos/Repos/demonictutor/docs/domain/context-map.md`]( /Users/adrianramos/Repos/demonictutor/docs/domain/context-map.md )
+  bounded-context view
+- [`/Users/adrianramos/Repos/demonictutor/docs/domain/aggregate-game.md`]( /Users/adrianramos/Repos/demonictutor/docs/domain/aggregate-game.md )
+  aggregate ownership and responsibilities
+- [`/Users/adrianramos/Repos/demonictutor/docs/domain/current-state.md`]( /Users/adrianramos/Repos/demonictutor/docs/domain/current-state.md )
+  the current supported gameplay snapshot
+- [`/Users/adrianramos/Repos/demonictutor/docs/architecture/system-overview.md`]( /Users/adrianramos/Repos/demonictutor/docs/architecture/system-overview.md )
+  system layering
+- [`/Users/adrianramos/Repos/demonictutor/docs/architecture/vertical-slices.md`]( /Users/adrianramos/Repos/demonictutor/docs/architecture/vertical-slices.md )
+  how the repository evolves
 
-Location:
+If canonical docs disagree with lower-level docs, canonical docs win unless the code has already moved ahead and the docs need curation.
 
-```
-docs/domain/
+## 2. Architecture and repository structure
 
-```
+These files explain how the system is organized and how it should evolve.
 
-These documents describe the **domain model and ubiquitous language**.
+- [`/Users/adrianramos/Repos/demonictutor/docs/architecture/game-aggregate-structure.md`]( /Users/adrianramos/Repos/demonictutor/docs/architecture/game-aggregate-structure.md )
+  internal organization of the `Game` aggregate
+- [`/Users/adrianramos/Repos/demonictutor/docs/architecture/agent-architecture.md`]( /Users/adrianramos/Repos/demonictutor/docs/architecture/agent-architecture.md )
+  agent-assistance model and documentation precedence
+- [`/Users/adrianramos/Repos/demonictutor/docs/architecture/gherkin-features.md`]( /Users/adrianramos/Repos/demonictutor/docs/architecture/gherkin-features.md )
+  conventions for feature files
+- [`/Users/adrianramos/Repos/demonictutor/docs/architecture/slice-template.md`]( /Users/adrianramos/Repos/demonictutor/docs/architecture/slice-template.md )
+  canonical slice document template
+- [`/Users/adrianramos/Repos/demonictutor/docs/architecture/adr-template.md`]( /Users/adrianramos/Repos/demonictutor/docs/architecture/adr-template.md )
+  ADR template
+- [`/Users/adrianramos/Repos/demonictutor/docs/architecture/adr/`]( /Users/adrianramos/Repos/demonictutor/docs/architecture/adr/ )
+  accepted architectural decisions and historical decision trail
 
-| Document | Purpose |
-|--------|--------|
-| `DOMAIN_GLOSSARY.md` | Ubiquitous language for the domain |
-| `context-map.md` | Relationships between bounded contexts |
-| `aggregate-game.md` | Design of the core `Game` aggregate |
-| `current-state.md` | Snapshot of the currently implemented domain |
+## 3. Rules interpretation support
 
-These documents represent **domain truth** and must remain consistent with the code.
+These files connect repository behavior to Magic rules without turning the rulebook into an implementation backlog.
 
----
+- [`/Users/adrianramos/Repos/demonictutor/docs/rules/README.md`]( /Users/adrianramos/Repos/demonictutor/docs/rules/README.md )
+  entry point for rules docs
+- [`/Users/adrianramos/Repos/demonictutor/docs/rules/rules-map.md`]( /Users/adrianramos/Repos/demonictutor/docs/rules/rules-map.md )
+  supported behavior mapped to rule areas
+- [`/Users/adrianramos/Repos/demonictutor/docs/rules/notes/`]( /Users/adrianramos/Repos/demonictutor/docs/rules/notes/ )
+  focused repository-owned notes by rule area
 
-# System Architecture
+## 4. Slice history
 
-Location:
+Slices are the main unit of incremental change in DemonicTutor.
 
-```
-docs/architecture/
+- [`/Users/adrianramos/Repos/demonictutor/docs/slices/implemented/`]( /Users/adrianramos/Repos/demonictutor/docs/slices/implemented/ )
+  slices that are part of the active or historical implemented story
+- [`/Users/adrianramos/Repos/demonictutor/docs/slices/proposals/`]( /Users/adrianramos/Repos/demonictutor/docs/slices/proposals/ )
+  future or superseded proposals, when still useful historically
 
-```
+Read slices when you want to understand:
 
-These documents describe **how the system is structured**.
+- why a capability was introduced
+- what was intentionally left out
+- how a simplification entered the model
 
-| Document | Purpose |
-|--------|--------|
-| `system-overview.md` | High-level architecture of the system |
-| `vertical-slices.md` | Strategy for incremental feature evolution |
-| `agent-architecture.md` | Architecture of the agent system |
-| `game-aggregate-structure.md` | Internal organization of the `Game` aggregate |
-| `slice-template.md` | Canonical structure for slice documentation |
-| `adr-template.md` | Template for architecture decisions |
-| `adr/` | Accepted architecture decision records |
+Do not use a slice doc as canonical truth if canonical docs already describe the live model more directly.
 
----
+## 5. Development guidance
 
-# Vertical Slices
+- [`/Users/adrianramos/Repos/demonictutor/docs/development/development.md`]( /Users/adrianramos/Repos/demonictutor/docs/development/development.md )
+  coding standards, validation commands, refactor discipline, and runtime representation guidance
 
-Location:
+## 6. Agent-facing context
 
-```
-docs/slices/
+These live outside `docs/`, but they are part of the documentation system and matter for navigation:
 
-```
+- [`/Users/adrianramos/Repos/demonictutor/AGENTS.md`]( /Users/adrianramos/Repos/demonictutor/AGENTS.md )
+  agent entry point
+- [`/Users/adrianramos/Repos/demonictutor/.agents/context/core-agent.md`]( /Users/adrianramos/Repos/demonictutor/.agents/context/core-agent.md )
+  working posture
+- [`/Users/adrianramos/Repos/demonictutor/.agents/skills/README.md`]( /Users/adrianramos/Repos/demonictutor/.agents/skills/README.md )
+  reusable workflows
 
-Slices describe **incremental capabilities added to the system**.
+## Recommended reading paths
 
-| Directory | Purpose |
-|--------|--------|
-| `implemented/` | Documented slices already present in the system |
-| `proposals/` | Proposed future slices |
+### For a new human contributor
 
-Slices represent the main mechanism for evolving the system safely.
+1. [`/Users/adrianramos/Repos/demonictutor/PROJECT.md`]( /Users/adrianramos/Repos/demonictutor/PROJECT.md )
+2. [`/Users/adrianramos/Repos/demonictutor/CONSTRAINTS.md`]( /Users/adrianramos/Repos/demonictutor/CONSTRAINTS.md )
+3. [`/Users/adrianramos/Repos/demonictutor/docs/domain/current-state.md`]( /Users/adrianramos/Repos/demonictutor/docs/domain/current-state.md )
+4. [`/Users/adrianramos/Repos/demonictutor/docs/domain/aggregate-game.md`]( /Users/adrianramos/Repos/demonictutor/docs/domain/aggregate-game.md )
+5. [`/Users/adrianramos/Repos/demonictutor/docs/development/development.md`]( /Users/adrianramos/Repos/demonictutor/docs/development/development.md )
 
----
+### For domain work
 
-# Development Guidelines
+1. glossary
+2. context map
+3. aggregate
+4. current state
+5. relevant rules notes
+6. relevant slice docs
 
-Location:
+### For architectural work
 
-```
-docs/development/
+1. system overview
+2. vertical slices
+3. game aggregate structure
+4. relevant ADRs
 
-```
+### For agent work
 
-| Document | Purpose |
-|--------|--------|
-| `development.md` | Code quality rules and development workflow |
+1. `AGENTS.md`
+2. agent architecture
+3. core-agent context
+4. only then the minimum task-specific docs
 
----
+## Maintenance rule
 
-# How Documentation Evolves
+This map should stay compact but trustworthy. Update it when:
 
-Documentation should evolve incrementally together with the code.
-
-Typical workflow:
-
-
-```
-Design slice
-↓
-Implement slice
-↓
-Update domain documentation
-↓
-Update architecture documentation (if needed)
-↓
-Record architectural decisions (ADR) when necessary
-
-```
-
-Documentation should remain:
-
-- explicit
-- minimal
-- consistent with the domain model
-
----
-
-# Documentation Philosophy
-
-The documentation follows several principles:
-
-- **single responsibility per document**
-- **explicit domain language**
-- **minimal duplication**
-- **incremental evolution through slices**
-
-The goal is to keep the repository understandable even as the system grows.
+- a canonical document is added, removed, or promoted
+- an architectural area gets reorganized in a way that changes how people should navigate the repo
+- the agent system gains or loses a stable entrypoint
