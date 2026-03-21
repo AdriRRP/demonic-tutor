@@ -175,6 +175,14 @@ The current runtime models a small closed subset of spell target kinds and valid
 
 ---
 
+## Spell Target Restriction
+
+The explicit legal-target rule carried by a supported targeted spell.
+
+The current runtime supports small closed restrictions such as `Player`, `Creature`, or `AnySupportedTarget`.
+
+---
+
 # Card Types
 
 ## Creature

@@ -9,7 +9,7 @@ pub use infrastructure::{GameLogProjection, InMemoryEventBus, InMemoryEventStore
 pub use domain::play::{
     cards::{
         CardInstance, CardType, CastingTimingProfile, KeywordAbility, KeywordAbilitySet,
-        SpellResolutionProfile, SpellTargetKind, SpellTargetKindSet, SpellTargetingProfile,
+        SpellResolutionProfile, SpellTargetKind, SpellTargetRestriction, SpellTargetingProfile,
         SupportedSpellRules,
     },
     commands::{

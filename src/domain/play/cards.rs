@@ -111,40 +111,30 @@ pub enum SpellTargetKind {
     Creature = 1 << 1,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-pub struct SpellTargetKindSet(u8);
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SpellTargetRestriction {
+    Player,
+    Creature,
+    AnySupportedTarget,
+}
 
-impl SpellTargetKindSet {
+impl SpellTargetRestriction {
     #[must_use]
-    pub const fn empty() -> Self {
-        Self(0)
-    }
-
-    #[must_use]
-    pub const fn only(kind: SpellTargetKind) -> Self {
-        Self(kind as u8)
-    }
-
-    #[must_use]
-    pub const fn any_supported_target() -> Self {
-        Self::only(SpellTargetKind::Player).with(SpellTargetKind::Creature)
-    }
-
-    #[must_use]
-    pub const fn with(self, kind: SpellTargetKind) -> Self {
-        Self(self.0 | kind as u8)
-    }
-
-    #[must_use]
-    pub const fn contains(self, kind: SpellTargetKind) -> bool {
-        self.0 & kind as u8 != 0
+    pub const fn accepts_kind(self, kind: SpellTargetKind) -> bool {
+        match self {
+            Self::Player => matches!(kind, SpellTargetKind::Player),
+            Self::Creature => matches!(kind, SpellTargetKind::Creature),
+            Self::AnySupportedTarget => {
+                matches!(kind, SpellTargetKind::Player | SpellTargetKind::Creature)
+            }
+        }
     }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SpellTargetingProfile {
     None,
-    SingleTarget(SpellTargetKindSet),
+    SingleTarget(SpellTargetRestriction),
 }
 
 impl SpellTargetingProfile {
@@ -157,7 +147,7 @@ impl SpellTargetingProfile {
     pub const fn accepts_kind(self, kind: SpellTargetKind) -> bool {
         match self {
             Self::None => false,
-            Self::SingleTarget(kinds) => kinds.contains(kind),
+            Self::SingleTarget(restriction) => restriction.accepts_kind(kind),
         }
     }
 }
@@ -187,7 +177,7 @@ impl SupportedSpellRules {
     pub const fn deal_damage_to_any_target(damage: u32) -> Self {
         Self {
             targeting: SpellTargetingProfile::SingleTarget(
-                SpellTargetKindSet::any_supported_target(),
+                SpellTargetRestriction::AnySupportedTarget,
             ),
             resolution: SpellResolutionProfile::DealDamage { damage },
         }
