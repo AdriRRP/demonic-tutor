@@ -1,5 +1,5 @@
 use crate::domain::play::{
-    cards::{CardInstance, CardType},
+    cards::{CardInstance, CardType, KeywordAbilitySet},
     ids::{CardDefinitionId, CardInstanceId, DeckId, PlayerId},
 };
 
@@ -20,8 +20,7 @@ impl PlayerDeck {
 pub struct LibraryCreature {
     pub power: u32,
     pub toughness: u32,
-    pub flying: bool,
-    pub reach: bool,
+    pub keyword_abilities: KeywordAbilitySet,
 }
 
 impl LibraryCreature {
@@ -30,18 +29,20 @@ impl LibraryCreature {
         Self {
             power,
             toughness,
-            flying: false,
-            reach: false,
+            keyword_abilities: KeywordAbilitySet::empty(),
         }
     }
 
     #[must_use]
-    pub const fn with_keywords(power: u32, toughness: u32, flying: bool, reach: bool) -> Self {
+    pub const fn with_keywords(
+        power: u32,
+        toughness: u32,
+        keyword_abilities: KeywordAbilitySet,
+    ) -> Self {
         Self {
             power,
             toughness,
-            flying,
-            reach,
+            keyword_abilities,
         }
     }
 }
@@ -86,15 +87,16 @@ impl LibraryCard {
         mana_cost: u32,
         power: u32,
         toughness: u32,
-        flying: bool,
-        reach: bool,
+        keyword_abilities: KeywordAbilitySet,
     ) -> Self {
         Self {
             definition_id,
             card_type: CardType::Creature,
             mana_cost,
             creature: Some(LibraryCreature::with_keywords(
-                power, toughness, flying, reach,
+                power,
+                toughness,
+                keyword_abilities,
             )),
         }
     }
@@ -128,8 +130,7 @@ impl LibraryCard {
                 self.mana_cost,
                 creature.power,
                 creature.toughness,
-                creature.flying,
-                creature.reach,
+                creature.keyword_abilities,
             ),
             None => CardInstance::new(
                 card_id,

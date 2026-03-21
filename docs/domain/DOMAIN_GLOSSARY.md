@@ -127,6 +127,14 @@ Cards can be moved to exile from the battlefield or graveyard. Exiled cards are 
 
 ---
 
+## Keyword Ability
+
+A named rules ability attached to a card or permanent.
+
+The current runtime models only a small closed subset of keyword abilities. Supported creature keywords are represented explicitly in the domain model rather than as free-form text.
+
+---
+
 ## Flying
 
 A keyword ability that restricts which creatures can block the flying creature.

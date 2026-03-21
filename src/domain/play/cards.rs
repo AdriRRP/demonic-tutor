@@ -5,6 +5,38 @@ const FLAG_SUMMONING_SICKNESS: u8 = 1 << 1;
 const FLAG_ATTACKING: u8 = 1 << 2;
 const FLAG_BLOCKING: u8 = 1 << 3;
 
+#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum KeywordAbility {
+    Flying = 1 << 0,
+    Reach = 1 << 1,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+pub struct KeywordAbilitySet(u8);
+
+impl KeywordAbilitySet {
+    #[must_use]
+    pub const fn empty() -> Self {
+        Self(0)
+    }
+
+    #[must_use]
+    pub const fn only(ability: KeywordAbility) -> Self {
+        Self(ability as u8)
+    }
+
+    #[must_use]
+    pub const fn with(self, ability: KeywordAbility) -> Self {
+        Self(self.0 | ability as u8)
+    }
+
+    #[must_use]
+    pub const fn contains(self, ability: KeywordAbility) -> bool {
+        self.0 & ability as u8 != 0
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum CardType {
     Land,
@@ -80,8 +112,7 @@ struct CreatureRuntime {
     toughness: u32,
     damage: u32,
     blocking_target: Option<CardInstanceId>,
-    flying: bool,
-    reach: bool,
+    keywords: KeywordAbilitySet,
 }
 
 impl CreatureRuntime {
@@ -91,19 +122,17 @@ impl CreatureRuntime {
             toughness,
             damage: 0,
             blocking_target: None,
-            flying: false,
-            reach: false,
+            keywords: KeywordAbilitySet::empty(),
         }
     }
 
-    const fn new_with_keywords(power: u32, toughness: u32, flying: bool, reach: bool) -> Self {
+    const fn new_with_keywords(power: u32, toughness: u32, keywords: KeywordAbilitySet) -> Self {
         Self {
             power,
             toughness,
             damage: 0,
             blocking_target: None,
-            flying,
-            reach,
+            keywords,
         }
     }
 }
@@ -170,15 +199,14 @@ impl CardInstance {
         mana_cost: u32,
         power: u32,
         toughness: u32,
-        flying: bool,
-        reach: bool,
+        keywords: KeywordAbilitySet,
     ) -> Self {
         Self {
             id,
             face: CardFace::new(definition_id, CardType::Creature, mana_cost),
             flags: FLAG_SUMMONING_SICKNESS,
             creature: Some(CreatureRuntime::new_with_keywords(
-                power, toughness, flying, reach,
+                power, toughness, keywords,
             )),
         }
     }
@@ -336,7 +364,7 @@ impl CardInstance {
     #[must_use]
     pub const fn has_flying(&self) -> bool {
         match &self.creature {
-            Some(creature) => creature.flying,
+            Some(creature) => creature.keywords.contains(KeywordAbility::Flying),
             None => false,
         }
     }
@@ -344,8 +372,16 @@ impl CardInstance {
     #[must_use]
     pub const fn has_reach(&self) -> bool {
         match &self.creature {
-            Some(creature) => creature.reach,
+            Some(creature) => creature.keywords.contains(KeywordAbility::Reach),
             None => false,
+        }
+    }
+
+    #[must_use]
+    pub const fn keyword_abilities(&self) -> Option<KeywordAbilitySet> {
+        match &self.creature {
+            Some(creature) => Some(creature.keywords),
+            None => None,
         }
     }
 }

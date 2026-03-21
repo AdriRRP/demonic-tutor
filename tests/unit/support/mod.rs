@@ -5,8 +5,9 @@
 use demonictutor::{
     AdvanceTurnCommand, AdvanceTurnOutcome, CardDefinitionId, CardType, CastSpellCommand,
     DealOpeningHandsCommand, DeckId, DeclareAttackersCommand, DiscardForCleanupCommand, Game,
-    GameId, GameService, InMemoryEventBus, InMemoryEventStore, LibraryCard, PassPriorityCommand,
-    Phase, PlayerDeck, PlayerId, PlayerLibrary, ResolveCombatDamageCommand, StartGameCommand,
+    GameId, GameService, InMemoryEventBus, InMemoryEventStore, KeywordAbility, KeywordAbilitySet,
+    LibraryCard, PassPriorityCommand, Phase, PlayerDeck, PlayerId, PlayerLibrary,
+    ResolveCombatDamageCommand, StartGameCommand,
 };
 
 pub type TestService = GameService<InMemoryEventStore, InMemoryEventBus>;
@@ -71,13 +72,20 @@ pub fn creature_card_with_keywords(
     flying: bool,
     reach: bool,
 ) -> LibraryCard {
+    let mut keyword_abilities = KeywordAbilitySet::empty();
+    if flying {
+        keyword_abilities = keyword_abilities.with(KeywordAbility::Flying);
+    }
+    if reach {
+        keyword_abilities = keyword_abilities.with(KeywordAbility::Reach);
+    }
+
     LibraryCard::creature_with_keywords(
         CardDefinitionId::new(name),
         mana_cost,
         power,
         toughness,
-        flying,
-        reach,
+        keyword_abilities,
     )
 }
 

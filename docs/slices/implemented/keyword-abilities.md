@@ -15,7 +15,7 @@ This slice is the logical next step after the combat foundation because:
 1. the combat system already supports declaring attackers and blockers
 2. the single-blocker-per-attacker limit is already modeled
 3. flying is the most common keyword ability and fundamentally changes combat
-4. the domain model already has `CreatureState` where keyword flags can be added
+4. the domain model can represent a small closed set of supported keyword abilities without introducing a generic rules engine
 5. future combat slices (trample, first strike, double strike) will follow the same pattern
 
 ---
@@ -38,7 +38,7 @@ This slice is the logical next step after the combat foundation because:
 
 - creatures can be created with Flying keyword during spell casting
 - creatures can be created with Reach keyword during spell casting
-- `new_creature` method is extended to accept keyword flags
+- creature construction carries an explicit set of supported keyword abilities
 
 ---
 
@@ -70,20 +70,24 @@ This slice is the logical next step after the combat foundation because:
 
 ## Domain Impact
 
-### CardInstance / CreatureState Changes
+### CardInstance / CreatureRuntime Changes
 
-Add keyword flags to `CreatureState`:
+Store supported keywords as a closed set on creature runtime state:
 
 ```rust
-#[derive(Debug, Clone, PartialEq, Eq)]
-struct CreatureState {
+enum KeywordAbility {
+    Flying,
+    Reach,
+}
+
+struct KeywordAbilitySet(u8);
+
+struct CreatureRuntime {
     power: u32,
     toughness: u32,
     damage: u32,
-    flags: u8,
     blocking_target: Option<CardInstanceId>,
-    flying: bool,
-    reach: bool,
+    keywords: KeywordAbilitySet,
 }
 ```
 
@@ -99,7 +103,7 @@ impl CardInstance {
 
 ### Command Changes
 
-- `CastSpellCommand` or creature casting path should accept keyword flags
+- creature creation paths should accept an explicit supported-keyword set
 - no new public command required for initial keywords
 
 ### Event Changes
@@ -166,9 +170,9 @@ This behavior belongs to the `Game` aggregate because:
 
 ## Implementation Notes
 
-### Keyword Flag Storage
+### Keyword Storage
 
-Store keywords as boolean fields in `CreatureState` rather than bitflags for clarity. Keywords are set at creature creation and do not change during the creature's lifetime in this slice.
+Store supported creature keywords in a small closed set rather than as one boolean field per keyword. This keeps the model explicit, compact in memory, and easier to extend when new supported keyword slices arrive.
 
 ### Blocking Legality Check
 
@@ -196,8 +200,7 @@ let mut creature = CardInstance::new_creature_with_keywords(
     mana_cost,
     power,
     toughness,
-    flying,
-    reach,
+    KeywordAbilitySet::only(KeywordAbility::Flying),
 );
 ```
 
