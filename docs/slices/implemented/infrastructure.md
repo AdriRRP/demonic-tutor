@@ -30,7 +30,7 @@ Add basic event-driven infrastructure to support:
 - Keeps a small public service facade while capability-local handlers stay grouped internally
 - Persists events after each command execution
 - Publishes events to the bus for subscribers
-- Returns domain events to callers
+- Returns command-specific outcomes and emitted event structs to callers, not raw `DomainEvent` batches
 
 ## Architecture
 
@@ -48,12 +48,12 @@ src/infrastructure/
       └── game_log.rs # GameLogProjection
 
 src/domain/play/
-  └── events.rs     # DomainEvent enum
+  └── events/       # Domain event modules re-exported through the play facade
 ```
 
 Following ADR 0003:
-- Aggregates emit events (return values)
-- Application service orchestrates persistence and publication
+- Aggregates and aggregate-owned rules return explicit outcomes and emitted event structs
+- Application service orchestrates persistence and publication into `DomainEvent`
 - Domain remains decoupled from infrastructure
 
 ## Invariants
