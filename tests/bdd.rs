@@ -15,7 +15,7 @@ mod combat;
 mod draw_effects;
 #[path = "bdd/life.rs"]
 mod life;
-#[path = "bdd/spell_casting.rs"]
+#[path = "bdd/spell_casting/mod.rs"]
 mod spell_casting;
 #[path = "bdd/stack_foundation.rs"]
 mod stack_foundation;
