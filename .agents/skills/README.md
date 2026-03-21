@@ -23,3 +23,5 @@ Common repository-wide guardrails these skills should reinforce:
 - distinguish executable features from implemented reference features
 - mark historical or superseded docs honestly
 - prefer explicit Rust and DDD structure over speculative generic frameworks
+- keep public application services thin and split orchestration helpers by capability
+- split BDD setup and step support by behavior family once files become crowded

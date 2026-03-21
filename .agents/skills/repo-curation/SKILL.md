@@ -107,6 +107,8 @@ Also search for:
 - feature headers that still claim `proposed` or `implemented` incorrectly
 - proposal docs that are already implemented but not marked historical
 - architecture docs that still describe monolithic files after internal module splits
+- application docs that still imply one broad service file after capability-local handler splits
+- testing docs or context that still point at superseded monolithic support files after module-to-directory refactors
 - deleted file paths that still linger in docs or in the worktree after a module-to-directory refactor
 
 ---

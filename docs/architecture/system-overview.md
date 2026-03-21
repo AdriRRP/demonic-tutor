@@ -84,7 +84,7 @@ Responsibilities:
 - coordinating event persistence
 - publishing domain events
 
-The application layer may internally split event-adapter helpers by domain capability while keeping a small public service facade.
+The application layer may internally split public command handlers and event-adapter helpers by domain capability while keeping a small public service facade.
 
 This layer acts as the boundary between the UI and the domain model.
 

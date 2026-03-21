@@ -27,6 +27,7 @@ Add basic event-driven infrastructure to support:
 
 ### GameService (updated)
 - Generic over `EventStore` and `EventBus` ports
+- Keeps a small public service facade while capability-local handlers stay grouped internally
 - Persists events after each command execution
 - Publishes events to the bus for subscribers
 - Returns domain events to callers

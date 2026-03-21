@@ -183,6 +183,7 @@ When implementation structure needs to evolve, prefer:
 - small explicit state machines where gameplay state has clear phases or holders
 - enums and deterministic transitions over generic rule engines or trait-object dispatch
 - thin application orchestration with explicit outcome-to-event mapping helpers instead of speculative abstraction layers
+- small public application facades with capability-local handlers when the service layer grows
 - centralized low-level representation choices, such as shared id backing, that can be revisited from one place after profiling
 
 Avoid introducing generic frameworks when a small explicit module split keeps the code more legible.
@@ -234,3 +235,5 @@ When broad refactors, stack growth, or repeated semantic corrections land, agent
 - one or more existing skills
 
 need synchronized updates so the repository keeps learning from the work.
+
+BDD setup and step support should also be kept split by gameplay capability once a helper file becomes crowded, rather than growing a single internal framework file.
