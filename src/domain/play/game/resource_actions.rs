@@ -53,12 +53,18 @@ impl Game {
         cmd: TapLandCommand,
     ) -> Result<(LandTapped, ManaAdded), DomainError> {
         invariants::require_game_active(self.is_over())?;
-        invariants::require_no_priority_with_pending_stack(self.priority(), self.stack.is_empty())?;
+        let priority = self.priority.clone();
+        invariants::require_empty_stack_priority_action_window(
+            priority.as_ref(),
+            self.stack.is_empty(),
+            &cmd.player_id,
+        )?;
         rules::resource_actions::tap_land(
             &self.id,
             &mut self.players,
             &self.active_player,
             &self.phase,
+            priority.as_ref(),
             cmd,
         )
     }

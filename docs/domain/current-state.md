@@ -26,6 +26,7 @@ Implemented capabilities include:
 - ending the game when a player reaches 0 life
 - playing lands
 - tapping lands for mana
+- tapping lands for mana in the currently exercised active-player open priority windows
 - casting spells that require mana
 - casting creature spells that enter the battlefield with power and toughness
 - resolving instants and sorceries to graveyard
@@ -141,7 +142,7 @@ Current constraints include:
 - no triggered abilities
 - limited card behavior modeling
 - permanent spells resolve from the stack into the battlefield in the current simplified stack model
-- mana production is simplified to active-player main phases and generic mana only
+- mana production is simplified to generic mana only and is currently exercised for the active player in main phases plus open empty-stack priority windows such as `Upkeep` and `BeginningOfCombat`
 - combat blocking is simplified to at most one blocker per attacker
 
 These constraints are expected to evolve in future slices.
