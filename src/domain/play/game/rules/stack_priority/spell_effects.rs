@@ -10,5 +10,5 @@ pub const fn supported_spell_rules(card: &CardInstance) -> SupportedSpellRules {
 
 #[must_use]
 pub const fn accepts_target(targeting: SpellTargetingProfile, target: &SpellTarget) -> bool {
-    targeting.permits(target.kind())
+    targeting.allows_target_kind(target.kind())
 }
