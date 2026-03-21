@@ -17,63 +17,51 @@ impl PlayerDeck {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum NonCreatureCardType {
-    Land,
-    Instant,
-    Sorcery,
-    Enchantment,
-    Artifact,
-    Planeswalker,
+pub struct LibraryCreature {
+    pub power: u32,
+    pub toughness: u32,
+    pub flying: bool,
+    pub reach: bool,
 }
 
-impl NonCreatureCardType {
+impl LibraryCreature {
     #[must_use]
-    pub const fn to_card_type(self) -> CardType {
-        match self {
-            Self::Land => CardType::Land,
-            Self::Instant => CardType::Instant,
-            Self::Sorcery => CardType::Sorcery,
-            Self::Enchantment => CardType::Enchantment,
-            Self::Artifact => CardType::Artifact,
-            Self::Planeswalker => CardType::Planeswalker,
+    pub const fn new(power: u32, toughness: u32) -> Self {
+        Self {
+            power,
+            toughness,
+            flying: false,
+            reach: false,
+        }
+    }
+
+    #[must_use]
+    pub const fn with_keywords(power: u32, toughness: u32, flying: bool, reach: bool) -> Self {
+        Self {
+            power,
+            toughness,
+            flying,
+            reach,
         }
     }
 }
 
 #[derive(Debug, Clone)]
-pub enum LibraryCard {
-    NonCreature {
-        definition_id: CardDefinitionId,
-        card_type: NonCreatureCardType,
-        mana_cost: u32,
-    },
-    Creature {
-        definition_id: CardDefinitionId,
-        mana_cost: u32,
-        power: u32,
-        toughness: u32,
-    },
-    CreatureWithKeywords {
-        definition_id: CardDefinitionId,
-        mana_cost: u32,
-        power: u32,
-        toughness: u32,
-        flying: bool,
-        reach: bool,
-    },
+pub struct LibraryCard {
+    definition_id: CardDefinitionId,
+    card_type: CardType,
+    mana_cost: u32,
+    creature: Option<LibraryCreature>,
 }
 
 impl LibraryCard {
     #[must_use]
-    pub const fn non_creature(
-        definition_id: CardDefinitionId,
-        card_type: NonCreatureCardType,
-        mana_cost: u32,
-    ) -> Self {
-        Self::NonCreature {
+    pub const fn new(definition_id: CardDefinitionId, card_type: CardType, mana_cost: u32) -> Self {
+        Self {
             definition_id,
             card_type,
             mana_cost,
+            creature: None,
         }
     }
 
@@ -84,11 +72,11 @@ impl LibraryCard {
         power: u32,
         toughness: u32,
     ) -> Self {
-        Self::Creature {
+        Self {
             definition_id,
+            card_type: CardType::Creature,
             mana_cost,
-            power,
-            toughness,
+            creature: Some(LibraryCreature::new(power, toughness)),
         }
     }
 
@@ -101,56 +89,53 @@ impl LibraryCard {
         flying: bool,
         reach: bool,
     ) -> Self {
-        Self::CreatureWithKeywords {
+        Self {
             definition_id,
+            card_type: CardType::Creature,
             mana_cost,
-            power,
-            toughness,
-            flying,
-            reach,
+            creature: Some(LibraryCreature::with_keywords(
+                power, toughness, flying, reach,
+            )),
         }
     }
 
     #[must_use]
+    pub const fn definition_id(&self) -> &CardDefinitionId {
+        &self.definition_id
+    }
+
+    #[must_use]
+    pub const fn card_type(&self) -> &CardType {
+        &self.card_type
+    }
+
+    #[must_use]
+    pub const fn mana_cost(&self) -> u32 {
+        self.mana_cost
+    }
+
+    #[must_use]
+    pub const fn creature_profile(&self) -> Option<&LibraryCreature> {
+        self.creature.as_ref()
+    }
+
+    #[must_use]
     pub fn to_card_instance(&self, card_id: CardInstanceId) -> CardInstance {
-        match self {
-            Self::Creature {
-                definition_id,
-                mana_cost,
-                power,
-                toughness,
-            } => CardInstance::new_creature(
+        match self.creature {
+            Some(creature) => CardInstance::new_creature_with_keywords(
                 card_id,
-                definition_id.clone(),
-                *mana_cost,
-                *power,
-                *toughness,
+                self.definition_id.clone(),
+                self.mana_cost,
+                creature.power,
+                creature.toughness,
+                creature.flying,
+                creature.reach,
             ),
-            Self::CreatureWithKeywords {
-                definition_id,
-                mana_cost,
-                power,
-                toughness,
-                flying,
-                reach,
-            } => CardInstance::new_creature_with_keywords(
+            None => CardInstance::new(
                 card_id,
-                definition_id.clone(),
-                *mana_cost,
-                *power,
-                *toughness,
-                *flying,
-                *reach,
-            ),
-            Self::NonCreature {
-                definition_id,
-                card_type,
-                mana_cost,
-            } => CardInstance::new(
-                card_id,
-                definition_id.clone(),
-                card_type.to_card_type(),
-                *mana_cost,
+                self.definition_id.clone(),
+                self.card_type.clone(),
+                self.mana_cost,
             ),
         }
     }

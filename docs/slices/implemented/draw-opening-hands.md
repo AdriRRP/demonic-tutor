@@ -14,7 +14,7 @@ Assign opening hands to all players in a started game.
 * move those cards from library to hand
 * emit one `OpeningHandDealt` event per player
 * apply the operation atomically
-* represent creature and non-creature library inputs as distinct variants
+* represent library input through a unified `LibraryCard` shape with an optional creature profile
 
 ## Invariants currently enforced
 
@@ -52,4 +52,4 @@ This slice implements the initial hand creation per rule 103.3, drawing exactly 
 This slice is intentionally limited.
 Opening hand size is currently hardcoded to 7 as a temporary rule for early development.
 The `Play` context now receives play-owned library initialization data rather than raw deck-context terminology.
-Creature and non-creature library initialization are distinct variants in the input model.
+Creature-specific setup data now lives in an optional creature profile on `LibraryCard` rather than in a separate top-level variant family.

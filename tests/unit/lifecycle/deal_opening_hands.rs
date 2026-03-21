@@ -1,7 +1,7 @@
 #![allow(clippy::unwrap_used)]
 
 use crate::support::{create_service, creature_library};
-use demonictutor::{CardDefinitionId, DomainError, GameError, LibraryCard, NonCreatureCardType};
+use demonictutor::{CardDefinitionId, CardType, DomainError, GameError, LibraryCard};
 
 #[test]
 fn deal_opening_hands_moves_cards_to_hand() {
@@ -124,11 +124,7 @@ fn deal_opening_hands_fails_when_hands_were_already_dealt() {
 
 #[test]
 fn deal_opening_hands_uses_explicit_non_creature_library_input() {
-    let card = LibraryCard::non_creature(
-        CardDefinitionId::new("forest"),
-        NonCreatureCardType::Land,
-        0,
-    );
+    let card = LibraryCard::new(CardDefinitionId::new("forest"), CardType::Land, 0);
 
     let card_instance = card.to_card_instance(demonictutor::CardInstanceId::new("card-1"));
 

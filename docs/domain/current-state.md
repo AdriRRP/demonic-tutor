@@ -209,7 +209,7 @@ The project currently includes:
 - a core `Game` aggregate with centralized player access
 - command-driven gameplay operations
 - play-owned library initialization data for opening hands
-- type-safe library initialization data with distinct creature and non-creature variants
+- type-safe library initialization data with a unified card shape and optional creature profile
 - domain events describing state transitions
 - composite turn progression events and draw events with explicit origin
 - explicit game-end events with reasons for terminal empty-library draw and zero life

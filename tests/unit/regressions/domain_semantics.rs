@@ -1,11 +1,11 @@
 #![allow(clippy::unwrap_used)]
 
 use demonictutor::{
-    AdjustPlayerLifeEffectCommand, CardDefinitionId, CardError, CardInstanceId, CastSpellCommand,
-    CreatureDied, DealOpeningHandsCommand, DeckId, DeclareAttackersCommand, DeclareBlockersCommand,
-    DomainError, Game, GameId, GameService, InMemoryEventBus, InMemoryEventStore, LibraryCard,
-    NonCreatureCardType, Phase, PlayerDeck, PlayerId, PlayerLibrary, ResolveCombatDamageCommand,
-    StartGameCommand,
+    AdjustPlayerLifeEffectCommand, CardDefinitionId, CardError, CardInstanceId, CardType,
+    CastSpellCommand, CreatureDied, DealOpeningHandsCommand, DeckId, DeclareAttackersCommand,
+    DeclareBlockersCommand, DomainError, Game, GameId, GameService, InMemoryEventBus,
+    InMemoryEventStore, LibraryCard, Phase, PlayerDeck, PlayerId, PlayerLibrary,
+    ResolveCombatDamageCommand, StartGameCommand,
 };
 
 fn player_deck(player: &str, deck: &str) -> PlayerDeck {
@@ -88,11 +88,7 @@ fn setup_game(
 fn instant_spells_resolve_to_graveyard_not_battlefield() {
     let (service, mut game) = setup_game(
         vec![
-            LibraryCard::non_creature(
-                CardDefinitionId::new("giant-growth"),
-                NonCreatureCardType::Instant,
-                0,
-            ),
+            LibraryCard::new(CardDefinitionId::new("giant-growth"), CardType::Instant, 0),
             LibraryCard::creature(CardDefinitionId::new("card-2"), 0, 2, 2),
             LibraryCard::creature(CardDefinitionId::new("card-3"), 0, 2, 2),
             LibraryCard::creature(CardDefinitionId::new("card-4"), 0, 2, 2),
@@ -104,11 +100,7 @@ fn instant_spells_resolve_to_graveyard_not_battlefield() {
             LibraryCard::creature(CardDefinitionId::new("card-10"), 0, 2, 2),
         ],
         vec![
-            LibraryCard::non_creature(
-                CardDefinitionId::new("forest"),
-                NonCreatureCardType::Land,
-                0,
-            ),
+            LibraryCard::new(CardDefinitionId::new("forest"), CardType::Land, 0),
             LibraryCard::creature(CardDefinitionId::new("card-2"), 0, 2, 2),
             LibraryCard::creature(CardDefinitionId::new("card-3"), 0, 2, 2),
             LibraryCard::creature(CardDefinitionId::new("card-4"), 0, 2, 2),
@@ -152,11 +144,7 @@ fn untap_only_updates_the_active_players_board_state() {
             LibraryCard::creature(CardDefinitionId::new("card-10"), 0, 2, 2),
         ],
         vec![
-            LibraryCard::non_creature(
-                CardDefinitionId::new("forest"),
-                NonCreatureCardType::Land,
-                0,
-            ),
+            LibraryCard::new(CardDefinitionId::new("forest"), CardType::Land, 0),
             LibraryCard::creature(CardDefinitionId::new("card-2"), 0, 2, 2),
             LibraryCard::creature(CardDefinitionId::new("card-3"), 0, 2, 2),
             LibraryCard::creature(CardDefinitionId::new("card-4"), 0, 2, 2),
@@ -440,11 +428,7 @@ fn unblocked_combat_damage_ends_the_game_when_it_reduces_a_player_to_zero_life()
 fn cast_land_keeps_the_card_in_hand() {
     let (service, mut game) = setup_game(
         vec![
-            LibraryCard::non_creature(
-                CardDefinitionId::new("forest"),
-                NonCreatureCardType::Land,
-                0,
-            ),
+            LibraryCard::new(CardDefinitionId::new("forest"), CardType::Land, 0),
             LibraryCard::creature(CardDefinitionId::new("card-2"), 0, 2, 2),
             LibraryCard::creature(CardDefinitionId::new("card-3"), 0, 2, 2),
             LibraryCard::creature(CardDefinitionId::new("card-4"), 0, 2, 2),
@@ -456,11 +440,7 @@ fn cast_land_keeps_the_card_in_hand() {
             LibraryCard::creature(CardDefinitionId::new("card-10"), 0, 2, 2),
         ],
         vec![
-            LibraryCard::non_creature(
-                CardDefinitionId::new("mountain"),
-                NonCreatureCardType::Land,
-                0,
-            ),
+            LibraryCard::new(CardDefinitionId::new("mountain"), CardType::Land, 0),
             LibraryCard::creature(CardDefinitionId::new("card-2"), 0, 2, 2),
             LibraryCard::creature(CardDefinitionId::new("card-3"), 0, 2, 2),
             LibraryCard::creature(CardDefinitionId::new("card-4"), 0, 2, 2),

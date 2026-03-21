@@ -12,7 +12,7 @@ pub use domain::play::{
         AdjustPlayerLifeEffectCommand, AdvanceTurnCommand, CastSpellCommand,
         DealOpeningHandsCommand, DeclareAttackersCommand, DeclareBlockersCommand,
         DiscardForCleanupCommand, DrawCardsEffectCommand, ExileCardCommand, LibraryCard,
-        MulliganCommand, NonCreatureCardType, PassPriorityCommand, PlayLandCommand, PlayerDeck,
+        LibraryCreature, MulliganCommand, PassPriorityCommand, PlayLandCommand, PlayerDeck,
         PlayerLibrary, ResolveCombatDamageCommand, StartGameCommand, TapLandCommand,
     },
     errors::{CardError, DomainError, GameError, PhaseError, PlayerError},

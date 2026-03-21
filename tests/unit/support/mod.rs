@@ -3,11 +3,10 @@
 #![allow(dead_code)]
 
 use demonictutor::{
-    AdvanceTurnCommand, AdvanceTurnOutcome, CardDefinitionId, CastSpellCommand,
+    AdvanceTurnCommand, AdvanceTurnOutcome, CardDefinitionId, CardType, CastSpellCommand,
     DealOpeningHandsCommand, DeckId, DeclareAttackersCommand, DiscardForCleanupCommand, Game,
-    GameId, GameService, InMemoryEventBus, InMemoryEventStore, LibraryCard, NonCreatureCardType,
-    PassPriorityCommand, Phase, PlayerDeck, PlayerId, PlayerLibrary, ResolveCombatDamageCommand,
-    StartGameCommand,
+    GameId, GameService, InMemoryEventBus, InMemoryEventStore, LibraryCard, PassPriorityCommand,
+    Phase, PlayerDeck, PlayerId, PlayerLibrary, ResolveCombatDamageCommand, StartGameCommand,
 };
 
 pub type TestService = GameService<InMemoryEventStore, InMemoryEventBus>;
@@ -25,45 +24,33 @@ pub fn player_library(player: &str, cards: Vec<LibraryCard>) -> PlayerLibrary {
 }
 
 pub fn land_card(name: &str) -> LibraryCard {
-    LibraryCard::non_creature(CardDefinitionId::new(name), NonCreatureCardType::Land, 0)
+    LibraryCard::new(CardDefinitionId::new(name), CardType::Land, 0)
 }
 
 pub fn instant_card(name: &str, mana_cost: u32) -> LibraryCard {
-    LibraryCard::non_creature(
-        CardDefinitionId::new(name),
-        NonCreatureCardType::Instant,
-        mana_cost,
-    )
+    LibraryCard::new(CardDefinitionId::new(name), CardType::Instant, mana_cost)
 }
 
 pub fn sorcery_card(name: &str, mana_cost: u32) -> LibraryCard {
-    LibraryCard::non_creature(
-        CardDefinitionId::new(name),
-        NonCreatureCardType::Sorcery,
-        mana_cost,
-    )
+    LibraryCard::new(CardDefinitionId::new(name), CardType::Sorcery, mana_cost)
 }
 
 pub fn artifact_card(name: &str, mana_cost: u32) -> LibraryCard {
-    LibraryCard::non_creature(
-        CardDefinitionId::new(name),
-        NonCreatureCardType::Artifact,
-        mana_cost,
-    )
+    LibraryCard::new(CardDefinitionId::new(name), CardType::Artifact, mana_cost)
 }
 
 pub fn enchantment_card(name: &str, mana_cost: u32) -> LibraryCard {
-    LibraryCard::non_creature(
+    LibraryCard::new(
         CardDefinitionId::new(name),
-        NonCreatureCardType::Enchantment,
+        CardType::Enchantment,
         mana_cost,
     )
 }
 
 pub fn planeswalker_card(name: &str, mana_cost: u32) -> LibraryCard {
-    LibraryCard::non_creature(
+    LibraryCard::new(
         CardDefinitionId::new(name),
-        NonCreatureCardType::Planeswalker,
+        CardType::Planeswalker,
         mana_cost,
     )
 }
