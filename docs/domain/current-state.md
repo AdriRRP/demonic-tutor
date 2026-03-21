@@ -99,7 +99,7 @@ The domain currently includes:
 - supported targeted instants currently require exactly one explicit player or creature target when cast
 - the current targeted-spell subset now supports contextual target restrictions such as `opponent of the acting player/controller` and `creature controlled by the acting player/controller`
 - the current targeted-spell subset now also supports explicit combat-relative target restrictions such as `attacking creature` and `blocking creature`
-- the current combat-relative targeted-spell subset is currently exercised in the post-attackers and post-blockers windows, including direct casts against attacking or blocking creatures
+- the current combat-relative targeted-spell subset is currently exercised in the post-attackers and post-blockers windows, including lethal and nonlethal damage against attacking or blocking creatures
 - supported targeted instant damage to a player emits `LifeChanged` on resolution
 - supported targeted instant damage to a creature marks damage and then relies on shared SBA review for lethal destruction
 - supported targeted instants currently do not apply their effect if their only legal creature target is gone on resolution
