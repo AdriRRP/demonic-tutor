@@ -116,82 +116,69 @@ pub enum CreatureTargetRule {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct SingleTargetRule {
-    player_rule: Option<PlayerTargetRule>,
-    creature_rule: Option<CreatureTargetRule>,
+pub enum SingleTargetRule {
+    Player(PlayerTargetRule),
+    Creature(CreatureTargetRule),
+    PlayerOrCreature {
+        player: PlayerTargetRule,
+        creature: CreatureTargetRule,
+    },
 }
 
 impl SingleTargetRule {
     #[must_use]
     pub const fn any_player() -> Self {
-        Self {
-            player_rule: Some(PlayerTargetRule::AnyPlayer),
-            creature_rule: None,
-        }
+        Self::Player(PlayerTargetRule::AnyPlayer)
     }
 
     #[must_use]
     pub const fn any_creature_on_battlefield() -> Self {
-        Self {
-            player_rule: None,
-            creature_rule: Some(CreatureTargetRule::AnyCreatureOnBattlefield),
-        }
+        Self::Creature(CreatureTargetRule::AnyCreatureOnBattlefield)
     }
 
     #[must_use]
     pub const fn opponent_of_actor() -> Self {
-        Self {
-            player_rule: Some(PlayerTargetRule::OpponentOfActor),
-            creature_rule: None,
-        }
+        Self::Player(PlayerTargetRule::OpponentOfActor)
     }
 
     #[must_use]
     pub const fn creature_controlled_by_actor() -> Self {
-        Self {
-            player_rule: None,
-            creature_rule: Some(CreatureTargetRule::CreatureControlledByActor),
-        }
+        Self::Creature(CreatureTargetRule::CreatureControlledByActor)
     }
 
     #[must_use]
     pub const fn any_player_or_creature_on_battlefield() -> Self {
-        Self {
-            player_rule: Some(PlayerTargetRule::AnyPlayer),
-            creature_rule: Some(CreatureTargetRule::AnyCreatureOnBattlefield),
+        Self::PlayerOrCreature {
+            player: PlayerTargetRule::AnyPlayer,
+            creature: CreatureTargetRule::AnyCreatureOnBattlefield,
         }
     }
 
     #[must_use]
     pub const fn matches_target_kind(self, kind: SpellTargetKind) -> bool {
         match self {
-            Self {
-                player_rule: Some(_),
-                creature_rule: None,
-            } => matches!(kind, SpellTargetKind::Player),
-            Self {
-                player_rule: None,
-                creature_rule: Some(_),
-            } => matches!(kind, SpellTargetKind::Creature),
-            Self {
-                player_rule: Some(_),
-                creature_rule: Some(_),
-            } => matches!(kind, SpellTargetKind::Player | SpellTargetKind::Creature),
-            Self {
-                player_rule: None,
-                creature_rule: None,
-            } => false,
+            Self::Player(_) => matches!(kind, SpellTargetKind::Player),
+            Self::Creature(_) => matches!(kind, SpellTargetKind::Creature),
+            Self::PlayerOrCreature { .. } => {
+                matches!(kind, SpellTargetKind::Player | SpellTargetKind::Creature)
+            }
         }
     }
 
     #[must_use]
     pub const fn player_rule(self) -> Option<PlayerTargetRule> {
-        self.player_rule
+        match self {
+            Self::Player(rule) | Self::PlayerOrCreature { player: rule, .. } => Some(rule),
+            Self::Creature(_) => None,
+        }
     }
 
     #[must_use]
     pub const fn creature_rule(self) -> Option<CreatureTargetRule> {
-        self.creature_rule
+        match self {
+            Self::Creature(rule) | Self::PlayerOrCreature { creature: rule, .. } => Some(rule),
+            Self::Player(_) => None,
+        }
     }
 }
 
