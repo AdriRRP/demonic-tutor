@@ -10,7 +10,7 @@ const FLAG_ATTACKING: u8 = 1 << 2;
 const FLAG_BLOCKING: u8 = 1 << 3;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-struct CreatureRuntime {
+struct CreatureState {
     power: u32,
     toughness: u32,
     damage: u32,
@@ -18,7 +18,7 @@ struct CreatureRuntime {
     keywords: KeywordAbilitySet,
 }
 
-impl CreatureRuntime {
+impl CreatureState {
     const fn new(power: u32, toughness: u32) -> Self {
         Self {
             power,
@@ -47,11 +47,16 @@ struct CardFace {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+struct CardRuntime {
+    flags: u8,
+    creature: Option<CreatureState>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CardInstance {
     id: CardInstanceId,
     face: CardFace,
-    flags: u8,
-    creature: Option<CreatureRuntime>,
+    runtime: CardRuntime,
 }
 
 impl CardInstance {
@@ -67,8 +72,10 @@ impl CardInstance {
                 definition,
                 card_type,
             },
-            flags: 0,
-            creature: None,
+            runtime: CardRuntime {
+                flags: 0,
+                creature: None,
+            },
         }
     }
 
@@ -104,8 +111,10 @@ impl CardInstance {
                 ),
                 card_type: CardType::Creature,
             },
-            flags: FLAG_SUMMONING_SICKNESS,
-            creature: Some(CreatureRuntime::new(power, toughness)),
+            runtime: CardRuntime {
+                flags: FLAG_SUMMONING_SICKNESS,
+                creature: Some(CreatureState::new(power, toughness)),
+            },
         }
     }
 
@@ -123,10 +132,10 @@ impl CardInstance {
                 definition,
                 card_type: CardType::Creature,
             },
-            flags: FLAG_SUMMONING_SICKNESS,
-            creature: Some(CreatureRuntime::new_with_keywords(
-                power, toughness, keywords,
-            )),
+            runtime: CardRuntime {
+                flags: FLAG_SUMMONING_SICKNESS,
+                creature: Some(CreatureState::new_with_keywords(power, toughness, keywords)),
+            },
         }
     }
 
@@ -147,7 +156,7 @@ impl CardInstance {
 
     #[must_use]
     pub const fn is_tapped(&self) -> bool {
-        self.flags & FLAG_TAPPED != 0
+        self.runtime.flags & FLAG_TAPPED != 0
     }
 
     #[must_use]
@@ -167,7 +176,7 @@ impl CardInstance {
 
     #[must_use]
     pub const fn power(&self) -> Option<u32> {
-        match &self.creature {
+        match &self.runtime.creature {
             Some(creature) => Some(creature.power),
             None => None,
         }
@@ -175,7 +184,7 @@ impl CardInstance {
 
     #[must_use]
     pub const fn toughness(&self) -> Option<u32> {
-        match &self.creature {
+        match &self.runtime.creature {
             Some(creature) => Some(creature.toughness),
             None => None,
         }
@@ -183,7 +192,7 @@ impl CardInstance {
 
     #[must_use]
     pub const fn creature_stats(&self) -> Option<(u32, u32)> {
-        match (&self.face.card_type, &self.creature) {
+        match (&self.face.card_type, &self.runtime.creature) {
             (CardType::Creature, Some(creature)) => Some((creature.power, creature.toughness)),
             _ => None,
         }
@@ -191,49 +200,49 @@ impl CardInstance {
 
     #[must_use]
     pub const fn has_summoning_sickness(&self) -> bool {
-        self.creature.is_some() && (self.flags & FLAG_SUMMONING_SICKNESS != 0)
+        self.runtime.creature.is_some() && (self.runtime.flags & FLAG_SUMMONING_SICKNESS != 0)
     }
 
     #[must_use]
     pub const fn is_attacking(&self) -> bool {
-        self.creature.is_some() && (self.flags & FLAG_ATTACKING != 0)
+        self.runtime.creature.is_some() && (self.runtime.flags & FLAG_ATTACKING != 0)
     }
 
     #[must_use]
     pub const fn is_blocking(&self) -> bool {
-        self.creature.is_some() && (self.flags & FLAG_BLOCKING != 0)
+        self.runtime.creature.is_some() && (self.runtime.flags & FLAG_BLOCKING != 0)
     }
 
     pub const fn tap(&mut self) {
-        self.flags |= FLAG_TAPPED;
+        self.runtime.flags |= FLAG_TAPPED;
     }
 
     pub const fn untap(&mut self) {
-        self.flags &= !FLAG_TAPPED;
+        self.runtime.flags &= !FLAG_TAPPED;
     }
 
     pub const fn remove_summoning_sickness(&mut self) {
-        if self.creature.is_some() {
-            self.flags &= !FLAG_SUMMONING_SICKNESS;
+        if self.runtime.creature.is_some() {
+            self.runtime.flags &= !FLAG_SUMMONING_SICKNESS;
         }
     }
 
     pub const fn set_attacking(&mut self, attacking: bool) {
-        if self.creature.is_some() {
+        if self.runtime.creature.is_some() {
             if attacking {
-                self.flags |= FLAG_ATTACKING;
+                self.runtime.flags |= FLAG_ATTACKING;
             } else {
-                self.flags &= !FLAG_ATTACKING;
+                self.runtime.flags &= !FLAG_ATTACKING;
             }
         }
     }
 
     pub fn set_blocking(&mut self, blocking: bool) {
-        if let Some(creature) = &mut self.creature {
+        if let Some(creature) = &mut self.runtime.creature {
             if blocking {
-                self.flags |= FLAG_BLOCKING;
+                self.runtime.flags |= FLAG_BLOCKING;
             } else {
-                self.flags &= !FLAG_BLOCKING;
+                self.runtime.flags &= !FLAG_BLOCKING;
                 creature.blocking_target = None;
             }
         }
@@ -241,22 +250,22 @@ impl CardInstance {
 
     #[must_use]
     pub const fn blocking_target(&self) -> Option<&CardInstanceId> {
-        match &self.creature {
+        match &self.runtime.creature {
             Some(creature) => creature.blocking_target.as_ref(),
             None => None,
         }
     }
 
     pub fn assign_blocking_target(&mut self, attacker_id: CardInstanceId) {
-        if let Some(creature) = &mut self.creature {
-            self.flags |= FLAG_BLOCKING;
+        if let Some(creature) = &mut self.runtime.creature {
+            self.runtime.flags |= FLAG_BLOCKING;
             creature.blocking_target = Some(attacker_id);
         }
     }
 
     #[must_use]
     pub const fn damage(&self) -> u32 {
-        match &self.creature {
+        match &self.runtime.creature {
             Some(creature) => creature.damage,
             None => 0,
         }
@@ -264,7 +273,7 @@ impl CardInstance {
 
     #[must_use]
     pub const fn has_lethal_damage(&self) -> bool {
-        match &self.creature {
+        match &self.runtime.creature {
             Some(creature) => creature.damage >= creature.toughness,
             None => false,
         }
@@ -272,27 +281,27 @@ impl CardInstance {
 
     #[must_use]
     pub const fn has_zero_toughness(&self) -> bool {
-        match &self.creature {
+        match &self.runtime.creature {
             Some(creature) => creature.toughness == 0,
             None => false,
         }
     }
 
     pub const fn add_damage(&mut self, damage: u32) {
-        if let Some(creature) = &mut self.creature {
+        if let Some(creature) = &mut self.runtime.creature {
             creature.damage += damage;
         }
     }
 
     pub const fn clear_damage(&mut self) {
-        if let Some(creature) = &mut self.creature {
+        if let Some(creature) = &mut self.runtime.creature {
             creature.damage = 0;
         }
     }
 
     #[must_use]
     pub const fn has_keyword(&self, ability: KeywordAbility) -> bool {
-        match &self.creature {
+        match &self.runtime.creature {
             Some(creature) => creature.keywords.contains(ability),
             None => false,
         }
@@ -310,7 +319,7 @@ impl CardInstance {
 
     #[must_use]
     pub const fn keyword_abilities(&self) -> Option<KeywordAbilitySet> {
-        match &self.creature {
+        match &self.runtime.creature {
             Some(creature) => Some(creature.keywords),
             None => None,
         }
