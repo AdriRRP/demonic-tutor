@@ -35,6 +35,12 @@ fn require_cast_timing(
             return Ok(());
         }
 
+        if casting_permission.supports(CastingRule::OpenPriorityWindowDuringOwnTurn)
+            && player_id == active_player
+        {
+            return Ok(());
+        }
+
         let active_player_in_empty_main_phase_window = stack.is_empty()
             && player_id == active_player
             && matches!(phase, Phase::FirstMain | Phase::SecondMain);

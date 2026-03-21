@@ -33,6 +33,16 @@ fn alice_is_the_active_player_in_first_main_with_an_artifact_card_in_hand_and_pr
     );
 }
 
+#[given("Alice is the active player in Upkeep with an own-turn-priority artifact card in hand and priority")]
+fn alice_is_the_active_player_in_upkeep_with_an_own_turn_priority_artifact_card_in_hand_and_priority(
+    world: &mut GameplayWorld,
+) {
+    world.setup_active_priority_window_with_own_turn_artifact(
+        "bdd-upkeep-own-turn-artifact-window",
+        Phase::Upkeep,
+    );
+}
+
 #[given("Alice is the active player in FirstMain with an enchantment card in hand and priority")]
 fn alice_is_the_active_player_in_first_main_with_an_enchantment_card_in_hand_and_priority(
     world: &mut GameplayWorld,

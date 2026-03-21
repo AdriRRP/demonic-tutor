@@ -16,6 +16,8 @@ mod cast_flash_creature_in_beginning_of_combat_window;
 mod cast_flash_creature_in_upkeep_window;
 #[path = "cast_instant_in_first_main_window.rs"]
 mod cast_instant_in_first_main_window;
+#[path = "cast_own_turn_priority_artifact_in_upkeep_window.rs"]
+mod cast_own_turn_priority_artifact_in_upkeep_window;
 #[path = "cast_planeswalker_in_main_window.rs"]
 mod cast_planeswalker_in_main_window;
 #[path = "cast_second_instant_after_attackers.rs"]
@@ -56,6 +58,8 @@ mod nonlethal_blocking_target_damage;
 mod reject_non_actor_relative_combat_targets;
 #[path = "reject_non_blocking_creature_for_block_only_spell.rs"]
 mod reject_non_blocking_creature_for_block_only_spell;
+#[path = "reject_own_turn_priority_artifact_response.rs"]
+mod reject_own_turn_priority_artifact_response;
 #[path = "reject_planeswalker_response.rs"]
 mod reject_planeswalker_response;
 #[path = "reject_sorcery_response.rs"]

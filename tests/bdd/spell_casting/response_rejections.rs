@@ -72,6 +72,24 @@ fn alice_has_cast_an_instant_spell_and_still_holds_priority_with_bobs_planeswalk
     );
 }
 
+#[given(
+    "Alice has cast an instant spell and still holds priority with Bob's own-turn artifact card in hand"
+)]
+fn alice_has_cast_an_instant_spell_and_still_holds_priority_with_bobs_own_turn_artifact_card_in_hand(
+    world: &mut GameplayWorld,
+) {
+    world.setup_invalid_own_turn_artifact_response();
+    world.cast_tracked_spell("Alice");
+    let priority = world
+        .game()
+        .priority()
+        .expect("priority window should be open");
+    assert_eq!(
+        priority.current_holder(),
+        &GameplayWorld::player_id("Alice")
+    );
+}
+
 #[given("Bob has priority in FirstMain with an artifact card in hand")]
 fn bob_has_priority_in_first_main_with_an_artifact_card_in_hand(world: &mut GameplayWorld) {
     world.setup_non_active_priority_window_with_artifact(
@@ -110,6 +128,20 @@ fn the_action_is_rejected_because_the_spell_timing_is_not_legal_in_the_current_w
         .expect("response cast should be rejected");
     assert!(
         error.contains("active-player empty-main-phase casting permission"),
+        "unexpected error: {error}"
+    );
+}
+
+#[then("the action is rejected because the spell only supports open-priority casting during its controller's turn")]
+fn the_action_is_rejected_because_the_spell_only_supports_open_priority_casting_during_its_controllers_turn(
+    world: &mut GameplayWorld,
+) {
+    let error = world
+        .last_error
+        .as_ref()
+        .expect("response cast should be rejected");
+    assert!(
+        error.contains("own-turn open-priority casting permission"),
         "unexpected error: {error}"
     );
 }

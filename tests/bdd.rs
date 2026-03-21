@@ -102,11 +102,14 @@ async fn main() {
     GameplayWorld::run("features/stack/cast_second_instant_after_combat_damage.feature").await;
     GameplayWorld::run("features/stack/cast_flash_creature_after_blockers.feature").await;
     GameplayWorld::run("features/stack/cast_flash_creature_after_combat_damage.feature").await;
+    GameplayWorld::run("features/stack/cast_own_turn_priority_artifact_in_upkeep_window.feature")
+        .await;
     GameplayWorld::run("features/stack/target_blocking_creature_spell.feature").await;
     GameplayWorld::run("features/stack/target_controlled_attacking_creature_spell.feature").await;
     GameplayWorld::run("features/stack/target_controlled_blocking_creature_spell.feature").await;
     GameplayWorld::run("features/stack/target_opponents_blocking_creature_spell.feature").await;
     GameplayWorld::run("features/stack/target_opponents_attacking_creature_spell.feature").await;
+    GameplayWorld::run("features/stack/reject_own_turn_priority_artifact_response.feature").await;
     GameplayWorld::run("features/turn-flow/upkeep_priority_window.feature").await;
     GameplayWorld::run("features/turn-flow/draw_priority_window.feature").await;
     GameplayWorld::run("features/turn-flow/main_phase_priority_window.feature").await;

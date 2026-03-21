@@ -258,6 +258,11 @@ fn write_casting_permission_error(
             f,
             "card {card} cannot be cast under an open-priority casting permission in the current window"
         )
+    } else if permission.supports(CastingRule::OpenPriorityWindowDuringOwnTurn) {
+        write!(
+            f,
+            "card {card} cannot be cast under an own-turn open-priority casting permission in the current window"
+        )
     } else if permission.supports(CastingRule::ActivePlayerEmptyMainPhaseWindow) {
         write!(
             f,

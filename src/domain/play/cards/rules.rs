@@ -36,11 +36,13 @@ impl CardType {
 
 const PERMISSION_OPEN_PRIORITY_WINDOW: u8 = 1 << 0;
 const PERMISSION_ACTIVE_PLAYER_EMPTY_MAIN_PHASE_WINDOW: u8 = 1 << 1;
+const PERMISSION_OPEN_PRIORITY_WINDOW_DURING_OWN_TURN: u8 = 1 << 2;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CastingRule {
     OpenPriorityWindow,
     ActivePlayerEmptyMainPhaseWindow,
+    OpenPriorityWindowDuringOwnTurn,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -79,6 +81,9 @@ impl CastingPermissionProfile {
             CastingRule::ActivePlayerEmptyMainPhaseWindow => {
                 self.0 |= PERMISSION_ACTIVE_PLAYER_EMPTY_MAIN_PHASE_WINDOW;
             }
+            CastingRule::OpenPriorityWindowDuringOwnTurn => {
+                self.0 |= PERMISSION_OPEN_PRIORITY_WINDOW_DURING_OWN_TURN;
+            }
         }
         self
     }
@@ -89,6 +94,9 @@ impl CastingPermissionProfile {
             CastingRule::OpenPriorityWindow => self.0 & PERMISSION_OPEN_PRIORITY_WINDOW != 0,
             CastingRule::ActivePlayerEmptyMainPhaseWindow => {
                 self.0 & PERMISSION_ACTIVE_PLAYER_EMPTY_MAIN_PHASE_WINDOW != 0
+            }
+            CastingRule::OpenPriorityWindowDuringOwnTurn => {
+                self.0 & PERMISSION_OPEN_PRIORITY_WINDOW_DURING_OWN_TURN != 0
             }
         }
     }

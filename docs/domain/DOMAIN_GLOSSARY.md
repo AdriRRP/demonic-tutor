@@ -236,6 +236,12 @@ A card-specific casting permission that allows a non-instant spell card to be ca
 
 The current runtime does not model the full keyword as free text. Instead, supported cards may carry explicit casting rules on their card face that produce minimal `Flash`-like behavior across the currently supported priority windows.
 
+## OpenPriorityWindowDuringOwnTurn
+
+A card-specific casting rule that allows a supported non-instant spell card to be cast in an open priority window, but only while its controller is the active player.
+
+The current runtime uses this as a turn-relative casting permission distinct from generic `OpenPriorityWindow`.
+
 ---
 
 # Creature-Specific Terms
