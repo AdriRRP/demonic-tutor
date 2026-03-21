@@ -113,7 +113,9 @@ Responsibilities:
 
 Current implementation:
 
-- collection of `CardInstance`
+- ordered collection of `CardInstance`
+
+The current runtime preserves the order in which cards appear in hand.
 
 ---
 
@@ -131,6 +133,7 @@ Current implementation:
 - collection of `CardInstance`
 
 The battlefield currently models only a minimal subset of permanent state.
+The runtime does not currently promise stable battlefield ordering.
 
 ---
 
@@ -145,7 +148,9 @@ Responsibilities:
 
 Current implementation:
 
-- collection of `CardInstance`
+- ordered collection of `CardInstance`
+
+The current runtime preserves graveyard insertion order.
 
 ---
 
@@ -160,7 +165,9 @@ Responsibilities:
 
 Current implementation:
 
-- collection of `CardInstance`
+- ordered collection of `CardInstance`
+
+The current runtime preserves exile insertion order.
 
 ---
 

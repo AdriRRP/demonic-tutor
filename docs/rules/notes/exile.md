@@ -20,6 +20,7 @@ This is a repository-owned interpretation note, not a copy of the Comprehensive 
 - exiled cards are kept face up by default
 - any player may examine cards in exile
 - the aggregate preserves insertion order within each player's exile zone
+- exile order is stable today because the runtime treats exile as an ordered history-like zone, unlike battlefield storage
 - no "return from exile" behavior is currently modeled
 - no exile-linked abilities are currently modeled
 - no face-down exile is currently modeled

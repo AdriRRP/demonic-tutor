@@ -32,6 +32,7 @@ This slice follows the existing zone model foundation because:
 - exiled cards can be examined by any player (CR 406.3)
 - exiled cards remain face up by default
 - the aggregate preserves insertion order within each player's exile zone
+- exile is intentionally modeled as an ordered zone, unlike battlefield storage
 - no "return from exile" behavior is introduced yet
 - no exile-linked abilities are modeled yet
 
@@ -42,6 +43,7 @@ This slice follows the existing zone model foundation because:
 - cards in exile belong to exactly one player
 - zone changes maintain consistency (a card cannot be in two zones simultaneously)
 - exile preserves insertion order to preserve card history
+- battlefield order remains intentionally unstable in the current runtime and is not reused as a precedent for exile
 - the aggregate exposes cards in exile for gameplay inspection
 - exile does not yet support face-down cards
 

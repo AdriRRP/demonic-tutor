@@ -66,6 +66,7 @@ The domain currently includes:
 - players
 - card instances with immutable face data and mutable runtime state
 - basic zones (library, hand, battlefield, graveyard, exile)
+- ordered library, hand, graveyard, and exile zones with intentionally unordered battlefield removal semantics
 - mana production from lands
 - spell casting with mana cost
 - transient mana pools cleared when the game advances to the next phase or turn
