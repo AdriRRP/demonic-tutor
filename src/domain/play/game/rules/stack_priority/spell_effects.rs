@@ -33,9 +33,7 @@ pub fn evaluate_target_legality(
     match (targeting, target) {
         (SpellTargetingProfile::None, None) => SpellTargetLegality::NoTargetRequired,
         (SpellTargetingProfile::None, Some(_)) => SpellTargetLegality::IllegalTargetKind,
-        (SpellTargetingProfile::ExactlyOneLegalTarget(_), None) => {
-            SpellTargetLegality::MissingRequiredTarget
-        }
+        (SpellTargetingProfile::ExactlyOne(_), None) => SpellTargetLegality::MissingRequiredTarget,
         (targeting, Some(target)) => {
             if !accepts_target(targeting, target) {
                 return SpellTargetLegality::IllegalTargetKind;

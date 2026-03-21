@@ -72,19 +72,19 @@ pub enum SpellTargetKind {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum SpellTargetLegalityRule {
-    Player,
-    Creature,
-    PlayerOrCreature,
+pub enum SingleTargetRule {
+    AnyPlayer,
+    AnyCreature,
+    AnyPlayerOrCreature,
 }
 
-impl SpellTargetLegalityRule {
+impl SingleTargetRule {
     #[must_use]
-    pub const fn allows_target_kind(self, kind: SpellTargetKind) -> bool {
+    pub const fn matches_target_kind(self, kind: SpellTargetKind) -> bool {
         match self {
-            Self::Player => matches!(kind, SpellTargetKind::Player),
-            Self::Creature => matches!(kind, SpellTargetKind::Creature),
-            Self::PlayerOrCreature => {
+            Self::AnyPlayer => matches!(kind, SpellTargetKind::Player),
+            Self::AnyCreature => matches!(kind, SpellTargetKind::Creature),
+            Self::AnyPlayerOrCreature => {
                 matches!(kind, SpellTargetKind::Player | SpellTargetKind::Creature)
             }
         }
@@ -94,7 +94,7 @@ impl SpellTargetLegalityRule {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SpellTargetingProfile {
     None,
-    ExactlyOneLegalTarget(SpellTargetLegalityRule),
+    ExactlyOne(SingleTargetRule),
 }
 
 impl SpellTargetingProfile {
@@ -107,7 +107,7 @@ impl SpellTargetingProfile {
     pub const fn allows_target_kind(self, kind: SpellTargetKind) -> bool {
         match self {
             Self::None => false,
-            Self::ExactlyOneLegalTarget(rule) => rule.allows_target_kind(kind),
+            Self::ExactlyOne(rule) => rule.matches_target_kind(kind),
         }
     }
 }
@@ -136,9 +136,7 @@ impl SupportedSpellRules {
     #[must_use]
     pub const fn deal_damage_to_any_target(damage: u32) -> Self {
         Self {
-            targeting: SpellTargetingProfile::ExactlyOneLegalTarget(
-                SpellTargetLegalityRule::PlayerOrCreature,
-            ),
+            targeting: SpellTargetingProfile::ExactlyOne(SingleTargetRule::AnyPlayerOrCreature),
             resolution: SpellResolutionProfile::DealDamage { damage },
         }
     }
@@ -146,9 +144,7 @@ impl SupportedSpellRules {
     #[must_use]
     pub const fn deal_damage_to_player(damage: u32) -> Self {
         Self {
-            targeting: SpellTargetingProfile::ExactlyOneLegalTarget(
-                SpellTargetLegalityRule::Player,
-            ),
+            targeting: SpellTargetingProfile::ExactlyOne(SingleTargetRule::AnyPlayer),
             resolution: SpellResolutionProfile::DealDamage { damage },
         }
     }
