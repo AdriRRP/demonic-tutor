@@ -11,8 +11,11 @@ pub const fn blocker_can_block_aerial_attacker(blocker: &CardInstance) -> bool {
 }
 
 #[must_use]
-pub const fn can_block_attacker(blocker: &CardInstance, attacker: &CardInstance) -> bool {
-    if attacker_requires_aerial_blocking_capability(attacker) {
+pub const fn can_block_attacker_with_aerial_requirement(
+    blocker: &CardInstance,
+    attacker_requires_aerial_blocking: bool,
+) -> bool {
+    if attacker_requires_aerial_blocking {
         blocker_can_block_aerial_attacker(blocker)
     } else {
         true

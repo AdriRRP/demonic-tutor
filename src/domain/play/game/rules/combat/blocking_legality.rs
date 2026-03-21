@@ -24,7 +24,12 @@ pub fn declare_blockers(
         .cards()
         .iter()
         .filter(|card| card.is_attacking())
-        .map(|card| (card.id().clone(), card.clone()))
+        .map(|card| {
+            (
+                card.id().clone(),
+                capabilities::attacker_requires_aerial_blocking_capability(card),
+            )
+        })
         .collect::<HashMap<_, _>>();
     let defender = &mut players[defending_player_idx];
     let battlefield = defender.battlefield_mut();
@@ -45,7 +50,7 @@ pub fn declare_blockers(
             ));
         }
 
-        let Some(attacker) = declared_attackers.get(attacker_id) else {
+        let Some(attacker_requires_aerial_blocking) = declared_attackers.get(attacker_id) else {
             return Err(DomainError::Card(CardError::NotAttacking(
                 attacker_id.clone(),
             )));
@@ -71,7 +76,10 @@ pub fn declare_blockers(
             }));
         }
 
-        if !capabilities::can_block_attacker(card, attacker) {
+        if !capabilities::can_block_attacker_with_aerial_requirement(
+            card,
+            *attacker_requires_aerial_blocking,
+        ) {
             return Err(DomainError::Card(
                 CardError::CannotBlockFlyingWithoutFlyingOrReach {
                     player: cmd.player_id.clone(),
