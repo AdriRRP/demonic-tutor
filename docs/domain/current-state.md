@@ -89,77 +89,22 @@ The domain currently includes:
 - casting spells onto an aggregate-owned stack zone
 - public priority passing for the currently open minimal stack windows
 - the casting player retains priority immediately after a spell is put on the stack
-- the responding player may cast a second instant while retaining priority on an existing stack
-- entering `Upkeep` opens an empty priority window for the active player
-- the active player may cast and resolve an instant during that upkeep priority window
-- the active player may cast a second instant in `Upkeep` before passing priority after the first
-- the non-active player may cast and resolve an instant in `Upkeep` after the active player passes
-- the non-active player may cast a second instant in `Upkeep` before passing priority after the first response
-- entering `Draw` opens an empty priority window for the active player after the automatic turn draw
-- the active player may cast and resolve an instant during that draw-step priority window
-- the active player may cast a second instant in `Draw` before passing priority after the first
-- the non-active player may cast and resolve an instant in `Draw` after the active player passes
-- the non-active player may cast a second instant in `Draw` before passing priority after the first response
-- entering `FirstMain` or `SecondMain` opens an empty priority window for the active player
-- the active player may cast and resolve a sorcery during an empty `FirstMain` priority window
-- the active player may cast and resolve a creature during an empty `FirstMain` priority window
-- the active player may cast and resolve an artifact during an empty `FirstMain` priority window
-- the active player may cast and resolve an enchantment during an empty `FirstMain` priority window
-- the active player may cast and resolve a planeswalker during an empty `FirstMain` priority window
-- the active player may cast and resolve an instant during that first-main priority window
-- the current priority holder may cast and resolve a targeted instant at a player or creature in the current targeted-spell subset whenever that holder can legally cast an instant in the current window
-- the active player may cast a second instant in `FirstMain` before passing priority after the first
-- the non-active player may cast and resolve an instant in `FirstMain` after the active player passes
-- the non-active player may cast a second instant in `FirstMain` before passing priority after the first response
-- the active player may cast and resolve a sorcery during an empty `SecondMain` priority window
-- the active player may cast and resolve a creature during an empty `SecondMain` priority window
-- the active player may cast and resolve an artifact during an empty `SecondMain` priority window
-- the active player may cast and resolve an enchantment during an empty `SecondMain` priority window
-- the active player may cast and resolve a planeswalker during an empty `SecondMain` priority window
-- the active player may cast and resolve an instant during that second-main priority window
-- the active player may cast a second instant in `SecondMain` before passing priority after the first
-- the non-active player may cast and resolve an instant in `SecondMain` after the active player passes
-- the non-active player may cast a second instant in `SecondMain` before passing priority after the first response
-- supported targeted instants currently require an explicit player or creature target when cast
+- currently supported open priority windows exist in `Upkeep`, `Draw`, `FirstMain`, `BeginningOfCombat`, post-attackers, post-blockers, `EndOfCombat`, `SecondMain`, and `EndStep`
+- in each currently supported instant-speed window, the active player may cast an instant and self-stack a second instant before passing priority
+- in each currently supported instant-speed window, the non-active player may respond with an instant after the first pass and may self-stack a second instant before passing priority
+- sorcery-speed spells are supported for the active player in empty `FirstMain` and `SecondMain` windows for the currently modeled spell-card subset: creature, sorcery, artifact, enchantment, and planeswalker
+- the current priority holder may cast and resolve a targeted instant at a player or creature in the currently supported targeted-spell subset whenever that holder can legally cast an instant in the current window
+- supported targeted instants currently require exactly one explicit player or creature target when cast
 - supported targeted instant damage to a player emits `LifeChanged` on resolution
 - supported targeted instant damage to a creature marks damage and then relies on shared SBA review for lethal destruction
 - supported targeted instants currently do not apply their effect if their only legal creature target is gone on resolution
-- legal-target evaluation for the current targeted-spell subset is shared between cast-time validation and resolution-time revalidation
-- supported spell targeting and resolution are currently carried as explicit card-face profiles rather than inferred from card-definition strings during resolution
-- supported spell-card casting rules are currently carried as explicit card-face data rather than inferred only from `CardType`
-- card definitions are currently created through card-type-aware constructors so supported spell cards receive casting-permission semantics when the face is built
-- entering `EndStep` opens an empty priority window for the active player before cleanup can finish the turn
-- the non-active player may cast and resolve an instant in `EndStep` after the active player passes
-- the non-active player may cast a second instant in `EndStep` before passing priority after the first response
-- the active player may cast and resolve an instant during that end-step priority window
-- the active player may cast a second instant in `EndStep` before passing priority after the first
-- spells with open-priority casting permission for the current priority holder
+- legal-target evaluation for the current targeted-spell subset is shared between cast-time validation and resolution-time revalidation, using explicit cast and resolution contexts
+- supported spell targeting, casting rules, and resolution are currently carried as explicit card-face profiles rather than inferred from card-definition strings during casting or resolution
+- card definitions are currently created through card-type-aware constructors so supported spell cards receive casting semantics when the face is built
 - resolving the top stack object after two consecutive passes
-- entering `BeginningOfCombat` opens an empty priority window for the active player
-- closing that empty beginning-of-combat window advances the game into `DeclareAttackers`
-- an empty `DeclareAttackers` step may advance into `DeclareBlockers`
-- an empty `DeclareBlockers` step may advance into `CombatDamage`
-- an empty `CombatDamage` step may advance into `EndOfCombat`
-- closing the empty `EndOfCombat` window advances the game into `SecondMain`
-- the non-active player may cast and resolve an instant at the beginning of `BeginningOfCombat` after the active player passes
-- the non-active player may cast a second instant at the beginning of `BeginningOfCombat` before passing priority after the first response
-- the active player may cast and resolve an instant at the beginning of `BeginningOfCombat`
-- the active player may cast a second instant at the beginning of `BeginningOfCombat` before passing priority after the first
-- combat actions reopen priority after attackers and blockers are declared, moving the game into `DeclareBlockers` and `CombatDamage`
-- the explicit combat corridor now reopens priority coherently as combat progresses from `DeclareAttackers` to `DeclareBlockers`, from `DeclareBlockers` to `CombatDamage`, and from resolved combat damage to `EndOfCombat`
-- the active player may cast and resolve an instant after attackers are declared
-- the active player may cast a second instant after attackers are declared before passing priority after the first
-- the non-active player may cast and resolve an instant after attackers are declared once the active player passes
-- the non-active player may cast a second instant in `DeclareBlockers` once the active player passes after attackers are declared
-- the active player may cast and resolve an instant after blockers are declared
-- the active player may cast a second instant after blockers are declared before passing priority after the first
-- the non-active player may cast and resolve an instant after blockers are declared once the active player passes
-- the non-active player may cast a second instant in `CombatDamage` once the active player passes after blockers are declared
-- combat damage resolution moves the game into `EndOfCombat` and reopens priority for the active player while the game remains active
-- the non-active player may cast and resolve an instant in `EndOfCombat` once the active player passes
-- the non-active player may cast a second instant in `EndOfCombat` before passing priority after the first response
-- the active player may cast and resolve an instant in `EndOfCombat`
-- the active player may cast a second instant in `EndOfCombat` before passing priority after the first
+- the explicit combat corridor progresses through `BeginningOfCombat`, `DeclareAttackers`, `DeclareBlockers`, `CombatDamage`, and `EndOfCombat`
+- empty combat windows close forward coherently from `BeginningOfCombat` into `DeclareAttackers`, from `DeclareAttackers` into `DeclareBlockers`, from `DeclareBlockers` into `CombatDamage`, and from `EndOfCombat` into `SecondMain`
+- combat actions reopen priority after attackers and blockers are declared, and combat damage resolution moves the game into `EndOfCombat` with a reopened priority window while the game remains active
 
 The system intentionally excludes complex gameplay mechanics at this stage.
 
