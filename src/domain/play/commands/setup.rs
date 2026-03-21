@@ -1,5 +1,5 @@
 use crate::domain::play::{
-    cards::{CardDefinition, CardInstance, CardType, KeywordAbilitySet, SpellEffectProfile},
+    cards::{CardDefinition, CardInstance, CardType, KeywordAbilitySet, SupportedSpellRules},
     ids::{CardDefinitionId, CardInstanceId, DeckId, PlayerId},
 };
 
@@ -65,8 +65,13 @@ impl LibraryCard {
     }
 
     #[must_use]
-    pub fn with_spell_effect(mut self, spell_effect: SpellEffectProfile) -> Self {
-        self.definition = self.definition.with_spell_effect(spell_effect);
+    pub fn with_supported_spell_rules(
+        mut self,
+        supported_spell_rules: SupportedSpellRules,
+    ) -> Self {
+        self.definition = self
+            .definition
+            .with_supported_spell_rules(supported_spell_rules);
         self
     }
 

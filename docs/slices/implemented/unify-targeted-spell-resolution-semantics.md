@@ -15,7 +15,7 @@ Centralize the minimal targeted-spell resolution path so player and creature tar
 - supported targeted spell effects resolve through a shared spell-effect path
 - player damage, creature damage, and post-resolution SBA review are coordinated in one place
 - `PassPriority` observes targeted resolution through the same event surface as other spells
-- supported spell behavior is read from explicit card-face profiles instead of string-matching on card-definition ids
+- supported spell targeting and resolution are read from explicit card-face profiles instead of string-matching on card-definition ids
 
 ---
 

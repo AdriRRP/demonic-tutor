@@ -1,9 +1,9 @@
 use super::{
-    spell_effects::{accepts_target, spell_effect},
+    spell_effects::{accepts_target, supported_spell_rules},
     CastSpellOutcome, StackPriorityContext,
 };
 use crate::domain::play::{
-    cards::{CardType, CastingTimingProfile, SpellEffectProfile},
+    cards::{CardType, CastingTimingProfile, SupportedSpellRules},
     commands::CastSpellCommand,
     errors::{CardError, DomainError, GameError, PhaseError},
     events::SpellPutOnStack,
@@ -61,17 +61,19 @@ fn require_cast_timing(
 fn validate_spell_target(
     players: &[crate::domain::play::game::Player],
     card_id: &CardInstanceId,
-    effect: &SpellEffectProfile,
+    supported_spell_rules: SupportedSpellRules,
     target: Option<&SpellTarget>,
 ) -> Result<(), DomainError> {
-    if effect.requires_target() {
+    let targeting = supported_spell_rules.targeting();
+
+    if targeting.requires_target() {
         let Some(target) = target else {
             return Err(DomainError::Game(GameError::MissingSpellTarget(
                 card_id.clone(),
             )));
         };
 
-        if !accepts_target(effect, target) {
+        if !accepts_target(targeting, target) {
             return Err(DomainError::Game(GameError::SpellDoesNotUseTargets(
                 card_id.clone(),
             )));
@@ -165,8 +167,8 @@ pub fn cast_spell(
         casting_timing,
     )?;
 
-    let effect = spell_effect(&hand_card);
-    validate_spell_target(players, &card_id, &effect, target.as_ref())?;
+    let supported_spell_rules = supported_spell_rules(&hand_card);
+    validate_spell_target(players, &card_id, supported_spell_rules, target.as_ref())?;
 
     if matches!(card_type, CardType::Creature) && hand_card.creature_stats().is_none() {
         return Err(DomainError::Game(GameError::InternalInvariantViolation(

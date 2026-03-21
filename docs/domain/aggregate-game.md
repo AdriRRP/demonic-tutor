@@ -171,7 +171,7 @@ Represents a concrete instance of a card inside a match.
 The current runtime model separates:
 
 - immutable card-face data (`definition id`, `type`, `mana cost`, `casting timing`)
-- immutable supported rules profile for the card's currently modeled behavior
+- immutable supported targeting and resolution profiles for the card's currently modeled behavior
 - immutable supported casting timing profile for the card's currently modeled legality
 - mutable gameplay state (`tapped`, combat flags, creature runtime state)
 

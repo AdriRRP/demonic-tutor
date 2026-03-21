@@ -104,16 +104,56 @@ impl CastingTimingProfile {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum SpellEffectProfile {
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SpellTargetingProfile {
     None,
-    DealDamageToAnyTarget { damage: u32 },
+    AnyTarget,
 }
 
-impl SpellEffectProfile {
+impl SpellTargetingProfile {
     #[must_use]
     pub const fn requires_target(&self) -> bool {
         !matches!(self, Self::None)
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SpellResolutionProfile {
+    None,
+    DealDamage { damage: u32 },
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct SupportedSpellRules {
+    targeting: SpellTargetingProfile,
+    resolution: SpellResolutionProfile,
+}
+
+impl SupportedSpellRules {
+    #[must_use]
+    pub const fn none() -> Self {
+        Self {
+            targeting: SpellTargetingProfile::None,
+            resolution: SpellResolutionProfile::None,
+        }
+    }
+
+    #[must_use]
+    pub const fn deal_damage_to_any_target(damage: u32) -> Self {
+        Self {
+            targeting: SpellTargetingProfile::AnyTarget,
+            resolution: SpellResolutionProfile::DealDamage { damage },
+        }
+    }
+
+    #[must_use]
+    pub const fn targeting(self) -> SpellTargetingProfile {
+        self.targeting
+    }
+
+    #[must_use]
+    pub const fn resolution(self) -> SpellResolutionProfile {
+        self.resolution
     }
 }
 
@@ -122,7 +162,7 @@ pub struct CardDefinition {
     id: CardDefinitionId,
     mana_cost: u32,
     casting_timing: CastingTimingProfile,
-    spell_effect: SpellEffectProfile,
+    supported_spell_rules: SupportedSpellRules,
 }
 
 impl CardDefinition {
@@ -132,7 +172,7 @@ impl CardDefinition {
             id,
             mana_cost,
             casting_timing: CastingTimingProfile::SorcerySpeed,
-            spell_effect: SpellEffectProfile::None,
+            supported_spell_rules: SupportedSpellRules::none(),
         }
     }
 
@@ -142,13 +182,16 @@ impl CardDefinition {
             id,
             mana_cost,
             casting_timing: CastingTimingProfile::for_card_type(card_type),
-            spell_effect: SpellEffectProfile::None,
+            supported_spell_rules: SupportedSpellRules::none(),
         }
     }
 
     #[must_use]
-    pub const fn with_spell_effect(mut self, spell_effect: SpellEffectProfile) -> Self {
-        self.spell_effect = spell_effect;
+    pub const fn with_supported_spell_rules(
+        mut self,
+        supported_spell_rules: SupportedSpellRules,
+    ) -> Self {
+        self.supported_spell_rules = supported_spell_rules;
         self
     }
 
@@ -168,8 +211,8 @@ impl CardDefinition {
     }
 
     #[must_use]
-    pub const fn spell_effect(&self) -> &SpellEffectProfile {
-        &self.spell_effect
+    pub const fn supported_spell_rules(&self) -> SupportedSpellRules {
+        self.supported_spell_rules
     }
 }
 
@@ -325,8 +368,8 @@ impl CardInstance {
     }
 
     #[must_use]
-    pub const fn spell_effect_profile(&self) -> &SpellEffectProfile {
-        self.face.definition.spell_effect()
+    pub const fn supported_spell_rules(&self) -> SupportedSpellRules {
+        self.face.definition.supported_spell_rules()
     }
 
     #[must_use]

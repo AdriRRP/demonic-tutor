@@ -1,14 +1,14 @@
 use crate::domain::play::{
-    cards::{CardInstance, SpellEffectProfile},
+    cards::{CardInstance, SpellTargetingProfile, SupportedSpellRules},
     game::SpellTarget,
 };
 
 #[must_use]
-pub fn spell_effect(card: &CardInstance) -> SpellEffectProfile {
-    card.spell_effect_profile().clone()
+pub const fn supported_spell_rules(card: &CardInstance) -> SupportedSpellRules {
+    card.supported_spell_rules()
 }
 
 #[must_use]
-pub const fn accepts_target(effect: &SpellEffectProfile, _target: &SpellTarget) -> bool {
-    matches!(effect, SpellEffectProfile::DealDamageToAnyTarget { .. })
+pub const fn accepts_target(targeting: SpellTargetingProfile, _target: &SpellTarget) -> bool {
+    matches!(targeting, SpellTargetingProfile::AnyTarget)
 }

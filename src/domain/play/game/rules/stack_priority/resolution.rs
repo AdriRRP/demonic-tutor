@@ -6,9 +6,9 @@ use super::super::{
     },
     state_based_actions::{self, StateBasedActionsResult},
 };
-use super::spell_effects::spell_effect;
+use super::spell_effects::supported_spell_rules;
 use crate::domain::play::{
-    cards::{CardType, SpellEffectProfile},
+    cards::{CardType, SpellResolutionProfile, SupportedSpellRules},
     errors::{DomainError, GameError},
     events::{CreatureDied, GameEnded, LifeChanged, SpellCast, SpellCastOutcome, StackTopResolved},
     game::SpellTarget,
@@ -37,18 +37,18 @@ fn resolve_spell_effect_from_effect(
     game_id: &GameId,
     players: &mut [Player],
     terminal_state: &mut TerminalState,
-    effect: &SpellEffectProfile,
+    supported_spell_rules: SupportedSpellRules,
     target: Option<&SpellTarget>,
 ) -> Result<SpellResolutionSideEffects, DomainError> {
-    match effect {
-        SpellEffectProfile::None => {
+    match supported_spell_rules.resolution() {
+        SpellResolutionProfile::None => {
             let StateBasedActionsResult {
                 creatures_died,
                 game_ended,
             } = state_based_actions::check_state_based_actions(game_id, players, terminal_state)?;
             Ok((None, creatures_died, game_ended))
         }
-        SpellEffectProfile::DealDamageToAnyTarget { damage } => {
+        SpellResolutionProfile::DealDamage { damage } => {
             let Some(target) = target else {
                 return Err(DomainError::Game(GameError::InternalInvariantViolation(
                     "targeted spell resolved without target".to_string(),
@@ -61,11 +61,11 @@ fn resolve_spell_effect_from_effect(
                         game_id,
                         players,
                         player_id,
-                        -(*damage).cast_signed(),
+                        -(damage).cast_signed(),
                     )?)
                 }
                 SpellTarget::Creature(card_id) => {
-                    apply_damage_to_creature(players, card_id, *damage);
+                    apply_damage_to_creature(players, card_id, damage);
                     None
                 }
             };
@@ -93,7 +93,7 @@ pub(super) fn resolve_spell_from_stack(
     let mana_cost_paid = spell.mana_cost_paid();
     let target = spell.target().cloned();
     let card = spell.into_card();
-    let effect = spell_effect(&card);
+    let supported_spell_rules = supported_spell_rules(&card);
     let card_type = card.card_type().clone();
 
     let player = helpers::find_player_mut(players, &controller_id)?;
@@ -130,23 +130,21 @@ pub(super) fn resolve_spell_from_stack(
         stack_object_id,
         source_card_id,
     );
-    let (life_changed, creatures_died, game_ended) = match effect {
-        SpellEffectProfile::None => {
+    let (life_changed, creatures_died, game_ended) = match supported_spell_rules.resolution() {
+        SpellResolutionProfile::None => {
             let StateBasedActionsResult {
                 creatures_died,
                 game_ended,
             } = state_based_actions::check_state_based_actions(game_id, players, terminal_state)?;
             (None, creatures_died, game_ended)
         }
-        effect @ SpellEffectProfile::DealDamageToAnyTarget { .. } => {
-            resolve_spell_effect_from_effect(
-                game_id,
-                players,
-                terminal_state,
-                &effect,
-                target.as_ref(),
-            )?
-        }
+        SpellResolutionProfile::DealDamage { .. } => resolve_spell_effect_from_effect(
+            game_id,
+            players,
+            terminal_state,
+            supported_spell_rules,
+            target.as_ref(),
+        )?,
     };
 
     Ok((

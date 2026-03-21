@@ -7,7 +7,7 @@ use demonictutor::{
     DealOpeningHandsCommand, DeckId, DeclareAttackersCommand, DiscardForCleanupCommand, Game,
     GameId, GameService, InMemoryEventBus, InMemoryEventStore, KeywordAbility, KeywordAbilitySet,
     LibraryCard, PassPriorityCommand, Phase, PlayerDeck, PlayerId, PlayerLibrary,
-    ResolveCombatDamageCommand, SpellEffectProfile, StartGameCommand,
+    ResolveCombatDamageCommand, StartGameCommand, SupportedSpellRules,
 };
 
 pub type TestService = GameService<InMemoryEventStore, InMemoryEventBus>;
@@ -34,7 +34,7 @@ pub fn instant_card(name: &str, mana_cost: u32) -> LibraryCard {
 
 pub fn targeted_damage_instant_card(name: &str, mana_cost: u32, damage: u32) -> LibraryCard {
     LibraryCard::new(CardDefinitionId::new(name), CardType::Instant, mana_cost)
-        .with_spell_effect(SpellEffectProfile::DealDamageToAnyTarget { damage })
+        .with_supported_spell_rules(SupportedSpellRules::deal_damage_to_any_target(damage))
 }
 
 pub fn sorcery_card(name: &str, mana_cost: u32) -> LibraryCard {
