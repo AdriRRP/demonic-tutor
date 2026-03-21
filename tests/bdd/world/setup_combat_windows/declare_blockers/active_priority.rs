@@ -41,6 +41,36 @@ impl GameplayWorld {
         self.reset_observations();
     }
 
+    pub fn setup_priority_after_blockers_declared_with_flash_artifact(&mut self) {
+        prepare_priority_after_blockers_declared(
+            self,
+            "bdd-combat-priority-blockers-flash-artifact",
+            vec![
+                attacker_card(),
+                support::flash_artifact_card("bdd-window-flash-artifact", 0),
+            ],
+            vec![blocker_card()],
+        );
+        self.tracked_card_id =
+            Some(self.hand_card_by_definition("Alice", "bdd-window-flash-artifact"));
+        self.reset_observations();
+    }
+
+    pub fn setup_priority_after_blockers_declared_with_flash_enchantment(&mut self) {
+        prepare_priority_after_blockers_declared(
+            self,
+            "bdd-combat-priority-blockers-flash-enchantment",
+            vec![
+                attacker_card(),
+                support::flash_enchantment_card("bdd-window-flash-enchantment", 0),
+            ],
+            vec![blocker_card()],
+        );
+        self.tracked_card_id =
+            Some(self.hand_card_by_definition("Alice", "bdd-window-flash-enchantment"));
+        self.reset_observations();
+    }
+
     pub fn setup_priority_after_blockers_declared_with_own_turn_artifact(&mut self) {
         prepare_priority_after_blockers_declared(
             self,
