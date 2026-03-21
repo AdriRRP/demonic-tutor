@@ -61,16 +61,17 @@ fn target_player_exists<'a>(players: &'a [Player], player_id: &PlayerId) -> Opti
     players.iter().find(|player| player.id() == player_id)
 }
 
-fn target_creature_controller<'a>(
+fn target_creature_on_battlefield<'a>(
     players: &'a [Player],
     card_id: &CardInstanceId,
-) -> Option<&'a Player> {
-    players.iter().find(|player| {
+) -> Option<(&'a Player, &'a CardInstance)> {
+    players.iter().find_map(|player| {
         player
             .battlefield()
             .cards()
             .iter()
-            .any(|card| card.id() == card_id)
+            .find(|card| card.id() == card_id)
+            .map(|card| (player, card))
     })
 }
 
@@ -112,7 +113,9 @@ pub fn evaluate_target_legality(
                     }
                 }
                 (SpellTargetingProfile::ExactlyOne(rule), SpellTarget::Creature(card_id)) => {
-                    let Some(controller) = target_creature_controller(players, card_id) else {
+                    let Some((controller, target_creature)) =
+                        target_creature_on_battlefield(players, card_id)
+                    else {
                         return SpellTargetLegality::MissingCreature(card_id.clone());
                     };
 
@@ -122,6 +125,13 @@ pub fn evaluate_target_legality(
                         }
                         Some(CreatureTargetRule::CreatureControlledByActor) => {
                             if controller.id() == actor_id {
+                                SpellTargetLegality::Legal
+                            } else {
+                                SpellTargetLegality::IllegalTargetRule
+                            }
+                        }
+                        Some(CreatureTargetRule::AttackingCreature) => {
+                            if target_creature.is_attacking() {
                                 SpellTargetLegality::Legal
                             } else {
                                 SpellTargetLegality::IllegalTargetRule

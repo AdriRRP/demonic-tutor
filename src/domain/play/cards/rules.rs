@@ -110,6 +110,7 @@ pub enum PlayerTargetRule {
 pub enum CreatureTargetRule {
     AnyCreatureOnBattlefield,
     CreatureControlledByActor,
+    AttackingCreature,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -141,6 +142,11 @@ impl SingleTargetRule {
     #[must_use]
     pub const fn creature_controlled_by_actor() -> Self {
         Self::Creature(CreatureTargetRule::CreatureControlledByActor)
+    }
+
+    #[must_use]
+    pub const fn attacking_creature() -> Self {
+        Self::Creature(CreatureTargetRule::AttackingCreature)
     }
 
     #[must_use]
@@ -253,6 +259,14 @@ impl SupportedSpellRules {
             targeting: SpellTargetingProfile::ExactlyOne(
                 SingleTargetRule::creature_controlled_by_actor(),
             ),
+            resolution: SpellResolutionProfile::DealDamage { damage },
+        }
+    }
+
+    #[must_use]
+    pub const fn deal_damage_to_attacking_creature(damage: u32) -> Self {
+        Self {
+            targeting: SpellTargetingProfile::ExactlyOne(SingleTargetRule::attacking_creature()),
             resolution: SpellResolutionProfile::DealDamage { damage },
         }
     }

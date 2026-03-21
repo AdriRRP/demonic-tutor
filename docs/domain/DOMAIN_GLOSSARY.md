@@ -187,6 +187,7 @@ Supported examples currently include:
 - `OpponentOfActor`
 - `AnyCreatureOnBattlefield`
 - `CreatureControlledByActor`
+- `AttackingCreature`
 
 Legal-target evaluation is shared between casting and resolution for the current targeted-spell subset.
 

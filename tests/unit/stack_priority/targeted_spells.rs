@@ -3,6 +3,7 @@
 use crate::support::{
     advance_to_first_main_satisfying_cleanup, advance_to_player_first_main_satisfying_cleanup,
     creature_card, filled_library, land_card, setup_two_player_game,
+    targeted_attacking_creature_damage_instant_card,
     targeted_controlled_creature_damage_instant_card, targeted_damage_instant_card,
     targeted_opponent_damage_instant_card, targeted_player_damage_instant_card,
 };
@@ -238,6 +239,36 @@ fn targeted_player_spell_rejects_a_creature_target_when_cast() {
         ),
         "unexpected result: {result:?}"
     );
+}
+
+#[test]
+fn targeted_attacking_creature_spell_rejects_a_player_target_when_cast() {
+    let (service, mut game) = setup_two_player_game(
+        "game-target-attacking-illegal-kind",
+        filled_library(
+            vec![targeted_attacking_creature_damage_instant_card(
+                "marked-for-battle",
+                0,
+                2,
+            )],
+            10,
+        ),
+        filled_library(Vec::new(), 10),
+    );
+
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
+
+    let spell_id = hand_card_id_by_definition(&game, 0, "marked-for-battle");
+    let result = service.cast_spell(
+        &mut game,
+        CastSpellCommand::new(PlayerId::new("player-1"), spell_id.clone())
+            .with_target(SpellTarget::Player(PlayerId::new("player-2"))),
+    );
+
+    assert!(matches!(
+        result,
+        Err(DomainError::Game(GameError::IllegalSpellTarget(card_id))) if card_id == spell_id
+    ));
 }
 
 #[test]
