@@ -404,7 +404,7 @@ src/domain/play/game/
     ├── game_effects.rs     # direct life and game-end helpers reused by rules
     ├── resource_actions.rs # lands, mana, spells, creatures, life
     ├── state_based_actions.rs # shared review of supported state-based actions
-    ├── combat.rs
+    ├── combat/              # declaration, blocking legality, damage, progression
     ├── stack_priority/     # casting, passing, resolution, spell effects
     └── turn_flow/          # phases, turn progression, draw effects, cleanup
 ```

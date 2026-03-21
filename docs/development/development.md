@@ -261,7 +261,7 @@ When an `impl`, trait, or module grows to affect readability or maintainability,
 
 Prefer:
 
-- modules organized by domain behavior or aggregate concern (e.g., `rules/resource_actions.rs`, `rules/combat.rs`, `invariants.rs`)
+- modules organized by domain behavior or aggregate concern (e.g., `rules/resource_actions.rs`, `rules/combat/`, `invariants.rs`)
 - focused files with clear responsibilities
 
 Avoid:

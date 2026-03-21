@@ -40,7 +40,12 @@ src/domain/play/game/
     │   ├── casting.rs
     │   ├── passing.rs
 │   └── resolution.rs
-    └── combat.rs           # Combat subphases, attacking, blocking, combat damage
+    └── combat/
+        ├── mod.rs
+        ├── declaring.rs        # Declaring attackers
+        ├── blocking_legality.rs # Blocking legality and declaration
+        ├── damage.rs           # Combat damage resolution
+        └── progression.rs      # Combat step legality and defending-player flow
     └── turn_flow/
         ├── mod.rs
         ├── phase_behavior.rs
