@@ -1,5 +1,5 @@
 use crate::domain::play::{
-    cards::{CardInstance, CardType, KeywordAbilitySet},
+    cards::{CardDefinition, CardInstance, CardType, KeywordAbilitySet, SpellEffectProfile},
     ids::{CardDefinitionId, CardInstanceId, DeckId, PlayerId},
 };
 
@@ -49,9 +49,8 @@ impl LibraryCreature {
 
 #[derive(Debug, Clone)]
 pub struct LibraryCard {
-    definition_id: CardDefinitionId,
+    definition: CardDefinition,
     card_type: CardType,
-    mana_cost: u32,
     creature: Option<LibraryCreature>,
 }
 
@@ -59,11 +58,16 @@ impl LibraryCard {
     #[must_use]
     pub const fn new(definition_id: CardDefinitionId, card_type: CardType, mana_cost: u32) -> Self {
         Self {
-            definition_id,
+            definition: CardDefinition::new(definition_id, mana_cost),
             card_type,
-            mana_cost,
             creature: None,
         }
+    }
+
+    #[must_use]
+    pub fn with_spell_effect(mut self, spell_effect: SpellEffectProfile) -> Self {
+        self.definition = self.definition.with_spell_effect(spell_effect);
+        self
     }
 
     #[must_use]
@@ -74,9 +78,8 @@ impl LibraryCard {
         toughness: u32,
     ) -> Self {
         Self {
-            definition_id,
+            definition: CardDefinition::new(definition_id, mana_cost),
             card_type: CardType::Creature,
-            mana_cost,
             creature: Some(LibraryCreature::new(power, toughness)),
         }
     }
@@ -90,9 +93,8 @@ impl LibraryCard {
         keyword_abilities: KeywordAbilitySet,
     ) -> Self {
         Self {
-            definition_id,
+            definition: CardDefinition::new(definition_id, mana_cost),
             card_type: CardType::Creature,
-            mana_cost,
             creature: Some(LibraryCreature::with_keywords(
                 power,
                 toughness,
@@ -103,7 +105,7 @@ impl LibraryCard {
 
     #[must_use]
     pub const fn definition_id(&self) -> &CardDefinitionId {
-        &self.definition_id
+        self.definition.id()
     }
 
     #[must_use]
@@ -113,7 +115,7 @@ impl LibraryCard {
 
     #[must_use]
     pub const fn mana_cost(&self) -> u32 {
-        self.mana_cost
+        self.definition.mana_cost()
     }
 
     #[must_use]
@@ -126,17 +128,15 @@ impl LibraryCard {
         match self.creature {
             Some(creature) => CardInstance::new_creature_with_keywords(
                 card_id,
-                self.definition_id.clone(),
-                self.mana_cost,
+                self.definition.clone(),
                 creature.power,
                 creature.toughness,
                 creature.keyword_abilities,
             ),
-            None => CardInstance::new(
+            None => CardInstance::from_definition(
                 card_id,
-                self.definition_id.clone(),
+                self.definition.clone(),
                 self.card_type.clone(),
-                self.mana_cost,
             ),
         }
     }

@@ -171,6 +171,7 @@ Represents a concrete instance of a card inside a match.
 The current runtime model separates:
 
 - immutable card-face data (`definition id`, `type`, `mana cost`)
+- immutable supported rules profile for the card's currently modeled behavior
 - mutable gameplay state (`tapped`, combat flags, creature runtime state)
 
 Fields include:
@@ -205,6 +206,7 @@ The current model includes:
 - automatic destruction of creatures with lethal marked damage
 - automatic destruction of creatures with 0 toughness through the shared review of supported state-based actions
 - minimal stack-aware spell casting and spell resolution
+- explicit supported spell-effect profiles carried by card-face data rather than inferred from card-definition strings during resolution
 - explicit player or creature targeting for the currently supported targeted-spell subset
 - casting player retaining priority immediately after putting a spell on the stack
 - instant responses by the current priority holder in the currently supported windows

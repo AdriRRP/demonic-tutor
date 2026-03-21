@@ -84,15 +84,39 @@ impl CardType {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+pub enum SpellEffectProfile {
+    None,
+    DealDamageToAnyTarget { damage: u32 },
+}
+
+impl SpellEffectProfile {
+    #[must_use]
+    pub const fn requires_target(&self) -> bool {
+        !matches!(self, Self::None)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CardDefinition {
     id: CardDefinitionId,
     mana_cost: u32,
+    spell_effect: SpellEffectProfile,
 }
 
 impl CardDefinition {
     #[must_use]
     pub const fn new(id: CardDefinitionId, mana_cost: u32) -> Self {
-        Self { id, mana_cost }
+        Self {
+            id,
+            mana_cost,
+            spell_effect: SpellEffectProfile::None,
+        }
+    }
+
+    #[must_use]
+    pub const fn with_spell_effect(mut self, spell_effect: SpellEffectProfile) -> Self {
+        self.spell_effect = spell_effect;
+        self
     }
 
     #[must_use]
@@ -103,6 +127,11 @@ impl CardDefinition {
     #[must_use]
     pub const fn mana_cost(&self) -> u32 {
         self.mana_cost
+    }
+
+    #[must_use]
+    pub const fn spell_effect(&self) -> &SpellEffectProfile {
+        &self.spell_effect
     }
 }
 
@@ -162,18 +191,30 @@ pub struct CardInstance {
 
 impl CardInstance {
     #[must_use]
+    pub(crate) const fn from_definition(
+        id: CardInstanceId,
+        definition: CardDefinition,
+        card_type: CardType,
+    ) -> Self {
+        Self {
+            id,
+            face: CardFace {
+                definition,
+                card_type,
+            },
+            flags: 0,
+            creature: None,
+        }
+    }
+
+    #[must_use]
     pub const fn new(
         id: CardInstanceId,
         definition_id: CardDefinitionId,
         card_type: CardType,
         mana_cost: u32,
     ) -> Self {
-        Self {
-            id,
-            face: CardFace::new(definition_id, card_type, mana_cost),
-            flags: 0,
-            creature: None,
-        }
+        Self::from_definition(id, CardDefinition::new(definition_id, mana_cost), card_type)
     }
 
     #[must_use]
@@ -195,15 +236,17 @@ impl CardInstance {
     #[must_use]
     pub const fn new_creature_with_keywords(
         id: CardInstanceId,
-        definition_id: CardDefinitionId,
-        mana_cost: u32,
+        definition: CardDefinition,
         power: u32,
         toughness: u32,
         keywords: KeywordAbilitySet,
     ) -> Self {
         Self {
             id,
-            face: CardFace::new(definition_id, CardType::Creature, mana_cost),
+            face: CardFace {
+                definition,
+                card_type: CardType::Creature,
+            },
             flags: FLAG_SUMMONING_SICKNESS,
             creature: Some(CreatureRuntime::new_with_keywords(
                 power, toughness, keywords,
@@ -234,6 +277,11 @@ impl CardInstance {
     #[must_use]
     pub const fn mana_cost(&self) -> u32 {
         self.face.definition.mana_cost()
+    }
+
+    #[must_use]
+    pub const fn spell_effect_profile(&self) -> &SpellEffectProfile {
+        self.face.definition.spell_effect()
     }
 
     #[must_use]

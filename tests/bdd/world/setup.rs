@@ -160,7 +160,10 @@ impl GameplayWorld {
     pub fn setup_targeted_player_spell(&mut self) {
         self.reset_game_with_libraries(
             "bdd-targeted-player-spell",
-            support::filled_library(vec![support::instant_card("bdd-shock", 0)], 10),
+            support::filled_library(
+                vec![support::targeted_damage_instant_card("bdd-shock", 0, 2)],
+                10,
+            ),
             support::filled_library(Vec::new(), 10),
         );
 
@@ -195,7 +198,7 @@ impl GameplayWorld {
             support::filled_library(
                 vec![
                     support::land_card("bdd-mountain"),
-                    support::instant_card("bdd-shock", 0),
+                    support::targeted_damage_instant_card("bdd-shock", 0, 2),
                 ],
                 10,
             ),

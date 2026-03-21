@@ -6,9 +6,9 @@ use super::super::{
     },
     state_based_actions::{self, StateBasedActionsResult},
 };
-use super::spell_effects::{spell_effect, SpellEffect};
+use super::spell_effects::spell_effect;
 use crate::domain::play::{
-    cards::CardType,
+    cards::{CardType, SpellEffectProfile},
     errors::{DomainError, GameError},
     events::{CreatureDied, GameEnded, LifeChanged, SpellCast, SpellCastOutcome, StackTopResolved},
     game::SpellTarget,
@@ -37,18 +37,18 @@ fn resolve_spell_effect_from_effect(
     game_id: &GameId,
     players: &mut [Player],
     terminal_state: &mut TerminalState,
-    effect: &SpellEffect,
+    effect: &SpellEffectProfile,
     target: Option<&SpellTarget>,
 ) -> Result<SpellResolutionSideEffects, DomainError> {
     match effect {
-        SpellEffect::None => {
+        SpellEffectProfile::None => {
             let StateBasedActionsResult {
                 creatures_died,
                 game_ended,
             } = state_based_actions::check_state_based_actions(game_id, players, terminal_state)?;
             Ok((None, creatures_died, game_ended))
         }
-        SpellEffect::DealDamageToAnyTarget { damage } => {
+        SpellEffectProfile::DealDamageToAnyTarget { damage } => {
             let Some(target) = target else {
                 return Err(DomainError::Game(GameError::InternalInvariantViolation(
                     "targeted spell resolved without target".to_string(),
@@ -131,20 +131,22 @@ pub(super) fn resolve_spell_from_stack(
         source_card_id,
     );
     let (life_changed, creatures_died, game_ended) = match effect {
-        SpellEffect::None => {
+        SpellEffectProfile::None => {
             let StateBasedActionsResult {
                 creatures_died,
                 game_ended,
             } = state_based_actions::check_state_based_actions(game_id, players, terminal_state)?;
             (None, creatures_died, game_ended)
         }
-        effect @ SpellEffect::DealDamageToAnyTarget { .. } => resolve_spell_effect_from_effect(
-            game_id,
-            players,
-            terminal_state,
-            &effect,
-            target.as_ref(),
-        )?,
+        effect @ SpellEffectProfile::DealDamageToAnyTarget { .. } => {
+            resolve_spell_effect_from_effect(
+                game_id,
+                players,
+                terminal_state,
+                &effect,
+                target.as_ref(),
+            )?
+        }
     };
 
     Ok((

@@ -2,7 +2,7 @@
 
 use crate::support::{
     advance_to_first_main_satisfying_cleanup, advance_to_player_first_main_satisfying_cleanup,
-    creature_card, filled_library, instant_card, land_card, setup_two_player_game,
+    creature_card, filled_library, land_card, setup_two_player_game, targeted_damage_instant_card,
 };
 use demonictutor::{
     CardDefinitionId, CardInstanceId, CastSpellCommand, DomainError, GameEndReason, GameError,
@@ -46,7 +46,7 @@ fn hand_card_id_by_definition(
 fn targeted_instant_requires_a_target_when_cast() {
     let (service, mut game) = setup_two_player_game(
         "game-target-missing",
-        filled_library(vec![instant_card("shock", 0)], 10),
+        filled_library(vec![targeted_damage_instant_card("shock", 0, 2)], 10),
         filled_library(vec![land_card("mountain")], 10),
     );
 
@@ -71,7 +71,7 @@ fn targeted_instant_requires_a_target_when_cast() {
 fn targeted_instant_rejects_unknown_player_target_when_cast() {
     let (service, mut game) = setup_two_player_game(
         "game-target-player-invalid",
-        filled_library(vec![instant_card("shock", 0)], 10),
+        filled_library(vec![targeted_damage_instant_card("shock", 0, 2)], 10),
         filled_library(vec![land_card("mountain")], 10),
     );
 
@@ -97,7 +97,7 @@ fn targeted_instant_rejects_unknown_player_target_when_cast() {
 fn targeted_instant_deals_damage_to_target_player_when_it_resolves() {
     let (service, mut game) = setup_two_player_game(
         "game-target-player-resolve",
-        filled_library(vec![instant_card("shock", 0)], 10),
+        filled_library(vec![targeted_damage_instant_card("shock", 0, 2)], 10),
         filled_library(vec![land_card("mountain")], 10),
     );
 
@@ -135,7 +135,7 @@ fn targeted_instant_deals_damage_to_target_player_when_it_resolves() {
 fn targeted_player_damage_can_end_the_game() {
     let (service, mut game) = setup_two_player_game(
         "game-target-player-lethal",
-        filled_library(vec![instant_card("shock", 0)], 10),
+        filled_library(vec![targeted_damage_instant_card("shock", 0, 2)], 10),
         filled_library(vec![land_card("mountain")], 10),
     );
 
@@ -172,7 +172,7 @@ fn targeted_player_damage_can_end_the_game() {
 fn targeted_instant_rejects_invalid_creature_target_when_cast() {
     let (service, mut game) = setup_two_player_game(
         "game-target-creature-invalid",
-        filled_library(vec![instant_card("shock", 0)], 10),
+        filled_library(vec![targeted_damage_instant_card("shock", 0, 2)], 10),
         filled_library(vec![land_card("mountain")], 10),
     );
 
@@ -200,7 +200,13 @@ fn targeted_instant_rejects_invalid_creature_target_when_cast() {
 fn targeted_instant_deals_damage_to_target_creature_and_state_based_actions_destroy_it() {
     let (service, mut game) = setup_two_player_game(
         "game-target-creature-resolve",
-        filled_library(vec![land_card("mountain"), instant_card("shock", 0)], 10),
+        filled_library(
+            vec![
+                land_card("mountain"),
+                targeted_damage_instant_card("shock", 0, 2),
+            ],
+            10,
+        ),
         filled_library(vec![creature_card("bob-bear", 0, 2, 2)], 10),
     );
 

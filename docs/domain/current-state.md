@@ -122,6 +122,7 @@ The domain currently includes:
 - supported targeted instants currently require an explicit player or creature target when cast
 - supported targeted instant damage to a player emits `LifeChanged` on resolution
 - supported targeted instant damage to a creature marks damage and then relies on shared SBA review for lethal destruction
+- supported spell effects are currently carried as explicit card-face profiles rather than inferred from card-definition strings during resolution
 - entering `EndStep` opens an empty priority window for the active player before cleanup can finish the turn
 - the non-active player may cast and resolve an instant in `EndStep` after the active player passes
 - the non-active player may cast a second instant in `EndStep` before passing priority after the first response

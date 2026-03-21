@@ -1,9 +1,9 @@
 use super::{
-    spell_effects::{spell_effect, SpellEffect},
+    spell_effects::{accepts_target, spell_effect},
     CastSpellOutcome, StackPriorityContext,
 };
 use crate::domain::play::{
-    cards::CardType,
+    cards::{CardType, SpellEffectProfile},
     commands::CastSpellCommand,
     errors::{CardError, DomainError, GameError, PhaseError},
     events::SpellPutOnStack,
@@ -59,7 +59,7 @@ fn require_cast_timing(
 fn validate_spell_target(
     players: &[crate::domain::play::game::Player],
     card_id: &CardInstanceId,
-    effect: &SpellEffect,
+    effect: &SpellEffectProfile,
     target: Option<&SpellTarget>,
 ) -> Result<(), DomainError> {
     if effect.requires_target() {
@@ -69,7 +69,7 @@ fn validate_spell_target(
             )));
         };
 
-        if !effect.accepts_target(target) {
+        if !accepts_target(effect, target) {
             return Err(DomainError::Game(GameError::SpellDoesNotUseTargets(
                 card_id.clone(),
             )));
