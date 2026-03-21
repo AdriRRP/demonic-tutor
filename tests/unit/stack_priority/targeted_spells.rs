@@ -8,8 +8,8 @@ use crate::support::{
     targeted_opponent_damage_instant_card, targeted_player_damage_instant_card,
 };
 use demonictutor::{
-    CardDefinitionId, CardInstanceId, CastSpellCommand, DomainError, GameEndReason, GameError,
-    PlayerId, SpellCastOutcome, SpellTarget,
+    CardDefinitionId, CardInstanceId, CastSpellCommand, DeclareAttackersCommand, DomainError,
+    GameEndReason, GameError, LibraryCard, PlayerId, SpellCastOutcome, SpellTarget,
 };
 
 fn resolve_current_stack(
@@ -307,6 +307,61 @@ fn targeted_attacking_creature_spell_rejects_a_non_attacking_creature_when_cast(
         result,
         Err(DomainError::Game(GameError::IllegalSpellTarget(card_id))) if card_id == spell_id
     ));
+}
+
+#[test]
+fn targeted_attacking_creature_spell_can_destroy_an_attacker_after_attackers() {
+    let (service, mut game) = setup_two_player_game(
+        "game-target-attacking-lethal",
+        filled_library(
+            vec![
+                LibraryCard::creature(CardDefinitionId::new("attacker"), 0, 2, 2),
+                targeted_attacking_creature_damage_instant_card("marked-for-battle", 0, 2),
+            ],
+            10,
+        ),
+        filled_library(Vec::new(), 10),
+    );
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
+    let attacker_id = CardInstanceId::new("game-target-attacking-lethal-player-1-0");
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), attacker_id.clone()),
+        )
+        .unwrap();
+    let _ = resolve_current_stack(&service, &mut game);
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-2");
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
+    crate::support::advance_turn_raw(&service, &mut game);
+    crate::support::close_empty_priority_window(&service, &mut game);
+    crate::support::advance_turn_raw(&service, &mut game);
+    service
+        .declare_attackers(
+            &mut game,
+            DeclareAttackersCommand::new(PlayerId::new("player-1"), vec![attacker_id.clone()]),
+        )
+        .unwrap();
+
+    let spell_id = hand_card_id_by_definition(&game, 0, "marked-for-battle");
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), spell_id)
+                .with_target(SpellTarget::Creature(attacker_id.clone())),
+        )
+        .unwrap();
+
+    let resolution = resolve_current_stack(&service, &mut game);
+    assert_eq!(resolution.creatures_died.len(), 1);
+    assert_eq!(resolution.creatures_died[0].card_id, attacker_id);
+    assert!(game.players()[0]
+        .battlefield()
+        .cards()
+        .iter()
+        .all(|card| card.id() != &resolution.creatures_died[0].card_id));
 }
 
 #[test]
