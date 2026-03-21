@@ -2,6 +2,7 @@
 #![allow(clippy::panic)]
 #![allow(dead_code)]
 
+use demonictutor::CastingRule;
 use demonictutor::{
     AdvanceTurnCommand, AdvanceTurnOutcome, CardDefinitionId, CardType, CastSpellCommand,
     DealOpeningHandsCommand, DeckId, DeclareAttackersCommand, DiscardForCleanupCommand, Game,
@@ -92,6 +93,11 @@ pub fn vanilla_creature(name: &str) -> LibraryCard {
 
 pub fn creature_card(name: &str, mana_cost: u32, power: u32, toughness: u32) -> LibraryCard {
     LibraryCard::creature(CardDefinitionId::new(name), mana_cost, power, toughness)
+}
+
+pub fn flash_creature_card(name: &str, mana_cost: u32, power: u32, toughness: u32) -> LibraryCard {
+    LibraryCard::creature(CardDefinitionId::new(name), mana_cost, power, toughness)
+        .with_casting_rule(CastingRule::OpenPriorityWindow)
 }
 
 pub fn creature_card_with_keywords(

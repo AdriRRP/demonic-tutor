@@ -71,6 +71,19 @@ impl CastingPermissionProfile {
     }
 
     #[must_use]
+    pub const fn with_rule(mut self, rule: CastingRule) -> Self {
+        match rule {
+            CastingRule::OpenPriorityWindow => {
+                self.0 |= PERMISSION_OPEN_PRIORITY_WINDOW;
+            }
+            CastingRule::ActivePlayerEmptyMainPhaseWindow => {
+                self.0 |= PERMISSION_ACTIVE_PLAYER_EMPTY_MAIN_PHASE_WINDOW;
+            }
+        }
+        self
+    }
+
+    #[must_use]
     pub const fn supports(self, rule: CastingRule) -> bool {
         match rule {
             CastingRule::OpenPriorityWindow => self.0 & PERMISSION_OPEN_PRIORITY_WINDOW != 0,

@@ -1,4 +1,4 @@
-use super::{CardType, CastingPermissionProfile, SupportedSpellRules};
+use super::{CardType, CastingPermissionProfile, CastingRule, SupportedSpellRules};
 use crate::domain::play::ids::CardDefinitionId;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -26,6 +26,14 @@ impl CardDefinition {
         supported_spell_rules: SupportedSpellRules,
     ) -> Self {
         self.supported_spell_rules = supported_spell_rules;
+        self
+    }
+
+    #[must_use]
+    pub const fn with_casting_rule(mut self, casting_rule: CastingRule) -> Self {
+        if let Some(permission) = self.casting_permission {
+            self.casting_permission = Some(permission.with_rule(casting_rule));
+        }
         self
     }
 

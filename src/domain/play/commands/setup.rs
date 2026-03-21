@@ -1,5 +1,7 @@
 use crate::domain::play::{
-    cards::{CardDefinition, CardInstance, CardType, KeywordAbilitySet, SupportedSpellRules},
+    cards::{
+        CardDefinition, CardInstance, CardType, CastingRule, KeywordAbilitySet, SupportedSpellRules,
+    },
     ids::{CardDefinitionId, CardInstanceId, DeckId, PlayerId},
 };
 
@@ -72,6 +74,12 @@ impl LibraryCard {
         self.definition = self
             .definition
             .with_supported_spell_rules(supported_spell_rules);
+        self
+    }
+
+    #[must_use]
+    pub fn with_casting_rule(mut self, casting_rule: CastingRule) -> Self {
+        self.definition = self.definition.with_casting_rule(casting_rule);
         self
     }
 

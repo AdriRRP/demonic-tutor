@@ -224,6 +224,12 @@ A card on the stack.
 
 In the current runtime model, spell cards are cast through `CastSpell` onto an explicit stack. Permanent spells resolve from the stack to the battlefield, while instants and sorceries resolve from the stack to the graveyard. The current minimal stack slice also supports spell cards whose explicit spell-casting permissions allow an open priority window.
 
+## Flash
+
+A card-specific casting permission that allows a non-instant spell card to be cast in an open priority window.
+
+The current runtime does not model the full keyword as free text. Instead, supported cards may carry explicit casting rules on their card face that produce minimal `Flash`-like behavior.
+
 ---
 
 # Creature-Specific Terms

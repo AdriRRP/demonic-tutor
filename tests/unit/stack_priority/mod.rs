@@ -4,6 +4,8 @@ mod cast_artifact_in_main_window;
 mod cast_creature_in_second_main_window;
 #[path = "cast_enchantment_in_main_window.rs"]
 mod cast_enchantment_in_main_window;
+#[path = "cast_flash_creature_in_upkeep_window.rs"]
+mod cast_flash_creature_in_upkeep_window;
 #[path = "cast_instant_in_first_main_window.rs"]
 mod cast_instant_in_first_main_window;
 #[path = "cast_planeswalker_in_main_window.rs"]
