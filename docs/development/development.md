@@ -194,6 +194,8 @@ Avoid:
 * speculative infrastructure
 * unnecessary generalization
 * semantically misleading shortcuts that are easier to code but harder to justify in the ubiquitous language
+* modeling finite rule spaces as combinations of optional fields when a closed enum can express the supported cases directly
+* cloning full aggregate-owned runtime objects in validation paths when a smaller capability snapshot matches the supported invariant
 
 New concepts should only be introduced when required by the active slice.
 

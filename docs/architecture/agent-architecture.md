@@ -257,6 +257,8 @@ The agent architecture should reinforce the repository's preferred implementatio
 
 - grow the `Game` aggregate through internal modules by capability, not new aggregates by default
 - prefer explicit enums, small state structs, and deterministic transition helpers over generic engines
+- prefer closed rule representations over optional-field cross-products when the supported cases are finite
+- prefer small semantic snapshots over cloning full runtime objects in validation-heavy paths
 - keep partial rule support honest in code, features, slices, and current-state docs
 - when widening priority-window support, synchronize the behavior triangle explicitly: active-player casting, non-active instant response, and active-player self-stacking
 - prefer broader truthful summaries in canonical docs once many narrow stack slices exist, rather than leaving public docs to underrepresent current support

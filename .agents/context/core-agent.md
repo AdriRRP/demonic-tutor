@@ -49,7 +49,9 @@ Prefer:
 - thin public application facades with capability-local handlers and adapters when orchestration grows
 - BDD support modules split by behavior family once setup or step files become crowded
 - small enums, state structs, and deterministic transitions over generic engines
+- closed enums or small value objects over combinations of optional fields when the supported rule space is finite
 - helper data structures aligned with current supported invariants instead of more general collections the domain cannot yet use
+- lightweight semantic snapshots in validation paths when cloning full runtime objects would only serve one narrow capability check
 - honest historical notes when a once-live slice or proposal no longer describes the active model
 - centralized representation choices for shared ids or compact state, changed only when profiling justifies them
 
@@ -59,6 +61,7 @@ Avoid:
 - speculative abstractions
 - hidden assumptions
 - unrelated edits
+- representational cross-products that permit invalid domain states the model never intends to support
 - keeping obsolete commands, events, or docs alive once they are no longer canonical
 - broad framework extraction when a local helper or module split is enough
 
