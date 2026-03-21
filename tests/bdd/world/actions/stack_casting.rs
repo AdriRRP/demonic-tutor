@@ -131,6 +131,18 @@ impl GameplayWorld {
         self.try_cast_targeted_creature_spell_with_card(caster_alias, card_id, target_card_id);
     }
 
+    pub fn cast_tracked_targeted_attacker_spell(&mut self, caster_alias: &str) {
+        let card_id = self
+            .tracked_card_id
+            .clone()
+            .expect("tracked card should exist");
+        let target_card_id = self
+            .tracked_attacker_id
+            .clone()
+            .expect("tracked attacker should exist");
+        self.cast_targeted_creature_spell_with_card(caster_alias, card_id, target_card_id);
+    }
+
     pub fn cast_tracked_targeted_response_spell_at_blocker(&mut self, caster_alias: &str) {
         let card_id = self
             .tracked_response_card_id

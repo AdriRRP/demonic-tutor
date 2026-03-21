@@ -42,10 +42,14 @@ mod cast_sorcery_in_main_window;
 mod cast_targeted_attacking_creature_spell_after_attackers;
 #[path = "cast_targeted_blocking_creature_spell_after_blockers.rs"]
 mod cast_targeted_blocking_creature_spell_after_blockers;
+#[path = "cast_targeted_controlled_attacking_creature_spell_after_attackers.rs"]
+mod cast_targeted_controlled_attacking_creature_spell_after_attackers;
 #[path = "cast_targeted_controlled_blocking_creature_spell_after_blockers.rs"]
 mod cast_targeted_controlled_blocking_creature_spell_after_blockers;
 #[path = "cast_targeted_opponents_attacking_creature_spell_after_attackers.rs"]
 mod cast_targeted_opponents_attacking_creature_spell_after_attackers;
+#[path = "cast_targeted_opponents_blocking_creature_spell_after_blockers.rs"]
+mod cast_targeted_opponents_blocking_creature_spell_after_blockers;
 #[path = "nonlethal_blocking_target_damage.rs"]
 mod nonlethal_blocking_target_damage;
 #[path = "reject_non_actor_relative_combat_targets.rs"]

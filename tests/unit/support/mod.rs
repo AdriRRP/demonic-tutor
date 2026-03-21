@@ -107,6 +107,28 @@ pub fn targeted_opponents_attacking_creature_damage_instant_card(
         )
 }
 
+pub fn targeted_controlled_attacking_creature_damage_instant_card(
+    name: &str,
+    mana_cost: u32,
+    damage: u32,
+) -> LibraryCard {
+    LibraryCard::new(CardDefinitionId::new(name), CardType::Instant, mana_cost)
+        .with_supported_spell_rules(
+            SupportedSpellRules::deal_damage_to_controlled_attacking_creature(damage),
+        )
+}
+
+pub fn targeted_opponents_blocking_creature_damage_instant_card(
+    name: &str,
+    mana_cost: u32,
+    damage: u32,
+) -> LibraryCard {
+    LibraryCard::new(CardDefinitionId::new(name), CardType::Instant, mana_cost)
+        .with_supported_spell_rules(
+            SupportedSpellRules::deal_damage_to_opponents_blocking_creature(damage),
+        )
+}
+
 pub fn sorcery_card(name: &str, mana_cost: u32) -> LibraryCard {
     LibraryCard::new(CardDefinitionId::new(name), CardType::Sorcery, mana_cost)
 }

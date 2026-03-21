@@ -144,8 +144,22 @@ pub fn evaluate_target_legality(
                                 SpellTargetLegality::IllegalTargetRule
                             }
                         }
+                        Some(CreatureTargetRule::CreatureControlledByActorAndAttacking) => {
+                            if controller.id() == actor_id && target_creature.is_attacking() {
+                                SpellTargetLegality::Legal
+                            } else {
+                                SpellTargetLegality::IllegalTargetRule
+                            }
+                        }
                         Some(CreatureTargetRule::CreatureControlledByActorAndBlocking) => {
                             if controller.id() == actor_id && target_creature.is_blocking() {
+                                SpellTargetLegality::Legal
+                            } else {
+                                SpellTargetLegality::IllegalTargetRule
+                            }
+                        }
+                        Some(CreatureTargetRule::BlockingCreatureControlledByOpponent) => {
+                            if controller.id() != actor_id && target_creature.is_blocking() {
                                 SpellTargetLegality::Legal
                             } else {
                                 SpellTargetLegality::IllegalTargetRule

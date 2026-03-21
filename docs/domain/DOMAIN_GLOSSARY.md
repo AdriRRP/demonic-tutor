@@ -189,7 +189,9 @@ Supported examples currently include:
 - `CreatureControlledByActor`
 - `AttackingCreature`
 - `BlockingCreature`
+- `CreatureControlledByActorAndAttacking`
 - `CreatureControlledByActorAndBlocking`
+- `BlockingCreatureControlledByOpponent`
 - `AttackingCreatureControlledByOpponent`
 
 Legal-target evaluation is shared between casting and resolution for the current targeted-spell subset.

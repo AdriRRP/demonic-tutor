@@ -69,6 +69,15 @@ fn bob_has_priority_after_attackers_are_declared_with_an_opponent_attacking_crea
 }
 
 #[given(
+    "Alice has priority after attackers are declared with a controlled-attacking-creature instant spell in hand"
+)]
+fn alice_has_priority_after_attackers_are_declared_with_a_controlled_attacking_creature_instant_spell_in_hand(
+    world: &mut GameplayWorld,
+) {
+    world.setup_priority_after_attackers_declared_with_controlled_attacking_spell();
+}
+
+#[given(
     "Bob has priority after blockers are declared with a controlled-blocking-creature instant spell in hand"
 )]
 fn bob_has_priority_after_blockers_are_declared_with_a_controlled_blocking_creature_instant_spell_in_hand(
@@ -84,6 +93,15 @@ fn bob_has_priority_after_blockers_are_declared_with_an_opponent_attacking_creat
     world: &mut GameplayWorld,
 ) {
     world.setup_non_active_priority_after_blockers_declared_with_opponents_attacking_spell();
+}
+
+#[given(
+    "Alice has priority after blockers are declared with an opponent-blocking-creature instant spell in hand"
+)]
+fn alice_has_priority_after_blockers_are_declared_with_an_opponent_blocking_creature_instant_spell_in_hand(
+    world: &mut GameplayWorld,
+) {
+    world.setup_priority_after_blockers_declared_with_opponents_blocking_spell();
 }
 
 #[when("Alice casts the blocking-creature instant spell targeting Bob")]
@@ -131,6 +149,20 @@ fn bob_casts_the_opponent_attacking_creature_instant_spell_targeting_his_blocker
     world: &mut GameplayWorld,
 ) {
     world.try_cast_tracked_targeted_response_spell_at_blocker("Bob");
+}
+
+#[when("Alice casts the controlled-attacking-creature instant spell targeting her attacker")]
+fn alice_casts_the_controlled_attacking_creature_instant_spell_targeting_her_attacker(
+    world: &mut GameplayWorld,
+) {
+    world.cast_tracked_targeted_attacker_spell("Alice");
+}
+
+#[when("Alice casts the opponent-blocking-creature instant spell targeting Bob's blocker")]
+fn alice_casts_the_opponent_blocking_creature_instant_spell_targeting_bobs_blocker(
+    world: &mut GameplayWorld,
+) {
+    world.cast_tracked_targeted_creature_spell("Alice");
 }
 
 #[then("casting fails because the spell only supports creature targets")]

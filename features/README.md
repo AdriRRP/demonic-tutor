@@ -178,7 +178,9 @@ The following features are currently executed by `tests/bdd.rs`, grouped by area
 - `features/stack/cast_flash_creature_after_blockers.feature`
 - `features/stack/cast_flash_creature_after_combat_damage.feature`
 - `features/stack/target_blocking_creature_spell.feature`
+- `features/stack/target_controlled_attacking_creature_spell.feature`
 - `features/stack/target_controlled_blocking_creature_spell.feature`
+- `features/stack/target_opponents_blocking_creature_spell.feature`
 - `features/stack/target_opponents_attacking_creature_spell.feature`
 
 ### Turn flow

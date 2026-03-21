@@ -2,9 +2,11 @@
 
 use crate::support::{
     advance_to_player_first_main_satisfying_cleanup, close_empty_priority_window, filled_library,
-    resolve_top_stack_with_passes, setup_two_player_game,
+    land_card, resolve_top_stack_with_passes, setup_two_player_game,
+    targeted_controlled_attacking_creature_damage_instant_card,
     targeted_controlled_blocking_creature_damage_instant_card,
     targeted_opponents_attacking_creature_damage_instant_card,
+    targeted_opponents_blocking_creature_damage_instant_card,
 };
 use demonictutor::{
     CardDefinitionId, CardInstanceId, CastSpellCommand, DeclareAttackersCommand,
@@ -146,6 +148,155 @@ fn opponents_attacking_creature_spell_rejects_the_casters_own_blocker() {
 
     advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-2");
     let blocker_id = CardInstanceId::new("game-target-opponent-attacker-illegal-player-2-0");
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-2"), blocker_id.clone()),
+        )
+        .unwrap();
+    resolve_top_stack_with_passes(&service, &mut game);
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
+    crate::support::advance_turn_raw(&service, &mut game);
+    close_empty_priority_window(&service, &mut game);
+    crate::support::advance_turn_raw(&service, &mut game);
+    service
+        .declare_attackers(
+            &mut game,
+            DeclareAttackersCommand::new(PlayerId::new("player-1"), vec![attacker_id.clone()]),
+        )
+        .unwrap();
+    close_empty_priority_window(&service, &mut game);
+    service
+        .declare_blockers(
+            &mut game,
+            DeclareBlockersCommand::new(
+                PlayerId::new("player-2"),
+                vec![(blocker_id.clone(), attacker_id)],
+            ),
+        )
+        .unwrap();
+    service
+        .pass_priority(
+            &mut game,
+            demonictutor::PassPriorityCommand::new(PlayerId::new("player-1")),
+        )
+        .unwrap();
+
+    let result = service.cast_spell(
+        &mut game,
+        CastSpellCommand::new(PlayerId::new("player-2"), spell_id.clone())
+            .with_target(SpellTarget::Creature(blocker_id)),
+    );
+
+    assert!(matches!(
+        result,
+        Err(DomainError::Game(GameError::IllegalSpellTarget(card_id)))
+            if card_id == spell_id
+    ));
+}
+
+#[test]
+fn controlled_attacking_creature_spell_rejects_an_opponents_attacker() {
+    let (service, mut game) = setup_two_player_game(
+        "game-target-controlled-attacker-illegal",
+        filled_library(
+            vec![LibraryCard::creature(
+                CardDefinitionId::new("attacker"),
+                0,
+                2,
+                2,
+            )],
+            10,
+        ),
+        filled_library(
+            vec![
+                land_card("bob-buffer"),
+                targeted_controlled_attacking_creature_damage_instant_card("rally-shot", 0, 2),
+            ],
+            10,
+        ),
+    );
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
+    let attacker_id = CardInstanceId::new("game-target-controlled-attacker-illegal-player-1-0");
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), attacker_id.clone()),
+        )
+        .unwrap();
+    resolve_top_stack_with_passes(&service, &mut game);
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-2");
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
+    crate::support::advance_turn_raw(&service, &mut game);
+    close_empty_priority_window(&service, &mut game);
+    crate::support::advance_turn_raw(&service, &mut game);
+    service
+        .declare_attackers(
+            &mut game,
+            DeclareAttackersCommand::new(PlayerId::new("player-1"), vec![attacker_id.clone()]),
+        )
+        .unwrap();
+    service
+        .pass_priority(
+            &mut game,
+            demonictutor::PassPriorityCommand::new(PlayerId::new("player-1")),
+        )
+        .unwrap();
+
+    let spell_id = hand_card_id_by_definition(&game, 1, "rally-shot");
+
+    let result = service.cast_spell(
+        &mut game,
+        CastSpellCommand::new(PlayerId::new("player-2"), spell_id.clone())
+            .with_target(SpellTarget::Creature(attacker_id)),
+    );
+
+    assert!(matches!(
+        result,
+        Err(DomainError::Game(GameError::IllegalSpellTarget(card_id)))
+            if card_id == spell_id
+    ));
+}
+
+#[test]
+fn opponents_blocking_creature_spell_rejects_the_casters_own_blocker() {
+    let (service, mut game) = setup_two_player_game(
+        "game-target-opponent-blocker-illegal",
+        filled_library(
+            vec![LibraryCard::creature(
+                CardDefinitionId::new("attacker"),
+                0,
+                2,
+                2,
+            )],
+            10,
+        ),
+        filled_library(
+            vec![
+                LibraryCard::creature(CardDefinitionId::new("blocker"), 0, 2, 2),
+                targeted_opponents_blocking_creature_damage_instant_card("punish-shield", 0, 2),
+            ],
+            10,
+        ),
+    );
+
+    let spell_id = hand_card_id_by_definition(&game, 1, "punish-shield");
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
+    let attacker_id = CardInstanceId::new("game-target-opponent-blocker-illegal-player-1-0");
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), attacker_id.clone()),
+        )
+        .unwrap();
+    resolve_top_stack_with_passes(&service, &mut game);
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-2");
+    let blocker_id = CardInstanceId::new("game-target-opponent-blocker-illegal-player-2-0");
     service
         .cast_spell(
             &mut game,
