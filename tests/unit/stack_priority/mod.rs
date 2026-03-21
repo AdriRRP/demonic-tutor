@@ -34,6 +34,8 @@ mod cast_second_instant_in_second_main_window;
 mod cast_second_instant_in_upkeep_window;
 #[path = "cast_sorcery_in_main_window.rs"]
 mod cast_sorcery_in_main_window;
+#[path = "cast_targeted_attacking_creature_spell_after_attackers.rs"]
+mod cast_targeted_attacking_creature_spell_after_attackers;
 #[path = "reject_planeswalker_response.rs"]
 mod reject_planeswalker_response;
 #[path = "reject_sorcery_response.rs"]
