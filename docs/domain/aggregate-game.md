@@ -76,6 +76,8 @@ Responsibilities:
 
 Players are entities contained within the aggregate.
 
+Deck-oriented setup identifiers are translated at the aggregate boundary and are not stored as part of the player's runtime gameplay state.
+
 ---
 
 ## Library
@@ -281,6 +283,8 @@ Several concerns intentionally live outside the aggregate.
 ## Deck Input Contract
 
 The aggregate consumes deck-oriented setup input but does not own a separate deck model.
+
+Deck metadata such as `DeckId` currently exists only in setup-oriented input. Once the match starts, the aggregate retains only play-owned runtime state.
 
 Responsible outside the aggregate:
 

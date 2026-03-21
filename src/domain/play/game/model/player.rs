@@ -1,4 +1,4 @@
-use crate::domain::play::ids::{DeckId, PlayerId};
+use crate::domain::play::ids::PlayerId;
 use crate::domain::play::zones::{Battlefield, Exile, Graveyard, Hand, Library};
 
 const DEFAULT_STARTING_LIFE: u32 = 20;
@@ -8,7 +8,6 @@ pub const MAX_HAND_SIZE: usize = 7;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Player {
     id: PlayerId,
-    deck_id: DeckId,
     library: Library,
     hand: Hand,
     battlefield: Battlefield,
@@ -23,10 +22,9 @@ pub struct Player {
 #[allow(clippy::missing_const_for_fn)]
 impl Player {
     #[must_use]
-    pub fn new(id: PlayerId, deck_id: DeckId) -> Self {
+    pub fn new(id: PlayerId) -> Self {
         Self {
             id,
-            deck_id,
             library: Library::new(Vec::new()),
             hand: Hand::new(),
             battlefield: Battlefield::new(),
@@ -42,11 +40,6 @@ impl Player {
     #[must_use]
     pub const fn id(&self) -> &PlayerId {
         &self.id
-    }
-
-    #[must_use]
-    pub const fn deck_id(&self) -> &DeckId {
-        &self.deck_id
     }
 
     #[must_use]

@@ -218,7 +218,7 @@ fn adjust_life_fails_for_unknown_target_player() {
 fn adjust_life_reviews_pending_state_based_actions_for_existing_lethal_damage() {
     let service = create_service();
 
-    let mut alice = Player::new(PlayerId::new("player-1"), DeckId::new("deck-1"));
+    let mut alice = Player::new(PlayerId::new("player-1"));
     let mut doomed_creature = CardInstance::new_creature(
         CardInstanceId::new("doomed-creature"),
         CardDefinitionId::new("doomed-creature"),
@@ -229,7 +229,7 @@ fn adjust_life_reviews_pending_state_based_actions_for_existing_lethal_damage() 
     doomed_creature.add_damage(2);
     alice.battlefield_mut().add(doomed_creature);
 
-    let bob = Player::new(PlayerId::new("player-2"), DeckId::new("deck-2"));
+    let bob = Player::new(PlayerId::new("player-2"));
     let mut game = Game::new(
         GameId::new("game-sba-life"),
         PlayerId::new("player-1"),

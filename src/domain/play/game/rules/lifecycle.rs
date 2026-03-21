@@ -44,10 +44,7 @@ fn build_players_and_ids(
             )));
         }
 
-        players.push(Player::new(
-            player_deck.player_id.clone(),
-            player_deck.deck_id.clone(),
-        ));
+        players.push(Player::new(player_deck.player_id.clone()));
         player_ids.push(player_deck.player_id.clone());
     }
 

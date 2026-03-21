@@ -7,7 +7,7 @@ use crate::support::{
 };
 use demonictutor::{
     domain::play::game::{Player, TerminalState},
-    CardDefinitionId, CardError, CardInstance, CardInstanceId, CardType, CastSpellCommand, DeckId,
+    CardDefinitionId, CardError, CardInstance, CardInstanceId, CardType, CastSpellCommand,
     DomainError, Game, GameError, GameId, LibraryCard, Phase, PlayLandCommand, PlayerId,
     SpellCastOutcome, TapLandCommand,
 };
@@ -417,7 +417,7 @@ fn zero_toughness_creature_dies_after_its_spell_resolves() {
 fn resolving_a_spell_reviews_pending_state_based_actions_for_existing_zero_toughness_creatures() {
     let service = crate::support::create_service();
 
-    let mut alice = Player::new(PlayerId::new("player-1"), DeckId::new("deck-1"));
+    let mut alice = Player::new(PlayerId::new("player-1"));
     alice.battlefield_mut().add(CardInstance::new_creature(
         CardInstanceId::new("doomed-creature"),
         CardDefinitionId::new("doomed-creature"),
@@ -432,7 +432,7 @@ fn resolving_a_spell_reviews_pending_state_based_actions_for_existing_zero_tough
         0,
     )]);
 
-    let bob = Player::new(PlayerId::new("player-2"), DeckId::new("deck-2"));
+    let bob = Player::new(PlayerId::new("player-2"));
     let mut game = Game::new(
         GameId::new("game-sba-review"),
         PlayerId::new("player-1"),
