@@ -1,3 +1,14 @@
+mod application;
+mod assignments;
+mod participants;
+
+use self::{
+    application::apply_damage_and_clear_combat_state,
+    assignments::{
+        blocking_assignments, group_assignments_by_attacker, group_assignments_by_blocker,
+    },
+    participants::{collect_attackers, collect_blockers},
+};
 use super::super::{
     super::{model::Player, TerminalState},
     game_effects, state_based_actions,
@@ -12,11 +23,6 @@ use crate::domain::play::{
     ids::{CardInstanceId, GameId},
 };
 use std::collections::HashMap;
-
-type CombatantPower = (CardInstanceId, u32);
-type BlockAssignment = (CardInstanceId, CardInstanceId);
-type BlockingCombatantPower = (CardInstanceId, CardInstanceId, u32);
-type CombatAssignments = HashMap<CardInstanceId, Vec<CardInstanceId>>;
 
 #[derive(Debug, Clone)]
 pub struct ResolveCombatDamageOutcome {
@@ -39,103 +45,6 @@ impl ResolveCombatDamageOutcome {
             life_changed,
             creatures_died,
             game_ended,
-        }
-    }
-}
-
-fn collect_attackers(player: &Player) -> Result<Vec<CombatantPower>, DomainError> {
-    player
-        .battlefield()
-        .cards()
-        .iter()
-        .filter(|card| card.is_attacking())
-        .map(|card| {
-            let (power, _) = card.creature_stats().ok_or_else(|| {
-                DomainError::Game(GameError::InternalInvariantViolation(format!(
-                    "attacking creature {} must have power and toughness",
-                    card.id()
-                )))
-            })?;
-
-            Ok((card.id().clone(), power))
-        })
-        .collect()
-}
-
-fn collect_blockers(player: &Player) -> Result<Vec<BlockingCombatantPower>, DomainError> {
-    player
-        .battlefield()
-        .cards()
-        .iter()
-        .filter(|card| card.is_blocking())
-        .map(|card| {
-            let (power, _) = card.creature_stats().ok_or_else(|| {
-                DomainError::Game(GameError::InternalInvariantViolation(format!(
-                    "blocking creature {} must have power and toughness",
-                    card.id()
-                )))
-            })?;
-            let attacker_id = card.blocking_target().cloned().ok_or_else(|| {
-                DomainError::Game(GameError::InternalInvariantViolation(format!(
-                    "blocking creature {} must have an assigned attacker",
-                    card.id()
-                )))
-            })?;
-
-            Ok((card.id().clone(), attacker_id, power))
-        })
-        .collect()
-}
-
-fn group_assignments_by_attacker(assignments: &[BlockAssignment]) -> CombatAssignments {
-    let mut grouped = HashMap::new();
-
-    for (blocker_id, attacker_id) in assignments {
-        grouped
-            .entry(attacker_id.clone())
-            .or_insert_with(Vec::new)
-            .push(blocker_id.clone());
-    }
-
-    grouped
-}
-
-fn group_assignments_by_blocker(assignments: &[BlockAssignment]) -> CombatAssignments {
-    let mut grouped = HashMap::new();
-
-    for (blocker_id, attacker_id) in assignments {
-        grouped
-            .entry(blocker_id.clone())
-            .or_insert_with(Vec::new)
-            .push(attacker_id.clone());
-    }
-
-    grouped
-}
-
-fn blocking_assignments(player: &Player) -> Vec<BlockAssignment> {
-    player
-        .battlefield()
-        .cards()
-        .iter()
-        .filter_map(|card| {
-            card.blocking_target()
-                .map(|attacker_id| (card.id().clone(), attacker_id.clone()))
-        })
-        .collect()
-}
-
-fn apply_damage_and_clear_combat_state(
-    players: &mut [Player],
-    damage_received: &HashMap<CardInstanceId, u32>,
-) {
-    for player in players.iter_mut() {
-        for card in player.battlefield_mut().iter_mut() {
-            if let Some(damage) = damage_received.get(card.id()) {
-                card.add_damage(*damage);
-            }
-            card.set_attacking(false);
-            card.set_blocking(false);
         }
     }
 }

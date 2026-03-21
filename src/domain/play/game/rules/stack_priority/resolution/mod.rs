@@ -1,10 +1,12 @@
 mod destination;
 mod effects;
+mod events;
 mod extract;
 
 use self::{
     destination::move_resolved_spell_to_its_destination,
     effects::apply_supported_spell_rules,
+    events::build_resolution_events,
     extract::{extract_resolved_spell_object, ResolvedSpellObject},
 };
 use crate::domain::play::{
@@ -41,19 +43,14 @@ pub(super) fn resolve_spell_from_stack(
     let outcome =
         move_resolved_spell_to_its_destination(players, &controller_id, &card_type, card)?;
 
-    let spell_cast = SpellCast::new(
-        game_id.clone(),
-        controller_id.clone(),
-        source_card_id.clone(),
+    let (stack_top_resolved, spell_cast) = build_resolution_events(
+        game_id,
+        &controller_id,
+        &stack_object_id,
+        &source_card_id,
         card_type,
         mana_cost_paid,
         outcome,
-    );
-    let stack_top_resolved = StackTopResolved::new(
-        game_id.clone(),
-        controller_id,
-        stack_object_id,
-        source_card_id,
     );
     let (life_changed, creatures_died, game_ended) = apply_supported_spell_rules(
         game_id,
