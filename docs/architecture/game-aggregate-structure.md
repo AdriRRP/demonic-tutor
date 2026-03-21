@@ -22,7 +22,12 @@ This document describes the recommended internal organization of the `Game` aggr
 
 ```
 src/domain/play/game/
-├── mod.rs             # Aggregate facade and command entrypoints
+├── mod.rs             # Aggregate facade, state, and read-only accessors
+├── lifecycle.rs       # Public lifecycle handlers
+├── resource_actions.rs # Public resource-action handlers
+├── stack.rs           # Public stack and priority handlers
+├── combat.rs          # Public combat handlers
+├── turn_flow.rs       # Public turn-flow and zone-transition handlers
 ├── invariants.rs      # Aggregate legality checks and internal lookups
 ├── model/
 │   ├── mod.rs
@@ -42,6 +47,7 @@ src/domain/play/game/
     │   ├── spell_effects.rs
     │   └── resolution/
     │       ├── mod.rs
+    │       ├── events.rs
     │       ├── extract.rs
     │       ├── destination.rs
     │       └── effects.rs
@@ -49,7 +55,11 @@ src/domain/play/game/
         ├── mod.rs
         ├── declaring.rs        # Declaring attackers
         ├── blocking_legality.rs # Blocking legality and declaration
-        ├── damage.rs           # Combat damage resolution
+        ├── damage.rs           # Combat damage resolution facade
+        ├── damage/
+        │   ├── participants.rs
+        │   ├── assignments.rs
+        │   └── application.rs
         └── progression.rs      # Combat step legality and defending-player flow
     └── turn_flow/
         ├── mod.rs
