@@ -75,7 +75,7 @@ fn validate_spell_target(
         };
 
         if !accepts_target(targeting, target) {
-            return Err(DomainError::Game(GameError::SpellDoesNotUseTargets(
+            return Err(DomainError::Game(GameError::IllegalSpellTarget(
                 card_id.clone(),
             )));
         }
@@ -104,7 +104,7 @@ fn validate_spell_target(
     }
 
     if target.is_some() {
-        return Err(DomainError::Game(GameError::SpellDoesNotUseTargets(
+        return Err(DomainError::Game(GameError::IllegalSpellTarget(
             card_id.clone(),
         )));
     }

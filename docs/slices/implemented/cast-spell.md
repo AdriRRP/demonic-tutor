@@ -36,6 +36,7 @@ pub struct CastSpellCommand {
 - Card must be in the player's hand
 - Card must not be a land
 - spells that require explicit targets must provide one when cast
+- a provided target must be legal for that spell's supported targeting rule
 - Outside an open priority window, casting remains limited to the active player in `FirstMain` or `SecondMain`
 - During an open priority window, spells with the active-player empty-main-phase permission may be cast only by the active player in `FirstMain` or `SecondMain` while the stack is empty
 - During any other supported response timing, only spells with open-priority casting permission may be cast in the current minimal stack model

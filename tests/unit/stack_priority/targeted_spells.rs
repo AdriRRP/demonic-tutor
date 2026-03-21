@@ -3,6 +3,7 @@
 use crate::support::{
     advance_to_first_main_satisfying_cleanup, advance_to_player_first_main_satisfying_cleanup,
     creature_card, filled_library, land_card, setup_two_player_game, targeted_damage_instant_card,
+    targeted_player_damage_instant_card,
 };
 use demonictutor::{
     CardDefinitionId, CardInstanceId, CastSpellCommand, DomainError, GameEndReason, GameError,
@@ -194,6 +195,48 @@ fn targeted_instant_rejects_invalid_creature_target_when_cast() {
         Err(DomainError::Game(GameError::InvalidCreatureTarget(card_id)))
             if card_id == CardInstanceId::new("missing-creature")
     ));
+}
+
+#[test]
+fn targeted_player_spell_rejects_a_creature_target_when_cast() {
+    let (service, mut game) = setup_two_player_game(
+        "game-target-illegal-kind",
+        filled_library(
+            vec![
+                land_card("alice-setup-land"),
+                targeted_player_damage_instant_card("bolt", 0, 2),
+            ],
+            10,
+        ),
+        filled_library(vec![creature_card("bob-bear", 0, 2, 2)], 10),
+    );
+    let bolt_id = hand_card_id_by_definition(&game, 0, "bolt");
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-2");
+    let creature_id = CardInstanceId::new("game-target-illegal-kind-player-2-0");
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-2"), creature_id.clone()),
+        )
+        .unwrap();
+    let _ = resolve_current_stack(&service, &mut game);
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
+
+    let result = service.cast_spell(
+        &mut game,
+        CastSpellCommand::new(PlayerId::new("player-1"), bolt_id.clone())
+            .with_target(SpellTarget::Creature(creature_id)),
+    );
+
+    assert!(
+        matches!(
+            result,
+            Err(DomainError::Game(GameError::IllegalSpellTarget(ref card_id)))
+                if card_id == &bolt_id
+        ),
+        "unexpected result: {result:?}"
+    );
 }
 
 #[test]

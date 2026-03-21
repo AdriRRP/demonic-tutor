@@ -144,6 +144,16 @@ impl SupportedSpellRules {
     }
 
     #[must_use]
+    pub const fn deal_damage_to_player(damage: u32) -> Self {
+        Self {
+            targeting: SpellTargetingProfile::ExactlyOneLegalTarget(
+                SpellTargetLegalityRule::Player,
+            ),
+            resolution: SpellResolutionProfile::DealDamage { damage },
+        }
+    }
+
+    #[must_use]
     pub const fn targeting(self) -> SpellTargetingProfile {
         self.targeting
     }

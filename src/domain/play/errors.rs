@@ -50,7 +50,7 @@ pub enum GameError {
     GameAlreadyEnded,
     InvalidDrawCount(u32),
     MissingSpellTarget(CardInstanceId),
-    SpellDoesNotUseTargets(CardInstanceId),
+    IllegalSpellTarget(CardInstanceId),
     InvalidCreatureTarget(CardInstanceId),
     NoAttackersDeclared,
     MulliganAlreadyUsed(PlayerId),
@@ -201,8 +201,11 @@ impl std::fmt::Display for GameError {
             Self::MissingSpellTarget(card_id) => {
                 write!(f, "spell {card_id} requires an explicit target")
             }
-            Self::SpellDoesNotUseTargets(card_id) => {
-                write!(f, "spell {card_id} does not use explicit targets in the current model")
+            Self::IllegalSpellTarget(card_id) => {
+                write!(
+                    f,
+                    "spell {card_id} cannot use the provided target in the current model"
+                )
             }
             Self::InvalidCreatureTarget(card_id) => {
                 write!(f, "creature target {card_id} is not on the battlefield")
