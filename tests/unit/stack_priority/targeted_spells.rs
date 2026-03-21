@@ -272,6 +272,44 @@ fn targeted_attacking_creature_spell_rejects_a_player_target_when_cast() {
 }
 
 #[test]
+fn targeted_attacking_creature_spell_rejects_a_non_attacking_creature_when_cast() {
+    let (service, mut game) = setup_two_player_game(
+        "game-target-attacking-nonattacker",
+        filled_library(
+            vec![
+                land_card("alice-setup-land"),
+                targeted_attacking_creature_damage_instant_card("marked-for-battle", 0, 2),
+            ],
+            10,
+        ),
+        filled_library(vec![creature_card("bob-bear", 0, 2, 2)], 10),
+    );
+    let spell_id = hand_card_id_by_definition(&game, 0, "marked-for-battle");
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-2");
+    let creature_id = CardInstanceId::new("game-target-attacking-nonattacker-player-2-0");
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-2"), creature_id.clone()),
+        )
+        .unwrap();
+    let _ = resolve_current_stack(&service, &mut game);
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
+
+    let result = service.cast_spell(
+        &mut game,
+        CastSpellCommand::new(PlayerId::new("player-1"), spell_id.clone())
+            .with_target(SpellTarget::Creature(creature_id)),
+    );
+
+    assert!(matches!(
+        result,
+        Err(DomainError::Game(GameError::IllegalSpellTarget(card_id))) if card_id == spell_id
+    ));
+}
+
+#[test]
 fn targeted_instant_deals_damage_to_target_creature_and_state_based_actions_destroy_it() {
     let (service, mut game) = setup_two_player_game(
         "game-target-creature-resolve",
