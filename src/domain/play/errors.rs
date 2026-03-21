@@ -168,16 +168,9 @@ impl std::fmt::Display for GameError {
                 f,
                 "a priority window is currently open and waiting on {current_holder}"
             ),
-            Self::CastingTimingNotAllowed { card, permission } => match permission {
-                CastingPermissionProfile::OpenPriorityWindow => write!(
-                    f,
-                    "card {card} cannot be cast under an open-priority casting permission in the current window"
-                ),
-                CastingPermissionProfile::ActivePlayerEmptyMainPhaseWindow => write!(
-                    f,
-                    "card {card} cannot be cast under an active-player empty-main-phase casting permission in the current window"
-                ),
-            },
+            Self::CastingTimingNotAllowed { card, permission } => {
+                write_casting_permission_error(f, card, *permission)
+            }
             Self::NoPriorityWindow => write!(f, "no priority window is currently open"),
             Self::NotPriorityHolder { current, requested } => {
                 write!(f, "not {requested}'s priority, current holder is {current}")
@@ -249,6 +242,29 @@ fn write_player_library_error(
         "{adjective} opening-hand library for player {}",
         pid.as_str()
     )
+}
+
+fn write_casting_permission_error(
+    f: &mut std::fmt::Formatter<'_>,
+    card: &CardInstanceId,
+    permission: CastingPermissionProfile,
+) -> std::fmt::Result {
+    if permission.allows_open_priority_window_cast() {
+        write!(
+            f,
+            "card {card} cannot be cast under an open-priority casting permission in the current window"
+        )
+    } else if permission.allows_active_player_empty_main_phase_cast() {
+        write!(
+            f,
+            "card {card} cannot be cast under an active-player empty-main-phase casting permission in the current window"
+        )
+    } else {
+        write!(
+            f,
+            "card {card} cannot be cast under its current casting permission in this window"
+        )
+    }
 }
 
 impl std::fmt::Display for CardError {

@@ -34,34 +34,50 @@ impl CardType {
     }
 }
 
+const PERMISSION_OPEN_PRIORITY_WINDOW: u8 = 1 << 0;
+const PERMISSION_ACTIVE_PLAYER_EMPTY_MAIN_PHASE_WINDOW: u8 = 1 << 1;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum CastingPermissionProfile {
-    OpenPriorityWindow,
-    ActivePlayerEmptyMainPhaseWindow,
-}
+pub struct CastingPermissionProfile(u8);
 
 impl CastingPermissionProfile {
+    #[allow(non_upper_case_globals)]
+    pub const OpenPriorityWindow: Self = Self::open_priority_window();
+    #[allow(non_upper_case_globals)]
+    pub const ActivePlayerEmptyMainPhaseWindow: Self =
+        Self::active_player_empty_main_phase_window();
+
     #[must_use]
     pub const fn for_spell_card_type(card_type: &CardType) -> Option<Self> {
         match card_type {
-            CardType::Instant => Some(Self::OpenPriorityWindow),
+            CardType::Instant => Some(Self::open_priority_window()),
             CardType::Creature
             | CardType::Sorcery
             | CardType::Enchantment
             | CardType::Artifact
-            | CardType::Planeswalker => Some(Self::ActivePlayerEmptyMainPhaseWindow),
+            | CardType::Planeswalker => Some(Self::active_player_empty_main_phase_window()),
             CardType::Land => None,
         }
     }
 
     #[must_use]
+    pub const fn open_priority_window() -> Self {
+        Self(PERMISSION_OPEN_PRIORITY_WINDOW)
+    }
+
+    #[must_use]
+    pub const fn active_player_empty_main_phase_window() -> Self {
+        Self(PERMISSION_ACTIVE_PLAYER_EMPTY_MAIN_PHASE_WINDOW)
+    }
+
+    #[must_use]
     pub const fn allows_open_priority_window_cast(self) -> bool {
-        matches!(self, Self::OpenPriorityWindow)
+        self.0 & PERMISSION_OPEN_PRIORITY_WINDOW != 0
     }
 
     #[must_use]
     pub const fn allows_active_player_empty_main_phase_cast(self) -> bool {
-        matches!(self, Self::ActivePlayerEmptyMainPhaseWindow)
+        self.0 & PERMISSION_ACTIVE_PLAYER_EMPTY_MAIN_PHASE_WINDOW != 0
     }
 }
 
