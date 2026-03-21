@@ -178,7 +178,7 @@ pub fn cast_spell(
         StackObjectKind::Spell(SpellOnStack::new(card, mana_cost, target.clone())),
     ));
 
-    *priority = Some(PriorityState::new(player_id.clone()));
+    *priority = Some(PriorityState::opened(player_id.clone()));
 
     Ok(CastSpellOutcome {
         spell_put_on_stack: SpellPutOnStack::new(

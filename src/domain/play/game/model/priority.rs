@@ -8,7 +8,7 @@ pub struct PriorityState {
 
 impl PriorityState {
     #[must_use]
-    pub const fn new(current_holder: PlayerId) -> Self {
+    pub const fn opened(current_holder: PlayerId) -> Self {
         Self {
             current_holder,
             passes_in_row: 0,
@@ -16,10 +16,10 @@ impl PriorityState {
     }
 
     #[must_use]
-    pub const fn new_with_passes(current_holder: PlayerId, passes_in_row: u8) -> Self {
+    pub const fn after_first_pass(next_holder: PlayerId) -> Self {
         Self {
-            current_holder,
-            passes_in_row,
+            current_holder: next_holder,
+            passes_in_row: 1,
         }
     }
 
@@ -29,7 +29,7 @@ impl PriorityState {
     }
 
     #[must_use]
-    pub const fn passes_in_row(&self) -> u8 {
-        self.passes_in_row
+    pub const fn has_pending_pass(&self) -> bool {
+        self.passes_in_row > 0
     }
 }

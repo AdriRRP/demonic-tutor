@@ -43,14 +43,14 @@ pub fn pass_priority(
 
     invariants::require_priority_holder(priority.as_ref(), &player_id)?;
     let priority_passed = PriorityPassed::new(game_id.clone(), player_id.clone());
-    let passes_in_row = priority
+    let has_pending_pass = priority
         .as_ref()
-        .map(PriorityState::passes_in_row)
+        .map(PriorityState::has_pending_pass)
         .ok_or(DomainError::Game(GameError::NoPriorityWindow))?;
 
-    if passes_in_row == 0 {
+    if !has_pending_pass {
         let next_holder = other_player_id(players, &player_id)?;
-        *priority = Some(PriorityState::new_with_passes(next_holder, 1));
+        *priority = Some(PriorityState::after_first_pass(next_holder));
         return Ok(PassPriorityOutcome {
             priority_passed,
             stack_top_resolved: None,
@@ -86,7 +86,7 @@ pub fn pass_priority(
     if terminal_state.is_over() {
         *priority = None;
     } else {
-        *priority = Some(PriorityState::new(active_player.clone()));
+        *priority = Some(PriorityState::opened(active_player.clone()));
     }
 
     Ok(PassPriorityOutcome {

@@ -148,7 +148,7 @@ pub fn advance_turn(
         *phase = to_phase;
         to_phase_behavior.on_enter(players, active_player)?;
         *priority = if opens_priority_window(to_phase) {
-            Some(PriorityState::new(active_player.clone()))
+            Some(PriorityState::opened(active_player.clone()))
         } else {
             None
         };
@@ -188,7 +188,7 @@ pub fn advance_turn(
     *phase = to_phase;
     to_phase_behavior.on_enter(players, active_player)?;
     *priority = if opens_priority_window(to_phase) {
-        Some(PriorityState::new(active_player.clone()))
+        Some(PriorityState::opened(active_player.clone()))
     } else {
         None
     };
