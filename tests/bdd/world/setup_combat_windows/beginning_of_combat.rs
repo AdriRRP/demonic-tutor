@@ -93,6 +93,41 @@ impl GameplayWorld {
         );
     }
 
+    pub fn setup_priority_when_entering_combat_with_own_turn_enchantment(&mut self) {
+        self.reset_game_with_libraries(
+            "bdd-beginning-combat-own-turn-enchantment",
+            support::filled_library(
+                vec![support::own_turn_priority_enchantment_card(
+                    "bdd-window-own-turn-enchantment",
+                    0,
+                )],
+                10,
+            ),
+            support::filled_library(Vec::new(), 10),
+        );
+
+        let service = support::create_service();
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-1",
+        );
+        support::close_empty_priority_window(&service, self.game_mut());
+        support::advance_turn_raw(&service, self.game_mut());
+
+        self.tracked_card_id =
+            Some(self.hand_card_by_definition("Alice", "bdd-window-own-turn-enchantment"));
+        self.reset_observations();
+        assert_eq!(self.game().phase(), &Phase::BeginningOfCombat);
+        assert_eq!(
+            self.game()
+                .priority()
+                .expect("combat should open priority")
+                .current_holder(),
+            &Self::player_id("Alice")
+        );
+    }
+
     pub fn setup_priority_when_entering_combat_with_two_instants(&mut self) {
         self.reset_game_with_libraries(
             "bdd-beginning-combat-two-instants",

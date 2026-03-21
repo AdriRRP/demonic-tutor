@@ -26,6 +26,14 @@ mod cast_own_turn_priority_artifact_after_combat_damage;
 mod cast_own_turn_priority_artifact_in_beginning_of_combat_window;
 #[path = "cast_own_turn_priority_artifact_in_upkeep_window.rs"]
 mod cast_own_turn_priority_artifact_in_upkeep_window;
+#[path = "cast_own_turn_priority_enchantment_after_attackers.rs"]
+mod cast_own_turn_priority_enchantment_after_attackers;
+#[path = "cast_own_turn_priority_enchantment_after_blockers.rs"]
+mod cast_own_turn_priority_enchantment_after_blockers;
+#[path = "cast_own_turn_priority_enchantment_after_combat_damage.rs"]
+mod cast_own_turn_priority_enchantment_after_combat_damage;
+#[path = "cast_own_turn_priority_enchantment_in_beginning_of_combat_window.rs"]
+mod cast_own_turn_priority_enchantment_in_beginning_of_combat_window;
 #[path = "cast_own_turn_priority_enchantment_in_upkeep_window.rs"]
 mod cast_own_turn_priority_enchantment_in_upkeep_window;
 #[path = "cast_planeswalker_in_main_window.rs"]

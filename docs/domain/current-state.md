@@ -95,7 +95,8 @@ The domain currently includes:
 - sorcery-speed spells are supported for the active player in empty `FirstMain` and `SecondMain` windows for the currently modeled spell-card subset: creature, sorcery, artifact, enchantment, and planeswalker
 - the current supported spell-card subset also allows explicit card-face casting rules that open non-instant spells to open priority windows, providing minimal `Flash`-like creature support
 - the current minimal `Flash`-like support is currently exercised in `Upkeep`, `BeginningOfCombat`, on an existing stack response window, and after attackers, blockers, or combat damage
-- the current supported spell-card subset also allows explicit turn-relative open-priority casting rules, currently exercised by a non-creature artifact in `Upkeep`, `BeginningOfCombat`, post-attackers, post-blockers, and post-combat-damage, and by a non-creature enchantment in `Upkeep`
+- the current supported spell-card subset also allows explicit turn-relative open-priority casting rules for the currently supported noncreature permanent subset
+- the current supported noncreature permanent subset for that rule is currently exercised by `Artifact` and `Enchantment` in `Upkeep`, `BeginningOfCombat`, post-attackers, post-blockers, and post-combat-damage
 - the current turn-relative open-priority casting subset is explicitly rejected as a response during the opponent's turn for the currently exercised artifact and enchantment cases
 - the current priority holder may cast and resolve a targeted instant at a player or creature in the currently supported targeted-spell subset whenever that holder can legally cast an instant in the current window
 - supported targeted instants currently require exactly one explicit player or creature target when cast

@@ -80,6 +80,31 @@ impl GameplayWorld {
         assert!(self.game().stack().is_empty());
     }
 
+    pub fn setup_priority_after_attackers_declared_with_own_turn_enchantment(&mut self) {
+        let attacker_id = prepare_priority_after_attackers_declared(
+            self,
+            "bdd-combat-priority-attackers-own-turn-enchantment",
+            vec![
+                attacker_card(),
+                support::own_turn_priority_enchantment_card("bdd-window-own-turn-enchantment", 0),
+            ],
+            Vec::new(),
+        );
+        self.tracked_card_id =
+            Some(self.hand_card_by_definition("Alice", "bdd-window-own-turn-enchantment"));
+        self.tracked_attacker_id = Some(attacker_id);
+        self.reset_observations();
+        assert_eq!(self.game().phase(), &Phase::DeclareBlockers);
+        assert_eq!(
+            self.game()
+                .priority()
+                .expect("attackers declaration should open priority")
+                .current_holder(),
+            &Self::player_id("Alice")
+        );
+        assert!(self.game().stack().is_empty());
+    }
+
     pub fn setup_priority_after_attackers_declared_with_controlled_attacking_spell(&mut self) {
         let attacker_id = prepare_priority_after_attackers_declared(
             self,

@@ -242,7 +242,7 @@ A card-specific casting rule that allows a supported non-instant spell card to b
 
 The current runtime uses this as a turn-relative casting permission distinct from generic `OpenPriorityWindow`.
 
-The currently exercised subset covers non-creature artifact and enchantment spells during the controller's turn.
+The currently exercised subset covers the supported noncreature permanent family, currently `Artifact` and `Enchantment`, during the controller's turn.
 
 ---
 
