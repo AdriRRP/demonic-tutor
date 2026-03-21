@@ -118,6 +118,7 @@ When extending spells with real stack-borne effects, verify the whole semantic c
 
 - casting legality and timing
 - target requirements and target validation
+- shared legality concepts reused consistently between cast-time validation and resolution-time revalidation
 - resolution behavior and downstream automatic consequences
 - executable features and BDD coverage
 - current-state, rules-map, slice docs, and public summaries
