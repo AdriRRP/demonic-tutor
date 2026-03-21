@@ -39,7 +39,12 @@ src/domain/play/game/
     │   ├── mod.rs
     │   ├── casting.rs
     │   ├── passing.rs
-│   └── resolution.rs
+    │   ├── spell_effects.rs
+    │   └── resolution/
+    │       ├── mod.rs
+    │       ├── extract.rs
+    │       ├── destination.rs
+    │       └── effects.rs
     └── combat/
         ├── mod.rs
         ├── declaring.rs        # Declaring attackers
@@ -65,6 +70,7 @@ src/domain/play/game/
 - **Rust coherence** — `mod.rs` stays small while internal modules separate aggregate state, rules, and invariants.
 - **Semantic consistency** — Shared state-based action review and direct game effects stay explicit instead of being duplicated across turn flow, resource, and combat code.
 - **Incremental stack evolution** — Stack and priority can grow from aggregate-owned model state through small explicit slices instead of a generic rules engine.
+- **Responsibility-first resolution flow** — As spell support grows, keep stack extraction, destination movement, and rule application in separate modules instead of letting one resolution file absorb the whole flow.
 - **Explicit turn semantics** — When a timing area grows cognitively, prefer explicit subphases and focused modules over hiding distinct moments behind one broad phase name.
 
 ---

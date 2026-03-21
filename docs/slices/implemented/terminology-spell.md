@@ -19,7 +19,7 @@ The code already uses correct naming (`CastSpellCommand`), but comments and docu
 
 ### Code Changes
 - `src/domain/play/game/mod.rs` — Fix doc comment
-- `src/application/game_service.rs` — Fix doc comment
+- `src/application/game_service/mod.rs` — Fix doc comment
 - `docs/architecture/game-aggregate-structure.md` — Fix comment
 
 ### Documentation Changes

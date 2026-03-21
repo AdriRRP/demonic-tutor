@@ -107,6 +107,7 @@ Also search for:
 - feature headers that still claim `proposed` or `implemented` incorrectly
 - proposal docs that are already implemented but not marked historical
 - architecture docs that still describe monolithic files after internal module splits
+- deleted file paths that still linger in docs or in the worktree after a module-to-directory refactor
 
 ---
 

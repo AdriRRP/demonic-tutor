@@ -216,6 +216,11 @@ Minimum closure check:
 
 If validation fails, resolve before moving to documentation closure.
 
+When a slice includes an internal structural refactor:
+
+- stage both added modules and removed superseded files
+- search for stale file-path references in architecture docs and agent skills before closing
+
 ---
 
 ### Stage 6 — Synchronize repository truth
