@@ -129,6 +129,8 @@ When extending spells with real stack-borne effects, verify the whole semantic c
 
 Do not close a targeting-capable spell slice with only the runtime change while the timing, legality, or documentation story still describes the pre-targeting model.
 
+When adding combat-relative target rules, validate them against the live combat state carried by the aggregate, not only against target kind or battlefield existence.
+
 When new gameplay semantics are introduced through stack, combat, or state-based actions, verify whether:
 
 - feature headers still reflect reality

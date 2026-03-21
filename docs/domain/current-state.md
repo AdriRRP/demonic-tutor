@@ -94,10 +94,12 @@ The domain currently includes:
 - in each currently supported instant-speed window, the non-active player may respond with an instant after the first pass and may self-stack a second instant before passing priority
 - sorcery-speed spells are supported for the active player in empty `FirstMain` and `SecondMain` windows for the currently modeled spell-card subset: creature, sorcery, artifact, enchantment, and planeswalker
 - the current supported spell-card subset also allows explicit card-face casting rules that open non-instant spells to open priority windows, providing minimal `Flash`-like creature support
+- the current minimal `Flash`-like support is currently exercised in `Upkeep`, `BeginningOfCombat`, on an existing stack response window, and after attackers are declared
 - the current priority holder may cast and resolve a targeted instant at a player or creature in the currently supported targeted-spell subset whenever that holder can legally cast an instant in the current window
 - supported targeted instants currently require exactly one explicit player or creature target when cast
 - the current targeted-spell subset now supports contextual target restrictions such as `opponent of the acting player/controller` and `creature controlled by the acting player/controller`
 - the current targeted-spell subset now also supports explicit combat-relative target restrictions such as `attacking creature`
+- the current combat-relative targeted-spell subset is currently exercised in the post-attackers window, including lethal and nonlethal damage against the attacker
 - supported targeted instant damage to a player emits `LifeChanged` on resolution
 - supported targeted instant damage to a creature marks damage and then relies on shared SBA review for lethal destruction
 - supported targeted instants currently do not apply their effect if their only legal creature target is gone on resolution

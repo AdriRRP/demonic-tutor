@@ -105,6 +105,8 @@ Emitted when the top spell on the stack resolves successfully, including the spe
 
 This slice now implements a minimal stack-aware spell-casting model. Casting moves a spell card from hand onto the stack, and the casting player keeps priority immediately afterward. Resolution happens only after two consecutive passes. Permanent spells resolve from the stack to the battlefield, while instants and sorceries resolve from the stack to the graveyard. The current runtime also triggers the shared review of currently supported state-based actions after spell resolution, which can produce `LifeChanged`, `CreatureDied`, or `GameEnded` in addition to `SpellCast`. Spells whose supported casting rules require an active-player empty main-phase window are currently supported only for the active player in `FirstMain` or `SecondMain` when the stack is empty. A targeted subset of spells can now target a player or creature explicitly; broader targeting, modes, and replacement effects remain out of scope.
 
+Later slices extend this corridor with explicit card-face casting rules that provide minimal `Flash`-like support for some creature cards, and with combat-relative target rules such as `AttackingCreature`.
+
 ## Tests
 
 - CastSpellCommand moves spell cards from hand to stack
