@@ -47,12 +47,6 @@ pub enum CastingRule {
 pub struct CastingPermissionProfile(u8);
 
 impl CastingPermissionProfile {
-    #[allow(non_upper_case_globals)]
-    pub const OpenPriorityWindow: Self = Self::open_priority_window();
-    #[allow(non_upper_case_globals)]
-    pub const ActivePlayerEmptyMainPhaseWindow: Self =
-        Self::active_player_empty_main_phase_window();
-
     #[must_use]
     pub const fn for_spell_card_type(card_type: &CardType) -> Option<Self> {
         match card_type {
@@ -84,16 +78,6 @@ impl CastingPermissionProfile {
                 self.0 & PERMISSION_ACTIVE_PLAYER_EMPTY_MAIN_PHASE_WINDOW != 0
             }
         }
-    }
-
-    #[must_use]
-    pub const fn allows_open_priority_window_cast(self) -> bool {
-        self.supports(CastingRule::OpenPriorityWindow)
-    }
-
-    #[must_use]
-    pub const fn allows_active_player_empty_main_phase_cast(self) -> bool {
-        self.supports(CastingRule::ActivePlayerEmptyMainPhaseWindow)
     }
 }
 

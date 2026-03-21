@@ -110,27 +110,27 @@ fn test_is_permanent_returns_false_for_non_permanent_types() {
 fn test_casting_permission_profile_for_card_type_matches_supported_model() {
     assert_eq!(
         CastingPermissionProfile::for_spell_card_type(&CardType::Instant),
-        Some(CastingPermissionProfile::OpenPriorityWindow)
+        Some(CastingPermissionProfile::open_priority_window())
     );
     assert_eq!(
         CastingPermissionProfile::for_spell_card_type(&CardType::Creature),
-        Some(CastingPermissionProfile::ActivePlayerEmptyMainPhaseWindow)
+        Some(CastingPermissionProfile::active_player_empty_main_phase_window())
     );
     assert_eq!(
         CastingPermissionProfile::for_spell_card_type(&CardType::Sorcery),
-        Some(CastingPermissionProfile::ActivePlayerEmptyMainPhaseWindow)
+        Some(CastingPermissionProfile::active_player_empty_main_phase_window())
     );
     assert_eq!(
         CastingPermissionProfile::for_spell_card_type(&CardType::Artifact),
-        Some(CastingPermissionProfile::ActivePlayerEmptyMainPhaseWindow)
+        Some(CastingPermissionProfile::active_player_empty_main_phase_window())
     );
     assert_eq!(
         CastingPermissionProfile::for_spell_card_type(&CardType::Enchantment),
-        Some(CastingPermissionProfile::ActivePlayerEmptyMainPhaseWindow)
+        Some(CastingPermissionProfile::active_player_empty_main_phase_window())
     );
     assert_eq!(
         CastingPermissionProfile::for_spell_card_type(&CardType::Planeswalker),
-        Some(CastingPermissionProfile::ActivePlayerEmptyMainPhaseWindow)
+        Some(CastingPermissionProfile::active_player_empty_main_phase_window())
     );
     assert_eq!(
         CastingPermissionProfile::for_spell_card_type(&CardType::Land),

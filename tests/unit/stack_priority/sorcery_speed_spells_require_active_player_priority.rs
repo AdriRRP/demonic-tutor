@@ -48,7 +48,7 @@ fn non_active_player_cannot_cast_sorcery_speed_spells_in_an_empty_main_phase_win
             Err(DomainError::Game(GameError::CastingTimingNotAllowed { card, permission }))
                 if card == card_id
                     && permission
-                        == demonictutor::CastingPermissionProfile::ActivePlayerEmptyMainPhaseWindow
+                        == demonictutor::CastingPermissionProfile::active_player_empty_main_phase_window()
         ));
     }
 

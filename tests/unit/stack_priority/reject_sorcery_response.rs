@@ -47,7 +47,7 @@ fn opponent_cannot_cast_a_sorcery_as_a_response_after_the_caster_passes() {
         Err(DomainError::Game(GameError::CastingTimingNotAllowed { card, permission }))
             if card == CardInstanceId::new("game-respond-sorcery-player-2-0")
                 && permission
-                    == demonictutor::CastingPermissionProfile::ActivePlayerEmptyMainPhaseWindow
+                    == demonictutor::CastingPermissionProfile::active_player_empty_main_phase_window()
     ));
     assert_eq!(game.stack().len(), 1);
 }
