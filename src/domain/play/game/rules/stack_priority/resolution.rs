@@ -8,7 +8,7 @@ use super::super::{
 };
 use super::spell_effects::supported_spell_rules;
 use crate::domain::play::{
-    cards::{CardType, SpellResolutionProfile, SupportedSpellRules},
+    cards::{CardInstance, CardType, SpellResolutionProfile, SupportedSpellRules},
     errors::{DomainError, GameError},
     events::{CreatureDied, GameEnded, LifeChanged, SpellCast, SpellCastOutcome, StackTopResolved},
     game::SpellTarget,
@@ -24,6 +24,17 @@ type ResolvedSpellOutcome = (
     Option<GameEnded>,
 );
 
+struct ResolvedSpellObject {
+    source_card_id: CardInstanceId,
+    controller_id: crate::domain::play::ids::PlayerId,
+    stack_object_id: crate::domain::play::ids::StackObjectId,
+    card: CardInstance,
+    card_type: CardType,
+    mana_cost_paid: u32,
+    supported_spell_rules: SupportedSpellRules,
+    target: Option<SpellTarget>,
+}
+
 fn apply_damage_to_creature(players: &mut [Player], target_id: &CardInstanceId, damage: u32) {
     for player in players.iter_mut() {
         if let Some(card) = player.battlefield_mut().card_mut(target_id) {
@@ -33,7 +44,19 @@ fn apply_damage_to_creature(players: &mut [Player], target_id: &CardInstanceId, 
     }
 }
 
-fn resolve_spell_effect_from_effect(
+fn review_state_based_actions(
+    game_id: &GameId,
+    players: &mut [Player],
+    terminal_state: &mut TerminalState,
+) -> Result<SpellResolutionSideEffects, DomainError> {
+    let StateBasedActionsResult {
+        creatures_died,
+        game_ended,
+    } = state_based_actions::check_state_based_actions(game_id, players, terminal_state)?;
+    Ok((None, creatures_died, game_ended))
+}
+
+fn apply_supported_spell_rules(
     game_id: &GameId,
     players: &mut [Player],
     terminal_state: &mut TerminalState,
@@ -42,11 +65,7 @@ fn resolve_spell_effect_from_effect(
 ) -> Result<SpellResolutionSideEffects, DomainError> {
     match supported_spell_rules.resolution() {
         SpellResolutionProfile::None => {
-            let StateBasedActionsResult {
-                creatures_died,
-                game_ended,
-            } = state_based_actions::check_state_based_actions(game_id, players, terminal_state)?;
-            Ok((None, creatures_died, game_ended))
+            review_state_based_actions(game_id, players, terminal_state)
         }
         SpellResolutionProfile::DealDamage { damage } => {
             let Some(target) = target else {
@@ -79,12 +98,33 @@ fn resolve_spell_effect_from_effect(
     }
 }
 
-pub(super) fn resolve_spell_from_stack(
-    game_id: &GameId,
+fn move_resolved_spell_to_its_destination(
     players: &mut [Player],
-    terminal_state: &mut TerminalState,
-    stack_object: &StackObject,
-) -> Result<ResolvedSpellOutcome, DomainError> {
+    controller_id: &crate::domain::play::ids::PlayerId,
+    card_type: &CardType,
+    card: CardInstance,
+) -> Result<SpellCastOutcome, DomainError> {
+    let player = helpers::find_player_mut(players, controller_id)?;
+
+    match card_type {
+        &CardType::Creature
+        | &CardType::Enchantment
+        | &CardType::Artifact
+        | &CardType::Planeswalker => {
+            player.battlefield_mut().add(card);
+            Ok(SpellCastOutcome::EnteredBattlefield)
+        }
+        &CardType::Instant | &CardType::Sorcery => {
+            player.graveyard_mut().add(card);
+            Ok(SpellCastOutcome::ResolvedToGraveyard)
+        }
+        &CardType::Land => Err(DomainError::Game(GameError::InternalInvariantViolation(
+            "land cards cannot resolve from the stack as spells".to_string(),
+        ))),
+    }
+}
+
+fn extract_resolved_spell_object(stack_object: &StackObject) -> ResolvedSpellObject {
     let stack_object_id = stack_object.id().clone();
     let controller_id = stack_object.controller_id().clone();
     let source_card_id = stack_object.source_card_id().clone();
@@ -96,25 +136,37 @@ pub(super) fn resolve_spell_from_stack(
     let supported_spell_rules = supported_spell_rules(&card);
     let card_type = card.card_type().clone();
 
-    let player = helpers::find_player_mut(players, &controller_id)?;
-    let outcome = match card_type {
-        CardType::Creature
-        | CardType::Enchantment
-        | CardType::Artifact
-        | CardType::Planeswalker => {
-            player.battlefield_mut().add(card);
-            SpellCastOutcome::EnteredBattlefield
-        }
-        CardType::Instant | CardType::Sorcery => {
-            player.graveyard_mut().add(card);
-            SpellCastOutcome::ResolvedToGraveyard
-        }
-        CardType::Land => {
-            return Err(DomainError::Game(GameError::InternalInvariantViolation(
-                "land cards cannot resolve from the stack as spells".to_string(),
-            )));
-        }
-    };
+    ResolvedSpellObject {
+        source_card_id,
+        controller_id,
+        stack_object_id,
+        card,
+        card_type,
+        mana_cost_paid,
+        supported_spell_rules,
+        target,
+    }
+}
+
+pub(super) fn resolve_spell_from_stack(
+    game_id: &GameId,
+    players: &mut [Player],
+    terminal_state: &mut TerminalState,
+    stack_object: &StackObject,
+) -> Result<ResolvedSpellOutcome, DomainError> {
+    let ResolvedSpellObject {
+        source_card_id,
+        controller_id,
+        stack_object_id,
+        card,
+        card_type,
+        mana_cost_paid,
+        supported_spell_rules,
+        target,
+    } = extract_resolved_spell_object(stack_object);
+
+    let outcome =
+        move_resolved_spell_to_its_destination(players, &controller_id, &card_type, card)?;
 
     let spell_cast = SpellCast::new(
         game_id.clone(),
@@ -130,22 +182,13 @@ pub(super) fn resolve_spell_from_stack(
         stack_object_id,
         source_card_id,
     );
-    let (life_changed, creatures_died, game_ended) = match supported_spell_rules.resolution() {
-        SpellResolutionProfile::None => {
-            let StateBasedActionsResult {
-                creatures_died,
-                game_ended,
-            } = state_based_actions::check_state_based_actions(game_id, players, terminal_state)?;
-            (None, creatures_died, game_ended)
-        }
-        SpellResolutionProfile::DealDamage { .. } => resolve_spell_effect_from_effect(
-            game_id,
-            players,
-            terminal_state,
-            supported_spell_rules,
-            target.as_ref(),
-        )?,
-    };
+    let (life_changed, creatures_died, game_ended) = apply_supported_spell_rules(
+        game_id,
+        players,
+        terminal_state,
+        supported_spell_rules,
+        target.as_ref(),
+    )?;
 
     Ok((
         stack_top_resolved,
