@@ -4,9 +4,7 @@ mod participants;
 
 use self::{
     application::apply_damage_and_clear_combat_state,
-    assignments::{
-        blocking_assignments, group_assignments_by_attacker, group_assignments_by_blocker,
-    },
+    assignments::blocker_by_attacker,
     participants::{collect_attackers, collect_blockers},
 };
 use super::super::{
@@ -63,45 +61,37 @@ pub fn resolve_combat_damage(
         return Err(DomainError::Game(GameError::NoAttackersDeclared));
     }
     let blockers = collect_blockers(&players[defender_idx])?;
-    let assignments = blocking_assignments(&players[defender_idx]);
-    let blockers_by_attacker = group_assignments_by_attacker(&assignments);
-    let attackers_by_blocker = group_assignments_by_blocker(&assignments);
+    let blocker_by_attacker = blocker_by_attacker(&players[defender_idx]);
 
     let mut damage_events: Vec<DamageEvent> = Vec::new();
     let mut damage_received: HashMap<CardInstanceId, u32> = HashMap::new();
     let mut player_damage = 0;
 
     for (attacker_id, power) in &attackers {
-        let blocking_for_attacker = blockers_by_attacker.get(attacker_id);
-
-        if blocking_for_attacker.is_none_or(Vec::is_empty) {
+        if let Some(blocker_id) = blocker_by_attacker.get(attacker_id) {
+            *damage_received.entry(blocker_id.clone()).or_insert(0) += *power;
+            damage_events.push(DamageEvent {
+                source: attacker_id.clone(),
+                target: DamageTarget::Creature(blocker_id.clone()),
+                damage_amount: *power,
+            });
+        } else {
             player_damage += *power;
             damage_events.push(DamageEvent {
                 source: attacker_id.clone(),
                 target: DamageTarget::Player(defender_player_id.clone()),
                 damage_amount: *power,
             });
-        } else {
-            for blocker_id in blocking_for_attacker.into_iter().flatten() {
-                *damage_received.entry(blocker_id.clone()).or_insert(0) += *power;
-                damage_events.push(DamageEvent {
-                    source: attacker_id.clone(),
-                    target: DamageTarget::Creature(blocker_id.clone()),
-                    damage_amount: *power,
-                });
-            }
         }
     }
 
     for (blocker_id, attacker_id, power) in &blockers {
-        if attackers_by_blocker.contains_key(blocker_id) {
-            *damage_received.entry(attacker_id.clone()).or_insert(0) += *power;
-            damage_events.push(DamageEvent {
-                source: blocker_id.clone(),
-                target: DamageTarget::Creature(attacker_id.clone()),
-                damage_amount: *power,
-            });
-        }
+        *damage_received.entry(attacker_id.clone()).or_insert(0) += *power;
+        damage_events.push(DamageEvent {
+            source: blocker_id.clone(),
+            target: DamageTarget::Creature(attacker_id.clone()),
+            damage_amount: *power,
+        });
     }
 
     apply_damage_and_clear_combat_state(players, &damage_received);

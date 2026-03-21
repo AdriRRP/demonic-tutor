@@ -49,6 +49,7 @@ Prefer:
 - thin public application facades with capability-local handlers and adapters when orchestration grows
 - BDD support modules split by behavior family once setup or step files become crowded
 - small enums, state structs, and deterministic transitions over generic engines
+- helper data structures aligned with current supported invariants instead of more general collections the domain cannot yet use
 - honest historical notes when a once-live slice or proposal no longer describes the active model
 - centralized representation choices for shared ids or compact state, changed only when profiling justifies them
 
