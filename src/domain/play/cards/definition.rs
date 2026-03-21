@@ -11,16 +11,6 @@ pub struct CardDefinition {
 
 impl CardDefinition {
     #[must_use]
-    pub const fn new(id: CardDefinitionId, mana_cost: u32) -> Self {
-        Self {
-            id,
-            mana_cost,
-            casting_permission: None,
-            supported_spell_rules: SupportedSpellRules::none(),
-        }
-    }
-
-    #[must_use]
     pub const fn for_card_type(id: CardDefinitionId, mana_cost: u32, card_type: &CardType) -> Self {
         Self {
             id,
