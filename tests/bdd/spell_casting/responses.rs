@@ -113,7 +113,7 @@ fn the_action_is_rejected_because_the_spell_timing_is_not_legal_in_the_current_w
         .as_ref()
         .expect("response cast should be rejected");
     assert!(
-        error.contains("cannot be cast with sorcery-speed timing"),
+        error.contains("active-player empty-main-phase casting permission"),
         "unexpected error: {error}"
     );
 }

@@ -2,16 +2,16 @@
 
 ## Goal
 
-Make the current sorcery-speed timing rule explicit in the model so the casting code reads in
+Make the current sorcery-speed legality rule explicit in the model so the casting code reads in
 domain terms instead of as an ad-hoc boolean combination.
 
 ## Scope
 
 In scope:
 
-- introducing an explicit casting-timing profile carried by the card face
+- introducing an explicit casting-permission profile carried by the card face
 - using that profile inside stack casting legality checks
-- adding unit coverage for the supported timing-profile semantics
+- adding unit coverage for the supported permission-profile semantics
 
 Out of scope:
 

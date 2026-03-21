@@ -123,13 +123,13 @@ The domain currently includes:
 - supported targeted instant damage to a player emits `LifeChanged` on resolution
 - supported targeted instant damage to a creature marks damage and then relies on shared SBA review for lethal destruction
 - supported spell targeting and resolution are currently carried as explicit card-face profiles rather than inferred from card-definition strings during resolution
-- supported spell casting timing is currently carried as explicit card-face data rather than inferred only from `CardType`
+- supported spell casting permissions are currently carried as explicit card-face data rather than inferred only from `CardType`
 - entering `EndStep` opens an empty priority window for the active player before cleanup can finish the turn
 - the non-active player may cast and resolve an instant in `EndStep` after the active player passes
 - the non-active player may cast a second instant in `EndStep` before passing priority after the first response
 - the active player may cast and resolve an instant during that end-step priority window
 - the active player may cast a second instant in `EndStep` before passing priority after the first
-- instant-speed spell responses for the current priority holder
+- spells with open-priority casting permission for the current priority holder
 - resolving the top stack object after two consecutive passes
 - entering `BeginningOfCombat` opens an empty priority window for the active player
 - closing that empty beginning-of-combat window advances the game into `DeclareAttackers`

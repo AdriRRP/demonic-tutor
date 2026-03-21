@@ -1,5 +1,5 @@
 use crate::domain::play::{
-    cards::CastingTimingProfile,
+    cards::CastingPermissionProfile,
     ids::{CardInstanceId, PlayerId},
     phase::Phase,
 };
@@ -32,7 +32,7 @@ pub enum GameError {
     },
     CastingTimingNotAllowed {
         card: CardInstanceId,
-        timing: CastingTimingProfile,
+        permission: CastingPermissionProfile,
     },
     NoPriorityWindow,
     NotPriorityHolder {
@@ -168,14 +168,14 @@ impl std::fmt::Display for GameError {
                 f,
                 "a priority window is currently open and waiting on {current_holder}"
             ),
-            Self::CastingTimingNotAllowed { card, timing } => match timing {
-                CastingTimingProfile::InstantSpeed => write!(
+            Self::CastingTimingNotAllowed { card, permission } => match permission {
+                CastingPermissionProfile::OpenPriorityWindow => write!(
                     f,
-                    "card {card} cannot be cast with instant-speed timing in the current window"
+                    "card {card} cannot be cast under an open-priority casting permission in the current window"
                 ),
-                CastingTimingProfile::SorcerySpeed => write!(
+                CastingPermissionProfile::ActivePlayerEmptyMainPhaseWindow => write!(
                     f,
-                    "card {card} cannot be cast with sorcery-speed timing in the current window"
+                    "card {card} cannot be cast under an active-player empty-main-phase casting permission in the current window"
                 ),
             },
             Self::NoPriorityWindow => write!(f, "no priority window is currently open"),

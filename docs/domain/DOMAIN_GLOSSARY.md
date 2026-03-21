@@ -49,7 +49,7 @@ The conceptual identity of a card.
 
 A card definition describes what a card *is* independently of any specific game.
 
-Examples include card name, type, mana cost, supported casting timing, supported targeting, and supported resolution used by the runtime.
+Examples include card name, type, mana cost, supported casting permissions, supported targeting, and supported resolution used by the runtime.
 
 ---
 
@@ -213,7 +213,7 @@ A card or token that exists on the battlefield. Permanents include lands, creatu
 
 A card on the stack.
 
-In the current runtime model, spell cards are cast through `CastSpell` onto an explicit stack. Permanent spells resolve from the stack to the battlefield, while instants and sorceries resolve from the stack to the graveyard. The current minimal stack slice also supports instant-speed spell responses while a priority window is open.
+In the current runtime model, spell cards are cast through `CastSpell` onto an explicit stack. Permanent spells resolve from the stack to the battlefield, while instants and sorceries resolve from the stack to the graveyard. The current minimal stack slice also supports spells whose casting permissions allow an open priority window.
 
 ---
 

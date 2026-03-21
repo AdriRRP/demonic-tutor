@@ -11,7 +11,7 @@ In scope:
 
 - rejecting a planeswalker spell when the non-active player tries to cast it as a response after the
   caster has passed priority
-- surfacing that rejection through the current explicit sorcery-speed timing error
+- surfacing that rejection through the current explicit casting-permission error
 
 Out of scope:
 
@@ -22,5 +22,5 @@ Out of scope:
 
 - The current stack model allows non-instant responses only when the stack is empty, the active
   player holds priority, and the game is in `FirstMain` or `SecondMain`.
-- This slice keeps planeswalkers aligned with the same sorcery-speed timing already enforced for
+- This slice keeps planeswalkers aligned with the same active-player empty-main-phase permission already enforced for
   sorceries, artifacts, and enchantments.

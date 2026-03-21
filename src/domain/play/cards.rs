@@ -74,33 +74,33 @@ impl CardType {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum CastingTimingProfile {
-    InstantSpeed,
-    SorcerySpeed,
+pub enum CastingPermissionProfile {
+    OpenPriorityWindow,
+    ActivePlayerEmptyMainPhaseWindow,
 }
 
-impl CastingTimingProfile {
+impl CastingPermissionProfile {
     #[must_use]
     pub const fn for_card_type(card_type: &CardType) -> Self {
         match card_type {
-            CardType::Instant => Self::InstantSpeed,
+            CardType::Instant => Self::OpenPriorityWindow,
             CardType::Creature
             | CardType::Sorcery
             | CardType::Enchantment
             | CardType::Artifact
             | CardType::Planeswalker
-            | CardType::Land => Self::SorcerySpeed,
+            | CardType::Land => Self::ActivePlayerEmptyMainPhaseWindow,
         }
     }
 
     #[must_use]
-    pub const fn allows_cast_while_holding_priority(self) -> bool {
-        matches!(self, Self::InstantSpeed)
+    pub const fn allows_open_priority_window_cast(self) -> bool {
+        matches!(self, Self::OpenPriorityWindow)
     }
 
     #[must_use]
-    pub const fn requires_empty_main_phase_window(self) -> bool {
-        matches!(self, Self::SorcerySpeed)
+    pub const fn allows_active_player_empty_main_phase_cast(self) -> bool {
+        matches!(self, Self::ActivePlayerEmptyMainPhaseWindow)
     }
 }
 
@@ -198,7 +198,7 @@ impl SupportedSpellRules {
 pub struct CardDefinition {
     id: CardDefinitionId,
     mana_cost: u32,
-    casting_timing: CastingTimingProfile,
+    casting_permission: CastingPermissionProfile,
     supported_spell_rules: SupportedSpellRules,
 }
 
@@ -208,7 +208,7 @@ impl CardDefinition {
         Self {
             id,
             mana_cost,
-            casting_timing: CastingTimingProfile::SorcerySpeed,
+            casting_permission: CastingPermissionProfile::ActivePlayerEmptyMainPhaseWindow,
             supported_spell_rules: SupportedSpellRules::none(),
         }
     }
@@ -218,7 +218,7 @@ impl CardDefinition {
         Self {
             id,
             mana_cost,
-            casting_timing: CastingTimingProfile::for_card_type(card_type),
+            casting_permission: CastingPermissionProfile::for_card_type(card_type),
             supported_spell_rules: SupportedSpellRules::none(),
         }
     }
@@ -243,8 +243,8 @@ impl CardDefinition {
     }
 
     #[must_use]
-    pub const fn casting_timing(&self) -> CastingTimingProfile {
-        self.casting_timing
+    pub const fn casting_permission(&self) -> CastingPermissionProfile {
+        self.casting_permission
     }
 
     #[must_use]
@@ -400,8 +400,8 @@ impl CardInstance {
     }
 
     #[must_use]
-    pub const fn casting_timing_profile(&self) -> CastingTimingProfile {
-        self.face.definition.casting_timing()
+    pub const fn casting_permission_profile(&self) -> CastingPermissionProfile {
+        self.face.definition.casting_permission()
     }
 
     #[must_use]

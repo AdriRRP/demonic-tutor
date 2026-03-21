@@ -3,7 +3,7 @@ use super::{
     CastSpellOutcome, StackPriorityContext,
 };
 use crate::domain::play::{
-    cards::{CardType, CastingTimingProfile, SupportedSpellRules},
+    cards::{CardType, CastingPermissionProfile, SupportedSpellRules},
     commands::CastSpellCommand,
     errors::{CardError, DomainError, GameError, PhaseError},
     events::SpellPutOnStack,
@@ -24,19 +24,19 @@ fn require_cast_timing(
     priority: Option<&PriorityState>,
     player_id: &PlayerId,
     card_id: &CardInstanceId,
-    casting_timing: CastingTimingProfile,
+    casting_permission: CastingPermissionProfile,
 ) -> Result<(), DomainError> {
     if let Some(priority) = priority {
         invariants::require_priority_holder(Some(priority), player_id)?;
 
-        if casting_timing.allows_cast_while_holding_priority() {
+        if casting_permission.allows_open_priority_window_cast() {
             return Ok(());
         }
 
         let active_player_in_empty_main_phase_window = stack.is_empty()
             && player_id == active_player
             && matches!(phase, Phase::FirstMain | Phase::SecondMain);
-        if casting_timing.requires_empty_main_phase_window()
+        if casting_permission.allows_active_player_empty_main_phase_cast()
             && active_player_in_empty_main_phase_window
         {
             return Ok(());
@@ -44,7 +44,7 @@ fn require_cast_timing(
 
         return Err(DomainError::Game(GameError::CastingTimingNotAllowed {
             card: card_id.clone(),
-            timing: casting_timing,
+            permission: casting_permission,
         }));
     }
 
@@ -152,7 +152,7 @@ pub fn cast_spell(
             })
         })?;
     let card_type = hand_card.card_type().clone();
-    let casting_timing = hand_card.casting_timing_profile();
+    let casting_permission = hand_card.casting_permission_profile();
 
     if card_type.is_land() {
         return Err(DomainError::Card(CardError::CannotCastLand(card_id)));
@@ -165,7 +165,7 @@ pub fn cast_spell(
         priority.as_ref(),
         &player_id,
         &card_id,
-        casting_timing,
+        casting_permission,
     )?;
 
     let supported_spell_rules = supported_spell_rules(&hand_card);

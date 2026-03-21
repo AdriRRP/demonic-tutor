@@ -45,9 +45,10 @@ fn opponent_cannot_cast_a_planeswalker_as_a_response_after_the_caster_passes() {
 
     assert!(matches!(
         result,
-        Err(DomainError::Game(GameError::CastingTimingNotAllowed { card, timing }))
+        Err(DomainError::Game(GameError::CastingTimingNotAllowed { card, permission }))
             if card == CardInstanceId::new("game-respond-planeswalker-player-2-0")
-                && timing == demonictutor::CastingTimingProfile::SorcerySpeed
+                && permission
+                    == demonictutor::CastingPermissionProfile::ActivePlayerEmptyMainPhaseWindow
     ));
     assert_eq!(game.stack().len(), 1);
 }

@@ -1,5 +1,5 @@
 use demonictutor::domain::play::cards::{
-    CardDefinition, CardInstance, CardType, CastingTimingProfile,
+    CardDefinition, CardInstance, CardType, CastingPermissionProfile,
 };
 use demonictutor::domain::play::ids::{CardDefinitionId, CardInstanceId};
 
@@ -97,33 +97,33 @@ fn test_is_permanent_returns_false_for_non_permanent_types() {
 }
 
 #[test]
-fn test_casting_timing_profile_for_card_type_matches_supported_model() {
+fn test_casting_permission_profile_for_card_type_matches_supported_model() {
     assert_eq!(
-        CastingTimingProfile::for_card_type(&CardType::Instant),
-        CastingTimingProfile::InstantSpeed
+        CastingPermissionProfile::for_card_type(&CardType::Instant),
+        CastingPermissionProfile::OpenPriorityWindow
     );
     assert_eq!(
-        CastingTimingProfile::for_card_type(&CardType::Creature),
-        CastingTimingProfile::SorcerySpeed
+        CastingPermissionProfile::for_card_type(&CardType::Creature),
+        CastingPermissionProfile::ActivePlayerEmptyMainPhaseWindow
     );
     assert_eq!(
-        CastingTimingProfile::for_card_type(&CardType::Sorcery),
-        CastingTimingProfile::SorcerySpeed
+        CastingPermissionProfile::for_card_type(&CardType::Sorcery),
+        CastingPermissionProfile::ActivePlayerEmptyMainPhaseWindow
     );
     assert_eq!(
-        CastingTimingProfile::for_card_type(&CardType::Artifact),
-        CastingTimingProfile::SorcerySpeed
+        CastingPermissionProfile::for_card_type(&CardType::Artifact),
+        CastingPermissionProfile::ActivePlayerEmptyMainPhaseWindow
     );
     assert_eq!(
-        CastingTimingProfile::for_card_type(&CardType::Enchantment),
-        CastingTimingProfile::SorcerySpeed
+        CastingPermissionProfile::for_card_type(&CardType::Enchantment),
+        CastingPermissionProfile::ActivePlayerEmptyMainPhaseWindow
     );
     assert_eq!(
-        CastingTimingProfile::for_card_type(&CardType::Planeswalker),
-        CastingTimingProfile::SorcerySpeed
+        CastingPermissionProfile::for_card_type(&CardType::Planeswalker),
+        CastingPermissionProfile::ActivePlayerEmptyMainPhaseWindow
     );
     assert_eq!(
-        CastingTimingProfile::for_card_type(&CardType::Land),
-        CastingTimingProfile::SorcerySpeed
+        CastingPermissionProfile::for_card_type(&CardType::Land),
+        CastingPermissionProfile::ActivePlayerEmptyMainPhaseWindow
     );
 }
