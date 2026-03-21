@@ -498,19 +498,21 @@ impl CardInstance {
     }
 
     #[must_use]
-    pub const fn has_flying(&self) -> bool {
+    pub const fn has_keyword(&self, ability: KeywordAbility) -> bool {
         match &self.creature {
-            Some(creature) => creature.keywords.contains(KeywordAbility::Flying),
+            Some(creature) => creature.keywords.contains(ability),
             None => false,
         }
     }
 
     #[must_use]
+    pub const fn has_flying(&self) -> bool {
+        self.has_keyword(KeywordAbility::Flying)
+    }
+
+    #[must_use]
     pub const fn has_reach(&self) -> bool {
-        match &self.creature {
-            Some(creature) => creature.keywords.contains(KeywordAbility::Reach),
-            None => false,
-        }
+        self.has_keyword(KeywordAbility::Reach)
     }
 
     #[must_use]

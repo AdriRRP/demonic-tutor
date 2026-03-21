@@ -3,7 +3,7 @@ use super::{
     progression,
 };
 use crate::domain::play::{
-    cards::CardType,
+    cards::{CardType, KeywordAbility},
     commands::DeclareBlockersCommand,
     errors::{CardError, DomainError, GameError},
     events::BlockersDeclared,
@@ -24,7 +24,7 @@ pub fn declare_blockers(
         .cards()
         .iter()
         .filter(|card| card.is_attacking())
-        .map(|card| (card.id().clone(), card.has_flying()))
+        .map(|card| (card.id().clone(), card.has_keyword(KeywordAbility::Flying)))
         .collect::<HashMap<_, _>>();
     let defender = &mut players[defending_player_idx];
     let battlefield = defender.battlefield_mut();
@@ -76,7 +76,10 @@ pub fn declare_blockers(
             }));
         }
 
-        if attacker_has_flying && !card.has_flying() && !card.has_reach() {
+        if attacker_has_flying
+            && !card.has_keyword(KeywordAbility::Flying)
+            && !card.has_keyword(KeywordAbility::Reach)
+        {
             return Err(DomainError::Card(
                 CardError::CannotBlockFlyingWithoutFlyingOrReach {
                     player: cmd.player_id.clone(),
