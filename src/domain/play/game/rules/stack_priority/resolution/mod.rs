@@ -56,6 +56,7 @@ pub(super) fn resolve_spell_from_stack(
         game_id,
         players,
         terminal_state,
+        &controller_id,
         supported_spell_rules,
         target.as_ref(),
     )?;

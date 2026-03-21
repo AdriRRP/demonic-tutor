@@ -2,13 +2,15 @@ use super::super::super::{
     super::{Player, TerminalState},
     state_based_actions::{self, StateBasedActionsResult},
 };
-use super::super::spell_effects::{evaluate_target_legality, SpellTargetLegality};
+use super::super::spell_effects::{
+    evaluate_target_legality, SpellTargetLegality, TargetLegalityContext,
+};
 use crate::domain::play::{
     cards::{SpellResolutionProfile, SupportedSpellRules},
     errors::{DomainError, GameError},
     events::{CreatureDied, GameEnded, LifeChanged},
     game::SpellTarget,
-    ids::{CardInstanceId, GameId},
+    ids::{CardInstanceId, GameId, PlayerId},
 };
 
 type SpellResolutionSideEffects = (Option<LifeChanged>, Vec<CreatureDied>, Option<GameEnded>);
@@ -38,6 +40,7 @@ pub(super) fn apply_supported_spell_rules(
     game_id: &GameId,
     players: &mut [Player],
     terminal_state: &mut TerminalState,
+    controller_id: &PlayerId,
     supported_spell_rules: SupportedSpellRules,
     target: Option<&SpellTarget>,
 ) -> Result<SpellResolutionSideEffects, DomainError> {
@@ -46,8 +49,14 @@ pub(super) fn apply_supported_spell_rules(
             review_state_based_actions(game_id, players, terminal_state)
         }
         SpellResolutionProfile::DealDamage { damage } => {
-            let legality =
-                evaluate_target_legality(players, supported_spell_rules.targeting(), target);
+            let legality = evaluate_target_legality(
+                TargetLegalityContext::Resolution {
+                    players,
+                    controller_id,
+                },
+                supported_spell_rules.targeting(),
+                target,
+            );
             let target = match (legality, target) {
                 (SpellTargetLegality::Legal, Some(target)) => target,
                 (SpellTargetLegality::Legal, None) => {
