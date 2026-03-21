@@ -166,6 +166,20 @@ pub fn flash_creature_card(name: &str, mana_cost: u32, power: u32, toughness: u3
         .with_casting_rule(CastingRule::OpenPriorityWindow)
 }
 
+pub fn flash_artifact_card(name: &str, mana_cost: u32) -> LibraryCard {
+    LibraryCard::new(CardDefinitionId::new(name), CardType::Artifact, mana_cost)
+        .with_casting_rule(CastingRule::OpenPriorityWindow)
+}
+
+pub fn flash_enchantment_card(name: &str, mana_cost: u32) -> LibraryCard {
+    LibraryCard::new(
+        CardDefinitionId::new(name),
+        CardType::Enchantment,
+        mana_cost,
+    )
+    .with_casting_rule(CastingRule::OpenPriorityWindow)
+}
+
 pub fn own_turn_priority_artifact_card(name: &str, mana_cost: u32) -> LibraryCard {
     LibraryCard::new(CardDefinitionId::new(name), CardType::Artifact, mana_cost)
         .with_casting_rule(CastingRule::OpenPriorityWindowDuringOwnTurn)

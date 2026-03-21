@@ -94,6 +94,8 @@ mod reject_planeswalker_response;
 mod reject_sorcery_response;
 #[path = "resolve_targeted_blocking_creature_damage.rs"]
 mod resolve_targeted_blocking_creature_damage;
+#[path = "respond_with_flash_artifact_spell.rs"]
+mod respond_with_flash_artifact_spell;
 #[path = "respond_with_flash_creature_spell.rs"]
 mod respond_with_flash_creature_spell;
 #[path = "respond_with_second_instant_in_beginning_of_combat_window.rs"]

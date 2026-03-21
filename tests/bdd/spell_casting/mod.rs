@@ -2,6 +2,7 @@ mod active_instant_windows;
 mod active_self_stacking;
 mod active_sorcery_speed;
 mod combat_contextual_spells;
+mod flash_noncreature_responses;
 mod priority_assertions;
 mod resolution_assertions;
 mod response_rejections;

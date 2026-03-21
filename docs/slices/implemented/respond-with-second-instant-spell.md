@@ -16,7 +16,7 @@ Allow the current non-active priority holder to cast a second instant spell in r
 
 ## Explicit Limits
 
-- response spells are still limited to instants
+- second-response self-stacking is still limited to the currently supported instant subset
 - this slice only proves responding-player self-stacking on an already non-empty stack
 - it does not yet broaden this pattern across every supported empty priority window; those remain separate slices
 - the currently supported targeted instant subset is allowed, but broader targeting, modes, activated abilities, and triggered abilities remain out of scope

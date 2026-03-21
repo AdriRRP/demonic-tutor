@@ -16,9 +16,8 @@ impl GameplayWorld {
             support::filled_library(Vec::new(), 10),
         );
 
-        let service = support::create_service();
         support::advance_to_player_first_main_satisfying_cleanup(
-            &service,
+            &support::create_service(),
             self.game_mut(),
             "player-1",
         );
@@ -245,6 +244,35 @@ impl GameplayWorld {
             &Self::player_id("Bob")
         );
         assert_eq!(self.game().stack().len(), 1);
+    }
+
+    pub fn setup_spell_response_stack_with_flash_artifact(&mut self) {
+        self.reset_game_with_libraries(
+            "bdd-spell-response-flash-artifact",
+            support::filled_library(
+                vec![
+                    LibraryCard::creature(CardDefinitionId::new("bdd-primary-creature"), 1, 2, 2),
+                    support::land_card("bdd-forest"),
+                ],
+                10,
+            ),
+            support::filled_library(
+                vec![support::flash_artifact_card("bdd-response-artifact", 0)],
+                10,
+            ),
+        );
+
+        let service = support::create_service();
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-1",
+        );
+
+        self.tracked_card_id = Some(self.hand_card_by_definition("Alice", "bdd-primary-creature"));
+        self.tracked_blocker_id = Some(self.hand_card_by_definition("Alice", "bdd-forest"));
+        self.tracked_response_card_id =
+            Some(self.hand_card_by_definition("Bob", "bdd-response-artifact"));
     }
 
     pub fn setup_invalid_noninstant_response(&mut self) {

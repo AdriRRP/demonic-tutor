@@ -16,7 +16,7 @@ Make the responding player's self-stacking behavior explicit in the `EndOfCombat
 ## Explicit Limits
 
 - this slice only covers the `EndOfCombat` window
-- response spells remain limited to instants
+- response self-stacking in this window remains limited to the currently supported instant subset
 - no richer end-of-combat rules, triggers, or abilities are modeled
 
 ## Domain Changes

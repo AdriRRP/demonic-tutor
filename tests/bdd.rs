@@ -89,6 +89,7 @@ async fn run_stack_features() {
         "features/stack/cast_second_instant_after_blockers.feature",
         "features/stack/cast_instant_after_combat_damage.feature",
         "features/stack/cast_second_instant_after_combat_damage.feature",
+        "features/stack/respond_with_flash_artifact_spell.feature",
         "features/stack/cast_flash_creature_after_blockers.feature",
         "features/stack/cast_flash_creature_after_combat_damage.feature",
         "features/stack/cast_own_turn_priority_artifact_in_upkeep_window.feature",

@@ -16,7 +16,7 @@ Make the responding player's self-stacking behavior explicit in the `CombatDamag
 ## Explicit Limits
 
 - this slice only covers the `CombatDamage` window
-- response spells remain limited to instants
+- response self-stacking in this window remains limited to the currently supported instant subset
 - the current supported targeted instant subset is allowed, but richer combat tricks, broader target semantics, and triggered abilities are not modeled
 
 ## Domain Changes

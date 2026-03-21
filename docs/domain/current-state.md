@@ -93,8 +93,8 @@ The domain currently includes:
 - in each currently supported instant-speed window, the active player may cast an instant and self-stack a second instant before passing priority
 - in each currently supported instant-speed window, the non-active player may respond with an instant after the first pass and may self-stack a second instant before passing priority
 - sorcery-speed spells are supported for the active player in empty `FirstMain` and `SecondMain` windows for the currently modeled spell-card subset: creature, sorcery, artifact, enchantment, and planeswalker
-- the current supported spell-card subset also allows explicit card-face casting rules that open non-instant spells to open priority windows, providing minimal `Flash`-like creature support
-- the current minimal `Flash`-like support is currently exercised in `Upkeep`, `BeginningOfCombat`, on an existing stack response window, and after attackers, blockers, or combat damage
+- the current supported spell-card subset also allows explicit card-face casting rules that open non-instant spells to open priority windows, providing minimal `Flash`-like support for the currently exercised subset
+- the current minimal `Flash`-like support is currently exercised by supported creatures in `Upkeep`, `BeginningOfCombat`, on an existing stack response window, and after attackers, blockers, or combat damage, and by a supported artifact on an existing stack response window
 - the current supported spell-card subset also allows explicit turn-relative open-priority casting rules for the currently supported noncreature permanent subset
 - the current supported noncreature permanent subset for that rule is currently exercised by `Artifact` and `Enchantment` in `Upkeep`, `BeginningOfCombat`, post-attackers, post-blockers, and post-combat-damage
 - the current turn-relative open-priority casting subset is explicitly rejected as a response during the opponent's turn for the currently exercised artifact and enchantment cases
@@ -129,7 +129,7 @@ Current constraints include:
 - matches support exactly two players
 - opening hand size is fixed to 7 cards
 - only a subset of zones are modeled (library, hand, battlefield, graveyard, exile)
-- spell responses during open priority windows are currently limited to instants
+- spell responses during open priority windows currently support instants plus the explicitly modeled `OpenPriorityWindow` subset
 - the current targeted-spell subset is intentionally tiny and driven by explicit card-face legal-target rules and resolution profiles
 - the current targeted-spell subset currently supports only simple player-or-creature damage instants
 - sorcery-speed spells are currently supported only for the active player in `FirstMain` or `SecondMain` while the stack is empty

@@ -15,8 +15,8 @@ Allow the current priority holder to cast an instant spell in response to a spel
 
 ## Explicit limits
 
-- response spells are currently limited to `CardType::Instant`
-- non-instant response spells are rejected
+- generic response access is still anchored in instant-speed stack windows
+- non-instant responses remain limited to the explicitly modeled `OpenPriorityWindow` subset
 - response timing is still limited to the currently implemented priority windows
 - the currently supported targeted instant subset is allowed, but broader targeting, modes, activated abilities, and triggered abilities remain out of scope
 
@@ -28,10 +28,10 @@ Allow the current priority holder to cast an instant spell in response to a spel
 
 ## Rules support statement
 
-This slice extends the minimal stack model with real spell responses. After a spell is cast, the caster keeps priority and may pass it. The next priority holder may then respond with an instant spell, that response becomes the new top object on the stack, and the stack continues to resolve in LIFO order through consecutive passes. Response timing is now available across the currently implemented priority windows, but broader response spell types and richer timing rules are still intentionally unsupported.
+This slice extends the minimal stack model with real spell responses. After a spell is cast, the caster keeps priority and may pass it. The next priority holder may then respond with an instant spell, that response becomes the new top object on the stack, and the stack continues to resolve in LIFO order through consecutive passes. Response timing is now available across the currently implemented priority windows, and later slices also open a narrow explicit `OpenPriorityWindow` subset for supported non-instant cards. Broader response spell types and richer timing rules remain intentionally unsupported.
 
 ## Tests
 
 - the opponent may cast an instant response while holding priority
 - a response spell resolves before the original spell beneath it
-- non-instant response spells are rejected explicitly
+- unsupported non-instant response spells are rejected explicitly
