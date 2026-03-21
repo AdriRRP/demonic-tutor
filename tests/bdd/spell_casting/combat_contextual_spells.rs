@@ -59,6 +59,33 @@ fn bob_has_declared_blockers_and_alice_still_has_a_nonlethal_blocking_creature_i
     world.setup_priority_after_blockers_declared_with_nonlethal_blocking_creature_spell();
 }
 
+#[given(
+    "Bob has priority after attackers are declared with an opponent-attacking-creature instant spell in hand"
+)]
+fn bob_has_priority_after_attackers_are_declared_with_an_opponent_attacking_creature_instant_spell_in_hand(
+    world: &mut GameplayWorld,
+) {
+    world.setup_non_active_priority_after_attackers_declared_with_opponents_attacking_spell();
+}
+
+#[given(
+    "Bob has priority after blockers are declared with a controlled-blocking-creature instant spell in hand"
+)]
+fn bob_has_priority_after_blockers_are_declared_with_a_controlled_blocking_creature_instant_spell_in_hand(
+    world: &mut GameplayWorld,
+) {
+    world.setup_non_active_priority_after_blockers_declared_with_controlled_blocking_spell();
+}
+
+#[given(
+    "Bob has priority after blockers are declared with an opponent-attacking-creature instant spell in hand"
+)]
+fn bob_has_priority_after_blockers_are_declared_with_an_opponent_attacking_creature_instant_spell_in_hand(
+    world: &mut GameplayWorld,
+) {
+    world.setup_non_active_priority_after_blockers_declared_with_opponents_attacking_spell();
+}
+
 #[when("Alice casts the blocking-creature instant spell targeting Bob")]
 fn alice_casts_the_blocking_creature_instant_spell_targeting_bob(world: &mut GameplayWorld) {
     world.try_cast_tracked_targeted_player_spell("Alice", "Bob");
@@ -78,6 +105,34 @@ fn alice_casts_the_blocking_creature_instant_spell_targeting_bobs_blocker(
     world.cast_tracked_targeted_creature_spell("Alice");
 }
 
+#[when("Bob casts the controlled-blocking-creature instant spell targeting his blocker")]
+fn bob_casts_the_controlled_blocking_creature_instant_spell_targeting_his_blocker(
+    world: &mut GameplayWorld,
+) {
+    world.cast_tracked_targeted_response_spell_at_blocker("Bob");
+}
+
+#[when("Bob casts the controlled-blocking-creature instant spell targeting Alice's attacker")]
+fn bob_casts_the_controlled_blocking_creature_instant_spell_targeting_alices_attacker(
+    world: &mut GameplayWorld,
+) {
+    world.try_cast_tracked_targeted_response_spell_at_attacker("Bob");
+}
+
+#[when("Bob casts the opponent-attacking-creature instant spell targeting Alice's attacker")]
+fn bob_casts_the_opponent_attacking_creature_instant_spell_targeting_alices_attacker(
+    world: &mut GameplayWorld,
+) {
+    world.cast_tracked_targeted_response_spell_at_attacker("Bob");
+}
+
+#[when("Bob casts the opponent-attacking-creature instant spell targeting his blocker")]
+fn bob_casts_the_opponent_attacking_creature_instant_spell_targeting_his_blocker(
+    world: &mut GameplayWorld,
+) {
+    world.try_cast_tracked_targeted_response_spell_at_blocker("Bob");
+}
+
 #[then("casting fails because the spell only supports creature targets")]
 fn casting_fails_because_the_spell_only_supports_creature_targets(world: &mut GameplayWorld) {
     assert!(world
@@ -94,6 +149,21 @@ fn casting_fails_because_the_target_creature_is_not_currently_blocking(world: &m
         .is_some_and(|error| error.contains("cannot use the provided target")));
 }
 
+#[then("casting fails because the creature target is not legal for the spell")]
+fn casting_fails_because_the_creature_target_is_not_legal_for_the_spell(world: &mut GameplayWorld) {
+    assert!(world
+        .last_error
+        .as_ref()
+        .is_some_and(|error| error.contains("cannot use the provided target")));
+}
+
+#[then("Bob's blocker has 1 damage marked and remains blocking")]
+fn bobs_blocker_has_1_damage_marked_and_remains_blocking(world: &mut GameplayWorld) {
+    let blocker = world.tracked_blocker();
+    assert_eq!(blocker.damage(), 1);
+    assert!(blocker.is_blocking());
+}
+
 #[then("Bob's blocker dies")]
 fn bobs_blocker_dies(world: &mut GameplayWorld) {
     assert_eq!(world.last_creature_died.len(), 1);
@@ -104,9 +174,12 @@ fn bobs_blocker_dies(world: &mut GameplayWorld) {
     assert_eq!(world.last_creature_died[0].card_id, *blocker_id);
 }
 
-#[then("Bob's blocker has 1 damage marked and remains blocking")]
-fn bobs_blocker_has_1_damage_marked_and_remains_blocking(world: &mut GameplayWorld) {
-    let blocker = world.tracked_blocker();
-    assert_eq!(blocker.damage(), 1);
-    assert!(blocker.is_blocking());
+#[then("Alice's attacker dies")]
+fn alices_attacker_dies(world: &mut GameplayWorld) {
+    assert_eq!(world.last_creature_died.len(), 1);
+    let attacker_id = world
+        .tracked_attacker_id
+        .as_ref()
+        .expect("tracked attacker should exist");
+    assert_eq!(world.last_creature_died[0].card_id, *attacker_id);
 }

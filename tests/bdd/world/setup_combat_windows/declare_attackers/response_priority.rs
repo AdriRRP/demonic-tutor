@@ -37,4 +37,27 @@ impl GameplayWorld {
         self.tracked_attacker_id = Some(attacker_id);
         self.reset_observations();
     }
+
+    pub fn setup_non_active_priority_after_attackers_declared_with_opponents_attacking_spell(
+        &mut self,
+    ) {
+        let attacker_id = prepare_priority_after_attackers_declared(
+            self,
+            "bdd-combat-priority-attackers-opponent-attacker-spell",
+            vec![attacker_card()],
+            vec![
+                support::land_card("bdd-bob-buffer"),
+                support::targeted_opponents_attacking_creature_damage_instant_card(
+                    "bdd-punish-charge",
+                    0,
+                    2,
+                ),
+            ],
+        );
+        self.tracked_response_card_id =
+            Some(self.hand_card_by_definition("Bob", "bdd-punish-charge"));
+        self.pass_priority("Alice");
+        self.tracked_attacker_id = Some(attacker_id);
+        self.reset_observations();
+    }
 }

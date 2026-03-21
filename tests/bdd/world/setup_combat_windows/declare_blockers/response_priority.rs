@@ -36,4 +36,48 @@ impl GameplayWorld {
         self.pass_priority("Alice");
         self.reset_observations();
     }
+
+    pub fn setup_non_active_priority_after_blockers_declared_with_controlled_blocking_spell(
+        &mut self,
+    ) {
+        prepare_priority_after_blockers_declared(
+            self,
+            "bdd-combat-priority-blockers-controlled-blocker-spell",
+            vec![attacker_card()],
+            vec![
+                blocker_card(),
+                support::targeted_controlled_blocking_creature_damage_instant_card(
+                    "bdd-guardians-rally",
+                    0,
+                    2,
+                ),
+            ],
+        );
+        self.tracked_response_card_id =
+            Some(self.hand_card_by_definition("Bob", "bdd-guardians-rally"));
+        self.pass_priority("Alice");
+        self.reset_observations();
+    }
+
+    pub fn setup_non_active_priority_after_blockers_declared_with_opponents_attacking_spell(
+        &mut self,
+    ) {
+        prepare_priority_after_blockers_declared(
+            self,
+            "bdd-combat-priority-blockers-opponent-attacker-spell",
+            vec![attacker_card()],
+            vec![
+                blocker_card(),
+                support::targeted_opponents_attacking_creature_damage_instant_card(
+                    "bdd-punish-charge",
+                    0,
+                    2,
+                ),
+            ],
+        );
+        self.tracked_response_card_id =
+            Some(self.hand_card_by_definition("Bob", "bdd-punish-charge"));
+        self.pass_priority("Alice");
+        self.reset_observations();
+    }
 }
