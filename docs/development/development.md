@@ -304,3 +304,10 @@ Avoid:
 
 - leaking memory-oriented encodings into the public domain interface
 - bit-level or packed representations that make domain behavior harder to review without a clear payoff
+
+Current repository choice:
+
+- domain ids currently centralize their shared string backing behind a single `SharedIdStr` alias in `src/domain/play/ids.rs`
+- the runtime intentionally uses `Arc<str>` today because ids are cloned pervasively into events, tests, and stack objects
+- this choice should not be changed casually to `Rc<str>` or interning without profiling the real workload first
+- if future measurements show identifier cloning or atomic refcounting as a meaningful hotspot, revisit the alias rather than rewriting each id type independently

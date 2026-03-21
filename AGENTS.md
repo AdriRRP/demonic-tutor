@@ -183,6 +183,7 @@ When implementation structure needs to evolve, prefer:
 - small explicit state machines where gameplay state has clear phases or holders
 - enums and deterministic transitions over generic rule engines or trait-object dispatch
 - thin application orchestration with explicit outcome-to-event mapping helpers instead of speculative abstraction layers
+- centralized low-level representation choices, such as shared id backing, that can be revisited from one place after profiling
 
 Avoid introducing generic frameworks when a small explicit module split keeps the code more legible.
 

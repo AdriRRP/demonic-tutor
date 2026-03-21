@@ -48,6 +48,7 @@ Prefer:
 - small explicit module splits by domain capability once a file becomes crowded
 - small enums, state structs, and deterministic transitions over generic engines
 - honest historical notes when a once-live slice or proposal no longer describes the active model
+- centralized representation choices for shared ids or compact state, changed only when profiling justifies them
 
 Avoid:
 
