@@ -1,4 +1,5 @@
 mod blocking_legality;
+mod capabilities;
 mod damage;
 mod declaring;
 mod progression;

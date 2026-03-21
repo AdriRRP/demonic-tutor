@@ -1,9 +1,9 @@
 use super::{
     super::super::{helpers, model::Player},
-    progression,
+    capabilities, progression,
 };
 use crate::domain::play::{
-    cards::{CardType, KeywordAbility},
+    cards::CardType,
     commands::DeclareBlockersCommand,
     errors::{CardError, DomainError, GameError},
     events::BlockersDeclared,
@@ -24,7 +24,7 @@ pub fn declare_blockers(
         .cards()
         .iter()
         .filter(|card| card.is_attacking())
-        .map(|card| (card.id().clone(), card.has_keyword(KeywordAbility::Flying)))
+        .map(|card| (card.id().clone(), card.clone()))
         .collect::<HashMap<_, _>>();
     let defender = &mut players[defending_player_idx];
     let battlefield = defender.battlefield_mut();
@@ -45,16 +45,11 @@ pub fn declare_blockers(
             ));
         }
 
-        if !declared_attackers.contains_key(attacker_id) {
+        let Some(attacker) = declared_attackers.get(attacker_id) else {
             return Err(DomainError::Card(CardError::NotAttacking(
                 attacker_id.clone(),
             )));
-        }
-
-        let attacker_has_flying = declared_attackers
-            .get(attacker_id)
-            .copied()
-            .unwrap_or(false);
+        };
 
         let card = battlefield.card_mut(blocker_id).ok_or_else(|| {
             DomainError::Card(CardError::NotOnBattlefield {
@@ -76,10 +71,7 @@ pub fn declare_blockers(
             }));
         }
 
-        if attacker_has_flying
-            && !card.has_keyword(KeywordAbility::Flying)
-            && !card.has_keyword(KeywordAbility::Reach)
-        {
+        if !capabilities::can_block_attacker(card, attacker) {
             return Err(DomainError::Card(
                 CardError::CannotBlockFlyingWithoutFlyingOrReach {
                     player: cmd.player_id.clone(),
