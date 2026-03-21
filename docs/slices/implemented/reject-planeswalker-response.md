@@ -11,6 +11,7 @@ In scope:
 
 - rejecting a planeswalker spell when the non-active player tries to cast it as a response after the
   caster has passed priority
+- surfacing that rejection through the current explicit sorcery-speed timing error
 
 Out of scope:
 

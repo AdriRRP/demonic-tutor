@@ -16,7 +16,7 @@ Allow the non-active player to cast a second instant spell in `Draw` before pass
 
 ## Explicit Limits
 
-- only instant responses are currently supported
+- response casts in this window currently require instant-speed timing
 - this slice only formalizes responding-player self-stacking in `Draw`
 - triggered abilities and richer draw-step timing remain out of scope
 

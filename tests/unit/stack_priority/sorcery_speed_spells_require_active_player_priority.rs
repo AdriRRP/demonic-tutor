@@ -45,8 +45,9 @@ fn non_active_player_cannot_cast_sorcery_speed_spells_in_an_empty_main_phase_win
 
         assert!(matches!(
             result,
-            Err(DomainError::Game(GameError::OnlyInstantSpellsSupportedAsResponses(rejected)))
-                if rejected == card_id
+            Err(DomainError::Game(GameError::CastingTimingNotAllowed { card, timing }))
+                if card == card_id
+                    && timing == demonictutor::CastingTimingProfile::SorcerySpeed
         ));
     }
 

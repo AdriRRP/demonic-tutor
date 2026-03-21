@@ -42,9 +42,10 @@ fn require_cast_timing(
             return Ok(());
         }
 
-        return Err(DomainError::Game(
-            GameError::OnlyInstantSpellsSupportedAsResponses(card_id.clone()),
-        ));
+        return Err(DomainError::Game(GameError::CastingTimingNotAllowed {
+            card: card_id.clone(),
+            timing: casting_timing,
+        }));
     }
 
     invariants::require_active_player(active_player, player_id)?;

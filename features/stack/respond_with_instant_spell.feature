@@ -21,4 +21,4 @@
     Given Alice has cast an instant spell and still holds priority with Bob's creature card in hand
     When Alice passes priority
     And Bob tries to cast the creature response spell
-    Then the action is rejected because only instant responses are currently supported
+    Then the action is rejected because the spell timing is not legal in the current window

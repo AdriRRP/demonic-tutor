@@ -1,4 +1,5 @@
 use crate::domain::play::{
+    cards::CastingTimingProfile,
     ids::{CardInstanceId, PlayerId},
     phase::Phase,
 };
@@ -29,7 +30,10 @@ pub enum GameError {
     PriorityWindowOpen {
         current_holder: PlayerId,
     },
-    OnlyInstantSpellsSupportedAsResponses(CardInstanceId),
+    CastingTimingNotAllowed {
+        card: CardInstanceId,
+        timing: CastingTimingProfile,
+    },
     NoPriorityWindow,
     NotPriorityHolder {
         current: PlayerId,
@@ -164,10 +168,16 @@ impl std::fmt::Display for GameError {
                 f,
                 "a priority window is currently open and waiting on {current_holder}"
             ),
-            Self::OnlyInstantSpellsSupportedAsResponses(card_id) => write!(
-                f,
-                "current stack timing only supports instant response spells; card {card_id} is not an instant"
-            ),
+            Self::CastingTimingNotAllowed { card, timing } => match timing {
+                CastingTimingProfile::InstantSpeed => write!(
+                    f,
+                    "card {card} cannot be cast with instant-speed timing in the current window"
+                ),
+                CastingTimingProfile::SorcerySpeed => write!(
+                    f,
+                    "card {card} cannot be cast with sorcery-speed timing in the current window"
+                ),
+            },
             Self::NoPriorityWindow => write!(f, "no priority window is currently open"),
             Self::NotPriorityHolder { current, requested } => {
                 write!(f, "not {requested}'s priority, current holder is {current}")

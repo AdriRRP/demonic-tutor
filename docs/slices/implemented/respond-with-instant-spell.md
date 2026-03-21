@@ -24,7 +24,7 @@ Allow the current priority holder to cast an instant spell in response to a spel
 
 - `Game::cast_spell()` now allows instant responses from the current priority holder
 - `Game::pass_priority()` reopens priority for the active player after top-of-stack resolution when the game remains active
-- `GameError::OnlyInstantSpellsSupportedAsResponses` documents the current temporary timing limit
+- `GameError::CastingTimingNotAllowed` now documents the current temporary timing limit through explicit spell timing semantics
 
 ## Rules support statement
 

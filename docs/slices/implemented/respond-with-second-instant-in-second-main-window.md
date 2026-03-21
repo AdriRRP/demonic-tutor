@@ -16,7 +16,7 @@ Allow the non-active player to cast a second instant spell in `SecondMain` befor
 
 ## Explicit Limits
 
-- only instant responses are currently supported
+- response casts in this window currently require instant-speed timing
 - this slice only formalizes responding-player self-stacking in `SecondMain`
 - sorcery-speed responses, activated abilities, and triggered abilities remain out of scope
 

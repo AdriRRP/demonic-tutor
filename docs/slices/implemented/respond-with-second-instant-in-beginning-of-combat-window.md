@@ -16,7 +16,7 @@ Allow the non-active player to cast a second instant spell at the beginning of `
 
 ## Explicit Limits
 
-- only instant responses are currently supported
+- response casts in this window currently require instant-speed timing
 - this slice only formalizes responding-player self-stacking at the beginning of `BeginningOfCombat`
 - richer combat-step timing remains out of scope beyond the current explicit subphases
 

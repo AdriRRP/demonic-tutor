@@ -405,8 +405,8 @@ fn the_game_emits_spell_cast_with_outcome(world: &mut GameplayWorld, outcome: St
     ));
 }
 
-#[then("the action is rejected because only instant responses are currently supported")]
-fn the_action_is_rejected_because_only_instant_responses_are_currently_supported(
+#[then("the action is rejected because the spell timing is not legal in the current window")]
+fn the_action_is_rejected_because_the_spell_timing_is_not_legal_in_the_current_window(
     world: &mut GameplayWorld,
 ) {
     let error = world
@@ -414,7 +414,7 @@ fn the_action_is_rejected_because_only_instant_responses_are_currently_supported
         .as_ref()
         .expect("response cast should be rejected");
     assert!(
-        error.contains("only supports instant response spells"),
+        error.contains("cannot be cast with sorcery-speed timing"),
         "unexpected error: {error}"
     );
 }

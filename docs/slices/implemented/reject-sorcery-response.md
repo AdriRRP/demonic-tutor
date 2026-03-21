@@ -7,7 +7,7 @@ Keep the current stack model semantically honest by rejecting sorcery-speed spel
 ## Supported behavior
 
 - after the active player passes a stack that already contains a spell, the non-active player may not cast a sorcery as a response
-- the action fails with the existing instant-response limitation error
+- the action fails with an explicit casting-timing error for sorcery-speed timing
 - the original spell remains on the stack
 
 ## Out of scope
