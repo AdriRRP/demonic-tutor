@@ -88,22 +88,76 @@ pub enum SpellTargetKind {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum SingleTargetRule {
+pub enum PlayerTargetRule {
     AnyPlayer,
-    AnyCreature,
-    AnyPlayerOrCreature,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CreatureTargetRule {
+    AnyCreatureOnBattlefield,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct SingleTargetRule {
+    player_rule: Option<PlayerTargetRule>,
+    creature_rule: Option<CreatureTargetRule>,
 }
 
 impl SingleTargetRule {
     #[must_use]
+    pub const fn any_player() -> Self {
+        Self {
+            player_rule: Some(PlayerTargetRule::AnyPlayer),
+            creature_rule: None,
+        }
+    }
+
+    #[must_use]
+    pub const fn any_creature_on_battlefield() -> Self {
+        Self {
+            player_rule: None,
+            creature_rule: Some(CreatureTargetRule::AnyCreatureOnBattlefield),
+        }
+    }
+
+    #[must_use]
+    pub const fn any_player_or_creature_on_battlefield() -> Self {
+        Self {
+            player_rule: Some(PlayerTargetRule::AnyPlayer),
+            creature_rule: Some(CreatureTargetRule::AnyCreatureOnBattlefield),
+        }
+    }
+
+    #[must_use]
     pub const fn matches_target_kind(self, kind: SpellTargetKind) -> bool {
         match self {
-            Self::AnyPlayer => matches!(kind, SpellTargetKind::Player),
-            Self::AnyCreature => matches!(kind, SpellTargetKind::Creature),
-            Self::AnyPlayerOrCreature => {
-                matches!(kind, SpellTargetKind::Player | SpellTargetKind::Creature)
-            }
+            Self {
+                player_rule: Some(_),
+                creature_rule: None,
+            } => matches!(kind, SpellTargetKind::Player),
+            Self {
+                player_rule: None,
+                creature_rule: Some(_),
+            } => matches!(kind, SpellTargetKind::Creature),
+            Self {
+                player_rule: Some(_),
+                creature_rule: Some(_),
+            } => matches!(kind, SpellTargetKind::Player | SpellTargetKind::Creature),
+            Self {
+                player_rule: None,
+                creature_rule: None,
+            } => false,
         }
+    }
+
+    #[must_use]
+    pub const fn player_rule(self) -> Option<PlayerTargetRule> {
+        self.player_rule
+    }
+
+    #[must_use]
+    pub const fn creature_rule(self) -> Option<CreatureTargetRule> {
+        self.creature_rule
     }
 }
 
@@ -152,7 +206,9 @@ impl SupportedSpellRules {
     #[must_use]
     pub const fn deal_damage_to_any_target(damage: u32) -> Self {
         Self {
-            targeting: SpellTargetingProfile::ExactlyOne(SingleTargetRule::AnyPlayerOrCreature),
+            targeting: SpellTargetingProfile::ExactlyOne(
+                SingleTargetRule::any_player_or_creature_on_battlefield(),
+            ),
             resolution: SpellResolutionProfile::DealDamage { damage },
         }
     }
@@ -160,7 +216,7 @@ impl SupportedSpellRules {
     #[must_use]
     pub const fn deal_damage_to_player(damage: u32) -> Self {
         Self {
-            targeting: SpellTargetingProfile::ExactlyOne(SingleTargetRule::AnyPlayer),
+            targeting: SpellTargetingProfile::ExactlyOne(SingleTargetRule::any_player()),
             resolution: SpellResolutionProfile::DealDamage { damage },
         }
     }
