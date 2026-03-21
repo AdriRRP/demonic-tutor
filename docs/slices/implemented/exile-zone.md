@@ -31,7 +31,7 @@ This slice follows the existing zone model foundation because:
   - the graveyard (cards exiled from graveyard)
 - exiled cards can be examined by any player (CR 406.3)
 - exiled cards remain face up by default
-- the aggregate maintains an ordered collection of `CardInstance` per player's exile zone
+- the aggregate preserves insertion order within each player's exile zone
 - no "return from exile" behavior is introduced yet
 - no exile-linked abilities are modeled yet
 
@@ -41,7 +41,7 @@ This slice follows the existing zone model foundation because:
 
 - cards in exile belong to exactly one player
 - zone changes maintain consistency (a card cannot be in two zones simultaneously)
-- exile is modeled as an ordered collection to preserve card history
+- exile preserves insertion order to preserve card history
 - the aggregate exposes cards in exile for gameplay inspection
 - exile does not yet support face-down cards
 
@@ -141,7 +141,7 @@ This behavior belongs to the `Game` aggregate because:
 
 ### Zone Model
 
-The `Exile` zone should follow the same pattern as `Graveyard`:
+The `Exile` zone should follow the same pattern as `Graveyard`, preserving insertion order:
 
 ```rust
 #[derive(Debug, Clone, PartialEq, Eq, Default)]

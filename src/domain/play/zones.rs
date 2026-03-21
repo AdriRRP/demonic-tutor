@@ -77,7 +77,7 @@ impl Hand {
         self.0
             .iter()
             .position(|c| c.id() == card_id)
-            .map(|index| self.0.swap_remove(index))
+            .map(|index| self.0.remove(index))
     }
 }
 
@@ -139,7 +139,7 @@ impl Graveyard {
         self.0
             .iter()
             .position(|card| card.id() == card_id)
-            .map(|index| self.0.swap_remove(index))
+            .map(|index| self.0.remove(index))
     }
 }
 
@@ -166,6 +166,6 @@ impl Exile {
         self.0
             .iter()
             .position(|card| card.id() == card_id)
-            .map(|index| self.0.swap_remove(index))
+            .map(|index| self.0.remove(index))
     }
 }

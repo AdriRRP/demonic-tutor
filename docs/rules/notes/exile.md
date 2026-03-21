@@ -19,7 +19,7 @@ This is a repository-owned interpretation note, not a copy of the Comprehensive 
 - the current runtime exposes a direct `ExileCard` command as a minimal public effect entrypoint for those moves
 - exiled cards are kept face up by default
 - any player may examine cards in exile
-- the aggregate maintains an ordered collection of `CardInstance` per player's exile zone
+- the aggregate preserves insertion order within each player's exile zone
 - no "return from exile" behavior is currently modeled
 - no exile-linked abilities are currently modeled
 - no face-down exile is currently modeled
