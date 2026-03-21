@@ -4,6 +4,8 @@ mod cast_artifact_in_main_window;
 mod cast_creature_in_second_main_window;
 #[path = "cast_enchantment_in_main_window.rs"]
 mod cast_enchantment_in_main_window;
+#[path = "cast_flash_creature_after_attackers.rs"]
+mod cast_flash_creature_after_attackers;
 #[path = "cast_flash_creature_in_beginning_of_combat_window.rs"]
 mod cast_flash_creature_in_beginning_of_combat_window;
 #[path = "cast_flash_creature_in_upkeep_window.rs"]
