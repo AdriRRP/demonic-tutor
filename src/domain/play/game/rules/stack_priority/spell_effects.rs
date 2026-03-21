@@ -1,5 +1,8 @@
 use crate::domain::play::{
-    cards::{CardInstance, SpellTargetingProfile, SupportedSpellRules},
+    cards::{
+        CardInstance, CreatureTargetRule, PlayerTargetRule, SpellTargetingProfile,
+        SupportedSpellRules,
+    },
     game::{Player, SpellTarget},
     ids::{CardInstanceId, PlayerId},
 };
@@ -14,6 +17,7 @@ pub enum SpellTargetLegality {
     NoTargetRequired,
     MissingRequiredTarget,
     IllegalTargetKind,
+    IllegalTargetRule,
     MissingPlayer(PlayerId),
     MissingCreature(CardInstanceId),
     Legal,
@@ -53,6 +57,23 @@ pub const fn accepts_target(targeting: SpellTargetingProfile, target: &SpellTarg
     targeting.allows_target_kind(target.kind())
 }
 
+fn target_player_exists<'a>(players: &'a [Player], player_id: &PlayerId) -> Option<&'a Player> {
+    players.iter().find(|player| player.id() == player_id)
+}
+
+fn target_creature_controller<'a>(
+    players: &'a [Player],
+    card_id: &CardInstanceId,
+) -> Option<&'a Player> {
+    players.iter().find(|player| {
+        player
+            .battlefield()
+            .cards()
+            .iter()
+            .any(|card| card.id() == card_id)
+    })
+}
+
 #[must_use]
 pub fn evaluate_target_legality(
     context: TargetLegalityContext<'_>,
@@ -70,26 +91,43 @@ pub fn evaluate_target_legality(
                 return SpellTargetLegality::IllegalTargetKind;
             }
 
-            match target {
-                SpellTarget::Player(player_id) => {
-                    if players.iter().any(|player| player.id() == player_id) {
-                        SpellTargetLegality::Legal
-                    } else {
-                        SpellTargetLegality::MissingPlayer(player_id.clone())
+            let actor_id = context.actor_id();
+            match (targeting, target) {
+                (SpellTargetingProfile::None, _) => SpellTargetLegality::IllegalTargetKind,
+                (SpellTargetingProfile::ExactlyOne(rule), SpellTarget::Player(player_id)) => {
+                    let Some(target_player) = target_player_exists(players, player_id) else {
+                        return SpellTargetLegality::MissingPlayer(player_id.clone());
+                    };
+
+                    match rule.player_rule() {
+                        Some(PlayerTargetRule::AnyPlayer) => SpellTargetLegality::Legal,
+                        Some(PlayerTargetRule::OpponentOfActor) => {
+                            if target_player.id() == actor_id {
+                                SpellTargetLegality::IllegalTargetRule
+                            } else {
+                                SpellTargetLegality::Legal
+                            }
+                        }
+                        None => SpellTargetLegality::IllegalTargetKind,
                     }
                 }
-                SpellTarget::Creature(card_id) => {
-                    let found = players.iter().any(|player| {
-                        player
-                            .battlefield()
-                            .cards()
-                            .iter()
-                            .any(|card| card.id() == card_id)
-                    });
-                    if found {
-                        SpellTargetLegality::Legal
-                    } else {
-                        SpellTargetLegality::MissingCreature(card_id.clone())
+                (SpellTargetingProfile::ExactlyOne(rule), SpellTarget::Creature(card_id)) => {
+                    let Some(controller) = target_creature_controller(players, card_id) else {
+                        return SpellTargetLegality::MissingCreature(card_id.clone());
+                    };
+
+                    match rule.creature_rule() {
+                        Some(CreatureTargetRule::AnyCreatureOnBattlefield) => {
+                            SpellTargetLegality::Legal
+                        }
+                        Some(CreatureTargetRule::CreatureControlledByActor) => {
+                            if controller.id() == actor_id {
+                                SpellTargetLegality::Legal
+                            } else {
+                                SpellTargetLegality::IllegalTargetRule
+                            }
+                        }
+                        None => SpellTargetLegality::IllegalTargetKind,
                     }
                 }
             }

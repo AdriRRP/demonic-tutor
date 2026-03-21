@@ -18,6 +18,7 @@ Centralize the minimal targeted-spell resolution path so player and creature tar
 - supported spell targeting and resolution are read from explicit card-face profiles instead of string-matching on card-definition ids
 - supported targeting now carries explicit legal-target rules rather than collapsing everything into a generic `AnyTarget` shortcut
 - the same legal-target evaluation now underpins both cast-time validation and resolution-time revalidation for the current targeted-spell subset
+- the shared legal-target model now supports actor-relative restrictions such as opponent-only player targets and controlled-creature-only targets
 - a targeted damage spell whose only creature target is no longer legal on resolution leaves the stack normally but does not apply its effect
 - a provided target of the wrong legal class is rejected explicitly at cast time rather than being reported as a non-targeted spell
 

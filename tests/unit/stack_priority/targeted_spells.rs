@@ -2,8 +2,9 @@
 
 use crate::support::{
     advance_to_first_main_satisfying_cleanup, advance_to_player_first_main_satisfying_cleanup,
-    creature_card, filled_library, land_card, setup_two_player_game, targeted_damage_instant_card,
-    targeted_player_damage_instant_card,
+    creature_card, filled_library, land_card, setup_two_player_game,
+    targeted_controlled_creature_damage_instant_card, targeted_damage_instant_card,
+    targeted_opponent_damage_instant_card, targeted_player_damage_instant_card,
 };
 use demonictutor::{
     CardDefinitionId, CardInstanceId, CastSpellCommand, DomainError, GameEndReason, GameError,
@@ -283,6 +284,100 @@ fn targeted_instant_deals_damage_to_target_creature_and_state_based_actions_dest
         .iter()
         .all(|card| card.definition_id() != &CardDefinitionId::new("bob-bear")));
     assert_eq!(game.players()[1].graveyard().cards().len(), 1);
+}
+
+#[test]
+fn targeted_opponent_spell_rejects_the_caster_as_target_when_cast() {
+    let (service, mut game) = setup_two_player_game(
+        "game-target-opponent-only",
+        filled_library(
+            vec![targeted_opponent_damage_instant_card("lava-spike", 0, 2)],
+            10,
+        ),
+        filled_library(vec![land_card("mountain")], 10),
+    );
+
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
+
+    let spike_id = hand_card_id_by_definition(&game, 0, "lava-spike");
+    let result = service.cast_spell(
+        &mut game,
+        CastSpellCommand::new(PlayerId::new("player-1"), spike_id.clone())
+            .with_target(SpellTarget::Player(PlayerId::new("player-1"))),
+    );
+
+    assert!(matches!(
+        result,
+        Err(DomainError::Game(GameError::IllegalSpellTarget(card_id))) if card_id == spike_id
+    ));
+}
+
+#[test]
+fn targeted_opponent_spell_can_target_the_opponent_when_it_resolves() {
+    let (service, mut game) = setup_two_player_game(
+        "game-target-opponent-resolve",
+        filled_library(
+            vec![targeted_opponent_damage_instant_card("lava-spike", 0, 2)],
+            10,
+        ),
+        filled_library(vec![land_card("mountain")], 10),
+    );
+
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
+
+    let spike_id = hand_card_id_by_definition(&game, 0, "lava-spike");
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), spike_id)
+                .with_target(SpellTarget::Player(PlayerId::new("player-2"))),
+        )
+        .unwrap();
+
+    let resolution = resolve_current_stack(&service, &mut game);
+    assert_eq!(
+        resolution.life_changed.as_ref().unwrap().player_id,
+        PlayerId::new("player-2")
+    );
+    assert_eq!(resolution.life_changed.as_ref().unwrap().to_life, 18);
+}
+
+#[test]
+fn targeted_controlled_creature_spell_rejects_an_opponents_creature_when_cast() {
+    let (service, mut game) = setup_two_player_game(
+        "game-target-controlled-creature-invalid",
+        filled_library(
+            vec![
+                land_card("alice-setup-land"),
+                targeted_controlled_creature_damage_instant_card("reckless-surge", 0, 2),
+            ],
+            10,
+        ),
+        filled_library(vec![creature_card("bob-bear", 0, 2, 2)], 10),
+    );
+    let spell_id = hand_card_id_by_definition(&game, 0, "reckless-surge");
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-2");
+    let creature_id = CardInstanceId::new("game-target-controlled-creature-invalid-player-2-0");
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-2"), creature_id.clone()),
+        )
+        .unwrap();
+    let _ = resolve_current_stack(&service, &mut game);
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
+
+    let result = service.cast_spell(
+        &mut game,
+        CastSpellCommand::new(PlayerId::new("player-1"), spell_id.clone())
+            .with_target(SpellTarget::Creature(creature_id)),
+    );
+
+    assert!(matches!(
+        result,
+        Err(DomainError::Game(GameError::IllegalSpellTarget(card_id))) if card_id == spell_id
+    ));
 }
 
 #[test]

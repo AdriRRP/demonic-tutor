@@ -76,6 +76,7 @@ pub(super) fn apply_supported_spell_rules(
                 }
                 (
                     SpellTargetLegality::IllegalTargetKind
+                    | SpellTargetLegality::IllegalTargetRule
                     | SpellTargetLegality::MissingPlayer(_)
                     | SpellTargetLegality::MissingCreature(_),
                     _,

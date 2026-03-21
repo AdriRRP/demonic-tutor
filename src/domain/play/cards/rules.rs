@@ -106,11 +106,13 @@ pub enum SpellTargetKind {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PlayerTargetRule {
     AnyPlayer,
+    OpponentOfActor,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CreatureTargetRule {
     AnyCreatureOnBattlefield,
+    CreatureControlledByActor,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -133,6 +135,22 @@ impl SingleTargetRule {
         Self {
             player_rule: None,
             creature_rule: Some(CreatureTargetRule::AnyCreatureOnBattlefield),
+        }
+    }
+
+    #[must_use]
+    pub const fn opponent_of_actor() -> Self {
+        Self {
+            player_rule: Some(PlayerTargetRule::OpponentOfActor),
+            creature_rule: None,
+        }
+    }
+
+    #[must_use]
+    pub const fn creature_controlled_by_actor() -> Self {
+        Self {
+            player_rule: None,
+            creature_rule: Some(CreatureTargetRule::CreatureControlledByActor),
         }
     }
 
@@ -233,6 +251,24 @@ impl SupportedSpellRules {
     pub const fn deal_damage_to_player(damage: u32) -> Self {
         Self {
             targeting: SpellTargetingProfile::ExactlyOne(SingleTargetRule::any_player()),
+            resolution: SpellResolutionProfile::DealDamage { damage },
+        }
+    }
+
+    #[must_use]
+    pub const fn deal_damage_to_opponent(damage: u32) -> Self {
+        Self {
+            targeting: SpellTargetingProfile::ExactlyOne(SingleTargetRule::opponent_of_actor()),
+            resolution: SpellResolutionProfile::DealDamage { damage },
+        }
+    }
+
+    #[must_use]
+    pub const fn deal_damage_to_controlled_creature(damage: u32) -> Self {
+        Self {
+            targeting: SpellTargetingProfile::ExactlyOne(
+                SingleTargetRule::creature_controlled_by_actor(),
+            ),
             resolution: SpellResolutionProfile::DealDamage { damage },
         }
     }

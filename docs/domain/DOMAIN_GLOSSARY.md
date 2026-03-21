@@ -179,7 +179,14 @@ The current runtime models a small closed subset of spell target kinds and valid
 
 The explicit legal-target rule carried by a supported targeted spell.
 
-The current runtime supports a small closed set of single-target rules built from explicit player-target and creature-target semantics, currently including `AnyPlayer` and `AnyCreatureOnBattlefield`.
+The current runtime supports a small closed set of single-target rules built from explicit player-target and creature-target semantics.
+
+Supported examples currently include:
+
+- `AnyPlayer`
+- `OpponentOfActor`
+- `AnyCreatureOnBattlefield`
+- `CreatureControlledByActor`
 
 Legal-target evaluation is shared between casting and resolution for the current targeted-spell subset.
 
