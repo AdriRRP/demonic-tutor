@@ -59,6 +59,28 @@ impl GameplayWorld {
         self.reset_observations();
     }
 
+    pub fn setup_non_active_priority_after_blockers_declared_with_nonlethal_controlled_blocking_spell(
+        &mut self,
+    ) {
+        prepare_priority_after_blockers_declared(
+            self,
+            "bdd-combat-priority-blockers-controlled-blocker-spell-nonlethal",
+            vec![attacker_card()],
+            vec![
+                support::creature_card("bdd-blocker-priority", 0, 2, 3),
+                support::targeted_controlled_blocking_creature_damage_instant_card(
+                    "bdd-guardians-rally",
+                    0,
+                    1,
+                ),
+            ],
+        );
+        self.tracked_response_card_id =
+            Some(self.hand_card_by_definition("Bob", "bdd-guardians-rally"));
+        self.pass_priority("Alice");
+        self.reset_observations();
+    }
+
     pub fn setup_non_active_priority_after_blockers_declared_with_opponents_attacking_spell(
         &mut self,
     ) {

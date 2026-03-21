@@ -69,6 +69,15 @@ fn bob_has_priority_after_attackers_are_declared_with_an_opponent_attacking_crea
 }
 
 #[given(
+    "Bob has priority after attackers are declared with a nonlethal opponent-attacking-creature instant spell in hand"
+)]
+fn bob_has_priority_after_attackers_are_declared_with_a_nonlethal_opponent_attacking_creature_instant_spell_in_hand(
+    world: &mut GameplayWorld,
+) {
+    world.setup_non_active_priority_after_attackers_declared_with_nonlethal_opponents_attacking_spell();
+}
+
+#[given(
     "Alice has priority after attackers are declared with a controlled-attacking-creature instant spell in hand"
 )]
 fn alice_has_priority_after_attackers_are_declared_with_a_controlled_attacking_creature_instant_spell_in_hand(
@@ -102,6 +111,17 @@ fn bob_has_priority_after_blockers_are_declared_with_a_controlled_blocking_creat
     world: &mut GameplayWorld,
 ) {
     world.setup_non_active_priority_after_blockers_declared_with_controlled_blocking_spell();
+}
+
+#[given(
+    "Bob has priority after blockers are declared with a nonlethal controlled-blocking-creature instant spell in hand"
+)]
+fn bob_has_priority_after_blockers_are_declared_with_a_nonlethal_controlled_blocking_creature_instant_spell_in_hand(
+    world: &mut GameplayWorld,
+) {
+    world
+        .setup_non_active_priority_after_blockers_declared_with_nonlethal_controlled_blocking_spell(
+        );
 }
 
 #[given(

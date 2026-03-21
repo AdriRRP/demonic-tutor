@@ -1,6 +1,6 @@
 # status: implemented
 # rules: 601.2c, 601.2f, 608.2b, 509.1h
-# slices: controlled-blocking-creature-spell.md
+# slices: controlled-blocking-creature-spell.md, nonlethal-controlled-blocking-target-damage.md
 
 Feature: Target a controlled blocking creature with a supported instant spell
   Scenario: Bob cannot target Alice's attacker with a controlled-blocking-creature spell
@@ -15,3 +15,11 @@ Feature: Target a controlled blocking creature with a supported instant spell
     When Bob passes priority
     And Alice passes priority
     Then Bob's blocker dies
+
+  Scenario: Bob marks nonlethal damage on his blocker with a controlled-blocking-creature spell
+    Given Bob has priority after blockers are declared with a nonlethal controlled-blocking-creature instant spell in hand
+    When Bob casts the controlled-blocking-creature instant spell targeting his blocker
+    Then the spell is on the stack under Bob's control
+    When Bob passes priority
+    And Alice passes priority
+    Then Bob's blocker has 1 damage marked and remains blocking

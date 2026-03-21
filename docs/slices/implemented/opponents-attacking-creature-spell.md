@@ -9,6 +9,7 @@ Allow a supported targeted instant to require a creature that is attacking and c
 - add an explicit closed legal-target rule for `opponent-controlled attacking creature`
 - prove the rule in the post-attackers response window for the defending player
 - reject creatures that fail the opponent-or-attacking side of the rule
+- cover both lethal and nonlethal damage consequences for the supported spell profile
 
 ## Out Of Scope
 

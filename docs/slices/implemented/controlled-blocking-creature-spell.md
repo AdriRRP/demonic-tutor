@@ -9,6 +9,7 @@ Allow a supported targeted instant to require a creature that both blocks and is
 - add an explicit closed legal-target rule for `controlled blocking creature`
 - prove the rule in the current post-blockers response window for the defending player
 - reject combat creatures that do not satisfy both ownership and blocking status
+- cover both lethal and nonlethal damage consequences for the supported spell profile
 
 ## Out Of Scope
 
