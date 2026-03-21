@@ -4,6 +4,26 @@ use crate::domain::play::{
     ids::GameId,
 };
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum SupportedStateBasedActionCheck {
+    ZeroToughnessCreaturesDie,
+    LethalDamageCreaturesDie,
+    ZeroLifeEndsTheGame,
+}
+
+#[derive(Debug, Clone)]
+struct StateBasedActionCheckResult {
+    creatures_died: Vec<CreatureDied>,
+    game_ended: Option<GameEnded>,
+}
+
+impl StateBasedActionCheckResult {
+    #[must_use]
+    const fn changed(&self) -> bool {
+        !self.creatures_died.is_empty() || self.game_ended.is_some()
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct StateBasedActionsResult {
     pub creatures_died: Vec<CreatureDied>,
@@ -106,6 +126,38 @@ fn destroy_lethally_damaged_creatures(
     destroyed
 }
 
+const SUPPORTED_STATE_BASED_ACTION_CHECKS: [SupportedStateBasedActionCheck; 3] = [
+    SupportedStateBasedActionCheck::ZeroToughnessCreaturesDie,
+    SupportedStateBasedActionCheck::LethalDamageCreaturesDie,
+    SupportedStateBasedActionCheck::ZeroLifeEndsTheGame,
+];
+
+fn run_state_based_action_check(
+    check: SupportedStateBasedActionCheck,
+    game_id: &GameId,
+    players: &mut [Player],
+    terminal_state: &mut TerminalState,
+) -> Result<StateBasedActionCheckResult, crate::domain::play::errors::DomainError> {
+    match check {
+        SupportedStateBasedActionCheck::ZeroToughnessCreaturesDie => {
+            Ok(StateBasedActionCheckResult {
+                creatures_died: destroy_zero_toughness_creatures(game_id, players),
+                game_ended: None,
+            })
+        }
+        SupportedStateBasedActionCheck::LethalDamageCreaturesDie => {
+            Ok(StateBasedActionCheckResult {
+                creatures_died: destroy_lethally_damaged_creatures(game_id, players),
+                game_ended: None,
+            })
+        }
+        SupportedStateBasedActionCheck::ZeroLifeEndsTheGame => Ok(StateBasedActionCheckResult {
+            creatures_died: Vec::new(),
+            game_ended: end_game_for_zero_life(game_id, players, terminal_state)?,
+        }),
+    }
+}
+
 /// Resolves the currently supported state-based actions after a relevant gameplay action.
 ///
 /// The current review covers:
@@ -128,22 +180,19 @@ pub fn check_state_based_actions(
     loop {
         let mut changes = false;
 
-        let died = destroy_zero_toughness_creatures(game_id, players);
-        if !died.is_empty() {
-            changes = true;
-            total_creatures_died.extend(died);
-        }
+        for check in SUPPORTED_STATE_BASED_ACTION_CHECKS {
+            let result = run_state_based_action_check(check, game_id, players, terminal_state)?;
+            if result.changed() {
+                changes = true;
+            }
+            total_creatures_died.extend(result.creatures_died);
+            if let Some(event) = result.game_ended {
+                final_game_ended = Some(event);
+            }
 
-        let destroyed = destroy_lethally_damaged_creatures(game_id, players);
-        if !destroyed.is_empty() {
-            changes = true;
-            total_creatures_died.extend(destroyed);
-        }
-
-        let ended = end_game_for_zero_life(game_id, players, terminal_state)?;
-        if let Some(event) = ended {
-            changes = true;
-            final_game_ended = Some(event);
+            if terminal_state.is_over() {
+                break;
+            }
         }
 
         if !changes || terminal_state.is_over() {
