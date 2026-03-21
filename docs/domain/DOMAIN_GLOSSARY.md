@@ -159,6 +159,22 @@ Full support for stack behavior may be introduced in future slices.
 
 ---
 
+## Spell Target
+
+An explicit object chosen for a targeted spell while that spell is cast and represented on the stack.
+
+The current runtime supports only player and creature spell targets.
+
+---
+
+## Spell Target Kind
+
+The semantic category of object a spell is allowed to target.
+
+The current runtime models a small closed subset of spell target kinds and validates them explicitly during casting.
+
+---
+
 # Card Types
 
 ## Creature

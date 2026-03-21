@@ -105,15 +105,60 @@ impl CastingTimingProfile {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(u8)]
+pub enum SpellTargetKind {
+    Player = 1 << 0,
+    Creature = 1 << 1,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct SpellTargetKindSet(u8);
+
+impl SpellTargetKindSet {
+    #[must_use]
+    pub const fn empty() -> Self {
+        Self(0)
+    }
+
+    #[must_use]
+    pub const fn only(kind: SpellTargetKind) -> Self {
+        Self(kind as u8)
+    }
+
+    #[must_use]
+    pub const fn any_supported_target() -> Self {
+        Self::only(SpellTargetKind::Player).with(SpellTargetKind::Creature)
+    }
+
+    #[must_use]
+    pub const fn with(self, kind: SpellTargetKind) -> Self {
+        Self(self.0 | kind as u8)
+    }
+
+    #[must_use]
+    pub const fn contains(self, kind: SpellTargetKind) -> bool {
+        self.0 & kind as u8 != 0
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SpellTargetingProfile {
     None,
-    AnyTarget,
+    SingleTarget(SpellTargetKindSet),
 }
 
 impl SpellTargetingProfile {
     #[must_use]
     pub const fn requires_target(&self) -> bool {
         !matches!(self, Self::None)
+    }
+
+    #[must_use]
+    pub const fn accepts_kind(self, kind: SpellTargetKind) -> bool {
+        match self {
+            Self::None => false,
+            Self::SingleTarget(kinds) => kinds.contains(kind),
+        }
     }
 }
 
@@ -141,7 +186,9 @@ impl SupportedSpellRules {
     #[must_use]
     pub const fn deal_damage_to_any_target(damage: u32) -> Self {
         Self {
-            targeting: SpellTargetingProfile::AnyTarget,
+            targeting: SpellTargetingProfile::SingleTarget(
+                SpellTargetKindSet::any_supported_target(),
+            ),
             resolution: SpellResolutionProfile::DealDamage { damage },
         }
     }

@@ -1,5 +1,5 @@
 use crate::domain::play::{
-    cards::{CardInstance, CardType},
+    cards::{CardInstance, CardType, SpellTargetKind},
     ids::{CardInstanceId, GameId, PlayerId, StackObjectId},
 };
 
@@ -7,6 +7,16 @@ use crate::domain::play::{
 pub enum SpellTarget {
     Player(PlayerId),
     Creature(CardInstanceId),
+}
+
+impl SpellTarget {
+    #[must_use]
+    pub const fn kind(&self) -> SpellTargetKind {
+        match self {
+            Self::Player(_) => SpellTargetKind::Player,
+            Self::Creature(_) => SpellTargetKind::Creature,
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

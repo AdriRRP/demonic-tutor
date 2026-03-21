@@ -208,7 +208,7 @@ The current model includes:
 - automatic destruction of creatures with 0 toughness through the shared review of supported state-based actions
 - minimal stack-aware spell casting and spell resolution
 - explicit supported spell-effect profiles carried by card-face data rather than inferred from card-definition strings during resolution
-- explicit player or creature targeting for the currently supported targeted-spell subset
+- explicit target-kind profiles for the currently supported targeted-spell subset, currently covering players and creatures
 - casting player retaining priority immediately after putting a spell on the stack
 - instant responses by the current priority holder in the currently supported windows
 - opening an empty priority window when entering `Upkeep`

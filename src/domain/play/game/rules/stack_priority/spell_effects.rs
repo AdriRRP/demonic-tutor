@@ -9,6 +9,6 @@ pub const fn supported_spell_rules(card: &CardInstance) -> SupportedSpellRules {
 }
 
 #[must_use]
-pub const fn accepts_target(targeting: SpellTargetingProfile, _target: &SpellTarget) -> bool {
-    matches!(targeting, SpellTargetingProfile::AnyTarget)
+pub const fn accepts_target(targeting: SpellTargetingProfile, target: &SpellTarget) -> bool {
+    targeting.accepts_kind(target.kind())
 }

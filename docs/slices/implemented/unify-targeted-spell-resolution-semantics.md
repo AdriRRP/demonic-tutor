@@ -16,6 +16,7 @@ Centralize the minimal targeted-spell resolution path so player and creature tar
 - player damage, creature damage, and post-resolution SBA review are coordinated in one place
 - `PassPriority` observes targeted resolution through the same event surface as other spells
 - supported spell targeting and resolution are read from explicit card-face profiles instead of string-matching on card-definition ids
+- supported targeting now describes accepted target kinds explicitly rather than collapsing everything into a single `AnyTarget` shortcut
 
 ---
 
