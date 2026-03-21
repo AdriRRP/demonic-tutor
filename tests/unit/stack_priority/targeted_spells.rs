@@ -365,6 +365,64 @@ fn targeted_attacking_creature_spell_can_destroy_an_attacker_after_attackers() {
 }
 
 #[test]
+fn targeted_attacking_creature_spell_marks_nonlethal_damage_and_leaves_the_attacker_in_combat() {
+    let (service, mut game) = setup_two_player_game(
+        "game-target-attacking-nonlethal",
+        filled_library(
+            vec![
+                LibraryCard::creature(CardDefinitionId::new("attacker"), 0, 3, 3),
+                targeted_attacking_creature_damage_instant_card("marked-for-battle", 0, 1),
+            ],
+            10,
+        ),
+        filled_library(Vec::new(), 10),
+    );
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
+    let attacker_id = CardInstanceId::new("game-target-attacking-nonlethal-player-1-0");
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), attacker_id.clone()),
+        )
+        .unwrap();
+    let _ = resolve_current_stack(&service, &mut game);
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-2");
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
+    crate::support::advance_turn_raw(&service, &mut game);
+    crate::support::close_empty_priority_window(&service, &mut game);
+    crate::support::advance_turn_raw(&service, &mut game);
+    service
+        .declare_attackers(
+            &mut game,
+            DeclareAttackersCommand::new(PlayerId::new("player-1"), vec![attacker_id.clone()]),
+        )
+        .unwrap();
+
+    let spell_id = hand_card_id_by_definition(&game, 0, "marked-for-battle");
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), spell_id)
+                .with_target(SpellTarget::Creature(attacker_id.clone())),
+        )
+        .unwrap();
+
+    let resolution = resolve_current_stack(&service, &mut game);
+    assert!(resolution.creatures_died.is_empty());
+
+    let attacker = game.players()[0]
+        .battlefield()
+        .cards()
+        .iter()
+        .find(|card| card.id() == &attacker_id)
+        .unwrap();
+    assert_eq!(attacker.damage(), 1);
+    assert!(attacker.is_attacking());
+}
+
+#[test]
 fn targeted_instant_deals_damage_to_target_creature_and_state_based_actions_destroy_it() {
     let (service, mut game) = setup_two_player_game(
         "game-target-creature-resolve",
