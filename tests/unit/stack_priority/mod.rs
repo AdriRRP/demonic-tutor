@@ -98,6 +98,8 @@ mod resolve_targeted_blocking_creature_damage;
 mod respond_with_flash_artifact_spell;
 #[path = "respond_with_flash_creature_spell.rs"]
 mod respond_with_flash_creature_spell;
+#[path = "respond_with_flash_enchantment_spell.rs"]
+mod respond_with_flash_enchantment_spell;
 #[path = "respond_with_second_instant_in_beginning_of_combat_window.rs"]
 mod respond_with_second_instant_in_beginning_of_combat_window;
 #[path = "respond_with_second_instant_in_combat_damage_window.rs"]

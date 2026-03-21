@@ -275,6 +275,37 @@ impl GameplayWorld {
             Some(self.hand_card_by_definition("Bob", "bdd-response-artifact"));
     }
 
+    pub fn setup_spell_response_stack_with_flash_enchantment(&mut self) {
+        self.reset_game_with_libraries(
+            "bdd-spell-response-flash-enchantment",
+            support::filled_library(
+                vec![
+                    LibraryCard::creature(CardDefinitionId::new("bdd-primary-creature"), 1, 2, 2),
+                    support::land_card("bdd-forest"),
+                ],
+                10,
+            ),
+            support::filled_library(
+                vec![support::flash_enchantment_card(
+                    "bdd-response-enchantment",
+                    0,
+                )],
+                10,
+            ),
+        );
+
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &support::create_service(),
+            self.game_mut(),
+            "player-1",
+        );
+
+        self.tracked_card_id = Some(self.hand_card_by_definition("Alice", "bdd-primary-creature"));
+        self.tracked_blocker_id = Some(self.hand_card_by_definition("Alice", "bdd-forest"));
+        self.tracked_response_card_id =
+            Some(self.hand_card_by_definition("Bob", "bdd-response-enchantment"));
+    }
+
     pub fn setup_invalid_noninstant_response(&mut self) {
         self.reset_game_with_libraries(
             "bdd-invalid-response",
