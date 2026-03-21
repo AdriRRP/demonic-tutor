@@ -58,7 +58,7 @@ impl LibraryCard {
     #[must_use]
     pub const fn new(definition_id: CardDefinitionId, card_type: CardType, mana_cost: u32) -> Self {
         Self {
-            definition: CardDefinition::new(definition_id, mana_cost),
+            definition: CardDefinition::for_card_type(definition_id, mana_cost, &card_type),
             card_type,
             creature: None,
         }
@@ -78,7 +78,11 @@ impl LibraryCard {
         toughness: u32,
     ) -> Self {
         Self {
-            definition: CardDefinition::new(definition_id, mana_cost),
+            definition: CardDefinition::for_card_type(
+                definition_id,
+                mana_cost,
+                &CardType::Creature,
+            ),
             card_type: CardType::Creature,
             creature: Some(LibraryCreature::new(power, toughness)),
         }
@@ -93,7 +97,11 @@ impl LibraryCard {
         keyword_abilities: KeywordAbilitySet,
     ) -> Self {
         Self {
-            definition: CardDefinition::new(definition_id, mana_cost),
+            definition: CardDefinition::for_card_type(
+                definition_id,
+                mana_cost,
+                &CardType::Creature,
+            ),
             card_type: CardType::Creature,
             creature: Some(LibraryCreature::with_keywords(
                 power,

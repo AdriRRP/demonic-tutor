@@ -9,9 +9,9 @@ domain terms instead of as an ad-hoc boolean combination.
 
 In scope:
 
-- introducing a `CardType` helper that identifies sorcery-speed spell types
-- using that helper inside stack casting legality checks
-- adding unit coverage for the helper semantics
+- introducing an explicit casting-timing profile carried by the card face
+- using that profile inside stack casting legality checks
+- adding unit coverage for the supported timing-profile semantics
 
 Out of scope:
 

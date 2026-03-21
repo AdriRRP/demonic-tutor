@@ -1,4 +1,6 @@
-use demonictutor::domain::play::cards::{CardDefinition, CardInstance, CardType};
+use demonictutor::domain::play::cards::{
+    CardDefinition, CardInstance, CardType, CastingTimingProfile,
+};
 use demonictutor::domain::play::ids::{CardDefinitionId, CardInstanceId};
 
 #[test]
@@ -95,16 +97,33 @@ fn test_is_permanent_returns_false_for_non_permanent_types() {
 }
 
 #[test]
-fn test_is_sorcery_speed_spell_returns_true_for_noninstant_spells() {
-    assert!(CardType::Creature.is_sorcery_speed_spell());
-    assert!(CardType::Sorcery.is_sorcery_speed_spell());
-    assert!(CardType::Artifact.is_sorcery_speed_spell());
-    assert!(CardType::Enchantment.is_sorcery_speed_spell());
-    assert!(CardType::Planeswalker.is_sorcery_speed_spell());
-}
-
-#[test]
-fn test_is_sorcery_speed_spell_returns_false_for_land_and_instant() {
-    assert!(!CardType::Land.is_sorcery_speed_spell());
-    assert!(!CardType::Instant.is_sorcery_speed_spell());
+fn test_casting_timing_profile_for_card_type_matches_supported_model() {
+    assert_eq!(
+        CastingTimingProfile::for_card_type(&CardType::Instant),
+        CastingTimingProfile::InstantSpeed
+    );
+    assert_eq!(
+        CastingTimingProfile::for_card_type(&CardType::Creature),
+        CastingTimingProfile::SorcerySpeed
+    );
+    assert_eq!(
+        CastingTimingProfile::for_card_type(&CardType::Sorcery),
+        CastingTimingProfile::SorcerySpeed
+    );
+    assert_eq!(
+        CastingTimingProfile::for_card_type(&CardType::Artifact),
+        CastingTimingProfile::SorcerySpeed
+    );
+    assert_eq!(
+        CastingTimingProfile::for_card_type(&CardType::Enchantment),
+        CastingTimingProfile::SorcerySpeed
+    );
+    assert_eq!(
+        CastingTimingProfile::for_card_type(&CardType::Planeswalker),
+        CastingTimingProfile::SorcerySpeed
+    );
+    assert_eq!(
+        CastingTimingProfile::for_card_type(&CardType::Land),
+        CastingTimingProfile::SorcerySpeed
+    );
 }

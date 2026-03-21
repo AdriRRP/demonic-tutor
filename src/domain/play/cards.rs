@@ -65,21 +65,42 @@ impl CardType {
     }
 
     #[must_use]
-    pub const fn is_instant(&self) -> bool {
-        matches!(self, Self::Instant)
-    }
-
-    #[must_use]
-    pub const fn is_sorcery_speed_spell(&self) -> bool {
-        self.is_spell_card() && !self.is_instant()
-    }
-
-    #[must_use]
     pub const fn is_permanent(&self) -> bool {
         matches!(
             self,
             Self::Land | Self::Creature | Self::Enchantment | Self::Artifact | Self::Planeswalker
         )
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CastingTimingProfile {
+    InstantSpeed,
+    SorcerySpeed,
+}
+
+impl CastingTimingProfile {
+    #[must_use]
+    pub const fn for_card_type(card_type: &CardType) -> Self {
+        match card_type {
+            CardType::Instant => Self::InstantSpeed,
+            CardType::Creature
+            | CardType::Sorcery
+            | CardType::Enchantment
+            | CardType::Artifact
+            | CardType::Planeswalker
+            | CardType::Land => Self::SorcerySpeed,
+        }
+    }
+
+    #[must_use]
+    pub const fn allows_cast_while_holding_priority(self) -> bool {
+        matches!(self, Self::InstantSpeed)
+    }
+
+    #[must_use]
+    pub const fn requires_empty_main_phase_window(self) -> bool {
+        matches!(self, Self::SorcerySpeed)
     }
 }
 
@@ -100,6 +121,7 @@ impl SpellEffectProfile {
 pub struct CardDefinition {
     id: CardDefinitionId,
     mana_cost: u32,
+    casting_timing: CastingTimingProfile,
     spell_effect: SpellEffectProfile,
 }
 
@@ -109,6 +131,17 @@ impl CardDefinition {
         Self {
             id,
             mana_cost,
+            casting_timing: CastingTimingProfile::SorcerySpeed,
+            spell_effect: SpellEffectProfile::None,
+        }
+    }
+
+    #[must_use]
+    pub const fn for_card_type(id: CardDefinitionId, mana_cost: u32, card_type: &CardType) -> Self {
+        Self {
+            id,
+            mana_cost,
+            casting_timing: CastingTimingProfile::for_card_type(card_type),
             spell_effect: SpellEffectProfile::None,
         }
     }
@@ -127,6 +160,11 @@ impl CardDefinition {
     #[must_use]
     pub const fn mana_cost(&self) -> u32 {
         self.mana_cost
+    }
+
+    #[must_use]
+    pub const fn casting_timing(&self) -> CastingTimingProfile {
+        self.casting_timing
     }
 
     #[must_use]
@@ -172,15 +210,6 @@ struct CardFace {
     card_type: CardType,
 }
 
-impl CardFace {
-    const fn new(definition_id: CardDefinitionId, card_type: CardType, mana_cost: u32) -> Self {
-        Self {
-            definition: CardDefinition::new(definition_id, mana_cost),
-            card_type,
-        }
-    }
-}
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CardInstance {
     id: CardInstanceId,
@@ -214,7 +243,11 @@ impl CardInstance {
         card_type: CardType,
         mana_cost: u32,
     ) -> Self {
-        Self::from_definition(id, CardDefinition::new(definition_id, mana_cost), card_type)
+        Self::from_definition(
+            id,
+            CardDefinition::for_card_type(definition_id, mana_cost, &card_type),
+            card_type,
+        )
     }
 
     #[must_use]
@@ -227,7 +260,14 @@ impl CardInstance {
     ) -> Self {
         Self {
             id,
-            face: CardFace::new(definition_id, CardType::Creature, mana_cost),
+            face: CardFace {
+                definition: CardDefinition::for_card_type(
+                    definition_id,
+                    mana_cost,
+                    &CardType::Creature,
+                ),
+                card_type: CardType::Creature,
+            },
             flags: FLAG_SUMMONING_SICKNESS,
             creature: Some(CreatureRuntime::new(power, toughness)),
         }
@@ -277,6 +317,11 @@ impl CardInstance {
     #[must_use]
     pub const fn mana_cost(&self) -> u32 {
         self.face.definition.mana_cost()
+    }
+
+    #[must_use]
+    pub const fn casting_timing_profile(&self) -> CastingTimingProfile {
+        self.face.definition.casting_timing()
     }
 
     #[must_use]

@@ -7,7 +7,10 @@ pub use application::{EventBus, EventStore, GameService};
 pub use infrastructure::{GameLogProjection, InMemoryEventBus, InMemoryEventStore};
 
 pub use domain::play::{
-    cards::{CardInstance, CardType, KeywordAbility, KeywordAbilitySet, SpellEffectProfile},
+    cards::{
+        CardInstance, CardType, CastingTimingProfile, KeywordAbility, KeywordAbilitySet,
+        SpellEffectProfile,
+    },
     commands::{
         AdjustPlayerLifeEffectCommand, AdvanceTurnCommand, CastSpellCommand,
         DealOpeningHandsCommand, DeclareAttackersCommand, DeclareBlockersCommand,

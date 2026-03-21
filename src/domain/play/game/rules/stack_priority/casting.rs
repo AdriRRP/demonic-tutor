@@ -3,7 +3,7 @@ use super::{
     CastSpellOutcome, StackPriorityContext,
 };
 use crate::domain::play::{
-    cards::{CardType, SpellEffectProfile},
+    cards::{CardType, CastingTimingProfile, SpellEffectProfile},
     commands::CastSpellCommand,
     errors::{CardError, DomainError, GameError, PhaseError},
     events::SpellPutOnStack,
@@ -24,19 +24,21 @@ fn require_cast_timing(
     priority: Option<&PriorityState>,
     player_id: &PlayerId,
     card_id: &CardInstanceId,
-    card_type: &CardType,
+    casting_timing: CastingTimingProfile,
 ) -> Result<(), DomainError> {
     if let Some(priority) = priority {
         invariants::require_priority_holder(Some(priority), player_id)?;
 
-        if card_type.is_instant() {
+        if casting_timing.allows_cast_while_holding_priority() {
             return Ok(());
         }
 
         let active_player_in_empty_main_phase_window = stack.is_empty()
             && player_id == active_player
             && matches!(phase, Phase::FirstMain | Phase::SecondMain);
-        if card_type.is_sorcery_speed_spell() && active_player_in_empty_main_phase_window {
+        if casting_timing.requires_empty_main_phase_window()
+            && active_player_in_empty_main_phase_window
+        {
             return Ok(());
         }
 
@@ -147,6 +149,7 @@ pub fn cast_spell(
             })
         })?;
     let card_type = hand_card.card_type().clone();
+    let casting_timing = hand_card.casting_timing_profile();
 
     if card_type.is_land() {
         return Err(DomainError::Card(CardError::CannotCastLand(card_id)));
@@ -159,7 +162,7 @@ pub fn cast_spell(
         priority.as_ref(),
         &player_id,
         &card_id,
-        &card_type,
+        casting_timing,
     )?;
 
     let effect = spell_effect(&hand_card);
