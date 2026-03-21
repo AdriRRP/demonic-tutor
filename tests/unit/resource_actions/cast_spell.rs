@@ -206,6 +206,94 @@ fn opponent_can_cast_an_instant_response_after_the_caster_passes_priority() {
 }
 
 #[test]
+fn opponent_can_tap_a_land_and_pay_for_an_instant_response_in_the_same_window() {
+    let alice_cards = vec![instant_card("alice-shock", 0); 10];
+    let bob_cards = vec![instant_card("bob-shock", 1); 5]
+        .into_iter()
+        .chain(vec![land_card("mountain"); 5])
+        .collect();
+
+    let (service, mut game) =
+        setup_two_player_game("game-respond-instant-with-mana", alice_cards, bob_cards);
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-2");
+    let bob_land = game.players()[1]
+        .hand()
+        .cards()
+        .iter()
+        .find(|card| matches!(card.card_type(), CardType::Land))
+        .unwrap()
+        .id()
+        .clone();
+    service
+        .play_land(
+            &mut game,
+            PlayLandCommand::new(PlayerId::new("player-2"), bob_land.clone()),
+        )
+        .unwrap();
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
+    let alice_spell = game.players()[0]
+        .hand()
+        .cards()
+        .iter()
+        .find(|card| card.definition_id() == &CardDefinitionId::new("alice-shock"))
+        .unwrap()
+        .id()
+        .clone();
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), alice_spell),
+        )
+        .unwrap();
+
+    service
+        .pass_priority(
+            &mut game,
+            demonictutor::PassPriorityCommand::new(PlayerId::new("player-1")),
+        )
+        .unwrap();
+    assert_eq!(
+        game.priority().unwrap().current_holder(),
+        &PlayerId::new("player-2")
+    );
+
+    let (_, mana_event) = service
+        .tap_land(
+            &mut game,
+            TapLandCommand::new(PlayerId::new("player-2"), bob_land),
+        )
+        .unwrap();
+    assert_eq!(mana_event.amount, 1);
+    assert_eq!(game.players()[1].mana(), 1);
+
+    let bob_spell = game.players()[1]
+        .hand()
+        .cards()
+        .iter()
+        .find(|card| matches!(card.card_type(), CardType::Instant))
+        .unwrap()
+        .id()
+        .clone();
+    let response = service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-2"), bob_spell.clone()),
+        )
+        .unwrap();
+
+    assert_eq!(response.spell_put_on_stack.card_id, bob_spell);
+    assert_eq!(response.spell_put_on_stack.mana_cost_paid, 1);
+    assert_eq!(game.players()[1].mana(), 0);
+    assert_eq!(game.stack().len(), 2);
+    assert_eq!(
+        game.stack().top().unwrap().controller_id(),
+        &PlayerId::new("player-2")
+    );
+}
+
+#[test]
 fn opponent_cannot_cast_a_creature_as_a_response_after_the_caster_passes() {
     let (service, mut game) = setup_two_player_game(
         "game-respond-creature",
