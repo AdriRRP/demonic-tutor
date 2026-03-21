@@ -4,6 +4,8 @@ pub mod support;
 mod actions;
 mod queries;
 mod setup;
+mod setup_combat_windows;
+mod setup_priority_windows;
 
 use demonictutor::{
     CardDiscarded, CardDrawn, CardExiled, CardInstanceId, CombatDamageResolved, CreatureDied, Game,
