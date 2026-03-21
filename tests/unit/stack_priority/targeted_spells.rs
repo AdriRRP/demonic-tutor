@@ -241,3 +241,58 @@ fn targeted_instant_deals_damage_to_target_creature_and_state_based_actions_dest
         .all(|card| card.definition_id() != &CardDefinitionId::new("bob-bear")));
     assert_eq!(game.players()[1].graveyard().cards().len(), 1);
 }
+
+#[test]
+fn targeted_instant_does_not_apply_if_its_only_creature_target_is_gone_on_resolution() {
+    let (service, mut game) = setup_two_player_game(
+        "game-target-creature-gone",
+        filled_library(
+            vec![
+                land_card("mountain"),
+                targeted_damage_instant_card("shock-a", 0, 2),
+                targeted_damage_instant_card("shock-b", 0, 2),
+            ],
+            10,
+        ),
+        filled_library(vec![creature_card("bob-bear", 0, 2, 2)], 10),
+    );
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-2");
+    let creature_id = CardInstanceId::new("game-target-creature-gone-player-2-0");
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-2"), creature_id.clone()),
+        )
+        .unwrap();
+    let _ = resolve_current_stack(&service, &mut game);
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
+
+    let first_shock_id = hand_card_id_by_definition(&game, 0, "shock-a");
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), first_shock_id)
+                .with_target(SpellTarget::Creature(creature_id.clone())),
+        )
+        .unwrap();
+
+    let second_shock_id = hand_card_id_by_definition(&game, 0, "shock-b");
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), second_shock_id)
+                .with_target(SpellTarget::Creature(creature_id.clone())),
+        )
+        .unwrap();
+
+    let first_resolution = resolve_current_stack(&service, &mut game);
+    assert_eq!(first_resolution.creatures_died.len(), 1);
+    assert_eq!(first_resolution.creatures_died[0].card_id, creature_id);
+
+    let second_resolution = resolve_current_stack(&service, &mut game);
+    assert!(second_resolution.life_changed.is_none());
+    assert!(second_resolution.creatures_died.is_empty());
+    assert!(game.players()[1].battlefield().cards().is_empty());
+    assert_eq!(game.players()[1].graveyard().cards().len(), 1);
+}

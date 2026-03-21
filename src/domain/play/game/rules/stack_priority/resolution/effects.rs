@@ -12,6 +12,19 @@ use crate::domain::play::{
 
 type SpellResolutionSideEffects = (Option<LifeChanged>, Vec<CreatureDied>, Option<GameEnded>);
 
+fn can_apply_to_target(players: &[Player], target: &SpellTarget) -> bool {
+    match target {
+        SpellTarget::Player(player_id) => players.iter().any(|player| player.id() == player_id),
+        SpellTarget::Creature(card_id) => players.iter().any(|player| {
+            player
+                .battlefield()
+                .cards()
+                .iter()
+                .any(|card| card.id() == card_id)
+        }),
+    }
+}
+
 fn apply_damage_to_creature(players: &mut [Player], target_id: &CardInstanceId, damage: u32) {
     for player in players.iter_mut() {
         if let Some(card) = player.battlefield_mut().card_mut(target_id) {
@@ -50,6 +63,10 @@ pub(super) fn apply_supported_spell_rules(
                     "targeted spell resolved without target".to_string(),
                 )));
             };
+
+            if !can_apply_to_target(players, target) {
+                return review_state_based_actions(game_id, players, terminal_state);
+            }
 
             let life_changed = match target {
                 SpellTarget::Player(player_id) => {

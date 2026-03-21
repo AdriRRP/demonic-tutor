@@ -17,6 +17,7 @@ Centralize the minimal targeted-spell resolution path so player and creature tar
 - `PassPriority` observes targeted resolution through the same event surface as other spells
 - supported spell targeting and resolution are read from explicit card-face profiles instead of string-matching on card-definition ids
 - supported targeting now carries explicit legal-target rules rather than collapsing everything into a generic `AnyTarget` shortcut
+- a targeted damage spell whose only creature target is no longer legal on resolution leaves the stack normally but does not apply its effect
 
 ---
 
