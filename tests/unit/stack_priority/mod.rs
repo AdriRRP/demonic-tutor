@@ -34,6 +34,8 @@ mod cast_sorcery_in_main_window;
 mod reject_planeswalker_response;
 #[path = "reject_sorcery_response.rs"]
 mod reject_sorcery_response;
+#[path = "respond_with_flash_creature_spell.rs"]
+mod respond_with_flash_creature_spell;
 #[path = "respond_with_second_instant_in_beginning_of_combat_window.rs"]
 mod respond_with_second_instant_in_beginning_of_combat_window;
 #[path = "respond_with_second_instant_in_combat_damage_window.rs"]
