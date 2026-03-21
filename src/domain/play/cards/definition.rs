@@ -1,0 +1,61 @@
+use super::{CardType, CastingPermissionProfile, SupportedSpellRules};
+use crate::domain::play::ids::CardDefinitionId;
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CardDefinition {
+    id: CardDefinitionId,
+    mana_cost: u32,
+    casting_permission: CastingPermissionProfile,
+    supported_spell_rules: SupportedSpellRules,
+}
+
+impl CardDefinition {
+    #[must_use]
+    pub const fn new(id: CardDefinitionId, mana_cost: u32) -> Self {
+        Self {
+            id,
+            mana_cost,
+            casting_permission: CastingPermissionProfile::ActivePlayerEmptyMainPhaseWindow,
+            supported_spell_rules: SupportedSpellRules::none(),
+        }
+    }
+
+    #[must_use]
+    pub const fn for_card_type(id: CardDefinitionId, mana_cost: u32, card_type: &CardType) -> Self {
+        Self {
+            id,
+            mana_cost,
+            casting_permission: CastingPermissionProfile::for_card_type(card_type),
+            supported_spell_rules: SupportedSpellRules::none(),
+        }
+    }
+
+    #[must_use]
+    pub const fn with_supported_spell_rules(
+        mut self,
+        supported_spell_rules: SupportedSpellRules,
+    ) -> Self {
+        self.supported_spell_rules = supported_spell_rules;
+        self
+    }
+
+    #[must_use]
+    pub const fn id(&self) -> &CardDefinitionId {
+        &self.id
+    }
+
+    #[must_use]
+    pub const fn mana_cost(&self) -> u32 {
+        self.mana_cost
+    }
+
+    #[must_use]
+    pub const fn casting_permission(&self) -> CastingPermissionProfile {
+        self.casting_permission
+    }
+
+    #[must_use]
+    pub const fn supported_spell_rules(&self) -> SupportedSpellRules {
+        self.supported_spell_rules
+    }
+}
