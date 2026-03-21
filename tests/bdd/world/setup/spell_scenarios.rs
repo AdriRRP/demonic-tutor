@@ -414,6 +414,43 @@ impl GameplayWorld {
             Some(self.hand_card_by_definition("Bob", "bdd-response-enchantment"));
     }
 
+    pub fn setup_spell_response_stack_with_mana_paid_instant(&mut self) {
+        let alice_cards = vec![support::instant_card("bdd-primary-instant", 0); 10];
+        let bob_cards = vec![support::instant_card("bdd-response-paid-instant", 1); 5]
+            .into_iter()
+            .chain(vec![support::land_card("bdd-bob-mountain"); 5])
+            .collect();
+
+        self.reset_game_with_libraries("bdd-spell-response-paid-instant", alice_cards, bob_cards);
+
+        let service = support::create_service();
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-2",
+        );
+
+        let bob_land = self.hand_card_by_definition("Bob", "bdd-bob-mountain");
+        service
+            .play_land(
+                self.game_mut(),
+                demonictutor::PlayLandCommand::new(Self::player_id("Bob"), bob_land.clone()),
+            )
+            .expect("Bob should be able to play his setup land");
+
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-1",
+        );
+
+        self.tracked_card_id = Some(self.hand_card_by_definition("Alice", "bdd-primary-instant"));
+        self.tracked_blocker_id = None;
+        self.tracked_response_card_id =
+            Some(self.hand_card_by_definition("Bob", "bdd-response-paid-instant"));
+        self.tracked_second_response_card_id = Some(bob_land);
+    }
+
     pub fn setup_invalid_noninstant_response(&mut self) {
         self.reset_game_with_libraries(
             "bdd-invalid-response",

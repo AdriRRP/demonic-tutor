@@ -93,6 +93,7 @@ The domain currently includes:
 - currently supported open priority windows exist in `Upkeep`, `Draw`, `FirstMain`, `BeginningOfCombat`, post-attackers, post-blockers, `EndOfCombat`, `SecondMain`, and `EndStep`
 - in each currently supported instant-speed window, the active player may cast an instant and self-stack a second instant before passing priority
 - in each currently supported instant-speed window, the non-active player may respond with an instant after the first pass and may self-stack a second instant before passing priority
+- the current response corridor also supports producing generic mana from a land and immediately spending it to cast a paid instant response on the same open stack
 - sorcery-speed spells are supported for the active player in empty `FirstMain` and `SecondMain` windows for the currently modeled spell-card subset: creature, sorcery, artifact, enchantment, and planeswalker
 - the current supported spell-card subset also allows explicit card-face casting rules that open non-instant spells to open priority windows, providing minimal `Flash`-like support for the currently exercised subset
 - the current minimal `Flash`-like support is currently exercised by supported creatures in `Upkeep`, `BeginningOfCombat`, on an existing stack response window, and after attackers, blockers, or combat damage, and by supported artifact and enchantment spells on an existing stack response window, in `BeginningOfCombat`, and after blockers or combat damage

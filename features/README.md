@@ -129,6 +129,7 @@ The following features are currently executed by `tests/bdd.rs`, grouped by area
 
 - `features/stack/stack_foundation.feature`
 - `features/stack/respond_with_instant_spell.feature`
+- `features/stack/respond_with_paid_instant_spell.feature`
 - `features/stack/respond_in_upkeep_window.feature`
 - `features/stack/respond_in_draw_window.feature`
 - `features/stack/respond_in_first_main_window.feature`

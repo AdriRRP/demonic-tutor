@@ -64,9 +64,28 @@ fn bob_has_priority_after_combat_damage_with_an_instant_card_in_hand(world: &mut
     world.setup_non_active_priority_after_combat_damage_with_instant();
 }
 
+#[given("Alice has cast a creature spell and Bob can pay for an instant response with a land on the battlefield")]
+fn alice_has_cast_a_creature_spell_and_bob_can_pay_for_an_instant_response_with_a_land_on_the_battlefield(
+    world: &mut GameplayWorld,
+) {
+    world.setup_spell_response_stack_with_mana_paid_instant();
+    world.cast_tracked_spell("Alice");
+    world.pass_priority("Alice");
+    let priority = world
+        .game()
+        .priority()
+        .expect("response window should be open");
+    assert_eq!(priority.current_holder(), &GameplayWorld::player_id("Bob"));
+}
+
 #[when("Bob casts the instant response spell")]
 fn bob_casts_the_instant_response_spell(world: &mut GameplayWorld) {
     world.cast_tracked_response_spell("Bob");
+}
+
+#[when("Bob taps his land for mana")]
+fn bob_taps_his_land_for_mana(world: &mut GameplayWorld) {
+    world.tap_tracked_response_land_for_mana("Bob");
 }
 
 #[when("Bob casts the instant spell")]

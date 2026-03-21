@@ -43,6 +43,7 @@ async fn run_stack_features() {
     run_features(&[
         "features/stack/stack_foundation.feature",
         "features/stack/respond_with_instant_spell.feature",
+        "features/stack/respond_with_paid_instant_spell.feature",
         "features/stack/respond_in_upkeep_window.feature",
         "features/stack/respond_in_draw_window.feature",
         "features/stack/respond_in_first_main_window.feature",
