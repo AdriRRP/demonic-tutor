@@ -131,6 +131,8 @@ Do not close a targeting-capable spell slice with only the runtime change while 
 
 When adding combat-relative target rules, validate them against the live combat state carried by the aggregate, not only against target kind or battlefield existence.
 
+When extending minimal `Flash`-like support, model it through explicit casting rules on the card face and prove it in the concrete priority windows that the runtime actually opens.
+
 When new gameplay semantics are introduced through stack, combat, or state-based actions, verify whether:
 
 - feature headers still reflect reality

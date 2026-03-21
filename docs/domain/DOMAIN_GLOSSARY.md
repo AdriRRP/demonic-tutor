@@ -188,6 +188,7 @@ Supported examples currently include:
 - `AnyCreatureOnBattlefield`
 - `CreatureControlledByActor`
 - `AttackingCreature`
+- `BlockingCreature`
 
 Legal-target evaluation is shared between casting and resolution for the current targeted-spell subset.
 
@@ -229,7 +230,7 @@ In the current runtime model, spell cards are cast through `CastSpell` onto an e
 
 A card-specific casting permission that allows a non-instant spell card to be cast in an open priority window.
 
-The current runtime does not model the full keyword as free text. Instead, supported cards may carry explicit casting rules on their card face that produce minimal `Flash`-like behavior.
+The current runtime does not model the full keyword as free text. Instead, supported cards may carry explicit casting rules on their card face that produce minimal `Flash`-like behavior across the currently supported priority windows.
 
 ---
 
