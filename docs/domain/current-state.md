@@ -64,7 +64,7 @@ The domain currently includes:
 
 - game sessions
 - players
-- card instances
+- card instances with immutable face data and mutable runtime state
 - basic zones (library, hand, battlefield, graveyard, exile)
 - mana production from lands
 - spell casting with mana cost

@@ -75,7 +75,7 @@ impl CardDefinition {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-struct CreatureState {
+struct CreatureRuntime {
     power: u32,
     toughness: u32,
     damage: u32,
@@ -84,7 +84,7 @@ struct CreatureState {
     reach: bool,
 }
 
-impl CreatureState {
+impl CreatureRuntime {
     const fn new(power: u32, toughness: u32) -> Self {
         Self {
             power,
@@ -109,13 +109,26 @@ impl CreatureState {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+struct CardFace {
+    definition: CardDefinition,
+    card_type: CardType,
+}
+
+impl CardFace {
+    const fn new(definition_id: CardDefinitionId, card_type: CardType, mana_cost: u32) -> Self {
+        Self {
+            definition: CardDefinition::new(definition_id, mana_cost),
+            card_type,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CardInstance {
     id: CardInstanceId,
-    definition_id: CardDefinitionId,
-    card_type: CardType,
-    mana_cost: u32,
+    face: CardFace,
     flags: u8,
-    creature: Option<CreatureState>,
+    creature: Option<CreatureRuntime>,
 }
 
 impl CardInstance {
@@ -128,9 +141,7 @@ impl CardInstance {
     ) -> Self {
         Self {
             id,
-            definition_id,
-            card_type,
-            mana_cost,
+            face: CardFace::new(definition_id, card_type, mana_cost),
             flags: 0,
             creature: None,
         }
@@ -146,11 +157,9 @@ impl CardInstance {
     ) -> Self {
         Self {
             id,
-            definition_id,
-            card_type: CardType::Creature,
-            mana_cost,
+            face: CardFace::new(definition_id, CardType::Creature, mana_cost),
             flags: FLAG_SUMMONING_SICKNESS,
-            creature: Some(CreatureState::new(power, toughness)),
+            creature: Some(CreatureRuntime::new(power, toughness)),
         }
     }
 
@@ -166,11 +175,9 @@ impl CardInstance {
     ) -> Self {
         Self {
             id,
-            definition_id,
-            card_type: CardType::Creature,
-            mana_cost,
+            face: CardFace::new(definition_id, CardType::Creature, mana_cost),
             flags: FLAG_SUMMONING_SICKNESS,
-            creature: Some(CreatureState::new_with_keywords(
+            creature: Some(CreatureRuntime::new_with_keywords(
                 power, toughness, flying, reach,
             )),
         }
@@ -183,12 +190,12 @@ impl CardInstance {
 
     #[must_use]
     pub const fn definition_id(&self) -> &CardDefinitionId {
-        &self.definition_id
+        self.face.definition.id()
     }
 
     #[must_use]
     pub const fn card_type(&self) -> &CardType {
-        &self.card_type
+        &self.face.card_type
     }
 
     #[must_use]
@@ -198,7 +205,7 @@ impl CardInstance {
 
     #[must_use]
     pub const fn mana_cost(&self) -> u32 {
-        self.mana_cost
+        self.face.definition.mana_cost()
     }
 
     #[must_use]
@@ -219,7 +226,7 @@ impl CardInstance {
 
     #[must_use]
     pub const fn creature_stats(&self) -> Option<(u32, u32)> {
-        match (&self.card_type, &self.creature) {
+        match (&self.face.card_type, &self.creature) {
             (CardType::Creature, Some(creature)) => Some((creature.power, creature.toughness)),
             _ => None,
         }

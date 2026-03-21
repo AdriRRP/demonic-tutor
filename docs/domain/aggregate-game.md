@@ -168,6 +168,11 @@ Current implementation:
 
 Represents a concrete instance of a card inside a match.
 
+The current runtime model separates:
+
+- immutable card-face data (`definition id`, `type`, `mana cost`)
+- mutable gameplay state (`tapped`, combat flags, creature runtime state)
+
 Fields include:
 
 - `CardInstanceId`
