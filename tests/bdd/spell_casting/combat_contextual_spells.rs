@@ -78,6 +78,24 @@ fn alice_has_priority_after_attackers_are_declared_with_a_controlled_attacking_c
 }
 
 #[given(
+    "Alice has priority after attackers are declared with a nonlethal controlled-attacking-creature instant spell in hand"
+)]
+fn alice_has_priority_after_attackers_are_declared_with_a_nonlethal_controlled_attacking_creature_instant_spell_in_hand(
+    world: &mut GameplayWorld,
+) {
+    world.setup_priority_after_attackers_declared_with_nonlethal_controlled_attacking_spell();
+}
+
+#[given(
+    "Bob has priority after attackers are declared with a controlled-attacking-creature instant spell in hand"
+)]
+fn bob_has_priority_after_attackers_are_declared_with_a_controlled_attacking_creature_instant_spell_in_hand(
+    world: &mut GameplayWorld,
+) {
+    world.setup_non_active_priority_after_attackers_declared_with_controlled_attacking_spell();
+}
+
+#[given(
     "Bob has priority after blockers are declared with a controlled-blocking-creature instant spell in hand"
 )]
 fn bob_has_priority_after_blockers_are_declared_with_a_controlled_blocking_creature_instant_spell_in_hand(
@@ -102,6 +120,24 @@ fn alice_has_priority_after_blockers_are_declared_with_an_opponent_blocking_crea
     world: &mut GameplayWorld,
 ) {
     world.setup_priority_after_blockers_declared_with_opponents_blocking_spell();
+}
+
+#[given(
+    "Alice has priority after blockers are declared with a nonlethal opponent-blocking-creature instant spell in hand"
+)]
+fn alice_has_priority_after_blockers_are_declared_with_a_nonlethal_opponent_blocking_creature_instant_spell_in_hand(
+    world: &mut GameplayWorld,
+) {
+    world.setup_priority_after_blockers_declared_with_nonlethal_opponents_blocking_spell();
+}
+
+#[given(
+    "Bob has priority after blockers are declared with an opponent-blocking-creature instant spell in hand"
+)]
+fn bob_has_priority_after_blockers_are_declared_with_an_opponent_blocking_creature_instant_spell_in_hand(
+    world: &mut GameplayWorld,
+) {
+    world.setup_non_active_priority_after_blockers_declared_with_opponents_blocking_spell();
 }
 
 #[when("Alice casts the blocking-creature instant spell targeting Bob")]
@@ -158,11 +194,25 @@ fn alice_casts_the_controlled_attacking_creature_instant_spell_targeting_her_att
     world.cast_tracked_targeted_attacker_spell("Alice");
 }
 
+#[when("Bob casts the controlled-attacking-creature instant spell targeting Alice's attacker")]
+fn bob_casts_the_controlled_attacking_creature_instant_spell_targeting_alices_attacker(
+    world: &mut GameplayWorld,
+) {
+    world.try_cast_tracked_targeted_response_spell_at_attacker("Bob");
+}
+
 #[when("Alice casts the opponent-blocking-creature instant spell targeting Bob's blocker")]
 fn alice_casts_the_opponent_blocking_creature_instant_spell_targeting_bobs_blocker(
     world: &mut GameplayWorld,
 ) {
     world.cast_tracked_targeted_creature_spell("Alice");
+}
+
+#[when("Bob casts the opponent-blocking-creature instant spell targeting his blocker")]
+fn bob_casts_the_opponent_blocking_creature_instant_spell_targeting_his_blocker(
+    world: &mut GameplayWorld,
+) {
+    world.try_cast_tracked_targeted_response_spell_at_blocker("Bob");
 }
 
 #[then("casting fails because the spell only supports creature targets")]
@@ -194,6 +244,13 @@ fn bobs_blocker_has_1_damage_marked_and_remains_blocking(world: &mut GameplayWor
     let blocker = world.tracked_blocker();
     assert_eq!(blocker.damage(), 1);
     assert!(blocker.is_blocking());
+}
+
+#[then("Alice's attacker has 1 damage marked and remains attacking")]
+fn alices_attacker_has_1_damage_marked_and_remains_attacking(world: &mut GameplayWorld) {
+    let attacker = world.tracked_attacker();
+    assert_eq!(attacker.damage(), 1);
+    assert!(attacker.is_attacking());
 }
 
 #[then("Bob's blocker dies")]

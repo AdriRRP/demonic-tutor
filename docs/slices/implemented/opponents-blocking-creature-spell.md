@@ -9,6 +9,7 @@ Allow a supported targeted instant to require a creature that is blocking and co
 - add an explicit closed legal-target rule for `opponent-controlled blocking creature`
 - prove the rule in the current post-blockers active-priority window
 - reject combat creatures that fail the opponent-or-blocking side of the rule
+- cover both lethal and nonlethal damage consequences for the supported spell profile
 
 ## Out Of Scope
 

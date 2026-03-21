@@ -64,6 +64,10 @@ mod cast_targeted_opponents_attacking_creature_spell_after_attackers;
 mod cast_targeted_opponents_blocking_creature_spell_after_blockers;
 #[path = "nonlethal_blocking_target_damage.rs"]
 mod nonlethal_blocking_target_damage;
+#[path = "nonlethal_controlled_attacking_target_damage.rs"]
+mod nonlethal_controlled_attacking_target_damage;
+#[path = "nonlethal_opponents_blocking_target_damage.rs"]
+mod nonlethal_opponents_blocking_target_damage;
 #[path = "reject_non_actor_relative_combat_targets.rs"]
 mod reject_non_actor_relative_combat_targets;
 #[path = "reject_non_blocking_creature_for_block_only_spell.rs"]

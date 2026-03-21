@@ -80,4 +80,26 @@ impl GameplayWorld {
         self.pass_priority("Alice");
         self.reset_observations();
     }
+
+    pub fn setup_non_active_priority_after_blockers_declared_with_opponents_blocking_spell(
+        &mut self,
+    ) {
+        prepare_priority_after_blockers_declared(
+            self,
+            "bdd-combat-priority-blockers-opponent-blocker-response",
+            vec![attacker_card()],
+            vec![
+                blocker_card(),
+                support::targeted_opponents_blocking_creature_damage_instant_card(
+                    "bdd-punish-shield",
+                    0,
+                    2,
+                ),
+            ],
+        );
+        self.tracked_response_card_id =
+            Some(self.hand_card_by_definition("Bob", "bdd-punish-shield"));
+        self.pass_priority("Alice");
+        self.reset_observations();
+    }
 }
