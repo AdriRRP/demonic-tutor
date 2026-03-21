@@ -9,6 +9,13 @@ fn alice_is_the_active_player_in_first_main_with_a_targeted_instant_spell_in_han
     world.setup_targeted_player_spell();
 }
 
+#[given("Alice is the active player in FirstMain with an opponent-targeted instant spell in hand")]
+fn alice_is_the_active_player_in_first_main_with_an_opponent_targeted_instant_spell_in_hand(
+    world: &mut GameplayWorld,
+) {
+    world.setup_targeted_opponent_player_spell();
+}
+
 #[given("Bob is a valid target player")]
 fn bob_is_a_valid_target_player(_world: &mut GameplayWorld) {}
 
@@ -31,9 +38,35 @@ fn alice_is_the_active_player_in_first_main_with_a_targeted_instant_spell_and_bo
     world.setup_targeted_creature_spell();
 }
 
+#[given("Alice is the active player in FirstMain with a controlled-creature instant spell and Alice's creature on the battlefield")]
+fn alice_is_the_active_player_in_first_main_with_a_controlled_creature_instant_spell_and_alices_creature_on_the_battlefield(
+    world: &mut GameplayWorld,
+) {
+    world.setup_targeted_controlled_creature_spell();
+}
+
+#[given("Alice is the active player in FirstMain with a controlled-creature instant spell and only Bob's creature on the battlefield")]
+fn alice_is_the_active_player_in_first_main_with_a_controlled_creature_instant_spell_and_only_bobs_creature_on_the_battlefield(
+    world: &mut GameplayWorld,
+) {
+    world.setup_targeted_controlled_creature_spell_with_opponents_creature();
+}
+
 #[when("Alice casts the targeted instant spell targeting Bob")]
 fn alice_casts_the_targeted_instant_spell_targeting_bob(world: &mut GameplayWorld) {
     world.cast_tracked_targeted_player_spell("Alice", "Bob");
+}
+
+#[when("Alice casts the opponent-targeted instant spell targeting Bob")]
+fn alice_casts_the_opponent_targeted_instant_spell_targeting_bob(world: &mut GameplayWorld) {
+    world.cast_tracked_targeted_player_spell("Alice", "Bob");
+}
+
+#[when("Alice tries to cast the opponent-targeted instant spell targeting herself")]
+fn alice_tries_to_cast_the_opponent_targeted_instant_spell_targeting_herself(
+    world: &mut GameplayWorld,
+) {
+    world.try_cast_tracked_targeted_player_spell("Alice", "Alice");
 }
 
 #[when("Alice casts the targeted instant spell without a target")]
@@ -51,6 +84,20 @@ fn alice_casts_the_targeted_instant_spell_targeting_bobs_creature(world: &mut Ga
     world.cast_tracked_targeted_creature_spell("Alice");
 }
 
+#[when("Alice casts the controlled-creature instant spell targeting her creature")]
+fn alice_casts_the_controlled_creature_instant_spell_targeting_her_creature(
+    world: &mut GameplayWorld,
+) {
+    world.cast_tracked_targeted_creature_spell("Alice");
+}
+
+#[when("Alice tries to cast the controlled-creature instant spell targeting Bob's creature")]
+fn alice_tries_to_cast_the_controlled_creature_instant_spell_targeting_bobs_creature(
+    world: &mut GameplayWorld,
+) {
+    world.try_cast_tracked_targeted_creature_spell("Alice");
+}
+
 #[then("the spell is on the stack targeting Bob")]
 fn the_spell_is_on_the_stack_targeting_bob(world: &mut GameplayWorld) {
     let event = world
@@ -62,6 +109,23 @@ fn the_spell_is_on_the_stack_targeting_bob(world: &mut GameplayWorld) {
         Some(demonictutor::SpellTarget::Player(GameplayWorld::player_id(
             "Bob"
         )))
+    );
+}
+
+#[then("the spell is on the stack targeting Alice's creature")]
+fn the_spell_is_on_the_stack_targeting_alices_creature(world: &mut GameplayWorld) {
+    let event = world
+        .last_spell_put_on_stack
+        .as_ref()
+        .expect("expected targeted spell on stack");
+    assert_eq!(
+        event.target,
+        Some(demonictutor::SpellTarget::Creature(
+            world
+                .tracked_blocker_id
+                .clone()
+                .expect("tracked creature should exist")
+        ))
     );
 }
 
@@ -101,8 +165,36 @@ fn casting_fails_because_the_target_player_does_not_exist(world: &mut GameplayWo
         .is_some_and(|error| error.contains("missing-player")));
 }
 
+#[then("casting fails because the spell requires an opponent target")]
+fn casting_fails_because_the_spell_requires_an_opponent_target(world: &mut GameplayWorld) {
+    assert!(world
+        .last_error
+        .as_ref()
+        .is_some_and(|error| error.contains("cannot use the provided target")));
+}
+
+#[then("casting fails because the spell requires a controlled creature target")]
+fn casting_fails_because_the_spell_requires_a_controlled_creature_target(
+    world: &mut GameplayWorld,
+) {
+    assert!(world
+        .last_error
+        .as_ref()
+        .is_some_and(|error| error.contains("cannot use the provided target")));
+}
+
 #[then("Bob's creature dies")]
 fn bobs_creature_dies(world: &mut GameplayWorld) {
+    assert_eq!(world.last_creature_died.len(), 1);
+    let creature_id = world
+        .tracked_blocker_id
+        .as_ref()
+        .expect("tracked creature target should exist");
+    assert_eq!(world.last_creature_died[0].card_id, *creature_id);
+}
+
+#[then("Alice's creature dies")]
+fn alices_creature_dies(world: &mut GameplayWorld) {
     assert_eq!(world.last_creature_died.len(), 1);
     let creature_id = world
         .tracked_blocker_id

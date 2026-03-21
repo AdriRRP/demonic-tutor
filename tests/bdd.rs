@@ -110,6 +110,8 @@ async fn run_stack_features() {
         "features/stack/cast_own_turn_priority_enchantment_after_blockers.feature",
         "features/stack/cast_own_turn_priority_enchantment_after_combat_damage.feature",
         "features/stack/target_blocking_creature_spell.feature",
+        "features/stack/target_opponent_player_spell.feature",
+        "features/stack/target_controlled_creature_spell_outside_combat.feature",
         "features/stack/target_controlled_attacking_creature_spell.feature",
         "features/stack/target_controlled_blocking_creature_spell.feature",
         "features/stack/target_opponents_blocking_creature_spell.feature",

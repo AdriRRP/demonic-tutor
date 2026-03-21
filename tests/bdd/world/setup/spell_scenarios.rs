@@ -98,6 +98,114 @@ impl GameplayWorld {
         self.reset_observations();
     }
 
+    pub fn setup_targeted_opponent_player_spell(&mut self) {
+        self.reset_game_with_libraries(
+            "bdd-targeted-opponent-player-spell",
+            support::filled_library(
+                vec![support::targeted_opponent_damage_instant_card(
+                    "bdd-lava-spike",
+                    0,
+                    2,
+                )],
+                10,
+            ),
+            support::filled_library(Vec::new(), 10),
+        );
+
+        let service = support::create_service();
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-1",
+        );
+        self.tracked_card_id = Some(self.hand_card_by_definition("Alice", "bdd-lava-spike"));
+        self.reset_observations();
+    }
+
+    pub fn setup_targeted_controlled_creature_spell(&mut self) {
+        self.reset_game_with_libraries(
+            "bdd-targeted-controlled-creature-spell",
+            support::filled_library(
+                vec![
+                    support::creature_card("bdd-alice-bear", 0, 2, 2),
+                    support::targeted_controlled_creature_damage_instant_card(
+                        "bdd-reckless-surge",
+                        0,
+                        2,
+                    ),
+                ],
+                10,
+            ),
+            support::filled_library(Vec::new(), 10),
+        );
+
+        let service = support::create_service();
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-1",
+        );
+        let creature_id = self.hand_card_by_definition("Alice", "bdd-alice-bear");
+        service
+            .cast_spell(
+                self.game_mut(),
+                CastSpellCommand::new(Self::player_id("Alice"), creature_id.clone()),
+            )
+            .expect("setup controlled creature spell cast should succeed");
+        self.pass_priority("Alice");
+        self.pass_priority("Bob");
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-1",
+        );
+        self.tracked_card_id = Some(self.hand_card_by_definition("Alice", "bdd-reckless-surge"));
+        self.tracked_blocker_id = Some(creature_id);
+        self.reset_observations();
+    }
+
+    pub fn setup_targeted_controlled_creature_spell_with_opponents_creature(&mut self) {
+        self.reset_game_with_libraries(
+            "bdd-targeted-controlled-creature-spell-opponent",
+            support::filled_library(
+                vec![
+                    support::land_card("bdd-mountain"),
+                    support::targeted_controlled_creature_damage_instant_card(
+                        "bdd-reckless-surge",
+                        0,
+                        2,
+                    ),
+                ],
+                10,
+            ),
+            support::filled_library(vec![support::creature_card("bdd-bob-bear", 0, 2, 2)], 10),
+        );
+
+        let service = support::create_service();
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-2",
+        );
+        let creature_id = self.hand_card_by_definition("Bob", "bdd-bob-bear");
+        service
+            .cast_spell(
+                self.game_mut(),
+                CastSpellCommand::new(Self::player_id("Bob"), creature_id.clone()),
+            )
+            .expect("setup opponent creature spell cast should succeed");
+        self.pass_priority("Bob");
+        self.pass_priority("Alice");
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-1",
+        );
+        self.tracked_card_id = Some(self.hand_card_by_definition("Alice", "bdd-reckless-surge"));
+        self.tracked_blocker_id = Some(creature_id);
+        self.reset_observations();
+    }
+
     pub fn setup_blocking_creature_player_target_spell(&mut self) {
         self.reset_game_with_libraries(
             "bdd-targeted-blocking-player-spell",
