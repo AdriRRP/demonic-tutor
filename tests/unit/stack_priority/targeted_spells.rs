@@ -90,7 +90,7 @@ fn targeted_instant_rejects_unknown_player_target_when_cast() {
 
     assert!(matches!(
         result,
-        Err(DomainError::Game(GameError::PlayerNotFound(player_id)))
+        Err(DomainError::Game(GameError::InvalidPlayerTarget(player_id)))
             if player_id == PlayerId::new("missing-player")
     ));
 }

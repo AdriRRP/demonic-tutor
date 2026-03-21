@@ -82,8 +82,7 @@ fn validate_spell_target(
             DomainError::Game(GameError::IllegalSpellTarget(card_id.clone())),
         ),
         SpellTargetLegality::MissingPlayer(player_id) => {
-            helpers::find_player_index(players, &player_id)?;
-            Ok(())
+            Err(DomainError::Game(GameError::InvalidPlayerTarget(player_id)))
         }
         SpellTargetLegality::MissingCreature(target_card_id) => Err(DomainError::Game(
             GameError::InvalidCreatureTarget(target_card_id),

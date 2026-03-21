@@ -51,6 +51,7 @@ pub enum GameError {
     InvalidDrawCount(u32),
     MissingSpellTarget(CardInstanceId),
     IllegalSpellTarget(CardInstanceId),
+    InvalidPlayerTarget(PlayerId),
     InvalidCreatureTarget(CardInstanceId),
     NoAttackersDeclared,
     MulliganAlreadyUsed(PlayerId),
@@ -199,6 +200,9 @@ impl std::fmt::Display for GameError {
                     f,
                     "spell {card_id} cannot use the provided target in the current model"
                 )
+            }
+            Self::InvalidPlayerTarget(player_id) => {
+                write!(f, "player target {player_id} is not part of the game")
             }
             Self::InvalidCreatureTarget(card_id) => {
                 write!(f, "creature target {card_id} is not on the battlefield")
