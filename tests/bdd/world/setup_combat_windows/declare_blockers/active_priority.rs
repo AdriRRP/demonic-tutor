@@ -27,6 +27,50 @@ impl GameplayWorld {
         self.reset_observations();
     }
 
+    pub fn setup_priority_after_blockers_declared_with_flash_creature(&mut self) {
+        prepare_priority_after_blockers_declared(
+            self,
+            "bdd-combat-priority-blockers-flash",
+            vec![
+                attacker_card(),
+                support::flash_creature_card("bdd-flash-creature", 0, 2, 1),
+            ],
+            vec![blocker_card()],
+        );
+        self.tracked_card_id = Some(self.hand_card_by_definition("Alice", "bdd-flash-creature"));
+        self.reset_observations();
+    }
+
+    pub fn setup_priority_after_blockers_declared_with_blocking_creature_spell(&mut self) {
+        prepare_priority_after_blockers_declared(
+            self,
+            "bdd-combat-priority-blockers-targeted-blocker",
+            vec![
+                attacker_card(),
+                support::targeted_blocking_creature_damage_instant_card("bdd-hold-the-line", 0, 2),
+            ],
+            vec![blocker_card()],
+        );
+        self.tracked_card_id = Some(self.hand_card_by_definition("Alice", "bdd-hold-the-line"));
+        self.reset_observations();
+    }
+
+    pub fn setup_priority_after_blockers_declared_with_nonlethal_blocking_creature_spell(
+        &mut self,
+    ) {
+        prepare_priority_after_blockers_declared(
+            self,
+            "bdd-combat-priority-blockers-targeted-blocker-nonlethal",
+            vec![
+                attacker_card(),
+                support::targeted_blocking_creature_damage_instant_card("bdd-hold-the-line", 0, 1),
+            ],
+            vec![support::creature_card("bdd-blocker-priority", 0, 2, 3)],
+        );
+        self.tracked_card_id = Some(self.hand_card_by_definition("Alice", "bdd-hold-the-line"));
+        self.reset_observations();
+    }
+
     pub fn setup_priority_after_blockers_declared_with_two_instants(&mut self) {
         prepare_priority_after_blockers_declared(
             self,

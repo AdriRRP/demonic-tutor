@@ -93,6 +93,26 @@ impl GameplayWorld {
         self.last_spell_put_on_stack = Some(outcome.spell_put_on_stack);
     }
 
+    pub fn try_cast_tracked_targeted_creature_spell(&mut self, caster_alias: &str) {
+        let card_id = self
+            .tracked_card_id
+            .clone()
+            .expect("tracked card should exist");
+        let target_card_id = self
+            .tracked_blocker_id
+            .clone()
+            .expect("tracked target creature should exist");
+        let service = support::create_service();
+        let res = service.cast_spell(
+            self.game_mut(),
+            CastSpellCommand::new(Self::player_id(caster_alias), card_id)
+                .with_target(SpellTarget::Creature(target_card_id)),
+        );
+        if let Err(e) = res {
+            self.last_error = Some(e.to_string());
+        }
+    }
+
     pub fn cast_tracked_response_spell(&mut self, alias: &str) {
         let card_id = self
             .tracked_response_card_id

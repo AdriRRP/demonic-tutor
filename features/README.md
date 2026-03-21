@@ -71,6 +71,8 @@ Stack and priority behavior:
 - self-stacking by the current priority holder
 - sorcery-speed legality in main phases
 - targeted instant subset against players and creatures
+- combat-relative targeted spells against attacking and blocking creatures
+- minimal `Flash`-like creature casts in supported combat windows
 
 ### `features/turn-flow/`
 
@@ -172,6 +174,9 @@ The following features are currently executed by `tests/bdd.rs`, grouped by area
 - `features/stack/cast_second_instant_after_blockers.feature`
 - `features/stack/cast_instant_after_combat_damage.feature`
 - `features/stack/cast_second_instant_after_combat_damage.feature`
+- `features/stack/cast_flash_creature_after_blockers.feature`
+- `features/stack/cast_flash_creature_after_combat_damage.feature`
+- `features/stack/target_blocking_creature_spell.feature`
 
 ### Turn flow
 
