@@ -27,7 +27,7 @@ pub(super) fn resolve_spell_from_stack(
     game_id: &GameId,
     players: &mut [Player],
     terminal_state: &mut TerminalState,
-    stack_object: &StackObject,
+    stack_object: StackObject,
 ) -> Result<ResolvedSpellOutcome, crate::domain::play::errors::DomainError> {
     let ResolvedSpellObject {
         source_card_id,

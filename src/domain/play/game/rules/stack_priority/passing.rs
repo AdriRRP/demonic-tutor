@@ -81,7 +81,7 @@ pub fn pass_priority(
         ))
     })?;
     let (stack_top_resolved, spell_cast, life_changed, creatures_died, game_ended) =
-        resolve_spell_from_stack(game_id, players, terminal_state, &stack_object)?;
+        resolve_spell_from_stack(game_id, players, terminal_state, stack_object)?;
 
     if terminal_state.is_over() {
         *priority = None;

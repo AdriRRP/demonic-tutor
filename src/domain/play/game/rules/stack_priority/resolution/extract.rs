@@ -18,12 +18,11 @@ pub(super) struct ResolvedSpellObject {
 
 pub(super) fn extract_resolved_spell_object(
     game_id: &GameId,
-    stack_object: &StackObject,
+    stack_object: StackObject,
 ) -> ResolvedSpellObject {
     let stack_object_id = stack_object.id(game_id);
     let controller_id = stack_object.controller_id().clone();
-
-    let StackObjectKind::Spell(spell) = stack_object.kind().clone();
+    let StackObjectKind::Spell(spell) = stack_object.into_kind();
     let source_card_id = spell.source_card_id().clone();
     let card_type = spell.card_type().clone();
     let supported_spell_rules = spell.supported_spell_rules();

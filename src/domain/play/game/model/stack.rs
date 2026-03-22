@@ -123,6 +123,11 @@ impl StackObject {
     pub const fn kind(&self) -> &StackObjectKind {
         &self.kind
     }
+
+    #[must_use]
+    pub fn into_kind(self) -> StackObjectKind {
+        self.kind
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
