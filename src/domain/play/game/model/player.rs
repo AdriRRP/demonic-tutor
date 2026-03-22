@@ -178,10 +178,6 @@ impl Player {
         &self.hand
     }
 
-    pub fn hand_mut(&mut self) -> &mut Hand {
-        &mut self.hand
-    }
-
     #[must_use]
     pub const fn library(&self) -> &Library {
         &self.library
@@ -205,17 +201,9 @@ impl Player {
         &self.graveyard
     }
 
-    pub fn graveyard_mut(&mut self) -> &mut Graveyard {
-        &mut self.graveyard
-    }
-
     #[must_use]
     pub const fn exile(&self) -> &Exile {
         &self.exile
-    }
-
-    pub fn exile_mut(&mut self) -> &mut Exile {
-        &mut self.exile
     }
 
     #[must_use]

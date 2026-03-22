@@ -1,3 +1,4 @@
+#![allow(clippy::panic)]
 #![allow(clippy::unwrap_used)]
 
 use demonictutor::{
@@ -227,7 +228,7 @@ fn adjust_life_reviews_pending_state_based_actions_for_existing_lethal_damage() 
         2,
     );
     doomed_creature.add_damage(2);
-    alice.battlefield_mut().add(doomed_creature);
+    alice.receive_battlefield_card(doomed_creature);
 
     let bob = Player::new(PlayerId::new("player-2"));
     let mut game = Game::new(
