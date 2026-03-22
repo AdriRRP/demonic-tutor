@@ -53,6 +53,10 @@ pub fn mountain_card(name: &str) -> LibraryCard {
     LibraryCard::land(CardDefinitionId::new(name), ManaColor::Red)
 }
 
+pub fn plains_card(name: &str) -> LibraryCard {
+    LibraryCard::land(CardDefinitionId::new(name), ManaColor::White)
+}
+
 pub fn instant_card(name: &str, mana_cost: u32) -> LibraryCard {
     LibraryCard::new(CardDefinitionId::new(name), CardType::Instant, mana_cost)
 }

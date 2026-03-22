@@ -216,6 +216,8 @@ A card type representing a permanent that produces mana.
 
 Currently the only card type that can be played without mana cost.
 
+In the current runtime, the exercised basic-land mana subset is `Forest -> Green`, `Mountain -> Red`, and `Plains -> White`.
+
 ---
 
 ## Permanent
