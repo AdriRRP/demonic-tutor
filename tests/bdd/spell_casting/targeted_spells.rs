@@ -228,6 +228,23 @@ fn the_spell_is_on_the_stack_targeting_alices_creature(world: &mut GameplayWorld
     );
 }
 
+#[then("the spell is on the stack targeting Alice's attacker")]
+fn the_spell_is_on_the_stack_targeting_alices_attacker(world: &mut GameplayWorld) {
+    let event = world
+        .last_spell_put_on_stack
+        .as_ref()
+        .expect("expected targeted spell on stack");
+    assert_eq!(
+        event.target,
+        Some(demonictutor::SpellTarget::Creature(
+            world
+                .tracked_attacker_id
+                .clone()
+                .expect("tracked attacker should exist")
+        ))
+    );
+}
+
 #[then("the spell is on the stack targeting Bob's creature")]
 fn the_spell_is_on_the_stack_targeting_bobs_creature(world: &mut GameplayWorld) {
     let event = world

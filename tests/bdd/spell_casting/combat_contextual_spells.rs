@@ -152,6 +152,15 @@ fn alice_has_priority_after_blockers_are_declared_with_a_nonlethal_opponent_bloc
 }
 
 #[given(
+    "Alice has priority after blockers are declared with a pump-creature instant spell in hand"
+)]
+fn alice_has_priority_after_blockers_are_declared_with_a_pump_creature_instant_spell_in_hand(
+    world: &mut GameplayWorld,
+) {
+    world.setup_priority_after_blockers_declared_with_pump_creature_spell();
+}
+
+#[given(
     "Bob has priority after blockers are declared with an opponent-blocking-creature instant spell in hand"
 )]
 fn bob_has_priority_after_blockers_are_declared_with_an_opponent_blocking_creature_instant_spell_in_hand(
@@ -211,6 +220,11 @@ fn bob_casts_the_opponent_attacking_creature_instant_spell_targeting_his_blocker
 fn alice_casts_the_controlled_attacking_creature_instant_spell_targeting_her_attacker(
     world: &mut GameplayWorld,
 ) {
+    world.cast_tracked_targeted_attacker_spell("Alice");
+}
+
+#[when("Alice casts the pump-creature instant spell targeting her attacker")]
+fn alice_casts_the_pump_creature_instant_spell_targeting_her_attacker(world: &mut GameplayWorld) {
     world.cast_tracked_targeted_attacker_spell("Alice");
 }
 

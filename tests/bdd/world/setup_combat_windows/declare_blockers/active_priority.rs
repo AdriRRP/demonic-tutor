@@ -157,6 +157,29 @@ impl GameplayWorld {
         assert!(self.game().stack().is_empty());
     }
 
+    pub fn setup_priority_after_blockers_declared_with_pump_creature_spell(&mut self) {
+        prepare_priority_after_blockers_declared(
+            self,
+            "bdd-combat-priority-blockers-pump-creature",
+            vec![
+                attacker_card(),
+                support::targeted_pump_creature_instant_card("bdd-giant-growth-lite", 0, 2, 2),
+            ],
+            vec![blocker_card()],
+        );
+        self.tracked_card_id = Some(self.hand_card_by_definition("Alice", "bdd-giant-growth-lite"));
+        self.reset_observations();
+        assert_eq!(self.game().phase(), &Phase::CombatDamage);
+        assert_eq!(
+            self.game()
+                .priority()
+                .expect("blockers declaration should open priority")
+                .current_holder(),
+            &Self::player_id("Alice")
+        );
+        assert!(self.game().stack().is_empty());
+    }
+
     pub fn setup_priority_after_blockers_declared_with_opponents_blocking_spell(&mut self) {
         prepare_priority_after_blockers_declared(
             self,

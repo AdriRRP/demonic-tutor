@@ -170,6 +170,30 @@ fn that_creature_remains_on_the_battlefield(world: &mut GameplayWorld) {
     assert!(world.battlefield_contains("Alice", card_id));
 }
 
+#[then("Alice's attacker survives combat")]
+fn alices_attacker_survives_combat(world: &mut GameplayWorld) {
+    let card_id = world
+        .tracked_attacker_id
+        .as_ref()
+        .expect("tracked attacker should exist");
+    assert!(world.battlefield_contains("Alice", card_id));
+}
+
+#[then("Alice's attacker gets +2/+2 until end of turn")]
+fn alices_attacker_gets_plus_2_plus_2_until_end_of_turn(world: &mut GameplayWorld) {
+    assert_eq!(world.tracked_attacker().creature_stats(), Some((4, 4)));
+}
+
+#[then("Bob's blocker dies in combat")]
+fn bobs_blocker_dies_in_combat(world: &mut GameplayWorld) {
+    let card_id = world
+        .tracked_blocker_id
+        .as_ref()
+        .expect("tracked blocker should exist");
+    assert!(!world.battlefield_contains("Bob", card_id));
+    assert!(world.graveyard_contains("Bob", card_id));
+}
+
 #[then("no CreatureDied event is emitted for that creature")]
 fn no_creature_died_event_is_emitted(world: &mut GameplayWorld) {
     let card_id = world
