@@ -7,6 +7,33 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ---
 
+## [0.4.0] - 2026-03-22
+
+### Added
+
+- **Combat-context stack support expanded**: `Flash` creatures, artifacts, and enchantments now operate across the currently supported upkeep, stack-response, and combat priority windows
+- **Actor-relative and combat-relative targeting expanded**: the stack now supports explicit target legality for opponent players, controlled creatures, attacking creatures, blocking creatures, and their current actor-relative combat variants
+- **Mana model v1 completed**: the runtime now exercises five basic land colors, mixed costs such as `1G`, repeated same-color costs such as `GG`, generic payment from remaining colored mana, and explicit rejection when the required color symbol is missing
+- **Executable mana coverage expanded**: Cucumber features now cover mixed and repeated colored spell payment plus mixed-cost rejection corridors
+
+### Changed
+
+- **Card storage model**: player-owned `Library`, `Hand`, `Battlefield`, `Graveyard`, and `Exile` now use id-backed storage with a unified owned-card store, while immutable card definitions are shared across instances
+- **Stack runtime model**: stack objects now use cheaper internal numeric ids and carry spell snapshots instead of full `CardInstance` values
+- **Targeting and combat hot paths**: battlefield lookup, single-blocker combat damage, mana payment, and supported state-based actions were simplified and tightened around the currently supported domain
+- **Repository navigation and slices**: slice history is grouped by capability, completed proposal waves have been curated into implemented slices, and documentation navigation now uses portable relative links instead of workspace-specific absolute paths
+
+### Documentation
+
+- Added ADR `0015` to capture shared card-face storage and semantic zone-access guidance
+- Refreshed development guidance with an explicit compact feature workflow for humans and agents
+- Synchronized canonical docs, glossary, features index, slice backlog, and agent context with the current mana, targeting, stack, and storage model
+
+### Quality
+
+- Global consistency pass completed across code, docs, slice history, and agent context
+- Strict repository validation remains clean through `./scripts/check-all.sh`
+
 ## [0.3.0] - 2026-03-18
 
 ### Added
