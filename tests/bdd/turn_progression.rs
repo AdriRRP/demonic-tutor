@@ -50,9 +50,24 @@ fn player_has_no_cards_in_her_library(world: &mut GameplayWorld, player: String)
     assert_eq!(world.player_library_size(&player), 0);
 }
 
+#[given("Alice is the active player in Upkeep with a land on the battlefield")]
+fn alice_is_the_active_player_in_upkeep_with_a_land_on_the_battlefield(world: &mut GameplayWorld) {
+    world.setup_upkeep_with_land_on_battlefield();
+    assert_eq!(world.game().phase(), &Phase::Upkeep);
+    assert_eq!(
+        world.game().active_player(),
+        &GameplayWorld::player_id("Alice")
+    );
+}
+
 #[when("the game advances the turn")]
 fn the_game_advances_the_turn(world: &mut GameplayWorld) {
     world.advance_turn();
+}
+
+#[when("Alice taps her land for mana")]
+fn alice_taps_her_land_for_mana(world: &mut GameplayWorld) {
+    world.tap_tracked_land_for_mana("Alice");
 }
 
 #[then(expr = "{word} becomes the active player")]
@@ -144,4 +159,9 @@ fn the_game_emits_card_drawn_with_kind(world: &mut GameplayWorld, draw_kind: Str
         .as_ref()
         .expect("expected a CardDrawn event");
     assert_eq!(event.draw_kind, expected);
+}
+
+#[then(expr = "{word} has {int} mana")]
+fn player_has_mana(world: &mut GameplayWorld, player: String, amount: u32) {
+    assert_eq!(world.player(&player).mana(), amount);
 }

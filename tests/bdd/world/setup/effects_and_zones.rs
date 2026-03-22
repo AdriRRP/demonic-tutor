@@ -1,8 +1,41 @@
 use super::super::support;
 use super::super::GameplayWorld;
-use demonictutor::{AdjustPlayerLifeEffectCommand, Phase};
+use demonictutor::{AdjustPlayerLifeEffectCommand, Phase, PlayLandCommand};
 
 impl GameplayWorld {
+    pub fn setup_upkeep_with_land_on_battlefield(&mut self) {
+        self.reset_game_with_libraries(
+            "bdd-mana-clears-on-phase-advance",
+            support::filled_library(vec![support::land_card("bdd-forest")], 40),
+            support::filled_library(Vec::new(), 40),
+        );
+
+        let service = support::create_service();
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-1",
+        );
+
+        let land_id = self.player("Alice").hand().cards()[0].id().clone();
+        service
+            .play_land(
+                self.game_mut(),
+                PlayLandCommand::new(Self::player_id("Alice"), land_id.clone()),
+            )
+            .expect("BDD setup land play should succeed");
+
+        support::advance_to_player_phase_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-1",
+            Phase::Upkeep,
+        );
+
+        self.tracked_card_id = Some(land_id);
+        self.reset_observations();
+    }
+
     pub fn setup_end_step_with_eight_cards_in_hand(&mut self) {
         self.reset_game_with_libraries(
             "bdd-cleanup-discard",

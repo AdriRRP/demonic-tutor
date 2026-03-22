@@ -71,6 +71,7 @@ The domain currently includes:
 - mana production from lands
 - spell casting with mana cost
 - transient mana pools cleared when the game advances to the next phase or turn
+- the current transient mana model is now exercised explicitly from `Upkeep` into `Draw`
 - creature cards with power and toughness
 - creature spells entering the battlefield through `CastSpell`
 - creature damage tracking during combat

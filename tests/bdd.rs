@@ -131,6 +131,7 @@ async fn run_turn_flow_features() {
         "features/turn-flow/draw_priority_window.feature",
         "features/turn-flow/main_phase_priority_window.feature",
         "features/turn-flow/end_step_priority_window.feature",
+        "features/turn-flow/mana_pool_clears_on_phase_advance.feature",
         "features/turn-flow/lose_on_empty_draw.feature",
         "features/turn-flow/turn_progression.feature",
         "features/turn-flow/draw_multiple_cards.feature",

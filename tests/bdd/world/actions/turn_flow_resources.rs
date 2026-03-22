@@ -220,4 +220,18 @@ impl GameplayWorld {
             )
             .expect("tapping response land should succeed");
     }
+
+    pub fn tap_tracked_land_for_mana(&mut self, alias: &str) {
+        let land_id = self
+            .tracked_card_id
+            .clone()
+            .expect("tracked land should exist");
+        let service = support::create_service();
+        service
+            .tap_land(
+                self.game_mut(),
+                TapLandCommand::new(Self::player_id(alias), land_id),
+            )
+            .expect("tapping tracked land should succeed");
+    }
 }
