@@ -78,6 +78,18 @@ pub fn green_instant_card(name: &str, green_requirement: u32) -> LibraryCard {
     .with_mana_cost(ManaCost::green(green_requirement))
 }
 
+pub fn mixed_green_instant_card(name: &str, generic_amount: u32) -> LibraryCard {
+    let total_cost = generic_amount + 1;
+    LibraryCard::new(CardDefinitionId::new(name), CardType::Instant, total_cost).with_mana_cost(
+        ManaCost::generic_plus_single_color(generic_amount, ManaColor::Green, 1),
+    )
+}
+
+pub fn double_green_instant_card(name: &str) -> LibraryCard {
+    LibraryCard::new(CardDefinitionId::new(name), CardType::Instant, 2)
+        .with_mana_cost(ManaCost::green(2))
+}
+
 pub fn targeted_damage_instant_card(name: &str, mana_cost: u32, damage: u32) -> LibraryCard {
     LibraryCard::new(CardDefinitionId::new(name), CardType::Instant, mana_cost)
         .with_supported_spell_rules(SupportedSpellRules::deal_damage_to_any_target(damage))

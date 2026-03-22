@@ -220,6 +220,14 @@ In the current runtime, the exercised basic-land mana subset is `Forest -> Green
 
 ---
 
+## Mana Cost
+
+The mana payment requirement declared by a spell card.
+
+The current runtime supports generic requirements plus explicit colored requirements in a small closed subset, including single-colored costs and a first mixed corridor such as `1G`.
+
+---
+
 ## Permanent
 
 A card or token that exists on the battlefield. Permanents include lands, creatures, enchantments, artifacts, and planeswalkers. They remain in play until removed by an effect.

@@ -1,6 +1,6 @@
 use super::super::support;
 use super::super::GameplayWorld;
-use demonictutor::{CardDefinitionId, CastSpellCommand, LibraryCard};
+use demonictutor::{CardDefinitionId, CastSpellCommand, LibraryCard, PlayLandCommand};
 
 impl GameplayWorld {
     pub fn setup_cast_creature_spell(&mut self) {
@@ -167,6 +167,58 @@ impl GameplayWorld {
         );
         self.tracked_card_id = Some(self.hand_card_by_definition("Alice", "bdd-giant-growth"));
         self.tracked_blocker_id = Some(self.hand_card_by_definition("Alice", "bdd-mountain"));
+        self.reset_observations();
+    }
+
+    pub fn setup_cast_mixed_green_instant(&mut self) {
+        self.reset_game_with_libraries(
+            "bdd-cast-mixed-green-instant",
+            support::filled_library(
+                vec![
+                    support::mixed_green_instant_card("bdd-ancient-stirring", 1),
+                    support::forest_card("bdd-forest"),
+                    support::mountain_card("bdd-mountain"),
+                ],
+                10,
+            ),
+            support::filled_library(Vec::new(), 10),
+        );
+
+        let service = support::create_service();
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-1",
+        );
+        let forest_id = self.hand_card_by_definition("Alice", "bdd-forest");
+        service
+            .play_land(
+                self.game_mut(),
+                PlayLandCommand::new(Self::player_id("Alice"), forest_id),
+            )
+            .expect("setup forest play should succeed");
+
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-2",
+        );
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-1",
+        );
+
+        self.tracked_card_id = Some(self.hand_card_by_definition("Alice", "bdd-ancient-stirring"));
+        self.tracked_blocker_id = Some(
+            self.player("Alice")
+                .battlefield_card_by_definition(&demonictutor::CardDefinitionId::new("bdd-forest"))
+                .expect("forest should be on battlefield")
+                .id()
+                .clone(),
+        );
+        self.tracked_second_response_card_id =
+            Some(self.hand_card_by_definition("Alice", "bdd-mountain"));
         self.reset_observations();
     }
 

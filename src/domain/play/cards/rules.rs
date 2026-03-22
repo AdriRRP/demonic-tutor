@@ -107,6 +107,17 @@ impl ManaCost {
     }
 
     #[must_use]
+    pub const fn generic_plus_single_color(
+        generic: u32,
+        color: ManaColor,
+        colored_amount: u32,
+    ) -> Self {
+        let mut colored = [0; ManaColor::COUNT];
+        colored[color.index()] = colored_amount;
+        Self { generic, colored }
+    }
+
+    #[must_use]
     pub const fn total(self) -> u32 {
         self.generic
             + self.colored[ManaColor::White.index()]

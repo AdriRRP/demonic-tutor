@@ -37,7 +37,7 @@ fn alice_has_a_creature_card_in_hand_with_valid_power_and_toughness(world: &mut 
 #[given("Alice has enough mana to pay its cost")]
 fn alice_has_enough_mana_to_pay_its_cost(world: &mut GameplayWorld) {
     world.ensure_tracked_land_provides_mana();
-    assert_eq!(world.player("Alice").mana(), 1);
+    assert!(world.player("Alice").mana() >= 1);
 }
 
 #[given("Alice has a land card in hand")]
@@ -75,6 +75,23 @@ fn alice_is_the_active_player_in_first_main_with_a_green_instant_card_in_hand_an
     world: &mut GameplayWorld,
 ) {
     world.setup_cast_green_instant_with_mountain();
+    assert_eq!(
+        world.game().phase(),
+        &GameplayWorld::phase_from_name("FirstMain")
+    );
+    assert_eq!(
+        world.game().active_player(),
+        &GameplayWorld::player_id("Alice")
+    );
+}
+
+#[given(
+    "Alice is the active player in FirstMain with a mixed green instant card in hand and priority"
+)]
+fn alice_is_the_active_player_in_first_main_with_a_mixed_green_instant_card_in_hand_and_priority(
+    world: &mut GameplayWorld,
+) {
+    world.setup_cast_mixed_green_instant();
     assert_eq!(
         world.game().phase(),
         &GameplayWorld::phase_from_name("FirstMain")

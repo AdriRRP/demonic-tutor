@@ -1,5 +1,6 @@
 use super::super::support;
 use super::super::GameplayWorld;
+use demonictutor::domain::play::game::PlayerCardZone;
 use demonictutor::{
     AdjustPlayerLifeEffectCommand, AdvanceTurnCommand, AdvanceTurnOutcome,
     DiscardForCleanupCommand, DrawCardsEffectCommand, PassPriorityCommand, PlayLandCommand,
@@ -192,12 +193,15 @@ impl GameplayWorld {
             .clone()
             .expect("tracked land should exist in tracked_blocker_id slot");
         let service = support::create_service();
-        service
-            .play_land(
-                self.game_mut(),
-                PlayLandCommand::new(Self::player_id("Alice"), land_id.clone()),
-            )
-            .expect("playing land should succeed");
+        let first_land_zone = self.player("Alice").card_zone(&land_id);
+        if first_land_zone == Some(PlayerCardZone::Hand) {
+            service
+                .play_land(
+                    self.game_mut(),
+                    PlayLandCommand::new(Self::player_id("Alice"), land_id.clone()),
+                )
+                .expect("playing land should succeed");
+        }
 
         service
             .tap_land(
@@ -205,6 +209,30 @@ impl GameplayWorld {
                 TapLandCommand::new(Self::player_id("Alice"), land_id),
             )
             .expect("tapping land should succeed");
+
+        if let Some(second_land_id) = self.tracked_second_response_card_id.clone() {
+            let second_land_zone = self.player("Alice").card_zone(&second_land_id);
+            if second_land_zone == Some(PlayerCardZone::Hand) {
+                service
+                    .play_land(
+                        self.game_mut(),
+                        PlayLandCommand::new(Self::player_id("Alice"), second_land_id.clone()),
+                    )
+                    .expect("playing second tracked land should succeed");
+            }
+
+            if matches!(
+                second_land_zone,
+                Some(PlayerCardZone::Hand | PlayerCardZone::Battlefield)
+            ) {
+                service
+                    .tap_land(
+                        self.game_mut(),
+                        TapLandCommand::new(Self::player_id("Alice"), second_land_id),
+                    )
+                    .expect("tapping second tracked land should succeed");
+            }
+        }
     }
 
     pub fn tap_tracked_response_land_for_mana(&mut self, alias: &str) {
