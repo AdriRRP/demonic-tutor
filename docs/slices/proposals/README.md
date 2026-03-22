@@ -12,8 +12,7 @@ Directory: `mana-v1/`
 
 Directory: `targeting-v1/`
 
-1. `targeting-v1/target-self-player-when-rule-allows-it.md`
-2. `targeting-v1/contextual-noncombat-target-matrix-sync.md`
+1. `targeting-v1/contextual-noncombat-target-matrix-sync.md`
 
 ## Wave 3 — Useful Spell Effects
 

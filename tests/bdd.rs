@@ -118,6 +118,7 @@ async fn run_stack_features() {
         "features/stack/cast_own_turn_priority_enchantment_after_combat_damage.feature",
         "features/stack/target_blocking_creature_spell.feature",
         "features/stack/target_opponent_player_spell.feature",
+        "features/stack/target_self_player_when_rule_allows_it.feature",
         "features/stack/target_controlled_creature_spell_outside_combat.feature",
         "features/stack/target_opponents_creature_in_first_main.feature",
         "features/stack/reject_controlled_creature_for_opponents_creature_spell.feature",

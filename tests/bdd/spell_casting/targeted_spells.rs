@@ -71,6 +71,11 @@ fn alice_casts_the_targeted_instant_spell_targeting_bob(world: &mut GameplayWorl
     world.cast_tracked_targeted_player_spell("Alice", "Bob");
 }
 
+#[when("Alice casts the targeted instant spell targeting herself")]
+fn alice_casts_the_targeted_instant_spell_targeting_herself(world: &mut GameplayWorld) {
+    world.cast_tracked_targeted_player_spell("Alice", "Alice");
+}
+
 #[when("Alice casts the opponent-targeted instant spell targeting Bob")]
 fn alice_casts_the_opponent_targeted_instant_spell_targeting_bob(world: &mut GameplayWorld) {
     world.cast_tracked_targeted_player_spell("Alice", "Bob");
@@ -140,6 +145,20 @@ fn the_spell_is_on_the_stack_targeting_bob(world: &mut GameplayWorld) {
     );
 }
 
+#[then("the spell is on the stack targeting Alice")]
+fn the_spell_is_on_the_stack_targeting_alice(world: &mut GameplayWorld) {
+    let event = world
+        .last_spell_put_on_stack
+        .as_ref()
+        .expect("expected targeted spell on stack");
+    assert_eq!(
+        event.target,
+        Some(demonictutor::SpellTarget::Player(GameplayWorld::player_id(
+            "Alice"
+        )))
+    );
+}
+
 #[then("the spell is on the stack targeting Alice's creature")]
 fn the_spell_is_on_the_stack_targeting_alices_creature(world: &mut GameplayWorld) {
     let event = world
@@ -181,6 +200,17 @@ fn bob_loses_2_life(world: &mut GameplayWorld) {
         .as_ref()
         .expect("expected life changed event");
     assert_eq!(event.player_id, GameplayWorld::player_id("Bob"));
+    assert_eq!(event.from_life, 20);
+    assert_eq!(event.to_life, 18);
+}
+
+#[then("Alice loses 2 life")]
+fn alice_loses_2_life(world: &mut GameplayWorld) {
+    let event = world
+        .last_life_changed
+        .as_ref()
+        .expect("expected life changed event");
+    assert_eq!(event.player_id, GameplayWorld::player_id("Alice"));
     assert_eq!(event.from_life, 20);
     assert_eq!(event.to_life, 18);
 }

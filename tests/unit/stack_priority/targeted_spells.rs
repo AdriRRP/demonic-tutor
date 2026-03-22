@@ -517,6 +517,33 @@ fn targeted_opponent_spell_can_target_the_opponent_when_it_resolves() {
 }
 
 #[test]
+fn targeted_any_player_spell_can_target_the_caster_when_it_resolves() {
+    let (service, mut game) = setup_two_player_game(
+        "game-target-any-player-self",
+        filled_library(vec![targeted_damage_instant_card("shock", 0, 2)], 10),
+        filled_library(vec![land_card("mountain")], 10),
+    );
+
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
+
+    let shock_id = hand_card_id_by_definition(&game, 0, "shock");
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), shock_id)
+                .with_target(SpellTarget::Player(PlayerId::new("player-1"))),
+        )
+        .unwrap();
+
+    let resolution = resolve_current_stack(&service, &mut game);
+    assert_eq!(
+        resolution.life_changed.as_ref().unwrap().player_id,
+        PlayerId::new("player-1")
+    );
+    assert_eq!(resolution.life_changed.as_ref().unwrap().to_life, 18);
+}
+
+#[test]
 fn targeted_controlled_creature_spell_rejects_an_opponents_creature_when_cast() {
     let (service, mut game) = setup_two_player_game(
         "game-target-controlled-creature-invalid",
