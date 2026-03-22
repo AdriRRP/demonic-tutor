@@ -50,16 +50,68 @@ impl Library {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
-pub struct Hand(Vec<CardInstance>);
+struct OrderedZone(Vec<CardInstance>);
+
+impl OrderedZone {
+    const fn empty() -> Self {
+        Self(Vec::new())
+    }
+
+    fn receive(&mut self, cards: Vec<CardInstance>) {
+        self.0.extend(cards);
+    }
+
+    fn add(&mut self, card: CardInstance) {
+        self.0.push(card);
+    }
+
+    const fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    const fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+
+    fn iter(&self) -> impl Iterator<Item = &CardInstance> {
+        self.0.iter()
+    }
+
+    fn card(&self, card_id: &CardInstanceId) -> Option<&CardInstance> {
+        self.0.iter().find(|card| card.id() == card_id)
+    }
+
+    fn contains(&self, card_id: &CardInstanceId) -> bool {
+        self.card(card_id).is_some()
+    }
+
+    fn cards(&self) -> &[CardInstance] {
+        &self.0
+    }
+
+    fn remove(&mut self, card_id: &CardInstanceId) -> Option<CardInstance> {
+        self.0
+            .iter()
+            .position(|card| card.id() == card_id)
+            .map(|index| self.0.remove(index))
+    }
+
+    fn drain_all(&mut self) -> Vec<CardInstance> {
+        std::mem::take(&mut self.0)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct Hand(OrderedZone);
 
 impl Hand {
     #[must_use]
     pub const fn new() -> Self {
-        Self(Vec::new())
+        Self(OrderedZone::empty())
     }
 
     pub fn receive(&mut self, cards: Vec<CardInstance>) {
-        self.0.extend(cards);
+        self.0.receive(cards);
     }
 
     #[must_use]
@@ -78,30 +130,27 @@ impl Hand {
 
     #[must_use]
     pub fn card(&self, card_id: &CardInstanceId) -> Option<&CardInstance> {
-        self.0.iter().find(|card| card.id() == card_id)
+        self.0.card(card_id)
     }
 
     #[must_use]
     pub fn contains(&self, card_id: &CardInstanceId) -> bool {
-        self.card(card_id).is_some()
+        self.0.contains(card_id)
     }
 
     #[must_use]
     pub fn cards(&self) -> &[CardInstance] {
-        &self.0
+        self.0.cards()
     }
 
     /// Removes and returns all cards from the hand, leaving it empty.
     pub fn drain_all(&mut self) -> Vec<CardInstance> {
-        std::mem::take(&mut self.0)
+        self.0.drain_all()
     }
 
     #[must_use]
     pub fn remove(&mut self, card_id: &CardInstanceId) -> Option<CardInstance> {
-        self.0
-            .iter()
-            .position(|c| c.id() == card_id)
-            .map(|index| self.0.remove(index))
+        self.0.remove(card_id)
     }
 }
 
@@ -165,16 +214,16 @@ impl Battlefield {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
-pub struct Graveyard(Vec<CardInstance>);
+pub struct Graveyard(OrderedZone);
 
 impl Graveyard {
     #[must_use]
     pub const fn new() -> Self {
-        Self(Vec::new())
+        Self(OrderedZone::empty())
     }
 
     pub fn add(&mut self, card: CardInstance) {
-        self.0.push(card);
+        self.0.add(card);
     }
 
     #[must_use]
@@ -193,39 +242,36 @@ impl Graveyard {
 
     #[must_use]
     pub fn card(&self, card_id: &CardInstanceId) -> Option<&CardInstance> {
-        self.0.iter().find(|card| card.id() == card_id)
+        self.0.card(card_id)
     }
 
     #[must_use]
     pub fn contains(&self, card_id: &CardInstanceId) -> bool {
-        self.card(card_id).is_some()
+        self.0.contains(card_id)
     }
 
     #[must_use]
     pub fn cards(&self) -> &[CardInstance] {
-        &self.0
+        self.0.cards()
     }
 
     #[must_use]
     pub fn remove(&mut self, card_id: &CardInstanceId) -> Option<CardInstance> {
-        self.0
-            .iter()
-            .position(|card| card.id() == card_id)
-            .map(|index| self.0.remove(index))
+        self.0.remove(card_id)
     }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
-pub struct Exile(Vec<CardInstance>);
+pub struct Exile(OrderedZone);
 
 impl Exile {
     #[must_use]
     pub const fn new() -> Self {
-        Self(Vec::new())
+        Self(OrderedZone::empty())
     }
 
     pub fn add(&mut self, card: CardInstance) {
-        self.0.push(card);
+        self.0.add(card);
     }
 
     #[must_use]
@@ -244,24 +290,21 @@ impl Exile {
 
     #[must_use]
     pub fn card(&self, card_id: &CardInstanceId) -> Option<&CardInstance> {
-        self.0.iter().find(|card| card.id() == card_id)
+        self.0.card(card_id)
     }
 
     #[must_use]
     pub fn contains(&self, card_id: &CardInstanceId) -> bool {
-        self.card(card_id).is_some()
+        self.0.contains(card_id)
     }
 
     #[must_use]
     pub fn cards(&self) -> &[CardInstance] {
-        &self.0
+        self.0.cards()
     }
 
     #[must_use]
     pub fn remove(&mut self, card_id: &CardInstanceId) -> Option<CardInstance> {
-        self.0
-            .iter()
-            .position(|card| card.id() == card_id)
-            .map(|index| self.0.remove(index))
+        self.0.remove(card_id)
     }
 }
