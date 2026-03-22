@@ -18,11 +18,10 @@ Wave 2 is fully implemented.
 
 Directory: `effects-v1/`
 
-7. `effects-v1/exile-target-card-from-graveyard.md`
-8. `effects-v1/pump-target-creature-until-end-of-turn.md`
-9. `effects-v1/pump-spell-changes-combat-outcome.md`
-10. `effects-v1/targeted-gain-life-spell.md`
-11. `effects-v1/targeted-lose-life-spell.md`
+7. `effects-v1/pump-target-creature-until-end-of-turn.md`
+8. `effects-v1/pump-spell-changes-combat-outcome.md`
+9. `effects-v1/targeted-gain-life-spell.md`
+10. `effects-v1/targeted-lose-life-spell.md`
 
 ## Wave 4 — Casting And Activations
 

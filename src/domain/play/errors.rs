@@ -53,6 +53,7 @@ pub enum GameError {
     IllegalSpellTarget(CardInstanceId),
     InvalidPlayerTarget(PlayerId),
     InvalidCreatureTarget(CardInstanceId),
+    InvalidGraveyardCardTarget(CardInstanceId),
     NoAttackersDeclared,
     MulliganAlreadyUsed(PlayerId),
     HandSizeLimitExceeded {
@@ -206,6 +207,9 @@ impl std::fmt::Display for GameError {
             }
             Self::InvalidCreatureTarget(card_id) => {
                 write!(f, "creature target {card_id} is not on the battlefield")
+            }
+            Self::InvalidGraveyardCardTarget(card_id) => {
+                write!(f, "graveyard card target {card_id} is not in a graveyard")
             }
             Self::NoAttackersDeclared => write!(f, "no attackers have been declared"),
             Self::MulliganAlreadyUsed(pid) => {

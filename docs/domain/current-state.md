@@ -114,7 +114,7 @@ The domain currently includes:
   - `CreatureControlledByOpponent`: cast and resolve at opponent-controlled creature, reject controlled creature
 - the current targeted-spell subset now also supports explicit combat-relative target restrictions such as `attacking creature`, `blocking creature`, `attacking creature you control`, `blocking creature you control`, `blocking creature an opponent controls`, and `attacking creature an opponent controls`
 - the current combat-relative targeted-spell subset is currently exercised in the post-attackers and post-blockers windows, including lethal and nonlethal damage against attacking, blocking, controlled-attacking, controlled-blocking, opponent-controlled attacking, and opponent-controlled blocking creatures
-- the current spell-effect subset also supports first direct `destroy target creature` and `exile target creature` corridors outside combat in `FirstMain`
+- the current spell-effect subset also supports first direct `destroy target creature`, `exile target creature`, and `exile target card from graveyard` corridors outside combat in `FirstMain`
 - supported targeted instant damage to a player emits `LifeChanged` on resolution
 - supported targeted instant damage to a creature marks damage and then relies on shared SBA review for lethal destruction
 - supported targeted instants currently do not apply their effect if their only legal creature target is gone on resolution

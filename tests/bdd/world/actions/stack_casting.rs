@@ -37,6 +37,23 @@ impl GameplayWorld {
         }
     }
 
+    fn cast_targeted_graveyard_card_spell_with_card(
+        &mut self,
+        caster_alias: &str,
+        card_id: demonictutor::CardInstanceId,
+        target_card_id: demonictutor::CardInstanceId,
+    ) {
+        let service = support::create_service();
+        let outcome = service
+            .cast_spell(
+                self.game_mut(),
+                CastSpellCommand::new(Self::player_id(caster_alias), card_id)
+                    .with_target(SpellTarget::GraveyardCard(target_card_id)),
+            )
+            .expect("casting targeted graveyard-card spell should succeed");
+        self.last_spell_put_on_stack = Some(outcome.spell_put_on_stack);
+    }
+
     pub fn cast_tracked_spell(&mut self, alias: &str) {
         let card_id = self
             .tracked_card_id
@@ -117,6 +134,18 @@ impl GameplayWorld {
             .clone()
             .expect("tracked target creature should exist");
         self.cast_targeted_creature_spell_with_card(caster_alias, card_id, target_card_id);
+    }
+
+    pub fn cast_tracked_targeted_graveyard_card_spell(&mut self, caster_alias: &str) {
+        let card_id = self
+            .tracked_card_id
+            .clone()
+            .expect("tracked card should exist");
+        let target_card_id = self
+            .tracked_blocker_id
+            .clone()
+            .expect("tracked target graveyard card should exist");
+        self.cast_targeted_graveyard_card_spell_with_card(caster_alias, card_id, target_card_id);
     }
 
     pub fn try_cast_tracked_targeted_creature_spell(&mut self, caster_alias: &str) {

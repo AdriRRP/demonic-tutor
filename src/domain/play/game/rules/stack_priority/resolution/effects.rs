@@ -42,6 +42,30 @@ fn destroy_creature(
     ))
 }
 
+fn exile_creature_from_battlefield(
+    game_id: &GameId,
+    players: &mut [Player],
+    target_id: &CardInstanceId,
+) -> Option<CardExiled> {
+    let target_owner = helpers::battlefield_card_location(players, target_id)
+        .map(|location| location.owner_id().clone());
+    target_owner.and_then(|owner_id| {
+        zones::exile_card_from_battlefield(game_id, players, &owner_id, target_id).ok()
+    })
+}
+
+fn exile_card_from_graveyard(
+    game_id: &GameId,
+    players: &mut [Player],
+    target_id: &CardInstanceId,
+) -> Option<CardExiled> {
+    let target_owner = helpers::graveyard_card_location(players, target_id)
+        .map(|location| location.owner_id().clone());
+    target_owner.and_then(|owner_id| {
+        zones::exile_card_from_graveyard(game_id, players, &owner_id, target_id).ok()
+    })
+}
+
 fn review_state_based_actions(
     game_id: &GameId,
     players: &mut [Player],
@@ -89,7 +113,8 @@ fn resolve_target_legality_for_effect(
             SpellTargetLegality::IllegalTargetKind
             | SpellTargetLegality::IllegalTargetRule
             | SpellTargetLegality::MissingPlayer(_)
-            | SpellTargetLegality::MissingCreature(_),
+            | SpellTargetLegality::MissingCreature(_)
+            | SpellTargetLegality::MissingGraveyardCard(_),
             _,
         ) => Ok(None),
     }
@@ -109,6 +134,78 @@ fn review_state_based_actions_after_effect(
     } = state_based_actions::check_state_based_actions(game_id, players, terminal_state)?;
     creatures_died.extend(sba_creatures_died);
     Ok((card_exiled, life_changed, creatures_died, game_ended))
+}
+
+fn resolve_exile_target_creature_effect(
+    game_id: &GameId,
+    players: &mut [Player],
+    terminal_state: &mut TerminalState,
+    controller_id: &PlayerId,
+    supported_spell_rules: SupportedSpellRules,
+    target: Option<&SpellTarget>,
+) -> Result<SpellResolutionSideEffects, DomainError> {
+    let Some(target) = resolve_target_legality_for_effect(
+        players,
+        controller_id,
+        supported_spell_rules,
+        target,
+        "exile spell resolved without a targeting profile",
+    )?
+    else {
+        return review_state_based_actions(game_id, players, terminal_state);
+    };
+
+    let card_exiled = match target {
+        SpellTarget::Creature(card_id) => {
+            exile_creature_from_battlefield(game_id, players, &card_id)
+        }
+        SpellTarget::Player(_) | SpellTarget::GraveyardCard(_) => None,
+    };
+
+    review_state_based_actions_after_effect(
+        game_id,
+        players,
+        terminal_state,
+        card_exiled,
+        None,
+        Vec::new(),
+    )
+}
+
+fn resolve_exile_target_graveyard_card_effect(
+    game_id: &GameId,
+    players: &mut [Player],
+    terminal_state: &mut TerminalState,
+    controller_id: &PlayerId,
+    supported_spell_rules: SupportedSpellRules,
+    target: Option<&SpellTarget>,
+) -> Result<SpellResolutionSideEffects, DomainError> {
+    let Some(target) = resolve_target_legality_for_effect(
+        players,
+        controller_id,
+        supported_spell_rules,
+        target,
+        "graveyard exile spell resolved without a targeting profile",
+    )?
+    else {
+        return review_state_based_actions(game_id, players, terminal_state);
+    };
+
+    let card_exiled = match target {
+        SpellTarget::GraveyardCard(card_id) => {
+            exile_card_from_graveyard(game_id, players, &card_id)
+        }
+        SpellTarget::Player(_) | SpellTarget::Creature(_) => None,
+    };
+
+    review_state_based_actions_after_effect(
+        game_id,
+        players,
+        terminal_state,
+        card_exiled,
+        None,
+        Vec::new(),
+    )
 }
 
 pub(super) fn apply_supported_spell_rules(
@@ -148,6 +245,7 @@ pub(super) fn apply_supported_spell_rules(
                     apply_damage_to_creature(players, &card_id, damage);
                     None
                 }
+                SpellTarget::GraveyardCard(_) => None,
             };
 
             review_state_based_actions_after_effect(
@@ -187,37 +285,22 @@ pub(super) fn apply_supported_spell_rules(
                 creatures_died,
             )
         }
-        SpellResolutionProfile::ExileTargetCreature => {
-            let Some(target) = resolve_target_legality_for_effect(
-                players,
-                controller_id,
-                supported_spell_rules,
-                target,
-                "exile spell resolved without a targeting profile",
-            )?
-            else {
-                return review_state_based_actions(game_id, players, terminal_state);
-            };
-
-            let card_exiled = match target {
-                SpellTarget::Creature(card_id) => {
-                    let target_owner = helpers::battlefield_card_location(players, &card_id)
-                        .map(|location| location.owner_id().clone());
-                    target_owner.and_then(|owner_id| {
-                        zones::exile_card_from_battlefield(game_id, players, &owner_id, &card_id)
-                            .ok()
-                    })
-                }
-                SpellTarget::Player(_) => None,
-            };
-
-            review_state_based_actions_after_effect(
+        SpellResolutionProfile::ExileTargetCreature => resolve_exile_target_creature_effect(
+            game_id,
+            players,
+            terminal_state,
+            controller_id,
+            supported_spell_rules,
+            target,
+        ),
+        SpellResolutionProfile::ExileTargetCardFromGraveyard => {
+            resolve_exile_target_graveyard_card_effect(
                 game_id,
                 players,
                 terminal_state,
-                card_exiled,
-                None,
-                Vec::new(),
+                controller_id,
+                supported_spell_rules,
+                target,
             )
         }
     }

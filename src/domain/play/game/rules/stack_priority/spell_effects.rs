@@ -1,7 +1,7 @@
 use crate::domain::play::{
     cards::{
-        CardInstance, CreatureTargetRule, PlayerTargetRule, SpellTargetingProfile,
-        SupportedSpellRules,
+        CardInstance, CreatureTargetRule, GraveyardCardTargetRule, PlayerTargetRule,
+        SpellTargetingProfile, SupportedSpellRules,
     },
     game::{helpers, Player, SpellTarget},
     ids::{CardInstanceId, PlayerId},
@@ -20,6 +20,7 @@ pub enum SpellTargetLegality {
     IllegalTargetRule,
     MissingPlayer(PlayerId),
     MissingCreature(CardInstanceId),
+    MissingGraveyardCard(CardInstanceId),
     Legal,
 }
 
@@ -124,6 +125,20 @@ pub fn evaluate_target_legality(
                             | CreatureTargetRule::BlockingCreatureControlledByOpponent
                             | CreatureTargetRule::AttackingCreatureControlledByOpponent,
                         ) => SpellTargetLegality::IllegalTargetRule,
+                        None => SpellTargetLegality::IllegalTargetKind,
+                    }
+                }
+                (SpellTargetingProfile::ExactlyOne(rule), SpellTarget::GraveyardCard(card_id)) => {
+                    let Some(_target_card) = helpers::graveyard_card_location(players, card_id)
+                    else {
+                        return SpellTargetLegality::MissingGraveyardCard(card_id.clone());
+                    };
+
+                    match rule.graveyard_card_rule() {
+                        Some(rule) if rule.allows() => SpellTargetLegality::Legal,
+                        Some(GraveyardCardTargetRule::AnyCardInAGraveyard) => {
+                            SpellTargetLegality::IllegalTargetRule
+                        }
                         None => SpellTargetLegality::IllegalTargetKind,
                     }
                 }

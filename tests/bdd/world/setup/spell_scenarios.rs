@@ -532,6 +532,44 @@ impl GameplayWorld {
         self.reset_observations();
     }
 
+    pub fn setup_exile_target_graveyard_card_spell(&mut self) {
+        self.reset_game_with_libraries(
+            "bdd-exile-target-graveyard-card-spell",
+            support::filled_library(
+                vec![
+                    support::land_card("bdd-mountain"),
+                    support::targeted_exile_graveyard_card_instant_card("bdd-crypt-banish", 0),
+                ],
+                10,
+            ),
+            support::filled_library(vec![support::creature_card("bdd-bob-wisp", 0, 0, 0)], 10),
+        );
+
+        let service = support::create_service();
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-2",
+        );
+        let graveyard_card_id = self.hand_card_by_definition("Bob", "bdd-bob-wisp");
+        service
+            .cast_spell(
+                self.game_mut(),
+                CastSpellCommand::new(Self::player_id("Bob"), graveyard_card_id.clone()),
+            )
+            .expect("setup exile target graveyard card spell cast should succeed");
+        self.pass_priority("Bob");
+        self.pass_priority("Alice");
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-1",
+        );
+        self.tracked_card_id = Some(self.hand_card_by_definition("Alice", "bdd-crypt-banish"));
+        self.tracked_blocker_id = Some(graveyard_card_id);
+        self.reset_observations();
+    }
+
     pub fn setup_targeted_opponents_creature_spell_with_controlled_creature(&mut self) {
         self.reset_game_with_libraries(
             "bdd-targeted-opponents-creature-spell-controlled",

@@ -6,8 +6,8 @@ use crate::support::{
     targeted_attacking_creature_damage_instant_card,
     targeted_controlled_creature_damage_instant_card, targeted_damage_instant_card,
     targeted_destroy_creature_instant_card, targeted_exile_creature_instant_card,
-    targeted_opponent_damage_instant_card, targeted_opponents_creature_damage_instant_card,
-    targeted_player_damage_instant_card,
+    targeted_exile_graveyard_card_instant_card, targeted_opponent_damage_instant_card,
+    targeted_opponents_creature_damage_instant_card, targeted_player_damage_instant_card,
 };
 use demonictutor::{
     CardDefinitionId, CardInstanceId, CastSpellCommand, DeclareAttackersCommand, DomainError,
@@ -904,6 +904,134 @@ fn exile_target_creature_spell_does_not_apply_if_the_target_is_gone_on_resolutio
     assert!(second_resolution.creatures_died.is_empty());
     assert_eq!(game.players()[1].graveyard_size(), 1);
     assert_eq!(game.players()[1].exile_size(), 0);
+}
+
+#[test]
+fn exile_target_graveyard_card_spell_can_exile_a_card_from_a_graveyard_when_it_resolves() {
+    let (service, mut game) = setup_two_player_game(
+        "game-exile-graveyard-card-resolve",
+        filled_library(
+            vec![
+                land_card("alice-setup-land"),
+                targeted_exile_graveyard_card_instant_card("crypt-banish", 0),
+            ],
+            10,
+        ),
+        filled_library(vec![creature_card("bob-wisp", 0, 0, 0)], 10),
+    );
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-2");
+    let graveyard_card_id = CardInstanceId::new("game-exile-graveyard-card-resolve-player-2-0");
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-2"), graveyard_card_id.clone()),
+        )
+        .unwrap();
+    let _ = resolve_current_stack(&service, &mut game);
+    assert!(game.players()[1].graveyard_contains(&graveyard_card_id));
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
+    let spell_id = hand_card_id_by_definition(&game, 0, "crypt-banish");
+
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), spell_id)
+                .with_target(SpellTarget::GraveyardCard(graveyard_card_id.clone())),
+        )
+        .unwrap();
+
+    let resolution = resolve_current_stack(&service, &mut game);
+    assert_eq!(
+        resolution.card_exiled.as_ref().unwrap().card_id,
+        graveyard_card_id
+    );
+    assert!(game.players()[1].exile_contains(&graveyard_card_id));
+    assert!(!game.players()[1].graveyard_contains(&graveyard_card_id));
+}
+
+#[test]
+fn exile_target_graveyard_card_spell_rejects_a_missing_graveyard_target_when_cast() {
+    let (service, mut game) = setup_two_player_game(
+        "game-exile-graveyard-card-invalid",
+        filled_library(
+            vec![
+                land_card("alice-setup-land"),
+                targeted_exile_graveyard_card_instant_card("crypt-banish", 0),
+            ],
+            10,
+        ),
+        filled_library(Vec::new(), 10),
+    );
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
+    let spell_id = hand_card_id_by_definition(&game, 0, "crypt-banish");
+
+    let result = service.cast_spell(
+        &mut game,
+        CastSpellCommand::new(PlayerId::new("player-1"), spell_id).with_target(
+            SpellTarget::GraveyardCard(CardInstanceId::new("missing-graveyard-card")),
+        ),
+    );
+
+    assert!(matches!(
+        result,
+        Err(DomainError::Game(GameError::InvalidGraveyardCardTarget(card_id)))
+            if card_id == CardInstanceId::new("missing-graveyard-card")
+    ));
+}
+
+#[test]
+fn exile_target_graveyard_card_spell_does_not_apply_if_the_target_is_gone_on_resolution() {
+    let (service, mut game) = setup_two_player_game(
+        "game-exile-graveyard-card-gone",
+        filled_library(
+            vec![
+                land_card("alice-setup-land"),
+                targeted_exile_graveyard_card_instant_card("crypt-banish", 0),
+            ],
+            10,
+        ),
+        filled_library(vec![creature_card("bob-wisp", 0, 0, 0)], 10),
+    );
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-2");
+    let graveyard_card_id = CardInstanceId::new("game-exile-graveyard-card-gone-player-2-0");
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-2"), graveyard_card_id.clone()),
+        )
+        .unwrap();
+    let _ = resolve_current_stack(&service, &mut game);
+    assert!(game.players()[1].graveyard_contains(&graveyard_card_id));
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
+    let spell_id = hand_card_id_by_definition(&game, 0, "crypt-banish");
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), spell_id)
+                .with_target(SpellTarget::GraveyardCard(graveyard_card_id.clone())),
+        )
+        .unwrap();
+
+    service
+        .exile_card(
+            &mut game,
+            &demonictutor::ExileCardCommand::new(
+                PlayerId::new("player-2"),
+                graveyard_card_id.clone(),
+                false,
+            ),
+        )
+        .unwrap();
+
+    let resolution = resolve_current_stack(&service, &mut game);
+    assert!(resolution.card_exiled.is_none());
+    assert!(game.players()[1].exile_contains(&graveyard_card_id));
+    assert!(!game.players()[1].graveyard_contains(&graveyard_card_id));
 }
 
 #[test]

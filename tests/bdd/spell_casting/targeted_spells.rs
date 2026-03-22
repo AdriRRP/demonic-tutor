@@ -73,6 +73,13 @@ fn alice_is_the_active_player_in_first_main_with_an_exile_creature_instant_spell
     world.setup_exile_target_creature_spell();
 }
 
+#[given("Alice is the active player in FirstMain with an exile-graveyard-card instant spell and Bob's card in the graveyard")]
+fn alice_is_the_active_player_in_first_main_with_an_exile_graveyard_card_instant_spell_and_bobs_card_in_the_graveyard(
+    world: &mut GameplayWorld,
+) {
+    world.setup_exile_target_graveyard_card_spell();
+}
+
 #[given("Alice is the active player in FirstMain with an opponents-creature instant spell and only her creature on the battlefield")]
 fn alice_is_the_active_player_in_first_main_with_an_opponents_creature_instant_spell_and_only_her_creature_on_the_battlefield(
     world: &mut GameplayWorld,
@@ -150,6 +157,13 @@ fn alice_casts_the_exile_creature_instant_spell_targeting_bobs_creature(world: &
     world.cast_tracked_targeted_creature_spell("Alice");
 }
 
+#[when("Alice casts the exile-graveyard-card instant spell targeting Bob's graveyard card")]
+fn alice_casts_the_exile_graveyard_card_instant_spell_targeting_bobs_graveyard_card(
+    world: &mut GameplayWorld,
+) {
+    world.cast_tracked_targeted_graveyard_card_spell("Alice");
+}
+
 #[when("Alice tries to cast the opponents-creature instant spell targeting her creature")]
 fn alice_tries_to_cast_the_opponents_creature_instant_spell_targeting_her_creature(
     world: &mut GameplayWorld,
@@ -225,6 +239,32 @@ fn bobs_creature_is_in_exile(world: &mut GameplayWorld) {
         .tracked_blocker_id
         .as_ref()
         .expect("tracked creature should exist");
+    assert!(world.exile_contains("Bob", card_id));
+}
+
+#[then("the spell is on the stack targeting Bob's graveyard card")]
+fn the_spell_is_on_the_stack_targeting_bobs_graveyard_card(world: &mut GameplayWorld) {
+    let event = world
+        .last_spell_put_on_stack
+        .as_ref()
+        .expect("expected targeted spell on stack");
+    assert_eq!(
+        event.target,
+        Some(demonictutor::SpellTarget::GraveyardCard(
+            world
+                .tracked_blocker_id
+                .clone()
+                .expect("tracked graveyard card should exist")
+        ))
+    );
+}
+
+#[then("Bob's graveyard card is in exile")]
+fn bobs_graveyard_card_is_in_exile(world: &mut GameplayWorld) {
+    let card_id = world
+        .tracked_blocker_id
+        .as_ref()
+        .expect("tracked graveyard card should exist");
     assert!(world.exile_contains("Bob", card_id));
 }
 

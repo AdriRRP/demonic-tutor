@@ -207,6 +207,11 @@ pub fn targeted_exile_creature_instant_card(name: &str, mana_cost: u32) -> Libra
         .with_supported_spell_rules(SupportedSpellRules::exile_target_creature())
 }
 
+pub fn targeted_exile_graveyard_card_instant_card(name: &str, mana_cost: u32) -> LibraryCard {
+    LibraryCard::new(CardDefinitionId::new(name), CardType::Instant, mana_cost)
+        .with_supported_spell_rules(SupportedSpellRules::exile_target_card_from_graveyard())
+}
+
 pub fn sorcery_card(name: &str, mana_cost: u32) -> LibraryCard {
     LibraryCard::new(CardDefinitionId::new(name), CardType::Sorcery, mana_cost)
 }

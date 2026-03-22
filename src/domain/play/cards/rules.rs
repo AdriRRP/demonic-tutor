@@ -235,6 +235,21 @@ impl CastingPermissionProfile {
 pub enum SpellTargetKind {
     Player,
     Creature,
+    GraveyardCard,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum GraveyardCardTargetRule {
+    AnyCardInAGraveyard,
+}
+
+impl GraveyardCardTargetRule {
+    #[must_use]
+    pub const fn allows(self) -> bool {
+        match self {
+            Self::AnyCardInAGraveyard => true,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -300,6 +315,7 @@ impl CreatureTargetRule {
 pub enum SingleTargetRule {
     Player(PlayerTargetRule),
     Creature(CreatureTargetRule),
+    GraveyardCard(GraveyardCardTargetRule),
     PlayerOrCreature {
         player: PlayerTargetRule,
         creature: CreatureTargetRule,
@@ -371,10 +387,16 @@ impl SingleTargetRule {
     }
 
     #[must_use]
+    pub const fn any_card_in_a_graveyard() -> Self {
+        Self::GraveyardCard(GraveyardCardTargetRule::AnyCardInAGraveyard)
+    }
+
+    #[must_use]
     pub const fn matches_target_kind(self, kind: SpellTargetKind) -> bool {
         match self {
             Self::Player(_) => matches!(kind, SpellTargetKind::Player),
             Self::Creature(_) => matches!(kind, SpellTargetKind::Creature),
+            Self::GraveyardCard(_) => matches!(kind, SpellTargetKind::GraveyardCard),
             Self::PlayerOrCreature { .. } => {
                 matches!(kind, SpellTargetKind::Player | SpellTargetKind::Creature)
             }
@@ -385,7 +407,7 @@ impl SingleTargetRule {
     pub const fn player_rule(self) -> Option<PlayerTargetRule> {
         match self {
             Self::Player(rule) | Self::PlayerOrCreature { player: rule, .. } => Some(rule),
-            Self::Creature(_) => None,
+            Self::Creature(_) | Self::GraveyardCard(_) => None,
         }
     }
 
@@ -393,7 +415,15 @@ impl SingleTargetRule {
     pub const fn creature_rule(self) -> Option<CreatureTargetRule> {
         match self {
             Self::Creature(rule) | Self::PlayerOrCreature { creature: rule, .. } => Some(rule),
-            Self::Player(_) => None,
+            Self::Player(_) | Self::GraveyardCard(_) => None,
+        }
+    }
+
+    #[must_use]
+    pub const fn graveyard_card_rule(self) -> Option<GraveyardCardTargetRule> {
+        match self {
+            Self::GraveyardCard(rule) => Some(rule),
+            Self::Player(_) | Self::Creature(_) | Self::PlayerOrCreature { .. } => None,
         }
     }
 }
@@ -425,6 +455,7 @@ pub enum SpellResolutionProfile {
     DealDamage { damage: u32 },
     DestroyTargetCreature,
     ExileTargetCreature,
+    ExileTargetCardFromGraveyard,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -559,6 +590,16 @@ impl SupportedSpellRules {
                 SingleTargetRule::any_creature_on_battlefield(),
             ),
             resolution: SpellResolutionProfile::ExileTargetCreature,
+        }
+    }
+
+    #[must_use]
+    pub const fn exile_target_card_from_graveyard() -> Self {
+        Self {
+            targeting: SpellTargetingProfile::ExactlyOne(
+                SingleTargetRule::any_card_in_a_graveyard(),
+            ),
+            resolution: SpellResolutionProfile::ExileTargetCardFromGraveyard,
         }
     }
 

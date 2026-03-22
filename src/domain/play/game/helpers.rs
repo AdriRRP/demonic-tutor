@@ -11,6 +11,17 @@ pub(super) struct BattlefieldCardLocation<'a> {
     card: &'a CardInstance,
 }
 
+pub(super) struct GraveyardCardLocation<'a> {
+    owner_id: &'a PlayerId,
+}
+
+impl<'a> GraveyardCardLocation<'a> {
+    #[must_use]
+    pub const fn owner_id(&self) -> &'a PlayerId {
+        self.owner_id
+    }
+}
+
 impl<'a> BattlefieldCardLocation<'a> {
     #[must_use]
     pub const fn owner_id(&self) -> &'a PlayerId {
@@ -120,4 +131,17 @@ pub(super) fn battlefield_card_mut<'a>(
 ) -> Option<&'a mut CardInstance> {
     let owner_index = battlefield_card_location(players, card_id)?.owner_index();
     players[owner_index].battlefield_card_mut(card_id)
+}
+
+pub(super) fn graveyard_card_location<'a>(
+    players: &'a [Player],
+    card_id: &CardInstanceId,
+) -> Option<GraveyardCardLocation<'a>> {
+    players.iter().find_map(|player| {
+        player
+            .graveyard_card(card_id)
+            .map(|_| GraveyardCardLocation {
+                owner_id: player.id(),
+            })
+    })
 }

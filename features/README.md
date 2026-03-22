@@ -212,6 +212,7 @@ The following features are currently executed by `tests/bdd.rs`, grouped by area
 - `features/stack/target_opponents_creature_in_first_main.feature`
 - `features/stack/destroy_target_creature_foundation.feature`
 - `features/stack/exile_target_creature_foundation.feature`
+- `features/stack/exile_target_card_from_graveyard.feature`
 - `features/stack/reject_controlled_creature_for_opponents_creature_spell.feature`
 - `features/stack/resolve_opponents_creature_spell_in_first_main.feature`
 - `features/stack/target_controlled_attacking_creature_spell.feature`

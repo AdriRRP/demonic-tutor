@@ -93,6 +93,9 @@ fn validate_spell_target(
         SpellTargetLegality::MissingCreature(target_card_id) => Err(DomainError::Game(
             GameError::InvalidCreatureTarget(target_card_id),
         )),
+        SpellTargetLegality::MissingGraveyardCard(target_card_id) => Err(DomainError::Game(
+            GameError::InvalidGraveyardCardTarget(target_card_id),
+        )),
     }
 }
 
