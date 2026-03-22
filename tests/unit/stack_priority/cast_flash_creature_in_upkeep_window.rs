@@ -39,11 +39,11 @@ fn active_player_can_cast_and_resolve_a_flash_creature_in_upkeep() {
     assert_eq!(game.stack().len(), 1);
 
     resolve_top_stack_with_passes(&service, &mut game);
-    assert_eq!(game.players()[0].battlefield().cards().len(), 1);
+    assert_eq!(game.players()[0].battlefield_size(), 1);
     assert_eq!(
-        game.players()[0].battlefield().cards()[0]
-            .definition_id()
-            .as_str(),
-        "ambush-viper"
+        game.players()[0]
+            .battlefield_card_at(0)
+            .map(|card| card.definition_id().as_str()),
+        Some("ambush-viper")
     );
 }

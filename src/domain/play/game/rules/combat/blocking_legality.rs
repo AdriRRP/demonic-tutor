@@ -20,8 +20,7 @@ pub fn declare_blockers(
     let defending_player_idx = progression::find_defending_player_index(players, active_player)?;
     let attacker_player_idx = helpers::find_player_index(players, active_player)?;
     let declared_attackers = players[attacker_player_idx]
-        .battlefield()
-        .iter()
+        .battlefield_cards()
         .filter(|card| card.is_attacking())
         .map(|card| {
             (
@@ -31,7 +30,6 @@ pub fn declare_blockers(
         })
         .collect::<HashMap<_, _>>();
     let defender = &mut players[defending_player_idx];
-    let battlefield = defender.battlefield_mut();
     let mut valid_blockers: Vec<(CardInstanceId, CardInstanceId)> = Vec::new();
     let mut seen_blockers = HashSet::new();
     let mut seen_attackers = HashSet::new();
@@ -55,7 +53,7 @@ pub fn declare_blockers(
             )));
         };
 
-        let card = battlefield.card_mut(blocker_id).ok_or_else(|| {
+        let card = defender.battlefield_card_mut(blocker_id).ok_or_else(|| {
             DomainError::Card(CardError::NotOnBattlefield {
                 player: cmd.player_id.clone(),
                 card: blocker_id.clone(),

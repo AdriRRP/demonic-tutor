@@ -52,6 +52,6 @@ fn active_player_can_cast_and_resolve_a_creature_in_second_main() {
         spell_cast.outcome,
         SpellCastOutcome::EnteredBattlefield
     ));
-    assert_eq!(game.players()[0].battlefield().cards().len(), 1);
+    assert_eq!(game.players()[0].battlefield_size(), 1);
     assert_eq!(game.players()[0].graveyard_size(), 0);
 }

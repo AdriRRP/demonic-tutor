@@ -14,11 +14,10 @@ pub fn declare_attackers(
 ) -> Result<AttackersDeclared, DomainError> {
     let player_idx = helpers::find_player_index(players, &cmd.player_id)?;
     let player = &mut players[player_idx];
-    let battlefield = player.battlefield_mut();
     let mut valid_attackers: Vec<CardInstanceId> = Vec::new();
 
     for attacker_id in &cmd.attacker_ids {
-        let card = battlefield.card_mut(attacker_id).ok_or_else(|| {
+        let card = player.battlefield_card_mut(attacker_id).ok_or_else(|| {
             DomainError::Card(CardError::NotOnBattlefield {
                 player: cmd.player_id.clone(),
                 card: attacker_id.clone(),

@@ -74,8 +74,7 @@ fn destroy_zero_toughness_creatures(game_id: &GameId, players: &mut [Player]) ->
 
     for player in players.iter_mut() {
         let zero_toughness_ids = player
-            .battlefield()
-            .iter()
+            .battlefield_cards()
             .filter(|card| card.has_zero_toughness())
             .map(|card| card.id().clone())
             .collect::<Vec<_>>();
@@ -105,8 +104,7 @@ fn destroy_lethally_damaged_creatures(
 
     for player in players.iter_mut() {
         let destroyed_ids = player
-            .battlefield()
-            .iter()
+            .battlefield_cards()
             .filter(|card| card.has_lethal_damage())
             .map(|card| card.id().clone())
             .collect::<Vec<_>>();

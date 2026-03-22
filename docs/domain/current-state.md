@@ -68,7 +68,7 @@ The domain currently includes:
 - card instances with immutable face data and mutable runtime state
 - shared immutable card definitions referenced by runtime card instances
 - basic zones (library, hand, battlefield, graveyard, exile)
-- ordered library, hand, graveyard, and exile zones with intentionally unordered battlefield removal semantics
+- player-owned zone carriers keyed by card id, with ordered library/hand/graveyard/exile views and intentionally unordered battlefield removal semantics
 - mana production from lands
 - minimal colored mana support for `Forest -> Green`, `Mountain -> Red`, and single-color instant costs
 - spell casting with mana cost
@@ -183,6 +183,7 @@ The project currently includes:
 - shared review of currently supported state-based actions after relevant gameplay actions
 - aggregate-owned stack zone and priority state with minimal public stack behavior
 - semantic zone and player accessors shielding most core rules and shared tests from raw zone storage details
+- player-owned card stores behind semantic zone views for library, hand, battlefield, graveyard, and exile
 - an event bus for event distribution
 - projections derived from gameplay events
 - State pattern for phase transitions

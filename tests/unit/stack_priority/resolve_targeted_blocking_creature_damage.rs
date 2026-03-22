@@ -86,9 +86,7 @@ fn targeted_blocking_creature_spell_can_destroy_a_blocker_after_blockers() {
     resolve_top_stack_with_passes(&service, &mut game);
 
     assert!(game.players()[1]
-        .battlefield()
-        .cards()
-        .iter()
+        .battlefield_cards()
         .all(|card| card.id() != &blocker_id));
     assert!(game.players()[1].graveyard_contains(&blocker_id));
 }

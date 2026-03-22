@@ -259,7 +259,7 @@ fn adjust_life_reviews_pending_state_based_actions_for_existing_lethal_damage() 
         CardInstanceId::new("doomed-creature")
     );
     assert!(outcome.game_ended.is_none());
-    assert_eq!(game.players()[0].battlefield().cards().len(), 0);
+    assert_eq!(game.players()[0].battlefield_size(), 0);
     assert_eq!(game.players()[0].graveyard_size(), 1);
 }
 

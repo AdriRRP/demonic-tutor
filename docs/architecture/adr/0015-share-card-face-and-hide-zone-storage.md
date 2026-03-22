@@ -20,7 +20,7 @@ For the current model this means:
 - `CardInstance` shares immutable card definition data instead of copying full definitions by value
 - stack objects may carry explicit spell metadata needed by resolution instead of rediscovering it from the moved card value
 - `Player` and zone types expose semantic reads and transitions that shield rules and tests from storage details
-- colder zones may migrate to id-backed storage behind those same semantic APIs before hotter carriers such as battlefield or stack do
+- player-owned zones may migrate to id-backed storage behind those same semantic APIs before hotter carriers such as stack do
 - future performance refactors should prefer changing storage behind those semantic APIs rather than widening direct mutable access again
 
 ## Consequences
@@ -31,12 +31,12 @@ For the current model this means:
 - clearer separation between immutable card face and mutable runtime state
 - easier future migration toward cheaper zone carriers or id-based storage
 - stronger protection against storage-shaped logic leaking into rules and tests
-- safer phased storage refactors because low-interaction zones can prove the pattern first
+- safer phased storage refactors because low-interaction zones can prove the pattern before hotter runtime carriers
 
 ### Negative
 
 - transitional APIs on `Player` can grow while the storage migration is still incomplete
-- the runtime still stores full `CardInstance` values in zones and on the stack for now
+- the runtime still stores full `CardInstance` values on the stack for now
 - a later registry-by-id design will still require a deliberate follow-up refactor
 
 ## Notes

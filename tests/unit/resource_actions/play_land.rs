@@ -39,9 +39,8 @@ fn play_land_moves_card_from_hand_to_battlefield() {
     assert_eq!(
         game.players()[1]
             .battlefield_card_at(0)
-            .unwrap_or_else(|| panic!("battlefield card should exist"))
-            .id(),
-        &land_card_id
+            .map(demonictutor::CardInstance::id),
+        Some(&land_card_id)
     );
 }
 

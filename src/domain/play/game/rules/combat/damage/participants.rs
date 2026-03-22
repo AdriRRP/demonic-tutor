@@ -8,8 +8,7 @@ pub(super) fn collect_attackers(
     player: &Player,
 ) -> Result<Vec<(CardInstanceId, u32)>, DomainError> {
     player
-        .battlefield()
-        .iter()
+        .battlefield_cards()
         .filter(|card| card.is_attacking())
         .map(|card| {
             let (power, _) = card.creature_stats().ok_or_else(|| {
@@ -28,8 +27,7 @@ pub(super) fn collect_blockers(
     player: &Player,
 ) -> Result<Vec<(CardInstanceId, CardInstanceId, u32)>, DomainError> {
     player
-        .battlefield()
-        .iter()
+        .battlefield_cards()
         .filter(|card| card.is_blocking())
         .map(|card| {
             let (power, _) = card.creature_stats().ok_or_else(|| {

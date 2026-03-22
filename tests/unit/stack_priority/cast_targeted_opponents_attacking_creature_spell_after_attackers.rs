@@ -94,9 +94,7 @@ fn non_active_player_can_cast_an_opponents_attacking_creature_spell_after_attack
 
     crate::support::resolve_top_stack_with_passes(&service, &mut game);
     assert!(game.players()[0]
-        .battlefield()
-        .cards()
-        .iter()
+        .battlefield_cards()
         .all(|card| card.id() != &attacker_id));
     assert!(game.players()[0].graveyard_contains(&attacker_id));
 }

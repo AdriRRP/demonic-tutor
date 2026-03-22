@@ -58,6 +58,7 @@ Prefer:
 - zone APIs consumed through semantic queries and iterators rather than exposing storage details to core rules
 - explicit stack-borne spell metadata preferred over rediscovering immutable spell facts from moved card values during resolution
 - phased storage refactors that prove id-backed carriers first in colder zones before touching hotter paths such as battlefield or stack
+- once battlefield follows the same id-backed pattern, prefer the next storage/performance refactor in stack or shared lookup helpers rather than widening player accessors again
 
 Avoid:
 

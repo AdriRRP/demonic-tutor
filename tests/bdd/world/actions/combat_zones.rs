@@ -23,8 +23,18 @@ impl GameplayWorld {
             .tracked_attacker_id
             .clone()
             .expect("tracked attacker should exist");
-        let blocker_1_id = self.player(alias).battlefield().cards()[0].id().clone();
-        let blocker_2_id = self.player(alias).battlefield().cards()[1].id().clone();
+        let blocker_1_id = self
+            .player(alias)
+            .battlefield_card_at(0)
+            .expect("first blocker should exist")
+            .id()
+            .clone();
+        let blocker_2_id = self
+            .player(alias)
+            .battlefield_card_at(1)
+            .expect("second blocker should exist")
+            .id()
+            .clone();
 
         let service = support::create_service();
         let res = service.declare_blockers(

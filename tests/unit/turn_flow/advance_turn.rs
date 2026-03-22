@@ -327,12 +327,22 @@ fn advance_turn_clears_marked_damage_when_turn_ends() {
         )
         .unwrap();
 
-    assert_eq!(game.players()[0].battlefield().cards()[0].damage(), 2);
+    assert_eq!(
+        game.players()[0]
+            .battlefield_card_at(0)
+            .map(demonictutor::CardInstance::damage),
+        Some(2)
+    );
 
     advance_to_player_phase_satisfying_cleanup(&service, &mut game, "player-2", Phase::Untap);
 
     assert_eq!(game.phase(), &Phase::Untap);
-    assert_eq!(game.players()[0].battlefield().cards()[0].damage(), 0);
+    assert_eq!(
+        game.players()[0]
+            .battlefield_card_at(0)
+            .map(demonictutor::CardInstance::damage),
+        Some(0)
+    );
 }
 
 #[test]

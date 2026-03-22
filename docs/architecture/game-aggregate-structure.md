@@ -82,6 +82,7 @@ src/domain/play/game/
 - **Responsibility-first resolution flow** — As spell support grows, keep stack extraction, destination movement, and rule application in separate modules instead of letting one resolution file absorb the whole flow.
 - **Explicit turn semantics** — When a timing area grows cognitively, prefer explicit subphases and focused modules over hiding distinct moments behind one broad phase name.
 - **Storage-agnostic rules** — Prefer semantic zone/player accessors and explicit stack metadata over rule code that depends on raw collection layout or repeatedly rediscovers immutable spell facts.
+- **Id-backed player zones** — Prefer player-owned card stores behind semantic zone views before introducing broader registry-style storage into hotter carriers such as stack.
 
 ---
 

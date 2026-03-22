@@ -154,6 +154,7 @@ pub struct Player {
     hand: Hand,
     hand_cards: HashMap<CardInstanceId, CardInstance>,
     battlefield: Battlefield,
+    battlefield_cards: HashMap<CardInstanceId, CardInstance>,
     graveyard: Graveyard,
     graveyard_cards: HashMap<CardInstanceId, CardInstance>,
     exile: Exile,
@@ -175,6 +176,7 @@ impl Player {
             hand: Hand::new(),
             hand_cards: HashMap::new(),
             battlefield: Battlefield::new(),
+            battlefield_cards: HashMap::new(),
             graveyard: Graveyard::new(),
             graveyard_cards: HashMap::new(),
             exile: Exile::new(),
@@ -208,10 +210,6 @@ impl Player {
     #[must_use]
     pub const fn battlefield(&self) -> &Battlefield {
         &self.battlefield
-    }
-
-    pub fn battlefield_mut(&mut self) -> &mut Battlefield {
-        &mut self.battlefield
     }
 
     #[must_use]
@@ -307,7 +305,7 @@ impl Player {
 
     #[must_use]
     pub fn battlefield_contains(&self, card_id: &CardInstanceId) -> bool {
-        self.battlefield.contains(card_id)
+        self.battlefield.contains(card_id) && self.battlefield_cards.contains_key(card_id)
     }
 
     #[must_use]
@@ -342,16 +340,21 @@ impl Player {
 
     #[must_use]
     pub fn battlefield_card(&self, card_id: &CardInstanceId) -> Option<&CardInstance> {
-        self.battlefield.card(card_id)
+        self.battlefield_contains(card_id)
+            .then(|| self.battlefield_cards.get(card_id))
+            .flatten()
     }
 
     pub fn battlefield_card_mut(&mut self, card_id: &CardInstanceId) -> Option<&mut CardInstance> {
-        self.battlefield.card_mut(card_id)
+        self.battlefield_contains(card_id)
+            .then(|| self.battlefield_cards.get_mut(card_id))
+            .flatten()
     }
 
     #[must_use]
     pub fn battlefield_card_at(&self, index: usize) -> Option<&CardInstance> {
-        self.battlefield.iter().nth(index)
+        let card_id = self.battlefield.card_id_at(index)?;
+        self.battlefield_cards.get(card_id)
     }
 
     #[must_use]
@@ -403,7 +406,35 @@ impl Player {
     ) -> Option<&CardInstance> {
         self.battlefield
             .iter()
+            .filter_map(|card_id| self.battlefield_cards.get(card_id))
             .find(|card| card.definition_id() == definition_id)
+    }
+
+    pub fn battlefield_cards(&self) -> impl Iterator<Item = &CardInstance> {
+        self.battlefield
+            .iter()
+            .filter_map(|card_id| self.battlefield_cards.get(card_id))
+    }
+
+    pub fn battlefield_card_ids(&self) -> impl Iterator<Item = &CardInstanceId> {
+        self.battlefield.iter()
+    }
+
+    pub fn for_each_battlefield_card_mut<F>(&mut self, mut f: F)
+    where
+        F: FnMut(&mut CardInstance),
+    {
+        let card_ids = self
+            .battlefield
+            .iter()
+            .cloned()
+            .collect::<Vec<CardInstanceId>>();
+
+        for card_id in card_ids {
+            if let Some(card) = self.battlefield_cards.get_mut(&card_id) {
+                f(card);
+            }
+        }
     }
 
     #[must_use]
@@ -438,7 +469,8 @@ impl Player {
     }
 
     pub fn remove_battlefield_card(&mut self, card_id: &CardInstanceId) -> Option<CardInstance> {
-        self.battlefield.remove(card_id)
+        self.battlefield.remove(card_id)?;
+        self.battlefield_cards.remove(card_id)
     }
 
     pub fn remove_graveyard_card(&mut self, card_id: &CardInstanceId) -> Option<CardInstance> {
@@ -448,7 +480,7 @@ impl Player {
 
     pub fn move_hand_card_to_battlefield(&mut self, card_id: &CardInstanceId) -> Option<()> {
         let card = self.remove_hand_card(card_id)?;
-        self.battlefield.add(card);
+        self.receive_battlefield_card(card);
         Some(())
     }
 
@@ -491,7 +523,9 @@ impl Player {
     }
 
     pub fn receive_battlefield_card(&mut self, card: CardInstance) {
-        self.battlefield.add(card);
+        let card_id = card.id().clone();
+        self.battlefield.add(card_id.clone());
+        self.battlefield_cards.insert(card_id, card);
     }
 
     pub fn receive_graveyard_card(&mut self, card: CardInstance) {

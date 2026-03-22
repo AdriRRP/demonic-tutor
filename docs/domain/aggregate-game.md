@@ -86,7 +86,7 @@ Represents a player's draw pile.
 
 Current implementation:
 
-- ordered collection of `CardInstance`
+- ordered collection of `CardInstanceId` backed by a player-owned card store
 
 Responsibilities:
 
@@ -113,7 +113,7 @@ Responsibilities:
 
 Current implementation:
 
-- ordered collection of `CardInstance`
+- ordered collection of `CardInstanceId` backed by a player-owned card store
 
 The current runtime preserves the order in which cards appear in hand.
 Rules and tests should prefer semantic player and zone queries over direct dependence on the hand's backing storage.
@@ -131,7 +131,7 @@ Responsibilities:
 
 Current implementation:
 
-- collection of `CardInstance`
+- collection of `CardInstanceId` backed by a player-owned card store
 
 The battlefield currently models only a minimal subset of permanent state.
 The runtime does not currently promise stable battlefield ordering.
@@ -149,7 +149,7 @@ Responsibilities:
 
 Current implementation:
 
-- ordered collection of `CardInstance`
+- ordered collection of `CardInstanceId` backed by a player-owned card store
 
 The current runtime preserves graveyard insertion order.
 Rules and tests should prefer semantic player and zone queries over direct dependence on graveyard storage details.
@@ -167,7 +167,7 @@ Responsibilities:
 
 Current implementation:
 
-- ordered collection of `CardInstance`
+- ordered collection of `CardInstanceId` backed by a player-owned card store
 
 The current runtime preserves exile insertion order.
 Rules and tests should prefer semantic player and zone queries over direct dependence on exile storage details.

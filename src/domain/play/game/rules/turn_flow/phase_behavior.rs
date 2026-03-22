@@ -68,7 +68,7 @@ impl PhaseBehavior for UntapPhase {
         active_player: &PlayerId,
     ) -> Result<(), DomainError> {
         let player = helpers::find_player_mut(players, active_player)?;
-        player.battlefield_mut().iter_mut().for_each(|card| {
+        player.for_each_battlefield_card_mut(|card| {
             card.untap();
             card.remove_summoning_sickness();
         });
@@ -202,10 +202,9 @@ impl PhaseBehavior for EndStepPhase {
         _active_player: &PlayerId,
     ) -> Result<(), DomainError> {
         for player in players.iter_mut() {
-            player
-                .battlefield_mut()
-                .iter_mut()
-                .for_each(crate::domain::play::cards::CardInstance::clear_damage);
+            player.for_each_battlefield_card_mut(
+                crate::domain::play::cards::CardInstance::clear_damage,
+            );
         }
         Ok(())
     }

@@ -73,9 +73,7 @@ fn controlled_attacking_creature_spell_marks_nonlethal_damage_and_leaves_the_att
     resolve_top_stack_with_passes(&service, &mut game);
 
     let attacker = game.players()[0]
-        .battlefield()
-        .cards()
-        .iter()
+        .battlefield_cards()
         .find(|card| card.id() == &attacker_id)
         .unwrap();
     assert_eq!(attacker.damage(), 1);

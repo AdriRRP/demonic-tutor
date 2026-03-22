@@ -355,9 +355,7 @@ fn targeted_attacking_creature_spell_can_destroy_an_attacker_after_attackers() {
     assert_eq!(resolution.creatures_died.len(), 1);
     assert_eq!(resolution.creatures_died[0].card_id, attacker_id);
     assert!(game.players()[0]
-        .battlefield()
-        .cards()
-        .iter()
+        .battlefield_cards()
         .all(|card| card.id() != &resolution.creatures_died[0].card_id));
 }
 
@@ -410,9 +408,7 @@ fn targeted_attacking_creature_spell_marks_nonlethal_damage_and_leaves_the_attac
     assert!(resolution.creatures_died.is_empty());
 
     let attacker = game.players()[0]
-        .battlefield()
-        .cards()
-        .iter()
+        .battlefield_cards()
         .find(|card| card.id() == &attacker_id)
         .unwrap();
     assert_eq!(attacker.damage(), 1);
@@ -458,9 +454,7 @@ fn targeted_instant_deals_damage_to_target_creature_and_state_based_actions_dest
     assert_eq!(resolution.creatures_died.len(), 1);
     assert_eq!(resolution.creatures_died[0].card_id, creature_id);
     assert!(game.players()[1]
-        .battlefield()
-        .cards()
-        .iter()
+        .battlefield_cards()
         .all(|card| card.definition_id() != &CardDefinitionId::new("bob-bear")));
     assert_eq!(game.players()[1].graveyard_size(), 1);
 }
@@ -610,6 +604,6 @@ fn targeted_instant_does_not_apply_if_its_only_creature_target_is_gone_on_resolu
     let second_resolution = resolve_current_stack(&service, &mut game);
     assert!(second_resolution.life_changed.is_none());
     assert!(second_resolution.creatures_died.is_empty());
-    assert!(game.players()[1].battlefield().cards().is_empty());
+    assert!(game.players()[1].battlefield_is_empty());
     assert_eq!(game.players()[1].graveyard_size(), 1);
 }

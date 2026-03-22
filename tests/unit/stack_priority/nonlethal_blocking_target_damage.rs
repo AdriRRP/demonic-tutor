@@ -86,9 +86,7 @@ fn targeted_blocking_creature_spell_marks_nonlethal_damage_and_leaves_the_blocke
     resolve_top_stack_with_passes(&service, &mut game);
 
     let blocker = game.players()[1]
-        .battlefield()
-        .cards()
-        .iter()
+        .battlefield_cards()
         .find(|card| card.id() == &blocker_id)
         .unwrap();
     assert_eq!(blocker.damage(), 1);

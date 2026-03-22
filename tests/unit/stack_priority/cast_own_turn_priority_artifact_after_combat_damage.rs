@@ -71,11 +71,11 @@ fn active_player_can_cast_and_resolve_an_own_turn_priority_artifact_after_combat
 
     assert_eq!(game.stack().len(), 1);
     resolve_top_stack_with_passes(&service, &mut game);
-    assert_eq!(game.players()[0].battlefield().cards().len(), 2);
+    assert_eq!(game.players()[0].battlefield_size(), 2);
     assert_eq!(
-        game.players()[0].battlefield().cards()[1]
-            .definition_id()
-            .as_str(),
-        "swift-relic"
+        game.players()[0]
+            .battlefield_card_at(1)
+            .map(|card| card.definition_id().as_str()),
+        Some("swift-relic")
     );
 }

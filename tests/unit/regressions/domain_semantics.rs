@@ -124,7 +124,7 @@ fn instant_spells_resolve_to_graveyard_not_battlefield() {
 
     let player = &game.players()[0];
     assert_eq!(player.hand_size(), 7);
-    assert!(player.battlefield().cards().is_empty());
+    assert!(player.battlefield_is_empty());
     assert_eq!(player.graveyard_size(), 1);
 }
 
@@ -162,15 +162,21 @@ fn untap_only_updates_the_active_players_board_state() {
     let creature_id = CardInstanceId::new("game-1-player-1-0");
     cast_and_resolve(&service, &mut game, "player-1", creature_id);
 
-    assert!(game.players()[0].battlefield().cards()[0].has_summoning_sickness());
+    assert!(game.players()[0]
+        .battlefield_card_at(0)
+        .is_some_and(demonictutor::CardInstance::has_summoning_sickness));
 
     advance_until(&service, &mut game, "player-2", Phase::Untap);
 
-    assert!(game.players()[0].battlefield().cards()[0].has_summoning_sickness());
+    assert!(game.players()[0]
+        .battlefield_card_at(0)
+        .is_some_and(demonictutor::CardInstance::has_summoning_sickness));
 
     advance_until(&service, &mut game, "player-1", Phase::Untap);
 
-    assert!(!game.players()[0].battlefield().cards()[0].has_summoning_sickness());
+    assert!(!game.players()[0]
+        .battlefield_card_at(0)
+        .is_some_and(demonictutor::CardInstance::has_summoning_sickness));
 }
 
 #[test]
@@ -240,15 +246,22 @@ fn combat_damage_marks_surviving_creatures_and_destroys_lethally_damaged_ones() 
         )
         .unwrap();
 
-    assert_eq!(game.players()[0].battlefield().cards()[0].damage(), 2);
-    assert!(game.players()[1].battlefield().cards().is_empty());
+    assert_eq!(
+        game.players()[0]
+            .battlefield_card_at(0)
+            .map(demonictutor::CardInstance::damage),
+        Some(2)
+    );
+    assert!(game.players()[1].battlefield_is_empty());
     assert_eq!(game.players()[1].graveyard_size(), 1);
     assert_eq!(outcome.creatures_died.len(), 1);
     assert_eq!(
         outcome.creatures_died[0].card_id,
         CardInstanceId::new("game-1-player-2-0")
     );
-    assert!(!game.players()[0].battlefield().cards()[0].is_attacking());
+    assert!(game.players()[0]
+        .battlefield_card_at(0)
+        .is_some_and(|card| !card.is_attacking()));
 }
 
 #[test]
@@ -333,7 +346,7 @@ fn creature_destruction_emits_one_event_per_destroyed_creature() {
         event.player_id == PlayerId::new("player-2")
             && (event.card_id == left_blocker_id || event.card_id == right_blocker_id)
     }));
-    assert_eq!(game.players()[1].battlefield().cards().len(), 0);
+    assert_eq!(game.players()[1].battlefield_size(), 0);
     assert_eq!(game.players()[1].graveyard_size(), 2);
 }
 
