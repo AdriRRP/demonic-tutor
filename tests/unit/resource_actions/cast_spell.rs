@@ -4,8 +4,8 @@
 use crate::support::{
     advance_to_first_main_satisfying_cleanup, advance_to_player_first_main_satisfying_cleanup,
     artifact_card, double_green_instant_card, filled_library, forest_card, green_instant_card,
-    instant_card, land_card, mixed_green_instant_card, mountain_card, setup_two_player_game,
-    vanilla_creature,
+    instant_card, land_card, mixed_green_instant_card, mountain_card, plains_card,
+    setup_two_player_game, vanilla_creature,
 };
 use demonictutor::{
     domain::play::game::{Player, TerminalState},
@@ -600,6 +600,156 @@ fn casting_a_double_green_instant_fails_with_only_one_green_mana() {
     assert_eq!(game.players()[0].mana_pool().green(), 1);
     assert_eq!(game.players()[0].mana_pool().red(), 1);
     assert_eq!(game.players()[0].mana(), 2);
+}
+
+#[test]
+fn casting_a_generic_spell_succeeds_with_colored_mana() {
+    let (service, mut game) = setup_two_player_game(
+        "game-generic-cost-colored-mana",
+        filled_library(
+            vec![
+                artifact_card("sky-skiff", 2),
+                forest_card("forest-a"),
+                mountain_card("mountain-b"),
+            ],
+            10,
+        ),
+        filled_library(vec![land_card("plains")], 10),
+    );
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
+    service
+        .play_land(
+            &mut game,
+            PlayLandCommand::new(
+                PlayerId::new("player-1"),
+                CardInstanceId::new("game-generic-cost-colored-mana-player-1-1"),
+            ),
+        )
+        .unwrap();
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-2");
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
+
+    service
+        .play_land(
+            &mut game,
+            PlayLandCommand::new(
+                PlayerId::new("player-1"),
+                CardInstanceId::new("game-generic-cost-colored-mana-player-1-2"),
+            ),
+        )
+        .unwrap();
+    service
+        .tap_land(
+            &mut game,
+            TapLandCommand::new(
+                PlayerId::new("player-1"),
+                CardInstanceId::new("game-generic-cost-colored-mana-player-1-1"),
+            ),
+        )
+        .unwrap();
+    service
+        .tap_land(
+            &mut game,
+            TapLandCommand::new(
+                PlayerId::new("player-1"),
+                CardInstanceId::new("game-generic-cost-colored-mana-player-1-2"),
+            ),
+        )
+        .unwrap();
+
+    let outcome = service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(
+                PlayerId::new("player-1"),
+                CardInstanceId::new("game-generic-cost-colored-mana-player-1-0"),
+            ),
+        )
+        .unwrap();
+
+    assert_eq!(outcome.spell_put_on_stack.mana_cost_paid, 2);
+    assert_eq!(game.players()[0].mana(), 0);
+    assert_eq!(game.players()[0].mana_pool().green(), 0);
+    assert_eq!(game.players()[0].mana_pool().red(), 0);
+}
+
+#[test]
+fn casting_a_mixed_green_instant_fails_without_the_required_green_symbol() {
+    let (service, mut game) = setup_two_player_game(
+        "game-mixed-green-spell-no-green",
+        filled_library(
+            vec![
+                mixed_green_instant_card("ancient-stirring", 1),
+                mountain_card("mountain"),
+                plains_card("plains"),
+            ],
+            10,
+        ),
+        filled_library(vec![land_card("forest")], 10),
+    );
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
+    service
+        .play_land(
+            &mut game,
+            PlayLandCommand::new(
+                PlayerId::new("player-1"),
+                CardInstanceId::new("game-mixed-green-spell-no-green-player-1-1"),
+            ),
+        )
+        .unwrap();
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-2");
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
+
+    service
+        .play_land(
+            &mut game,
+            PlayLandCommand::new(
+                PlayerId::new("player-1"),
+                CardInstanceId::new("game-mixed-green-spell-no-green-player-1-2"),
+            ),
+        )
+        .unwrap();
+    service
+        .tap_land(
+            &mut game,
+            TapLandCommand::new(
+                PlayerId::new("player-1"),
+                CardInstanceId::new("game-mixed-green-spell-no-green-player-1-1"),
+            ),
+        )
+        .unwrap();
+    service
+        .tap_land(
+            &mut game,
+            TapLandCommand::new(
+                PlayerId::new("player-1"),
+                CardInstanceId::new("game-mixed-green-spell-no-green-player-1-2"),
+            ),
+        )
+        .unwrap();
+
+    let result = service.cast_spell(
+        &mut game,
+        CastSpellCommand::new(
+            PlayerId::new("player-1"),
+            CardInstanceId::new("game-mixed-green-spell-no-green-player-1-0"),
+        ),
+    );
+
+    assert!(matches!(
+        result,
+        Err(DomainError::Game(GameError::InsufficientMana { .. }))
+    ));
+    assert_eq!(game.players()[0].mana_pool().red(), 1);
+    assert_eq!(game.players()[0].mana_pool().white(), 1);
+    assert_eq!(game.players()[0].mana(), 2);
+    assert!(game.players()[0].hand_contains(&CardInstanceId::new(
+        "game-mixed-green-spell-no-green-player-1-0"
+    )));
 }
 
 #[test]

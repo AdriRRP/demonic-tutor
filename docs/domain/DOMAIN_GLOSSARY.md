@@ -224,7 +224,7 @@ In the current runtime, the exercised basic-land mana subset is `Forest -> Green
 
 The mana payment requirement declared by a spell card.
 
-The current runtime supports generic requirements plus explicit colored requirements in a small closed subset, including single-colored costs, a first mixed corridor such as `1G`, and repeated same-color requirements such as `GG`.
+The current runtime supports generic requirements plus explicit colored requirements in a small closed subset, including single-colored costs, a first mixed corridor such as `1G`, repeated same-color requirements such as `GG`, and generic payment from any remaining mana after colored requirements are reserved.
 
 ---
 

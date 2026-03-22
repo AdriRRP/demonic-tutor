@@ -119,6 +119,23 @@ fn alice_is_the_active_player_in_first_main_with_a_double_green_instant_card_in_
     );
 }
 
+#[given(
+    "Alice is the active player in FirstMain with a mixed green instant card in hand and only red and white mana available"
+)]
+fn alice_is_the_active_player_in_first_main_with_a_mixed_green_instant_card_in_hand_and_only_red_and_white_mana_available(
+    world: &mut GameplayWorld,
+) {
+    world.setup_cast_mixed_green_instant_without_green();
+    assert_eq!(
+        world.game().phase(),
+        &GameplayWorld::phase_from_name("FirstMain")
+    );
+    assert_eq!(
+        world.game().active_player(),
+        &GameplayWorld::player_id("Alice")
+    );
+}
+
 #[given("Alice has only red mana available to pay its cost")]
 fn alice_has_only_red_mana_available_to_pay_its_cost(world: &mut GameplayWorld) {
     world.ensure_tracked_land_provides_mana();

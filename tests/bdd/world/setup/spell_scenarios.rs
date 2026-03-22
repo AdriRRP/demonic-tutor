@@ -276,6 +276,60 @@ impl GameplayWorld {
         self.reset_observations();
     }
 
+    pub fn setup_cast_mixed_green_instant_without_green(&mut self) {
+        self.reset_game_with_libraries(
+            "bdd-cast-mixed-green-instant-no-green",
+            support::filled_library(
+                vec![
+                    support::mixed_green_instant_card("bdd-ancient-stirring", 1),
+                    support::mountain_card("bdd-mountain"),
+                    support::plains_card("bdd-plains"),
+                ],
+                10,
+            ),
+            support::filled_library(Vec::new(), 10),
+        );
+
+        let service = support::create_service();
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-1",
+        );
+        let mountain_id = self.hand_card_by_definition("Alice", "bdd-mountain");
+        service
+            .play_land(
+                self.game_mut(),
+                PlayLandCommand::new(Self::player_id("Alice"), mountain_id),
+            )
+            .expect("setup mountain play should succeed");
+
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-2",
+        );
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-1",
+        );
+
+        self.tracked_card_id = Some(self.hand_card_by_definition("Alice", "bdd-ancient-stirring"));
+        self.tracked_blocker_id = Some(
+            self.player("Alice")
+                .battlefield_card_by_definition(&demonictutor::CardDefinitionId::new(
+                    "bdd-mountain",
+                ))
+                .expect("mountain should be on battlefield")
+                .id()
+                .clone(),
+        );
+        self.tracked_second_response_card_id =
+            Some(self.hand_card_by_definition("Alice", "bdd-plains"));
+        self.reset_observations();
+    }
+
     pub fn setup_targeted_controlled_creature_spell(&mut self) {
         self.reset_game_with_libraries(
             "bdd-targeted-controlled-creature-spell",
