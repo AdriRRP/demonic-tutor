@@ -103,6 +103,13 @@ If a change affects multiple concerns, verify whether it requires updates to:
 
 When a session establishes a stable new design rule, naming rule, or repository-closing workflow, update the operational context or skills before ending the work so the lesson persists across sessions.
 
+When navigating slice history or planning backlog, prefer the grouped slice directories:
+
+- `docs/slices/implemented/` grouped by capability
+- `docs/slices/proposals/` grouped by implementation wave
+
+Do not assume slice docs live in one flat directory.
+
 When stack or priority is only partially implemented, any new gameplay action must either:
 
 - integrate with the currently supported priority windows, or

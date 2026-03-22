@@ -23,7 +23,7 @@ The code already uses correct naming (`CastSpellCommand`), but comments and docu
 - `docs/architecture/game-aggregate-structure.md` — Fix comment
 
 ### Documentation Changes
-- `docs/slices/implemented/cast-spell.md` — Fix terminology
+- `docs/slices/implemented/stack/cast-spell.md` — Fix terminology
 
 ### Additional Cleanup
 - `CardType::is_spell_card()` now expresses the same distinction in positive domain language

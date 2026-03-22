@@ -94,7 +94,7 @@ This behavior belongs to the `Game` aggregate because it:
 - `docs/domain/aggregate-game.md`
 - `docs/domain/DOMAIN_GLOSSARY.md`
 - `docs/rules/rules-map.md`
-- `docs/slices/implemented/player-life.md`
+- `docs/slices/implemented/life/player-life.md`
 - `features/life/lose_on_zero_life.feature`
 - this slice document
 

@@ -80,7 +80,7 @@ This slice follows `CastSpell`, `CreatureDestruction`, and terminal game-state s
 - `docs/domain/current-state.md`
 - `docs/domain/aggregate-game.md`
 - `docs/rules/rules-map.md`
-- `docs/slices/implemented/cast-spell.md`
+- `docs/slices/implemented/stack/cast-spell.md`
 - `features/state-based-actions/zero_toughness_creature_dies.feature`
 - this slice document
 

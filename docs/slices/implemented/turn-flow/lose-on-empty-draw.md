@@ -96,7 +96,7 @@ This behavior belongs to the `Game` aggregate because it:
 - `docs/domain/DOMAIN_GLOSSARY.md`
 - `docs/rules/notes/turn-flow.md`
 - `docs/rules/rules-map.md`
-- `docs/slices/implemented/draw-card.md`
+- `docs/slices/implemented/turn-flow/draw-card.md`
 - `features/turn-flow/lose_on_empty_draw.feature`
 - this slice document
 

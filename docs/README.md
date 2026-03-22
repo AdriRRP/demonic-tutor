@@ -70,10 +70,12 @@ These files connect repository behavior to Magic rules without turning the ruleb
 
 Slices are the main unit of incremental change in DemonicTutor.
 
-- [`/Users/adrianramos/Repos/demonictutor/docs/slices/implemented/`]( /Users/adrianramos/Repos/demonictutor/docs/slices/implemented/ )
-  slices that are part of the active or historical implemented story
-- [`/Users/adrianramos/Repos/demonictutor/docs/slices/proposals/`]( /Users/adrianramos/Repos/demonictutor/docs/slices/proposals/ )
-  future or superseded proposals, when still useful historically
+- [`/Users/adrianramos/Repos/demonictutor/docs/slices/README.md`]( /Users/adrianramos/Repos/demonictutor/docs/slices/README.md )
+  entry point for slice history and backlog
+- [`/Users/adrianramos/Repos/demonictutor/docs/slices/implemented/README.md`]( /Users/adrianramos/Repos/demonictutor/docs/slices/implemented/README.md )
+  implemented and historical slices grouped by capability
+- [`/Users/adrianramos/Repos/demonictutor/docs/slices/proposals/README.md`]( /Users/adrianramos/Repos/demonictutor/docs/slices/proposals/README.md )
+  live proposal backlog grouped by wave
 
 Read slices when you want to understand:
 

@@ -65,8 +65,8 @@ The repository already supports declaring blockers and resolving combat damage, 
 
 - `docs/domain/current-state.md`
 - `docs/rules/notes/combat.md`
-- `docs/slices/implemented/declare-blockers.md`
-- `docs/slices/implemented/combat-damage.md`
+- `docs/slices/implemented/combat/declare-blockers.md`
+- `docs/slices/implemented/combat/combat-damage.md`
 
 ---
 

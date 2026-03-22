@@ -71,8 +71,8 @@ Allowing an explicit effect to draw multiple cards onto a chosen player is a sma
 
 ## Documentation Impact
 
-- `docs/slices/implemented/draw-card.md`
-- `docs/slices/implemented/lose-on-empty-draw.md`
+- `docs/slices/implemented/turn-flow/draw-card.md`
+- `docs/slices/implemented/turn-flow/lose-on-empty-draw.md`
 - `docs/domain/current-state.md`
 - `docs/rules/notes/turn-flow.md`
 
