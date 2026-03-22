@@ -158,6 +158,46 @@ For rule-heavy areas, a slice may also be preceded by a focused Gherkin feature 
 
 Avoid introducing large frameworks or infrastructure before they are required by a slice.
 
+## Practical Slice Flow
+
+Default sequence:
+
+1. define the capability in one sentence
+2. load only the minimum canonical context
+3. decide the smallest observable behavior worth landing
+4. add or refine the `.feature` only if the behavior is acceptance-level or rule-heavy
+5. add or refine the slice doc
+6. implement the domain behavior in the owning capability module
+7. add unit tests for invariants, edge cases, and regressions
+8. add BDD only for the end-to-end gameplay corridor
+9. sync canonical docs only if their owned truth changed
+10. run `./scripts/check-all.sh`
+11. commit semantically
+
+Preferred order:
+
+`feature/slice -> domain -> unit tests -> BDD -> docs sync -> check-all -> commit`
+
+## Small Example
+
+Example: `Forest` produces `Green`.
+
+1. feature intent:
+   `tapping a Forest adds Green mana`
+2. domain impact:
+   extend card-face mana color, mana pool, and land-tap resolution
+3. unit coverage:
+   `forest adds green mana`
+   `mana event reports green`
+4. executable BDD only if the slice also proves a real corridor such as:
+   `Alice casts a green instant in FirstMain`
+5. docs sync:
+   `current-state`
+   glossary only if a new term becomes canonical
+   implemented slice doc
+
+This is the default bar: one real behavior, one small model extension, focused tests, honest docs.
+
 ---
 
 # Code Style
@@ -217,11 +257,60 @@ Repository test layout:
 * `tests/unit/` for conventional Rust integration and behavior test modules, grouped by domain area such as `lifecycle`, `turn_flow`, `resource_actions`, `combat`, `infrastructure`, and `regressions`
 * `tests/bdd/` for executable Cucumber acceptance test runners
 
+## Test Strategy
+
+Use unit tests by default.
+
+Add unit tests for:
+
+- legality and invariants
+- state transitions inside one capability
+- edge cases and regressions
+- negative paths
+
+Add executable BDD for:
+
+- end-to-end gameplay corridors
+- rule-heavy flows that are easier to review in ubiquitous language
+- interactions across stack, priority, mana, combat, targeting, or turn flow
+
+Do not move fine-grained invariant testing into BDD.
+Do not use BDD to replace unit coverage.
+
+## Test Placement
+
+- add new unit files inside the nearest existing capability directory under `tests/unit/`
+- add new BDD step files inside the nearest existing behavior family under `tests/bdd/`
+- add shared BDD setup only under `tests/bdd/world/`
+- add shared unit helpers only under `tests/unit/support/`
+
+If a file becomes crowded, split it by capability or scenario family, not by arbitrary size.
+
+Examples:
+
+- new mana payment edge case:
+  `tests/unit/resource_actions/`
+- new combat legality rule:
+  `tests/unit/combat/`
+- new targeting gameplay corridor:
+  `tests/bdd/spell_casting/`
+- repeated combat setup helper:
+  `tests/bdd/world/setup_combat_windows/`
+
 Prefer small tests tied to domain behaviors over large integration scaffolding.
 
 BDD-style tests may be introduced when gameplay flows become complex.
 
 When `features/` are executable, keep them focused on acceptance-level behavior and continue using ordinary Rust tests for fine-grained invariants and edge cases.
+
+## Feature Rules
+
+- put executable features under the nearest capability directory in `features/`
+- keep one coherent gameplay behavior per feature
+- name scenarios by observable gameplay result
+- use features to describe behavior
+- use slice docs to describe scope and implementation boundaries
+- if a feature becomes historical or reference-only, mark it honestly
 
 Current executable BDD suite:
 
@@ -273,6 +362,52 @@ Avoid:
 
 This applies especially to the `Game` aggregate: dividing its implementation into internal modules does not change the aggregate boundary.
 
+## New Modules
+
+Prefer adding behavior to an existing capability module first.
+
+Create a new module only when:
+
+- the file is becoming hard to navigate
+- the new behavior is a stable capability of its own
+- the helper logic is reused inside the same capability family
+
+Good:
+
+- `src/domain/play/game/rules/stack_priority/`
+- `src/domain/play/game/rules/combat/`
+- `tests/bdd/world/setup_combat_windows/`
+
+Avoid:
+
+- `helpers.rs` with unrelated logic
+- broad framework extraction for one slice
+- public modules created only to hide temporary complexity
+
+## Utility Placement
+
+Add a utility only after the second real use.
+
+Place it as close as possible to the owning behavior:
+
+- stack-only helper:
+  under `src/domain/play/game/rules/stack_priority/`
+- combat-only helper:
+  under `src/domain/play/game/rules/combat/`
+- BDD setup helper:
+  under `tests/bdd/world/`
+- unit helper:
+  under `tests/unit/support/`
+
+Keep helpers:
+
+- small
+- deterministic
+- private unless another module truly needs them
+- named in ubiquitous language
+
+Avoid cross-cutting utility files for unrelated concerns.
+
 ---
 
 # Event Design
@@ -313,3 +448,27 @@ Current repository choice:
 - the runtime intentionally uses `Arc<str>` today because ids are cloned pervasively into events, tests, and stack objects
 - this choice should not be changed casually to `Rc<str>` or interning without profiling the real workload first
 - if future measurements show identifier cloning or atomic refcounting as a meaningful hotspot, revisit the alias rather than rewriting each id type independently
+
+## Memory Heuristics
+
+Prefer the smallest representation that matches the supported rule space.
+
+Prefer:
+
+- closed enums for finite rule sets
+- small snapshots in validation paths
+- face/runtime separation when mutable state grows
+- explicit value objects for legal state
+
+Avoid:
+
+- cloning full runtime objects just to inspect one capability
+- collections more general than the currently supported invariant
+- representational combinations that allow impossible states
+
+If a new slice needs more state, first ask whether the state belongs to:
+
+- immutable card face data
+- mutable runtime state
+- transient validation snapshot
+- or a narrower capability-local helper
