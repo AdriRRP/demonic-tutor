@@ -9,8 +9,7 @@ pub const MAX_HAND_SIZE: usize = 7;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ManaPool {
     generic: u32,
-    green: u32,
-    red: u32,
+    colored: [u32; ManaColor::COUNT],
 }
 
 impl ManaPool {
@@ -18,14 +17,18 @@ impl ManaPool {
     pub const fn empty() -> Self {
         Self {
             generic: 0,
-            green: 0,
-            red: 0,
+            colored: [0; ManaColor::COUNT],
         }
     }
 
     #[must_use]
     pub const fn total(&self) -> u32 {
-        self.generic + self.green + self.red
+        self.generic
+            + self.colored[ManaColor::White.index()]
+            + self.colored[ManaColor::Blue.index()]
+            + self.colored[ManaColor::Black.index()]
+            + self.colored[ManaColor::Green.index()]
+            + self.colored[ManaColor::Red.index()]
     }
 
     #[must_use]
@@ -34,13 +37,33 @@ impl ManaPool {
     }
 
     #[must_use]
+    pub const fn colored(&self, color: ManaColor) -> u32 {
+        self.colored[color.index()]
+    }
+
+    #[must_use]
     pub const fn green(&self) -> u32 {
-        self.green
+        self.colored(ManaColor::Green)
     }
 
     #[must_use]
     pub const fn red(&self) -> u32 {
-        self.red
+        self.colored(ManaColor::Red)
+    }
+
+    #[must_use]
+    pub const fn white(&self) -> u32 {
+        self.colored(ManaColor::White)
+    }
+
+    #[must_use]
+    pub const fn blue(&self) -> u32 {
+        self.colored(ManaColor::Blue)
+    }
+
+    #[must_use]
+    pub const fn black(&self) -> u32 {
+        self.colored(ManaColor::Black)
     }
 
     pub const fn add_generic(&mut self, amount: u32) {
@@ -48,43 +71,66 @@ impl ManaPool {
     }
 
     pub const fn add_colored(&mut self, color: ManaColor, amount: u32) {
-        match color {
-            ManaColor::Green => self.green = self.green.saturating_add(amount),
-            ManaColor::Red => self.red = self.red.saturating_add(amount),
-        }
+        self.colored[color.index()] = self.colored[color.index()].saturating_add(amount);
     }
 
     pub const fn clear(&mut self) {
         self.generic = 0;
-        self.green = 0;
-        self.red = 0;
+        self.colored = [0; ManaColor::COUNT];
     }
 
     pub fn spend(&mut self, cost: ManaCost) -> bool {
-        if self.green < cost.green_requirement() || self.red < cost.red_requirement() {
-            return false;
+        let mut remaining_total = self.total();
+        for color in [
+            ManaColor::White,
+            ManaColor::Blue,
+            ManaColor::Black,
+            ManaColor::Green,
+            ManaColor::Red,
+        ] {
+            let required = cost.colored_requirement(color);
+            if self.colored(color) < required {
+                return false;
+            }
+            remaining_total -= required;
         }
 
-        let remaining_total = self.total() - cost.green_requirement() - cost.red_requirement();
         if remaining_total < cost.generic_requirement() {
             return false;
         }
 
-        self.green -= cost.green_requirement();
-        self.red -= cost.red_requirement();
+        for color in [
+            ManaColor::White,
+            ManaColor::Blue,
+            ManaColor::Black,
+            ManaColor::Green,
+            ManaColor::Red,
+        ] {
+            let required = cost.colored_requirement(color);
+            self.colored[color.index()] -= required;
+        }
 
         let mut generic_to_pay = cost.generic_requirement();
         let pay_from_generic = self.generic.min(generic_to_pay);
         self.generic -= pay_from_generic;
         generic_to_pay -= pay_from_generic;
 
-        let pay_from_green = self.green.min(generic_to_pay);
-        self.green -= pay_from_green;
-        generic_to_pay -= pay_from_green;
+        for color in [
+            ManaColor::White,
+            ManaColor::Blue,
+            ManaColor::Black,
+            ManaColor::Green,
+            ManaColor::Red,
+        ] {
+            if generic_to_pay == 0 {
+                break;
+            }
 
-        let pay_from_red = self.red.min(generic_to_pay);
-        self.red -= pay_from_red;
-        debug_assert_eq!(generic_to_pay - pay_from_red, 0);
+            let pay = self.colored[color.index()].min(generic_to_pay);
+            self.colored[color.index()] -= pay;
+            generic_to_pay -= pay;
+        }
+        debug_assert_eq!(generic_to_pay, 0);
 
         true
     }

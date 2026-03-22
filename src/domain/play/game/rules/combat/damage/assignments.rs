@@ -1,7 +1,6 @@
 use crate::domain::play::{game::model::Player, ids::CardInstanceId};
-use std::collections::HashMap;
 
-pub(super) fn blocker_by_attacker(player: &Player) -> HashMap<CardInstanceId, CardInstanceId> {
+pub(super) fn blocker_by_attacker(player: &Player) -> Vec<(CardInstanceId, CardInstanceId)> {
     player
         .battlefield()
         .cards()

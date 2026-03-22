@@ -96,6 +96,43 @@ fn validate_spell_target(
     }
 }
 
+struct HandSpellMetadata {
+    card_type: CardType,
+    casting_permission: Option<CastingPermissionProfile>,
+    supported_spell_rules: SupportedSpellRules,
+    has_creature_stats: bool,
+    mana_cost: u32,
+    mana_cost_profile: crate::domain::play::cards::ManaCost,
+}
+
+fn read_hand_spell_metadata(
+    player: &crate::domain::play::game::Player,
+    player_id: &PlayerId,
+    card_id: &CardInstanceId,
+) -> Result<HandSpellMetadata, DomainError> {
+    let hand_card = helpers::hand_card(player, player_id, card_id)?;
+    let card_type = hand_card.card_type().clone();
+    let casting_permission = if card_type.is_land() {
+        None
+    } else {
+        Some(hand_card.casting_permission_profile().ok_or_else(|| {
+            DomainError::Game(GameError::InternalInvariantViolation(format!(
+                "spell card {} must define casting permission",
+                hand_card.id()
+            )))
+        })?)
+    };
+
+    Ok(HandSpellMetadata {
+        card_type,
+        casting_permission,
+        supported_spell_rules: supported_spell_rules(hand_card),
+        has_creature_stats: hand_card.creature_stats().is_some(),
+        mana_cost: hand_card.mana_cost(),
+        mana_cost_profile: hand_card.mana_cost_profile(),
+    })
+}
+
 /// Puts a spell card from hand onto the stack and opens a priority window.
 ///
 /// # Errors
@@ -123,27 +160,20 @@ pub fn cast_spell(
     } = cmd;
 
     let player_idx = helpers::find_player_index(players, &player_id)?;
-    let hand_card = players[player_idx]
-        .hand()
-        .cards()
-        .iter()
-        .find(|card| card.id() == &card_id)
-        .cloned()
-        .ok_or_else(|| {
-            DomainError::Card(CardError::NotInHand {
-                player: player_id.clone(),
-                card: card_id.clone(),
-            })
-        })?;
-    let card_type = hand_card.card_type().clone();
+    let HandSpellMetadata {
+        card_type,
+        casting_permission,
+        supported_spell_rules,
+        has_creature_stats,
+        mana_cost,
+        mana_cost_profile,
+    } = read_hand_spell_metadata(&players[player_idx], &player_id, &card_id)?;
     if card_type.is_land() {
         return Err(DomainError::Card(CardError::CannotCastLand(card_id)));
     }
-
-    let casting_permission = hand_card.casting_permission_profile().ok_or_else(|| {
+    let casting_permission = casting_permission.ok_or_else(|| {
         DomainError::Game(GameError::InternalInvariantViolation(format!(
-            "spell card {} must define casting permission",
-            hand_card.id()
+            "spell card {card_id} must define casting permission"
         )))
     })?;
 
@@ -157,7 +187,6 @@ pub fn cast_spell(
         casting_permission,
     )?;
 
-    let supported_spell_rules = supported_spell_rules(&hand_card);
     validate_spell_target(
         players,
         &player_id,
@@ -166,17 +195,12 @@ pub fn cast_spell(
         target.as_ref(),
     )?;
 
-    if matches!(card_type, CardType::Creature) && hand_card.creature_stats().is_none() {
+    if matches!(card_type, CardType::Creature) && !has_creature_stats {
         return Err(DomainError::Game(GameError::InternalInvariantViolation(
-            format!(
-                "creature card {} must have power and toughness",
-                hand_card.id()
-            ),
+            format!("creature card {card_id} must have power and toughness"),
         )));
     }
 
-    let mana_cost = hand_card.mana_cost();
-    let mana_cost_profile = hand_card.mana_cost_profile();
     let player = &mut players[player_idx];
     if player.mana() < mana_cost {
         return Err(DomainError::Game(GameError::InsufficientMana {

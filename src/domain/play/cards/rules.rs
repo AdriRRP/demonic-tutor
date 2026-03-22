@@ -34,17 +34,29 @@ impl CardType {
     }
 }
 
+#[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ManaColor {
+    White = 0,
+    Blue = 1,
+    Black = 2,
     Green,
     Red,
+}
+
+impl ManaColor {
+    pub const COUNT: usize = 5;
+
+    #[must_use]
+    pub const fn index(self) -> usize {
+        self as usize
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ManaCost {
     generic: u32,
-    green: u32,
-    red: u32,
+    colored: [u32; ManaColor::COUNT],
 }
 
 impl ManaCost {
@@ -52,32 +64,53 @@ impl ManaCost {
     pub const fn generic(amount: u32) -> Self {
         Self {
             generic: amount,
-            green: 0,
-            red: 0,
+            colored: [0; ManaColor::COUNT],
         }
     }
 
     #[must_use]
     pub const fn green(amount: u32) -> Self {
-        Self {
-            generic: 0,
-            green: amount,
-            red: 0,
-        }
+        Self::single_color(ManaColor::Green, amount)
     }
 
     #[must_use]
     pub const fn red(amount: u32) -> Self {
+        Self::single_color(ManaColor::Red, amount)
+    }
+
+    #[must_use]
+    pub const fn white(amount: u32) -> Self {
+        Self::single_color(ManaColor::White, amount)
+    }
+
+    #[must_use]
+    pub const fn blue(amount: u32) -> Self {
+        Self::single_color(ManaColor::Blue, amount)
+    }
+
+    #[must_use]
+    pub const fn black(amount: u32) -> Self {
+        Self::single_color(ManaColor::Black, amount)
+    }
+
+    #[must_use]
+    pub const fn single_color(color: ManaColor, amount: u32) -> Self {
+        let mut colored = [0; ManaColor::COUNT];
+        colored[color.index()] = amount;
         Self {
             generic: 0,
-            green: 0,
-            red: amount,
+            colored,
         }
     }
 
     #[must_use]
     pub const fn total(self) -> u32 {
-        self.generic + self.green + self.red
+        self.generic
+            + self.colored[ManaColor::White.index()]
+            + self.colored[ManaColor::Blue.index()]
+            + self.colored[ManaColor::Black.index()]
+            + self.colored[ManaColor::Green.index()]
+            + self.colored[ManaColor::Red.index()]
     }
 
     #[must_use]
@@ -86,13 +119,33 @@ impl ManaCost {
     }
 
     #[must_use]
+    pub const fn colored_requirement(self, color: ManaColor) -> u32 {
+        self.colored[color.index()]
+    }
+
+    #[must_use]
     pub const fn green_requirement(self) -> u32 {
-        self.green
+        self.colored_requirement(ManaColor::Green)
     }
 
     #[must_use]
     pub const fn red_requirement(self) -> u32 {
-        self.red
+        self.colored_requirement(ManaColor::Red)
+    }
+
+    #[must_use]
+    pub const fn white_requirement(self) -> u32 {
+        self.colored_requirement(ManaColor::White)
+    }
+
+    #[must_use]
+    pub const fn blue_requirement(self) -> u32 {
+        self.colored_requirement(ManaColor::Blue)
+    }
+
+    #[must_use]
+    pub const fn black_requirement(self) -> u32 {
+        self.colored_requirement(ManaColor::Black)
     }
 }
 
@@ -176,6 +229,16 @@ pub enum PlayerTargetRule {
     OpponentOfActor,
 }
 
+impl PlayerTargetRule {
+    #[must_use]
+    pub const fn allows(self, target_is_actor: bool) -> bool {
+        match self {
+            Self::AnyPlayer => true,
+            Self::OpponentOfActor => !target_is_actor,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CreatureTargetRule {
     AnyCreatureOnBattlefield,
@@ -186,6 +249,35 @@ pub enum CreatureTargetRule {
     CreatureControlledByActorAndBlocking,
     BlockingCreatureControlledByOpponent,
     AttackingCreatureControlledByOpponent,
+}
+
+impl CreatureTargetRule {
+    #[must_use]
+    pub const fn allows(
+        self,
+        target_controlled_by_actor: bool,
+        target_is_attacking: bool,
+        target_is_blocking: bool,
+    ) -> bool {
+        match self {
+            Self::AnyCreatureOnBattlefield => true,
+            Self::CreatureControlledByActor => target_controlled_by_actor,
+            Self::AttackingCreature => target_is_attacking,
+            Self::BlockingCreature => target_is_blocking,
+            Self::CreatureControlledByActorAndAttacking => {
+                target_controlled_by_actor && target_is_attacking
+            }
+            Self::CreatureControlledByActorAndBlocking => {
+                target_controlled_by_actor && target_is_blocking
+            }
+            Self::BlockingCreatureControlledByOpponent => {
+                !target_controlled_by_actor && target_is_blocking
+            }
+            Self::AttackingCreatureControlledByOpponent => {
+                !target_controlled_by_actor && target_is_attacking
+            }
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

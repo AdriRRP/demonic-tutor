@@ -20,7 +20,21 @@ use crate::domain::play::{
     },
     ids::{CardInstanceId, GameId},
 };
-use std::collections::HashMap;
+
+fn add_damage(
+    damage_received: &mut Vec<(CardInstanceId, u32)>,
+    target: &CardInstanceId,
+    damage: u32,
+) {
+    if let Some((_, accumulated)) = damage_received
+        .iter_mut()
+        .find(|(card_id, _)| card_id == target)
+    {
+        *accumulated += damage;
+    } else {
+        damage_received.push((target.clone(), damage));
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct ResolveCombatDamageOutcome {
@@ -64,12 +78,15 @@ pub fn resolve_combat_damage(
     let blocker_by_attacker = blocker_by_attacker(&players[defender_idx]);
 
     let mut damage_events: Vec<DamageEvent> = Vec::new();
-    let mut damage_received: HashMap<CardInstanceId, u32> = HashMap::new();
+    let mut damage_received: Vec<(CardInstanceId, u32)> = Vec::new();
     let mut player_damage = 0;
 
     for (attacker_id, power) in &attackers {
-        if let Some(blocker_id) = blocker_by_attacker.get(attacker_id) {
-            *damage_received.entry(blocker_id.clone()).or_insert(0) += *power;
+        if let Some((_, blocker_id)) = blocker_by_attacker
+            .iter()
+            .find(|(blocked_attacker_id, _)| blocked_attacker_id == attacker_id)
+        {
+            add_damage(&mut damage_received, blocker_id, *power);
             damage_events.push(DamageEvent {
                 source: attacker_id.clone(),
                 target: DamageTarget::Creature(blocker_id.clone()),
@@ -86,7 +103,7 @@ pub fn resolve_combat_damage(
     }
 
     for (blocker_id, attacker_id, power) in &blockers {
-        *damage_received.entry(attacker_id.clone()).or_insert(0) += *power;
+        add_damage(&mut damage_received, attacker_id, *power);
         damage_events.push(DamageEvent {
             source: blocker_id.clone(),
             target: DamageTarget::Creature(attacker_id.clone()),

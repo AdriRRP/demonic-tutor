@@ -101,13 +101,11 @@ pub fn evaluate_target_legality(
                     };
 
                     match rule.player_rule() {
-                        Some(PlayerTargetRule::AnyPlayer) => SpellTargetLegality::Legal,
-                        Some(PlayerTargetRule::OpponentOfActor) => {
-                            if target_player.id() == actor_id {
-                                SpellTargetLegality::IllegalTargetRule
-                            } else {
-                                SpellTargetLegality::Legal
-                            }
+                        Some(rule) if rule.allows(target_player.id() == actor_id) => {
+                            SpellTargetLegality::Legal
+                        }
+                        Some(PlayerTargetRule::AnyPlayer | PlayerTargetRule::OpponentOfActor) => {
+                            SpellTargetLegality::IllegalTargetRule
                         }
                         None => SpellTargetLegality::IllegalTargetKind,
                     }
@@ -120,58 +118,25 @@ pub fn evaluate_target_legality(
                     };
 
                     match rule.creature_rule() {
-                        Some(CreatureTargetRule::AnyCreatureOnBattlefield) => {
+                        Some(rule)
+                            if rule.allows(
+                                controller.id() == actor_id,
+                                target_creature.is_attacking(),
+                                target_creature.is_blocking(),
+                            ) =>
+                        {
                             SpellTargetLegality::Legal
                         }
-                        Some(CreatureTargetRule::CreatureControlledByActor) => {
-                            if controller.id() == actor_id {
-                                SpellTargetLegality::Legal
-                            } else {
-                                SpellTargetLegality::IllegalTargetRule
-                            }
-                        }
-                        Some(CreatureTargetRule::AttackingCreature) => {
-                            if target_creature.is_attacking() {
-                                SpellTargetLegality::Legal
-                            } else {
-                                SpellTargetLegality::IllegalTargetRule
-                            }
-                        }
-                        Some(CreatureTargetRule::BlockingCreature) => {
-                            if target_creature.is_blocking() {
-                                SpellTargetLegality::Legal
-                            } else {
-                                SpellTargetLegality::IllegalTargetRule
-                            }
-                        }
-                        Some(CreatureTargetRule::CreatureControlledByActorAndAttacking) => {
-                            if controller.id() == actor_id && target_creature.is_attacking() {
-                                SpellTargetLegality::Legal
-                            } else {
-                                SpellTargetLegality::IllegalTargetRule
-                            }
-                        }
-                        Some(CreatureTargetRule::CreatureControlledByActorAndBlocking) => {
-                            if controller.id() == actor_id && target_creature.is_blocking() {
-                                SpellTargetLegality::Legal
-                            } else {
-                                SpellTargetLegality::IllegalTargetRule
-                            }
-                        }
-                        Some(CreatureTargetRule::BlockingCreatureControlledByOpponent) => {
-                            if controller.id() != actor_id && target_creature.is_blocking() {
-                                SpellTargetLegality::Legal
-                            } else {
-                                SpellTargetLegality::IllegalTargetRule
-                            }
-                        }
-                        Some(CreatureTargetRule::AttackingCreatureControlledByOpponent) => {
-                            if controller.id() != actor_id && target_creature.is_attacking() {
-                                SpellTargetLegality::Legal
-                            } else {
-                                SpellTargetLegality::IllegalTargetRule
-                            }
-                        }
+                        Some(
+                            CreatureTargetRule::AnyCreatureOnBattlefield
+                            | CreatureTargetRule::CreatureControlledByActor
+                            | CreatureTargetRule::AttackingCreature
+                            | CreatureTargetRule::BlockingCreature
+                            | CreatureTargetRule::CreatureControlledByActorAndAttacking
+                            | CreatureTargetRule::CreatureControlledByActorAndBlocking
+                            | CreatureTargetRule::BlockingCreatureControlledByOpponent
+                            | CreatureTargetRule::AttackingCreatureControlledByOpponent,
+                        ) => SpellTargetLegality::IllegalTargetRule,
                         None => SpellTargetLegality::IllegalTargetKind,
                     }
                 }
