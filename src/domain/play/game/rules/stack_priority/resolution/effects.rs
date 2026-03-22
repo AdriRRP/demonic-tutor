@@ -49,6 +49,62 @@ fn review_state_based_actions(
     Ok((None, creatures_died, game_ended))
 }
 
+fn resolve_target_legality_for_effect(
+    players: &[Player],
+    controller_id: &PlayerId,
+    supported_spell_rules: SupportedSpellRules,
+    target: Option<&SpellTarget>,
+    missing_profile_message: &str,
+) -> Result<Option<SpellTarget>, DomainError> {
+    let legality = evaluate_target_legality(
+        TargetLegalityContext::Resolution {
+            players,
+            controller_id,
+        },
+        supported_spell_rules.targeting(),
+        target,
+    );
+
+    match (legality, target) {
+        (SpellTargetLegality::Legal, Some(target)) => Ok(Some(target.clone())),
+        (SpellTargetLegality::Legal, None) => {
+            Err(DomainError::Game(GameError::InternalInvariantViolation(
+                "legal targeted spell resolution requires an attached target".to_string(),
+            )))
+        }
+        (SpellTargetLegality::MissingRequiredTarget, _) => {
+            Err(DomainError::Game(GameError::InternalInvariantViolation(
+                "targeted spell resolved without target".to_string(),
+            )))
+        }
+        (SpellTargetLegality::NoTargetRequired, _) => Err(DomainError::Game(
+            GameError::InternalInvariantViolation(missing_profile_message.to_string()),
+        )),
+        (
+            SpellTargetLegality::IllegalTargetKind
+            | SpellTargetLegality::IllegalTargetRule
+            | SpellTargetLegality::MissingPlayer(_)
+            | SpellTargetLegality::MissingCreature(_),
+            _,
+        ) => Ok(None),
+    }
+}
+
+fn review_state_based_actions_after_effect(
+    game_id: &GameId,
+    players: &mut [Player],
+    terminal_state: &mut TerminalState,
+    life_changed: Option<LifeChanged>,
+    mut creatures_died: Vec<CreatureDied>,
+) -> Result<SpellResolutionSideEffects, DomainError> {
+    let StateBasedActionsResult {
+        creatures_died: sba_creatures_died,
+        game_ended,
+    } = state_based_actions::check_state_based_actions(game_id, players, terminal_state)?;
+    creatures_died.extend(sba_creatures_died);
+    Ok((life_changed, creatures_died, game_ended))
+}
+
 pub(super) fn apply_supported_spell_rules(
     game_id: &GameId,
     players: &mut [Player],
@@ -62,40 +118,15 @@ pub(super) fn apply_supported_spell_rules(
             review_state_based_actions(game_id, players, terminal_state)
         }
         SpellResolutionProfile::DealDamage { damage } => {
-            let legality = evaluate_target_legality(
-                TargetLegalityContext::Resolution {
-                    players,
-                    controller_id,
-                },
-                supported_spell_rules.targeting(),
+            let Some(target) = resolve_target_legality_for_effect(
+                players,
+                controller_id,
+                supported_spell_rules,
                 target,
-            );
-            let target = match (legality, target) {
-                (SpellTargetLegality::Legal, Some(target)) => target,
-                (SpellTargetLegality::Legal, None) => {
-                    return Err(DomainError::Game(GameError::InternalInvariantViolation(
-                        "legal targeted spell resolution requires an attached target".to_string(),
-                    )));
-                }
-                (SpellTargetLegality::MissingRequiredTarget, _) => {
-                    return Err(DomainError::Game(GameError::InternalInvariantViolation(
-                        "targeted spell resolved without target".to_string(),
-                    )));
-                }
-                (SpellTargetLegality::NoTargetRequired, _) => {
-                    return Err(DomainError::Game(GameError::InternalInvariantViolation(
-                        "damage spell resolved without a targeting profile".to_string(),
-                    )));
-                }
-                (
-                    SpellTargetLegality::IllegalTargetKind
-                    | SpellTargetLegality::IllegalTargetRule
-                    | SpellTargetLegality::MissingPlayer(_)
-                    | SpellTargetLegality::MissingCreature(_),
-                    _,
-                ) => {
-                    return review_state_based_actions(game_id, players, terminal_state);
-                }
+                "damage spell resolved without a targeting profile",
+            )?
+            else {
+                return review_state_based_actions(game_id, players, terminal_state);
             };
 
             let life_changed = match target {
@@ -103,72 +134,50 @@ pub(super) fn apply_supported_spell_rules(
                     Some(super::super::super::game_effects::adjust_player_life(
                         game_id,
                         players,
-                        player_id,
+                        &player_id,
                         -(damage).cast_signed(),
                     )?)
                 }
                 SpellTarget::Creature(card_id) => {
-                    apply_damage_to_creature(players, card_id, damage);
+                    apply_damage_to_creature(players, &card_id, damage);
                     None
                 }
             };
 
-            let StateBasedActionsResult {
-                creatures_died,
-                game_ended,
-            } = state_based_actions::check_state_based_actions(game_id, players, terminal_state)?;
-            Ok((life_changed, creatures_died, game_ended))
+            review_state_based_actions_after_effect(
+                game_id,
+                players,
+                terminal_state,
+                life_changed,
+                Vec::new(),
+            )
         }
         SpellResolutionProfile::DestroyTargetCreature => {
-            let legality = evaluate_target_legality(
-                TargetLegalityContext::Resolution {
-                    players,
-                    controller_id,
-                },
-                supported_spell_rules.targeting(),
+            let Some(target) = resolve_target_legality_for_effect(
+                players,
+                controller_id,
+                supported_spell_rules,
                 target,
-            );
-            let target = match (legality, target) {
-                (SpellTargetLegality::Legal, Some(target)) => target,
-                (SpellTargetLegality::Legal, None) => {
-                    return Err(DomainError::Game(GameError::InternalInvariantViolation(
-                        "legal targeted spell resolution requires an attached target".to_string(),
-                    )));
-                }
-                (SpellTargetLegality::MissingRequiredTarget, _) => {
-                    return Err(DomainError::Game(GameError::InternalInvariantViolation(
-                        "targeted spell resolved without target".to_string(),
-                    )));
-                }
-                (SpellTargetLegality::NoTargetRequired, _) => {
-                    return Err(DomainError::Game(GameError::InternalInvariantViolation(
-                        "destroy spell resolved without a targeting profile".to_string(),
-                    )));
-                }
-                (
-                    SpellTargetLegality::IllegalTargetKind
-                    | SpellTargetLegality::IllegalTargetRule
-                    | SpellTargetLegality::MissingPlayer(_)
-                    | SpellTargetLegality::MissingCreature(_),
-                    _,
-                ) => {
-                    return review_state_based_actions(game_id, players, terminal_state);
-                }
+                "destroy spell resolved without a targeting profile",
+            )?
+            else {
+                return review_state_based_actions(game_id, players, terminal_state);
             };
 
             let mut creatures_died = Vec::new();
             if let SpellTarget::Creature(card_id) = target {
-                if let Some(creature_died) = destroy_creature(game_id, players, card_id) {
+                if let Some(creature_died) = destroy_creature(game_id, players, &card_id) {
                     creatures_died.push(creature_died);
                 }
             }
 
-            let StateBasedActionsResult {
-                creatures_died: sba_creatures_died,
-                game_ended,
-            } = state_based_actions::check_state_based_actions(game_id, players, terminal_state)?;
-            creatures_died.extend(sba_creatures_died);
-            Ok((None, creatures_died, game_ended))
+            review_state_based_actions_after_effect(
+                game_id,
+                players,
+                terminal_state,
+                None,
+                creatures_died,
+            )
         }
     }
 }

@@ -18,13 +18,12 @@ Wave 2 is fully implemented.
 
 Directory: `effects-v1/`
 
-7. `effects-v1/destroy-target-creature-uses-shared-resolution-corridor.md`
-8. `effects-v1/exile-target-creature-foundation.md`
-9. `effects-v1/exile-target-card-from-graveyard.md`
-10. `effects-v1/pump-target-creature-until-end-of-turn.md`
-11. `effects-v1/pump-spell-changes-combat-outcome.md`
-12. `effects-v1/targeted-gain-life-spell.md`
-13. `effects-v1/targeted-lose-life-spell.md`
+7. `effects-v1/exile-target-creature-foundation.md`
+8. `effects-v1/exile-target-card-from-graveyard.md`
+9. `effects-v1/pump-target-creature-until-end-of-turn.md`
+10. `effects-v1/pump-spell-changes-combat-outcome.md`
+11. `effects-v1/targeted-gain-life-spell.md`
+12. `effects-v1/targeted-lose-life-spell.md`
 
 ## Wave 4 — Casting And Activations
 
