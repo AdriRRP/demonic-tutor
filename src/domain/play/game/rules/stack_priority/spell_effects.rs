@@ -8,7 +8,7 @@ use crate::domain::play::{
 };
 
 #[must_use]
-pub const fn supported_spell_rules(card: &CardInstance) -> SupportedSpellRules {
+pub fn supported_spell_rules(card: &CardInstance) -> SupportedSpellRules {
     card.supported_spell_rules()
 }
 

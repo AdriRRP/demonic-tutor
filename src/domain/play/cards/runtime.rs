@@ -3,6 +3,7 @@ use super::{
     ManaColor, ManaCost, SupportedSpellRules,
 };
 use crate::domain::play::ids::{CardDefinitionId, CardInstanceId};
+use std::sync::Arc;
 
 const CREATURE_FLAG_SUMMONING_SICKNESS: u8 = 1 << 0;
 const CREATURE_FLAG_ATTACKING: u8 = 1 << 1;
@@ -77,7 +78,7 @@ impl CreatureRuntime {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct CardFace {
-    definition: CardDefinition,
+    definition: Arc<CardDefinition>,
     card_type: CardType,
 }
 
@@ -96,7 +97,7 @@ pub struct CardInstance {
 
 impl CardInstance {
     #[must_use]
-    pub(crate) const fn from_definition(
+    pub(crate) fn from_definition(
         id: CardInstanceId,
         definition: CardDefinition,
         card_type: CardType,
@@ -104,7 +105,7 @@ impl CardInstance {
         Self {
             id,
             face: CardFace {
-                definition,
+                definition: Arc::new(definition),
                 card_type,
             },
             runtime: CardRuntime {
@@ -115,7 +116,7 @@ impl CardInstance {
     }
 
     #[must_use]
-    pub const fn new(
+    pub fn new(
         id: CardInstanceId,
         definition_id: CardDefinitionId,
         card_type: CardType,
@@ -129,7 +130,7 @@ impl CardInstance {
     }
 
     #[must_use]
-    pub const fn new_creature(
+    pub fn new_creature(
         id: CardInstanceId,
         definition_id: CardDefinitionId,
         mana_cost: u32,
@@ -139,11 +140,11 @@ impl CardInstance {
         Self {
             id,
             face: CardFace {
-                definition: CardDefinition::for_card_type(
+                definition: Arc::new(CardDefinition::for_card_type(
                     definition_id,
                     mana_cost,
                     &CardType::Creature,
-                ),
+                )),
                 card_type: CardType::Creature,
             },
             runtime: CardRuntime {
@@ -154,7 +155,7 @@ impl CardInstance {
     }
 
     #[must_use]
-    pub const fn new_creature_with_keywords(
+    pub fn new_creature_with_keywords(
         id: CardInstanceId,
         definition: CardDefinition,
         power: u32,
@@ -164,7 +165,7 @@ impl CardInstance {
         Self {
             id,
             face: CardFace {
-                definition,
+                definition: Arc::new(definition),
                 card_type: CardType::Creature,
             },
             runtime: CardRuntime {
@@ -182,7 +183,7 @@ impl CardInstance {
     }
 
     #[must_use]
-    pub const fn definition_id(&self) -> &CardDefinitionId {
+    pub fn definition_id(&self) -> &CardDefinitionId {
         self.face.definition.id()
     }
 
@@ -197,27 +198,27 @@ impl CardInstance {
     }
 
     #[must_use]
-    pub const fn mana_cost(&self) -> u32 {
+    pub fn mana_cost(&self) -> u32 {
         self.face.definition.mana_cost()
     }
 
     #[must_use]
-    pub const fn mana_cost_profile(&self) -> ManaCost {
+    pub fn mana_cost_profile(&self) -> ManaCost {
         self.face.definition.mana_cost_profile()
     }
 
     #[must_use]
-    pub const fn casting_permission_profile(&self) -> Option<CastingPermissionProfile> {
+    pub fn casting_permission_profile(&self) -> Option<CastingPermissionProfile> {
         self.face.definition.casting_permission()
     }
 
     #[must_use]
-    pub const fn supported_spell_rules(&self) -> SupportedSpellRules {
+    pub fn supported_spell_rules(&self) -> SupportedSpellRules {
         self.face.definition.supported_spell_rules()
     }
 
     #[must_use]
-    pub const fn produced_mana(&self) -> Option<ManaColor> {
+    pub fn produced_mana(&self) -> Option<ManaColor> {
         self.face.definition.produced_mana()
     }
 

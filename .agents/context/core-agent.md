@@ -54,6 +54,7 @@ Prefer:
 - lightweight semantic snapshots in validation paths when cloning full runtime objects would only serve one narrow capability check
 - honest historical notes when a once-live slice or proposal no longer describes the active model
 - centralized representation choices for shared ids or compact state, changed only when profiling justifies them
+- shared immutable card metadata behind instance-local mutable runtime when card definitions would otherwise be duplicated across zones
 
 Avoid:
 
