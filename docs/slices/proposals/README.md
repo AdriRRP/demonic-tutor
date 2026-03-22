@@ -4,16 +4,6 @@ This directory contains the current proposal backlog for the next stable-engine 
 
 The backlog is intentionally organized by dependency order.
 
-## Wave 0 — Engine Audit V1
-
-Directory: `engine-audit-v1/`
-
-1. `engine-audit-v1/unify-player-owned-card-store.md`
-2. `engine-audit-v1/index-ordered-player-zones.md`
-3. `engine-audit-v1/consume-popped-stack-objects-during-resolution.md`
-4. `engine-audit-v1/compact-mana-payment-corridor.md`
-5. `engine-audit-v1/single-pass-supported-state-based-actions.md`
-
 ## Wave 1 — Mana V1
 
 Directory: `mana-v1/`
@@ -71,4 +61,4 @@ Directory: `combat-v1/`
 31. `combat-v1/expand-state-based-actions-for-new-effects.md`
 32. `combat-v1/stable-capability-matrix-sync.md`
 
-The historical proposal files that were already implemented or superseded have been removed from this directory so it reflects only the live planning backlog.
+The proposal files that were already implemented or superseded have been removed from this directory so it reflects only the live planning backlog.
