@@ -61,6 +61,10 @@ pub fn island_card(name: &str) -> LibraryCard {
     LibraryCard::land(CardDefinitionId::new(name), ManaColor::Blue)
 }
 
+pub fn swamp_card(name: &str) -> LibraryCard {
+    LibraryCard::land(CardDefinitionId::new(name), ManaColor::Black)
+}
+
 pub fn instant_card(name: &str, mana_cost: u32) -> LibraryCard {
     LibraryCard::new(CardDefinitionId::new(name), CardType::Instant, mana_cost)
 }

@@ -70,7 +70,7 @@ Stack and priority behavior:
 - non-active instant responses after the first pass
 - self-stacking by the current priority holder
 - stack-free land mana production in the currently supported priority windows
-- minimal colored mana support for `Forest`, `Mountain`, `Plains`, `Island`, and single-color instant costs
+- minimal colored mana support for `Forest`, `Mountain`, `Plains`, `Island`, `Swamp`, and single-color instant costs
 - sorcery-speed legality in main phases
 - targeted instant subset against players and creatures
 - combat-relative targeted spells against attacking and blocking creatures
