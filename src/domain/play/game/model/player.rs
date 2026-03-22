@@ -354,6 +354,11 @@ impl Player {
     }
 
     #[must_use]
+    pub fn hand_card_ids(&self) -> Vec<CardInstanceId> {
+        self.hand.iter().map(|card| card.id().clone()).collect()
+    }
+
+    #[must_use]
     pub fn battlefield_card_by_definition(
         &self,
         definition_id: &CardDefinitionId,

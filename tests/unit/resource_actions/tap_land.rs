@@ -1,4 +1,5 @@
 #![allow(clippy::unwrap_used)]
+#![allow(clippy::panic)]
 
 use crate::support::{
     advance_to_first_main_satisfying_cleanup, advance_to_player_phase_satisfying_cleanup,
@@ -44,11 +45,8 @@ fn hand_card_id_by_definition(
     definition_id: &str,
 ) -> CardInstanceId {
     game.players()[player_index]
-        .hand()
-        .cards()
-        .iter()
-        .find(|card| card.definition_id() == &demonictutor::CardDefinitionId::new(definition_id))
-        .unwrap()
+        .hand_card_by_definition(&demonictutor::CardDefinitionId::new(definition_id))
+        .unwrap_or_else(|| panic!("hand card should exist for definition {definition_id}"))
         .id()
         .clone()
 }

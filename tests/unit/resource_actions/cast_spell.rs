@@ -1,3 +1,4 @@
+#![allow(clippy::panic)]
 #![allow(clippy::unwrap_used)]
 
 use crate::support::{
@@ -54,8 +55,8 @@ fn cast_instant_puts_the_spell_on_the_stack_before_resolution() {
         CardType::Instant
     ));
     assert_eq!(outcome.spell_put_on_stack.mana_cost_paid, 0);
-    assert_eq!(game.players()[0].hand().cards().len(), 7);
-    assert_eq!(game.players()[0].graveyard().cards().len(), 0);
+    assert_eq!(game.players()[0].hand_size(), 7);
+    assert_eq!(game.players()[0].graveyard_size(), 0);
     assert_eq!(game.stack().len(), 1);
     assert_eq!(
         game.priority().unwrap().current_holder(),
@@ -92,7 +93,7 @@ fn passing_priority_twice_resolves_an_instant_from_stack_to_graveyard() {
     ));
     assert!(outcome.creatures_died.is_empty());
     assert_eq!(game.stack().len(), 0);
-    assert_eq!(game.players()[0].graveyard().cards().len(), 1);
+    assert_eq!(game.players()[0].graveyard_size(), 1);
     assert_eq!(
         game.priority().unwrap().current_holder(),
         &PlayerId::new("player-1")
@@ -218,11 +219,8 @@ fn opponent_can_tap_a_land_and_pay_for_an_instant_response_in_the_same_window() 
 
     advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-2");
     let bob_land = game.players()[1]
-        .hand()
-        .cards()
-        .iter()
-        .find(|card| matches!(card.card_type(), CardType::Land))
-        .unwrap()
+        .hand_card_by_definition(&CardDefinitionId::new("mountain"))
+        .unwrap_or_else(|| panic!("mountain should exist in Bob's hand"))
         .id()
         .clone();
     service
@@ -234,11 +232,8 @@ fn opponent_can_tap_a_land_and_pay_for_an_instant_response_in_the_same_window() 
 
     advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
     let alice_spell = game.players()[0]
-        .hand()
-        .cards()
-        .iter()
-        .find(|card| card.definition_id() == &CardDefinitionId::new("alice-shock"))
-        .unwrap()
+        .hand_card_by_definition(&CardDefinitionId::new("alice-shock"))
+        .unwrap_or_else(|| panic!("alice-shock should exist in Alice's hand"))
         .id()
         .clone();
     service

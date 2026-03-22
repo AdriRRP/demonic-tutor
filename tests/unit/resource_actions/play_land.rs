@@ -1,4 +1,5 @@
 #![allow(clippy::unwrap_used)]
+#![allow(clippy::panic)]
 
 use crate::support::{
     advance_to_player_first_main_satisfying_cleanup, create_service, filled_library, land_card,
@@ -34,9 +35,14 @@ fn play_land_moves_card_from_hand_to_battlefield() {
 
     assert!(result.is_ok());
 
-    let p2_battlefield = game.players()[1].battlefield().cards();
-    assert_eq!(p2_battlefield.len(), 1);
-    assert_eq!(p2_battlefield[0].id(), &land_card_id);
+    assert_eq!(game.players()[1].battlefield_size(), 1);
+    assert_eq!(
+        game.players()[1]
+            .battlefield_card_at(0)
+            .unwrap_or_else(|| panic!("battlefield card should exist"))
+            .id(),
+        &land_card_id
+    );
 }
 
 #[test]
@@ -90,7 +96,7 @@ fn play_land_rejected_non_land_card_stays_in_hand() {
     let (mut game, _) = create_game_with_land_in_hand();
     let service = create_service();
 
-    let hand_before = game.players()[1].hand().cards().len();
+    let hand_before = game.players()[1].hand_size();
 
     let cmd = PlayLandCommand::new(
         PlayerId::new("player-2"),
@@ -99,7 +105,7 @@ fn play_land_rejected_non_land_card_stays_in_hand() {
     let result = service.play_land(&mut game, cmd);
 
     assert!(result.is_err());
-    assert_eq!(game.players()[1].hand().cards().len(), hand_before);
+    assert_eq!(game.players()[1].hand_size(), hand_before);
 }
 
 #[test]
