@@ -1,4 +1,7 @@
-use crate::domain::play::{game::model::Player, ids::CardInstanceId};
+use crate::domain::play::{
+    game::{helpers, model::Player},
+    ids::CardInstanceId,
+};
 
 pub(super) fn apply_damage_and_clear_combat_state(
     players: &mut [Player],
@@ -6,14 +9,14 @@ pub(super) fn apply_damage_and_clear_combat_state(
 ) {
     for player in players.iter_mut() {
         player.for_each_battlefield_card_mut(|card| {
-            if let Some((_, damage)) = damage_received
-                .iter()
-                .find(|(card_id, _)| card_id == card.id())
-            {
-                card.add_damage(*damage);
-            }
             card.set_attacking(false);
             card.set_blocking(false);
         });
+    }
+
+    for (card_id, damage) in damage_received {
+        if let Some(card) = helpers::battlefield_card_mut(players, card_id) {
+            card.add_damage(*damage);
+        }
     }
 }

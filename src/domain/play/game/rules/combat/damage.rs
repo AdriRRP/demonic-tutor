@@ -3,7 +3,7 @@ mod participants;
 
 use self::{
     application::apply_damage_and_clear_combat_state,
-    participants::{collect_attackers, collect_blockers},
+    participants::{collect_attackers, collect_blockers, BlockerParticipant},
 };
 use super::super::{
     super::{model::Player, TerminalState},
@@ -32,6 +32,15 @@ fn add_damage(
     } else {
         damage_received.push((target.clone(), damage));
     }
+}
+
+fn blocker_for_attacker<'a>(
+    blockers: &'a [BlockerParticipant],
+    attacker_id: &CardInstanceId,
+) -> Option<&'a BlockerParticipant> {
+    blockers
+        .iter()
+        .find(|blocker| blocker.blocked_attacker_id() == attacker_id)
 }
 
 #[derive(Debug, Clone)]
@@ -78,33 +87,34 @@ pub fn resolve_combat_damage(
     let mut damage_received: Vec<(CardInstanceId, u32)> = Vec::new();
     let mut player_damage = 0;
 
-    for (attacker_id, power) in &attackers {
-        if let Some((blocker_id, _, _)) = blockers
-            .iter()
-            .find(|(_, blocked_attacker_id, _)| blocked_attacker_id == attacker_id)
-        {
-            add_damage(&mut damage_received, blocker_id, *power);
+    for attacker in &attackers {
+        if let Some(blocker) = blocker_for_attacker(&blockers, attacker.id()) {
+            add_damage(&mut damage_received, blocker.id(), attacker.power());
             damage_events.push(DamageEvent {
-                source: attacker_id.clone(),
-                target: DamageTarget::Creature(blocker_id.clone()),
-                damage_amount: *power,
+                source: attacker.id().clone(),
+                target: DamageTarget::Creature(blocker.id().clone()),
+                damage_amount: attacker.power(),
             });
         } else {
-            player_damage += *power;
+            player_damage += attacker.power();
             damage_events.push(DamageEvent {
-                source: attacker_id.clone(),
+                source: attacker.id().clone(),
                 target: DamageTarget::Player(defender_player_id.clone()),
-                damage_amount: *power,
+                damage_amount: attacker.power(),
             });
         }
     }
 
-    for (blocker_id, attacker_id, power) in &blockers {
-        add_damage(&mut damage_received, attacker_id, *power);
+    for blocker in &blockers {
+        add_damage(
+            &mut damage_received,
+            blocker.blocked_attacker_id(),
+            blocker.power(),
+        );
         damage_events.push(DamageEvent {
-            source: blocker_id.clone(),
-            target: DamageTarget::Creature(attacker_id.clone()),
-            damage_amount: *power,
+            source: blocker.id().clone(),
+            target: DamageTarget::Creature(blocker.blocked_attacker_id().clone()),
+            damage_amount: blocker.power(),
         });
     }
 

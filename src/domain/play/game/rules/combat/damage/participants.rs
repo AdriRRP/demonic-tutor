@@ -4,9 +4,49 @@ use crate::domain::play::{
     ids::CardInstanceId,
 };
 
-pub(super) fn collect_attackers(
-    player: &Player,
-) -> Result<Vec<(CardInstanceId, u32)>, DomainError> {
+#[derive(Debug, Clone)]
+pub(super) struct AttackerParticipant {
+    id: CardInstanceId,
+    power: u32,
+}
+
+impl AttackerParticipant {
+    #[must_use]
+    pub const fn id(&self) -> &CardInstanceId {
+        &self.id
+    }
+
+    #[must_use]
+    pub const fn power(&self) -> u32 {
+        self.power
+    }
+}
+
+#[derive(Debug, Clone)]
+pub(super) struct BlockerParticipant {
+    id: CardInstanceId,
+    blocked_attacker_id: CardInstanceId,
+    power: u32,
+}
+
+impl BlockerParticipant {
+    #[must_use]
+    pub const fn id(&self) -> &CardInstanceId {
+        &self.id
+    }
+
+    #[must_use]
+    pub const fn blocked_attacker_id(&self) -> &CardInstanceId {
+        &self.blocked_attacker_id
+    }
+
+    #[must_use]
+    pub const fn power(&self) -> u32 {
+        self.power
+    }
+}
+
+pub(super) fn collect_attackers(player: &Player) -> Result<Vec<AttackerParticipant>, DomainError> {
     player
         .battlefield_cards()
         .filter(|card| card.is_attacking())
@@ -18,14 +58,15 @@ pub(super) fn collect_attackers(
                 )))
             })?;
 
-            Ok((card.id().clone(), power))
+            Ok(AttackerParticipant {
+                id: card.id().clone(),
+                power,
+            })
         })
         .collect()
 }
 
-pub(super) fn collect_blockers(
-    player: &Player,
-) -> Result<Vec<(CardInstanceId, CardInstanceId, u32)>, DomainError> {
+pub(super) fn collect_blockers(player: &Player) -> Result<Vec<BlockerParticipant>, DomainError> {
     player
         .battlefield_cards()
         .filter(|card| card.is_blocking())
@@ -43,7 +84,11 @@ pub(super) fn collect_blockers(
                 )))
             })?;
 
-            Ok((card.id().clone(), attacker_id, power))
+            Ok(BlockerParticipant {
+                id: card.id().clone(),
+                blocked_attacker_id: attacker_id,
+                power,
+            })
         })
         .collect()
 }
