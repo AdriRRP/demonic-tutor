@@ -4,13 +4,6 @@ use crate::domain::play::{
     ids::GameId,
 };
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum SupportedStateBasedActionCheck {
-    ZeroToughnessCreaturesDie,
-    LethalDamageCreaturesDie,
-    ZeroLifeEndsTheGame,
-}
-
 #[derive(Debug, Clone)]
 struct StateBasedActionCheckResult {
     creatures_died: Vec<CreatureDied>,
@@ -69,22 +62,25 @@ fn end_game_for_zero_life(
     )))
 }
 
-fn destroy_zero_toughness_creatures(game_id: &GameId, players: &mut [Player]) -> Vec<CreatureDied> {
-    let mut died = Vec::new();
+fn review_supported_creature_state_based_actions(
+    game_id: &GameId,
+    players: &mut [Player],
+) -> StateBasedActionCheckResult {
+    let mut creatures_died = Vec::new();
 
     for player in players.iter_mut() {
-        let zero_toughness_ids = player
+        let doomed_ids = player
             .battlefield_cards()
-            .filter(|card| card.has_zero_toughness())
+            .filter(|card| card.has_zero_toughness() || card.has_lethal_damage())
             .map(|card| card.id().clone())
             .collect::<Vec<_>>();
 
-        for card_id in zero_toughness_ids {
+        for card_id in doomed_ids {
             if player
                 .move_battlefield_card_to_graveyard(&card_id)
                 .is_some()
             {
-                died.push(CreatureDied::new(
+                creatures_died.push(CreatureDied::new(
                     game_id.clone(),
                     player.id().clone(),
                     card_id,
@@ -93,68 +89,9 @@ fn destroy_zero_toughness_creatures(game_id: &GameId, players: &mut [Player]) ->
         }
     }
 
-    died
-}
-
-fn destroy_lethally_damaged_creatures(
-    game_id: &GameId,
-    players: &mut [Player],
-) -> Vec<CreatureDied> {
-    let mut destroyed = Vec::new();
-
-    for player in players.iter_mut() {
-        let destroyed_ids = player
-            .battlefield_cards()
-            .filter(|card| card.has_lethal_damage())
-            .map(|card| card.id().clone())
-            .collect::<Vec<_>>();
-
-        for card_id in destroyed_ids {
-            if player
-                .move_battlefield_card_to_graveyard(&card_id)
-                .is_some()
-            {
-                destroyed.push(CreatureDied::new(
-                    game_id.clone(),
-                    player.id().clone(),
-                    card_id,
-                ));
-            }
-        }
-    }
-
-    destroyed
-}
-
-const SUPPORTED_STATE_BASED_ACTION_CHECKS: [SupportedStateBasedActionCheck; 3] = [
-    SupportedStateBasedActionCheck::ZeroToughnessCreaturesDie,
-    SupportedStateBasedActionCheck::LethalDamageCreaturesDie,
-    SupportedStateBasedActionCheck::ZeroLifeEndsTheGame,
-];
-
-fn run_state_based_action_check(
-    check: SupportedStateBasedActionCheck,
-    game_id: &GameId,
-    players: &mut [Player],
-    terminal_state: &mut TerminalState,
-) -> Result<StateBasedActionCheckResult, crate::domain::play::errors::DomainError> {
-    match check {
-        SupportedStateBasedActionCheck::ZeroToughnessCreaturesDie => {
-            Ok(StateBasedActionCheckResult {
-                creatures_died: destroy_zero_toughness_creatures(game_id, players),
-                game_ended: None,
-            })
-        }
-        SupportedStateBasedActionCheck::LethalDamageCreaturesDie => {
-            Ok(StateBasedActionCheckResult {
-                creatures_died: destroy_lethally_damaged_creatures(game_id, players),
-                game_ended: None,
-            })
-        }
-        SupportedStateBasedActionCheck::ZeroLifeEndsTheGame => Ok(StateBasedActionCheckResult {
-            creatures_died: Vec::new(),
-            game_ended: end_game_for_zero_life(game_id, players, terminal_state)?,
-        }),
+    StateBasedActionCheckResult {
+        creatures_died,
+        game_ended: None,
     }
 }
 
@@ -180,19 +117,25 @@ pub fn check_state_based_actions(
     loop {
         let mut changes = false;
 
-        for check in SUPPORTED_STATE_BASED_ACTION_CHECKS {
-            let result = run_state_based_action_check(check, game_id, players, terminal_state)?;
-            if result.changed() {
-                changes = true;
-            }
-            total_creatures_died.extend(result.creatures_died);
-            if let Some(event) = result.game_ended {
-                final_game_ended = Some(event);
-            }
+        let creature_result = review_supported_creature_state_based_actions(game_id, players);
+        if creature_result.changed() {
+            changes = true;
+        }
+        total_creatures_died.extend(creature_result.creatures_died);
 
-            if terminal_state.is_over() {
-                break;
-            }
+        if terminal_state.is_over() {
+            break;
+        }
+
+        let zero_life_result = StateBasedActionCheckResult {
+            creatures_died: Vec::new(),
+            game_ended: end_game_for_zero_life(game_id, players, terminal_state)?,
+        };
+        if zero_life_result.changed() {
+            changes = true;
+        }
+        if let Some(event) = zero_life_result.game_ended {
+            final_game_ended = Some(event);
         }
 
         if !changes || terminal_state.is_over() {
