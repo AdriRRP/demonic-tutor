@@ -52,17 +52,12 @@ pub(super) fn hand_card<'a>(
     player_id: &PlayerId,
     card_id: &CardInstanceId,
 ) -> Result<&'a CardInstance, DomainError> {
-    player
-        .hand()
-        .cards()
-        .iter()
-        .find(|card| card.id() == card_id)
-        .ok_or_else(|| {
-            DomainError::Card(CardError::NotInHand {
-                player: player_id.clone(),
-                card: card_id.clone(),
-            })
+    player.hand().card(card_id).ok_or_else(|| {
+        DomainError::Card(CardError::NotInHand {
+            player: player_id.clone(),
+            card: card_id.clone(),
         })
+    })
 }
 
 pub(super) fn remove_card_from_hand(

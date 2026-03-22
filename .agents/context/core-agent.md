@@ -55,6 +55,7 @@ Prefer:
 - honest historical notes when a once-live slice or proposal no longer describes the active model
 - centralized representation choices for shared ids or compact state, changed only when profiling justifies them
 - shared immutable card metadata behind instance-local mutable runtime when card definitions would otherwise be duplicated across zones
+- zone APIs consumed through semantic queries and iterators rather than exposing storage details to core rules
 
 Avoid:
 

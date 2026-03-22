@@ -21,7 +21,6 @@ pub fn declare_blockers(
     let attacker_player_idx = helpers::find_player_index(players, active_player)?;
     let declared_attackers = players[attacker_player_idx]
         .battlefield()
-        .cards()
         .iter()
         .filter(|card| card.is_attacking())
         .map(|card| {

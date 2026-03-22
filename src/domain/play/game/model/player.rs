@@ -245,7 +245,7 @@ impl Player {
 
     #[must_use]
     pub fn hand_size(&self) -> usize {
-        self.hand.cards().len()
+        self.hand.len()
     }
 
     pub fn adjust_life(&mut self, delta: i32) {

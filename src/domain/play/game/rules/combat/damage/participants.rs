@@ -9,7 +9,6 @@ pub(super) fn collect_attackers(
 ) -> Result<Vec<(CardInstanceId, u32)>, DomainError> {
     player
         .battlefield()
-        .cards()
         .iter()
         .filter(|card| card.is_attacking())
         .map(|card| {
@@ -30,7 +29,6 @@ pub(super) fn collect_blockers(
 ) -> Result<Vec<(CardInstanceId, CardInstanceId, u32)>, DomainError> {
     player
         .battlefield()
-        .cards()
         .iter()
         .filter(|card| card.is_blocking())
         .map(|card| {

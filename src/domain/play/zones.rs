@@ -63,6 +63,30 @@ impl Hand {
     }
 
     #[must_use]
+    pub const fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    #[must_use]
+    pub const fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &CardInstance> {
+        self.0.iter()
+    }
+
+    #[must_use]
+    pub fn card(&self, card_id: &CardInstanceId) -> Option<&CardInstance> {
+        self.0.iter().find(|card| card.id() == card_id)
+    }
+
+    #[must_use]
+    pub fn contains(&self, card_id: &CardInstanceId) -> bool {
+        self.card(card_id).is_some()
+    }
+
+    #[must_use]
     pub fn cards(&self) -> &[CardInstance] {
         &self.0
     }
@@ -95,8 +119,32 @@ impl Battlefield {
     }
 
     #[must_use]
+    pub const fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    #[must_use]
+    pub const fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &CardInstance> {
+        self.0.iter()
+    }
+
+    #[must_use]
     pub fn cards(&self) -> &[CardInstance] {
         &self.0
+    }
+
+    #[must_use]
+    pub fn card(&self, card_id: &CardInstanceId) -> Option<&CardInstance> {
+        self.0.iter().find(|card| card.id() == card_id)
+    }
+
+    #[must_use]
+    pub fn contains(&self, card_id: &CardInstanceId) -> bool {
+        self.card(card_id).is_some()
     }
 
     pub fn card_mut(&mut self, card_id: &CardInstanceId) -> Option<&mut CardInstance> {
@@ -130,6 +178,30 @@ impl Graveyard {
     }
 
     #[must_use]
+    pub const fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    #[must_use]
+    pub const fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &CardInstance> {
+        self.0.iter()
+    }
+
+    #[must_use]
+    pub fn card(&self, card_id: &CardInstanceId) -> Option<&CardInstance> {
+        self.0.iter().find(|card| card.id() == card_id)
+    }
+
+    #[must_use]
+    pub fn contains(&self, card_id: &CardInstanceId) -> bool {
+        self.card(card_id).is_some()
+    }
+
+    #[must_use]
     pub fn cards(&self) -> &[CardInstance] {
         &self.0
     }
@@ -154,6 +226,30 @@ impl Exile {
 
     pub fn add(&mut self, card: CardInstance) {
         self.0.push(card);
+    }
+
+    #[must_use]
+    pub const fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    #[must_use]
+    pub const fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &CardInstance> {
+        self.0.iter()
+    }
+
+    #[must_use]
+    pub fn card(&self, card_id: &CardInstanceId) -> Option<&CardInstance> {
+        self.0.iter().find(|card| card.id() == card_id)
+    }
+
+    #[must_use]
+    pub fn contains(&self, card_id: &CardInstanceId) -> bool {
+        self.card(card_id).is_some()
     }
 
     #[must_use]

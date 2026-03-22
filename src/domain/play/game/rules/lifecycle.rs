@@ -112,10 +112,10 @@ fn validate_player_libraries(
 
 fn require_opening_hands_not_dealt(players: &[Player]) -> Result<(), DomainError> {
     if players.iter().any(|player| {
-        !player.hand().cards().is_empty()
+        !player.hand().is_empty()
             || !player.library().is_empty()
-            || !player.battlefield().cards().is_empty()
-            || !player.graveyard().cards().is_empty()
+            || !player.battlefield().is_empty()
+            || !player.graveyard().is_empty()
     }) {
         Err(DomainError::Game(GameError::OpeningHandsAlreadyDealt))
     } else {
@@ -180,12 +180,7 @@ fn draw_opening_hand(
 
     player.hand_mut().receive(drawn_cards);
 
-    Ok(player
-        .hand()
-        .cards()
-        .iter()
-        .map(|card| card.id().clone())
-        .collect())
+    Ok(player.hand().iter().map(|card| card.id().clone()).collect())
 }
 
 /// Starts a new game with the given players.

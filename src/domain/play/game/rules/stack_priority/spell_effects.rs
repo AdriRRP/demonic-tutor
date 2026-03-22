@@ -68,9 +68,7 @@ fn target_creature_on_battlefield<'a>(
     players.iter().find_map(|player| {
         player
             .battlefield()
-            .cards()
-            .iter()
-            .find(|card| card.id() == card_id)
+            .card(card_id)
             .map(|card| (player, card))
     })
 }
