@@ -187,6 +187,7 @@ Supported examples currently include:
 - `OpponentOfActor`
 - `AnyCreatureOnBattlefield`
 - `CreatureControlledByActor`
+- `CreatureControlledByOpponent`
 - `AttackingCreature`
 - `BlockingCreature`
 - `CreatureControlledByActorAndAttacking`

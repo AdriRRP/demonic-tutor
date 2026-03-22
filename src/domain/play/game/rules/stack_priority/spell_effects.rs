@@ -116,6 +116,7 @@ pub fn evaluate_target_legality(
                         Some(
                             CreatureTargetRule::AnyCreatureOnBattlefield
                             | CreatureTargetRule::CreatureControlledByActor
+                            | CreatureTargetRule::CreatureControlledByOpponent
                             | CreatureTargetRule::AttackingCreature
                             | CreatureTargetRule::BlockingCreature
                             | CreatureTargetRule::CreatureControlledByActorAndAttacking

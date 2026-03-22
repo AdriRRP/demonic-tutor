@@ -52,6 +52,13 @@ fn alice_is_the_active_player_in_first_main_with_a_controlled_creature_instant_s
     world.setup_targeted_controlled_creature_spell_with_opponents_creature();
 }
 
+#[given("Alice is the active player in FirstMain with an opponents-creature instant spell and Bob's creature on the battlefield")]
+fn alice_is_the_active_player_in_first_main_with_an_opponents_creature_instant_spell_and_bobs_creature_on_the_battlefield(
+    world: &mut GameplayWorld,
+) {
+    world.setup_targeted_opponents_creature_spell();
+}
+
 #[when("Alice casts the targeted instant spell targeting Bob")]
 fn alice_casts_the_targeted_instant_spell_targeting_bob(world: &mut GameplayWorld) {
     world.cast_tracked_targeted_player_spell("Alice", "Bob");
@@ -98,6 +105,13 @@ fn alice_tries_to_cast_the_controlled_creature_instant_spell_targeting_bobs_crea
     world.try_cast_tracked_targeted_creature_spell("Alice");
 }
 
+#[when("Alice casts the opponents-creature instant spell targeting Bob's creature")]
+fn alice_casts_the_opponents_creature_instant_spell_targeting_bobs_creature(
+    world: &mut GameplayWorld,
+) {
+    world.cast_tracked_targeted_creature_spell("Alice");
+}
+
 #[then("the spell is on the stack targeting Bob")]
 fn the_spell_is_on_the_stack_targeting_bob(world: &mut GameplayWorld) {
     let event = world
@@ -114,6 +128,23 @@ fn the_spell_is_on_the_stack_targeting_bob(world: &mut GameplayWorld) {
 
 #[then("the spell is on the stack targeting Alice's creature")]
 fn the_spell_is_on_the_stack_targeting_alices_creature(world: &mut GameplayWorld) {
+    let event = world
+        .last_spell_put_on_stack
+        .as_ref()
+        .expect("expected targeted spell on stack");
+    assert_eq!(
+        event.target,
+        Some(demonictutor::SpellTarget::Creature(
+            world
+                .tracked_blocker_id
+                .clone()
+                .expect("tracked creature should exist")
+        ))
+    );
+}
+
+#[then("the spell is on the stack targeting Bob's creature")]
+fn the_spell_is_on_the_stack_targeting_bobs_creature(world: &mut GameplayWorld) {
     let event = world
         .last_spell_put_on_stack
         .as_ref()

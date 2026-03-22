@@ -5,7 +5,8 @@ use crate::support::{
     creature_card, filled_library, land_card, setup_two_player_game,
     targeted_attacking_creature_damage_instant_card,
     targeted_controlled_creature_damage_instant_card, targeted_damage_instant_card,
-    targeted_opponent_damage_instant_card, targeted_player_damage_instant_card,
+    targeted_opponent_damage_instant_card, targeted_opponents_creature_damage_instant_card,
+    targeted_player_damage_instant_card,
 };
 use demonictutor::{
     CardDefinitionId, CardInstanceId, CastSpellCommand, DeclareAttackersCommand, DomainError,
@@ -551,6 +552,46 @@ fn targeted_controlled_creature_spell_rejects_an_opponents_creature_when_cast() 
         result,
         Err(DomainError::Game(GameError::IllegalSpellTarget(card_id))) if card_id == spell_id
     ));
+}
+
+#[test]
+fn targeted_opponents_creature_spell_can_target_an_opponents_creature_when_cast() {
+    let (service, mut game) = setup_two_player_game(
+        "game-target-opponents-creature-cast",
+        filled_library(
+            vec![
+                land_card("alice-setup-land"),
+                targeted_opponents_creature_damage_instant_card("hostile-bolt", 0, 2),
+            ],
+            10,
+        ),
+        filled_library(vec![creature_card("bob-bear", 0, 2, 2)], 10),
+    );
+    let spell_id = hand_card_id_by_definition(&game, 0, "hostile-bolt");
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-2");
+    let creature_id = CardInstanceId::new("game-target-opponents-creature-cast-player-2-0");
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-2"), creature_id.clone()),
+        )
+        .unwrap();
+    let _ = resolve_current_stack(&service, &mut game);
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
+
+    let outcome = service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), spell_id)
+                .with_target(SpellTarget::Creature(creature_id.clone())),
+        )
+        .unwrap();
+
+    assert_eq!(
+        outcome.spell_put_on_stack.target,
+        Some(SpellTarget::Creature(creature_id))
+    );
 }
 
 #[test]

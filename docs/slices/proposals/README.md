@@ -12,12 +12,11 @@ Directory: `mana-v1/`
 
 Directory: `targeting-v1/`
 
-1. `targeting-v1/target-opponents-creature-in-first-main.md`
-2. `targeting-v1/reject-controlled-creature-for-opponents-creature-spell.md`
-3. `targeting-v1/resolve-opponents-creature-spell-in-first-main.md`
-4. `targeting-v1/target-any-player-spell-foundation.md`
-5. `targeting-v1/target-self-player-when-rule-allows-it.md`
-6. `targeting-v1/contextual-noncombat-target-matrix-sync.md`
+1. `targeting-v1/reject-controlled-creature-for-opponents-creature-spell.md`
+2. `targeting-v1/resolve-opponents-creature-spell-in-first-main.md`
+3. `targeting-v1/target-any-player-spell-foundation.md`
+4. `targeting-v1/target-self-player-when-rule-allows-it.md`
+5. `targeting-v1/contextual-noncombat-target-matrix-sync.md`
 
 ## Wave 3 — Useful Spell Effects
 
