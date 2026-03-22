@@ -1,4 +1,5 @@
 #![allow(clippy::unwrap_used)]
+#![allow(clippy::panic)]
 
 use crate::support::{
     advance_to_player_first_main_satisfying_cleanup, advance_to_player_phase_satisfying_cleanup,
@@ -16,7 +17,7 @@ fn setup_game_with_eight_cards_in_hand() -> (crate::support::TestService, demoni
     advance_to_player_phase_satisfying_cleanup(&service, &mut game, "player-1", Phase::EndStep);
 
     assert_eq!(game.phase(), &Phase::EndStep);
-    assert_eq!(game.players()[0].hand().cards().len(), 8);
+    assert_eq!(game.players()[0].hand_size(), 8);
 
     (service, game)
 }
@@ -24,7 +25,11 @@ fn setup_game_with_eight_cards_in_hand() -> (crate::support::TestService, demoni
 #[test]
 fn discard_for_cleanup_moves_card_from_hand_to_graveyard_during_end_step_cleanup() {
     let (service, mut game) = setup_game_with_eight_cards_in_hand();
-    let card_id = game.players()[0].hand().cards()[0].id().clone();
+    let card_id = game.players()[0]
+        .hand_card_at(0)
+        .unwrap_or_else(|| panic!("hand card should exist"))
+        .id()
+        .clone();
 
     let event = service
         .discard_for_cleanup(
@@ -35,9 +40,15 @@ fn discard_for_cleanup_moves_card_from_hand_to_graveyard_during_end_step_cleanup
 
     assert_eq!(event.card_id, card_id);
     assert_eq!(event.discard_kind, DiscardKind::CleanupHandSize);
-    assert_eq!(game.players()[0].hand().cards().len(), 7);
-    assert_eq!(game.players()[0].graveyard().cards().len(), 1);
-    assert_eq!(game.players()[0].graveyard().cards()[0].id(), &card_id);
+    assert_eq!(game.players()[0].hand_size(), 7);
+    assert_eq!(game.players()[0].graveyard_size(), 1);
+    assert_eq!(
+        game.players()[0]
+            .graveyard_card_at(0)
+            .unwrap_or_else(|| panic!("graveyard card should exist"))
+            .id(),
+        &card_id
+    );
 }
 
 #[test]
@@ -45,7 +56,11 @@ fn discard_for_cleanup_fails_outside_end_step() {
     let (service, mut game) =
         setup_two_player_game("game-1", creature_library(20), creature_library(20));
     advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
-    let card_id = game.players()[0].hand().cards()[0].id().clone();
+    let card_id = game.players()[0]
+        .hand_card_at(0)
+        .unwrap_or_else(|| panic!("hand card should exist"))
+        .id()
+        .clone();
 
     let error = service
         .discard_for_cleanup(
@@ -65,7 +80,11 @@ fn discard_for_cleanup_fails_outside_end_step() {
 #[test]
 fn discard_for_cleanup_fails_when_not_active_players_turn() {
     let (service, mut game) = setup_game_with_eight_cards_in_hand();
-    let card_id = game.players()[0].hand().cards()[0].id().clone();
+    let card_id = game.players()[0]
+        .hand_card_at(0)
+        .unwrap_or_else(|| panic!("hand card should exist"))
+        .id()
+        .clone();
 
     let error = service
         .discard_for_cleanup(
@@ -86,7 +105,11 @@ fn discard_for_cleanup_fails_when_not_active_players_turn() {
 #[test]
 fn discard_for_cleanup_fails_when_cleanup_discard_is_not_required() {
     let (service, mut game) = setup_game_with_eight_cards_in_hand();
-    let first_card_id = game.players()[0].hand().cards()[0].id().clone();
+    let first_card_id = game.players()[0]
+        .hand_card_at(0)
+        .unwrap_or_else(|| panic!("hand card should exist"))
+        .id()
+        .clone();
     service
         .discard_for_cleanup(
             &mut game,
@@ -94,7 +117,11 @@ fn discard_for_cleanup_fails_when_cleanup_discard_is_not_required() {
         )
         .unwrap();
 
-    let second_card_id = game.players()[0].hand().cards()[0].id().clone();
+    let second_card_id = game.players()[0]
+        .hand_card_at(0)
+        .unwrap_or_else(|| panic!("hand card should exist"))
+        .id()
+        .clone();
     let error = service
         .discard_for_cleanup(
             &mut game,
@@ -146,7 +173,11 @@ fn advance_turn_fails_from_end_step_while_cleanup_discard_is_still_required() {
 #[test]
 fn advance_turn_succeeds_after_discarding_down_to_maximum_hand_size() {
     let (service, mut game) = setup_game_with_eight_cards_in_hand();
-    let card_id = game.players()[0].hand().cards()[0].id().clone();
+    let card_id = game.players()[0]
+        .hand_card_at(0)
+        .unwrap_or_else(|| panic!("hand card should exist"))
+        .id()
+        .clone();
 
     service
         .discard_for_cleanup(

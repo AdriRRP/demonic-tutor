@@ -13,6 +13,22 @@ use demonictutor::{
 
 pub type TestService = GameService<InMemoryEventStore, InMemoryEventBus>;
 
+pub fn player<'a>(game: &'a Game, player_id: &str) -> &'a demonictutor::domain::play::game::Player {
+    let player_id = PlayerId::new(player_id);
+    game.players()
+        .iter()
+        .find(|player| player.id() == &player_id)
+        .unwrap_or_else(|| panic!("player should exist: {player_id}"))
+}
+
+pub fn first_hand_card_id(game: &Game, player_id: &str) -> demonictutor::CardInstanceId {
+    player(game, player_id)
+        .hand_card_at(0)
+        .unwrap_or_else(|| panic!("first hand card should exist for {player_id}"))
+        .id()
+        .clone()
+}
+
 pub fn create_service() -> TestService {
     GameService::new(InMemoryEventStore::new(), InMemoryEventBus::new())
 }
@@ -429,10 +445,7 @@ pub fn pass_priority_to_non_active_player_in_end_of_combat(service: &TestService
         .iter()
         .find(|player| player.id() == &PlayerId::new("player-1"))
         .unwrap_or_else(|| panic!("player-1 should exist"))
-        .hand()
-        .cards()
-        .iter()
-        .find(|card| card.definition_id() == &CardDefinitionId::new("attacker"))
+        .hand_card_by_definition(&CardDefinitionId::new("attacker"))
         .unwrap_or_else(|| panic!("attacker should exist in player-1 hand"))
         .id()
         .clone();
@@ -477,9 +490,7 @@ pub fn satisfy_cleanup_discard(service: &TestService, game: &mut Game) {
             .iter()
             .find(|player| player.id() == &active_player)
             .unwrap_or_else(|| panic!("active player should exist: {active_player}"))
-            .hand()
-            .cards()
-            .len();
+            .hand_size();
 
         if active_hand_size <= 7 {
             break;
@@ -490,8 +501,8 @@ pub fn satisfy_cleanup_discard(service: &TestService, game: &mut Game) {
             .iter()
             .find(|player| player.id() == &active_player)
             .unwrap_or_else(|| panic!("active player should exist: {active_player}"))
-            .hand()
-            .cards()[0]
+            .hand_card_at(0)
+            .unwrap_or_else(|| panic!("active player should have a hand card: {active_player}"))
             .id()
             .clone();
 

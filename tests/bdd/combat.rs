@@ -288,7 +288,7 @@ fn alice_attacks_with_a_flying_creature_with_power(world: &mut GameplayWorld) {
 
 #[given("Bob has no creatures that can block flying")]
 fn bob_has_no_blockers_for_flying(world: &mut GameplayWorld) {
-    assert!(world.player("Bob").battlefield().cards().is_empty());
+    assert!(world.player_battlefield_is_empty("Bob"));
 }
 
 #[given("the flying attacker is unblocked")]

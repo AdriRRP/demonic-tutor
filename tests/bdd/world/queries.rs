@@ -83,6 +83,10 @@ impl GameplayWorld {
         self.player(alias).hand_size()
     }
 
+    pub fn player_battlefield_is_empty(&self, alias: &str) -> bool {
+        self.player(alias).battlefield_is_empty()
+    }
+
     pub fn player_library_size(&self, alias: &str) -> usize {
         self.player(alias).library().len()
     }

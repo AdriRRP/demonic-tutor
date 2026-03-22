@@ -51,7 +51,7 @@ fn draw_cards_effect_moves_cards_from_library_to_hand() {
 
     advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-2");
 
-    let hand_before = game.players()[1].hand().cards().len();
+    let hand_before = game.players()[1].hand_size();
     let lib_before = game.players()[1].library().len();
 
     let outcome = service
@@ -63,7 +63,7 @@ fn draw_cards_effect_moves_cards_from_library_to_hand() {
     assert_eq!(outcome.cards_drawn.len(), 2);
     assert!(outcome.game_ended.is_none());
 
-    let hand_after = game.players()[1].hand().cards().len();
+    let hand_after = game.players()[1].hand_size();
     let lib_after = game.players()[1].library().len();
 
     assert_eq!(hand_before + 2, hand_after);
@@ -103,7 +103,7 @@ fn draw_cards_effect_can_target_another_player() {
 
     advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
 
-    let bob_hand_before = game.players()[1].hand().cards().len();
+    let bob_hand_before = game.players()[1].hand_size();
     let bob_library_before = game.players()[1].library().len();
 
     let outcome = service
@@ -118,7 +118,7 @@ fn draw_cards_effect_can_target_another_player() {
         .cards_drawn
         .iter()
         .all(|event| event.player_id == PlayerId::new("player-2")));
-    assert_eq!(game.players()[1].hand().cards().len(), bob_hand_before + 2);
+    assert_eq!(game.players()[1].hand_size(), bob_hand_before + 2);
     assert_eq!(game.players()[1].library().len(), bob_library_before - 2);
 }
 

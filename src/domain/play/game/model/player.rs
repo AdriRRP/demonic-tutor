@@ -249,8 +249,18 @@ impl Player {
     }
 
     #[must_use]
+    pub fn hand_is_empty(&self) -> bool {
+        self.hand.is_empty()
+    }
+
+    #[must_use]
     pub fn battlefield_size(&self) -> usize {
         self.battlefield.len()
+    }
+
+    #[must_use]
+    pub fn battlefield_is_empty(&self) -> bool {
+        self.battlefield.is_empty()
     }
 
     #[must_use]
@@ -259,8 +269,18 @@ impl Player {
     }
 
     #[must_use]
+    pub fn graveyard_is_empty(&self) -> bool {
+        self.graveyard.is_empty()
+    }
+
+    #[must_use]
     pub fn exile_size(&self) -> usize {
         self.exile.len()
+    }
+
+    #[must_use]
+    pub fn exile_is_empty(&self) -> bool {
+        self.exile.is_empty()
     }
 
     #[must_use]
@@ -289,8 +309,18 @@ impl Player {
     }
 
     #[must_use]
+    pub fn hand_card_at(&self, index: usize) -> Option<&CardInstance> {
+        self.hand.iter().nth(index)
+    }
+
+    #[must_use]
     pub fn battlefield_card(&self, card_id: &CardInstanceId) -> Option<&CardInstance> {
         self.battlefield.card(card_id)
+    }
+
+    #[must_use]
+    pub fn battlefield_card_at(&self, index: usize) -> Option<&CardInstance> {
+        self.battlefield.iter().nth(index)
     }
 
     #[must_use]
@@ -299,8 +329,18 @@ impl Player {
     }
 
     #[must_use]
+    pub fn graveyard_card_at(&self, index: usize) -> Option<&CardInstance> {
+        self.graveyard.iter().nth(index)
+    }
+
+    #[must_use]
     pub fn exile_card(&self, card_id: &CardInstanceId) -> Option<&CardInstance> {
         self.exile.card(card_id)
+    }
+
+    #[must_use]
+    pub fn exile_card_at(&self, index: usize) -> Option<&CardInstance> {
+        self.exile.iter().nth(index)
     }
 
     #[must_use]
@@ -309,6 +349,16 @@ impl Player {
         definition_id: &CardDefinitionId,
     ) -> Option<&CardInstance> {
         self.hand
+            .iter()
+            .find(|card| card.definition_id() == definition_id)
+    }
+
+    #[must_use]
+    pub fn battlefield_card_by_definition(
+        &self,
+        definition_id: &CardDefinitionId,
+    ) -> Option<&CardInstance> {
+        self.battlefield
             .iter()
             .find(|card| card.definition_id() == definition_id)
     }
