@@ -56,6 +56,7 @@ Prefer:
 - centralized representation choices for shared ids or compact state, changed only when profiling justifies them
 - shared immutable card metadata behind instance-local mutable runtime when card definitions would otherwise be duplicated across zones
 - zone APIs consumed through semantic queries and iterators rather than exposing storage details to core rules
+- explicit stack-borne spell metadata preferred over rediscovering immutable spell facts from moved card values during resolution
 
 Avoid:
 

@@ -66,6 +66,7 @@ The domain currently includes:
 - game sessions
 - players
 - card instances with immutable face data and mutable runtime state
+- shared immutable card definitions referenced by runtime card instances
 - basic zones (library, hand, battlefield, graveyard, exile)
 - ordered library, hand, graveyard, and exile zones with intentionally unordered battlefield removal semantics
 - mana production from lands
@@ -114,6 +115,7 @@ The domain currently includes:
 - legal-target evaluation for the current targeted-spell subset is shared between cast-time validation and resolution-time revalidation, using explicit cast and resolution contexts
 - supported spell targeting, casting rules, and resolution are currently carried as explicit card-face profiles rather than inferred from card-definition strings during casting or resolution
 - card definitions are currently created through card-type-aware constructors so supported spell cards receive casting semantics when the face is built
+- stack-borne spells now carry explicit spell metadata needed by resolution instead of rediscovering all of it from the moved card value
 - resolving the top stack object after two consecutive passes
 - the explicit combat corridor progresses through `BeginningOfCombat`, `DeclareAttackers`, `DeclareBlockers`, `CombatDamage`, and `EndOfCombat`
 - empty combat windows close forward coherently from `BeginningOfCombat` into `DeclareAttackers`, from `DeclareAttackers` into `DeclareBlockers`, from `DeclareBlockers` into `CombatDamage`, and from `EndOfCombat` into `SecondMain`
@@ -136,7 +138,7 @@ Current constraints include:
 - only a subset of zones are modeled (library, hand, battlefield, graveyard, exile)
 - spell responses during open priority windows currently support instants plus the explicitly modeled `OpenPriorityWindow` subset
 - the current targeted-spell subset is intentionally tiny and driven by explicit card-face legal-target rules and resolution profiles
-- the current targeted-spell subset currently supports only simple player-or-creature damage instants
+- the current targeted-spell subset currently supports only a small explicit damage-instant subset, but that subset already includes actor-relative and combat-relative target restrictions
 - sorcery-speed spells are currently supported only for the active player in `FirstMain` or `SecondMain` while the stack is empty
 - priority windows are currently opened by spell casting, by entering `Upkeep`, `Draw`, `FirstMain`, `BeginningOfCombat`, `SecondMain`, or `EndStep`, after attackers or blockers are declared, and after combat damage resolves if the game remains active
 - outside stack-aware operations, general turn advancement still requires the priority window to be closed
@@ -180,6 +182,7 @@ The project currently includes:
 - shared life-change semantics reused by explicit targeted life effects and combat damage
 - shared review of currently supported state-based actions after relevant gameplay actions
 - aggregate-owned stack zone and priority state with minimal public stack behavior
+- semantic zone and player accessors shielding most core rules and shared tests from raw zone storage details
 - an event bus for event distribution
 - projections derived from gameplay events
 - State pattern for phase transitions

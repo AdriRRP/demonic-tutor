@@ -58,7 +58,6 @@ src/domain/play/game/
         ├── damage.rs           # Combat damage resolution facade
         ├── damage/
         │   ├── participants.rs
-        │   ├── assignments.rs
         │   └── application.rs
         └── progression.rs      # Combat step legality and defending-player flow
     └── turn_flow/
@@ -82,6 +81,7 @@ src/domain/play/game/
 - **Incremental stack evolution** — Stack and priority can grow from aggregate-owned model state through small explicit slices instead of a generic rules engine.
 - **Responsibility-first resolution flow** — As spell support grows, keep stack extraction, destination movement, and rule application in separate modules instead of letting one resolution file absorb the whole flow.
 - **Explicit turn semantics** — When a timing area grows cognitively, prefer explicit subphases and focused modules over hiding distinct moments behind one broad phase name.
+- **Storage-agnostic rules** — Prefer semantic zone/player accessors and explicit stack metadata over rule code that depends on raw collection layout or repeatedly rediscovers immutable spell facts.
 
 ---
 

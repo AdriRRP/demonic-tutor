@@ -116,6 +116,7 @@ Current implementation:
 - ordered collection of `CardInstance`
 
 The current runtime preserves the order in which cards appear in hand.
+Rules and tests should prefer semantic player and zone queries over direct dependence on the hand's backing storage.
 
 ---
 
@@ -151,6 +152,7 @@ Current implementation:
 - ordered collection of `CardInstance`
 
 The current runtime preserves graveyard insertion order.
+Rules and tests should prefer semantic player and zone queries over direct dependence on graveyard storage details.
 
 ---
 
@@ -168,6 +170,7 @@ Current implementation:
 - ordered collection of `CardInstance`
 
 The current runtime preserves exile insertion order.
+Rules and tests should prefer semantic player and zone queries over direct dependence on exile storage details.
 
 ---
 
@@ -180,6 +183,8 @@ The current runtime model separates:
 - immutable card-face data (`definition id`, `type`, `mana cost`, optional spell-casting permissions`)
 - immutable supported targeting and resolution profiles for the card's currently modeled behavior
 - mutable gameplay state (`tapped`, combat flags, creature runtime state)
+
+Immutable card-face metadata is currently shared across instances rather than copied by value per zone entry.
 
 Fields include:
 
