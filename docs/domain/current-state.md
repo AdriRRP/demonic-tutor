@@ -26,7 +26,7 @@ Implemented capabilities include:
 - ending the game when a player reaches 0 life
 - playing lands
 - tapping lands for mana
-- tapping lands for mana in the currently exercised active-player open priority windows
+- tapping lands for mana in the currently exercised open priority windows while the acting player holds priority
 - casting spells that require mana
 - casting creature spells that enter the battlefield with power and toughness
 - resolving instants and sorceries to graveyard
@@ -93,7 +93,7 @@ The domain currently includes:
 - currently supported open priority windows exist in `Upkeep`, `Draw`, `FirstMain`, `BeginningOfCombat`, post-attackers, post-blockers, `EndOfCombat`, `SecondMain`, and `EndStep`
 - in each currently supported instant-speed window, the active player may cast an instant and self-stack a second instant before passing priority
 - in each currently supported instant-speed window, the non-active player may respond with an instant after the first pass and may self-stack a second instant before passing priority
-- the current response corridor also supports producing generic mana from a land and immediately spending it to cast a paid instant response on the same open stack
+- the current response corridor also supports producing generic mana from a land, without using the stack, and immediately spending it to cast a paid instant response on the same open stack
 - sorcery-speed spells are supported for the active player in empty `FirstMain` and `SecondMain` windows for the currently modeled spell-card subset: creature, sorcery, artifact, enchantment, and planeswalker
 - the current supported spell-card subset also allows explicit card-face casting rules that open non-instant spells to open priority windows, providing minimal `Flash`-like support for the currently exercised subset
 - the current minimal `Flash`-like support is currently exercised by supported creatures in `Upkeep`, `BeginningOfCombat`, on an existing stack response window, and after attackers, blockers, or combat damage, and by supported artifact and enchantment spells on an existing stack response window, in `BeginningOfCombat`, and after blockers or combat damage
@@ -143,7 +143,7 @@ Current constraints include:
 - no triggered abilities
 - limited card behavior modeling
 - permanent spells resolve from the stack into the battlefield in the current simplified stack model
-- mana production is simplified to generic mana only and is currently exercised for the active player in main phases plus open empty-stack priority windows such as `Upkeep` and `BeginningOfCombat`
+- mana production is simplified to generic mana only and is currently exercised in main phases plus the currently supported open priority windows while the acting player holds priority
 - combat blocking is simplified to at most one blocker per attacker
 
 These constraints are expected to evolve in future slices.

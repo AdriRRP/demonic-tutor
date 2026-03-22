@@ -349,6 +349,61 @@ fn non_active_player_can_tap_a_land_while_holding_priority_on_an_open_stack() {
 }
 
 #[test]
+fn tapping_a_land_for_mana_does_not_use_the_stack_or_change_priority() {
+    let alice_cards = vec![instant_card("alice-shock", 0); 10];
+    let bob_cards = vec![land_card("mountain"); 10];
+
+    let (service, mut game) =
+        setup_two_player_game("game-tap-land-no-stack", alice_cards, bob_cards);
+    advance_to_player_phase_satisfying_cleanup(&service, &mut game, "player-2", Phase::FirstMain);
+
+    let bob_land = hand_card_id_by_definition(&game, 1, "mountain");
+    service
+        .play_land(
+            &mut game,
+            PlayLandCommand::new(PlayerId::new("player-2"), bob_land.clone()),
+        )
+        .unwrap();
+
+    advance_to_player_phase_satisfying_cleanup(&service, &mut game, "player-1", Phase::FirstMain);
+    let alice_spell = hand_card_id_by_definition(&game, 0, "alice-shock");
+
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), alice_spell.clone()),
+        )
+        .unwrap();
+    service
+        .pass_priority(
+            &mut game,
+            PassPriorityCommand::new(PlayerId::new("player-1")),
+        )
+        .unwrap();
+
+    assert_eq!(game.stack().len(), 1);
+    assert_eq!(game.stack().top().unwrap().source_card_id(), &alice_spell);
+    assert_eq!(
+        game.priority().unwrap().current_holder(),
+        &PlayerId::new("player-2")
+    );
+
+    service
+        .tap_land(
+            &mut game,
+            TapLandCommand::new(PlayerId::new("player-2"), bob_land),
+        )
+        .unwrap();
+
+    assert_eq!(game.stack().len(), 1);
+    assert_eq!(game.stack().top().unwrap().source_card_id(), &alice_spell);
+    assert_eq!(
+        game.priority().unwrap().current_holder(),
+        &PlayerId::new("player-2")
+    );
+}
+
+#[test]
 fn advance_turn_clears_mana_pools() {
     let (mut game, service) = create_game_with_land_on_battlefield();
 

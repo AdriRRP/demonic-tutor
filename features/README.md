@@ -69,6 +69,7 @@ Stack and priority behavior:
 - active-player instant casting in supported windows
 - non-active instant responses after the first pass
 - self-stacking by the current priority holder
+- stack-free land mana production in the currently supported priority windows
 - sorcery-speed legality in main phases
 - targeted instant subset against players and creatures
 - combat-relative targeted spells against attacking and blocking creatures
@@ -130,6 +131,7 @@ The following features are currently executed by `tests/bdd.rs`, grouped by area
 - `features/stack/stack_foundation.feature`
 - `features/stack/respond_with_instant_spell.feature`
 - `features/stack/respond_with_paid_instant_spell.feature`
+- `features/stack/tap_land_for_mana_does_not_use_the_stack.feature`
 - `features/stack/respond_in_upkeep_window.feature`
 - `features/stack/respond_in_draw_window.feature`
 - `features/stack/respond_in_first_main_window.feature`

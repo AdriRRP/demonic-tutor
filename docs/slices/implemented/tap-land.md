@@ -10,7 +10,7 @@ Enable lands to produce mana for future spell casting.
 - Players have a mana pool (starts at 0)
 - Lands can be tapped to produce 1 mana each
 - Tapped lands cannot be tapped again until untapped
-- Mana production is currently supported for the active player in `FirstMain` and `SecondMain`, and in currently supported open empty-stack priority windows where that player still holds priority
+- Mana production is currently supported for the active player in `FirstMain` and `SecondMain`, and in currently supported open priority windows where the acting player currently holds priority
 - Mana pools are cleared when the game advances to the next phase or turn
 
 ### Commands
@@ -25,9 +25,9 @@ pub struct TapLandCommand {
 - Card must be on the battlefield
 - Card must be a Land type
 - Card must not already be tapped
-- Player must be the active player
-- Current phase must be `FirstMain` or `SecondMain`, or the land must be tapped in a currently supported open empty-stack priority window while the active player still holds priority
-- Produces 1 generic mana for the active player
+- Player must be the active player when no priority window is open
+- Current phase must be `FirstMain` or `SecondMain` when no priority window is open, or the land must be tapped in a currently supported open priority window while the acting player holds priority
+- Produces 1 generic mana for the acting player
 
 ### Events
 
@@ -65,7 +65,7 @@ pub struct ManaAdded {
 
 ## Rules Support Statement
 
-This slice implements mana production from lands per rules 605.1 and 605.3a. This implements basic mana production. Mana types, color identity, stack-free mana-ability semantics, and mana burn are not implemented.
+This slice implements mana production from lands per rules 605.1 and 605.3a. This implements basic mana production. Mana types, color identity, and mana burn are not implemented. For the currently supported land mana action, stack-free mana-ability semantics are implemented in the currently exercised priority windows.
 
 ## Tests
 
