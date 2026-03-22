@@ -1,10 +1,8 @@
 mod application;
-mod assignments;
 mod participants;
 
 use self::{
     application::apply_damage_and_clear_combat_state,
-    assignments::blocker_by_attacker,
     participants::{collect_attackers, collect_blockers},
 };
 use super::super::{
@@ -75,16 +73,15 @@ pub fn resolve_combat_damage(
         return Err(DomainError::Game(GameError::NoAttackersDeclared));
     }
     let blockers = collect_blockers(&players[defender_idx])?;
-    let blocker_by_attacker = blocker_by_attacker(&players[defender_idx]);
 
     let mut damage_events: Vec<DamageEvent> = Vec::new();
     let mut damage_received: Vec<(CardInstanceId, u32)> = Vec::new();
     let mut player_damage = 0;
 
     for (attacker_id, power) in &attackers {
-        if let Some((_, blocker_id)) = blocker_by_attacker
+        if let Some((blocker_id, _, _)) = blockers
             .iter()
-            .find(|(blocked_attacker_id, _)| blocked_attacker_id == attacker_id)
+            .find(|(_, blocked_attacker_id, _)| blocked_attacker_id == attacker_id)
         {
             add_damage(&mut damage_received, blocker_id, *power);
             damage_events.push(DamageEvent {
