@@ -456,6 +456,44 @@ impl GameplayWorld {
         self.reset_observations();
     }
 
+    pub fn setup_destroy_target_creature_spell(&mut self) {
+        self.reset_game_with_libraries(
+            "bdd-destroy-target-creature-spell",
+            support::filled_library(
+                vec![
+                    support::land_card("bdd-mountain"),
+                    support::targeted_destroy_creature_instant_card("bdd-murder-lite", 0),
+                ],
+                10,
+            ),
+            support::filled_library(vec![support::creature_card("bdd-bob-bear", 0, 2, 2)], 10),
+        );
+
+        let service = support::create_service();
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-2",
+        );
+        let creature_id = self.hand_card_by_definition("Bob", "bdd-bob-bear");
+        service
+            .cast_spell(
+                self.game_mut(),
+                CastSpellCommand::new(Self::player_id("Bob"), creature_id.clone()),
+            )
+            .expect("setup destroy target creature spell cast should succeed");
+        self.pass_priority("Bob");
+        self.pass_priority("Alice");
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-1",
+        );
+        self.tracked_card_id = Some(self.hand_card_by_definition("Alice", "bdd-murder-lite"));
+        self.tracked_blocker_id = Some(creature_id);
+        self.reset_observations();
+    }
+
     pub fn setup_targeted_opponents_creature_spell_with_controlled_creature(&mut self) {
         self.reset_game_with_libraries(
             "bdd-targeted-opponents-creature-spell-controlled",

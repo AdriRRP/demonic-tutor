@@ -423,6 +423,7 @@ impl SpellTargetingProfile {
 pub enum SpellResolutionProfile {
     None,
     DealDamage { damage: u32 },
+    DestroyTargetCreature,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -537,6 +538,16 @@ impl SupportedSpellRules {
                 SingleTargetRule::opponents_attacking_creature(),
             ),
             resolution: SpellResolutionProfile::DealDamage { damage },
+        }
+    }
+
+    #[must_use]
+    pub const fn destroy_target_creature() -> Self {
+        Self {
+            targeting: SpellTargetingProfile::ExactlyOne(
+                SingleTargetRule::any_creature_on_battlefield(),
+            ),
+            resolution: SpellResolutionProfile::DestroyTargetCreature,
         }
     }
 

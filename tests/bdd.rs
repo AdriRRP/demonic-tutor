@@ -121,6 +121,7 @@ async fn run_stack_features() {
         "features/stack/target_self_player_when_rule_allows_it.feature",
         "features/stack/target_controlled_creature_spell_outside_combat.feature",
         "features/stack/target_opponents_creature_in_first_main.feature",
+        "features/stack/destroy_target_creature_foundation.feature",
         "features/stack/reject_controlled_creature_for_opponents_creature_spell.feature",
         "features/stack/resolve_opponents_creature_spell_in_first_main.feature",
         "features/stack/target_controlled_attacking_creature_spell.feature",
