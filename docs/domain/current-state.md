@@ -107,6 +107,11 @@ The domain currently includes:
 - supported targeted instants currently require exactly one explicit player or creature target when cast
 - the current targeted-spell subset now supports contextual target restrictions such as `opponent of the acting player/controller` and `creature controlled by the acting player/controller`
 - the current non-combat targeted-spell subset explicitly exercises `any player`, including self-targeting, plus `opponent player`, `creature you control`, and `creature an opponent controls` restrictions in `FirstMain`, including cast-time rejection and successful resolution for the currently modeled opponent-controlled-creature damage corridor
+- the current non-combat target matrix exercised in `FirstMain` is:
+  - `AnyPlayer`: cast and resolve at opponent, cast and resolve at self
+  - `OpponentOfActor`: cast and resolve at opponent, reject self
+  - `CreatureControlledByActor`: cast and resolve at controlled creature, reject opponent-controlled creature
+  - `CreatureControlledByOpponent`: cast and resolve at opponent-controlled creature, reject controlled creature
 - the current targeted-spell subset now also supports explicit combat-relative target restrictions such as `attacking creature`, `blocking creature`, `attacking creature you control`, `blocking creature you control`, `blocking creature an opponent controls`, and `attacking creature an opponent controls`
 - the current combat-relative targeted-spell subset is currently exercised in the post-attackers and post-blockers windows, including lethal and nonlethal damage against attacking, blocking, controlled-attacking, controlled-blocking, opponent-controlled attacking, and opponent-controlled blocking creatures
 - supported targeted instant damage to a player emits `LifeChanged` on resolution

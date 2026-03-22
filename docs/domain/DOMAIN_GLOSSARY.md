@@ -197,6 +197,13 @@ Supported examples currently include:
 
 Legal-target evaluation is shared between casting and resolution for the current targeted-spell subset.
 
+The current non-combat target matrix exercised by repository-owned features is:
+
+- `AnyPlayer`
+- `OpponentOfActor`
+- `CreatureControlledByActor`
+- `CreatureControlledByOpponent`
+
 ---
 
 # Card Types

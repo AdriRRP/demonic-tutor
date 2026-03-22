@@ -12,7 +12,7 @@ Directory: `mana-v1/`
 
 Directory: `targeting-v1/`
 
-1. `targeting-v1/contextual-noncombat-target-matrix-sync.md`
+Wave 2 is fully implemented.
 
 ## Wave 3 — Useful Spell Effects
 
