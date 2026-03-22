@@ -89,7 +89,7 @@ pub(super) fn battlefield_card_mut<'a>(
     card_id: &CardInstanceId,
 ) -> Option<&'a mut CardInstance> {
     for player in players.iter_mut() {
-        if let Some(card) = player.battlefield_mut().card_mut(card_id) {
+        if let Some(card) = player.battlefield_card_mut(card_id) {
             return Some(card);
         }
     }

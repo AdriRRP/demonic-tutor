@@ -6,6 +6,15 @@ const DEFAULT_STARTING_LIFE: u32 = 20;
 pub const OPENING_HAND_SIZE: usize = 7;
 pub const MAX_HAND_SIZE: usize = 7;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PlayerCardZone {
+    Library,
+    Hand,
+    Battlefield,
+    Graveyard,
+    Exile,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ManaPool {
     generic: u32,
@@ -237,6 +246,11 @@ impl Player {
     }
 
     #[must_use]
+    pub fn library_size(&self) -> usize {
+        self.library.len()
+    }
+
+    #[must_use]
     pub fn hand_is_empty(&self) -> bool {
         self.hand.is_empty()
     }
@@ -277,6 +291,11 @@ impl Player {
     }
 
     #[must_use]
+    pub fn library_contains(&self, card_id: &CardInstanceId) -> bool {
+        self.library.iter().any(|card| card.id() == card_id)
+    }
+
+    #[must_use]
     pub fn battlefield_contains(&self, card_id: &CardInstanceId) -> bool {
         self.battlefield.contains(card_id)
     }
@@ -297,6 +316,11 @@ impl Player {
     }
 
     #[must_use]
+    pub fn library_card(&self, card_id: &CardInstanceId) -> Option<&CardInstance> {
+        self.library.iter().find(|card| card.id() == card_id)
+    }
+
+    #[must_use]
     pub fn hand_card_at(&self, index: usize) -> Option<&CardInstance> {
         self.hand.iter().nth(index)
     }
@@ -304,6 +328,10 @@ impl Player {
     #[must_use]
     pub fn battlefield_card(&self, card_id: &CardInstanceId) -> Option<&CardInstance> {
         self.battlefield.card(card_id)
+    }
+
+    pub fn battlefield_card_mut(&mut self, card_id: &CardInstanceId) -> Option<&mut CardInstance> {
+        self.battlefield.card_mut(card_id)
     }
 
     #[must_use]
@@ -354,6 +382,32 @@ impl Player {
         self.battlefield
             .iter()
             .find(|card| card.definition_id() == definition_id)
+    }
+
+    #[must_use]
+    pub fn card_zone(&self, card_id: &CardInstanceId) -> Option<PlayerCardZone> {
+        if self.hand_contains(card_id) {
+            return Some(PlayerCardZone::Hand);
+        }
+        if self.battlefield_contains(card_id) {
+            return Some(PlayerCardZone::Battlefield);
+        }
+        if self.graveyard_contains(card_id) {
+            return Some(PlayerCardZone::Graveyard);
+        }
+        if self.exile_contains(card_id) {
+            return Some(PlayerCardZone::Exile);
+        }
+        if self.library_contains(card_id) {
+            return Some(PlayerCardZone::Library);
+        }
+
+        None
+    }
+
+    #[must_use]
+    pub fn owns_card(&self, card_id: &CardInstanceId) -> bool {
+        self.card_zone(card_id).is_some()
     }
 
     pub fn remove_hand_card(&mut self, card_id: &CardInstanceId) -> Option<CardInstance> {

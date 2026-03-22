@@ -97,15 +97,12 @@ pub fn tap_land(
 
     let player = helpers::find_player_mut(players, &cmd.player_id)?;
 
-    let card = player
-        .battlefield_mut()
-        .card_mut(&cmd.card_id)
-        .ok_or_else(|| {
-            DomainError::Card(CardError::NotOnBattlefield {
-                player: cmd.player_id.clone(),
-                card: cmd.card_id.clone(),
-            })
-        })?;
+    let card = player.battlefield_card_mut(&cmd.card_id).ok_or_else(|| {
+        DomainError::Card(CardError::NotOnBattlefield {
+            player: cmd.player_id.clone(),
+            card: cmd.card_id.clone(),
+        })
+    })?;
 
     if card.is_tapped() {
         return Err(DomainError::Card(CardError::AlreadyTapped {
