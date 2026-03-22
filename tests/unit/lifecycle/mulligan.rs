@@ -11,13 +11,13 @@ fn mulligan_hand_contains_exactly_seven_cards_after_mulligan() {
     let (service, mut game) =
         setup_two_player_game("game-1", creature_library(14), creature_library(14));
 
-    assert_eq!(game.players()[0].hand().cards().len(), 7);
+    assert_eq!(game.players()[0].hand_size(), 7);
 
     service
         .mulligan(&mut game, MulliganCommand::new(PlayerId::new("player-1")))
         .unwrap();
 
-    assert_eq!(game.players()[0].hand().cards().len(), 7);
+    assert_eq!(game.players()[0].hand_size(), 7);
 }
 
 #[test]

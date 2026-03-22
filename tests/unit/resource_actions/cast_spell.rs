@@ -264,10 +264,7 @@ fn opponent_can_tap_a_land_and_pay_for_an_instant_response_in_the_same_window() 
     assert_eq!(game.players()[1].mana(), 1);
 
     let bob_spell = game.players()[1]
-        .hand()
-        .cards()
-        .iter()
-        .find(|card| matches!(card.card_type(), CardType::Instant))
+        .hand_card_by_definition(&CardDefinitionId::new("bob-shock"))
         .unwrap()
         .id()
         .clone();
@@ -440,7 +437,7 @@ fn cast_spell_rejected_land_card_stays_in_hand() {
 
     advance_to_first_main_satisfying_cleanup(&service, &mut game);
 
-    let hand_before = game.players()[0].hand().cards().len();
+    let hand_before = game.players()[0].hand_size();
     let result = service.cast_spell(
         &mut game,
         CastSpellCommand::new(
@@ -450,7 +447,7 @@ fn cast_spell_rejected_land_card_stays_in_hand() {
     );
 
     assert!(result.is_err());
-    assert_eq!(game.players()[0].hand().cards().len(), hand_before);
+    assert_eq!(game.players()[0].hand_size(), hand_before);
 }
 
 #[test]
@@ -718,7 +715,7 @@ fn cast_spell_fails_with_insufficient_mana() {
             demonictutor::GameError::InsufficientMana { .. }
         ))
     ));
-    assert_eq!(game.players()[0].hand().cards().len(), 8);
+    assert_eq!(game.players()[0].hand_size(), 8);
     assert_eq!(game.players()[0].graveyard_size(), 0);
     assert_eq!(game.players()[0].battlefield().cards().len(), 0);
     assert_eq!(game.stack().len(), 0);

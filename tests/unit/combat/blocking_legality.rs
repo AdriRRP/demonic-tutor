@@ -1,3 +1,5 @@
+#![allow(clippy::expect_used)]
+
 use crate::support;
 use demonictutor::{CastSpellCommand, DeclareAttackersCommand, DeclareBlockersCommand, PlayerId};
 
@@ -63,12 +65,24 @@ fn test_flying_blocking_legality() {
     );
 
     support::advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
-    let attacker_id = game.players()[0].hand().cards()[0].id().clone();
+    let attacker_id = game.players()[0]
+        .hand_card_at(0)
+        .expect("attacker should exist in hand")
+        .id()
+        .clone();
     cast_spell_and_resolve_for_player(&service, &mut game, "player-1", attacker_id.clone());
 
     support::advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-2");
-    let non_flying_id = game.players()[1].hand().cards()[0].id().clone();
-    let flying_blocker_id = game.players()[1].hand().cards()[1].id().clone();
+    let non_flying_id = game.players()[1]
+        .hand_card_at(0)
+        .expect("non-flying blocker should exist in hand")
+        .id()
+        .clone();
+    let flying_blocker_id = game.players()[1]
+        .hand_card_at(1)
+        .expect("flying blocker should exist in hand")
+        .id()
+        .clone();
     cast_spell_and_resolve_for_player(&service, &mut game, "player-2", non_flying_id.clone());
     cast_spell_and_resolve_for_player(&service, &mut game, "player-2", flying_blocker_id.clone());
 
@@ -116,11 +130,19 @@ fn test_reach_blocking_legality() {
     );
 
     support::advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
-    let attacker_id = game.players()[0].hand().cards()[0].id().clone();
+    let attacker_id = game.players()[0]
+        .hand_card_at(0)
+        .expect("attacker should exist in hand")
+        .id()
+        .clone();
     cast_spell_and_resolve_for_player(&service, &mut game, "player-1", attacker_id.clone());
 
     support::advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-2");
-    let reach_blocker_id = game.players()[1].hand().cards()[0].id().clone();
+    let reach_blocker_id = game.players()[1]
+        .hand_card_at(0)
+        .expect("reach blocker should exist in hand")
+        .id()
+        .clone();
     cast_spell_and_resolve_for_player(&service, &mut game, "player-2", reach_blocker_id.clone());
 
     advance_to_combat_after_battlefield_setup(&service, &mut game, attacker_id.clone());
@@ -153,11 +175,19 @@ fn test_non_flying_blocking_legality() {
     );
 
     support::advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
-    let attacker_id = game.players()[0].hand().cards()[0].id().clone();
+    let attacker_id = game.players()[0]
+        .hand_card_at(0)
+        .expect("attacker should exist in hand")
+        .id()
+        .clone();
     cast_spell_and_resolve_for_player(&service, &mut game, "player-1", attacker_id.clone());
 
     support::advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-2");
-    let blocker_id = game.players()[1].hand().cards()[0].id().clone();
+    let blocker_id = game.players()[1]
+        .hand_card_at(0)
+        .expect("blocker should exist in hand")
+        .id()
+        .clone();
     cast_spell_and_resolve_for_player(&service, &mut game, "player-2", blocker_id.clone());
 
     advance_to_combat_after_battlefield_setup(&service, &mut game, attacker_id.clone());

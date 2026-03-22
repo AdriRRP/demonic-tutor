@@ -19,10 +19,7 @@ fn hand_card_id_by_definition(
     definition_id: &str,
 ) -> CardInstanceId {
     game.players()[player_index]
-        .hand()
-        .cards()
-        .iter()
-        .find(|card| card.definition_id() == &CardDefinitionId::new(definition_id))
+        .hand_card_by_definition(&CardDefinitionId::new(definition_id))
         .unwrap()
         .id()
         .clone()

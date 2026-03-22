@@ -151,6 +151,7 @@ pub struct Player {
     id: PlayerId,
     library: Library,
     hand: Hand,
+    hand_cards: HashMap<CardInstanceId, CardInstance>,
     battlefield: Battlefield,
     graveyard: Graveyard,
     graveyard_cards: HashMap<CardInstanceId, CardInstance>,
@@ -170,6 +171,7 @@ impl Player {
             id,
             library: Library::new(Vec::new()),
             hand: Hand::new(),
+            hand_cards: HashMap::new(),
             battlefield: Battlefield::new(),
             graveyard: Graveyard::new(),
             graveyard_cards: HashMap::new(),
@@ -292,7 +294,7 @@ impl Player {
 
     #[must_use]
     pub fn hand_contains(&self, card_id: &CardInstanceId) -> bool {
-        self.hand.contains(card_id)
+        self.hand.contains(card_id) && self.hand_cards.contains_key(card_id)
     }
 
     #[must_use]
@@ -317,7 +319,9 @@ impl Player {
 
     #[must_use]
     pub fn hand_card(&self, card_id: &CardInstanceId) -> Option<&CardInstance> {
-        self.hand.card(card_id)
+        self.hand_contains(card_id)
+            .then(|| self.hand_cards.get(card_id))
+            .flatten()
     }
 
     #[must_use]
@@ -327,7 +331,8 @@ impl Player {
 
     #[must_use]
     pub fn hand_card_at(&self, index: usize) -> Option<&CardInstance> {
-        self.hand.iter().nth(index)
+        let card_id = self.hand.card_id_at(index)?;
+        self.hand_cards.get(card_id)
     }
 
     #[must_use]
@@ -377,12 +382,13 @@ impl Player {
     ) -> Option<&CardInstance> {
         self.hand
             .iter()
+            .filter_map(|card_id| self.hand_cards.get(card_id))
             .find(|card| card.definition_id() == definition_id)
     }
 
     #[must_use]
     pub fn hand_card_ids(&self) -> Vec<CardInstanceId> {
-        self.hand.iter().map(|card| card.id().clone()).collect()
+        self.hand.iter().cloned().collect()
     }
 
     #[must_use]
@@ -422,7 +428,8 @@ impl Player {
     }
 
     pub fn remove_hand_card(&mut self, card_id: &CardInstanceId) -> Option<CardInstance> {
-        self.hand.remove(card_id)
+        self.hand.remove(card_id)?;
+        self.hand_cards.remove(card_id)
     }
 
     pub fn remove_battlefield_card(&mut self, card_id: &CardInstanceId) -> Option<CardInstance> {
@@ -459,7 +466,13 @@ impl Player {
     }
 
     pub fn receive_hand_cards(&mut self, cards: Vec<CardInstance>) {
-        self.hand.receive(cards);
+        let mut card_ids = Vec::with_capacity(cards.len());
+        for card in cards {
+            let card_id = card.id().clone();
+            card_ids.push(card_id.clone());
+            self.hand_cards.insert(card_id, card);
+        }
+        self.hand.receive(card_ids);
     }
 
     pub fn receive_library_cards(&mut self, cards: Vec<CardInstance>) {
@@ -484,19 +497,24 @@ impl Player {
 
     pub fn draw_cards_into_hand(&mut self, count: usize) -> Option<()> {
         let cards = self.library.draw(count)?;
-        self.hand.receive(cards);
+        self.receive_hand_cards(cards);
         Some(())
     }
 
     pub fn draw_one_into_hand(&mut self) -> Option<CardInstanceId> {
         let card = self.library.draw_one()?;
         let card_id = card.id().clone();
-        self.hand.receive(vec![card]);
+        self.receive_hand_cards(vec![card]);
         Some(card_id)
     }
 
     pub fn recycle_hand_into_library(&mut self) {
-        let cards = self.hand.drain_all();
+        let cards = self
+            .hand
+            .drain_all()
+            .into_iter()
+            .filter_map(|card_id| self.hand_cards.remove(&card_id))
+            .collect();
         self.library.receive(cards);
     }
 

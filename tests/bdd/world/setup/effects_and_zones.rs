@@ -17,7 +17,12 @@ impl GameplayWorld {
             "player-1",
         );
 
-        let land_id = self.player("Alice").hand().cards()[0].id().clone();
+        let land_id = self
+            .player("Alice")
+            .hand_card_at(0)
+            .expect("Alice hand card should exist")
+            .id()
+            .clone();
         service
             .play_land(
                 self.game_mut(),
@@ -50,7 +55,13 @@ impl GameplayWorld {
             "player-1",
             Phase::EndStep,
         );
-        self.tracked_card_id = Some(self.player("Alice").hand().cards()[0].id().clone());
+        self.tracked_card_id = Some(
+            self.player("Alice")
+                .hand_card_at(0)
+                .expect("Alice hand card should exist")
+                .id()
+                .clone(),
+        );
         self.reset_observations();
         assert_eq!(self.game().phase(), &Phase::EndStep);
         assert_eq!(self.player_hand_size("Alice"), 8);
@@ -101,7 +112,12 @@ impl GameplayWorld {
             player_label,
         );
 
-        let card_id = self.player(alias).hand().cards()[0].id().clone();
+        let card_id = self
+            .player(alias)
+            .hand_card_at(0)
+            .expect("hand card should exist")
+            .id()
+            .clone();
         service
             .cast_spell(
                 self.game_mut(),
@@ -135,7 +151,12 @@ impl GameplayWorld {
             Phase::EndStep,
         );
 
-        let card_id = self.player(alias).hand().cards()[0].id().clone();
+        let card_id = self
+            .player(alias)
+            .hand_card_at(0)
+            .expect("hand card should exist")
+            .id()
+            .clone();
         service
             .discard_for_cleanup(
                 self.game_mut(),

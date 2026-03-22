@@ -53,10 +53,7 @@ fn responding_player_can_cast_a_second_instant_before_passing_in_declare_blocker
         .iter()
         .find(|player| player.id() == &PlayerId::new("player-2"))
         .expect("player-2 should exist")
-        .hand()
-        .cards()
-        .iter()
-        .find(|card| card.definition_id() == &CardDefinitionId::new("declare-blockers-response-a"))
+        .hand_card_by_definition(&CardDefinitionId::new("declare-blockers-response-a"))
         .expect("first response instant should exist in Bob's hand")
         .id()
         .clone();
@@ -65,10 +62,7 @@ fn responding_player_can_cast_a_second_instant_before_passing_in_declare_blocker
         .iter()
         .find(|player| player.id() == &PlayerId::new("player-2"))
         .expect("player-2 should exist")
-        .hand()
-        .cards()
-        .iter()
-        .find(|card| card.definition_id() == &CardDefinitionId::new("declare-blockers-response-b"))
+        .hand_card_by_definition(&CardDefinitionId::new("declare-blockers-response-b"))
         .expect("second response instant should exist in Bob's hand")
         .id()
         .clone();

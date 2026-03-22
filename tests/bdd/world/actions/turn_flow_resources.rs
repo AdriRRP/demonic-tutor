@@ -31,7 +31,7 @@ impl GameplayWorld {
             }
         }
 
-        self.pre_advance_hand_size = Some(self.player("Alice").hand().cards().len());
+        self.pre_advance_hand_size = Some(self.player("Alice").hand_size());
 
         let outcome = service
             .advance_turn(self.game_mut(), AdvanceTurnCommand::new())
@@ -50,7 +50,7 @@ impl GameplayWorld {
             }
         }
 
-        self.post_advance_hand_size = Some(self.player("Alice").hand().cards().len());
+        self.post_advance_hand_size = Some(self.player("Alice").hand_size());
     }
 
     pub fn try_advance_turn(&mut self) {
@@ -77,7 +77,7 @@ impl GameplayWorld {
             }
         }
 
-        self.pre_advance_hand_size = Some(self.player("Alice").hand().cards().len());
+        self.pre_advance_hand_size = Some(self.player("Alice").hand_size());
 
         let res = service.advance_turn(self.game_mut(), AdvanceTurnCommand::new());
 
@@ -96,7 +96,7 @@ impl GameplayWorld {
                     self.last_game_ended = Some(game_ended);
                 }
             }
-            self.post_advance_hand_size = Some(self.player("Alice").hand().cards().len());
+            self.post_advance_hand_size = Some(self.player("Alice").hand_size());
         }
     }
 

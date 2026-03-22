@@ -276,7 +276,12 @@ impl GameplayWorld {
         let service = support::create_service();
         support::advance_n_satisfying_cleanup(&service, self.game_mut(), 2);
         while self.player_hand_size("Alice") > 7 {
-            let card_id = self.player("Alice").hand().cards()[0].id().clone();
+            let card_id = self
+                .player("Alice")
+                .hand_card_at(0)
+                .expect("Alice hand card should exist")
+                .id()
+                .clone();
             service
                 .discard_for_cleanup(
                     self.game_mut(),

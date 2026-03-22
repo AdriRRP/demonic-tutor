@@ -123,7 +123,7 @@ fn instant_spells_resolve_to_graveyard_not_battlefield() {
     );
 
     let player = &game.players()[0];
-    assert_eq!(player.hand().cards().len(), 7);
+    assert_eq!(player.hand_size(), 7);
     assert!(player.battlefield().cards().is_empty());
     assert_eq!(player.graveyard_size(), 1);
 }
@@ -455,7 +455,7 @@ fn cast_land_keeps_the_card_in_hand() {
 
     advance_until(&service, &mut game, "player-1", Phase::FirstMain);
 
-    let hand_before = game.players()[0].hand().cards().len();
+    let hand_before = game.players()[0].hand_size();
     let result = service.cast_spell(
         &mut game,
         CastSpellCommand::new(
@@ -468,5 +468,5 @@ fn cast_land_keeps_the_card_in_hand() {
         result,
         Err(DomainError::Card(CardError::CannotCastLand(_)))
     ));
-    assert_eq!(game.players()[0].hand().cards().len(), hand_before);
+    assert_eq!(game.players()[0].hand_size(), hand_before);
 }

@@ -29,9 +29,7 @@ impl GameplayWorld {
             .iter()
             .find(|player| player.id() == &active_player)
             .expect("active player should exist")
-            .hand()
-            .cards()
-            .len();
+            .hand_size();
 
         if active_player_hand_size <= 7 {
             return;
@@ -43,8 +41,8 @@ impl GameplayWorld {
             .iter()
             .find(|player| player.id() == &active_player)
             .expect("active player should exist")
-            .hand()
-            .cards()[0]
+            .hand_card_at(0)
+            .expect("active player hand card should exist")
             .id()
             .clone();
         self.game_mut()
@@ -74,9 +72,7 @@ impl GameplayWorld {
                     .iter()
                     .find(|player| player.id() == &active_player)
                     .expect("active player should exist")
-                    .hand()
-                    .cards()
-                    .len();
+                    .hand_size();
                 if hand_size <= 7 {
                     break;
                 }

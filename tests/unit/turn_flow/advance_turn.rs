@@ -155,7 +155,7 @@ fn advance_turn_opens_priority_when_entering_draw() {
         game.priority().unwrap().current_holder(),
         &PlayerId::new("player-1")
     );
-    assert_eq!(game.players()[0].hand().cards().len(), 8);
+    assert_eq!(game.players()[0].hand_size(), 8);
     assert!(game.stack().is_empty());
 }
 
