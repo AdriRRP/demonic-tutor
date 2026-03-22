@@ -10,7 +10,7 @@ use self::{
     extract::{extract_resolved_spell_object, ResolvedSpellObject},
 };
 use crate::domain::play::{
-    events::{CreatureDied, GameEnded, LifeChanged, SpellCast, StackTopResolved},
+    events::{CardExiled, CreatureDied, GameEnded, LifeChanged, SpellCast, StackTopResolved},
     game::{model::StackObject, Player, TerminalState},
     ids::GameId,
 };
@@ -18,6 +18,7 @@ use crate::domain::play::{
 type ResolvedSpellOutcome = (
     StackTopResolved,
     SpellCast,
+    Option<CardExiled>,
     Option<LifeChanged>,
     Vec<CreatureDied>,
     Option<GameEnded>,
@@ -52,7 +53,7 @@ pub(super) fn resolve_spell_from_stack(
         mana_cost_paid,
         outcome,
     );
-    let (life_changed, creatures_died, game_ended) = apply_supported_spell_rules(
+    let (card_exiled, life_changed, creatures_died, game_ended) = apply_supported_spell_rules(
         game_id,
         players,
         terminal_state,
@@ -64,6 +65,7 @@ pub(super) fn resolve_spell_from_stack(
     Ok((
         stack_top_resolved,
         spell_cast,
+        card_exiled,
         life_changed,
         creatures_died,
         game_ended,

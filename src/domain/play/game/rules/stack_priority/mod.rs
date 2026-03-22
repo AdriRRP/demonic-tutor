@@ -6,8 +6,8 @@ mod spell_effects;
 use super::super::{model::PriorityState, Player, TerminalState};
 use crate::domain::play::{
     events::{
-        CreatureDied, GameEnded, LifeChanged, PriorityPassed, SpellCast, SpellPutOnStack,
-        StackTopResolved,
+        CardExiled, CreatureDied, GameEnded, LifeChanged, PriorityPassed, SpellCast,
+        SpellPutOnStack, StackTopResolved,
     },
     ids::{GameId, PlayerId},
     phase::Phase,
@@ -36,6 +36,7 @@ pub struct PassPriorityOutcome {
     pub priority_passed: PriorityPassed,
     pub stack_top_resolved: Option<StackTopResolved>,
     pub spell_cast: Option<SpellCast>,
+    pub card_exiled: Option<CardExiled>,
     pub life_changed: Option<LifeChanged>,
     pub creatures_died: Vec<CreatureDied>,
     pub game_ended: Option<GameEnded>,

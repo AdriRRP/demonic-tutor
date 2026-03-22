@@ -424,6 +424,7 @@ pub enum SpellResolutionProfile {
     None,
     DealDamage { damage: u32 },
     DestroyTargetCreature,
+    ExileTargetCreature,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -548,6 +549,16 @@ impl SupportedSpellRules {
                 SingleTargetRule::any_creature_on_battlefield(),
             ),
             resolution: SpellResolutionProfile::DestroyTargetCreature,
+        }
+    }
+
+    #[must_use]
+    pub const fn exile_target_creature() -> Self {
+        Self {
+            targeting: SpellTargetingProfile::ExactlyOne(
+                SingleTargetRule::any_creature_on_battlefield(),
+            ),
+            resolution: SpellResolutionProfile::ExileTargetCreature,
         }
     }
 

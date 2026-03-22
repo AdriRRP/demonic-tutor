@@ -55,6 +55,7 @@ pub fn pass_priority(
             priority_passed,
             stack_top_resolved: None,
             spell_cast: None,
+            card_exiled: None,
             life_changed: None,
             creatures_died: Vec::new(),
             game_ended: None,
@@ -68,6 +69,7 @@ pub fn pass_priority(
             priority_passed,
             stack_top_resolved: None,
             spell_cast: None,
+            card_exiled: None,
             life_changed: None,
             creatures_died: Vec::new(),
             game_ended: None,
@@ -80,7 +82,7 @@ pub fn pass_priority(
             "priority resolution expected a stack object".to_string(),
         ))
     })?;
-    let (stack_top_resolved, spell_cast, life_changed, creatures_died, game_ended) =
+    let (stack_top_resolved, spell_cast, card_exiled, life_changed, creatures_died, game_ended) =
         resolve_spell_from_stack(game_id, players, terminal_state, stack_object)?;
 
     if terminal_state.is_over() {
@@ -93,6 +95,7 @@ pub fn pass_priority(
         priority_passed,
         stack_top_resolved: Some(stack_top_resolved),
         spell_cast: Some(spell_cast),
+        card_exiled,
         life_changed,
         creatures_died,
         game_ended,

@@ -66,6 +66,13 @@ fn alice_is_the_active_player_in_first_main_with_a_destroy_creature_instant_spel
     world.setup_destroy_target_creature_spell();
 }
 
+#[given("Alice is the active player in FirstMain with an exile-creature instant spell and Bob's creature on the battlefield")]
+fn alice_is_the_active_player_in_first_main_with_an_exile_creature_instant_spell_and_bobs_creature_on_the_battlefield(
+    world: &mut GameplayWorld,
+) {
+    world.setup_exile_target_creature_spell();
+}
+
 #[given("Alice is the active player in FirstMain with an opponents-creature instant spell and only her creature on the battlefield")]
 fn alice_is_the_active_player_in_first_main_with_an_opponents_creature_instant_spell_and_only_her_creature_on_the_battlefield(
     world: &mut GameplayWorld,
@@ -138,6 +145,11 @@ fn alice_casts_the_destroy_creature_instant_spell_targeting_bobs_creature(
     world.cast_tracked_targeted_creature_spell("Alice");
 }
 
+#[when("Alice casts the exile-creature instant spell targeting Bob's creature")]
+fn alice_casts_the_exile_creature_instant_spell_targeting_bobs_creature(world: &mut GameplayWorld) {
+    world.cast_tracked_targeted_creature_spell("Alice");
+}
+
 #[when("Alice tries to cast the opponents-creature instant spell targeting her creature")]
 fn alice_tries_to_cast_the_opponents_creature_instant_spell_targeting_her_creature(
     world: &mut GameplayWorld,
@@ -205,6 +217,15 @@ fn the_spell_is_on_the_stack_targeting_bobs_creature(world: &mut GameplayWorld) 
                 .expect("tracked creature should exist")
         ))
     );
+}
+
+#[then("Bob's creature is in exile")]
+fn bobs_creature_is_in_exile(world: &mut GameplayWorld) {
+    let card_id = world
+        .tracked_blocker_id
+        .as_ref()
+        .expect("tracked creature should exist");
+    assert!(world.exile_contains("Bob", card_id));
 }
 
 #[then("Bob loses 2 life")]

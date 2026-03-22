@@ -114,6 +114,7 @@ impl GameplayWorld {
         self.last_priority_passed = Some(outcome.priority_passed);
         self.last_stack_top_resolved = outcome.stack_top_resolved;
         self.last_spell_cast = outcome.spell_cast;
+        self.last_card_exiled = outcome.card_exiled;
         self.last_life_changed = outcome.life_changed;
         self.last_creature_died = outcome.creatures_died;
         self.last_game_ended = outcome.game_ended;

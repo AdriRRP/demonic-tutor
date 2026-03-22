@@ -8,12 +8,17 @@ use super::super::spell_effects::{
 use crate::domain::play::{
     cards::{SpellResolutionProfile, SupportedSpellRules},
     errors::{DomainError, GameError},
-    events::{CreatureDied, GameEnded, LifeChanged},
-    game::SpellTarget,
+    events::{CardExiled, CreatureDied, GameEnded, LifeChanged},
+    game::{rules::zones, SpellTarget},
     ids::{CardInstanceId, GameId, PlayerId},
 };
 
-type SpellResolutionSideEffects = (Option<LifeChanged>, Vec<CreatureDied>, Option<GameEnded>);
+type SpellResolutionSideEffects = (
+    Option<CardExiled>,
+    Option<LifeChanged>,
+    Vec<CreatureDied>,
+    Option<GameEnded>,
+);
 
 fn apply_damage_to_creature(players: &mut [Player], target_id: &CardInstanceId, damage: u32) {
     if let Some(card) = helpers::battlefield_card_mut(players, target_id) {
@@ -46,7 +51,7 @@ fn review_state_based_actions(
         creatures_died,
         game_ended,
     } = state_based_actions::check_state_based_actions(game_id, players, terminal_state)?;
-    Ok((None, creatures_died, game_ended))
+    Ok((None, None, creatures_died, game_ended))
 }
 
 fn resolve_target_legality_for_effect(
@@ -94,6 +99,7 @@ fn review_state_based_actions_after_effect(
     game_id: &GameId,
     players: &mut [Player],
     terminal_state: &mut TerminalState,
+    card_exiled: Option<CardExiled>,
     life_changed: Option<LifeChanged>,
     mut creatures_died: Vec<CreatureDied>,
 ) -> Result<SpellResolutionSideEffects, DomainError> {
@@ -102,7 +108,7 @@ fn review_state_based_actions_after_effect(
         game_ended,
     } = state_based_actions::check_state_based_actions(game_id, players, terminal_state)?;
     creatures_died.extend(sba_creatures_died);
-    Ok((life_changed, creatures_died, game_ended))
+    Ok((card_exiled, life_changed, creatures_died, game_ended))
 }
 
 pub(super) fn apply_supported_spell_rules(
@@ -148,6 +154,7 @@ pub(super) fn apply_supported_spell_rules(
                 game_id,
                 players,
                 terminal_state,
+                None,
                 life_changed,
                 Vec::new(),
             )
@@ -176,7 +183,41 @@ pub(super) fn apply_supported_spell_rules(
                 players,
                 terminal_state,
                 None,
+                None,
                 creatures_died,
+            )
+        }
+        SpellResolutionProfile::ExileTargetCreature => {
+            let Some(target) = resolve_target_legality_for_effect(
+                players,
+                controller_id,
+                supported_spell_rules,
+                target,
+                "exile spell resolved without a targeting profile",
+            )?
+            else {
+                return review_state_based_actions(game_id, players, terminal_state);
+            };
+
+            let card_exiled = match target {
+                SpellTarget::Creature(card_id) => {
+                    let target_owner = helpers::battlefield_card_location(players, &card_id)
+                        .map(|location| location.owner_id().clone());
+                    target_owner.and_then(|owner_id| {
+                        zones::exile_card_from_battlefield(game_id, players, &owner_id, &card_id)
+                            .ok()
+                    })
+                }
+                SpellTarget::Player(_) => None,
+            };
+
+            review_state_based_actions_after_effect(
+                game_id,
+                players,
+                terminal_state,
+                card_exiled,
+                None,
+                Vec::new(),
             )
         }
     }
