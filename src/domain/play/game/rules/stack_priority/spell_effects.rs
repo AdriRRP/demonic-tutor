@@ -3,7 +3,7 @@ use crate::domain::play::{
         CardInstance, CreatureTargetRule, PlayerTargetRule, SpellTargetingProfile,
         SupportedSpellRules,
     },
-    game::{Player, SpellTarget},
+    game::{helpers, Player, SpellTarget},
     ids::{CardInstanceId, PlayerId},
 };
 
@@ -61,18 +61,6 @@ fn target_player_exists<'a>(players: &'a [Player], player_id: &PlayerId) -> Opti
     players.iter().find(|player| player.id() == player_id)
 }
 
-fn target_creature_on_battlefield<'a>(
-    players: &'a [Player],
-    card_id: &CardInstanceId,
-) -> Option<(&'a Player, &'a CardInstance)> {
-    players.iter().find_map(|player| {
-        player
-            .battlefield()
-            .card(card_id)
-            .map(|card| (player, card))
-    })
-}
-
 #[must_use]
 pub fn evaluate_target_legality(
     context: TargetLegalityContext<'_>,
@@ -109,8 +97,8 @@ pub fn evaluate_target_legality(
                     }
                 }
                 (SpellTargetingProfile::ExactlyOne(rule), SpellTarget::Creature(card_id)) => {
-                    let Some((controller, target_creature)) =
-                        target_creature_on_battlefield(players, card_id)
+                    let Some((controller_id, target_creature)) =
+                        helpers::battlefield_card_owner(players, card_id)
                     else {
                         return SpellTargetLegality::MissingCreature(card_id.clone());
                     };
@@ -118,7 +106,7 @@ pub fn evaluate_target_legality(
                     match rule.creature_rule() {
                         Some(rule)
                             if rule.allows(
-                                controller.id() == actor_id,
+                                controller_id == actor_id,
                                 target_creature.is_attacking(),
                                 target_creature.is_blocking(),
                             ) =>

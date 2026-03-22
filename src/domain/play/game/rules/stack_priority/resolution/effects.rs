@@ -1,5 +1,5 @@
 use super::super::super::{
-    super::{Player, TerminalState},
+    super::{helpers, Player, TerminalState},
     state_based_actions::{self, StateBasedActionsResult},
 };
 use super::super::spell_effects::{
@@ -16,11 +16,8 @@ use crate::domain::play::{
 type SpellResolutionSideEffects = (Option<LifeChanged>, Vec<CreatureDied>, Option<GameEnded>);
 
 fn apply_damage_to_creature(players: &mut [Player], target_id: &CardInstanceId, damage: u32) {
-    for player in players.iter_mut() {
-        if let Some(card) = player.battlefield_mut().card_mut(target_id) {
-            card.add_damage(damage);
-            return;
-        }
+    if let Some(card) = helpers::battlefield_card_mut(players, target_id) {
+        card.add_damage(damage);
     }
 }
 

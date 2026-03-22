@@ -72,3 +72,27 @@ pub(super) fn remove_card_from_hand(
         })
     })
 }
+
+pub(super) fn battlefield_card_owner<'a>(
+    players: &'a [Player],
+    card_id: &CardInstanceId,
+) -> Option<(&'a PlayerId, &'a CardInstance)> {
+    players.iter().find_map(|player| {
+        player
+            .battlefield_card(card_id)
+            .map(|card| (player.id(), card))
+    })
+}
+
+pub(super) fn battlefield_card_mut<'a>(
+    players: &'a mut [Player],
+    card_id: &CardInstanceId,
+) -> Option<&'a mut CardInstance> {
+    for player in players.iter_mut() {
+        if let Some(card) = player.battlefield_mut().card_mut(card_id) {
+            return Some(card);
+        }
+    }
+
+    None
+}
