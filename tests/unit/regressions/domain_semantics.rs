@@ -125,7 +125,7 @@ fn instant_spells_resolve_to_graveyard_not_battlefield() {
     let player = &game.players()[0];
     assert_eq!(player.hand().cards().len(), 7);
     assert!(player.battlefield().cards().is_empty());
-    assert_eq!(player.graveyard().cards().len(), 1);
+    assert_eq!(player.graveyard_size(), 1);
 }
 
 #[test]
@@ -242,7 +242,7 @@ fn combat_damage_marks_surviving_creatures_and_destroys_lethally_damaged_ones() 
 
     assert_eq!(game.players()[0].battlefield().cards()[0].damage(), 2);
     assert!(game.players()[1].battlefield().cards().is_empty());
-    assert_eq!(game.players()[1].graveyard().cards().len(), 1);
+    assert_eq!(game.players()[1].graveyard_size(), 1);
     assert_eq!(outcome.creatures_died.len(), 1);
     assert_eq!(
         outcome.creatures_died[0].card_id,
@@ -334,7 +334,7 @@ fn creature_destruction_emits_one_event_per_destroyed_creature() {
             && (event.card_id == left_blocker_id || event.card_id == right_blocker_id)
     }));
     assert_eq!(game.players()[1].battlefield().cards().len(), 0);
-    assert_eq!(game.players()[1].graveyard().cards().len(), 2);
+    assert_eq!(game.players()[1].graveyard_size(), 2);
 }
 
 #[test]

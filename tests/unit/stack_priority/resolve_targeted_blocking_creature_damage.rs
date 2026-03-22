@@ -90,9 +90,5 @@ fn targeted_blocking_creature_spell_can_destroy_a_blocker_after_blockers() {
         .cards()
         .iter()
         .all(|card| card.id() != &blocker_id));
-    assert!(game.players()[1]
-        .graveyard()
-        .cards()
-        .iter()
-        .any(|card| card.id() == &blocker_id));
+    assert!(game.players()[1].graveyard_contains(&blocker_id));
 }

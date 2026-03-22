@@ -260,7 +260,7 @@ fn adjust_life_reviews_pending_state_based_actions_for_existing_lethal_damage() 
     );
     assert!(outcome.game_ended.is_none());
     assert_eq!(game.players()[0].battlefield().cards().len(), 0);
-    assert_eq!(game.players()[0].graveyard().cards().len(), 1);
+    assert_eq!(game.players()[0].graveyard_size(), 1);
 }
 
 #[test]

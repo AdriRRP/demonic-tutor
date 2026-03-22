@@ -465,7 +465,7 @@ fn targeted_instant_deals_damage_to_target_creature_and_state_based_actions_dest
         .cards()
         .iter()
         .all(|card| card.definition_id() != &CardDefinitionId::new("bob-bear")));
-    assert_eq!(game.players()[1].graveyard().cards().len(), 1);
+    assert_eq!(game.players()[1].graveyard_size(), 1);
 }
 
 #[test]
@@ -614,5 +614,5 @@ fn targeted_instant_does_not_apply_if_its_only_creature_target_is_gone_on_resolu
     assert!(second_resolution.life_changed.is_none());
     assert!(second_resolution.creatures_died.is_empty());
     assert!(game.players()[1].battlefield().cards().is_empty());
-    assert_eq!(game.players()[1].graveyard().cards().len(), 1);
+    assert_eq!(game.players()[1].graveyard_size(), 1);
 }

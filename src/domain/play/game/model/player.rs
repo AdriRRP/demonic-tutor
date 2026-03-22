@@ -153,6 +153,7 @@ pub struct Player {
     hand: Hand,
     battlefield: Battlefield,
     graveyard: Graveyard,
+    graveyard_cards: HashMap<CardInstanceId, CardInstance>,
     exile: Exile,
     exiled_cards: HashMap<CardInstanceId, CardInstance>,
     life: u32,
@@ -171,6 +172,7 @@ impl Player {
             hand: Hand::new(),
             battlefield: Battlefield::new(),
             graveyard: Graveyard::new(),
+            graveyard_cards: HashMap::new(),
             exile: Exile::new(),
             exiled_cards: HashMap::new(),
             life: DEFAULT_STARTING_LIFE,
@@ -305,7 +307,7 @@ impl Player {
 
     #[must_use]
     pub fn graveyard_contains(&self, card_id: &CardInstanceId) -> bool {
-        self.graveyard.contains(card_id)
+        self.graveyard.contains(card_id) && self.graveyard_cards.contains_key(card_id)
     }
 
     #[must_use]
@@ -344,12 +346,15 @@ impl Player {
 
     #[must_use]
     pub fn graveyard_card(&self, card_id: &CardInstanceId) -> Option<&CardInstance> {
-        self.graveyard.card(card_id)
+        self.graveyard_contains(card_id)
+            .then(|| self.graveyard_cards.get(card_id))
+            .flatten()
     }
 
     #[must_use]
     pub fn graveyard_card_at(&self, index: usize) -> Option<&CardInstance> {
-        self.graveyard.iter().nth(index)
+        let card_id = self.graveyard.card_id_at(index)?;
+        self.graveyard_cards.get(card_id)
     }
 
     #[must_use]
@@ -425,7 +430,8 @@ impl Player {
     }
 
     pub fn remove_graveyard_card(&mut self, card_id: &CardInstanceId) -> Option<CardInstance> {
-        self.graveyard.remove(card_id)
+        self.graveyard.remove(card_id)?;
+        self.graveyard_cards.remove(card_id)
     }
 
     pub fn move_hand_card_to_battlefield(&mut self, card_id: &CardInstanceId) -> Option<()> {
@@ -436,7 +442,7 @@ impl Player {
 
     pub fn move_battlefield_card_to_graveyard(&mut self, card_id: &CardInstanceId) -> Option<()> {
         let card = self.remove_battlefield_card(card_id)?;
-        self.graveyard.add(card);
+        self.receive_graveyard_card(card);
         Some(())
     }
 
@@ -465,7 +471,9 @@ impl Player {
     }
 
     pub fn receive_graveyard_card(&mut self, card: CardInstance) {
-        self.graveyard.add(card);
+        let card_id = card.id().clone();
+        self.graveyard.add(card_id.clone());
+        self.graveyard_cards.insert(card_id, card);
     }
 
     pub fn receive_exile_card(&mut self, card: CardInstance) {

@@ -513,7 +513,7 @@ fn resolving_a_creature_spell_moves_card_to_battlefield() {
     assert!(outcome.creatures_died.is_empty());
     assert_eq!(game.stack().len(), 0);
     assert_eq!(game.players()[0].battlefield().cards().len(), 1);
-    assert_eq!(game.players()[0].graveyard().cards().len(), 0);
+    assert_eq!(game.players()[0].graveyard_size(), 0);
 }
 
 #[test]
@@ -549,7 +549,7 @@ fn resolving_an_artifact_spell_moves_card_to_battlefield() {
     ));
     assert!(outcome.creatures_died.is_empty());
     assert_eq!(game.players()[0].battlefield().cards().len(), 1);
-    assert_eq!(game.players()[0].graveyard().cards().len(), 0);
+    assert_eq!(game.players()[0].graveyard_size(), 0);
 }
 
 #[test]
@@ -592,7 +592,7 @@ fn zero_toughness_creature_dies_after_its_spell_resolves() {
         CardInstanceId::new("game-1-player-1-0")
     );
     assert_eq!(game.players()[0].battlefield().cards().len(), 0);
-    assert_eq!(game.players()[0].graveyard().cards().len(), 1);
+    assert_eq!(game.players()[0].graveyard_size(), 1);
 }
 
 #[test]
@@ -643,7 +643,7 @@ fn resolving_a_spell_reviews_pending_state_based_actions_for_existing_zero_tough
     );
     assert!(outcome.game_ended.is_none());
     assert_eq!(game.players()[0].battlefield().cards().len(), 0);
-    assert_eq!(game.players()[0].graveyard().cards().len(), 2);
+    assert_eq!(game.players()[0].graveyard_size(), 2);
 }
 
 #[test]
@@ -719,7 +719,7 @@ fn cast_spell_fails_with_insufficient_mana() {
         ))
     ));
     assert_eq!(game.players()[0].hand().cards().len(), 8);
-    assert_eq!(game.players()[0].graveyard().cards().len(), 0);
+    assert_eq!(game.players()[0].graveyard_size(), 0);
     assert_eq!(game.players()[0].battlefield().cards().len(), 0);
     assert_eq!(game.stack().len(), 0);
 }

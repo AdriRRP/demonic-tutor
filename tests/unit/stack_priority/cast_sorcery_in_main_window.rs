@@ -55,7 +55,7 @@ fn active_player_can_cast_and_resolve_a_sorcery_in_first_main() {
         SpellCastOutcome::ResolvedToGraveyard
     ));
     assert_eq!(game.stack().len(), 0);
-    assert_eq!(game.players()[0].graveyard().cards().len(), 1);
+    assert_eq!(game.players()[0].graveyard_size(), 1);
 }
 
 #[test]
@@ -105,7 +105,7 @@ fn active_player_can_cast_and_resolve_a_sorcery_in_second_main() {
         SpellCastOutcome::ResolvedToGraveyard
     ));
     assert_eq!(game.stack().len(), 0);
-    assert_eq!(game.players()[0].graveyard().cards().len(), 1);
+    assert_eq!(game.players()[0].graveyard_size(), 1);
 }
 
 #[test]
