@@ -1,5 +1,7 @@
 use {
-    crate::domain::play::ids::CardInstanceId, rand::seq::SliceRandom, std::collections::VecDeque,
+    crate::domain::play::ids::CardInstanceId,
+    rand::seq::SliceRandom,
+    std::collections::{HashMap, VecDeque},
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
@@ -48,190 +50,236 @@ impl Library {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
-pub struct Hand(Vec<CardInstanceId>);
+pub struct Hand {
+    card_ids: Vec<CardInstanceId>,
+    positions: HashMap<CardInstanceId, usize>,
+}
 
 impl Hand {
     #[must_use]
-    pub const fn new() -> Self {
-        Self(Vec::new())
+    pub fn new() -> Self {
+        Self {
+            card_ids: Vec::new(),
+            positions: HashMap::new(),
+        }
     }
 
     pub fn receive(&mut self, card_ids: Vec<CardInstanceId>) {
-        self.0.extend(card_ids);
+        for card_id in card_ids {
+            let index = self.card_ids.len();
+            self.positions.insert(card_id.clone(), index);
+            self.card_ids.push(card_id);
+        }
     }
 
     #[must_use]
     pub const fn len(&self) -> usize {
-        self.0.len()
+        self.card_ids.len()
     }
 
     #[must_use]
     pub const fn is_empty(&self) -> bool {
-        self.0.is_empty()
+        self.card_ids.is_empty()
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &CardInstanceId> {
-        self.0.iter()
+        self.card_ids.iter()
     }
 
     #[must_use]
     pub fn contains(&self, card_id: &CardInstanceId) -> bool {
-        self.0.iter().any(|stored_id| stored_id == card_id)
+        self.positions.contains_key(card_id)
     }
 
     #[must_use]
     pub fn card_id_at(&self, index: usize) -> Option<&CardInstanceId> {
-        self.0.get(index)
+        self.card_ids.get(index)
     }
 
     /// Removes and returns all card ids from the hand, leaving it empty.
     pub fn drain_all(&mut self) -> Vec<CardInstanceId> {
-        std::mem::take(&mut self.0)
+        self.positions.clear();
+        std::mem::take(&mut self.card_ids)
     }
 
     #[must_use]
     pub fn remove(&mut self, card_id: &CardInstanceId) -> Option<CardInstanceId> {
-        self.0
-            .iter()
-            .position(|stored_id| stored_id == card_id)
-            .map(|index| self.0.remove(index))
+        let index = self.positions.remove(card_id)?;
+        let removed = self.card_ids.remove(index);
+        for shifted_index in index..self.card_ids.len() {
+            self.positions
+                .insert(self.card_ids[shifted_index].clone(), shifted_index);
+        }
+        Some(removed)
     }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
-pub struct Battlefield(Vec<CardInstanceId>);
+pub struct Battlefield {
+    card_ids: Vec<CardInstanceId>,
+    positions: HashMap<CardInstanceId, usize>,
+}
 
 impl Battlefield {
     #[must_use]
-    pub const fn new() -> Self {
-        Self(Vec::new())
+    pub fn new() -> Self {
+        Self {
+            card_ids: Vec::new(),
+            positions: HashMap::new(),
+        }
     }
 
     pub fn add(&mut self, card_id: CardInstanceId) {
-        self.0.push(card_id);
+        let index = self.card_ids.len();
+        self.positions.insert(card_id.clone(), index);
+        self.card_ids.push(card_id);
     }
 
     #[must_use]
     pub const fn len(&self) -> usize {
-        self.0.len()
+        self.card_ids.len()
     }
 
     #[must_use]
     pub const fn is_empty(&self) -> bool {
-        self.0.is_empty()
+        self.card_ids.is_empty()
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &CardInstanceId> {
-        self.0.iter()
+        self.card_ids.iter()
     }
 
     #[must_use]
     pub fn contains(&self, card_id: &CardInstanceId) -> bool {
-        self.0.iter().any(|stored_id| stored_id == card_id)
+        self.positions.contains_key(card_id)
     }
 
     #[must_use]
     pub fn card_id_at(&self, index: usize) -> Option<&CardInstanceId> {
-        self.0.get(index)
+        self.card_ids.get(index)
     }
 
     #[must_use]
     pub fn remove(&mut self, card_id: &CardInstanceId) -> Option<CardInstanceId> {
-        self.0
-            .iter()
-            .position(|stored_id| stored_id == card_id)
-            .map(|index| self.0.swap_remove(index))
+        let index = self.positions.remove(card_id)?;
+        let removed = self.card_ids.swap_remove(index);
+        if let Some(swapped_card_id) = self.card_ids.get(index) {
+            self.positions.insert(swapped_card_id.clone(), index);
+        }
+        Some(removed)
     }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
-pub struct Graveyard(Vec<CardInstanceId>);
+pub struct Graveyard {
+    card_ids: Vec<CardInstanceId>,
+    positions: HashMap<CardInstanceId, usize>,
+}
 
 impl Graveyard {
     #[must_use]
-    pub const fn new() -> Self {
-        Self(Vec::new())
+    pub fn new() -> Self {
+        Self {
+            card_ids: Vec::new(),
+            positions: HashMap::new(),
+        }
     }
 
     pub fn add(&mut self, card_id: CardInstanceId) {
-        self.0.push(card_id);
+        let index = self.card_ids.len();
+        self.positions.insert(card_id.clone(), index);
+        self.card_ids.push(card_id);
     }
 
     #[must_use]
     pub const fn len(&self) -> usize {
-        self.0.len()
+        self.card_ids.len()
     }
 
     #[must_use]
     pub const fn is_empty(&self) -> bool {
-        self.0.is_empty()
+        self.card_ids.is_empty()
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &CardInstanceId> {
-        self.0.iter()
+        self.card_ids.iter()
     }
 
     #[must_use]
     pub fn contains(&self, card_id: &CardInstanceId) -> bool {
-        self.0.iter().any(|stored_id| stored_id == card_id)
+        self.positions.contains_key(card_id)
     }
 
     #[must_use]
     pub fn card_id_at(&self, index: usize) -> Option<&CardInstanceId> {
-        self.0.get(index)
+        self.card_ids.get(index)
     }
 
     #[must_use]
     pub fn remove(&mut self, card_id: &CardInstanceId) -> Option<CardInstanceId> {
-        self.0
-            .iter()
-            .position(|stored_id| stored_id == card_id)
-            .map(|index| self.0.remove(index))
+        let index = self.positions.remove(card_id)?;
+        let removed = self.card_ids.remove(index);
+        for shifted_index in index..self.card_ids.len() {
+            self.positions
+                .insert(self.card_ids[shifted_index].clone(), shifted_index);
+        }
+        Some(removed)
     }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
-pub struct Exile(Vec<CardInstanceId>);
+pub struct Exile {
+    card_ids: Vec<CardInstanceId>,
+    positions: HashMap<CardInstanceId, usize>,
+}
 
 impl Exile {
     #[must_use]
-    pub const fn new() -> Self {
-        Self(Vec::new())
+    pub fn new() -> Self {
+        Self {
+            card_ids: Vec::new(),
+            positions: HashMap::new(),
+        }
     }
 
     pub fn add(&mut self, card_id: CardInstanceId) {
-        self.0.push(card_id);
+        let index = self.card_ids.len();
+        self.positions.insert(card_id.clone(), index);
+        self.card_ids.push(card_id);
     }
 
     #[must_use]
     pub const fn len(&self) -> usize {
-        self.0.len()
+        self.card_ids.len()
     }
 
     #[must_use]
     pub const fn is_empty(&self) -> bool {
-        self.0.is_empty()
+        self.card_ids.is_empty()
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &CardInstanceId> {
-        self.0.iter()
+        self.card_ids.iter()
     }
 
     #[must_use]
     pub fn contains(&self, card_id: &CardInstanceId) -> bool {
-        self.0.iter().any(|stored_id| stored_id == card_id)
+        self.positions.contains_key(card_id)
     }
 
     #[must_use]
     pub fn card_id_at(&self, index: usize) -> Option<&CardInstanceId> {
-        self.0.get(index)
+        self.card_ids.get(index)
     }
 
     #[must_use]
     pub fn remove(&mut self, card_id: &CardInstanceId) -> Option<CardInstanceId> {
-        self.0
-            .iter()
-            .position(|stored_id| stored_id == card_id)
-            .map(|index| self.0.remove(index))
+        let index = self.positions.remove(card_id)?;
+        let removed = self.card_ids.remove(index);
+        for shifted_index in index..self.card_ids.len() {
+            self.positions
+                .insert(self.card_ids[shifted_index].clone(), shifted_index);
+        }
+        Some(removed)
     }
 }

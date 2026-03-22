@@ -286,7 +286,7 @@ impl Player {
 
     #[must_use]
     pub fn hand_contains(&self, card_id: &CardInstanceId) -> bool {
-        self.hand.contains(card_id) && self.cards.contains_key(card_id)
+        self.hand.contains(card_id)
     }
 
     #[must_use]
@@ -297,17 +297,17 @@ impl Player {
 
     #[must_use]
     pub fn battlefield_contains(&self, card_id: &CardInstanceId) -> bool {
-        self.battlefield.contains(card_id) && self.cards.contains_key(card_id)
+        self.battlefield.contains(card_id)
     }
 
     #[must_use]
     pub fn graveyard_contains(&self, card_id: &CardInstanceId) -> bool {
-        self.graveyard.contains(card_id) && self.cards.contains_key(card_id)
+        self.graveyard.contains(card_id)
     }
 
     #[must_use]
     pub fn exile_contains(&self, card_id: &CardInstanceId) -> bool {
-        self.exile.contains(card_id) && self.cards.contains_key(card_id)
+        self.exile.contains(card_id)
     }
 
     #[must_use]
