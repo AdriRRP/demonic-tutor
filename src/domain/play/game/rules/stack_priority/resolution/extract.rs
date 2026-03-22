@@ -1,4 +1,3 @@
-use super::super::spell_effects::supported_spell_rules;
 use crate::domain::play::{
     cards::{CardInstance, CardType, SupportedSpellRules},
     game::model::{StackObject, StackObjectKind},
@@ -20,14 +19,14 @@ pub(super) struct ResolvedSpellObject {
 pub(super) fn extract_resolved_spell_object(stack_object: &StackObject) -> ResolvedSpellObject {
     let stack_object_id = stack_object.id().clone();
     let controller_id = stack_object.controller_id().clone();
-    let source_card_id = stack_object.source_card_id().clone();
 
     let StackObjectKind::Spell(spell) = stack_object.kind().clone();
+    let source_card_id = spell.source_card_id().clone();
+    let card_type = spell.card_type().clone();
+    let supported_spell_rules = spell.supported_spell_rules();
     let mana_cost_paid = spell.mana_cost_paid();
     let target = spell.target().cloned();
     let card = spell.into_card();
-    let supported_spell_rules = supported_spell_rules(&card);
-    let card_type = card.card_type().clone();
 
     ResolvedSpellObject {
         source_card_id,

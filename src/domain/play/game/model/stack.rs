@@ -1,5 +1,5 @@
 use crate::domain::play::{
-    cards::{CardInstance, CardType, SpellTargetKind},
+    cards::{CardInstance, CardType, SpellTargetKind, SupportedSpellRules},
     ids::{CardInstanceId, GameId, PlayerId, StackObjectId},
 };
 
@@ -109,7 +109,7 @@ impl StackObject {
     #[must_use]
     pub const fn source_card_id(&self) -> &CardInstanceId {
         match &self.kind {
-            StackObjectKind::Spell(spell) => spell.card().id(),
+            StackObjectKind::Spell(spell) => spell.source_card_id(),
         }
     }
 
@@ -126,19 +126,30 @@ pub enum StackObjectKind {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SpellOnStack {
+    source_card_id: CardInstanceId,
     card: CardInstance,
+    card_type: CardType,
+    supported_spell_rules: SupportedSpellRules,
     mana_cost_paid: u32,
     target: Option<SpellTarget>,
 }
 
 impl SpellOnStack {
     #[must_use]
-    pub const fn new(card: CardInstance, mana_cost_paid: u32, target: Option<SpellTarget>) -> Self {
+    pub fn new(card: CardInstance, mana_cost_paid: u32, target: Option<SpellTarget>) -> Self {
         Self {
+            source_card_id: card.id().clone(),
+            card_type: card.card_type().clone(),
+            supported_spell_rules: card.supported_spell_rules(),
             card,
             mana_cost_paid,
             target,
         }
+    }
+
+    #[must_use]
+    pub const fn source_card_id(&self) -> &CardInstanceId {
+        &self.source_card_id
     }
 
     #[must_use]
@@ -148,7 +159,12 @@ impl SpellOnStack {
 
     #[must_use]
     pub const fn card_type(&self) -> &CardType {
-        self.card.card_type()
+        &self.card_type
+    }
+
+    #[must_use]
+    pub const fn supported_spell_rules(&self) -> SupportedSpellRules {
+        self.supported_spell_rules
     }
 
     #[must_use]
