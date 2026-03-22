@@ -59,6 +59,13 @@ fn alice_is_the_active_player_in_first_main_with_an_opponents_creature_instant_s
     world.setup_targeted_opponents_creature_spell();
 }
 
+#[given("Alice is the active player in FirstMain with an opponents-creature instant spell and only her creature on the battlefield")]
+fn alice_is_the_active_player_in_first_main_with_an_opponents_creature_instant_spell_and_only_her_creature_on_the_battlefield(
+    world: &mut GameplayWorld,
+) {
+    world.setup_targeted_opponents_creature_spell_with_controlled_creature();
+}
+
 #[when("Alice casts the targeted instant spell targeting Bob")]
 fn alice_casts_the_targeted_instant_spell_targeting_bob(world: &mut GameplayWorld) {
     world.cast_tracked_targeted_player_spell("Alice", "Bob");
@@ -110,6 +117,13 @@ fn alice_casts_the_opponents_creature_instant_spell_targeting_bobs_creature(
     world: &mut GameplayWorld,
 ) {
     world.cast_tracked_targeted_creature_spell("Alice");
+}
+
+#[when("Alice tries to cast the opponents-creature instant spell targeting her creature")]
+fn alice_tries_to_cast_the_opponents_creature_instant_spell_targeting_her_creature(
+    world: &mut GameplayWorld,
+) {
+    world.try_cast_tracked_targeted_creature_spell("Alice");
 }
 
 #[then("the spell is on the stack targeting Bob")]
@@ -206,6 +220,16 @@ fn casting_fails_because_the_spell_requires_an_opponent_target(world: &mut Gamep
 
 #[then("casting fails because the spell requires a controlled creature target")]
 fn casting_fails_because_the_spell_requires_a_controlled_creature_target(
+    world: &mut GameplayWorld,
+) {
+    assert!(world
+        .last_error
+        .as_ref()
+        .is_some_and(|error| error.contains("cannot use the provided target")));
+}
+
+#[then("casting fails because the spell requires an opponents-creature target")]
+fn casting_fails_because_the_spell_requires_an_opponents_creature_target(
     world: &mut GameplayWorld,
 ) {
     assert!(world
