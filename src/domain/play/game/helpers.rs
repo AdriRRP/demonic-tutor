@@ -65,7 +65,7 @@ pub(super) fn remove_card_from_hand(
     player_id: &PlayerId,
     card_id: &CardInstanceId,
 ) -> Result<CardInstance, DomainError> {
-    player.hand_mut().remove(card_id).ok_or_else(|| {
+    player.remove_hand_card(card_id).ok_or_else(|| {
         DomainError::Card(CardError::NotInHand {
             player: player_id.clone(),
             card: card_id.clone(),

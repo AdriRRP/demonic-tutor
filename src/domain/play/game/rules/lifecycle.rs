@@ -167,9 +167,8 @@ fn draw_opening_hand(
     player: &mut Player,
     player_id: &PlayerId,
 ) -> Result<Vec<CardInstanceId>, DomainError> {
-    let drawn_cards = player
-        .library_mut()
-        .draw(OPENING_HAND_SIZE)
+    player
+        .draw_cards_into_hand(OPENING_HAND_SIZE)
         .ok_or_else(|| {
             DomainError::Game(GameError::NotEnoughCardsInLibrary {
                 player: player_id.clone(),
@@ -177,8 +176,6 @@ fn draw_opening_hand(
                 requested: OPENING_HAND_SIZE,
             })
         })?;
-
-    player.hand_mut().receive(drawn_cards);
 
     Ok(player.hand().iter().map(|card| card.id().clone()).collect())
 }
@@ -230,7 +227,7 @@ pub fn deal_opening_hands(
     for (player_id, runtime_cards) in runtime_libraries {
         let player_index = find_player_index(players, &player_id)?;
         let player = &mut players[player_index];
-        player.library_mut().receive(runtime_cards);
+        player.receive_library_cards(runtime_cards);
         let hand_cards = draw_opening_hand(player, &player_id)?;
         events.push(OpeningHandDealt::new(
             game_id.clone(),
@@ -278,13 +275,11 @@ pub fn mulligan(
         }));
     }
 
-    let hand_cards = player.hand_mut().drain_all();
-    player.library_mut().receive(hand_cards);
+    player.recycle_hand_into_library();
     player.library_mut().shuffle();
 
-    let drawn_cards = player
-        .library_mut()
-        .draw(OPENING_HAND_SIZE)
+    player
+        .draw_cards_into_hand(OPENING_HAND_SIZE)
         .ok_or_else(|| {
             DomainError::Game(GameError::NotEnoughCardsInLibrary {
                 player: cmd.player_id.clone(),
@@ -292,8 +287,6 @@ pub fn mulligan(
                 requested: OPENING_HAND_SIZE,
             })
         })?;
-
-    player.hand_mut().receive(drawn_cards);
     player.use_mulligan();
 
     Ok(MulliganTaken::new(game_id.clone(), cmd.player_id))

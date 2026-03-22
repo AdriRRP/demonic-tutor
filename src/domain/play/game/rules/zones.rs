@@ -25,14 +25,14 @@ pub fn exile_card_from_battlefield(
             ))
         })?;
 
-    let card = player.battlefield_mut().remove(card_id).ok_or_else(|| {
-        DomainError::Card(crate::domain::play::errors::CardError::NotOnBattlefield {
-            player: player_id.clone(),
-            card: card_id.clone(),
-        })
-    })?;
-
-    player.exile_mut().add(card);
+    player
+        .move_battlefield_card_to_exile(card_id)
+        .ok_or_else(|| {
+            DomainError::Card(crate::domain::play::errors::CardError::NotOnBattlefield {
+                player: player_id.clone(),
+                card: card_id.clone(),
+            })
+        })?;
 
     Ok(CardExiled::new(
         game_id.clone(),
@@ -62,25 +62,19 @@ pub fn exile_card_from_graveyard(
             ))
         })?;
 
-    let card = player.graveyard_mut().remove(card_id);
+    player
+        .move_graveyard_card_to_exile(card_id)
+        .ok_or_else(|| {
+            DomainError::Card(crate::domain::play::errors::CardError::NotOnBattlefield {
+                player: player_id.clone(),
+                card: card_id.clone(),
+            })
+        })?;
 
-    card.map_or_else(
-        || {
-            Err(DomainError::Card(
-                crate::domain::play::errors::CardError::NotOnBattlefield {
-                    player: player_id.clone(),
-                    card: card_id.clone(),
-                },
-            ))
-        },
-        |card| {
-            player.exile_mut().add(card);
-            Ok(CardExiled::new(
-                game_id.clone(),
-                player_id.clone(),
-                card_id.clone(),
-                ZoneType::Graveyard,
-            ))
-        },
-    )
+    Ok(CardExiled::new(
+        game_id.clone(),
+        player_id.clone(),
+        card_id.clone(),
+        ZoneType::Graveyard,
+    ))
 }

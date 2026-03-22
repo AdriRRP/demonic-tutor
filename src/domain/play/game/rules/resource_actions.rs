@@ -67,8 +67,7 @@ pub fn play_land(
     }
 
     let card = helpers::remove_card_from_hand(player, &cmd.player_id, &card_id)?;
-
-    player.battlefield_mut().add(card);
+    player.receive_battlefield_card(card);
     player.record_land_played();
 
     Ok(LandPlayed::new(game_id.clone(), cmd.player_id, card_id))

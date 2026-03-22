@@ -81,8 +81,10 @@ fn destroy_zero_toughness_creatures(game_id: &GameId, players: &mut [Player]) ->
             .collect::<Vec<_>>();
 
         for card_id in zero_toughness_ids {
-            if let Some(card) = player.battlefield_mut().remove(&card_id) {
-                player.graveyard_mut().add(card);
+            if player
+                .move_battlefield_card_to_graveyard(&card_id)
+                .is_some()
+            {
                 died.push(CreatureDied::new(
                     game_id.clone(),
                     player.id().clone(),
@@ -110,8 +112,10 @@ fn destroy_lethally_damaged_creatures(
             .collect::<Vec<_>>();
 
         for card_id in destroyed_ids {
-            if let Some(card) = player.battlefield_mut().remove(&card_id) {
-                player.graveyard_mut().add(card);
+            if player
+                .move_battlefield_card_to_graveyard(&card_id)
+                .is_some()
+            {
                 destroyed.push(CreatureDied::new(
                     game_id.clone(),
                     player.id().clone(),

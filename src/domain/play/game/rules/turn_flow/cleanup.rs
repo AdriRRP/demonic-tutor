@@ -45,7 +45,7 @@ pub fn discard_for_cleanup(
 
     let card = helpers::remove_card_from_hand(player, &cmd.player_id, &cmd.card_id)?;
     let card_id = card.id().clone();
-    player.graveyard_mut().add(card);
+    player.receive_graveyard_card(card);
 
     Ok(CardDiscarded::new(
         game_id.clone(),

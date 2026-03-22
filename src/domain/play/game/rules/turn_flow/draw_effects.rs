@@ -24,11 +24,7 @@ impl DrawCardsEffectOutcome {
 }
 
 pub(super) fn draw_one_card(player: &mut Player) -> Option<CardInstanceId> {
-    let card = player.library_mut().draw_one()?;
-
-    let card_id = card.id().clone();
-    player.hand_mut().receive(vec![card]);
-    Some(card_id)
+    player.draw_one_into_hand()
 }
 
 /// Resolves an explicit draw effect by moving one or more cards from library to hand.

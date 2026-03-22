@@ -19,11 +19,11 @@ pub(super) fn move_resolved_spell_to_its_destination(
         | CardType::Enchantment
         | CardType::Artifact
         | CardType::Planeswalker => {
-            player.battlefield_mut().add(card);
+            player.receive_battlefield_card(card);
             Ok(SpellCastOutcome::EnteredBattlefield)
         }
         CardType::Instant | CardType::Sorcery => {
-            player.graveyard_mut().add(card);
+            player.receive_graveyard_card(card);
             Ok(SpellCastOutcome::ResolvedToGraveyard)
         }
         CardType::Land => Err(DomainError::Game(GameError::InternalInvariantViolation(

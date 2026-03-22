@@ -313,6 +313,80 @@ impl Player {
             .find(|card| card.definition_id() == definition_id)
     }
 
+    pub fn remove_hand_card(&mut self, card_id: &CardInstanceId) -> Option<CardInstance> {
+        self.hand.remove(card_id)
+    }
+
+    pub fn remove_battlefield_card(&mut self, card_id: &CardInstanceId) -> Option<CardInstance> {
+        self.battlefield.remove(card_id)
+    }
+
+    pub fn remove_graveyard_card(&mut self, card_id: &CardInstanceId) -> Option<CardInstance> {
+        self.graveyard.remove(card_id)
+    }
+
+    pub fn move_hand_card_to_battlefield(&mut self, card_id: &CardInstanceId) -> Option<()> {
+        let card = self.remove_hand_card(card_id)?;
+        self.battlefield.add(card);
+        Some(())
+    }
+
+    pub fn move_battlefield_card_to_graveyard(&mut self, card_id: &CardInstanceId) -> Option<()> {
+        let card = self.remove_battlefield_card(card_id)?;
+        self.graveyard.add(card);
+        Some(())
+    }
+
+    pub fn move_battlefield_card_to_exile(&mut self, card_id: &CardInstanceId) -> Option<()> {
+        let card = self.remove_battlefield_card(card_id)?;
+        self.exile.add(card);
+        Some(())
+    }
+
+    pub fn move_graveyard_card_to_exile(&mut self, card_id: &CardInstanceId) -> Option<()> {
+        let card = self.remove_graveyard_card(card_id)?;
+        self.exile.add(card);
+        Some(())
+    }
+
+    pub fn receive_hand_cards(&mut self, cards: Vec<CardInstance>) {
+        self.hand.receive(cards);
+    }
+
+    pub fn receive_library_cards(&mut self, cards: Vec<CardInstance>) {
+        self.library.receive(cards);
+    }
+
+    pub fn receive_battlefield_card(&mut self, card: CardInstance) {
+        self.battlefield.add(card);
+    }
+
+    pub fn receive_graveyard_card(&mut self, card: CardInstance) {
+        self.graveyard.add(card);
+    }
+
+    pub fn receive_exile_card(&mut self, card: CardInstance) {
+        self.exile.add(card);
+    }
+
+    pub fn draw_cards_into_hand(&mut self, count: usize) -> Option<()> {
+        let cards = self.library.draw(count)?;
+        self.hand.receive(cards);
+        Some(())
+    }
+
+    pub fn draw_one_into_hand(&mut self) -> Option<CardInstanceId> {
+        let card = self.library.draw_one()?;
+        let card_id = card.id().clone();
+        self.hand.receive(vec![card]);
+        Some(card_id)
+    }
+
+    pub fn recycle_hand_into_library(&mut self) {
+        let cards = self.hand.drain_all();
+        self.library.receive(cards);
+    }
+
     pub fn adjust_life(&mut self, delta: i32) {
         self.life = self.life.saturating_add_signed(delta);
     }
