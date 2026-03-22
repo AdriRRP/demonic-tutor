@@ -57,6 +57,7 @@ Prefer:
 - shared immutable card metadata behind instance-local mutable runtime when card definitions would otherwise be duplicated across zones
 - zone APIs consumed through semantic queries and iterators rather than exposing storage details to core rules
 - explicit stack-borne spell metadata preferred over rediscovering immutable spell facts from moved card values during resolution
+- phased storage refactors that prove id-backed carriers first in colder zones before touching hotter paths such as battlefield or stack
 
 Avoid:
 

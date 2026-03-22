@@ -262,16 +262,16 @@ impl Graveyard {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
-pub struct Exile(OrderedZone);
+pub struct Exile(Vec<CardInstanceId>);
 
 impl Exile {
     #[must_use]
     pub const fn new() -> Self {
-        Self(OrderedZone::empty())
+        Self(Vec::new())
     }
 
-    pub fn add(&mut self, card: CardInstance) {
-        self.0.add(card);
+    pub fn add(&mut self, card_id: CardInstanceId) {
+        self.0.push(card_id);
     }
 
     #[must_use]
@@ -284,27 +284,25 @@ impl Exile {
         self.0.is_empty()
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = &CardInstance> {
+    pub fn iter(&self) -> impl Iterator<Item = &CardInstanceId> {
         self.0.iter()
     }
 
     #[must_use]
-    pub fn card(&self, card_id: &CardInstanceId) -> Option<&CardInstance> {
-        self.0.card(card_id)
-    }
-
-    #[must_use]
     pub fn contains(&self, card_id: &CardInstanceId) -> bool {
-        self.0.contains(card_id)
+        self.0.iter().any(|stored_id| stored_id == card_id)
     }
 
     #[must_use]
-    pub fn cards(&self) -> &[CardInstance] {
-        self.0.cards()
+    pub fn card_id_at(&self, index: usize) -> Option<&CardInstanceId> {
+        self.0.get(index)
     }
 
     #[must_use]
-    pub fn remove(&mut self, card_id: &CardInstanceId) -> Option<CardInstance> {
-        self.0.remove(card_id)
+    pub fn remove(&mut self, card_id: &CardInstanceId) -> Option<CardInstanceId> {
+        self.0
+            .iter()
+            .position(|stored_id| stored_id == card_id)
+            .map(|index| self.0.remove(index))
     }
 }

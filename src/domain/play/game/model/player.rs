@@ -1,6 +1,7 @@
 use crate::domain::play::cards::{CardInstance, ManaColor, ManaCost};
 use crate::domain::play::ids::{CardDefinitionId, CardInstanceId, PlayerId};
 use crate::domain::play::zones::{Battlefield, Exile, Graveyard, Hand, Library};
+use std::collections::HashMap;
 
 const DEFAULT_STARTING_LIFE: u32 = 20;
 pub const OPENING_HAND_SIZE: usize = 7;
@@ -153,6 +154,7 @@ pub struct Player {
     battlefield: Battlefield,
     graveyard: Graveyard,
     exile: Exile,
+    exiled_cards: HashMap<CardInstanceId, CardInstance>,
     life: u32,
     mana: ManaPool,
     lands_played_this_turn: usize,
@@ -170,6 +172,7 @@ impl Player {
             battlefield: Battlefield::new(),
             graveyard: Graveyard::new(),
             exile: Exile::new(),
+            exiled_cards: HashMap::new(),
             life: DEFAULT_STARTING_LIFE,
             mana: ManaPool::empty(),
             lands_played_this_turn: 0,
@@ -307,7 +310,7 @@ impl Player {
 
     #[must_use]
     pub fn exile_contains(&self, card_id: &CardInstanceId) -> bool {
-        self.exile.contains(card_id)
+        self.exile.contains(card_id) && self.exiled_cards.contains_key(card_id)
     }
 
     #[must_use]
@@ -351,12 +354,15 @@ impl Player {
 
     #[must_use]
     pub fn exile_card(&self, card_id: &CardInstanceId) -> Option<&CardInstance> {
-        self.exile.card(card_id)
+        self.exile_contains(card_id)
+            .then(|| self.exiled_cards.get(card_id))
+            .flatten()
     }
 
     #[must_use]
     pub fn exile_card_at(&self, index: usize) -> Option<&CardInstance> {
-        self.exile.iter().nth(index)
+        let card_id = self.exile.card_id_at(index)?;
+        self.exiled_cards.get(card_id)
     }
 
     #[must_use]
@@ -436,13 +442,13 @@ impl Player {
 
     pub fn move_battlefield_card_to_exile(&mut self, card_id: &CardInstanceId) -> Option<()> {
         let card = self.remove_battlefield_card(card_id)?;
-        self.exile.add(card);
+        self.receive_exile_card(card);
         Some(())
     }
 
     pub fn move_graveyard_card_to_exile(&mut self, card_id: &CardInstanceId) -> Option<()> {
         let card = self.remove_graveyard_card(card_id)?;
-        self.exile.add(card);
+        self.receive_exile_card(card);
         Some(())
     }
 
@@ -463,7 +469,9 @@ impl Player {
     }
 
     pub fn receive_exile_card(&mut self, card: CardInstance) {
-        self.exile.add(card);
+        let card_id = card.id().clone();
+        self.exile.add(card_id.clone());
+        self.exiled_cards.insert(card_id, card);
     }
 
     pub fn draw_cards_into_hand(&mut self, count: usize) -> Option<()> {
