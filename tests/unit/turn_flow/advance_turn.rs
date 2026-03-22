@@ -346,7 +346,7 @@ fn advance_turn_ends_the_game_when_the_active_player_cannot_draw() {
     advance_n_raw(&service, &mut game, 2);
     assert_eq!(game.phase(), &Phase::Upkeep);
     assert_eq!(game.active_player(), &PlayerId::new("player-1"));
-    assert_eq!(game.players()[0].library().len(), 0);
+    assert_eq!(game.players()[0].library_size(), 0);
     close_empty_priority_window(&service, &mut game);
 
     let outcome = service

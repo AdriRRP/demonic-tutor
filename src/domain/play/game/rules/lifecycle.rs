@@ -113,7 +113,7 @@ fn validate_player_libraries(
 fn require_opening_hands_not_dealt(players: &[Player]) -> Result<(), DomainError> {
     if players.iter().any(|player| {
         !player.hand_is_empty()
-            || !player.library().is_empty()
+            || player.library_size() > 0
             || !player.battlefield_is_empty()
             || !player.graveyard_is_empty()
     }) {
@@ -172,7 +172,7 @@ fn draw_opening_hand(
         .ok_or_else(|| {
             DomainError::Game(GameError::NotEnoughCardsInLibrary {
                 player: player_id.clone(),
-                available: player.library().len(),
+                available: player.library_size(),
                 requested: OPENING_HAND_SIZE,
             })
         })?;
@@ -267,23 +267,23 @@ pub fn mulligan(
         )));
     }
 
-    if player.library().len() < OPENING_HAND_SIZE {
+    if player.library_size() < OPENING_HAND_SIZE {
         return Err(DomainError::Game(GameError::NotEnoughCardsInLibrary {
             player: cmd.player_id,
-            available: player.library().len(),
+            available: player.library_size(),
             requested: OPENING_HAND_SIZE,
         }));
     }
 
     player.recycle_hand_into_library();
-    player.library_mut().shuffle();
+    player.shuffle_library();
 
     player
         .draw_cards_into_hand(OPENING_HAND_SIZE)
         .ok_or_else(|| {
             DomainError::Game(GameError::NotEnoughCardsInLibrary {
                 player: cmd.player_id.clone(),
-                available: player.library().len(),
+                available: player.library_size(),
                 requested: OPENING_HAND_SIZE,
             })
         })?;

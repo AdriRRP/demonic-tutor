@@ -77,5 +77,5 @@ fn creature_not_in_alice_hand(world: &mut GameplayWorld) {
 fn creature_not_in_alice_library(world: &mut GameplayWorld) {
     let card_id = world.tracked_card_id.as_ref().unwrap();
     let alice = world.player("Alice");
-    assert!(!alice.library().iter().any(|c| c.id() == card_id));
+    assert!(!alice.library_contains(card_id));
 }

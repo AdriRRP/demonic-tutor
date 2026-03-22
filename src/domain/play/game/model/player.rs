@@ -150,6 +150,7 @@ impl ManaPool {
 pub struct Player {
     id: PlayerId,
     library: Library,
+    library_cards: HashMap<CardInstanceId, CardInstance>,
     hand: Hand,
     hand_cards: HashMap<CardInstanceId, CardInstance>,
     battlefield: Battlefield,
@@ -170,6 +171,7 @@ impl Player {
         Self {
             id,
             library: Library::new(Vec::new()),
+            library_cards: HashMap::new(),
             hand: Hand::new(),
             hand_cards: HashMap::new(),
             battlefield: Battlefield::new(),
@@ -299,7 +301,8 @@ impl Player {
 
     #[must_use]
     pub fn library_contains(&self, card_id: &CardInstanceId) -> bool {
-        self.library.iter().any(|card| card.id() == card_id)
+        self.library.iter().any(|stored_id| stored_id == card_id)
+            && self.library_cards.contains_key(card_id)
     }
 
     #[must_use]
@@ -326,7 +329,9 @@ impl Player {
 
     #[must_use]
     pub fn library_card(&self, card_id: &CardInstanceId) -> Option<&CardInstance> {
-        self.library.iter().find(|card| card.id() == card_id)
+        self.library_contains(card_id)
+            .then(|| self.library_cards.get(card_id))
+            .flatten()
     }
 
     #[must_use]
@@ -476,7 +481,13 @@ impl Player {
     }
 
     pub fn receive_library_cards(&mut self, cards: Vec<CardInstance>) {
-        self.library.receive(cards);
+        let mut card_ids = Vec::with_capacity(cards.len());
+        for card in cards {
+            let card_id = card.id().clone();
+            card_ids.push(card_id.clone());
+            self.library_cards.insert(card_id, card);
+        }
+        self.library.receive(card_ids);
     }
 
     pub fn receive_battlefield_card(&mut self, card: CardInstance) {
@@ -496,14 +507,19 @@ impl Player {
     }
 
     pub fn draw_cards_into_hand(&mut self, count: usize) -> Option<()> {
-        let cards = self.library.draw(count)?;
+        let cards = self
+            .library
+            .draw(count)?
+            .into_iter()
+            .filter_map(|card_id| self.library_cards.remove(&card_id))
+            .collect();
         self.receive_hand_cards(cards);
         Some(())
     }
 
     pub fn draw_one_into_hand(&mut self) -> Option<CardInstanceId> {
-        let card = self.library.draw_one()?;
-        let card_id = card.id().clone();
+        let card_id = self.library.draw_one()?;
+        let card = self.library_cards.remove(&card_id)?;
         self.receive_hand_cards(vec![card]);
         Some(card_id)
     }
@@ -515,7 +531,11 @@ impl Player {
             .into_iter()
             .filter_map(|card_id| self.hand_cards.remove(&card_id))
             .collect();
-        self.library.receive(cards);
+        self.receive_library_cards(cards);
+    }
+
+    pub fn shuffle_library(&mut self) {
+        self.library.shuffle();
     }
 
     pub fn adjust_life(&mut self, delta: i32) {

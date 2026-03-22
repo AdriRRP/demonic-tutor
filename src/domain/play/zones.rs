@@ -5,19 +5,19 @@ use {
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
-pub struct Library(VecDeque<CardInstance>);
+pub struct Library(VecDeque<CardInstanceId>);
 
 impl Library {
     #[must_use]
-    pub fn new(cards: Vec<CardInstance>) -> Self {
-        Self(VecDeque::from(cards))
+    pub fn new(card_ids: Vec<CardInstanceId>) -> Self {
+        Self(VecDeque::from(card_ids))
     }
 
-    pub fn draw_one(&mut self) -> Option<CardInstance> {
+    pub fn draw_one(&mut self) -> Option<CardInstanceId> {
         self.0.pop_front()
     }
 
-    pub fn draw(&mut self, n: usize) -> Option<Vec<CardInstance>> {
+    pub fn draw(&mut self, n: usize) -> Option<Vec<CardInstanceId>> {
         if self.0.len() >= n {
             Some((0..n).filter_map(|_| self.0.pop_front()).collect())
         } else {
@@ -35,8 +35,8 @@ impl Library {
         self.0.is_empty()
     }
 
-    pub fn receive(&mut self, cards: Vec<CardInstance>) {
-        self.0.extend(cards);
+    pub fn receive(&mut self, card_ids: Vec<CardInstanceId>) {
+        self.0.extend(card_ids);
     }
 
     pub fn shuffle(&mut self) {
@@ -44,7 +44,7 @@ impl Library {
         self.0.make_contiguous().shuffle(&mut rng);
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = &CardInstance> {
+    pub fn iter(&self) -> impl Iterator<Item = &CardInstanceId> {
         self.0.iter()
     }
 }
