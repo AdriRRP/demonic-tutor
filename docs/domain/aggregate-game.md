@@ -200,7 +200,6 @@ Fields include:
 - is_blocking (for creatures)
 - blocking target (for blocking creatures)
 - damage marked on the creature
-- optional explicit spell target while the card is represented on the stack
 
 Responsibilities:
 
@@ -220,6 +219,7 @@ The current model includes:
 - minimal stack-aware spell casting and spell resolution
 - explicit supported spell-effect profiles carried by card-face data rather than inferred from card-definition strings during resolution
 - explicit legal-target rules for the currently supported targeted-spell subset, currently covering players and creatures
+- spell-target and spell-resolution metadata can be projected into dedicated stack-borne spell snapshots instead of reusing full permanent runtime
 - casting player retaining priority immediately after putting a spell on the stack
 - instant responses by the current priority holder in the currently supported windows
 - opening an empty priority window when entering `Upkeep`

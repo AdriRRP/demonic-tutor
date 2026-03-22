@@ -115,7 +115,7 @@ The domain currently includes:
 - legal-target evaluation for the current targeted-spell subset is shared between cast-time validation and resolution-time revalidation, using explicit cast and resolution contexts
 - supported spell targeting, casting rules, and resolution are currently carried as explicit card-face profiles rather than inferred from card-definition strings during casting or resolution
 - card definitions are currently created through card-type-aware constructors so supported spell cards receive casting semantics when the face is built
-- stack-borne spells now carry explicit spell metadata needed by resolution instead of rediscovering all of it from the moved card value
+- stack-borne spells now carry explicit spell snapshots and resolution metadata instead of reusing the full moved card runtime
 - resolving the top stack object after two consecutive passes
 - the explicit combat corridor progresses through `BeginningOfCombat`, `DeclareAttackers`, `DeclareBlockers`, `CombatDamage`, and `EndOfCombat`
 - empty combat windows close forward coherently from `BeginningOfCombat` into `DeclareAttackers`, from `DeclareAttackers` into `DeclareBlockers`, from `DeclareBlockers` into `CombatDamage`, and from `EndOfCombat` into `SecondMain`

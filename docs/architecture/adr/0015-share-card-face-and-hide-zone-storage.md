@@ -36,7 +36,7 @@ For the current model this means:
 ### Negative
 
 - transitional APIs on `Player` can grow while the storage migration is still incomplete
-- the runtime still stores full `CardInstance` values on the stack for now
+- a later stack carrier or registry-by-id design may still tighten stack storage further
 - a later registry-by-id design will still require a deliberate follow-up refactor
 
 ## Notes

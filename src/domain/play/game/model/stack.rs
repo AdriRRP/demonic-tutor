@@ -1,5 +1,5 @@
 use crate::domain::play::{
-    cards::{CardInstance, CardType, SpellTargetKind, SupportedSpellRules},
+    cards::{CardType, SpellCardSnapshot, SpellTargetKind, SupportedSpellRules},
     ids::{CardInstanceId, GameId, PlayerId, StackObjectId},
 };
 
@@ -127,7 +127,7 @@ pub enum StackObjectKind {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SpellOnStack {
     source_card_id: CardInstanceId,
-    card: CardInstance,
+    card: SpellCardSnapshot,
     card_type: CardType,
     supported_spell_rules: SupportedSpellRules,
     mana_cost_paid: u32,
@@ -136,7 +136,7 @@ pub struct SpellOnStack {
 
 impl SpellOnStack {
     #[must_use]
-    pub fn new(card: CardInstance, mana_cost_paid: u32, target: Option<SpellTarget>) -> Self {
+    pub fn new(card: SpellCardSnapshot, mana_cost_paid: u32, target: Option<SpellTarget>) -> Self {
         Self {
             source_card_id: card.id().clone(),
             card_type: card.card_type().clone(),
@@ -153,7 +153,7 @@ impl SpellOnStack {
     }
 
     #[must_use]
-    pub const fn card(&self) -> &CardInstance {
+    pub const fn card(&self) -> &SpellCardSnapshot {
         &self.card
     }
 
@@ -178,7 +178,7 @@ impl SpellOnStack {
     }
 
     #[must_use]
-    pub fn into_card(self) -> CardInstance {
+    pub fn into_card(self) -> SpellCardSnapshot {
         self.card
     }
 

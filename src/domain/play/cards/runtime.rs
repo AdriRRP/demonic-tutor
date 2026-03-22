@@ -19,6 +19,13 @@ struct CreatureRuntime {
     keywords: KeywordAbilitySet,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct SpellCreatureProfile {
+    power: u32,
+    toughness: u32,
+    keywords: KeywordAbilitySet,
+}
+
 impl CreatureRuntime {
     const fn new(power: u32, toughness: u32) -> Self {
         Self {
@@ -93,6 +100,14 @@ pub struct CardInstance {
     id: CardInstanceId,
     face: CardFace,
     runtime: CardRuntime,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SpellCardSnapshot {
+    id: CardInstanceId,
+    definition: Arc<CardDefinition>,
+    card_type: CardType,
+    creature_profile: Option<SpellCreatureProfile>,
 }
 
 impl CardInstance {
@@ -174,6 +189,26 @@ impl CardInstance {
                     power, toughness, keywords,
                 )),
             },
+        }
+    }
+
+    #[must_use]
+    pub fn into_spell_snapshot(self) -> SpellCardSnapshot {
+        let creature_profile =
+            self.runtime
+                .creature
+                .as_ref()
+                .map(|creature| SpellCreatureProfile {
+                    power: creature.power,
+                    toughness: creature.toughness,
+                    keywords: creature.keywords,
+                });
+
+        SpellCardSnapshot {
+            id: self.id,
+            definition: self.face.definition,
+            card_type: self.face.card_type,
+            creature_profile,
         }
     }
 
@@ -370,6 +405,50 @@ impl CardInstance {
         match &self.runtime.creature {
             Some(creature) => Some(creature.keywords),
             None => None,
+        }
+    }
+}
+
+impl SpellCardSnapshot {
+    #[must_use]
+    pub const fn id(&self) -> &CardInstanceId {
+        &self.id
+    }
+
+    #[must_use]
+    pub const fn card_type(&self) -> &CardType {
+        &self.card_type
+    }
+
+    #[must_use]
+    pub fn supported_spell_rules(&self) -> SupportedSpellRules {
+        self.definition.supported_spell_rules()
+    }
+
+    #[must_use]
+    pub fn into_card_instance(self) -> CardInstance {
+        let runtime = self.creature_profile.map_or(
+            CardRuntime {
+                tapped: false,
+                creature: None,
+            },
+            |creature| CardRuntime {
+                tapped: false,
+                creature: Some(CreatureRuntime::new_with_keywords(
+                    creature.power,
+                    creature.toughness,
+                    creature.keywords,
+                )),
+            },
+        );
+
+        CardInstance {
+            id: self.id,
+            face: CardFace {
+                definition: self.definition,
+                card_type: self.card_type,
+            },
+            runtime,
         }
     }
 }

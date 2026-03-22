@@ -217,7 +217,7 @@ pub fn cast_spell(
         }));
     }
 
-    let card = helpers::remove_card_from_hand(player, &player_id, &card_id)?;
+    let card = helpers::remove_card_from_hand(player, &player_id, &card_id)?.into_spell_snapshot();
 
     let stack_object_id = stack.next_id(game_id);
     stack.push(StackObject::new(

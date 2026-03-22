@@ -10,4 +10,4 @@ pub use rules::{
     PlayerTargetRule, SingleTargetRule, SpellResolutionProfile, SpellTargetKind,
     SpellTargetingProfile, SupportedSpellRules,
 };
-pub use runtime::CardInstance;
+pub use runtime::{CardInstance, SpellCardSnapshot};

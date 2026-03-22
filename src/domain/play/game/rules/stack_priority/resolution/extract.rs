@@ -26,7 +26,7 @@ pub(super) fn extract_resolved_spell_object(stack_object: &StackObject) -> Resol
     let supported_spell_rules = spell.supported_spell_rules();
     let mana_cost_paid = spell.mana_cost_paid();
     let target = spell.target().cloned();
-    let card = spell.into_card();
+    let card = spell.into_card().into_card_instance();
 
     ResolvedSpellObject {
         source_card_id,
