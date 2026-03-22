@@ -80,7 +80,7 @@ The current runtime supports a meaningful minimal playtest loop, including:
 - shared automatic consequences for zero life, empty-library draw, lethal damage, zero toughness, and cleanup damage removal
 - in-memory event store, event bus, gameplay log projection, and executable BDD coverage
 
-For the authoritative snapshot, read [`docs/domain/current-state.md`](/Users/adrianramos/Repos/demonictutor/docs/domain/current-state.md).
+For the authoritative snapshot, read [`docs/domain/current-state.md`](docs/domain/current-state.md).
 
 ## What this repository is not
 
@@ -114,9 +114,9 @@ The project is organized around a single implemented bounded context, `play`.
 
 For the architectural picture, start with:
 
-- [`docs/domain/aggregate-game.md`](/Users/adrianramos/Repos/demonictutor/docs/domain/aggregate-game.md)
-- [`docs/architecture/system-overview.md`](/Users/adrianramos/Repos/demonictutor/docs/architecture/system-overview.md)
-- [`docs/architecture/vertical-slices.md`](/Users/adrianramos/Repos/demonictutor/docs/architecture/vertical-slices.md)
+- [`docs/domain/aggregate-game.md`](docs/domain/aggregate-game.md)
+- [`docs/architecture/system-overview.md`](docs/architecture/system-overview.md)
+- [`docs/architecture/vertical-slices.md`](docs/architecture/vertical-slices.md)
 
 ## Source of truth
 
@@ -136,31 +136,31 @@ That rule matters because this repository deliberately keeps documentation hones
 
 Read, in order:
 
-1. [`PROJECT.md`](/Users/adrianramos/Repos/demonictutor/PROJECT.md)
-2. [`CONSTRAINTS.md`](/Users/adrianramos/Repos/demonictutor/CONSTRAINTS.md)
-3. [`docs/README.md`](/Users/adrianramos/Repos/demonictutor/docs/README.md)
-4. [`docs/domain/current-state.md`](/Users/adrianramos/Repos/demonictutor/docs/domain/current-state.md)
+1. [`PROJECT.md`](PROJECT.md)
+2. [`CONSTRAINTS.md`](CONSTRAINTS.md)
+3. [`docs/README.md`](docs/README.md)
+4. [`docs/domain/current-state.md`](docs/domain/current-state.md)
 
 ### If you want the domain model
 
-- [`docs/domain/DOMAIN_GLOSSARY.md`](/Users/adrianramos/Repos/demonictutor/docs/domain/DOMAIN_GLOSSARY.md)
-- [`docs/domain/context-map.md`](/Users/adrianramos/Repos/demonictutor/docs/domain/context-map.md)
-- [`docs/domain/aggregate-game.md`](/Users/adrianramos/Repos/demonictutor/docs/domain/aggregate-game.md)
-- [`docs/domain/current-state.md`](/Users/adrianramos/Repos/demonictutor/docs/domain/current-state.md)
+- [`docs/domain/DOMAIN_GLOSSARY.md`](docs/domain/DOMAIN_GLOSSARY.md)
+- [`docs/domain/context-map.md`](docs/domain/context-map.md)
+- [`docs/domain/aggregate-game.md`](docs/domain/aggregate-game.md)
+- [`docs/domain/current-state.md`](docs/domain/current-state.md)
 
 ### If you want rules support and gameplay specs
 
-- [`docs/rules/README.md`](/Users/adrianramos/Repos/demonictutor/docs/rules/README.md)
-- [`docs/rules/rules-map.md`](/Users/adrianramos/Repos/demonictutor/docs/rules/rules-map.md)
-- [`features/README.md`](/Users/adrianramos/Repos/demonictutor/features/README.md)
+- [`docs/rules/README.md`](docs/rules/README.md)
+- [`docs/rules/rules-map.md`](docs/rules/rules-map.md)
+- [`features/README.md`](features/README.md)
 
 ### If you are working with agents
 
 Start with:
 
-1. [`AGENTS.md`](/Users/adrianramos/Repos/demonictutor/AGENTS.md)
-2. [`docs/architecture/agent-architecture.md`](/Users/adrianramos/Repos/demonictutor/docs/architecture/agent-architecture.md)
-3. [`.agents/context/core-agent.md`](/Users/adrianramos/Repos/demonictutor/.agents/context/core-agent.md)
+1. [`AGENTS.md`](AGENTS.md)
+2. [`docs/architecture/agent-architecture.md`](docs/architecture/agent-architecture.md)
+3. [`.agents/context/core-agent.md`](.agents/context/core-agent.md)
 
 ## Development workflow
 
@@ -174,18 +174,18 @@ cargo test --test unit
 cargo test --test bdd
 ```
 
-The authoritative development guidance lives in [`docs/development/development.md`](/Users/adrianramos/Repos/demonictutor/docs/development/development.md).
+The authoritative development guidance lives in [`docs/development/development.md`](docs/development/development.md).
 
 ## Documentation map
 
-- [`docs/README.md`](/Users/adrianramos/Repos/demonictutor/docs/README.md): full documentation map
-- [`docs/rules/README.md`](/Users/adrianramos/Repos/demonictutor/docs/rules/README.md): how rules notes and rules mapping are used
-- [`features/README.md`](/Users/adrianramos/Repos/demonictutor/features/README.md): how feature files are organized and executed
+- [`docs/README.md`](docs/README.md): full documentation map
+- [`docs/rules/README.md`](docs/rules/README.md): how rules notes and rules mapping are used
+- [`features/README.md`](features/README.md): how feature files are organized and executed
 
 ## Releases
 
-- release history: [`CHANGELOG.md`](/Users/adrianramos/Repos/demonictutor/CHANGELOG.md)
-- current crate version: [`Cargo.toml`](/Users/adrianramos/Repos/demonictutor/Cargo.toml)
+- release history: [`CHANGELOG.md`](CHANGELOG.md)
+- current crate version: [`Cargo.toml`](Cargo.toml)
 
 ## Guiding idea
 

@@ -299,4 +299,4 @@ Feature files are only one part of the repository’s truth model.
 - `docs/rules/` explains the repository-owned rules interpretation behind supported behavior
 - `docs/domain/current-state.md` summarizes the live support set
 
-For the rules side of the story, see [`/Users/adrianramos/Repos/demonictutor/docs/rules/README.md`]( /Users/adrianramos/Repos/demonictutor/docs/rules/README.md ).
+For the rules side of the story, see [`docs/rules/README.md`](../docs/rules/README.md).

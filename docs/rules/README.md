@@ -20,7 +20,7 @@ It helps answer:
 
 ## What lives here
 
-### [`/Users/adrianramos/Repos/demonictutor/docs/rules/rules-map.md`]( /Users/adrianramos/Repos/demonictutor/docs/rules/rules-map.md )
+### [`docs/rules/rules-map.md`](rules-map.md)
 
 The rules map is the high-level index from supported repository behavior to Magic rule sections.
 
@@ -30,7 +30,7 @@ Use it when you want to know:
 - which rule area a slice belongs to
 - whether a repository rule note already exists
 
-### [`/Users/adrianramos/Repos/demonictutor/docs/rules/notes/`]( /Users/adrianramos/Repos/demonictutor/docs/rules/notes/ )
+### [`docs/rules/notes/`](notes/)
 
 Rules notes are focused, repository-owned interpretations of specific rule areas.
 
@@ -52,8 +52,8 @@ This directory is not:
 
 Canonical truth still lives primarily in:
 
-- [`/Users/adrianramos/Repos/demonictutor/docs/domain/current-state.md`]( /Users/adrianramos/Repos/demonictutor/docs/domain/current-state.md )
-- [`/Users/adrianramos/Repos/demonictutor/docs/domain/aggregate-game.md`]( /Users/adrianramos/Repos/demonictutor/docs/domain/aggregate-game.md )
+- [`docs/domain/current-state.md`](../domain/current-state.md)
+- [`docs/domain/aggregate-game.md`](../domain/aggregate-game.md)
 - accepted ADRs
 - and, above all, the code
 
@@ -73,8 +73,8 @@ Rules notes should support canonical docs, not compete with them.
 
 ### If you are implementing a slice
 
-1. check [`/Users/adrianramos/Repos/demonictutor/docs/domain/current-state.md`]( /Users/adrianramos/Repos/demonictutor/docs/domain/current-state.md )
-2. check [`/Users/adrianramos/Repos/demonictutor/docs/rules/rules-map.md`]( /Users/adrianramos/Repos/demonictutor/docs/rules/rules-map.md )
+1. check [`docs/domain/current-state.md`](../domain/current-state.md)
+2. check [`docs/rules/rules-map.md`](rules-map.md)
 3. read the relevant note under `notes/`
 4. read the relevant implemented slice docs
 5. only consult the external Comprehensive Rules if the repository-owned interpretation is missing or ambiguous
@@ -96,4 +96,4 @@ That distinction matters:
 - `docs/rules/` says what part of the rules the repository is modeling
 - `features/` says what observable behavior the repository promises
 
-For feature organization and execution, see [`/Users/adrianramos/Repos/demonictutor/features/README.md`]( /Users/adrianramos/Repos/demonictutor/features/README.md ).
+For feature organization and execution, see [`features/README.md`](../../features/README.md).

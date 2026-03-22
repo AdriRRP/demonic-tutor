@@ -19,21 +19,21 @@ If you only need one rule:
 
 These files define the stable truth of the repository.
 
-- [`/Users/adrianramos/Repos/demonictutor/PROJECT.md`]( /Users/adrianramos/Repos/demonictutor/PROJECT.md )
+- [`PROJECT.md`](../PROJECT.md)
   product identity and long-term intent
-- [`/Users/adrianramos/Repos/demonictutor/CONSTRAINTS.md`]( /Users/adrianramos/Repos/demonictutor/CONSTRAINTS.md )
+- [`CONSTRAINTS.md`](../CONSTRAINTS.md)
   non-negotiable modeling and architectural limits
-- [`/Users/adrianramos/Repos/demonictutor/docs/domain/DOMAIN_GLOSSARY.md`]( /Users/adrianramos/Repos/demonictutor/docs/domain/DOMAIN_GLOSSARY.md )
+- [`docs/domain/DOMAIN_GLOSSARY.md`](domain/DOMAIN_GLOSSARY.md)
   ubiquitous language
-- [`/Users/adrianramos/Repos/demonictutor/docs/domain/context-map.md`]( /Users/adrianramos/Repos/demonictutor/docs/domain/context-map.md )
+- [`docs/domain/context-map.md`](domain/context-map.md)
   bounded-context view
-- [`/Users/adrianramos/Repos/demonictutor/docs/domain/aggregate-game.md`]( /Users/adrianramos/Repos/demonictutor/docs/domain/aggregate-game.md )
+- [`docs/domain/aggregate-game.md`](domain/aggregate-game.md)
   aggregate ownership and responsibilities
-- [`/Users/adrianramos/Repos/demonictutor/docs/domain/current-state.md`]( /Users/adrianramos/Repos/demonictutor/docs/domain/current-state.md )
+- [`docs/domain/current-state.md`](domain/current-state.md)
   the current supported gameplay snapshot
-- [`/Users/adrianramos/Repos/demonictutor/docs/architecture/system-overview.md`]( /Users/adrianramos/Repos/demonictutor/docs/architecture/system-overview.md )
+- [`docs/architecture/system-overview.md`](architecture/system-overview.md)
   system layering
-- [`/Users/adrianramos/Repos/demonictutor/docs/architecture/vertical-slices.md`]( /Users/adrianramos/Repos/demonictutor/docs/architecture/vertical-slices.md )
+- [`docs/architecture/vertical-slices.md`](architecture/vertical-slices.md)
   how the repository evolves
 
 If canonical docs disagree with lower-level docs, canonical docs win unless the code has already moved ahead and the docs need curation.
@@ -42,39 +42,39 @@ If canonical docs disagree with lower-level docs, canonical docs win unless the 
 
 These files explain how the system is organized and how it should evolve.
 
-- [`/Users/adrianramos/Repos/demonictutor/docs/architecture/game-aggregate-structure.md`]( /Users/adrianramos/Repos/demonictutor/docs/architecture/game-aggregate-structure.md )
+- [`docs/architecture/game-aggregate-structure.md`](architecture/game-aggregate-structure.md)
   internal organization of the `Game` aggregate
-- [`/Users/adrianramos/Repos/demonictutor/docs/architecture/agent-architecture.md`]( /Users/adrianramos/Repos/demonictutor/docs/architecture/agent-architecture.md )
+- [`docs/architecture/agent-architecture.md`](architecture/agent-architecture.md)
   agent-assistance model and documentation precedence
-- [`/Users/adrianramos/Repos/demonictutor/docs/architecture/gherkin-features.md`]( /Users/adrianramos/Repos/demonictutor/docs/architecture/gherkin-features.md )
+- [`docs/architecture/gherkin-features.md`](architecture/gherkin-features.md)
   conventions for feature files
-- [`/Users/adrianramos/Repos/demonictutor/docs/architecture/slice-template.md`]( /Users/adrianramos/Repos/demonictutor/docs/architecture/slice-template.md )
+- [`docs/architecture/slice-template.md`](architecture/slice-template.md)
   canonical slice document template
-- [`/Users/adrianramos/Repos/demonictutor/docs/architecture/adr-template.md`]( /Users/adrianramos/Repos/demonictutor/docs/architecture/adr-template.md )
+- [`docs/architecture/adr-template.md`](architecture/adr-template.md)
   ADR template
-- [`/Users/adrianramos/Repos/demonictutor/docs/architecture/adr/`]( /Users/adrianramos/Repos/demonictutor/docs/architecture/adr/ )
+- [`docs/architecture/adr/`](architecture/adr/)
   accepted architectural decisions and historical decision trail
 
 ## 3. Rules interpretation support
 
 These files connect repository behavior to Magic rules without turning the rulebook into an implementation backlog.
 
-- [`/Users/adrianramos/Repos/demonictutor/docs/rules/README.md`]( /Users/adrianramos/Repos/demonictutor/docs/rules/README.md )
+- [`docs/rules/README.md`](rules/README.md)
   entry point for rules docs
-- [`/Users/adrianramos/Repos/demonictutor/docs/rules/rules-map.md`]( /Users/adrianramos/Repos/demonictutor/docs/rules/rules-map.md )
+- [`docs/rules/rules-map.md`](rules/rules-map.md)
   supported behavior mapped to rule areas
-- [`/Users/adrianramos/Repos/demonictutor/docs/rules/notes/`]( /Users/adrianramos/Repos/demonictutor/docs/rules/notes/ )
+- [`docs/rules/notes/`](rules/notes/)
   focused repository-owned notes by rule area
 
 ## 4. Slice history
 
 Slices are the main unit of incremental change in DemonicTutor.
 
-- [`/Users/adrianramos/Repos/demonictutor/docs/slices/README.md`]( /Users/adrianramos/Repos/demonictutor/docs/slices/README.md )
+- [`docs/slices/README.md`](slices/README.md)
   entry point for slice history and backlog
-- [`/Users/adrianramos/Repos/demonictutor/docs/slices/implemented/README.md`]( /Users/adrianramos/Repos/demonictutor/docs/slices/implemented/README.md )
+- [`docs/slices/implemented/README.md`](slices/implemented/README.md)
   implemented and historical slices grouped by capability
-- [`/Users/adrianramos/Repos/demonictutor/docs/slices/proposals/README.md`]( /Users/adrianramos/Repos/demonictutor/docs/slices/proposals/README.md )
+- [`docs/slices/proposals/README.md`](slices/proposals/README.md)
   live proposal backlog grouped by wave
 
 Read slices when you want to understand:
@@ -87,29 +87,29 @@ Do not use a slice doc as canonical truth if canonical docs already describe the
 
 ## 5. Development guidance
 
-- [`/Users/adrianramos/Repos/demonictutor/docs/development/development.md`]( /Users/adrianramos/Repos/demonictutor/docs/development/development.md )
+- [`docs/development/development.md`](development/development.md)
   coding standards, validation commands, refactor discipline, and runtime representation guidance
 
 ## 6. Agent-facing context
 
 These live outside `docs/`, but they are part of the documentation system and matter for navigation:
 
-- [`/Users/adrianramos/Repos/demonictutor/AGENTS.md`]( /Users/adrianramos/Repos/demonictutor/AGENTS.md )
+- [`AGENTS.md`](../AGENTS.md)
   agent entry point
-- [`/Users/adrianramos/Repos/demonictutor/.agents/context/core-agent.md`]( /Users/adrianramos/Repos/demonictutor/.agents/context/core-agent.md )
+- [`.agents/context/core-agent.md`](../.agents/context/core-agent.md)
   working posture
-- [`/Users/adrianramos/Repos/demonictutor/.agents/skills/README.md`]( /Users/adrianramos/Repos/demonictutor/.agents/skills/README.md )
+- [`.agents/skills/README.md`](../.agents/skills/README.md)
   reusable workflows
 
 ## Recommended reading paths
 
 ### For a new human contributor
 
-1. [`/Users/adrianramos/Repos/demonictutor/PROJECT.md`]( /Users/adrianramos/Repos/demonictutor/PROJECT.md )
-2. [`/Users/adrianramos/Repos/demonictutor/CONSTRAINTS.md`]( /Users/adrianramos/Repos/demonictutor/CONSTRAINTS.md )
-3. [`/Users/adrianramos/Repos/demonictutor/docs/domain/current-state.md`]( /Users/adrianramos/Repos/demonictutor/docs/domain/current-state.md )
-4. [`/Users/adrianramos/Repos/demonictutor/docs/domain/aggregate-game.md`]( /Users/adrianramos/Repos/demonictutor/docs/domain/aggregate-game.md )
-5. [`/Users/adrianramos/Repos/demonictutor/docs/development/development.md`]( /Users/adrianramos/Repos/demonictutor/docs/development/development.md )
+1. [`PROJECT.md`](../PROJECT.md)
+2. [`CONSTRAINTS.md`](../CONSTRAINTS.md)
+3. [`docs/domain/current-state.md`](domain/current-state.md)
+4. [`docs/domain/aggregate-game.md`](domain/aggregate-game.md)
+5. [`docs/development/development.md`](development/development.md)
 
 ### For domain work
 
