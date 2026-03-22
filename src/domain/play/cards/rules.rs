@@ -34,6 +34,68 @@ impl CardType {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum ManaColor {
+    Green,
+    Red,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ManaCost {
+    generic: u32,
+    green: u32,
+    red: u32,
+}
+
+impl ManaCost {
+    #[must_use]
+    pub const fn generic(amount: u32) -> Self {
+        Self {
+            generic: amount,
+            green: 0,
+            red: 0,
+        }
+    }
+
+    #[must_use]
+    pub const fn green(amount: u32) -> Self {
+        Self {
+            generic: 0,
+            green: amount,
+            red: 0,
+        }
+    }
+
+    #[must_use]
+    pub const fn red(amount: u32) -> Self {
+        Self {
+            generic: 0,
+            green: 0,
+            red: amount,
+        }
+    }
+
+    #[must_use]
+    pub const fn total(self) -> u32 {
+        self.generic + self.green + self.red
+    }
+
+    #[must_use]
+    pub const fn generic_requirement(self) -> u32 {
+        self.generic
+    }
+
+    #[must_use]
+    pub const fn green_requirement(self) -> u32 {
+        self.green
+    }
+
+    #[must_use]
+    pub const fn red_requirement(self) -> u32 {
+        self.red
+    }
+}
+
 const PERMISSION_OPEN_PRIORITY_WINDOW: u8 = 1 << 0;
 const PERMISSION_ACTIVE_PLAYER_EMPTY_MAIN_PHASE_WINDOW: u8 = 1 << 1;
 const PERMISSION_OPEN_PRIORITY_WINDOW_DURING_OWN_TURN: u8 = 1 << 2;

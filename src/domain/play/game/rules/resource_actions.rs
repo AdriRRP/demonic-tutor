@@ -121,12 +121,17 @@ pub fn tap_land(
 
     card.tap();
 
-    player.add_mana(1);
+    let produced_color = card.produced_mana();
+    if let Some(color) = produced_color {
+        player.add_colored_mana(color, 1);
+    } else {
+        player.add_mana(1);
+    }
     let new_mana = player.mana();
 
     Ok((
         LandTapped::new(game_id.clone(), cmd.player_id.clone(), cmd.card_id.clone()),
-        ManaAdded::new(game_id.clone(), cmd.player_id, 1, new_mana),
+        ManaAdded::new(game_id.clone(), cmd.player_id, 1, produced_color, new_mana),
     ))
 }
 

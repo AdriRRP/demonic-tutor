@@ -2,8 +2,8 @@
 
 use crate::support::{
     advance_to_first_main_satisfying_cleanup, advance_to_player_first_main_satisfying_cleanup,
-    artifact_card, filled_library, instant_card, land_card, setup_two_player_game,
-    vanilla_creature,
+    artifact_card, filled_library, forest_card, green_instant_card, instant_card, land_card,
+    mountain_card, setup_two_player_game, vanilla_creature,
 };
 use demonictutor::{
     domain::play::game::{Player, TerminalState},
@@ -291,6 +291,103 @@ fn opponent_can_tap_a_land_and_pay_for_an_instant_response_in_the_same_window() 
         game.stack().top().unwrap().controller_id(),
         &PlayerId::new("player-2")
     );
+}
+
+#[test]
+fn casting_a_green_instant_succeeds_with_green_mana() {
+    let (service, mut game) = setup_two_player_game(
+        "game-green-spell",
+        filled_library(
+            vec![green_instant_card("giant-growth", 1), forest_card("forest")],
+            10,
+        ),
+        filled_library(vec![land_card("mountain")], 10),
+    );
+
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
+
+    service
+        .play_land(
+            &mut game,
+            PlayLandCommand::new(
+                PlayerId::new("player-1"),
+                CardInstanceId::new("game-green-spell-player-1-1"),
+            ),
+        )
+        .unwrap();
+    service
+        .tap_land(
+            &mut game,
+            TapLandCommand::new(
+                PlayerId::new("player-1"),
+                CardInstanceId::new("game-green-spell-player-1-1"),
+            ),
+        )
+        .unwrap();
+
+    let outcome = service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(
+                PlayerId::new("player-1"),
+                CardInstanceId::new("game-green-spell-player-1-0"),
+            ),
+        )
+        .unwrap();
+
+    assert_eq!(outcome.spell_put_on_stack.mana_cost_paid, 1);
+    assert_eq!(game.players()[0].mana(), 0);
+}
+
+#[test]
+fn casting_a_green_instant_fails_with_only_red_mana() {
+    let (service, mut game) = setup_two_player_game(
+        "game-green-spell-red-mana",
+        filled_library(
+            vec![
+                green_instant_card("giant-growth", 1),
+                mountain_card("mountain"),
+            ],
+            10,
+        ),
+        filled_library(vec![land_card("forest")], 10),
+    );
+
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
+
+    service
+        .play_land(
+            &mut game,
+            PlayLandCommand::new(
+                PlayerId::new("player-1"),
+                CardInstanceId::new("game-green-spell-red-mana-player-1-1"),
+            ),
+        )
+        .unwrap();
+    service
+        .tap_land(
+            &mut game,
+            TapLandCommand::new(
+                PlayerId::new("player-1"),
+                CardInstanceId::new("game-green-spell-red-mana-player-1-1"),
+            ),
+        )
+        .unwrap();
+
+    let result = service.cast_spell(
+        &mut game,
+        CastSpellCommand::new(
+            PlayerId::new("player-1"),
+            CardInstanceId::new("game-green-spell-red-mana-player-1-0"),
+        ),
+    );
+
+    assert!(matches!(
+        result,
+        Err(DomainError::Game(GameError::InsufficientMana { .. }))
+    ));
+    assert_eq!(game.players()[0].mana_pool().red(), 1);
+    assert_eq!(game.players()[0].mana(), 1);
 }
 
 #[test]

@@ -70,6 +70,7 @@ Stack and priority behavior:
 - non-active instant responses after the first pass
 - self-stacking by the current priority holder
 - stack-free land mana production in the currently supported priority windows
+- minimal colored mana support for `Forest`, `Mountain`, and single-color instant costs
 - sorcery-speed legality in main phases
 - targeted instant subset against players and creatures
 - combat-relative targeted spells against attacking and blocking creatures
@@ -157,6 +158,7 @@ The following features are currently executed by `tests/bdd.rs`, grouped by area
 - `features/stack/cast_instant_in_draw_window.feature`
 - `features/stack/cast_second_instant_in_draw_window.feature`
 - `features/stack/cast_instant_in_first_main_window.feature`
+- `features/stack/cast_green_instant_in_first_main_window.feature`
 - `features/stack/targeted_instant_spell.feature`
 - `features/stack/cast_sorcery_in_main_window.feature`
 - `features/stack/cast_creature_in_second_main_window.feature`
@@ -167,6 +169,7 @@ The following features are currently executed by `tests/bdd.rs`, grouped by area
 - `features/stack/cast_instant_in_second_main_window.feature`
 - `features/stack/reject_sorcery_response.feature`
 - `features/stack/reject_planeswalker_response.feature`
+- `features/stack/reject_green_instant_with_only_red_mana.feature`
 - `features/stack/sorcery_speed_spells_require_active_player_priority.feature`
 - `features/stack/cast_second_instant_in_second_main_window.feature`
 - `features/stack/cast_instant_in_end_step_window.feature`

@@ -141,6 +141,11 @@ fn bob_tries_to_cast_the_enchantment_spell(world: &mut GameplayWorld) {
     world.try_cast_tracked_response_spell("Bob");
 }
 
+#[when("Alice tries to cast the green instant spell")]
+fn alice_tries_to_cast_the_green_instant_spell(world: &mut GameplayWorld) {
+    world.try_cast_tracked_spell("Alice");
+}
+
 #[then("the action is rejected because the spell timing is not legal in the current window")]
 fn the_action_is_rejected_because_the_spell_timing_is_not_legal_in_the_current_window(
     world: &mut GameplayWorld,
@@ -165,6 +170,20 @@ fn the_action_is_rejected_because_the_spell_only_supports_open_priority_casting_
         .expect("response cast should be rejected");
     assert!(
         error.contains("own-turn open-priority casting permission"),
+        "unexpected error: {error}"
+    );
+}
+
+#[then("the action is rejected because the available mana does not satisfy the colored cost")]
+fn the_action_is_rejected_because_the_available_mana_does_not_satisfy_the_colored_cost(
+    world: &mut GameplayWorld,
+) {
+    let error = world
+        .last_error
+        .as_ref()
+        .expect("green instant cast should be rejected");
+    assert!(
+        error.contains("insufficient mana"),
         "unexpected error: {error}"
     );
 }

@@ -2,7 +2,7 @@
 
 use crate::support::{
     advance_to_first_main_satisfying_cleanup, advance_to_player_phase_satisfying_cleanup,
-    advance_turn_raw, create_service, filled_library, instant_card, land_card,
+    advance_turn_raw, create_service, filled_library, forest_card, instant_card, land_card,
     setup_two_player_game,
 };
 use demonictutor::{
@@ -423,4 +423,42 @@ fn advance_turn_clears_mana_pools() {
 
     assert_eq!(game.players()[0].mana(), 0);
     assert_eq!(game.players()[1].mana(), 0);
+}
+
+#[test]
+fn tapping_a_forest_adds_green_mana_to_the_pool() {
+    let service = create_service();
+    let mut game = crate::support::start_two_player_game(&service, "game-green-mana");
+
+    crate::support::deal_opening_hands(
+        &service,
+        &mut game,
+        filled_library(vec![forest_card("forest")], 10),
+        filled_library(vec![land_card("mountain")], 10),
+    );
+
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
+    service
+        .play_land(
+            &mut game,
+            PlayLandCommand::new(
+                PlayerId::new("player-1"),
+                CardInstanceId::new("game-green-mana-player-1-0"),
+            ),
+        )
+        .unwrap();
+
+    let (_, mana_event) = service
+        .tap_land(
+            &mut game,
+            TapLandCommand::new(
+                PlayerId::new("player-1"),
+                CardInstanceId::new("game-green-mana-player-1-0"),
+            ),
+        )
+        .unwrap();
+
+    assert_eq!(mana_event.color, Some(demonictutor::ManaColor::Green));
+    assert_eq!(game.players()[0].mana_pool().green(), 1);
+    assert_eq!(game.players()[0].mana(), 1);
 }

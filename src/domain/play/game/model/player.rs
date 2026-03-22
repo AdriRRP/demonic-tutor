@@ -1,9 +1,94 @@
+use crate::domain::play::cards::{ManaColor, ManaCost};
 use crate::domain::play::ids::PlayerId;
 use crate::domain::play::zones::{Battlefield, Exile, Graveyard, Hand, Library};
 
 const DEFAULT_STARTING_LIFE: u32 = 20;
 pub const OPENING_HAND_SIZE: usize = 7;
 pub const MAX_HAND_SIZE: usize = 7;
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ManaPool {
+    generic: u32,
+    green: u32,
+    red: u32,
+}
+
+impl ManaPool {
+    #[must_use]
+    pub const fn empty() -> Self {
+        Self {
+            generic: 0,
+            green: 0,
+            red: 0,
+        }
+    }
+
+    #[must_use]
+    pub const fn total(&self) -> u32 {
+        self.generic + self.green + self.red
+    }
+
+    #[must_use]
+    pub const fn generic(&self) -> u32 {
+        self.generic
+    }
+
+    #[must_use]
+    pub const fn green(&self) -> u32 {
+        self.green
+    }
+
+    #[must_use]
+    pub const fn red(&self) -> u32 {
+        self.red
+    }
+
+    pub const fn add_generic(&mut self, amount: u32) {
+        self.generic = self.generic.saturating_add(amount);
+    }
+
+    pub const fn add_colored(&mut self, color: ManaColor, amount: u32) {
+        match color {
+            ManaColor::Green => self.green = self.green.saturating_add(amount),
+            ManaColor::Red => self.red = self.red.saturating_add(amount),
+        }
+    }
+
+    pub const fn clear(&mut self) {
+        self.generic = 0;
+        self.green = 0;
+        self.red = 0;
+    }
+
+    pub fn spend(&mut self, cost: ManaCost) -> bool {
+        if self.green < cost.green_requirement() || self.red < cost.red_requirement() {
+            return false;
+        }
+
+        let remaining_total = self.total() - cost.green_requirement() - cost.red_requirement();
+        if remaining_total < cost.generic_requirement() {
+            return false;
+        }
+
+        self.green -= cost.green_requirement();
+        self.red -= cost.red_requirement();
+
+        let mut generic_to_pay = cost.generic_requirement();
+        let pay_from_generic = self.generic.min(generic_to_pay);
+        self.generic -= pay_from_generic;
+        generic_to_pay -= pay_from_generic;
+
+        let pay_from_green = self.green.min(generic_to_pay);
+        self.green -= pay_from_green;
+        generic_to_pay -= pay_from_green;
+
+        let pay_from_red = self.red.min(generic_to_pay);
+        self.red -= pay_from_red;
+        debug_assert_eq!(generic_to_pay - pay_from_red, 0);
+
+        true
+    }
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Player {
@@ -14,7 +99,7 @@ pub struct Player {
     graveyard: Graveyard,
     exile: Exile,
     life: u32,
-    mana: u32,
+    mana: ManaPool,
     lands_played_this_turn: usize,
     mulligan_used: bool,
 }
@@ -31,7 +116,7 @@ impl Player {
             graveyard: Graveyard::new(),
             exile: Exile::new(),
             life: DEFAULT_STARTING_LIFE,
-            mana: 0,
+            mana: ManaPool::empty(),
             lands_played_this_turn: 0,
             mulligan_used: false,
         }
@@ -94,7 +179,12 @@ impl Player {
 
     #[must_use]
     pub const fn mana(&self) -> u32 {
-        self.mana
+        self.mana.total()
+    }
+
+    #[must_use]
+    pub const fn mana_pool(&self) -> &ManaPool {
+        &self.mana
     }
 
     #[must_use]
@@ -117,20 +207,23 @@ impl Player {
     }
 
     pub fn add_mana(&mut self, amount: u32) {
-        self.mana = self.mana.saturating_add(amount);
+        self.mana.add_generic(amount);
+    }
+
+    pub fn add_colored_mana(&mut self, color: ManaColor, amount: u32) {
+        self.mana.add_colored(color, amount);
     }
 
     pub fn clear_mana(&mut self) {
-        self.mana = 0;
+        self.mana.clear();
     }
 
     pub fn spend_mana(&mut self, amount: u32) -> bool {
-        if self.mana >= amount {
-            self.mana -= amount;
-            true
-        } else {
-            false
-        }
+        self.mana.spend(ManaCost::generic(amount))
+    }
+
+    pub fn spend_mana_cost(&mut self, cost: ManaCost) -> bool {
+        self.mana.spend(cost)
     }
 
     pub fn record_land_played(&mut self) {

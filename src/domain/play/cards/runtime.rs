@@ -1,6 +1,6 @@
 use super::{
     CardDefinition, CardType, CastingPermissionProfile, KeywordAbility, KeywordAbilitySet,
-    SupportedSpellRules,
+    ManaColor, ManaCost, SupportedSpellRules,
 };
 use crate::domain::play::ids::{CardDefinitionId, CardInstanceId};
 
@@ -202,6 +202,11 @@ impl CardInstance {
     }
 
     #[must_use]
+    pub const fn mana_cost_profile(&self) -> ManaCost {
+        self.face.definition.mana_cost_profile()
+    }
+
+    #[must_use]
     pub const fn casting_permission_profile(&self) -> Option<CastingPermissionProfile> {
         self.face.definition.casting_permission()
     }
@@ -209,6 +214,11 @@ impl CardInstance {
     #[must_use]
     pub const fn supported_spell_rules(&self) -> SupportedSpellRules {
         self.face.definition.supported_spell_rules()
+    }
+
+    #[must_use]
+    pub const fn produced_mana(&self) -> Option<ManaColor> {
+        self.face.definition.produced_mana()
     }
 
     #[must_use]

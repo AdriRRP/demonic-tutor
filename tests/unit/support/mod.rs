@@ -7,8 +7,8 @@ use demonictutor::{
     AdvanceTurnCommand, AdvanceTurnOutcome, CardDefinitionId, CardType, CastSpellCommand,
     DealOpeningHandsCommand, DeckId, DeclareAttackersCommand, DiscardForCleanupCommand, Game,
     GameId, GameService, InMemoryEventBus, InMemoryEventStore, KeywordAbility, KeywordAbilitySet,
-    LibraryCard, PassPriorityCommand, Phase, PlayerDeck, PlayerId, PlayerLibrary,
-    ResolveCombatDamageCommand, StartGameCommand, SupportedSpellRules,
+    LibraryCard, ManaColor, ManaCost, PassPriorityCommand, Phase, PlayerDeck, PlayerId,
+    PlayerLibrary, ResolveCombatDamageCommand, StartGameCommand, SupportedSpellRules,
 };
 
 pub type TestService = GameService<InMemoryEventStore, InMemoryEventBus>;
@@ -29,8 +29,25 @@ pub fn land_card(name: &str) -> LibraryCard {
     LibraryCard::new(CardDefinitionId::new(name), CardType::Land, 0)
 }
 
+pub fn forest_card(name: &str) -> LibraryCard {
+    LibraryCard::land(CardDefinitionId::new(name), ManaColor::Green)
+}
+
+pub fn mountain_card(name: &str) -> LibraryCard {
+    LibraryCard::land(CardDefinitionId::new(name), ManaColor::Red)
+}
+
 pub fn instant_card(name: &str, mana_cost: u32) -> LibraryCard {
     LibraryCard::new(CardDefinitionId::new(name), CardType::Instant, mana_cost)
+}
+
+pub fn green_instant_card(name: &str, green_requirement: u32) -> LibraryCard {
+    LibraryCard::new(
+        CardDefinitionId::new(name),
+        CardType::Instant,
+        green_requirement,
+    )
+    .with_mana_cost(ManaCost::green(green_requirement))
 }
 
 pub fn targeted_damage_instant_card(name: &str, mana_cost: u32, damage: u32) -> LibraryCard {

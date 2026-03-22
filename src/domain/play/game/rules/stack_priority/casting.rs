@@ -176,6 +176,7 @@ pub fn cast_spell(
     }
 
     let mana_cost = hand_card.mana_cost();
+    let mana_cost_profile = hand_card.mana_cost_profile();
     let player = &mut players[player_idx];
     if player.mana() < mana_cost {
         return Err(DomainError::Game(GameError::InsufficientMana {
@@ -184,10 +185,15 @@ pub fn cast_spell(
             available: player.mana(),
         }));
     }
+    if !player.spend_mana_cost(mana_cost_profile) {
+        return Err(DomainError::Game(GameError::InsufficientMana {
+            player: player_id.clone(),
+            required: mana_cost,
+            available: player.mana(),
+        }));
+    }
 
     let card = helpers::remove_card_from_hand(player, &player_id, &card_id)?;
-    let spent = player.spend_mana(mana_cost);
-    debug_assert!(spent, "mana was checked before removing the card from hand");
 
     let stack_object_id = stack.next_id(game_id);
     stack.push(StackObject::new(

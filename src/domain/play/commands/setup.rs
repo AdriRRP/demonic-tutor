@@ -1,6 +1,7 @@
 use crate::domain::play::{
     cards::{
-        CardDefinition, CardInstance, CardType, CastingRule, KeywordAbilitySet, SupportedSpellRules,
+        CardDefinition, CardInstance, CardType, CastingRule, KeywordAbilitySet, ManaColor,
+        ManaCost, SupportedSpellRules,
     },
     ids::{CardDefinitionId, CardInstanceId, DeckId, PlayerId},
 };
@@ -58,6 +59,15 @@ pub struct LibraryCard {
 
 impl LibraryCard {
     #[must_use]
+    pub const fn land(definition_id: CardDefinitionId, produced_mana: ManaColor) -> Self {
+        Self {
+            definition: CardDefinition::land(definition_id, produced_mana),
+            card_type: CardType::Land,
+            creature: None,
+        }
+    }
+
+    #[must_use]
     pub const fn new(definition_id: CardDefinitionId, card_type: CardType, mana_cost: u32) -> Self {
         Self {
             definition: CardDefinition::for_card_type(definition_id, mana_cost, &card_type),
@@ -80,6 +90,12 @@ impl LibraryCard {
     #[must_use]
     pub fn with_casting_rule(mut self, casting_rule: CastingRule) -> Self {
         self.definition = self.definition.with_casting_rule(casting_rule);
+        self
+    }
+
+    #[must_use]
+    pub fn with_mana_cost(mut self, mana_cost: ManaCost) -> Self {
+        self.definition = self.definition.with_mana_cost(mana_cost);
         self
     }
 

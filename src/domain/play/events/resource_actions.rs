@@ -1,3 +1,4 @@
+use crate::domain::play::cards::ManaColor;
 use crate::domain::play::ids::{CardInstanceId, GameId, PlayerId};
 
 #[derive(Debug, Clone)]
@@ -61,6 +62,7 @@ pub struct ManaAdded {
     pub game_id: GameId,
     pub player_id: PlayerId,
     pub amount: u32,
+    pub color: Option<ManaColor>,
     pub new_mana_total: u32,
 }
 
@@ -70,12 +72,14 @@ impl ManaAdded {
         game_id: GameId,
         player_id: PlayerId,
         amount: u32,
+        color: Option<ManaColor>,
         new_mana_total: u32,
     ) -> Self {
         Self {
             game_id,
             player_id,
             amount,
+            color,
             new_mana_total,
         }
     }

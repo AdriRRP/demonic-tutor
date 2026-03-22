@@ -122,6 +122,54 @@ impl GameplayWorld {
         self.reset_observations();
     }
 
+    pub fn setup_cast_green_instant_with_forest(&mut self) {
+        self.reset_game_with_libraries(
+            "bdd-cast-green-instant",
+            support::filled_library(
+                vec![
+                    support::green_instant_card("bdd-giant-growth", 1),
+                    support::forest_card("bdd-forest"),
+                ],
+                10,
+            ),
+            support::filled_library(Vec::new(), 10),
+        );
+
+        let service = support::create_service();
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-1",
+        );
+        self.tracked_card_id = Some(self.hand_card_by_definition("Alice", "bdd-giant-growth"));
+        self.tracked_blocker_id = Some(self.hand_card_by_definition("Alice", "bdd-forest"));
+        self.reset_observations();
+    }
+
+    pub fn setup_cast_green_instant_with_mountain(&mut self) {
+        self.reset_game_with_libraries(
+            "bdd-cast-green-instant-red-mana",
+            support::filled_library(
+                vec![
+                    support::green_instant_card("bdd-giant-growth", 1),
+                    support::mountain_card("bdd-mountain"),
+                ],
+                10,
+            ),
+            support::filled_library(Vec::new(), 10),
+        );
+
+        let service = support::create_service();
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-1",
+        );
+        self.tracked_card_id = Some(self.hand_card_by_definition("Alice", "bdd-giant-growth"));
+        self.tracked_blocker_id = Some(self.hand_card_by_definition("Alice", "bdd-mountain"));
+        self.reset_observations();
+    }
+
     pub fn setup_targeted_controlled_creature_spell(&mut self) {
         self.reset_game_with_libraries(
             "bdd-targeted-controlled-creature-spell",

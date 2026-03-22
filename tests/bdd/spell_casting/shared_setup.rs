@@ -61,6 +61,43 @@ fn alice_has_a_land_card_in_hand(world: &mut GameplayWorld) {
     assert_eq!(card.card_type(), &CardType::Land);
 }
 
+#[given("Alice is the active player in FirstMain with a green instant card in hand and priority")]
+fn alice_is_the_active_player_in_first_main_with_a_green_instant_card_in_hand_and_priority(
+    world: &mut GameplayWorld,
+) {
+    world.setup_cast_green_instant_with_forest();
+    assert_eq!(
+        world.game().phase(),
+        &GameplayWorld::phase_from_name("FirstMain")
+    );
+    assert_eq!(
+        world.game().active_player(),
+        &GameplayWorld::player_id("Alice")
+    );
+}
+
+#[given("Alice is the active player in FirstMain with a green instant card in hand and only a mountain available")]
+fn alice_is_the_active_player_in_first_main_with_a_green_instant_card_in_hand_and_only_a_mountain_available(
+    world: &mut GameplayWorld,
+) {
+    world.setup_cast_green_instant_with_mountain();
+    assert_eq!(
+        world.game().phase(),
+        &GameplayWorld::phase_from_name("FirstMain")
+    );
+    assert_eq!(
+        world.game().active_player(),
+        &GameplayWorld::player_id("Alice")
+    );
+}
+
+#[given("Alice has only red mana available to pay its cost")]
+fn alice_has_only_red_mana_available_to_pay_its_cost(world: &mut GameplayWorld) {
+    world.ensure_tracked_land_provides_mana();
+    assert_eq!(world.player("Alice").mana_pool().red(), 1);
+    assert_eq!(world.player("Alice").mana(), 1);
+}
+
 #[when("Alice tries to cast the card as a spell")]
 fn alice_tries_to_cast_the_card_as_a_spell(world: &mut GameplayWorld) {
     world.try_cast_tracked_spell("Alice");

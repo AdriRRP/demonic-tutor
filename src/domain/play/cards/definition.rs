@@ -1,12 +1,15 @@
-use super::{CardType, CastingPermissionProfile, CastingRule, SupportedSpellRules};
+use super::{
+    CardType, CastingPermissionProfile, CastingRule, ManaColor, ManaCost, SupportedSpellRules,
+};
 use crate::domain::play::ids::CardDefinitionId;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CardDefinition {
     id: CardDefinitionId,
-    mana_cost: u32,
+    mana_cost: ManaCost,
     casting_permission: Option<CastingPermissionProfile>,
     supported_spell_rules: SupportedSpellRules,
+    produced_mana: Option<ManaColor>,
 }
 
 impl CardDefinition {
@@ -14,9 +17,21 @@ impl CardDefinition {
     pub const fn for_card_type(id: CardDefinitionId, mana_cost: u32, card_type: &CardType) -> Self {
         Self {
             id,
-            mana_cost,
+            mana_cost: ManaCost::generic(mana_cost),
             casting_permission: CastingPermissionProfile::for_spell_card_type(card_type),
             supported_spell_rules: SupportedSpellRules::none(),
+            produced_mana: None,
+        }
+    }
+
+    #[must_use]
+    pub const fn land(id: CardDefinitionId, produced_mana: ManaColor) -> Self {
+        Self {
+            id,
+            mana_cost: ManaCost::generic(0),
+            casting_permission: None,
+            supported_spell_rules: SupportedSpellRules::none(),
+            produced_mana: Some(produced_mana),
         }
     }
 
@@ -38,12 +53,23 @@ impl CardDefinition {
     }
 
     #[must_use]
+    pub const fn with_mana_cost(mut self, mana_cost: ManaCost) -> Self {
+        self.mana_cost = mana_cost;
+        self
+    }
+
+    #[must_use]
     pub const fn id(&self) -> &CardDefinitionId {
         &self.id
     }
 
     #[must_use]
     pub const fn mana_cost(&self) -> u32 {
+        self.mana_cost.total()
+    }
+
+    #[must_use]
+    pub const fn mana_cost_profile(&self) -> ManaCost {
         self.mana_cost
     }
 
@@ -55,5 +81,10 @@ impl CardDefinition {
     #[must_use]
     pub const fn supported_spell_rules(&self) -> SupportedSpellRules {
         self.supported_spell_rules
+    }
+
+    #[must_use]
+    pub const fn produced_mana(&self) -> Option<ManaColor> {
+        self.produced_mana
     }
 }

@@ -69,6 +69,7 @@ The domain currently includes:
 - basic zones (library, hand, battlefield, graveyard, exile)
 - ordered library, hand, graveyard, and exile zones with intentionally unordered battlefield removal semantics
 - mana production from lands
+- minimal colored mana support for `Forest -> Green`, `Mountain -> Red`, and single-color instant costs
 - spell casting with mana cost
 - transient mana pools cleared when the game advances to the next phase or turn
 - the current transient mana model is now exercised explicitly from `Upkeep` into `Draw`
@@ -144,7 +145,7 @@ Current constraints include:
 - no triggered abilities
 - limited card behavior modeling
 - permanent spells resolve from the stack into the battlefield in the current simplified stack model
-- mana production is simplified to generic mana only and is currently exercised in main phases plus the currently supported open priority windows while the acting player holds priority
+- mana production is simplified to generic mana plus a minimal colored subset (`Green`, `Red`) and is currently exercised in main phases plus the currently supported open priority windows while the acting player holds priority
 - combat blocking is simplified to at most one blocker per attacker
 
 These constraints are expected to evolve in future slices.
