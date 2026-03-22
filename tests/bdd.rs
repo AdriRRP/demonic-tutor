@@ -132,6 +132,8 @@ async fn run_stack_features() {
         "features/stack/exile_target_card_from_graveyard.feature",
         "features/stack/pump_target_creature_until_end_of_turn.feature",
         "features/stack/pump_spell_changes_combat_outcome.feature",
+        "features/stack/targeted_gain_life_spell.feature",
+        "features/stack/targeted_lose_life_spell.feature",
         "features/stack/reject_own_turn_priority_artifact_response.feature",
         "features/stack/reject_own_turn_priority_enchantment_response.feature",
     ])

@@ -6,7 +6,8 @@ use crate::support::{
     setup_two_player_game, targeted_attacking_creature_damage_instant_card,
     targeted_controlled_creature_damage_instant_card, targeted_damage_instant_card,
     targeted_destroy_creature_instant_card, targeted_exile_creature_instant_card,
-    targeted_exile_graveyard_card_instant_card, targeted_opponent_damage_instant_card,
+    targeted_exile_graveyard_card_instant_card, targeted_gain_life_instant_card,
+    targeted_lose_life_instant_card, targeted_opponent_damage_instant_card,
     targeted_opponents_creature_damage_instant_card, targeted_player_damage_instant_card,
     targeted_pump_creature_instant_card,
 };
@@ -160,6 +161,110 @@ fn targeted_player_damage_can_end_the_game() {
         .cast_spell(
             &mut game,
             CastSpellCommand::new(PlayerId::new("player-1"), shock_id)
+                .with_target(SpellTarget::Player(PlayerId::new("player-2"))),
+        )
+        .unwrap();
+
+    let resolution = resolve_current_stack(&service, &mut game);
+    assert_eq!(resolution.life_changed.as_ref().unwrap().to_life, 0);
+    assert_eq!(
+        resolution.game_ended.as_ref().unwrap().reason,
+        GameEndReason::ZeroLife
+    );
+}
+
+#[test]
+fn targeted_gain_life_spell_increases_the_targets_life_when_it_resolves() {
+    let (service, mut game) = setup_two_player_game(
+        "game-target-player-gain-life",
+        filled_library(
+            vec![targeted_gain_life_instant_card("healing-light", 0, 3)],
+            10,
+        ),
+        filled_library(vec![land_card("mountain")], 10),
+    );
+
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
+
+    let spell_id = hand_card_id_by_definition(&game, 0, "healing-light");
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), spell_id)
+                .with_target(SpellTarget::Player(PlayerId::new("player-2"))),
+        )
+        .unwrap();
+
+    let resolution = resolve_current_stack(&service, &mut game);
+    assert_eq!(
+        resolution.life_changed.as_ref().unwrap().player_id,
+        PlayerId::new("player-2")
+    );
+    assert_eq!(resolution.life_changed.as_ref().unwrap().from_life, 20);
+    assert_eq!(resolution.life_changed.as_ref().unwrap().to_life, 23);
+    assert_eq!(game.players()[1].life(), 23);
+}
+
+#[test]
+fn targeted_lose_life_spell_reduces_the_targets_life_when_it_resolves() {
+    let (service, mut game) = setup_two_player_game(
+        "game-target-player-lose-life",
+        filled_library(
+            vec![targeted_lose_life_instant_card("soul-drain", 0, 3)],
+            10,
+        ),
+        filled_library(vec![land_card("mountain")], 10),
+    );
+
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
+
+    let spell_id = hand_card_id_by_definition(&game, 0, "soul-drain");
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), spell_id)
+                .with_target(SpellTarget::Player(PlayerId::new("player-2"))),
+        )
+        .unwrap();
+
+    let resolution = resolve_current_stack(&service, &mut game);
+    assert_eq!(
+        resolution.life_changed.as_ref().unwrap().player_id,
+        PlayerId::new("player-2")
+    );
+    assert_eq!(resolution.life_changed.as_ref().unwrap().from_life, 20);
+    assert_eq!(resolution.life_changed.as_ref().unwrap().to_life, 17);
+    assert_eq!(game.players()[1].life(), 17);
+}
+
+#[test]
+fn targeted_lose_life_spell_can_end_the_game() {
+    let (service, mut game) = setup_two_player_game(
+        "game-target-player-lose-life-lethal",
+        filled_library(
+            vec![targeted_lose_life_instant_card("soul-drain", 0, 3)],
+            10,
+        ),
+        filled_library(vec![land_card("mountain")], 10),
+    );
+
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
+    service
+        .adjust_player_life_effect(
+            &mut game,
+            demonictutor::AdjustPlayerLifeEffectCommand::new(
+                PlayerId::new("player-1"),
+                PlayerId::new("player-2"),
+                -18,
+            ),
+        )
+        .unwrap();
+
+    let spell_id = hand_card_id_by_definition(&game, 0, "soul-drain");
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), spell_id)
                 .with_target(SpellTarget::Player(PlayerId::new("player-2"))),
         )
         .unwrap();

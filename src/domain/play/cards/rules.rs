@@ -453,6 +453,8 @@ impl SpellTargetingProfile {
 pub enum SpellResolutionProfile {
     None,
     DealDamage { damage: u32 },
+    GainLife { amount: u32 },
+    LoseLife { amount: u32 },
     DestroyTargetCreature,
     ExileTargetCreature,
     ExileTargetCardFromGraveyard,
@@ -489,6 +491,22 @@ impl SupportedSpellRules {
         Self {
             targeting: SpellTargetingProfile::ExactlyOne(SingleTargetRule::any_player()),
             resolution: SpellResolutionProfile::DealDamage { damage },
+        }
+    }
+
+    #[must_use]
+    pub const fn gain_life_to_player(amount: u32) -> Self {
+        Self {
+            targeting: SpellTargetingProfile::ExactlyOne(SingleTargetRule::any_player()),
+            resolution: SpellResolutionProfile::GainLife { amount },
+        }
+    }
+
+    #[must_use]
+    pub const fn lose_life_from_player(amount: u32) -> Self {
+        Self {
+            targeting: SpellTargetingProfile::ExactlyOne(SingleTargetRule::any_player()),
+            resolution: SpellResolutionProfile::LoseLife { amount },
         }
     }
 

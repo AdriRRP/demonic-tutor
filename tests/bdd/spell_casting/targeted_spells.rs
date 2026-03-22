@@ -26,6 +26,20 @@ fn alice_is_the_active_player_in_first_main_with_a_lethal_targeted_instant_spell
     world.setup_lethal_targeted_player_spell();
 }
 
+#[given("Alice is the active player in FirstMain with a targeted gain-life instant spell in hand")]
+fn alice_is_the_active_player_in_first_main_with_a_targeted_gain_life_instant_spell_in_hand(
+    world: &mut GameplayWorld,
+) {
+    world.setup_targeted_gain_life_spell();
+}
+
+#[given("Alice is the active player in FirstMain with a targeted lose-life instant spell in hand")]
+fn alice_is_the_active_player_in_first_main_with_a_targeted_lose_life_instant_spell_in_hand(
+    world: &mut GameplayWorld,
+) {
+    world.setup_targeted_lose_life_spell();
+}
+
 #[given("Bob is at 2 life")]
 fn bob_is_at_2_life(world: &mut GameplayWorld) {
     assert_eq!(world.player_life("Bob"), 2);
@@ -96,6 +110,16 @@ fn alice_is_the_active_player_in_first_main_with_an_opponents_creature_instant_s
 
 #[when("Alice casts the targeted instant spell targeting Bob")]
 fn alice_casts_the_targeted_instant_spell_targeting_bob(world: &mut GameplayWorld) {
+    world.cast_tracked_targeted_player_spell("Alice", "Bob");
+}
+
+#[when("Alice casts the targeted gain-life instant spell targeting Bob")]
+fn alice_casts_the_targeted_gain_life_instant_spell_targeting_bob(world: &mut GameplayWorld) {
+    world.cast_tracked_targeted_player_spell("Alice", "Bob");
+}
+
+#[when("Alice casts the targeted lose-life instant spell targeting Bob")]
+fn alice_casts_the_targeted_lose_life_instant_spell_targeting_bob(world: &mut GameplayWorld) {
     world.cast_tracked_targeted_player_spell("Alice", "Bob");
 }
 
@@ -320,6 +344,28 @@ fn bob_loses_2_life(world: &mut GameplayWorld) {
     assert_eq!(event.player_id, GameplayWorld::player_id("Bob"));
     assert_eq!(event.from_life, 20);
     assert_eq!(event.to_life, 18);
+}
+
+#[then("Bob gains 3 life")]
+fn bob_gains_3_life(world: &mut GameplayWorld) {
+    let event = world
+        .last_life_changed
+        .as_ref()
+        .expect("expected life changed event");
+    assert_eq!(event.player_id, GameplayWorld::player_id("Bob"));
+    assert_eq!(event.from_life, 20);
+    assert_eq!(event.to_life, 23);
+}
+
+#[then("Bob loses 3 life from the spell")]
+fn bob_loses_3_life_from_spell(world: &mut GameplayWorld) {
+    let event = world
+        .last_life_changed
+        .as_ref()
+        .expect("expected life changed event");
+    assert_eq!(event.player_id, GameplayWorld::player_id("Bob"));
+    assert_eq!(event.from_life, 20);
+    assert_eq!(event.to_life, 17);
 }
 
 #[then("Alice loses 2 life")]

@@ -122,6 +122,54 @@ impl GameplayWorld {
         self.reset_observations();
     }
 
+    pub fn setup_targeted_gain_life_spell(&mut self) {
+        self.reset_game_with_libraries(
+            "bdd-targeted-gain-life-spell",
+            support::filled_library(
+                vec![support::targeted_gain_life_instant_card(
+                    "bdd-healing-light",
+                    0,
+                    3,
+                )],
+                10,
+            ),
+            support::filled_library(Vec::new(), 10),
+        );
+
+        let service = support::create_service();
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-1",
+        );
+        self.tracked_card_id = Some(self.hand_card_by_definition("Alice", "bdd-healing-light"));
+        self.reset_observations();
+    }
+
+    pub fn setup_targeted_lose_life_spell(&mut self) {
+        self.reset_game_with_libraries(
+            "bdd-targeted-lose-life-spell",
+            support::filled_library(
+                vec![support::targeted_lose_life_instant_card(
+                    "bdd-soul-drain",
+                    0,
+                    3,
+                )],
+                10,
+            ),
+            support::filled_library(Vec::new(), 10),
+        );
+
+        let service = support::create_service();
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-1",
+        );
+        self.tracked_card_id = Some(self.hand_card_by_definition("Alice", "bdd-soul-drain"));
+        self.reset_observations();
+    }
+
     pub fn setup_pump_target_creature_spell(&mut self) {
         self.reset_game_with_libraries(
             "bdd-pump-target-creature-spell",

@@ -100,6 +100,16 @@ pub fn targeted_player_damage_instant_card(name: &str, mana_cost: u32, damage: u
         .with_supported_spell_rules(SupportedSpellRules::deal_damage_to_player(damage))
 }
 
+pub fn targeted_gain_life_instant_card(name: &str, mana_cost: u32, amount: u32) -> LibraryCard {
+    LibraryCard::new(CardDefinitionId::new(name), CardType::Instant, mana_cost)
+        .with_supported_spell_rules(SupportedSpellRules::gain_life_to_player(amount))
+}
+
+pub fn targeted_lose_life_instant_card(name: &str, mana_cost: u32, amount: u32) -> LibraryCard {
+    LibraryCard::new(CardDefinitionId::new(name), CardType::Instant, mana_cost)
+        .with_supported_spell_rules(SupportedSpellRules::lose_life_from_player(amount))
+}
+
 pub fn targeted_opponent_damage_instant_card(
     name: &str,
     mana_cost: u32,
