@@ -202,18 +202,12 @@ pub fn cast_spell(
     }
 
     let player = &mut players[player_idx];
-    if player.mana() < mana_cost {
-        return Err(DomainError::Game(GameError::InsufficientMana {
-            player: player_id.clone(),
-            required: mana_cost,
-            available: player.mana(),
-        }));
-    }
+    let available_mana = player.mana();
     if !player.spend_mana_cost(mana_cost_profile) {
         return Err(DomainError::Game(GameError::InsufficientMana {
             player: player_id.clone(),
             required: mana_cost,
-            available: player.mana(),
+            available: available_mana,
         }));
     }
 

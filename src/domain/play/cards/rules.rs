@@ -45,6 +45,9 @@ pub enum ManaColor {
 }
 
 impl ManaColor {
+    pub const ALL: [Self; Self::COUNT] =
+        [Self::White, Self::Blue, Self::Black, Self::Green, Self::Red];
+
     pub const COUNT: usize = 5;
 
     #[must_use]

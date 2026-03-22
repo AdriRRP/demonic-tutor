@@ -90,58 +90,39 @@ impl ManaPool {
     }
 
     pub fn spend(&mut self, cost: ManaCost) -> bool {
-        let mut remaining_total = self.total();
-        for color in [
-            ManaColor::White,
-            ManaColor::Blue,
-            ManaColor::Black,
-            ManaColor::Green,
-            ManaColor::Red,
-        ] {
+        let mut next_generic = self.generic;
+        let mut next_colored = self.colored;
+
+        for color in ManaColor::ALL {
             let required = cost.colored_requirement(color);
-            if self.colored(color) < required {
+            let color_index = color.index();
+            if next_colored[color_index] < required {
                 return false;
             }
-            remaining_total -= required;
-        }
-
-        if remaining_total < cost.generic_requirement() {
-            return false;
-        }
-
-        for color in [
-            ManaColor::White,
-            ManaColor::Blue,
-            ManaColor::Black,
-            ManaColor::Green,
-            ManaColor::Red,
-        ] {
-            let required = cost.colored_requirement(color);
-            self.colored[color.index()] -= required;
+            next_colored[color_index] -= required;
         }
 
         let mut generic_to_pay = cost.generic_requirement();
-        let pay_from_generic = self.generic.min(generic_to_pay);
-        self.generic -= pay_from_generic;
+        let pay_from_generic = next_generic.min(generic_to_pay);
+        next_generic -= pay_from_generic;
         generic_to_pay -= pay_from_generic;
 
-        for color in [
-            ManaColor::White,
-            ManaColor::Blue,
-            ManaColor::Black,
-            ManaColor::Green,
-            ManaColor::Red,
-        ] {
+        for color in ManaColor::ALL {
             if generic_to_pay == 0 {
                 break;
             }
 
-            let pay = self.colored[color.index()].min(generic_to_pay);
-            self.colored[color.index()] -= pay;
+            let color_index = color.index();
+            let pay = next_colored[color_index].min(generic_to_pay);
+            next_colored[color_index] -= pay;
             generic_to_pay -= pay;
         }
-        debug_assert_eq!(generic_to_pay, 0);
+        if generic_to_pay != 0 {
+            return false;
+        }
 
+        self.generic = next_generic;
+        self.colored = next_colored;
         true
     }
 }
