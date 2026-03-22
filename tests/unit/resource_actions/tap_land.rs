@@ -3,8 +3,8 @@
 
 use crate::support::{
     advance_to_first_main_satisfying_cleanup, advance_to_player_phase_satisfying_cleanup,
-    advance_turn_raw, create_service, filled_library, forest_card, instant_card, land_card,
-    plains_card, setup_two_player_game,
+    advance_turn_raw, create_service, filled_library, forest_card, instant_card, island_card,
+    land_card, plains_card, setup_two_player_game,
 };
 use demonictutor::{
     CardError, CardInstanceId, CastSpellCommand, DomainError, GameService, InMemoryEventBus,
@@ -496,5 +496,43 @@ fn tapping_a_plains_adds_white_mana_to_the_pool() {
 
     assert_eq!(mana_event.color, Some(demonictutor::ManaColor::White));
     assert_eq!(game.players()[0].mana_pool().white(), 1);
+    assert_eq!(game.players()[0].mana(), 1);
+}
+
+#[test]
+fn tapping_an_island_adds_blue_mana_to_the_pool() {
+    let service = create_service();
+    let mut game = crate::support::start_two_player_game(&service, "game-blue-mana");
+
+    crate::support::deal_opening_hands(
+        &service,
+        &mut game,
+        filled_library(vec![island_card("island")], 10),
+        filled_library(vec![land_card("mountain")], 10),
+    );
+
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
+    service
+        .play_land(
+            &mut game,
+            PlayLandCommand::new(
+                PlayerId::new("player-1"),
+                CardInstanceId::new("game-blue-mana-player-1-0"),
+            ),
+        )
+        .unwrap();
+
+    let (_, mana_event) = service
+        .tap_land(
+            &mut game,
+            TapLandCommand::new(
+                PlayerId::new("player-1"),
+                CardInstanceId::new("game-blue-mana-player-1-0"),
+            ),
+        )
+        .unwrap();
+
+    assert_eq!(mana_event.color, Some(demonictutor::ManaColor::Blue));
+    assert_eq!(game.players()[0].mana_pool().blue(), 1);
     assert_eq!(game.players()[0].mana(), 1);
 }
