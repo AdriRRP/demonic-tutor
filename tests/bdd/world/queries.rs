@@ -53,52 +53,34 @@ impl GameplayWorld {
     }
 
     pub fn hand_contains(&self, alias: &str, card_id: &CardInstanceId) -> bool {
-        self.player(alias)
-            .hand()
-            .cards()
-            .iter()
-            .any(|card: &CardInstance| card.id() == card_id)
+        self.player(alias).hand_contains(card_id)
     }
 
     pub fn battlefield_contains(&self, alias: &str, card_id: &CardInstanceId) -> bool {
-        self.player(alias)
-            .battlefield()
-            .cards()
-            .iter()
-            .any(|card: &CardInstance| card.id() == card_id)
+        self.player(alias).battlefield_contains(card_id)
     }
 
     pub fn graveyard_contains(&self, alias: &str, card_id: &CardInstanceId) -> bool {
-        self.player(alias)
-            .graveyard()
-            .cards()
-            .iter()
-            .any(|card: &CardInstance| card.id() == card_id)
+        self.player(alias).graveyard_contains(card_id)
     }
 
     pub fn battlefield_card(&self, alias: &str, card_id: &CardInstanceId) -> &CardInstance {
         self.player(alias)
-            .battlefield()
-            .cards()
-            .iter()
-            .find(|card: &&CardInstance| card.id() == card_id)
+            .battlefield_card(card_id)
             .unwrap_or_else(|| panic!("battlefield card should exist: {card_id}"))
     }
 
     pub fn hand_card_by_definition(&self, alias: &str, definition_id: &str) -> CardInstanceId {
         let definition_id = CardDefinitionId::new(definition_id);
         self.player(alias)
-            .hand()
-            .cards()
-            .iter()
-            .find(|card: &&CardInstance| card.definition_id() == &definition_id)
+            .hand_card_by_definition(&definition_id)
             .unwrap_or_else(|| panic!("hand card should exist: {definition_id}"))
             .id()
             .clone()
     }
 
     pub fn player_hand_size(&self, alias: &str) -> usize {
-        self.player(alias).hand().cards().len()
+        self.player(alias).hand_size()
     }
 
     pub fn player_library_size(&self, alias: &str) -> usize {
@@ -134,10 +116,6 @@ impl GameplayWorld {
     }
 
     pub fn exile_contains(&self, alias: &str, card_id: &CardInstanceId) -> bool {
-        self.player(alias)
-            .exile()
-            .cards()
-            .iter()
-            .any(|card: &CardInstance| card.id() == card_id)
+        self.player(alias).exile_contains(card_id)
     }
 }

@@ -1,5 +1,5 @@
 use cucumber::{given, when};
-use demonictutor::{CardInstance, CardType};
+use demonictutor::CardType;
 
 use crate::world::GameplayWorld;
 
@@ -27,10 +27,7 @@ fn alice_has_a_creature_card_in_hand_with_valid_power_and_toughness(world: &mut 
         .expect("tracked creature card should exist");
     let card = world
         .player("Alice")
-        .hand()
-        .cards()
-        .iter()
-        .find(|card: &&CardInstance| card.id() == card_id)
+        .hand_card(card_id)
         .expect("creature card should be in hand");
 
     assert_eq!(card.card_type(), &CardType::Creature);
@@ -52,10 +49,7 @@ fn alice_has_a_land_card_in_hand(world: &mut GameplayWorld) {
         .expect("tracked land card should exist");
     let card = world
         .player("Alice")
-        .hand()
-        .cards()
-        .iter()
-        .find(|card: &&CardInstance| card.id() == card_id)
+        .hand_card(card_id)
         .expect("land card should be in hand");
 
     assert_eq!(card.card_type(), &CardType::Land);

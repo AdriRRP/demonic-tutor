@@ -1,5 +1,5 @@
-use crate::domain::play::cards::{ManaColor, ManaCost};
-use crate::domain::play::ids::PlayerId;
+use crate::domain::play::cards::{CardInstance, ManaColor, ManaCost};
+use crate::domain::play::ids::{CardDefinitionId, CardInstanceId, PlayerId};
 use crate::domain::play::zones::{Battlefield, Exile, Graveyard, Hand, Library};
 
 const DEFAULT_STARTING_LIFE: u32 = 20;
@@ -246,6 +246,71 @@ impl Player {
     #[must_use]
     pub fn hand_size(&self) -> usize {
         self.hand.len()
+    }
+
+    #[must_use]
+    pub fn battlefield_size(&self) -> usize {
+        self.battlefield.len()
+    }
+
+    #[must_use]
+    pub fn graveyard_size(&self) -> usize {
+        self.graveyard.len()
+    }
+
+    #[must_use]
+    pub fn exile_size(&self) -> usize {
+        self.exile.len()
+    }
+
+    #[must_use]
+    pub fn hand_contains(&self, card_id: &CardInstanceId) -> bool {
+        self.hand.contains(card_id)
+    }
+
+    #[must_use]
+    pub fn battlefield_contains(&self, card_id: &CardInstanceId) -> bool {
+        self.battlefield.contains(card_id)
+    }
+
+    #[must_use]
+    pub fn graveyard_contains(&self, card_id: &CardInstanceId) -> bool {
+        self.graveyard.contains(card_id)
+    }
+
+    #[must_use]
+    pub fn exile_contains(&self, card_id: &CardInstanceId) -> bool {
+        self.exile.contains(card_id)
+    }
+
+    #[must_use]
+    pub fn hand_card(&self, card_id: &CardInstanceId) -> Option<&CardInstance> {
+        self.hand.card(card_id)
+    }
+
+    #[must_use]
+    pub fn battlefield_card(&self, card_id: &CardInstanceId) -> Option<&CardInstance> {
+        self.battlefield.card(card_id)
+    }
+
+    #[must_use]
+    pub fn graveyard_card(&self, card_id: &CardInstanceId) -> Option<&CardInstance> {
+        self.graveyard.card(card_id)
+    }
+
+    #[must_use]
+    pub fn exile_card(&self, card_id: &CardInstanceId) -> Option<&CardInstance> {
+        self.exile.card(card_id)
+    }
+
+    #[must_use]
+    pub fn hand_card_by_definition(
+        &self,
+        definition_id: &CardDefinitionId,
+    ) -> Option<&CardInstance> {
+        self.hand
+            .iter()
+            .find(|card| card.definition_id() == definition_id)
     }
 
     pub fn adjust_life(&mut self, delta: i32) {
