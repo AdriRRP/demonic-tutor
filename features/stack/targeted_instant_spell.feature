@@ -1,6 +1,6 @@
 # status: implemented
 # rules: 114, 117, 601, 608, 704.5a, 704.5g
-# slices: spell-target-foundation.md, cast-targeted-instant-at-player.md, resolve-targeted-instant-damage-to-player.md, targeted-player-damage-can-end-the-game.md, reject-missing-target-on-cast.md, reject-invalid-player-target-on-cast.md, cast-targeted-instant-at-creature.md, resolve-targeted-damage-to-creature.md, targeted-creature-damage-uses-sba-review.md
+# slices: spell-target-foundation.md, target-any-player-spell-foundation.md, cast-targeted-instant-at-player.md, resolve-targeted-instant-damage-to-player.md, targeted-player-damage-can-end-the-game.md, reject-missing-target-on-cast.md, reject-invalid-player-target-on-cast.md, cast-targeted-instant-at-creature.md, resolve-targeted-damage-to-creature.md, targeted-creature-damage-uses-sba-review.md
 
 Feature: Targeted instant spells
 
