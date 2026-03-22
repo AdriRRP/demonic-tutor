@@ -8,10 +8,9 @@ The backlog is intentionally organized by dependency order.
 
 Directory: `mana-v1/`
 
-1. `mana-v1/cast-spell-with-double-colored-cost.md`
-2. `mana-v1/colored-mana-can-pay-generic-costs.md`
-3. `mana-v1/reject-mixed-cost-without-required-color.md`
-4. `mana-v1/mana-model-v1-sync.md`
+1. `mana-v1/colored-mana-can-pay-generic-costs.md`
+2. `mana-v1/reject-mixed-cost-without-required-color.md`
+3. `mana-v1/mana-model-v1-sync.md`
 
 ## Wave 2 — Contextual Noncombat Targeting
 
