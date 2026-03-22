@@ -57,4 +57,40 @@ shared_string_id!(PlayerId, display);
 shared_string_id!(DeckId);
 shared_string_id!(CardInstanceId, display);
 shared_string_id!(CardDefinitionId, display);
-shared_string_id!(StackObjectId, display);
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct StackObjectId(pub SharedIdStr);
+
+impl StackObjectId {
+    pub fn new(value: impl Into<String>) -> Self {
+        Self(SharedIdStr::from(value.into()))
+    }
+
+    #[must_use]
+    pub fn for_stack_object(game_id: &GameId, object_number: u32) -> Self {
+        let object_number = object_number.to_string();
+        let mut value =
+            String::with_capacity(game_id.as_str().len() + "-stack-".len() + object_number.len());
+        value.push_str(game_id.as_str());
+        value.push_str("-stack-");
+        value.push_str(&object_number);
+        Self(SharedIdStr::from(value))
+    }
+
+    #[must_use]
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+impl From<String> for StackObjectId {
+    fn from(value: String) -> Self {
+        Self(SharedIdStr::from(value))
+    }
+}
+
+impl std::fmt::Display for StackObjectId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}

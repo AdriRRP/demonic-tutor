@@ -219,9 +219,10 @@ pub fn cast_spell(
 
     let card = helpers::remove_card_from_hand(player, &player_id, &card_id)?.into_spell_snapshot();
 
-    let stack_object_id = stack.next_id(game_id);
+    let stack_object_number = stack.next_object_number();
+    let stack_object_id = stack.object_id(game_id, stack_object_number);
     stack.push(StackObject::new(
-        stack_object_id.clone(),
+        stack_object_number,
         player_id.clone(),
         StackObjectKind::Spell(SpellOnStack::new(card, mana_cost, target.clone())),
     ));

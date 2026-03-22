@@ -40,14 +40,15 @@ impl StackZone {
         }
     }
 
-    pub fn next_id(&mut self, game_id: &GameId) -> StackObjectId {
-        let id = StackObjectId::new(format!(
-            "{}-stack-{}",
-            game_id.as_str(),
-            self.next_object_number
-        ));
+    pub const fn next_object_number(&mut self) -> u32 {
+        let number = self.next_object_number;
         self.next_object_number += 1;
-        id
+        number
+    }
+
+    #[must_use]
+    pub fn object_id(&self, game_id: &GameId, object_number: u32) -> StackObjectId {
+        StackObjectId::for_stack_object(game_id, object_number)
     }
 
     #[must_use]
@@ -81,24 +82,29 @@ impl StackZone {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct StackObject {
-    id: StackObjectId,
+    number: u32,
     controller_id: PlayerId,
     kind: StackObjectKind,
 }
 
 impl StackObject {
     #[must_use]
-    pub const fn new(id: StackObjectId, controller_id: PlayerId, kind: StackObjectKind) -> Self {
+    pub const fn new(number: u32, controller_id: PlayerId, kind: StackObjectKind) -> Self {
         Self {
-            id,
+            number,
             controller_id,
             kind,
         }
     }
 
     #[must_use]
-    pub const fn id(&self) -> &StackObjectId {
-        &self.id
+    pub const fn number(&self) -> u32 {
+        self.number
+    }
+
+    #[must_use]
+    pub fn id(&self, game_id: &GameId) -> StackObjectId {
+        StackObjectId::for_stack_object(game_id, self.number)
     }
 
     #[must_use]

@@ -2,7 +2,7 @@ use crate::domain::play::{
     cards::{CardInstance, CardType, SupportedSpellRules},
     game::model::{StackObject, StackObjectKind},
     game::SpellTarget,
-    ids::{CardInstanceId, PlayerId, StackObjectId},
+    ids::{CardInstanceId, GameId, PlayerId, StackObjectId},
 };
 
 pub(super) struct ResolvedSpellObject {
@@ -16,8 +16,11 @@ pub(super) struct ResolvedSpellObject {
     pub target: Option<SpellTarget>,
 }
 
-pub(super) fn extract_resolved_spell_object(stack_object: &StackObject) -> ResolvedSpellObject {
-    let stack_object_id = stack_object.id().clone();
+pub(super) fn extract_resolved_spell_object(
+    game_id: &GameId,
+    stack_object: &StackObject,
+) -> ResolvedSpellObject {
+    let stack_object_id = stack_object.id(game_id);
     let controller_id = stack_object.controller_id().clone();
 
     let StackObjectKind::Spell(spell) = stack_object.kind().clone();

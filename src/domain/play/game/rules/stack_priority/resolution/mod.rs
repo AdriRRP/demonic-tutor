@@ -38,7 +38,7 @@ pub(super) fn resolve_spell_from_stack(
         mana_cost_paid,
         supported_spell_rules,
         target,
-    } = extract_resolved_spell_object(stack_object);
+    } = extract_resolved_spell_object(game_id, stack_object);
 
     let outcome =
         move_resolved_spell_to_its_destination(players, &controller_id, &card_type, card)?;
