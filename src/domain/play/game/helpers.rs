@@ -5,6 +5,29 @@ use crate::domain::play::{
     ids::{CardInstanceId, PlayerId},
 };
 
+pub(super) struct BattlefieldCardLocation<'a> {
+    owner_id: &'a PlayerId,
+    owner_index: usize,
+    card: &'a CardInstance,
+}
+
+impl<'a> BattlefieldCardLocation<'a> {
+    #[must_use]
+    pub const fn owner_id(&self) -> &'a PlayerId {
+        self.owner_id
+    }
+
+    #[must_use]
+    pub const fn owner_index(&self) -> usize {
+        self.owner_index
+    }
+
+    #[must_use]
+    pub const fn card(&self) -> &'a CardInstance {
+        self.card
+    }
+}
+
 pub(super) fn find_player_index(
     players: &[Player],
     player_id: &PlayerId,
@@ -73,26 +96,28 @@ pub(super) fn remove_card_from_hand(
     })
 }
 
-pub(super) fn battlefield_card_owner<'a>(
+pub(super) fn battlefield_card_location<'a>(
     players: &'a [Player],
     card_id: &CardInstanceId,
-) -> Option<(&'a PlayerId, &'a CardInstance)> {
-    players.iter().find_map(|player| {
-        player
-            .battlefield_card(card_id)
-            .map(|card| (player.id(), card))
-    })
+) -> Option<BattlefieldCardLocation<'a>> {
+    players
+        .iter()
+        .enumerate()
+        .find_map(|(owner_index, player)| {
+            player
+                .battlefield_card(card_id)
+                .map(|card| BattlefieldCardLocation {
+                    owner_id: player.id(),
+                    owner_index,
+                    card,
+                })
+        })
 }
 
 pub(super) fn battlefield_card_mut<'a>(
     players: &'a mut [Player],
     card_id: &CardInstanceId,
 ) -> Option<&'a mut CardInstance> {
-    for player in players.iter_mut() {
-        if let Some(card) = player.battlefield_card_mut(card_id) {
-            return Some(card);
-        }
-    }
-
-    None
+    let owner_index = battlefield_card_location(players, card_id)?.owner_index();
+    players[owner_index].battlefield_card_mut(card_id)
 }

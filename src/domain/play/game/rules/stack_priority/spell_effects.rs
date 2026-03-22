@@ -97,8 +97,8 @@ pub fn evaluate_target_legality(
                     }
                 }
                 (SpellTargetingProfile::ExactlyOne(rule), SpellTarget::Creature(card_id)) => {
-                    let Some((controller_id, target_creature)) =
-                        helpers::battlefield_card_owner(players, card_id)
+                    let Some(target_creature) =
+                        helpers::battlefield_card_location(players, card_id)
                     else {
                         return SpellTargetLegality::MissingCreature(card_id.clone());
                     };
@@ -106,9 +106,9 @@ pub fn evaluate_target_legality(
                     match rule.creature_rule() {
                         Some(rule)
                             if rule.allows(
-                                controller_id == actor_id,
-                                target_creature.is_attacking(),
-                                target_creature.is_blocking(),
+                                target_creature.owner_id() == actor_id,
+                                target_creature.card().is_attacking(),
+                                target_creature.card().is_blocking(),
                             ) =>
                         {
                             SpellTargetLegality::Legal
