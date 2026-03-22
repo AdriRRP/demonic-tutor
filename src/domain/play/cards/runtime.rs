@@ -14,6 +14,8 @@ struct CreatureRuntime {
     power: u32,
     toughness: u32,
     damage: u32,
+    temporary_power: u32,
+    temporary_toughness: u32,
     flags: u8,
     blocking_target: Option<CardInstanceId>,
     keywords: KeywordAbilitySet,
@@ -32,6 +34,8 @@ impl CreatureRuntime {
             power,
             toughness,
             damage: 0,
+            temporary_power: 0,
+            temporary_toughness: 0,
             flags: CREATURE_FLAG_SUMMONING_SICKNESS,
             blocking_target: None,
             keywords: KeywordAbilitySet::empty(),
@@ -43,6 +47,8 @@ impl CreatureRuntime {
             power,
             toughness,
             damage: 0,
+            temporary_power: 0,
+            temporary_toughness: 0,
             flags: CREATURE_FLAG_SUMMONING_SICKNESS,
             blocking_target: None,
             keywords,
@@ -260,7 +266,7 @@ impl CardInstance {
     #[must_use]
     pub const fn power(&self) -> Option<u32> {
         match &self.runtime.creature {
-            Some(creature) => Some(creature.power),
+            Some(creature) => Some(creature.power + creature.temporary_power),
             None => None,
         }
     }
@@ -268,7 +274,7 @@ impl CardInstance {
     #[must_use]
     pub const fn toughness(&self) -> Option<u32> {
         match &self.runtime.creature {
-            Some(creature) => Some(creature.toughness),
+            Some(creature) => Some(creature.toughness + creature.temporary_toughness),
             None => None,
         }
     }
@@ -276,7 +282,10 @@ impl CardInstance {
     #[must_use]
     pub const fn creature_stats(&self) -> Option<(u32, u32)> {
         match (&self.face.card_type, &self.runtime.creature) {
-            (CardType::Creature, Some(creature)) => Some((creature.power, creature.toughness)),
+            (CardType::Creature, Some(creature)) => Some((
+                creature.power + creature.temporary_power,
+                creature.toughness + creature.temporary_toughness,
+            )),
             _ => None,
         }
     }
@@ -357,7 +366,7 @@ impl CardInstance {
     #[must_use]
     pub const fn has_lethal_damage(&self) -> bool {
         match &self.runtime.creature {
-            Some(creature) => creature.damage >= creature.toughness,
+            Some(creature) => creature.damage >= creature.toughness + creature.temporary_toughness,
             None => false,
         }
     }
@@ -365,7 +374,7 @@ impl CardInstance {
     #[must_use]
     pub const fn has_zero_toughness(&self) -> bool {
         match &self.runtime.creature {
-            Some(creature) => creature.toughness == 0,
+            Some(creature) => creature.toughness + creature.temporary_toughness == 0,
             None => false,
         }
     }
@@ -379,6 +388,20 @@ impl CardInstance {
     pub const fn clear_damage(&mut self) {
         if let Some(creature) = &mut self.runtime.creature {
             creature.damage = 0;
+        }
+    }
+
+    pub const fn apply_temporary_stat_bonus(&mut self, power: u32, toughness: u32) {
+        if let Some(creature) = &mut self.runtime.creature {
+            creature.temporary_power += power;
+            creature.temporary_toughness += toughness;
+        }
+    }
+
+    pub const fn clear_temporary_stat_bonuses(&mut self) {
+        if let Some(creature) = &mut self.runtime.creature {
+            creature.temporary_power = 0;
+            creature.temporary_toughness = 0;
         }
     }
 

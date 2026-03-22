@@ -80,6 +80,13 @@ fn alice_is_the_active_player_in_first_main_with_an_exile_graveyard_card_instant
     world.setup_exile_target_graveyard_card_spell();
 }
 
+#[given("Alice is the active player in FirstMain with a pump-creature instant spell and her creature on the battlefield")]
+fn alice_is_the_active_player_in_first_main_with_a_pump_creature_instant_spell_and_her_creature_on_the_battlefield(
+    world: &mut GameplayWorld,
+) {
+    world.setup_pump_target_creature_spell();
+}
+
 #[given("Alice is the active player in FirstMain with an opponents-creature instant spell and only her creature on the battlefield")]
 fn alice_is_the_active_player_in_first_main_with_an_opponents_creature_instant_spell_and_only_her_creature_on_the_battlefield(
     world: &mut GameplayWorld,
@@ -162,6 +169,11 @@ fn alice_casts_the_exile_graveyard_card_instant_spell_targeting_bobs_graveyard_c
     world: &mut GameplayWorld,
 ) {
     world.cast_tracked_targeted_graveyard_card_spell("Alice");
+}
+
+#[when("Alice casts the pump-creature instant spell targeting her creature")]
+fn alice_casts_the_pump_creature_instant_spell_targeting_her_creature(world: &mut GameplayWorld) {
+    world.cast_tracked_targeted_creature_spell("Alice");
 }
 
 #[when("Alice tries to cast the opponents-creature instant spell targeting her creature")]
@@ -266,6 +278,20 @@ fn bobs_graveyard_card_is_in_exile(world: &mut GameplayWorld) {
         .as_ref()
         .expect("tracked graveyard card should exist");
     assert!(world.exile_contains("Bob", card_id));
+}
+
+#[then("Alice's creature gets +2/+2 until end of turn")]
+fn alices_creature_gets_plus_2_plus_2_until_end_of_turn(world: &mut GameplayWorld) {
+    let creature_id = world
+        .tracked_blocker_id
+        .as_ref()
+        .expect("tracked creature should exist");
+    assert_eq!(
+        world
+            .battlefield_card("Alice", creature_id)
+            .creature_stats(),
+        Some((4, 4))
+    );
 }
 
 #[then("Bob loses 2 life")]

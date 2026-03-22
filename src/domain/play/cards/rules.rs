@@ -456,6 +456,7 @@ pub enum SpellResolutionProfile {
     DestroyTargetCreature,
     ExileTargetCreature,
     ExileTargetCardFromGraveyard,
+    PumpTargetCreatureUntilEndOfTurn { power: u32, toughness: u32 },
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -600,6 +601,19 @@ impl SupportedSpellRules {
                 SingleTargetRule::any_card_in_a_graveyard(),
             ),
             resolution: SpellResolutionProfile::ExileTargetCardFromGraveyard,
+        }
+    }
+
+    #[must_use]
+    pub const fn pump_target_creature_until_end_of_turn(power: u32, toughness: u32) -> Self {
+        Self {
+            targeting: SpellTargetingProfile::ExactlyOne(
+                SingleTargetRule::any_creature_on_battlefield(),
+            ),
+            resolution: SpellResolutionProfile::PumpTargetCreatureUntilEndOfTurn {
+                power,
+                toughness,
+            },
         }
     }
 

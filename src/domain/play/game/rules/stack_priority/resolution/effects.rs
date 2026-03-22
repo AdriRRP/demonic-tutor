@@ -26,6 +26,17 @@ fn apply_damage_to_creature(players: &mut [Player], target_id: &CardInstanceId, 
     }
 }
 
+fn apply_temporary_pump_to_creature(
+    players: &mut [Player],
+    target_id: &CardInstanceId,
+    power: u32,
+    toughness: u32,
+) {
+    if let Some(card) = helpers::battlefield_card_mut(players, target_id) {
+        card.apply_temporary_stat_bonus(power, toughness);
+    }
+}
+
 fn destroy_creature(
     game_id: &GameId,
     players: &mut [Player],
@@ -208,6 +219,40 @@ fn resolve_exile_target_graveyard_card_effect(
     )
 }
 
+fn resolve_pump_target_creature_effect(
+    game_id: &GameId,
+    players: &mut [Player],
+    terminal_state: &mut TerminalState,
+    controller_id: &PlayerId,
+    supported_spell_rules: SupportedSpellRules,
+    target: Option<&SpellTarget>,
+    bonus: (u32, u32),
+) -> Result<SpellResolutionSideEffects, DomainError> {
+    let Some(target) = resolve_target_legality_for_effect(
+        players,
+        controller_id,
+        supported_spell_rules,
+        target,
+        "pump spell resolved without a targeting profile",
+    )?
+    else {
+        return review_state_based_actions(game_id, players, terminal_state);
+    };
+
+    if let SpellTarget::Creature(card_id) = target {
+        apply_temporary_pump_to_creature(players, &card_id, bonus.0, bonus.1);
+    }
+
+    review_state_based_actions_after_effect(
+        game_id,
+        players,
+        terminal_state,
+        None,
+        None,
+        Vec::new(),
+    )
+}
+
 pub(super) fn apply_supported_spell_rules(
     game_id: &GameId,
     players: &mut [Player],
@@ -301,6 +346,17 @@ pub(super) fn apply_supported_spell_rules(
                 controller_id,
                 supported_spell_rules,
                 target,
+            )
+        }
+        SpellResolutionProfile::PumpTargetCreatureUntilEndOfTurn { power, toughness } => {
+            resolve_pump_target_creature_effect(
+                game_id,
+                players,
+                terminal_state,
+                controller_id,
+                supported_spell_rules,
+                target,
+                (power, toughness),
             )
         }
     }

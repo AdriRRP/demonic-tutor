@@ -212,6 +212,18 @@ pub fn targeted_exile_graveyard_card_instant_card(name: &str, mana_cost: u32) ->
         .with_supported_spell_rules(SupportedSpellRules::exile_target_card_from_graveyard())
 }
 
+pub fn targeted_pump_creature_instant_card(
+    name: &str,
+    mana_cost: u32,
+    power: u32,
+    toughness: u32,
+) -> LibraryCard {
+    LibraryCard::new(CardDefinitionId::new(name), CardType::Instant, mana_cost)
+        .with_supported_spell_rules(SupportedSpellRules::pump_target_creature_until_end_of_turn(
+            power, toughness,
+        ))
+}
+
 pub fn sorcery_card(name: &str, mana_cost: u32) -> LibraryCard {
     LibraryCard::new(CardDefinitionId::new(name), CardType::Sorcery, mana_cost)
 }

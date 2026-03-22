@@ -130,6 +130,7 @@ async fn run_stack_features() {
         "features/stack/target_opponents_attacking_creature_spell.feature",
         "features/stack/exile_target_creature_foundation.feature",
         "features/stack/exile_target_card_from_graveyard.feature",
+        "features/stack/pump_target_creature_until_end_of_turn.feature",
         "features/stack/reject_own_turn_priority_artifact_response.feature",
         "features/stack/reject_own_turn_priority_enchantment_response.feature",
     ])

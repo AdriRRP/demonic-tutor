@@ -2,16 +2,18 @@
 
 use crate::support::{
     advance_to_first_main_satisfying_cleanup, advance_to_player_first_main_satisfying_cleanup,
-    creature_card, filled_library, land_card, setup_two_player_game,
-    targeted_attacking_creature_damage_instant_card,
+    advance_turn_raw, close_empty_priority_window, creature_card, filled_library, land_card,
+    setup_two_player_game, targeted_attacking_creature_damage_instant_card,
     targeted_controlled_creature_damage_instant_card, targeted_damage_instant_card,
     targeted_destroy_creature_instant_card, targeted_exile_creature_instant_card,
     targeted_exile_graveyard_card_instant_card, targeted_opponent_damage_instant_card,
     targeted_opponents_creature_damage_instant_card, targeted_player_damage_instant_card,
+    targeted_pump_creature_instant_card,
 };
 use demonictutor::{
     CardDefinitionId, CardInstanceId, CastSpellCommand, DeclareAttackersCommand, DomainError,
-    GameEndReason, GameError, LibraryCard, PlayerId, SpellCastOutcome, SpellTarget,
+    GameEndReason, GameError, LibraryCard, PlayerId, ResolveCombatDamageCommand, SpellCastOutcome,
+    SpellTarget,
 };
 
 fn resolve_current_stack(
@@ -1032,6 +1034,120 @@ fn exile_target_graveyard_card_spell_does_not_apply_if_the_target_is_gone_on_res
     assert!(resolution.card_exiled.is_none());
     assert!(game.players()[1].exile_contains(&graveyard_card_id));
     assert!(!game.players()[1].graveyard_contains(&graveyard_card_id));
+}
+
+#[test]
+fn pump_target_creature_spell_applies_temporary_stats_until_end_of_turn() {
+    let (service, mut game) = setup_two_player_game(
+        "game-pump-target-creature-expire",
+        filled_library(
+            vec![
+                creature_card("alice-bear", 0, 2, 2),
+                targeted_pump_creature_instant_card("giant-growth-lite", 0, 2, 2),
+            ],
+            10,
+        ),
+        filled_library(Vec::new(), 10),
+    );
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
+    let creature_id = CardInstanceId::new("game-pump-target-creature-expire-player-1-0");
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), creature_id.clone()),
+        )
+        .unwrap();
+    let _ = resolve_current_stack(&service, &mut game);
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-2");
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
+
+    let spell_id = hand_card_id_by_definition(&game, 0, "giant-growth-lite");
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), spell_id)
+                .with_target(SpellTarget::Creature(creature_id.clone())),
+        )
+        .unwrap();
+
+    let _ = resolve_current_stack(&service, &mut game);
+    assert_eq!(
+        game.players()[0]
+            .battlefield_card(&creature_id)
+            .unwrap()
+            .creature_stats(),
+        Some((4, 4))
+    );
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-2");
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
+
+    assert_eq!(
+        game.players()[0]
+            .battlefield_card(&creature_id)
+            .unwrap()
+            .creature_stats(),
+        Some((2, 2))
+    );
+}
+
+#[test]
+fn pump_target_creature_spell_changes_combat_damage_this_turn() {
+    let (service, mut game) = setup_two_player_game(
+        "game-pump-target-creature-combat",
+        filled_library(
+            vec![
+                creature_card("alice-bear", 0, 2, 2),
+                targeted_pump_creature_instant_card("giant-growth-lite", 0, 2, 2),
+            ],
+            10,
+        ),
+        filled_library(Vec::new(), 10),
+    );
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
+    let creature_id = CardInstanceId::new("game-pump-target-creature-combat-player-1-0");
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), creature_id.clone()),
+        )
+        .unwrap();
+    let _ = resolve_current_stack(&service, &mut game);
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-2");
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
+
+    let spell_id = hand_card_id_by_definition(&game, 0, "giant-growth-lite");
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), spell_id)
+                .with_target(SpellTarget::Creature(creature_id.clone())),
+        )
+        .unwrap();
+    let _ = resolve_current_stack(&service, &mut game);
+
+    advance_turn_raw(&service, &mut game);
+    advance_turn_raw(&service, &mut game);
+    service
+        .declare_attackers(
+            &mut game,
+            DeclareAttackersCommand::new(PlayerId::new("player-1"), vec![creature_id]),
+        )
+        .unwrap();
+    close_empty_priority_window(&service, &mut game);
+    advance_turn_raw(&service, &mut game);
+    service
+        .resolve_combat_damage(
+            &mut game,
+            ResolveCombatDamageCommand::new(PlayerId::new("player-1")),
+        )
+        .unwrap();
+
+    assert_eq!(game.players()[1].life(), 16);
 }
 
 #[test]

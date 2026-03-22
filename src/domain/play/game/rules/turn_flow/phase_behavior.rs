@@ -202,9 +202,10 @@ impl PhaseBehavior for EndStepPhase {
         _active_player: &PlayerId,
     ) -> Result<(), DomainError> {
         for player in players.iter_mut() {
-            player.for_each_battlefield_card_mut(
-                crate::domain::play::cards::CardInstance::clear_damage,
-            );
+            player.for_each_battlefield_card_mut(|card| {
+                card.clear_damage();
+                card.clear_temporary_stat_bonuses();
+            });
         }
         Ok(())
     }

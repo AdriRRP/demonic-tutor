@@ -122,6 +122,51 @@ impl GameplayWorld {
         self.reset_observations();
     }
 
+    pub fn setup_pump_target_creature_spell(&mut self) {
+        self.reset_game_with_libraries(
+            "bdd-pump-target-creature-spell",
+            support::filled_library(
+                vec![
+                    support::creature_card("bdd-alice-bear", 0, 2, 2),
+                    support::targeted_pump_creature_instant_card("bdd-giant-growth-lite", 0, 2, 2),
+                ],
+                10,
+            ),
+            support::filled_library(Vec::new(), 10),
+        );
+
+        let service = support::create_service();
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-1",
+        );
+        let creature_id = self.hand_card_by_definition("Alice", "bdd-alice-bear");
+        service
+            .cast_spell(
+                self.game_mut(),
+                CastSpellCommand::new(Self::player_id("Alice"), creature_id.clone()),
+            )
+            .expect("setup creature spell cast should succeed");
+        self.pass_priority("Alice");
+        self.pass_priority("Bob");
+
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-2",
+        );
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-1",
+        );
+
+        self.tracked_card_id = Some(self.hand_card_by_definition("Alice", "bdd-giant-growth-lite"));
+        self.tracked_blocker_id = Some(creature_id);
+        self.reset_observations();
+    }
+
     pub fn setup_cast_green_instant_with_forest(&mut self) {
         self.reset_game_with_libraries(
             "bdd-cast-green-instant",
