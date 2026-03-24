@@ -71,11 +71,8 @@ fn exile_creature_from_battlefield(
     players: &mut [Player],
     target_id: &CardInstanceId,
 ) -> Option<CardExiled> {
-    let target_owner = helpers::battlefield_card_location(players, target_id)
-        .map(|location| players[location.owner_index()].id().clone());
-    target_owner.and_then(|owner_id| {
-        zones::exile_card_from_battlefield(game_id, players, &owner_id, target_id).ok()
-    })
+    let owner_index = helpers::battlefield_card_location(players, target_id)?.owner_index();
+    zones::exile_card_from_battlefield_by_index(game_id, players, owner_index, target_id).ok()
 }
 
 fn exile_card_from_graveyard(
@@ -83,11 +80,8 @@ fn exile_card_from_graveyard(
     players: &mut [Player],
     target_id: &CardInstanceId,
 ) -> Option<CardExiled> {
-    let target_owner = helpers::graveyard_card_location(players, target_id)
-        .map(|location| players[location.owner_index()].id().clone());
-    target_owner.and_then(|owner_id| {
-        zones::exile_card_from_graveyard(game_id, players, &owner_id, target_id).ok()
-    })
+    let owner_index = helpers::graveyard_card_location(players, target_id)?.owner_index();
+    zones::exile_card_from_graveyard_by_index(game_id, players, owner_index, target_id).ok()
 }
 
 fn review_state_based_actions(
