@@ -11,6 +11,7 @@ use {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CardDefinition {
     id: CardDefinitionId,
+    card_type: CardType,
     mana_cost: ManaCost,
     casting_permission: Option<CastingPermissionProfile>,
     supported_spell_rules: SupportedSpellRules,
@@ -23,6 +24,7 @@ impl CardDefinition {
     pub const fn for_card_type(id: CardDefinitionId, mana_cost: u32, card_type: &CardType) -> Self {
         Self {
             id,
+            card_type: *card_type,
             mana_cost: ManaCost::generic(mana_cost),
             casting_permission: CastingPermissionProfile::for_spell_card_type(card_type),
             supported_spell_rules: SupportedSpellRules::none(),
@@ -43,6 +45,7 @@ impl CardDefinition {
     pub const fn land(id: CardDefinitionId, produced_mana: ManaColor) -> Self {
         Self {
             id,
+            card_type: CardType::Land,
             mana_cost: ManaCost::generic(0),
             casting_permission: None,
             supported_spell_rules: SupportedSpellRules::none(),
@@ -94,6 +97,11 @@ impl CardDefinition {
     #[must_use]
     pub const fn mana_cost(&self) -> u32 {
         self.mana_cost.total()
+    }
+
+    #[must_use]
+    pub const fn card_type(&self) -> &CardType {
+        &self.card_type
     }
 
     #[must_use]

@@ -119,7 +119,7 @@ fn read_hand_spell_metadata(
     card_id: &CardInstanceId,
 ) -> Result<HandSpellMetadata, DomainError> {
     let hand_card = helpers::hand_card(player, player_id, card_id)?;
-    let card_type = hand_card.card_type().clone();
+    let card_type = *hand_card.card_type();
     let casting_permission = if card_type.is_land() {
         None
     } else {

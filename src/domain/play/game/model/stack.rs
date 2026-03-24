@@ -207,7 +207,7 @@ impl SpellOnStack {
     }
 
     #[must_use]
-    pub const fn card_type(&self) -> &CardType {
+    pub fn card_type(&self) -> &CardType {
         self.card.card_type()
     }
 

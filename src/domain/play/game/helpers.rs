@@ -82,7 +82,7 @@ pub(super) fn hand_card_type(
     player_id: &PlayerId,
     card_id: &CardInstanceId,
 ) -> Result<CardType, DomainError> {
-    hand_card(player, player_id, card_id).map(|card| card.card_type().clone())
+    hand_card(player, player_id, card_id).map(|card| *card.card_type())
 }
 
 pub(super) fn hand_card<'a>(

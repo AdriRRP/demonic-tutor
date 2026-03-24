@@ -96,7 +96,6 @@ impl CreatureRuntime {
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct CardFace {
     definition: Arc<CardDefinition>,
-    card_type: CardType,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -122,7 +121,6 @@ pub struct CardInstance {
 pub struct SpellCardSnapshot {
     id: CardInstanceId,
     definition: Arc<CardDefinition>,
-    card_type: CardType,
     creature_profile: Option<SpellCreatureProfile>,
 }
 
@@ -131,13 +129,12 @@ impl CardInstance {
     pub(crate) fn from_definition(
         id: CardInstanceId,
         definition: CardDefinition,
-        card_type: CardType,
+        _card_type: CardType,
     ) -> Self {
         Self {
             id,
             face: CardFace {
                 definition: Arc::new(definition),
-                card_type,
             },
             runtime: CardRuntime {
                 tapped: false,
@@ -176,7 +173,6 @@ impl CardInstance {
                     mana_cost,
                     &CardType::Creature,
                 )),
-                card_type: CardType::Creature,
             },
             runtime: CardRuntime {
                 tapped: false,
@@ -197,7 +193,6 @@ impl CardInstance {
             id,
             face: CardFace {
                 definition: Arc::new(definition),
-                card_type: CardType::Creature,
             },
             runtime: CardRuntime {
                 tapped: false,
@@ -222,7 +217,6 @@ impl CardInstance {
         SpellCardSnapshot {
             id: self.id,
             definition: self.face.definition,
-            card_type: self.face.card_type,
             creature_profile,
         }
     }
@@ -238,8 +232,8 @@ impl CardInstance {
     }
 
     #[must_use]
-    pub const fn card_type(&self) -> &CardType {
-        &self.face.card_type
+    pub fn card_type(&self) -> &CardType {
+        self.face.definition.card_type()
     }
 
     #[must_use]
@@ -479,8 +473,8 @@ impl SpellCardSnapshot {
     }
 
     #[must_use]
-    pub const fn card_type(&self) -> &CardType {
-        &self.card_type
+    pub fn card_type(&self) -> &CardType {
+        self.definition.card_type()
     }
 
     #[must_use]
@@ -509,7 +503,6 @@ impl SpellCardSnapshot {
             id: self.id,
             face: CardFace {
                 definition: self.definition,
-                card_type: self.card_type,
             },
             runtime,
         }

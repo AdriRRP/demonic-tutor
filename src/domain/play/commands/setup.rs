@@ -178,11 +178,7 @@ impl LibraryCard {
                 creature.toughness,
                 creature.keyword_abilities,
             ),
-            None => CardInstance::from_definition(
-                card_id,
-                self.definition.clone(),
-                self.card_type.clone(),
-            ),
+            None => CardInstance::from_definition(card_id, self.definition.clone(), self.card_type),
         }
     }
 }

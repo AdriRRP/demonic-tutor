@@ -50,8 +50,7 @@ fn resolve_spell_from_stack(
         target,
     } = extract_resolved_spell_object(game_id, stack_object)?;
 
-    let outcome =
-        move_resolved_spell_to_its_destination(players, &controller_id, &card_type, card)?;
+    let outcome = move_resolved_spell_to_its_destination(players, &controller_id, card_type, card)?;
 
     let (stack_top_resolved, spell_cast) = build_resolution_events(
         game_id,

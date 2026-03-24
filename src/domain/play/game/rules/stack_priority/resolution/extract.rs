@@ -31,7 +31,7 @@ pub(super) fn extract_resolved_spell_object(
         )));
     };
     let source_card_id = spell.source_card_id().clone();
-    let card_type = spell.card_type().clone();
+    let card_type = *spell.card_type();
     let supported_spell_rules = spell.supported_spell_rules();
     let mana_cost_paid = spell.mana_cost_paid();
     let target = spell.target().cloned();

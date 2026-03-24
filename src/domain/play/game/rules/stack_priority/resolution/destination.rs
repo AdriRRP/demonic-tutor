@@ -11,7 +11,7 @@ use crate::domain::play::{
 pub(super) fn move_resolved_spell_to_its_destination(
     players: &mut [Player],
     controller_id: &PlayerId,
-    card_type: &CardType,
+    card_type: CardType,
     card: CardInstance,
 ) -> Result<SpellCastOutcome, DomainError> {
     let player = helpers::find_player_mut(players, controller_id)?;
