@@ -1,7 +1,7 @@
 //! Supports stack priority resolution extract.
 
 use crate::domain::play::{
-    cards::{ActivatedAbilityProfile, CardType, SpellPayload, SupportedSpellRules},
+    cards::{ActivatedAbilityProfile, SpellPayload},
     errors::{DomainError, GameError},
     game::model::{StackObject, StackObjectKind},
     game::SpellTarget,
@@ -13,9 +13,7 @@ pub(super) struct ResolvedSpellObject {
     pub controller_id: PlayerId,
     pub stack_object_id: StackObjectId,
     pub payload: SpellPayload,
-    pub card_type: CardType,
     pub mana_cost_paid: u32,
-    pub supported_spell_rules: SupportedSpellRules,
     pub target: Option<SpellTarget>,
 }
 
@@ -31,8 +29,6 @@ pub(super) fn extract_resolved_spell_object(
         )));
     };
     let source_card_id = spell.source_card_id().clone();
-    let card_type = *spell.card_type();
-    let supported_spell_rules = spell.supported_spell_rules();
     let mana_cost_paid = spell.mana_cost_paid();
     let target = spell.target().cloned();
     let payload = spell.into_payload();
@@ -42,9 +38,7 @@ pub(super) fn extract_resolved_spell_object(
         controller_id,
         stack_object_id,
         payload,
-        card_type,
         mana_cost_paid,
-        supported_spell_rules,
         target,
     })
 }

@@ -45,11 +45,11 @@ fn resolve_spell_from_stack(
         controller_id,
         stack_object_id,
         payload,
-        card_type,
         mana_cost_paid,
-        supported_spell_rules,
         target,
     } = extract_resolved_spell_object(game_id, stack_object)?;
+    let card_type = *payload.card_type();
+    let supported_spell_rules = payload.supported_spell_rules();
 
     let outcome =
         move_resolved_spell_to_its_destination(players, &controller_id, card_type, payload)?;
