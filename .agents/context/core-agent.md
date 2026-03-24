@@ -62,7 +62,7 @@ Prefer:
 - keep mana abilities and non-mana activated abilities semantically distinct: mana abilities stay stack-free, while supported non-mana activations must go through the normal priority-and-stack corridor
 - once the supported subset becomes broad, prefer compact capability matrices in canonical docs over ever-longer linear capability checklists
 - every Rust module in `src/` and `tests/` must start with a brief `//!` rustdoc explaining its job
-- top-level Rust imports must follow repository `rustfmt` settings, preferring grouped imports when they improve readability
+- top-level Rust imports must follow repository `rustfmt` settings, preferring grouped imports when they improve readability and the formatter preserves them
 
 Avoid:
 

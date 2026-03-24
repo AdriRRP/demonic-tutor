@@ -150,7 +150,7 @@ Agents must:
 - preserve aggregate boundaries
 - maintain ubiquitous language consistency
 - ensure every Rust module in `src/` and `tests/` starts with a brief `//!` rustdoc describing its responsibility
-- ensure top-level Rust imports in each module follow repository `rustfmt` settings and prefer grouped imports when they read better
+- ensure top-level Rust imports in each module follow repository `rustfmt` settings and prefer grouped imports when they read better and the formatter preserves them
 - prefer the **domain-canonical action** over temporary convenience commands
 - remove duplicate domain entrypoints when one concept is the real source of truth
 - keep domain events expressive enough for replay and analysis without reconstructing basic intent from hidden state

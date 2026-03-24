@@ -204,13 +204,13 @@ This is the default bar: one real behavior, one small model extension, focused t
 
 ## Imports
 
-Use grouped imports to keep modules readable.
+Keep imports readable and let repository `rustfmt` own their final layout.
 
 This is mandatory in this repository:
 
 - every Rust module file under `src/` and `tests/` must start with a brief module rustdoc comment using `//!`
 - top-level imports in each Rust module must follow repository `rustfmt` settings rather than per-file ad hoc formatting
-- when multiple imports can be grouped semantically, prefer compact grouped imports
+- when multiple imports can be grouped semantically, prefer compact grouped imports where `rustfmt` preserves them
 
 These rules are repository policy and must be preserved in every new file and every edited file.
 
