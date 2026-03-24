@@ -114,6 +114,18 @@ struct HandSpellMetadata {
     mana_cost_profile: crate::domain::play::cards::ManaCost,
 }
 
+struct PreparedStackSpellObject {
+    card_type: CardType,
+    mana_cost: u32,
+    spell: SpellOnStack,
+}
+
+impl PreparedStackSpellObject {
+    fn into_stack_object(self, number: u32, controller_id: PlayerId) -> StackObject {
+        StackObject::new(number, controller_id, StackObjectKind::Spell(self.spell))
+    }
+}
+
 fn read_hand_spell_metadata(
     player: &crate::domain::play::game::Player,
     player_id: &PlayerId,
@@ -140,6 +152,19 @@ fn read_hand_spell_metadata(
         mana_cost: hand_card.mana_cost(),
         mana_cost_profile: hand_card.mana_cost_profile(),
     })
+}
+
+fn prepare_stack_spell_object(
+    prepared_cast: crate::domain::play::game::model::PreparedHandSpellCast,
+    card_type: CardType,
+    mana_cost: u32,
+    target: Option<SpellTarget>,
+) -> PreparedStackSpellObject {
+    PreparedStackSpellObject {
+        card_type,
+        mana_cost,
+        spell: SpellOnStack::new(prepared_cast.into_payload(), mana_cost, target),
+    }
 }
 
 /// Puts a spell card from hand onto the stack and opens a priority window.
@@ -227,16 +252,14 @@ pub fn cast_spell(
                 }))
             }
         };
-    let mana_cost_paid = prepared_cast.mana_cost_paid();
-    let payload = prepared_cast.into_payload();
+    let prepared_stack_spell =
+        prepare_stack_spell_object(prepared_cast, card_type, mana_cost, target.clone());
 
+    let spell_card_type = prepared_stack_spell.card_type;
+    let spell_mana_cost = prepared_stack_spell.mana_cost;
     let stack_object_number = stack.next_object_number();
     let stack_object_id = stack.object_id(game_id, stack_object_number);
-    stack.push(StackObject::new(
-        stack_object_number,
-        player_id.clone(),
-        StackObjectKind::Spell(SpellOnStack::new(payload, mana_cost_paid, target.clone())),
-    ));
+    stack.push(prepared_stack_spell.into_stack_object(stack_object_number, player_id.clone()));
 
     *priority = Some(PriorityState::opened(player_id.clone()));
 
@@ -245,8 +268,8 @@ pub fn cast_spell(
             game_id.clone(),
             player_id,
             card_id,
-            card_type,
-            mana_cost,
+            spell_card_type,
+            spell_mana_cost,
             stack_object_id,
             target,
         ),
