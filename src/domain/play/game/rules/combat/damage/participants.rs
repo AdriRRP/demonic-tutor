@@ -95,7 +95,10 @@ pub(super) fn collect_attackers(player: &Player) -> Result<Vec<AttackerParticipa
         .collect()
 }
 
-pub(super) fn collect_blockers(player: &Player) -> Result<Vec<BlockerParticipant>, DomainError> {
+pub(super) fn collect_blockers(
+    player: &Player,
+    attacker_player: &Player,
+) -> Result<Vec<BlockerParticipant>, DomainError> {
     player
         .battlefield_cards()
         .filter(|card| card.is_blocking())
@@ -106,12 +109,22 @@ pub(super) fn collect_blockers(player: &Player) -> Result<Vec<BlockerParticipant
                     card.id()
                 )))
             })?;
-            let attacker_id = card.blocking_target().cloned().ok_or_else(|| {
+            let attacker_handle = card.blocking_target().ok_or_else(|| {
                 DomainError::Game(GameError::InternalInvariantViolation(format!(
                     "blocking creature {} must have an assigned attacker",
                     card.id()
                 )))
             })?;
+            let attacker_id = attacker_player
+                .card_by_handle(attacker_handle)
+                .ok_or_else(|| {
+                    DomainError::Game(GameError::InternalInvariantViolation(format!(
+                        "blocking creature {} points to a missing attacker handle",
+                        card.id()
+                    )))
+                })?
+                .id()
+                .clone();
 
             Ok(BlockerParticipant {
                 id: card.id().clone(),

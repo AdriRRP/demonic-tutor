@@ -31,7 +31,6 @@ pub fn declare_blockers(
             )
         })
         .collect::<HashMap<_, _>>();
-    let defender = &mut players[defending_player_idx];
     let mut valid_blockers: Vec<(CardInstanceId, CardInstanceId)> = Vec::new();
     let mut seen_blockers = HashSet::new();
     let mut seen_attackers = HashSet::new();
@@ -55,12 +54,24 @@ pub fn declare_blockers(
             )));
         };
 
-        let card = defender.battlefield_card_mut(blocker_id).ok_or_else(|| {
-            DomainError::Card(CardError::NotOnBattlefield {
-                player: cmd.player_id.clone(),
-                card: blocker_id.clone(),
-            })
-        })?;
+        let attacker_owner_id = players[attacker_player_idx].id().clone();
+        let attacker_handle = players[attacker_player_idx]
+            .battlefield_handle(attacker_id)
+            .ok_or_else(|| {
+                DomainError::Card(CardError::NotOnBattlefield {
+                    player: attacker_owner_id,
+                    card: attacker_id.clone(),
+                })
+            })?;
+
+        let card = players[defending_player_idx]
+            .battlefield_card_mut(blocker_id)
+            .ok_or_else(|| {
+                DomainError::Card(CardError::NotOnBattlefield {
+                    player: cmd.player_id.clone(),
+                    card: blocker_id.clone(),
+                })
+            })?;
 
         if !matches!(card.card_type(), CardType::Creature) {
             return Err(DomainError::Card(CardError::NotACreature(
@@ -88,7 +99,7 @@ pub fn declare_blockers(
             ));
         }
 
-        card.assign_blocking_target(attacker_id.clone());
+        card.assign_blocking_target(attacker_handle);
         valid_blockers.push((blocker_id.clone(), attacker_id.clone()));
     }
 

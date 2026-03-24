@@ -510,6 +510,10 @@ impl Player {
         self.card_in_zone(card_id, PlayerCardZone::Battlefield)
     }
 
+    pub(crate) fn battlefield_handle(&self, card_id: &CardInstanceId) -> Option<PlayerCardHandle> {
+        self.handle_in_zone(card_id, PlayerCardZone::Battlefield)
+    }
+
     pub fn battlefield_card_mut(&mut self, card_id: &CardInstanceId) -> Option<&mut CardInstance> {
         self.card_in_zone_mut(card_id, PlayerCardZone::Battlefield)
     }

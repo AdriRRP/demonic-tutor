@@ -166,7 +166,7 @@ pub fn resolve_combat_damage(
     if attackers.is_empty() {
         return Err(DomainError::Game(GameError::NoAttackersDeclared));
     }
-    let blockers = collect_blockers(&players[defender_idx])?;
+    let blockers = collect_blockers(&players[defender_idx], &players[attacker_player_idx])?;
     let has_first_strike_step = attackers.iter().any(AttackerParticipant::has_first_strike)
         || blockers.iter().any(BlockerParticipant::has_first_strike);
 
@@ -223,7 +223,8 @@ pub fn resolve_combat_damage(
 
     if has_first_strike_step && game_ended.is_none() {
         let surviving_attackers = collect_attackers(&players[attacker_player_idx])?;
-        let surviving_blockers = collect_blockers(&players[defender_idx])?;
+        let surviving_blockers =
+            collect_blockers(&players[defender_idx], &players[attacker_player_idx])?;
         let (second_step_events, second_step_damage, second_step_player_damage) =
             resolve_damage_step(
                 &surviving_attackers,

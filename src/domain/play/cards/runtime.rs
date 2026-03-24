@@ -5,7 +5,7 @@ use {
         ActivatedAbilityProfile, ActivatedManaAbilityProfile, CardDefinition, CardType,
         CastingPermissionProfile, KeywordAbility, KeywordAbilitySet, ManaCost, SupportedSpellRules,
     },
-    crate::domain::play::ids::{CardDefinitionId, CardInstanceId},
+    crate::domain::play::ids::{CardDefinitionId, CardInstanceId, PlayerCardHandle},
     std::sync::Arc,
 };
 
@@ -21,7 +21,7 @@ struct CreatureRuntime {
     temporary_power: u32,
     temporary_toughness: u32,
     flags: u8,
-    blocking_target: Option<CardInstanceId>,
+    blocking_target: Option<PlayerCardHandle>,
     keywords: KeywordAbilitySet,
 }
 
@@ -104,7 +104,7 @@ impl CreatureRuntime {
         }
     }
 
-    fn set_blocking(&mut self, blocking: bool) {
+    const fn set_blocking(&mut self, blocking: bool) {
         if blocking {
             self.flags |= CREATURE_FLAG_BLOCKING;
         } else {
@@ -381,24 +381,24 @@ impl CardInstance {
         }
     }
 
-    pub fn set_blocking(&mut self, blocking: bool) {
+    pub const fn set_blocking(&mut self, blocking: bool) {
         if let CardRuntimeKind::Creature(creature) = &mut self.runtime.kind {
             creature.set_blocking(blocking);
         }
     }
 
     #[must_use]
-    pub const fn blocking_target(&self) -> Option<&CardInstanceId> {
+    pub const fn blocking_target(&self) -> Option<PlayerCardHandle> {
         match &self.runtime.kind {
-            CardRuntimeKind::Creature(creature) => creature.blocking_target.as_ref(),
+            CardRuntimeKind::Creature(creature) => creature.blocking_target,
             CardRuntimeKind::NonCreature => None,
         }
     }
 
-    pub fn assign_blocking_target(&mut self, attacker_id: CardInstanceId) {
+    pub const fn assign_blocking_target(&mut self, attacker_handle: PlayerCardHandle) {
         if let CardRuntimeKind::Creature(creature) = &mut self.runtime.kind {
             creature.set_blocking(true);
-            creature.blocking_target = Some(attacker_id);
+            creature.blocking_target = Some(attacker_handle);
         }
     }
 
