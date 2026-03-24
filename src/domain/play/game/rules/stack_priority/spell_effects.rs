@@ -2,7 +2,7 @@
 
 use crate::domain::play::{
     cards::{CardInstance, SpellTargetingProfile, SupportedSpellRules},
-    game::{helpers, Player, SpellTarget},
+    game::{helpers, AggregateCardLocationIndex, Player, SpellTarget},
     ids::{CardInstanceId, PlayerId},
 };
 
@@ -27,10 +27,12 @@ pub enum SpellTargetLegality {
 pub enum TargetLegalityContext<'a> {
     Cast {
         players: &'a [Player],
+        card_locations: &'a AggregateCardLocationIndex,
         caster_id: &'a PlayerId,
     },
     Resolution {
         players: &'a [Player],
+        card_locations: &'a AggregateCardLocationIndex,
         controller_id: &'a PlayerId,
     },
 }
@@ -40,6 +42,15 @@ impl<'a> TargetLegalityContext<'a> {
     pub const fn players(self) -> &'a [Player] {
         match self {
             Self::Cast { players, .. } | Self::Resolution { players, .. } => players,
+        }
+    }
+
+    #[must_use]
+    pub const fn card_locations(self) -> &'a AggregateCardLocationIndex {
+        match self {
+            Self::Cast { card_locations, .. } | Self::Resolution { card_locations, .. } => {
+                card_locations
+            }
         }
     }
 
@@ -79,6 +90,7 @@ fn resolve_target(
     target: &SpellTarget,
 ) -> Result<ResolvedTarget, SpellTargetLegality> {
     let players = context.players();
+    let card_locations = context.card_locations();
     let actor_id = context.actor_id();
 
     if !accepts_target(targeting, target) {
@@ -98,7 +110,9 @@ fn resolve_target(
             })
         }
         SpellTarget::Creature(card_id) => {
-            let Some(target_creature) = helpers::battlefield_card_location(players, card_id) else {
+            let Some(target_creature) =
+                helpers::battlefield_card_location(players, card_locations, card_id)
+            else {
                 return Err(SpellTargetLegality::MissingCreature(card_id.clone()));
             };
 
@@ -109,7 +123,7 @@ fn resolve_target(
             })
         }
         SpellTarget::GraveyardCard(card_id) => {
-            if helpers::graveyard_card_location(players, card_id).is_none() {
+            if helpers::graveyard_card_location(players, card_locations, card_id).is_none() {
                 return Err(SpellTargetLegality::MissingGraveyardCard(card_id.clone()));
             }
 

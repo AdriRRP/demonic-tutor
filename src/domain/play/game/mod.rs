@@ -18,9 +18,9 @@ use crate::domain::play::{
 
 pub use model::Player;
 pub use model::{
-    ActivatedAbilityOnStack, PlayerCardZone, PrepareHandSpellCastError, PreparedHandSpellCast,
-    PriorityState, SpellOnStack, SpellTarget, StackObject, StackObjectKind, StackZone,
-    TerminalState,
+    ActivatedAbilityOnStack, AggregateCardLocationIndex, PlayerCardZone, PrepareHandSpellCastError,
+    PreparedHandSpellCast, PriorityState, SpellOnStack, SpellTarget, StackObject, StackObjectKind,
+    StackZone, TerminalState,
 };
 pub use rules::{
     combat::ResolveCombatDamageOutcome,
@@ -39,6 +39,7 @@ pub struct Game {
     phase: Phase,
     turn_number: u32,
     players: Vec<Player>,
+    card_locations: AggregateCardLocationIndex,
     stack: StackZone,
     priority: Option<PriorityState>,
     terminal_state: TerminalState,
@@ -46,7 +47,7 @@ pub struct Game {
 
 impl Game {
     #[must_use]
-    pub const fn new(
+    pub fn new(
         id: GameId,
         active_player: PlayerId,
         phase: Phase,
@@ -54,12 +55,14 @@ impl Game {
         players: Vec<Player>,
         terminal_state: TerminalState,
     ) -> Self {
+        let card_locations = AggregateCardLocationIndex::from_players(&players);
         Self {
             id,
             active_player,
             phase,
             turn_number,
             players,
+            card_locations,
             stack: StackZone::empty(),
             priority: None,
             terminal_state,
@@ -124,5 +127,9 @@ impl Game {
     #[must_use]
     pub const fn end_reason(&self) -> Option<GameEndReason> {
         self.terminal_state.end_reason()
+    }
+
+    fn refresh_card_locations(&mut self) {
+        self.card_locations.refresh(&self.players);
     }
 }

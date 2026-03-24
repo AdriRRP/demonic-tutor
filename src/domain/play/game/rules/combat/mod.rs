@@ -6,7 +6,11 @@ mod damage;
 mod declaring;
 mod progression;
 
-use super::super::{helpers, invariants, model::Player, TerminalState};
+use super::super::{
+    helpers, invariants,
+    model::{AggregateCardLocationIndex, Player},
+    TerminalState,
+};
 use crate::domain::play::{
     commands::{DeclareAttackersCommand, DeclareBlockersCommand, ResolveCombatDamageCommand},
     errors::DomainError,
@@ -56,6 +60,7 @@ pub fn declare_blockers(
 pub fn resolve_combat_damage(
     game_id: &GameId,
     players: &mut [Player],
+    card_locations: &AggregateCardLocationIndex,
     active_player: &PlayerId,
     phase: &Phase,
     terminal_state: &mut TerminalState,
@@ -70,6 +75,7 @@ pub fn resolve_combat_damage(
     damage::resolve_combat_damage(
         game_id,
         players,
+        card_locations,
         terminal_state,
         cmd,
         player_idx,

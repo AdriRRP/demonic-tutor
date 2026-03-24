@@ -36,6 +36,7 @@ pub fn pass_priority(
     let StackPriorityContext {
         game_id,
         players,
+        card_locations,
         active_player,
         stack,
         priority,
@@ -87,7 +88,13 @@ pub fn pass_priority(
         ))
     })?;
     let (stack_top_resolved, spell_cast, card_exiled, life_changed, creatures_died, game_ended) =
-        resolve_stack_object(game_id, players, terminal_state, stack_object)?;
+        resolve_stack_object(
+            game_id,
+            players,
+            card_locations,
+            terminal_state,
+            stack_object,
+        )?;
 
     if terminal_state.is_over() {
         *priority = None;

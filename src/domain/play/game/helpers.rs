@@ -1,7 +1,7 @@
 //! Supports play game helpers.
 
 use {
-    super::model::Player,
+    super::model::{AggregateCardLocationIndex, Player, PlayerCardZone},
     crate::domain::play::{
         cards::{CardInstance, CardType},
         errors::{CardError, DomainError, GameError},
@@ -107,36 +107,37 @@ pub(super) fn remove_card_from_hand(
 
 pub(super) fn battlefield_card_location<'a>(
     players: &'a [Player],
+    card_locations: &AggregateCardLocationIndex,
     card_id: &CardInstanceId,
 ) -> Option<BattlefieldCardLocation<'a>> {
-    players
-        .iter()
-        .enumerate()
-        .find_map(|(owner_index, player)| {
-            player
-                .battlefield_card(card_id)
-                .map(|card| BattlefieldCardLocation { owner_index, card })
-        })
+    let location = card_locations.location(card_id)?;
+    (location.zone() == PlayerCardZone::Battlefield).then_some(())?;
+    let owner_index = location.owner_index();
+    let player = players.get(owner_index)?;
+    let card = player.battlefield_card(card_id)?;
+    Some(BattlefieldCardLocation { owner_index, card })
 }
 
 pub(super) fn battlefield_card_mut<'a>(
     players: &'a mut [Player],
+    card_locations: &AggregateCardLocationIndex,
     card_id: &CardInstanceId,
 ) -> Option<&'a mut CardInstance> {
-    let owner_index = battlefield_card_location(players, card_id)?.owner_index();
+    let owner_index = battlefield_card_location(players, card_locations, card_id)?.owner_index();
     players[owner_index].battlefield_card_mut(card_id)
 }
 
 pub(super) fn graveyard_card_location(
     players: &[Player],
+    card_locations: &AggregateCardLocationIndex,
     card_id: &CardInstanceId,
 ) -> Option<GraveyardCardLocation> {
+    let location = card_locations.location(card_id)?;
+    (location.zone() == PlayerCardZone::Graveyard).then_some(())?;
     players
-        .iter()
-        .enumerate()
-        .find_map(|(owner_index, player)| {
-            player
-                .graveyard_card(card_id)
-                .map(|_| GraveyardCardLocation { owner_index })
-        })
+        .get(location.owner_index())?
+        .graveyard_card(card_id)?;
+    Some(GraveyardCardLocation {
+        owner_index: location.owner_index(),
+    })
 }

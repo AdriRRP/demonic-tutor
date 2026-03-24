@@ -21,10 +21,12 @@ impl Game {
         cmd: AdvanceTurnCommand,
     ) -> Result<rules::turn_flow::AdvanceTurnOutcome, DomainError> {
         invariants::require_no_open_priority_window(self.priority())?;
-        rules::turn_flow::advance_turn(
+        self.refresh_card_locations();
+        let result = rules::turn_flow::advance_turn(
             TurnProgressionContext {
                 game_id: &self.id,
                 players: &mut self.players,
+                card_locations: &self.card_locations,
                 active_player: &mut self.active_player,
                 phase: &mut self.phase,
                 priority: &mut self.priority,
@@ -32,7 +34,9 @@ impl Game {
                 terminal_state: &mut self.terminal_state,
             },
             cmd,
-        )
+        );
+        self.refresh_card_locations();
+        result
     }
 
     /// Resolves an explicit draw effect.
@@ -48,14 +52,17 @@ impl Game {
             self.stack.is_empty(),
             &self.active_player,
         )?;
-        rules::turn_flow::draw_cards_effect(
+        self.refresh_card_locations();
+        let result = rules::turn_flow::draw_cards_effect(
             &self.id,
             &mut self.players,
             &self.active_player,
             &self.phase,
             &mut self.terminal_state,
             cmd,
-        )
+        );
+        self.refresh_card_locations();
+        result
     }
 
     /// Discards one card from hand during cleanup-related turn flow.
@@ -67,13 +74,16 @@ impl Game {
         cmd: DiscardForCleanupCommand,
     ) -> Result<CardDiscarded, DomainError> {
         invariants::require_game_active(self.is_over())?;
-        rules::turn_flow::discard_for_cleanup(
+        self.refresh_card_locations();
+        let result = rules::turn_flow::discard_for_cleanup(
             &self.id,
             &mut self.players,
             &self.active_player,
             &self.phase,
             cmd,
-        )
+        );
+        self.refresh_card_locations();
+        result
     }
 
     /// Exiles a card from battlefield or graveyard.
@@ -82,7 +92,8 @@ impl Game {
     /// See [`rules::zones::exile_card_from_battlefield`] and [`rules::zones::exile_card_from_graveyard`].
     pub fn exile_card(&mut self, cmd: &ExileCardCommand) -> Result<CardExiled, DomainError> {
         invariants::require_game_active(self.is_over())?;
-        if cmd.from_battlefield {
+        self.refresh_card_locations();
+        let result = if cmd.from_battlefield {
             rules::zones::exile_card_from_battlefield(
                 &self.id,
                 &mut self.players,
@@ -96,6 +107,8 @@ impl Game {
                 &cmd.player_id,
                 &cmd.card_id,
             )
-        }
+        };
+        self.refresh_card_locations();
+        result
     }
 }

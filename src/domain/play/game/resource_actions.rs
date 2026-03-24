@@ -17,13 +17,16 @@ impl Game {
     pub fn play_land(&mut self, cmd: PlayLandCommand) -> Result<LandPlayed, DomainError> {
         invariants::require_game_active(self.is_over())?;
         invariants::require_no_priority_with_pending_stack(self.priority(), self.stack.is_empty())?;
-        rules::resource_actions::play_land(
+        self.refresh_card_locations();
+        let result = rules::resource_actions::play_land(
             &self.id,
             &mut self.players,
             &self.active_player,
             &self.phase,
             cmd,
-        )
+        );
+        self.refresh_card_locations();
+        result
     }
 
     /// Resolves an explicit life effect from a caster onto a target player.
@@ -40,12 +43,15 @@ impl Game {
             self.stack.is_empty(),
             &self.active_player,
         )?;
-        rules::resource_actions::adjust_player_life_effect(
+        self.refresh_card_locations();
+        let result = rules::resource_actions::adjust_player_life_effect(
             &self.id,
             &mut self.players,
             &mut self.terminal_state,
             cmd,
-        )
+        );
+        self.refresh_card_locations();
+        result
     }
 
     /// Taps a land to produce mana.
@@ -61,13 +67,16 @@ impl Game {
         if let Some(priority) = priority.as_ref() {
             invariants::require_priority_holder(Some(priority), &cmd.player_id)?;
         }
-        rules::resource_actions::tap_land(
+        self.refresh_card_locations();
+        let result = rules::resource_actions::tap_land(
             &self.id,
             &mut self.players,
             &self.active_player,
             &self.phase,
             priority.as_ref(),
             cmd,
-        )
+        );
+        self.refresh_card_locations();
+        result
     }
 }

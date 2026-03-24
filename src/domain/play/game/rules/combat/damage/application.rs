@@ -1,13 +1,17 @@
 //! Supports combat damage application.
 
 use crate::domain::play::{
-    game::{helpers, model::Player},
+    game::{helpers, model::Player, AggregateCardLocationIndex},
     ids::CardInstanceId,
 };
 
-pub(super) fn apply_damage(players: &mut [Player], damage_received: &[(CardInstanceId, u32)]) {
+pub(super) fn apply_damage(
+    players: &mut [Player],
+    card_locations: &AggregateCardLocationIndex,
+    damage_received: &[(CardInstanceId, u32)],
+) {
     for (card_id, damage) in damage_received {
-        if let Some(card) = helpers::battlefield_card_mut(players, card_id) {
+        if let Some(card) = helpers::battlefield_card_mut(players, card_locations, card_id) {
             card.add_damage(*damage);
         }
     }

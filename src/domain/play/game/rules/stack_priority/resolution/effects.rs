@@ -2,7 +2,7 @@
 
 use {
     super::super::super::{
-        super::{helpers, Player, TerminalState},
+        super::{helpers, AggregateCardLocationIndex, Player, TerminalState},
         state_based_actions::{self, StateBasedActionsResult},
     },
     super::super::spell_effects::{
@@ -27,25 +27,32 @@ type SpellResolutionSideEffects = (
 struct ResolutionContext<'a> {
     game_id: &'a GameId,
     players: &'a mut [Player],
+    card_locations: &'a AggregateCardLocationIndex,
     terminal_state: &'a mut TerminalState,
     controller_id: &'a PlayerId,
     supported_spell_rules: SupportedSpellRules,
     target: Option<&'a SpellTarget>,
 }
 
-fn apply_damage_to_creature(players: &mut [Player], target_id: &CardInstanceId, damage: u32) {
-    if let Some(card) = helpers::battlefield_card_mut(players, target_id) {
+fn apply_damage_to_creature(
+    players: &mut [Player],
+    card_locations: &AggregateCardLocationIndex,
+    target_id: &CardInstanceId,
+    damage: u32,
+) {
+    if let Some(card) = helpers::battlefield_card_mut(players, card_locations, target_id) {
         card.add_damage(damage);
     }
 }
 
 fn apply_temporary_pump_to_creature(
     players: &mut [Player],
+    card_locations: &AggregateCardLocationIndex,
     target_id: &CardInstanceId,
     power: u32,
     toughness: u32,
 ) {
-    if let Some(card) = helpers::battlefield_card_mut(players, target_id) {
+    if let Some(card) = helpers::battlefield_card_mut(players, card_locations, target_id) {
         card.apply_temporary_stat_bonus(power, toughness);
     }
 }
@@ -53,9 +60,10 @@ fn apply_temporary_pump_to_creature(
 fn destroy_creature(
     game_id: &GameId,
     players: &mut [Player],
+    card_locations: &AggregateCardLocationIndex,
     target_id: &CardInstanceId,
 ) -> Option<CreatureDied> {
-    let target = helpers::battlefield_card_location(players, target_id)?;
+    let target = helpers::battlefield_card_location(players, card_locations, target_id)?;
     let owner_index = target.owner_index();
     let owner_id = players[owner_index].id().clone();
     players[owner_index].move_battlefield_card_to_graveyard(target_id)?;
@@ -69,18 +77,22 @@ fn destroy_creature(
 fn exile_creature_from_battlefield(
     game_id: &GameId,
     players: &mut [Player],
+    card_locations: &AggregateCardLocationIndex,
     target_id: &CardInstanceId,
 ) -> Option<CardExiled> {
-    let owner_index = helpers::battlefield_card_location(players, target_id)?.owner_index();
+    let owner_index =
+        helpers::battlefield_card_location(players, card_locations, target_id)?.owner_index();
     zones::exile_card_from_battlefield_by_index(game_id, players, owner_index, target_id).ok()
 }
 
 fn exile_card_from_graveyard(
     game_id: &GameId,
     players: &mut [Player],
+    card_locations: &AggregateCardLocationIndex,
     target_id: &CardInstanceId,
 ) -> Option<CardExiled> {
-    let owner_index = helpers::graveyard_card_location(players, target_id)?.owner_index();
+    let owner_index =
+        helpers::graveyard_card_location(players, card_locations, target_id)?.owner_index();
     zones::exile_card_from_graveyard_by_index(game_id, players, owner_index, target_id).ok()
 }
 
@@ -98,6 +110,7 @@ fn review_state_based_actions(
 
 fn resolve_target_legality_for_effect(
     players: &[Player],
+    card_locations: &AggregateCardLocationIndex,
     controller_id: &PlayerId,
     supported_spell_rules: SupportedSpellRules,
     target: Option<&SpellTarget>,
@@ -106,6 +119,7 @@ fn resolve_target_legality_for_effect(
     let legality = evaluate_target_legality(
         TargetLegalityContext::Resolution {
             players,
+            card_locations,
             controller_id,
         },
         supported_spell_rules.targeting(),
@@ -158,12 +172,14 @@ fn resolve_exile_target_creature_effect(
     game_id: &GameId,
     players: &mut [Player],
     terminal_state: &mut TerminalState,
+    card_locations: &AggregateCardLocationIndex,
     controller_id: &PlayerId,
     supported_spell_rules: SupportedSpellRules,
     target: Option<&SpellTarget>,
 ) -> Result<SpellResolutionSideEffects, DomainError> {
     let Some(target) = resolve_target_legality_for_effect(
         players,
+        card_locations,
         controller_id,
         supported_spell_rules,
         target,
@@ -175,7 +191,7 @@ fn resolve_exile_target_creature_effect(
 
     let card_exiled = match target {
         SpellTarget::Creature(card_id) => {
-            exile_creature_from_battlefield(game_id, players, &card_id)
+            exile_creature_from_battlefield(game_id, players, card_locations, &card_id)
         }
         SpellTarget::Player(_) | SpellTarget::GraveyardCard(_) => None,
     };
@@ -194,12 +210,14 @@ fn resolve_exile_target_graveyard_card_effect(
     game_id: &GameId,
     players: &mut [Player],
     terminal_state: &mut TerminalState,
+    card_locations: &AggregateCardLocationIndex,
     controller_id: &PlayerId,
     supported_spell_rules: SupportedSpellRules,
     target: Option<&SpellTarget>,
 ) -> Result<SpellResolutionSideEffects, DomainError> {
     let Some(target) = resolve_target_legality_for_effect(
         players,
+        card_locations,
         controller_id,
         supported_spell_rules,
         target,
@@ -211,7 +229,7 @@ fn resolve_exile_target_graveyard_card_effect(
 
     let card_exiled = match target {
         SpellTarget::GraveyardCard(card_id) => {
-            exile_card_from_graveyard(game_id, players, &card_id)
+            exile_card_from_graveyard(game_id, players, card_locations, &card_id)
         }
         SpellTarget::Player(_) | SpellTarget::Creature(_) => None,
     };
@@ -227,33 +245,39 @@ fn resolve_exile_target_graveyard_card_effect(
 }
 
 fn resolve_pump_target_creature_effect(
-    game_id: &GameId,
-    players: &mut [Player],
-    terminal_state: &mut TerminalState,
-    controller_id: &PlayerId,
-    supported_spell_rules: SupportedSpellRules,
-    target: Option<&SpellTarget>,
+    context: &mut ResolutionContext<'_>,
     bonus: (u32, u32),
 ) -> Result<SpellResolutionSideEffects, DomainError> {
     let Some(target) = resolve_target_legality_for_effect(
-        players,
-        controller_id,
-        supported_spell_rules,
-        target,
+        context.players,
+        context.card_locations,
+        context.controller_id,
+        context.supported_spell_rules,
+        context.target,
         "pump spell resolved without a targeting profile",
     )?
     else {
-        return review_state_based_actions(game_id, players, terminal_state);
+        return review_state_based_actions(
+            context.game_id,
+            context.players,
+            context.terminal_state,
+        );
     };
 
     if let SpellTarget::Creature(card_id) = target {
-        apply_temporary_pump_to_creature(players, &card_id, bonus.0, bonus.1);
+        apply_temporary_pump_to_creature(
+            context.players,
+            context.card_locations,
+            &card_id,
+            bonus.0,
+            bonus.1,
+        );
     }
 
     review_state_based_actions_after_effect(
-        game_id,
-        players,
-        terminal_state,
+        context.game_id,
+        context.players,
+        context.terminal_state,
         None,
         None,
         Vec::new(),
@@ -267,6 +291,7 @@ fn resolve_targeted_player_life_effect(
 ) -> Result<SpellResolutionSideEffects, DomainError> {
     let Some(target) = resolve_target_legality_for_effect(
         context.players,
+        context.card_locations,
         context.controller_id,
         context.supported_spell_rules,
         context.target,
@@ -308,6 +333,7 @@ fn resolve_damage_effect(
 ) -> Result<SpellResolutionSideEffects, DomainError> {
     let Some(target) = resolve_target_legality_for_effect(
         context.players,
+        context.card_locations,
         context.controller_id,
         context.supported_spell_rules,
         context.target,
@@ -331,7 +357,7 @@ fn resolve_damage_effect(
             )?)
         }
         SpellTarget::Creature(card_id) => {
-            apply_damage_to_creature(context.players, &card_id, damage);
+            apply_damage_to_creature(context.players, context.card_locations, &card_id, damage);
             None
         }
         SpellTarget::GraveyardCard(_) => None,
@@ -352,6 +378,7 @@ fn resolve_destroy_target_creature_effect(
 ) -> Result<SpellResolutionSideEffects, DomainError> {
     let Some(target) = resolve_target_legality_for_effect(
         context.players,
+        context.card_locations,
         context.controller_id,
         context.supported_spell_rules,
         context.target,
@@ -367,7 +394,12 @@ fn resolve_destroy_target_creature_effect(
 
     let mut creatures_died = Vec::new();
     if let SpellTarget::Creature(card_id) = target {
-        if let Some(creature_died) = destroy_creature(context.game_id, context.players, &card_id) {
+        if let Some(creature_died) = destroy_creature(
+            context.game_id,
+            context.players,
+            context.card_locations,
+            &card_id,
+        ) {
             creatures_died.push(creature_died);
         }
     }
@@ -385,6 +417,7 @@ fn resolve_destroy_target_creature_effect(
 pub(super) fn apply_supported_spell_rules(
     game_id: &GameId,
     players: &mut [Player],
+    card_locations: &AggregateCardLocationIndex,
     terminal_state: &mut TerminalState,
     controller_id: &PlayerId,
     supported_spell_rules: SupportedSpellRules,
@@ -398,6 +431,7 @@ pub(super) fn apply_supported_spell_rules(
             let mut context = ResolutionContext {
                 game_id,
                 players,
+                card_locations,
                 terminal_state,
                 controller_id,
                 supported_spell_rules,
@@ -409,6 +443,7 @@ pub(super) fn apply_supported_spell_rules(
             let mut context = ResolutionContext {
                 game_id,
                 players,
+                card_locations,
                 terminal_state,
                 controller_id,
                 supported_spell_rules,
@@ -424,6 +459,7 @@ pub(super) fn apply_supported_spell_rules(
             let mut context = ResolutionContext {
                 game_id,
                 players,
+                card_locations,
                 terminal_state,
                 controller_id,
                 supported_spell_rules,
@@ -439,6 +475,7 @@ pub(super) fn apply_supported_spell_rules(
             let mut context = ResolutionContext {
                 game_id,
                 players,
+                card_locations,
                 terminal_state,
                 controller_id,
                 supported_spell_rules,
@@ -450,6 +487,7 @@ pub(super) fn apply_supported_spell_rules(
             game_id,
             players,
             terminal_state,
+            card_locations,
             controller_id,
             supported_spell_rules,
             target,
@@ -459,21 +497,23 @@ pub(super) fn apply_supported_spell_rules(
                 game_id,
                 players,
                 terminal_state,
+                card_locations,
                 controller_id,
                 supported_spell_rules,
                 target,
             )
         }
         SpellResolutionProfile::PumpTargetCreatureUntilEndOfTurn { power, toughness } => {
-            resolve_pump_target_creature_effect(
+            let mut context = ResolutionContext {
                 game_id,
                 players,
+                card_locations,
                 terminal_state,
                 controller_id,
                 supported_spell_rules,
                 target,
-                (power, toughness),
-            )
+            };
+            resolve_pump_target_creature_effect(&mut context, (power, toughness))
         }
     }
 }

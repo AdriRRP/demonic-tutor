@@ -11,7 +11,11 @@ use {
         commands::AdvanceTurnCommand,
         errors::{DomainError, GameError},
         events::{CardDrawn, DrawKind, GameEnded, TurnProgressed},
-        game::{helpers, invariants, model::Player, PriorityState, TerminalState},
+        game::{
+            helpers, invariants,
+            model::{AggregateCardLocationIndex, Player},
+            PriorityState, TerminalState,
+        },
         ids::{GameId, PlayerId},
         phase::Phase,
     },
@@ -29,6 +33,7 @@ pub enum AdvanceTurnOutcome {
 pub struct TurnProgressionContext<'a> {
     pub game_id: &'a GameId,
     pub players: &'a mut [Player],
+    pub card_locations: &'a AggregateCardLocationIndex,
     pub active_player: &'a mut PlayerId,
     pub phase: &'a mut Phase,
     pub priority: &'a mut Option<PriorityState>,
@@ -120,6 +125,7 @@ pub fn advance_turn(
     let TurnProgressionContext {
         game_id,
         players,
+        card_locations: _,
         active_player,
         phase,
         priority,

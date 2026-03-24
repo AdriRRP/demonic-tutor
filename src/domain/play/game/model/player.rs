@@ -568,6 +568,15 @@ impl Player {
             .filter_map(|handle| self.cards.get_by_handle(*handle))
     }
 
+    pub(crate) fn owned_card_locations(
+        &self,
+    ) -> impl Iterator<Item = (&CardInstanceId, PlayerCardZone)> {
+        self.cards
+            .cards
+            .iter()
+            .filter_map(|slot| slot.as_ref().map(|owned| (owned.card.id(), owned.zone)))
+    }
+
     pub fn battlefield_card_ids(&self) -> impl Iterator<Item = &CardInstanceId> {
         self.battlefield
             .iter()

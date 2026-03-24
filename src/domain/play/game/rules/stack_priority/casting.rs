@@ -75,6 +75,7 @@ fn require_cast_timing(
 
 fn validate_spell_target(
     players: &[crate::domain::play::game::Player],
+    card_locations: &crate::domain::play::game::AggregateCardLocationIndex,
     caster_id: &PlayerId,
     card_id: &CardInstanceId,
     supported_spell_rules: SupportedSpellRules,
@@ -82,7 +83,11 @@ fn validate_spell_target(
 ) -> Result<(), DomainError> {
     let targeting = supported_spell_rules.targeting();
     match evaluate_target_legality(
-        TargetLegalityContext::Cast { players, caster_id },
+        TargetLegalityContext::Cast {
+            players,
+            card_locations,
+            caster_id,
+        },
         targeting,
         target,
     ) {
@@ -180,6 +185,7 @@ pub fn cast_spell(
     let StackPriorityContext {
         game_id,
         players,
+        card_locations,
         active_player,
         phase,
         stack,
@@ -223,6 +229,7 @@ pub fn cast_spell(
 
     validate_spell_target(
         players,
+        card_locations,
         &player_id,
         &card_id,
         supported_spell_rules,

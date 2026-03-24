@@ -6,7 +6,10 @@ mod passing;
 mod resolution;
 mod spell_effects;
 
-use super::super::{model::PriorityState, Player, TerminalState};
+use super::super::{
+    model::{AggregateCardLocationIndex, PriorityState},
+    Player, TerminalState,
+};
 use crate::domain::play::{
     events::{
         ActivatedAbilityPutOnStack, CardExiled, CreatureDied, GameEnded, LifeChanged,
@@ -23,6 +26,7 @@ pub use passing::pass_priority;
 pub struct StackPriorityContext<'a> {
     pub game_id: &'a GameId,
     pub players: &'a mut [Player],
+    pub card_locations: &'a AggregateCardLocationIndex,
     pub active_player: &'a PlayerId,
     pub phase: &'a Phase,
     pub stack: &'a mut super::super::model::StackZone,

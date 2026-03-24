@@ -21,10 +21,12 @@ impl Game {
         cmd: ActivateAbilityCommand,
     ) -> Result<ActivateAbilityOutcome, DomainError> {
         invariants::require_game_active(self.is_over())?;
-        rules::stack_priority::activate_ability(
+        self.refresh_card_locations();
+        let result = rules::stack_priority::activate_ability(
             StackPriorityContext {
                 game_id: &self.id,
                 players: &mut self.players,
+                card_locations: &self.card_locations,
                 active_player: &self.active_player,
                 phase: &self.phase,
                 stack: &mut self.stack,
@@ -32,7 +34,9 @@ impl Game {
                 terminal_state: &mut self.terminal_state,
             },
             cmd,
-        )
+        );
+        self.refresh_card_locations();
+        result
     }
 
     /// Casts a spell.
@@ -41,10 +45,12 @@ impl Game {
     /// See [`rules::stack_priority::cast_spell`].
     pub fn cast_spell(&mut self, cmd: CastSpellCommand) -> Result<CastSpellOutcome, DomainError> {
         invariants::require_game_active(self.is_over())?;
-        rules::stack_priority::cast_spell(
+        self.refresh_card_locations();
+        let result = rules::stack_priority::cast_spell(
             StackPriorityContext {
                 game_id: &self.id,
                 players: &mut self.players,
+                card_locations: &self.card_locations,
                 active_player: &self.active_player,
                 phase: &self.phase,
                 stack: &mut self.stack,
@@ -52,7 +58,9 @@ impl Game {
                 terminal_state: &mut self.terminal_state,
             },
             cmd,
-        )
+        );
+        self.refresh_card_locations();
+        result
     }
 
     /// Passes priority in an open priority window.
@@ -64,10 +72,12 @@ impl Game {
         cmd: PassPriorityCommand,
     ) -> Result<PassPriorityOutcome, DomainError> {
         invariants::require_game_active(self.is_over())?;
-        rules::stack_priority::pass_priority(
+        self.refresh_card_locations();
+        let result = rules::stack_priority::pass_priority(
             StackPriorityContext {
                 game_id: &self.id,
                 players: &mut self.players,
+                card_locations: &self.card_locations,
                 active_player: &self.active_player,
                 phase: &self.phase,
                 stack: &mut self.stack,
@@ -75,6 +85,8 @@ impl Game {
                 terminal_state: &mut self.terminal_state,
             },
             cmd,
-        )
+        );
+        self.refresh_card_locations();
+        result
     }
 }

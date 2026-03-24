@@ -36,6 +36,7 @@ type ResolvedSpellOutcome = (
 fn resolve_spell_from_stack(
     game_id: &GameId,
     players: &mut [Player],
+    card_locations: &crate::domain::play::game::AggregateCardLocationIndex,
     terminal_state: &mut TerminalState,
     stack_object: StackObject,
 ) -> Result<ResolvedSpellOutcome, crate::domain::play::errors::DomainError> {
@@ -65,6 +66,7 @@ fn resolve_spell_from_stack(
     let (card_exiled, life_changed, creatures_died, game_ended) = apply_supported_spell_rules(
         game_id,
         players,
+        card_locations,
         terminal_state,
         &controller_id,
         supported_spell_rules,
@@ -134,13 +136,18 @@ fn resolve_activated_ability_from_stack(
 pub(super) fn resolve_stack_object(
     game_id: &GameId,
     players: &mut [Player],
+    card_locations: &crate::domain::play::game::AggregateCardLocationIndex,
     terminal_state: &mut TerminalState,
     stack_object: StackObject,
 ) -> Result<ResolvedSpellOutcome, crate::domain::play::errors::DomainError> {
     match stack_object.kind() {
-        StackObjectKind::Spell(_) => {
-            resolve_spell_from_stack(game_id, players, terminal_state, stack_object)
-        }
+        StackObjectKind::Spell(_) => resolve_spell_from_stack(
+            game_id,
+            players,
+            card_locations,
+            terminal_state,
+            stack_object,
+        ),
         StackObjectKind::ActivatedAbility(_) => {
             resolve_activated_ability_from_stack(game_id, players, terminal_state, stack_object)
         }

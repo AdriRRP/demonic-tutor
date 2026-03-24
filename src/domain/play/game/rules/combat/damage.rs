@@ -8,7 +8,7 @@ use self::{
     participants::{collect_attackers, collect_blockers, AttackerParticipant, BlockerParticipant},
 };
 use super::super::{
-    super::{model::Player, TerminalState},
+    super::{model::Player, AggregateCardLocationIndex, TerminalState},
     game_effects, state_based_actions,
     state_based_actions::StateBasedActionsResult,
 };
@@ -155,6 +155,7 @@ impl ResolveCombatDamageOutcome {
 pub fn resolve_combat_damage(
     game_id: &GameId,
     players: &mut [Player],
+    card_locations: &AggregateCardLocationIndex,
     terminal_state: &mut TerminalState,
     cmd: ResolveCombatDamageCommand,
     attacker_player_idx: usize,
@@ -194,7 +195,7 @@ pub fn resolve_combat_damage(
     };
 
     damage_events.extend(first_step_events);
-    apply_damage(players, &first_step_damage);
+    apply_damage(players, card_locations, &first_step_damage);
     let first_step_life_changed = if first_step_player_damage > 0 {
         let life_delta = i32::try_from(first_step_player_damage).map_err(|_| {
             DomainError::Game(GameError::InternalInvariantViolation(
@@ -232,7 +233,7 @@ pub fn resolve_combat_damage(
                 |blocker| !blocker.has_first_strike(),
             );
         damage_events.extend(second_step_events);
-        apply_damage(players, &second_step_damage);
+        apply_damage(players, card_locations, &second_step_damage);
         let second_step_life_changed = if second_step_player_damage > 0 {
             let life_delta = i32::try_from(second_step_player_damage).map_err(|_| {
                 DomainError::Game(GameError::InternalInvariantViolation(
