@@ -4,8 +4,15 @@ This directory contains the current proposal backlog for the next stable-engine 
 
 The backlog is intentionally organized by dependency order when active.
 
-## Current State
+## Wave 1 — Engine Audit V5
 
-There is currently no open slice backlog.
+Directory: `engine-audit-v5/`
 
-The latest architectural follow-up wave, `engine-audit-v4`, has been fully implemented and moved to `docs/slices/implemented/`.
+1. `engine-audit-v5/introduce-internal-handle-first-card-identity.md`
+1. `engine-audit-v5/make-player-card-location-a-primary-index.md`
+1. `engine-audit-v5/thin-stack-spell-payloads-further.md`
+1. `engine-audit-v5/commit-spells-to-stack-through-one-internal-object.md`
+1. `engine-audit-v5/rework-ordered-zone-visible-indexing.md`
+1. `engine-audit-v5/move-public-string-ids-to-edge-materialization.md`
+
+These proposals focus on the next internal-representation step for an embedded-class engine: handle-first identity, slimmer stack carriers, and cheaper zone/location queries.
