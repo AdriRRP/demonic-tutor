@@ -339,6 +339,22 @@ pub fn creature_card_with_keywords(
     )
 }
 
+pub fn creature_card_with_keyword(
+    name: &str,
+    mana_cost: u32,
+    power: u32,
+    toughness: u32,
+    keyword: KeywordAbility,
+) -> LibraryCard {
+    LibraryCard::creature_with_keywords(
+        CardDefinitionId::new(name),
+        mana_cost,
+        power,
+        toughness,
+        KeywordAbilitySet::only(keyword),
+    )
+}
+
 pub fn filled_library(seed_cards: Vec<LibraryCard>, total_cards: usize) -> Vec<LibraryCard> {
     assert!(seed_cards.len() <= total_cards);
 

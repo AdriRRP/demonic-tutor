@@ -3,6 +3,8 @@
 pub enum KeywordAbility {
     Flying = 1 << 0,
     Reach = 1 << 1,
+    Haste = 1 << 2,
+    Vigilance = 1 << 3,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]

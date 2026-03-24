@@ -1,6 +1,8 @@
 use super::super::support;
 use super::super::GameplayWorld;
-use demonictutor::{DeclareBlockersCommand, ExileCardCommand, ResolveCombatDamageCommand};
+use demonictutor::{
+    DeclareAttackersCommand, DeclareBlockersCommand, ExileCardCommand, ResolveCombatDamageCommand,
+};
 
 impl GameplayWorld {
     pub fn resolve_combat_damage(&mut self, alias: &str) {
@@ -88,6 +90,22 @@ impl GameplayWorld {
         if let Err(e) = res {
             self.last_error = Some(e.to_string());
         }
+    }
+
+    pub fn try_declare_attacker(
+        &mut self,
+        attacker_alias: &str,
+        attacker_id: &demonictutor::CardInstanceId,
+    ) {
+        let service = support::create_service();
+        let res = service.declare_attackers(
+            self.game_mut(),
+            DeclareAttackersCommand::new(
+                Self::player_id(attacker_alias),
+                vec![attacker_id.clone()],
+            ),
+        );
+        self.last_error = res.err().map(|e| e.to_string());
     }
 
     pub fn exile_tracked_card(&mut self, alias: &str, from_battlefield: bool) {

@@ -30,11 +30,9 @@ Wave 4 is fully implemented.
 
 Directory: `combat-v1/`
 
-9. `combat-v1/haste-creatures-can-attack-immediately.md`
-10. `combat-v1/vigilance-creatures-do-not-tap-to-attack.md`
-11. `combat-v1/trample-assigns-excess-damage-to-player.md`
-12. `combat-v1/first-strike-changes-combat-damage-order.md`
-13. `combat-v1/expand-state-based-actions-for-new-effects.md`
-14. `combat-v1/stable-capability-matrix-sync.md`
+9. `combat-v1/trample-assigns-excess-damage-to-player.md`
+10. `combat-v1/first-strike-changes-combat-damage-order.md`
+11. `combat-v1/expand-state-based-actions-for-new-effects.md`
+12. `combat-v1/stable-capability-matrix-sync.md`
 
 The proposal files that were already implemented or superseded have been removed from this directory so it reflects only the live planning backlog.

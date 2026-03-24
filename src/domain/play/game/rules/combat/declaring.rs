@@ -37,7 +37,7 @@ pub fn declare_attackers(
             }));
         }
 
-        if card.has_summoning_sickness() {
+        if card.has_summoning_sickness() && !card.has_haste() {
             return Err(DomainError::Card(CardError::CreatureHasSummoningSickness {
                 player: cmd.player_id.clone(),
                 card: attacker_id.clone(),
@@ -45,7 +45,9 @@ pub fn declare_attackers(
         }
 
         card.set_attacking(true);
-        card.tap();
+        if !card.has_vigilance() {
+            card.tap();
+        }
         valid_attackers.push(attacker_id.clone());
     }
 

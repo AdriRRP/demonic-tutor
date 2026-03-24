@@ -52,7 +52,7 @@ Implemented capabilities include:
 - resolving explicit targeted life effects
 - advancing turns
 - full phase progression using State pattern (Setup, Untap, Upkeep, Draw, FirstMain, BeginningOfCombat, DeclareAttackers, DeclareBlockers, CombatDamage, EndOfCombat, SecondMain, EndStep)
-- keyword abilities: Flying and Reach affect combat blocking legality
+- keyword abilities: Flying and Reach affect combat blocking legality, Haste bypasses summoning-sickness attack restriction, and Vigilance avoids tapping on attack
 
 These capabilities correspond to the slices currently implemented in the system.
 

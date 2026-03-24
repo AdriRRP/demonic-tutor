@@ -429,6 +429,16 @@ impl CardInstance {
     }
 
     #[must_use]
+    pub const fn has_haste(&self) -> bool {
+        self.has_keyword(KeywordAbility::Haste)
+    }
+
+    #[must_use]
+    pub const fn has_vigilance(&self) -> bool {
+        self.has_keyword(KeywordAbility::Vigilance)
+    }
+
+    #[must_use]
     pub const fn keyword_abilities(&self) -> Option<KeywordAbilitySet> {
         match &self.runtime.creature {
             Some(creature) => Some(creature.keywords),

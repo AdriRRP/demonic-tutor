@@ -7,6 +7,20 @@ fn alice_attacks_with_a_creature(world: &mut GameplayWorld) {
     world.setup_blocked_damage_marking();
 }
 
+#[given("Alice is in DeclareAttackers with a haste creature that entered this turn")]
+fn alice_is_in_declare_attackers_with_a_haste_creature_that_entered_this_turn(
+    world: &mut GameplayWorld,
+) {
+    world.setup_haste_attack();
+}
+
+#[given("Alice is in DeclareAttackers with a vigilance creature without summoning sickness")]
+fn alice_is_in_declare_attackers_with_a_vigilance_creature_without_summoning_sickness(
+    world: &mut GameplayWorld,
+) {
+    world.setup_vigilance_attack();
+}
+
 #[given("Alice has declared attackers in Combat")]
 fn alice_has_declared_attackers_in_combat(world: &mut GameplayWorld) {
     world.setup_priority_after_attackers_declared();
@@ -42,6 +56,15 @@ fn combat_damage_resolves(world: &mut GameplayWorld) {
     world.resolve_combat_damage("Alice");
 }
 
+#[when("Alice declares that creature as an attacker")]
+fn alice_declares_that_creature_as_an_attacker(world: &mut GameplayWorld) {
+    let attacker_id = world
+        .tracked_attacker_id
+        .clone()
+        .expect("tracked attacker should exist");
+    world.try_declare_attacker("Alice", &attacker_id);
+}
+
 #[when("Bob tries to assign both blockers to that attacker")]
 fn bob_tries_to_assign_both_blockers_to_that_attacker(world: &mut GameplayWorld) {
     world.try_declare_multiple_blockers_on_one_attacker("Bob");
@@ -55,6 +78,25 @@ fn combat_damage_resolution_finishes(world: &mut GameplayWorld) {
 #[then("the attacker's damage is marked on the blocking creature")]
 fn attacker_damage_is_marked_on_the_blocking_creature(world: &mut GameplayWorld) {
     assert_eq!(world.tracked_blocker().damage(), 2);
+}
+
+#[then("the attacker declaration is accepted")]
+fn the_attacker_declaration_is_accepted(world: &mut GameplayWorld) {
+    assert!(
+        world.last_error.is_none(),
+        "unexpected error: {:?}",
+        world.last_error
+    );
+}
+
+#[then("that creature is attacking")]
+fn that_creature_is_attacking(world: &mut GameplayWorld) {
+    assert!(world.tracked_attacker().is_attacking());
+}
+
+#[then("that creature remains untapped")]
+fn that_creature_remains_untapped(world: &mut GameplayWorld) {
+    assert!(!world.tracked_attacker().is_tapped());
 }
 
 #[then("the blocker's damage is marked on the attacking creature")]

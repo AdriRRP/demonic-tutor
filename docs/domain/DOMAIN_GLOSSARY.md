@@ -151,6 +151,22 @@ A creature with Reach can block creatures with Flying. Reach does not grant Flyi
 
 ---
 
+## Haste
+
+A keyword ability that lets a creature ignore the current summoning-sickness attack restriction.
+
+In the current runtime, a creature with `Haste` may attack on the turn it entered under its controller's control.
+
+---
+
+## Vigilance
+
+A keyword ability that lets a creature attack without tapping.
+
+In the current runtime, a creature with `Vigilance` still becomes an attacker normally but remains untapped when declared.
+
+---
+
 ## Stack
 
 A conceptual zone where spells and abilities wait to resolve.

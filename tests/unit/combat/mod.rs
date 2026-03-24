@@ -4,5 +4,9 @@ mod blocking_legality;
 mod combat_subphases;
 #[path = "declare_blockers.rs"]
 mod declare_blockers;
+#[path = "haste.rs"]
+mod haste;
 #[path = "permanent_type.rs"]
 mod permanent_type;
+#[path = "vigilance.rs"]
+mod vigilance;
