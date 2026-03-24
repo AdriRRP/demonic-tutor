@@ -11,6 +11,7 @@ mod stack;
 mod turn_flow;
 
 use crate::domain::play::{
+    errors::{DomainError, GameError},
     events::GameEndReason,
     ids::{GameId, PlayerId},
     phase::Phase,
@@ -35,7 +36,8 @@ pub use rules::{
 #[derive(Debug)]
 pub struct Game {
     id: GameId,
-    active_player: PlayerId,
+    player_ids: Vec<PlayerId>,
+    active_player_index: usize,
     phase: Phase,
     turn_number: u32,
     players: Vec<Player>,
@@ -46,19 +48,28 @@ pub struct Game {
 }
 
 impl Game {
-    #[must_use]
+    /// # Errors
+    ///
+    /// Returns [`DomainError::Game`] with [`GameError::PlayerNotFound`] if
+    /// `active_player` is not present in `players`.
     pub fn new(
         id: GameId,
-        active_player: PlayerId,
+        active_player: &PlayerId,
         phase: Phase,
         turn_number: u32,
         players: Vec<Player>,
         terminal_state: TerminalState,
-    ) -> Self {
+    ) -> Result<Self, DomainError> {
+        let player_ids: Vec<_> = players.iter().map(|player| player.id().clone()).collect();
+        let active_player_index = player_ids
+            .iter()
+            .position(|player_id| player_id == active_player)
+            .ok_or_else(|| DomainError::Game(GameError::PlayerNotFound(active_player.clone())))?;
         let card_locations = AggregateCardLocationIndex::from_players(&players);
-        Self {
+        Ok(Self {
             id,
-            active_player,
+            player_ids,
+            active_player_index,
             phase,
             turn_number,
             players,
@@ -66,7 +77,7 @@ impl Game {
             stack: StackZone::empty(),
             priority: None,
             terminal_state,
-        }
+        })
     }
 
     #[must_use]
@@ -75,8 +86,8 @@ impl Game {
     }
 
     #[must_use]
-    pub const fn active_player(&self) -> &PlayerId {
-        &self.active_player
+    pub fn active_player(&self) -> &PlayerId {
+        &self.player_ids[self.active_player_index]
     }
 
     #[must_use]

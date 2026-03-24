@@ -201,12 +201,12 @@ pub fn start(cmd: StartGameCommand) -> Result<(Game, GameStarted), DomainError> 
 
     let game = Game::new(
         cmd.game_id,
-        active_player,
+        &active_player,
         Phase::Setup,
         1,
         players,
         TerminalState::active(),
-    );
+    )?;
 
     Ok((game, game_started))
 }

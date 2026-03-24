@@ -36,10 +36,11 @@ impl Game {
     pub fn mulligan(&mut self, cmd: MulliganCommand) -> Result<MulliganTaken, DomainError> {
         invariants::require_game_active(self.is_over())?;
         invariants::require_no_open_priority_window(self.priority())?;
+        let active_player = self.active_player().clone();
         rules::lifecycle::mulligan(
             &self.id,
             &mut self.players,
-            &self.active_player,
+            &active_player,
             &self.phase,
             cmd,
         )

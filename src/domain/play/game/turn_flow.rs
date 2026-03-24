@@ -27,7 +27,8 @@ impl Game {
                 game_id: &self.id,
                 players: &mut self.players,
                 card_locations: &self.card_locations,
-                active_player: &mut self.active_player,
+                player_ids: &self.player_ids,
+                active_player_index: &mut self.active_player_index,
                 phase: &mut self.phase,
                 priority: &mut self.priority,
                 turn_number: &mut self.turn_number,
@@ -47,16 +48,17 @@ impl Game {
         &mut self,
         cmd: &DrawCardsEffectCommand,
     ) -> Result<rules::turn_flow::DrawCardsEffectOutcome, DomainError> {
+        let active_player = self.active_player().clone();
         invariants::require_empty_stack_priority_action_window(
             self.priority(),
             self.stack.is_empty(),
-            &self.active_player,
+            &active_player,
         )?;
         self.refresh_card_locations();
         let result = rules::turn_flow::draw_cards_effect(
             &self.id,
             &mut self.players,
-            &self.active_player,
+            &active_player,
             &self.phase,
             &mut self.terminal_state,
             cmd,
@@ -74,11 +76,12 @@ impl Game {
         cmd: DiscardForCleanupCommand,
     ) -> Result<CardDiscarded, DomainError> {
         invariants::require_game_active(self.is_over())?;
+        let active_player = self.active_player().clone();
         self.refresh_card_locations();
         let result = rules::turn_flow::discard_for_cleanup(
             &self.id,
             &mut self.players,
-            &self.active_player,
+            &active_player,
             &self.phase,
             cmd,
         );

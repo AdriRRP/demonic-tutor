@@ -233,14 +233,16 @@ fn adjust_life_reviews_pending_state_based_actions_for_existing_lethal_damage() 
     alice.receive_battlefield_card(doomed_creature);
 
     let bob = Player::new(PlayerId::new("player-2"));
+    let active_player = PlayerId::new("player-1");
     let mut game = Game::new(
         GameId::new("game-sba-life"),
-        PlayerId::new("player-1"),
+        &active_player,
         demonictutor::Phase::FirstMain,
         1,
         vec![alice, bob],
         TerminalState::active(),
-    );
+    )
+    .unwrap();
 
     let outcome = service
         .adjust_player_life_effect(

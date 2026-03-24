@@ -21,16 +21,17 @@ impl Game {
     ) -> Result<AttackersDeclared, DomainError> {
         invariants::require_game_active(self.is_over())?;
         invariants::require_no_open_priority_window(self.priority())?;
+        let active_player = self.active_player().clone();
         self.refresh_card_locations();
         let event = rules::combat::declare_attackers(
             &self.id,
             &mut self.players,
-            &self.active_player,
+            &active_player,
             &self.phase,
             cmd,
         )?;
         self.phase = Phase::DeclareBlockers;
-        self.priority = Some(PriorityState::opened(self.active_player.clone()));
+        self.priority = Some(PriorityState::opened(active_player));
         self.refresh_card_locations();
         Ok(event)
     }
@@ -45,16 +46,17 @@ impl Game {
     ) -> Result<BlockersDeclared, DomainError> {
         invariants::require_game_active(self.is_over())?;
         invariants::require_no_open_priority_window(self.priority())?;
+        let active_player = self.active_player().clone();
         self.refresh_card_locations();
         let event = rules::combat::declare_blockers(
             &self.id,
             &mut self.players,
-            &self.active_player,
+            &active_player,
             &self.phase,
             cmd,
         )?;
         self.phase = Phase::CombatDamage;
-        self.priority = Some(PriorityState::opened(self.active_player.clone()));
+        self.priority = Some(PriorityState::opened(active_player));
         self.refresh_card_locations();
         Ok(event)
     }
@@ -69,12 +71,13 @@ impl Game {
     ) -> Result<ResolveCombatDamageOutcome, DomainError> {
         invariants::require_game_active(self.is_over())?;
         invariants::require_no_open_priority_window(self.priority())?;
+        let active_player = self.active_player().clone();
         self.refresh_card_locations();
         let outcome = rules::combat::resolve_combat_damage(
             &self.id,
             &mut self.players,
             &self.card_locations,
-            &self.active_player,
+            &active_player,
             &self.phase,
             &mut self.terminal_state,
             cmd,
@@ -84,7 +87,7 @@ impl Game {
         self.priority = if self.is_over() {
             None
         } else {
-            Some(PriorityState::opened(self.active_player.clone()))
+            Some(PriorityState::opened(active_player))
         };
 
         self.refresh_card_locations();

@@ -34,7 +34,8 @@ pub struct TurnProgressionContext<'a> {
     pub game_id: &'a GameId,
     pub players: &'a mut [Player],
     pub card_locations: &'a AggregateCardLocationIndex,
-    pub active_player: &'a mut PlayerId,
+    pub player_ids: &'a [PlayerId],
+    pub active_player_index: &'a mut usize,
     pub phase: &'a mut Phase,
     pub priority: &'a mut Option<PriorityState>,
     pub turn_number: &'a mut u32,
@@ -42,21 +43,17 @@ pub struct TurnProgressionContext<'a> {
 }
 
 fn rotate_to_next_player(
-    players: &[Player],
-    active_player: &mut PlayerId,
+    player_count: usize,
+    active_player_index: &mut usize,
     turn_number: &mut u32,
 ) -> Result<(), DomainError> {
-    let current_idx = players
-        .iter()
-        .position(|player| player.id() == active_player)
-        .ok_or_else(|| {
-            DomainError::Game(GameError::InternalInvariantViolation(
-                "active player should exist in player list".to_string(),
-            ))
-        })?;
+    if player_count == 0 {
+        return Err(DomainError::Game(GameError::InternalInvariantViolation(
+            "game should have at least one player".to_string(),
+        )));
+    }
 
-    let next_idx = (current_idx + 1) % players.len();
-    *active_player = players[next_idx].id().clone();
+    *active_player_index = (*active_player_index + 1) % player_count;
     *turn_number += 1;
     Ok(())
 }
@@ -126,12 +123,18 @@ pub fn advance_turn(
         game_id,
         players,
         card_locations: _,
-        active_player,
+        player_ids,
+        active_player_index,
         phase,
         priority,
         turn_number,
         terminal_state,
     } = ctx;
+    let active_player = player_ids.get(*active_player_index).ok_or_else(|| {
+        DomainError::Game(GameError::InternalInvariantViolation(
+            "active player index should exist in player list".to_string(),
+        ))
+    })?;
 
     invariants::require_game_active(terminal_state.is_over())?;
     let from_phase = *phase;
@@ -156,7 +159,12 @@ pub fn advance_turn(
     let to_phase_behavior = get_phase_behavior(to_phase);
 
     if current_phase_behavior.requires_player_change() {
-        rotate_to_next_player(players, active_player, turn_number)?;
+        rotate_to_next_player(players.len(), active_player_index, turn_number)?;
+        let active_player = player_ids.get(*active_player_index).ok_or_else(|| {
+            DomainError::Game(GameError::InternalInvariantViolation(
+                "active player index should exist in player list".to_string(),
+            ))
+        })?;
         *phase = to_phase;
         to_phase_behavior.on_enter(players, active_player)?;
         *priority = if opens_priority_window(to_phase) {

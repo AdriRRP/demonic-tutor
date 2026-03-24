@@ -986,14 +986,16 @@ fn resolving_a_spell_reviews_pending_state_based_actions_for_existing_zero_tough
     )]);
 
     let bob = Player::new(PlayerId::new("player-2"));
+    let active_player = PlayerId::new("player-1");
     let mut game = Game::new(
         GameId::new("game-sba-review"),
-        PlayerId::new("player-1"),
+        &active_player,
         Phase::FirstMain,
         1,
         vec![alice, bob],
         TerminalState::active(),
-    );
+    )
+    .unwrap();
 
     service
         .cast_spell(
