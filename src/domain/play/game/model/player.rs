@@ -163,28 +163,20 @@ struct PlayerOwnedCard {
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 struct PlayerCardArena {
     cards: Vec<Option<PlayerOwnedCard>>,
-    id_to_handle: HashMap<CardInstanceId, PlayerCardHandle>,
     free_slots: Vec<usize>,
 }
 
 impl PlayerCardArena {
     fn insert(&mut self, card: CardInstance, zone: PlayerCardZone) -> PlayerCardHandle {
-        let card_id = card.id().clone();
         let owned_card = PlayerOwnedCard { card, zone };
-        let handle = if let Some(index) = self.free_slots.pop() {
+        if let Some(index) = self.free_slots.pop() {
             self.cards[index] = Some(owned_card);
             PlayerCardHandle::new(index)
         } else {
             let handle = PlayerCardHandle::new(self.cards.len());
             self.cards.push(Some(owned_card));
             handle
-        };
-        self.id_to_handle.insert(card_id, handle);
-        handle
-    }
-
-    fn handle(&self, card_id: &CardInstanceId) -> Option<PlayerCardHandle> {
-        self.id_to_handle.get(card_id).copied()
+        }
     }
 
     fn get_by_handle(&self, handle: PlayerCardHandle) -> Option<&CardInstance> {
@@ -205,8 +197,7 @@ impl PlayerCardArena {
         self.cards.get_mut(handle.index())?.take()
     }
 
-    fn commit_removed(&mut self, handle: PlayerCardHandle, card_id: &CardInstanceId) {
-        self.id_to_handle.remove(card_id);
+    fn commit_removed(&mut self, handle: PlayerCardHandle) {
         self.free_slots.push(handle.index());
     }
 
@@ -234,7 +225,7 @@ impl PlayerCardArena {
 
     fn remove_by_handle(&mut self, handle: PlayerCardHandle) -> Option<CardInstance> {
         let owned = self.begin_remove_by_handle(handle)?;
-        self.commit_removed(handle, owned.card.id());
+        self.commit_removed(handle);
         Some(owned.card)
     }
 }
@@ -248,6 +239,7 @@ pub struct Player {
     graveyard: Graveyard,
     exile: Exile,
     cards: PlayerCardArena,
+    id_to_handle: HashMap<CardInstanceId, PlayerCardHandle>,
     life: u32,
     mana: ManaPool,
     lands_played_this_turn: usize,
@@ -257,7 +249,7 @@ pub struct Player {
 #[allow(clippy::missing_const_for_fn)]
 impl Player {
     fn handle(&self, card_id: &CardInstanceId) -> Option<PlayerCardHandle> {
-        self.cards.handle(card_id)
+        self.id_to_handle.get(card_id).copied()
     }
 
     fn handle_in_zone(
@@ -289,17 +281,23 @@ impl Player {
 
     fn remove_hand_handle(&mut self, handle: PlayerCardHandle) -> Option<CardInstance> {
         self.hand.remove(handle)?;
-        self.cards.remove_by_handle(handle)
+        let card = self.cards.remove_by_handle(handle)?;
+        self.id_to_handle.remove(card.id());
+        Some(card)
     }
 
     fn remove_battlefield_handle(&mut self, handle: PlayerCardHandle) -> Option<CardInstance> {
         self.battlefield.remove(handle)?;
-        self.cards.remove_by_handle(handle)
+        let card = self.cards.remove_by_handle(handle)?;
+        self.id_to_handle.remove(card.id());
+        Some(card)
     }
 
     fn remove_graveyard_handle(&mut self, handle: PlayerCardHandle) -> Option<CardInstance> {
         self.graveyard.remove(handle)?;
-        self.cards.remove_by_handle(handle)
+        let card = self.cards.remove_by_handle(handle)?;
+        self.id_to_handle.remove(card.id());
+        Some(card)
     }
 
     fn remove_handle_from_zone(
@@ -354,6 +352,7 @@ impl Player {
             graveyard: Graveyard::new(),
             exile: Exile::new(),
             cards: PlayerCardArena::default(),
+            id_to_handle: HashMap::new(),
             life: DEFAULT_STARTING_LIFE,
             mana: ManaPool::empty(),
             lands_played_this_turn: 0,
@@ -677,7 +676,10 @@ impl Player {
     pub fn receive_hand_cards(&mut self, cards: Vec<CardInstance>) {
         let mut handles = Vec::with_capacity(cards.len());
         for card in cards {
-            handles.push(self.cards.insert(card, PlayerCardZone::Hand));
+            let card_id = card.id().clone();
+            let handle = self.cards.insert(card, PlayerCardZone::Hand);
+            self.id_to_handle.insert(card_id, handle);
+            handles.push(handle);
         }
         self.hand.receive(handles);
     }
@@ -685,23 +687,32 @@ impl Player {
     pub fn receive_library_cards(&mut self, cards: Vec<CardInstance>) {
         let mut handles = Vec::with_capacity(cards.len());
         for card in cards {
-            handles.push(self.cards.insert(card, PlayerCardZone::Library));
+            let card_id = card.id().clone();
+            let handle = self.cards.insert(card, PlayerCardZone::Library);
+            self.id_to_handle.insert(card_id, handle);
+            handles.push(handle);
         }
         self.library.receive(handles);
     }
 
     pub fn receive_battlefield_card(&mut self, card: CardInstance) {
+        let card_id = card.id().clone();
         let handle = self.cards.insert(card, PlayerCardZone::Battlefield);
+        self.id_to_handle.insert(card_id, handle);
         self.battlefield.add(handle);
     }
 
     pub fn receive_graveyard_card(&mut self, card: CardInstance) {
+        let card_id = card.id().clone();
         let handle = self.cards.insert(card, PlayerCardZone::Graveyard);
+        self.id_to_handle.insert(card_id, handle);
         self.graveyard.add(handle);
     }
 
     pub fn receive_exile_card(&mut self, card: CardInstance) {
+        let card_id = card.id().clone();
         let handle = self.cards.insert(card, PlayerCardZone::Exile);
+        self.id_to_handle.insert(card_id, handle);
         self.exile.add(handle);
     }
 
@@ -766,7 +777,8 @@ impl Player {
             let _ = self.cards.rollback_remove(handle, owned);
             return Err(PrepareHandSpellCastError::MissingCard);
         }
-        self.cards.commit_removed(handle, owned.card.id());
+        self.id_to_handle.remove(owned.card.id());
+        self.cards.commit_removed(handle);
         let payload = owned.card.into_spell_payload();
         self.mana = next_mana;
 
