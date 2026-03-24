@@ -5,26 +5,8 @@ use crate::domain::play::{
         ActivatedAbilityEffect, ActivatedAbilityProfile, CardType, SpellPayload, SpellTargetKind,
         SupportedSpellRules,
     },
-    ids::{CardInstanceId, PlayerCardHandle, PlayerId},
+    ids::{CardInstanceId, PlayerCardHandle},
 };
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum SpellTarget {
-    Player(PlayerId),
-    Creature(CardInstanceId),
-    GraveyardCard(CardInstanceId),
-}
-
-impl SpellTarget {
-    #[must_use]
-    pub const fn kind(&self) -> SpellTargetKind {
-        match self {
-            Self::Player(_) => SpellTargetKind::Player,
-            Self::Creature(_) => SpellTargetKind::Creature,
-            Self::GraveyardCard(_) => SpellTargetKind::GraveyardCard,
-        }
-    }
-}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct StackCardRef {

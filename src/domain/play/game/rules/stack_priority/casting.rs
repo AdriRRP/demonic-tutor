@@ -16,9 +16,10 @@ use {
         game::{
             helpers, invariants,
             model::{
-                PrepareHandSpellCastError, PriorityState, SpellOnStack, SpellTarget, StackCardRef,
-                StackObject, StackObjectKind, StackTargetRef, StackZone,
+                PrepareHandSpellCastError, PriorityState, SpellOnStack, StackCardRef, StackObject,
+                StackObjectKind, StackTargetRef, StackZone,
             },
+            SpellTarget,
         },
         ids::{CardInstanceId, PlayerId},
         phase::Phase,

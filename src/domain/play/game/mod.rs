@@ -8,6 +8,7 @@ pub mod model;
 mod resource_actions;
 pub mod rules;
 mod stack;
+mod targets;
 mod turn_flow;
 
 use crate::domain::play::{
@@ -20,8 +21,8 @@ use crate::domain::play::{
 pub use model::Player;
 pub use model::{
     ActivatedAbilityOnStack, AggregateCardLocationIndex, PlayerCardZone, PrepareHandSpellCastError,
-    PreparedHandSpellCast, PriorityState, SpellOnStack, SpellTarget, StackObject, StackObjectKind,
-    StackZone, TerminalState,
+    PreparedHandSpellCast, PriorityState, SpellOnStack, StackObject, StackObjectKind, StackZone,
+    TerminalState,
 };
 pub use rules::{
     combat::ResolveCombatDamageOutcome,
@@ -32,6 +33,7 @@ pub use rules::{
     turn_flow::TurnProgressionContext,
     turn_flow::{AdvanceTurnOutcome, DrawCardsEffectOutcome},
 };
+pub use targets::SpellTarget;
 
 #[derive(Debug)]
 pub struct Game {

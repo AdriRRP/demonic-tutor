@@ -8,10 +8,9 @@ The backlog is intentionally organized by active legacy wave when proposals are 
 
 Directory: `engine-audit-v10/`
 
-1. `engine-audit-v10/separate-internal-stack-targets-from-public-target-materialization.md`
-2. `engine-audit-v10/move-combat-participants-to-internal-card-references.md`
-3. `engine-audit-v10/rework-visible-zone-indexing-for-sublinear-position-lookup.md`
-4. `engine-audit-v10/finish-dual-layer-identity-with-numeric-core-ids.md`
+1. `engine-audit-v10/move-combat-participants-to-internal-card-references.md`
+2. `engine-audit-v10/rework-visible-zone-indexing-for-sublinear-position-lookup.md`
+3. `engine-audit-v10/finish-dual-layer-identity-with-numeric-core-ids.md`
 
 These proposals focus on the next excellence pass: canonical internal handles, leaner stack carriers, truly incremental location indexing, and a numeric-first core identity model.
 
