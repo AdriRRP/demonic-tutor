@@ -8,7 +8,6 @@ The backlog is intentionally organized by dependency order when active.
 
 Directory: `engine-audit-v6/`
 
-1. `engine-audit-v6/rework-ordered-zone-visible-indexing.md`
 1. `engine-audit-v6/materialize-public-string-ids-only-at-boundaries.md`
 
-These proposals focus on the next elite engine pass: handle-first runtime identity, primary location indexing, slimmer stack carriers, and stricter edge-only public ids.
+These proposals focus on the last open frontier in this wave: stricter edge-only public id materialization.

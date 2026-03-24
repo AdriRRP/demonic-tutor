@@ -8,39 +8,11 @@ use {
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 struct IndexedOrderedZone {
-    handles: Vec<Option<PlayerCardHandle>>,
+    handles: Vec<PlayerCardHandle>,
     positions: HashMap<PlayerCardHandle, usize>,
-    len: usize,
 }
 
 impl IndexedOrderedZone {
-    fn compact(&mut self) {
-        let mut next_handles = Vec::with_capacity(self.len);
-        let mut next_positions = HashMap::with_capacity(self.len);
-
-        for handle in self.handles.iter().flatten().copied() {
-            let index = next_handles.len();
-            next_positions.insert(handle, index);
-            next_handles.push(Some(handle));
-        }
-
-        self.handles = next_handles;
-        self.positions = next_positions;
-    }
-
-    fn compact_if_sparse(&mut self) {
-        if self.len == 0 {
-            self.handles.clear();
-            self.positions.clear();
-            return;
-        }
-
-        let tombstones = self.handles.len().saturating_sub(self.len);
-        if tombstones >= self.len {
-            self.compact();
-        }
-    }
-
     fn receive_many(&mut self, handles: Vec<PlayerCardHandle>) {
         for handle in handles {
             self.push(handle);
@@ -50,20 +22,19 @@ impl IndexedOrderedZone {
     fn push(&mut self, handle: PlayerCardHandle) {
         let index = self.handles.len();
         self.positions.insert(handle, index);
-        self.handles.push(Some(handle));
-        self.len += 1;
+        self.handles.push(handle);
     }
 
     const fn len(&self) -> usize {
-        self.len
+        self.handles.len()
     }
 
     const fn is_empty(&self) -> bool {
-        self.len == 0
+        self.handles.is_empty()
     }
 
     fn iter(&self) -> impl Iterator<Item = &PlayerCardHandle> {
-        self.handles.iter().filter_map(Option::as_ref)
+        self.handles.iter()
     }
 
     fn contains(&self, handle: PlayerCardHandle) -> bool {
@@ -71,23 +42,20 @@ impl IndexedOrderedZone {
     }
 
     fn handle_at(&self, index: usize) -> Option<PlayerCardHandle> {
-        self.handles.iter().filter_map(|handle| *handle).nth(index)
+        self.handles.get(index).copied()
     }
 
     fn drain_all(&mut self) -> Vec<PlayerCardHandle> {
         self.positions.clear();
-        self.len = 0;
         std::mem::take(&mut self.handles)
-            .into_iter()
-            .flatten()
-            .collect()
     }
 
     fn remove_preserving_order(&mut self, handle: PlayerCardHandle) -> Option<PlayerCardHandle> {
         let index = self.positions.remove(&handle)?;
-        let removed = self.handles.get_mut(index)?.take()?;
-        self.len -= 1;
-        self.compact_if_sparse();
+        let removed = self.handles.remove(index);
+        for (shifted_index, shifted_handle) in self.handles[index..].iter().copied().enumerate() {
+            self.positions.insert(shifted_handle, index + shifted_index);
+        }
         Some(removed)
     }
 }
