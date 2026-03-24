@@ -34,7 +34,7 @@ fn the_activated_ability_is_on_the_stack_under_alices_control(world: &mut Gamepl
         .top()
         .expect("stack should contain an ability");
     assert_eq!(event.player_id, GameplayWorld::player_id("Alice"));
-    assert_eq!(top.controller_id(), &GameplayWorld::player_id("Alice"));
+    assert_eq!(top.controller_index(), 0);
     assert_eq!(world.game().stack().len(), 1);
 }
 

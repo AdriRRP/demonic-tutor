@@ -57,7 +57,7 @@ fn the_spell_is_on_the_stack_under_alices_control(world: &mut GameplayWorld) {
         .top()
         .expect("stack should contain a spell");
     assert_eq!(event.player_id, GameplayWorld::player_id("Alice"));
-    assert_eq!(top.controller_id(), &GameplayWorld::player_id("Alice"));
+    assert_eq!(top.controller_index(), 0);
 }
 
 #[then("the spell is on the stack under Bob's control")]
@@ -67,7 +67,7 @@ fn the_spell_is_on_the_stack_under_bobs_control(world: &mut GameplayWorld) {
         .stack()
         .top()
         .expect("stack should contain a top spell");
-    assert_eq!(top.controller_id(), &GameplayWorld::player_id("Bob"));
+    assert_eq!(top.controller_index(), 1);
 }
 
 #[then("Bob's instant is on top of the stack under Bob's control")]
@@ -77,7 +77,7 @@ fn bobs_instant_is_on_top_of_the_stack_under_bobs_control(world: &mut GameplayWo
         .stack()
         .top()
         .expect("stack should contain a top spell");
-    assert_eq!(top.controller_id(), &GameplayWorld::player_id("Bob"));
+    assert_eq!(top.controller_index(), 1);
 }
 
 #[then("Alice's original spell remains on the stack")]

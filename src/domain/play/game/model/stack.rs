@@ -5,7 +5,7 @@ use crate::domain::play::{
         ActivatedAbilityEffect, ActivatedAbilityProfile, CardType, SpellPayload, SpellTargetKind,
         SupportedSpellRules,
     },
-    ids::{CardInstanceId, PlayerId},
+    ids::{CardInstanceId, PlayerCardHandle, PlayerId},
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -16,6 +16,50 @@ pub enum SpellTarget {
 }
 
 impl SpellTarget {
+    #[must_use]
+    pub const fn kind(&self) -> SpellTargetKind {
+        match self {
+            Self::Player(_) => SpellTargetKind::Player,
+            Self::Creature(_) => SpellTargetKind::Creature,
+            Self::GraveyardCard(_) => SpellTargetKind::GraveyardCard,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct StackCardRef {
+    owner_index: usize,
+    handle: PlayerCardHandle,
+}
+
+impl StackCardRef {
+    #[must_use]
+    pub const fn new(owner_index: usize, handle: PlayerCardHandle) -> Self {
+        Self {
+            owner_index,
+            handle,
+        }
+    }
+
+    #[must_use]
+    pub const fn owner_index(self) -> usize {
+        self.owner_index
+    }
+
+    #[must_use]
+    pub const fn handle(self) -> PlayerCardHandle {
+        self.handle
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum StackTargetRef {
+    Player(usize),
+    Creature(StackCardRef),
+    GraveyardCard(StackCardRef),
+}
+
+impl StackTargetRef {
     #[must_use]
     pub const fn kind(&self) -> SpellTargetKind {
         match self {
@@ -85,16 +129,16 @@ impl StackZone {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct StackObject {
     number: u32,
-    controller_id: PlayerId,
+    controller_index: usize,
     kind: StackObjectKind,
 }
 
 impl StackObject {
     #[must_use]
-    pub const fn new(number: u32, controller_id: PlayerId, kind: StackObjectKind) -> Self {
+    pub const fn new(number: u32, controller_index: usize, kind: StackObjectKind) -> Self {
         Self {
             number,
-            controller_id,
+            controller_index,
             kind,
         }
     }
@@ -105,8 +149,8 @@ impl StackObject {
     }
 
     #[must_use]
-    pub const fn controller_id(&self) -> &PlayerId {
-        &self.controller_id
+    pub const fn controller_index(&self) -> usize {
+        self.controller_index
     }
 
     #[must_use]
@@ -138,7 +182,7 @@ pub enum StackObjectKind {
 pub struct SpellOnStack {
     payload: SpellPayload,
     mana_cost_paid: u32,
-    target: Option<SpellTarget>,
+    target: Option<StackTargetRef>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -177,7 +221,7 @@ impl SpellOnStack {
     pub const fn new(
         payload: SpellPayload,
         mana_cost_paid: u32,
-        target: Option<SpellTarget>,
+        target: Option<StackTargetRef>,
     ) -> Self {
         Self {
             payload,
@@ -212,7 +256,7 @@ impl SpellOnStack {
     }
 
     #[must_use]
-    pub const fn target(&self) -> Option<&SpellTarget> {
+    pub const fn target(&self) -> Option<&StackTargetRef> {
         self.target.as_ref()
     }
 
@@ -222,7 +266,7 @@ impl SpellOnStack {
     }
 
     #[must_use]
-    pub fn into_target(self) -> Option<SpellTarget> {
+    pub fn into_target(self) -> Option<StackTargetRef> {
         self.target
     }
 }

@@ -103,7 +103,7 @@ fn bob_casts_the_second_instant_response_spell(world: &mut GameplayWorld) {
 fn the_stack_contains_two_spells_controlled_by_bob(world: &mut GameplayWorld) {
     assert_eq!(world.game().stack().len(), 2);
     for object in world.game().stack().objects() {
-        assert_eq!(object.controller_id(), &GameplayWorld::player_id("Bob"));
+        assert_eq!(object.controller_index(), 1);
     }
 }
 
@@ -120,14 +120,8 @@ fn the_stack_contains_alices_original_spell_below_two_spells_controlled_by_bob(
         world.game().stack().objects()[0].source_card_id(),
         original_spell
     );
-    assert_eq!(
-        world.game().stack().objects()[1].controller_id(),
-        &GameplayWorld::player_id("Bob")
-    );
-    assert_eq!(
-        world.game().stack().objects()[2].controller_id(),
-        &GameplayWorld::player_id("Bob")
-    );
+    assert_eq!(world.game().stack().objects()[1].controller_index(), 1);
+    assert_eq!(world.game().stack().objects()[2].controller_index(), 1);
 }
 
 #[then("Bob's original response remains on the stack")]

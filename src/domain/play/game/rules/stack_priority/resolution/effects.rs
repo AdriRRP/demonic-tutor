@@ -13,7 +13,7 @@ use {
         errors::{DomainError, GameError},
         events::{CardExiled, CreatureDied, GameEnded, LifeChanged},
         game::{rules::zones, SpellTarget},
-        ids::{CardInstanceId, GameId, PlayerId},
+        ids::{CardInstanceId, GameId},
     },
 };
 
@@ -425,11 +425,10 @@ pub(super) fn apply_supported_spell_rules(
     players: &mut [Player],
     card_locations: &AggregateCardLocationIndex,
     terminal_state: &mut TerminalState,
-    controller_id: &PlayerId,
+    controller_index: usize,
     supported_spell_rules: SupportedSpellRules,
     target: Option<&SpellTarget>,
 ) -> Result<SpellResolutionSideEffects, DomainError> {
-    let controller_index = helpers::find_player_index(players, controller_id)?;
     match supported_spell_rules.resolution() {
         SpellResolutionProfile::None => {
             review_state_based_actions(game_id, players, terminal_state)

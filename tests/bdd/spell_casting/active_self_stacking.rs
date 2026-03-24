@@ -87,6 +87,6 @@ fn alice_casts_the_second_instant_spell(world: &mut GameplayWorld) {
 fn the_stack_contains_two_spells_controlled_by_alice(world: &mut GameplayWorld) {
     assert_eq!(world.game().stack().len(), 2);
     for object in world.game().stack().objects() {
-        assert_eq!(object.controller_id(), &GameplayWorld::player_id("Alice"));
+        assert_eq!(object.controller_index(), 0);
     }
 }

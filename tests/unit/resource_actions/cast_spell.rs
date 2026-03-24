@@ -183,10 +183,7 @@ fn opponent_can_cast_an_instant_response_after_the_caster_passes_priority() {
 
     assert_eq!(response.spell_put_on_stack.card_id, bob_spell);
     assert_eq!(game.stack().len(), 2);
-    assert_eq!(
-        game.stack().top().unwrap().controller_id(),
-        &PlayerId::new("player-2")
-    );
+    assert_eq!(game.stack().top().unwrap().controller_index(), 1);
     assert_eq!(
         game.priority().unwrap().current_holder(),
         &PlayerId::new("player-2")
@@ -284,10 +281,7 @@ fn opponent_can_tap_a_land_and_pay_for_an_instant_response_in_the_same_window() 
     assert_eq!(response.spell_put_on_stack.mana_cost_paid, 1);
     assert_eq!(game.players()[1].mana(), 0);
     assert_eq!(game.stack().len(), 2);
-    assert_eq!(
-        game.stack().top().unwrap().controller_id(),
-        &PlayerId::new("player-2")
-    );
+    assert_eq!(game.stack().top().unwrap().controller_index(), 1);
 }
 
 #[test]

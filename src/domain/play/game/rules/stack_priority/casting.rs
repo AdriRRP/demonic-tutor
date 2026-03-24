@@ -16,8 +16,8 @@ use {
         game::{
             helpers, invariants,
             model::{
-                PrepareHandSpellCastError, PriorityState, SpellOnStack, SpellTarget, StackObject,
-                StackObjectKind, StackZone,
+                PrepareHandSpellCastError, PriorityState, SpellOnStack, SpellTarget, StackCardRef,
+                StackObject, StackObjectKind, StackTargetRef, StackZone,
             },
         },
         ids::{CardInstanceId, PlayerId},
@@ -126,8 +126,43 @@ struct PreparedStackSpellObject {
 }
 
 impl PreparedStackSpellObject {
-    fn into_stack_object(self, number: u32, controller_id: PlayerId) -> StackObject {
-        StackObject::new(number, controller_id, StackObjectKind::Spell(self.spell))
+    fn into_stack_object(self, number: u32, controller_index: usize) -> StackObject {
+        StackObject::new(number, controller_index, StackObjectKind::Spell(self.spell))
+    }
+}
+
+fn prepare_stack_target(
+    players: &[crate::domain::play::game::Player],
+    card_locations: &crate::domain::play::game::AggregateCardLocationIndex,
+    target: Option<&SpellTarget>,
+) -> Result<Option<StackTargetRef>, DomainError> {
+    match target {
+        None => Ok(None),
+        Some(SpellTarget::Player(player_id)) => Ok(Some(StackTargetRef::Player(
+            helpers::find_player_index(players, player_id)?,
+        ))),
+        Some(SpellTarget::Creature(card_id)) => {
+            let location = card_locations.location(card_id).ok_or_else(|| {
+                DomainError::Game(GameError::InternalInvariantViolation(format!(
+                    "target creature {card_id} disappeared before stack insertion"
+                )))
+            })?;
+            Ok(Some(StackTargetRef::Creature(StackCardRef::new(
+                location.owner_index(),
+                location.handle(),
+            ))))
+        }
+        Some(SpellTarget::GraveyardCard(card_id)) => {
+            let location = card_locations.location(card_id).ok_or_else(|| {
+                DomainError::Game(GameError::InternalInvariantViolation(format!(
+                    "target graveyard card {card_id} disappeared before stack insertion"
+                )))
+            })?;
+            Ok(Some(StackTargetRef::GraveyardCard(StackCardRef::new(
+                location.owner_index(),
+                location.handle(),
+            ))))
+        }
     }
 }
 
@@ -163,7 +198,7 @@ fn prepare_stack_spell_object(
     prepared_cast: crate::domain::play::game::model::PreparedHandSpellCast,
     card_type: CardType,
     mana_cost: u32,
-    target: Option<SpellTarget>,
+    target: Option<StackTargetRef>,
 ) -> PreparedStackSpellObject {
     PreparedStackSpellObject {
         card_type,
@@ -259,13 +294,14 @@ pub fn cast_spell(
                 }))
             }
         };
+    let prepared_stack_target = prepare_stack_target(players, card_locations, target.as_ref())?;
     let prepared_stack_spell =
-        prepare_stack_spell_object(prepared_cast, card_type, mana_cost, target.clone());
+        prepare_stack_spell_object(prepared_cast, card_type, mana_cost, prepared_stack_target);
 
     let spell_card_type = prepared_stack_spell.card_type;
     let spell_mana_cost = prepared_stack_spell.mana_cost;
     let stack_object_number = stack.next_object_number();
-    stack.push(prepared_stack_spell.into_stack_object(stack_object_number, player_id.clone()));
+    stack.push(prepared_stack_spell.into_stack_object(stack_object_number, player_idx));
 
     *priority = Some(PriorityState::opened(player_id.clone()));
 

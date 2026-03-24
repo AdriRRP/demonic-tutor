@@ -18,8 +18,8 @@ use crate::domain::play::{
     cards::ActivatedAbilityEffect,
     events::{CardExiled, CreatureDied, GameEnded, LifeChanged, SpellCast, StackTopResolved},
     game::{
-        model::{StackObject, StackObjectKind},
-        Player, TerminalState,
+        model::{StackObject, StackObjectKind, StackTargetRef},
+        Player, SpellTarget, TerminalState,
     },
     ids::GameId,
 };
@@ -33,6 +33,55 @@ type ResolvedSpellOutcome = (
     Option<GameEnded>,
 );
 
+fn materialize_spell_target(
+    players: &[Player],
+    target: StackTargetRef,
+) -> Result<SpellTarget, crate::domain::play::errors::DomainError> {
+    match target {
+        StackTargetRef::Player(player_index) => Ok(SpellTarget::Player(
+            players
+                .get(player_index)
+                .ok_or_else(|| {
+                    crate::domain::play::errors::DomainError::Game(
+                        crate::domain::play::errors::GameError::InternalInvariantViolation(
+                            format!("missing player at stack target index {player_index}"),
+                        ),
+                    )
+                })?
+                .id()
+                .clone(),
+        )),
+        StackTargetRef::Creature(card_ref) => Ok(SpellTarget::Creature(
+            players
+                .get(card_ref.owner_index())
+                .and_then(|player| player.card_by_handle(card_ref.handle()))
+                .ok_or_else(|| {
+                    crate::domain::play::errors::DomainError::Game(
+                        crate::domain::play::errors::GameError::InternalInvariantViolation(
+                            "missing creature stack target handle".to_string(),
+                        ),
+                    )
+                })?
+                .id()
+                .clone(),
+        )),
+        StackTargetRef::GraveyardCard(card_ref) => Ok(SpellTarget::GraveyardCard(
+            players
+                .get(card_ref.owner_index())
+                .and_then(|player| player.card_by_handle(card_ref.handle()))
+                .ok_or_else(|| {
+                    crate::domain::play::errors::DomainError::Game(
+                        crate::domain::play::errors::GameError::InternalInvariantViolation(
+                            "missing graveyard stack target handle".to_string(),
+                        ),
+                    )
+                })?
+                .id()
+                .clone(),
+        )),
+    }
+}
+
 fn resolve_spell_from_stack(
     game_id: &GameId,
     players: &mut [Player],
@@ -43,16 +92,20 @@ fn resolve_spell_from_stack(
     let ResolvedSpellObject {
         stack_object_number,
         source_card_id,
-        controller_id,
+        controller_index,
         payload,
         mana_cost_paid,
         target,
     } = extract_resolved_spell_object(stack_object)?;
+    let target = target
+        .map(|target_ref| materialize_spell_target(players, target_ref))
+        .transpose()?;
     let card_type = *payload.card_type();
     let supported_spell_rules = payload.supported_spell_rules();
 
     let outcome =
-        move_resolved_spell_to_its_destination(players, &controller_id, card_type, payload)?;
+        move_resolved_spell_to_its_destination(players, controller_index, card_type, payload)?;
+    let controller_id = players[controller_index].id().clone();
 
     let (stack_top_resolved, spell_cast) = build_resolution_events(
         game_id,
@@ -68,7 +121,7 @@ fn resolve_spell_from_stack(
         players,
         card_locations,
         terminal_state,
-        &controller_id,
+        controller_index,
         supported_spell_rules,
         target.as_ref(),
     )?;
@@ -92,23 +145,24 @@ fn resolve_activated_ability_from_stack(
     let ResolvedActivatedAbility {
         stack_object_number,
         source_card_id,
-        controller_id,
+        controller_index,
         ability,
     } = extract_resolved_activated_ability(stack_object)?;
+    let controller_id = players[controller_index].id().clone();
 
     let stack_top_resolved = StackTopResolved::new(
         game_id.clone(),
-        controller_id.clone(),
+        controller_id,
         crate::domain::play::ids::StackObjectId::for_stack_object(game_id, stack_object_number),
         source_card_id,
     );
 
     let life_changed = match ability.effect() {
         ActivatedAbilityEffect::GainLifeToController(amount) => {
-            Some(super::super::game_effects::adjust_player_life(
+            Some(super::super::game_effects::adjust_player_life_by_index(
                 game_id,
                 players,
-                &controller_id,
+                controller_index,
                 amount.cast_signed(),
             )?)
         }

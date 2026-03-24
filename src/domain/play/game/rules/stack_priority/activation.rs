@@ -65,7 +65,7 @@ pub fn activate_ability(
     let stack_object_number = stack.next_object_number();
     stack.push(StackObject::new(
         stack_object_number,
-        player_id.clone(),
+        player_index,
         StackObjectKind::ActivatedAbility(ActivatedAbilityOnStack::new(
             source_card_id.clone(),
             ability,

@@ -13,6 +13,7 @@ pub use player::{
 };
 pub use priority::PriorityState;
 pub use stack::{
-    ActivatedAbilityOnStack, SpellOnStack, SpellTarget, StackObject, StackObjectKind, StackZone,
+    ActivatedAbilityOnStack, SpellOnStack, SpellTarget, StackCardRef, StackObject, StackObjectKind,
+    StackTargetRef, StackZone,
 };
 pub use terminal_state::TerminalState;
