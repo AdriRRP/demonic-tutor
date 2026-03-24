@@ -1,3 +1,5 @@
+#[path = "activate_nonmana_ability_in_priority_window.rs"]
+mod activate_nonmana_ability_in_priority_window;
 #[path = "cast_artifact_in_main_window.rs"]
 mod cast_artifact_in_main_window;
 #[path = "cast_creature_in_second_main_window.rs"]

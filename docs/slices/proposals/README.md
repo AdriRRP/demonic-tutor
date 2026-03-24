@@ -24,9 +24,7 @@ Wave 3 is fully implemented.
 
 Directory: `abilities-v1/`
 
-7. `abilities-v1/generalize-flash-support-for-noncreature-spells.md`
-7. `abilities-v1/activated-ability-uses-priority-windows.md`
-8. `abilities-v1/mana-abilities-remain-stack-free.md`
+Wave 4 is fully implemented.
 
 ## Wave 5 — Combat And Stability Closure
 

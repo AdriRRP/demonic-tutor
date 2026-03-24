@@ -155,7 +155,19 @@ A creature with Reach can block creatures with Flying. Reach does not grant Flyi
 
 A conceptual zone where spells and abilities wait to resolve.
 
-Full support for stack behavior may be introduced in future slices.
+The current runtime supports spell objects plus a minimal non-mana activated-ability object family on the stack. Supported mana abilities remain stack-free.
+
+## Activated Ability
+
+An explicit ability attached to a card or permanent that a player may activate when the current game state allows it.
+
+The current runtime supports a tiny closed subset only. Non-mana activated abilities use the same priority-and-stack corridor as other supported stack interactions.
+
+## Mana Ability
+
+A supported activated ability whose effect produces mana and does not use the stack.
+
+In the current runtime, the exercised mana-ability subset is the land-tap corridor backed by explicit activated mana-ability profiles.
 
 ---
 

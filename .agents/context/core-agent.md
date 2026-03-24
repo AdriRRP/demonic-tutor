@@ -59,6 +59,7 @@ Prefer:
 - explicit stack-borne spell metadata preferred over rediscovering immutable spell facts from moved card values during resolution
 - phased storage refactors that prove id-backed carriers first in colder zones before touching hotter paths such as battlefield or stack
 - once battlefield follows the same id-backed pattern, prefer the next storage/performance refactor in stack or shared lookup helpers rather than widening player accessors again
+- keep mana abilities and non-mana activated abilities semantically distinct: mana abilities stay stack-free, while supported non-mana activations must go through the normal priority-and-stack corridor
 
 Avoid:
 

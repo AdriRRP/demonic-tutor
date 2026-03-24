@@ -10,6 +10,6 @@ pub use combat::{DeclareAttackersCommand, DeclareBlockersCommand, ResolveCombatD
 pub use lifecycle::{DealOpeningHandsCommand, MulliganCommand, StartGameCommand};
 pub use resource_actions::{AdjustPlayerLifeEffectCommand, PlayLandCommand, TapLandCommand};
 pub use setup::{LibraryCard, LibraryCreature, PlayerDeck, PlayerLibrary};
-pub use stack_priority::{CastSpellCommand, PassPriorityCommand};
+pub use stack_priority::{ActivateAbilityCommand, CastSpellCommand, PassPriorityCommand};
 pub use turn_flow::{AdvanceTurnCommand, DiscardForCleanupCommand, DrawCardsEffectCommand};
 pub use zones::ExileCardCommand;

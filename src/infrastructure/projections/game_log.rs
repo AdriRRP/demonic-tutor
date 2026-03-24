@@ -55,6 +55,12 @@ impl GameLogProjection {
                     e.player_id, e.amount, e.new_mana_total
                 )
             }
+            DomainEvent::ActivatedAbilityPutOnStack(e) => {
+                format!(
+                    "Player {} activated ability from {} with effect {:?}",
+                    e.player_id, e.source_card_id, e.effect
+                )
+            }
             DomainEvent::SpellPutOnStack(e) => Self::log_spell_put_on_stack(e),
             DomainEvent::PriorityPassed(e) => format!("Player {} passed priority", e.player_id),
             DomainEvent::StackTopResolved(e) => Self::log_stack_top_resolved(e),

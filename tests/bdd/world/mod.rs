@@ -8,9 +8,9 @@ mod setup_combat_windows;
 mod setup_priority_windows;
 
 use demonictutor::{
-    CardDiscarded, CardDrawn, CardExiled, CardInstanceId, CombatDamageResolved, CreatureDied, Game,
-    GameEnded, LifeChanged, PriorityPassed, SpellCast, SpellPutOnStack, StackTopResolved,
-    TurnProgressed,
+    ActivatedAbilityPutOnStack, CardDiscarded, CardDrawn, CardExiled, CardInstanceId,
+    CombatDamageResolved, CreatureDied, Game, GameEnded, LifeChanged, PriorityPassed, SpellCast,
+    SpellPutOnStack, StackTopResolved, TurnProgressed,
 };
 
 #[derive(Debug, Default, cucumber::World)]
@@ -22,6 +22,7 @@ pub struct GameplayWorld {
     pub last_cards_drawn: Vec<CardDrawn>,
     pub last_card_discarded: Option<CardDiscarded>,
     pub last_card_exiled: Option<CardExiled>,
+    pub last_activated_ability_put_on_stack: Option<ActivatedAbilityPutOnStack>,
     pub last_spell_put_on_stack: Option<SpellPutOnStack>,
     pub last_spell_cast: Option<SpellCast>,
     pub last_priority_passed: Option<PriorityPassed>,

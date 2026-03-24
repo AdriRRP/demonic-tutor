@@ -2,12 +2,18 @@ use super::{common::DomainEvents, GameService};
 use crate::{
     application::{EventBus, EventStore},
     domain::play::{
-        commands::{CastSpellCommand, PassPriorityCommand},
+        commands::{ActivateAbilityCommand, CastSpellCommand, PassPriorityCommand},
         errors::DomainError,
         events::DomainEvent,
-        game::{CastSpellOutcome, Game, PassPriorityOutcome},
+        game::{ActivateAbilityOutcome, CastSpellOutcome, Game, PassPriorityOutcome},
     },
 };
+
+pub(super) fn domain_events_for_activate_ability(
+    outcome: &ActivateAbilityOutcome,
+) -> Vec<DomainEvent> {
+    vec![outcome.activated_ability_put_on_stack.clone().into()]
+}
 
 pub(super) fn domain_events_for_cast_spell(outcome: &CastSpellOutcome) -> Vec<DomainEvent> {
     vec![outcome.spell_put_on_stack.clone().into()]
@@ -41,6 +47,23 @@ where
     ) -> Result<CastSpellOutcome, DomainError> {
         let outcome = game.cast_spell(cmd)?;
         let domain_events = domain_events_for_cast_spell(&outcome);
+        self.persist_and_publish_events(game.id().as_str(), &domain_events)?;
+
+        Ok(outcome)
+    }
+
+    /// Activates a supported non-mana ability.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the command is invalid.
+    pub fn activate_ability(
+        &self,
+        game: &mut Game,
+        cmd: ActivateAbilityCommand,
+    ) -> Result<ActivateAbilityOutcome, DomainError> {
+        let outcome = game.activate_ability(cmd)?;
+        let domain_events = domain_events_for_activate_ability(&outcome);
         self.persist_and_publish_events(game.id().as_str(), &domain_events)?;
 
         Ok(outcome)

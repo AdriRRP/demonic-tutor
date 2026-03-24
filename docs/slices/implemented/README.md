@@ -18,6 +18,8 @@ Implemented slice docs are grouped by capability so the directory stays navigabl
   state-based reviews, automatic cleanup, and other automatic gameplay consequences
 - `stack/`
   stack, casting, responses, flash-like support, and priority-window spell corridors
+- `abilities/`
+  explicit activated abilities and stack-free mana-ability boundaries
 - `targeting/`
   target legality and the currently supported targeted-spell families
 - `combat/`

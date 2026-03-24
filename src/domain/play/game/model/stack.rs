@@ -1,5 +1,8 @@
 use crate::domain::play::{
-    cards::{CardType, SpellCardSnapshot, SpellTargetKind, SupportedSpellRules},
+    cards::{
+        ActivatedAbilityEffect, ActivatedAbilityProfile, CardType, SpellCardSnapshot,
+        SpellTargetKind, SupportedSpellRules,
+    },
     ids::{CardInstanceId, GameId, PlayerId, StackObjectId},
 };
 
@@ -118,6 +121,7 @@ impl StackObject {
     pub const fn source_card_id(&self) -> &CardInstanceId {
         match &self.kind {
             StackObjectKind::Spell(spell) => spell.source_card_id(),
+            StackObjectKind::ActivatedAbility(ability) => ability.source_card_id(),
         }
     }
 
@@ -135,6 +139,7 @@ impl StackObject {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum StackObjectKind {
     Spell(SpellOnStack),
+    ActivatedAbility(ActivatedAbilityOnStack),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -145,6 +150,37 @@ pub struct SpellOnStack {
     supported_spell_rules: SupportedSpellRules,
     mana_cost_paid: u32,
     target: Option<SpellTarget>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ActivatedAbilityOnStack {
+    source_card_id: CardInstanceId,
+    ability: ActivatedAbilityProfile,
+}
+
+impl ActivatedAbilityOnStack {
+    #[must_use]
+    pub const fn new(source_card_id: CardInstanceId, ability: ActivatedAbilityProfile) -> Self {
+        Self {
+            source_card_id,
+            ability,
+        }
+    }
+
+    #[must_use]
+    pub const fn source_card_id(&self) -> &CardInstanceId {
+        &self.source_card_id
+    }
+
+    #[must_use]
+    pub const fn ability(&self) -> ActivatedAbilityProfile {
+        self.ability
+    }
+
+    #[must_use]
+    pub const fn effect(&self) -> ActivatedAbilityEffect {
+        self.ability.effect()
+    }
 }
 
 impl SpellOnStack {

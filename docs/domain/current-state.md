@@ -27,6 +27,7 @@ Implemented capabilities include:
 - playing lands
 - tapping lands for mana
 - tapping lands for mana in the currently exercised open priority windows while the acting player holds priority
+- activating the first supported non-mana activated ability through the stack in open priority windows
 - casting spells that require mana
 - casting creature spells that enter the battlefield with power and toughness
 - resolving instants and sorceries to graveyard
@@ -71,6 +72,7 @@ The domain currently includes:
 - player-owned zone carriers keyed by card id, with ordered library/hand/graveyard/exile views and intentionally unordered battlefield removal semantics
 - mana production from lands
 - explicit activated mana-ability profiles for the currently supported mana-producing permanents
+- the first supported non-mana activated ability corridor (`Tap: you gain 1 life`) using the same priority and stack model as other stack interactions
 - minimal colored mana support for `Forest -> Green`, `Mountain -> Red`, `Plains -> White`, `Island -> Blue`, `Swamp -> Black`, single-color instant costs, a first mixed `generic + colored` spell cost corridor, repeated same-color costs such as `GG`, colored mana satisfying generic requirements after colored symbols are reserved, and explicit rejection when a required colored symbol is missing
 - spell casting with mana cost
 - transient mana pools cleared when the game advances to the next phase or turn
@@ -98,6 +100,7 @@ The domain currently includes:
 - in each currently supported instant-speed window, the active player may cast an instant and self-stack a second instant before passing priority
 - in each currently supported instant-speed window, the non-active player may respond with an instant after the first pass and may self-stack a second instant before passing priority
 - the current response corridor also supports producing generic mana from a land, without using the stack, and immediately spending it to cast a paid instant response on the same open stack
+- the current stack model now supports both spells and the first supported non-mana activated ability object family
 - sorcery-speed spells are supported for the active player in empty `FirstMain` and `SecondMain` windows for the currently modeled spell-card subset: creature, sorcery, artifact, enchantment, and planeswalker
 - the current supported spell-card subset also allows explicit card-face casting rules that open non-instant spells to open priority windows, providing minimal `Flash`-like support for the currently exercised subset
 - the current minimal `Flash`-like support is currently exercised by supported creatures in `Upkeep`, `BeginningOfCombat`, on an existing stack response window, and after attackers, blockers, or combat damage, and by the current supported noncreature subset (`Artifact`, `Enchantment`, `Planeswalker`) on an existing stack response window, in `BeginningOfCombat`, and after blockers or combat damage
@@ -157,7 +160,7 @@ Current constraints include:
 - limited card behavior modeling
 - permanent spells resolve from the stack into the battlefield in the current simplified stack model
 - mana production is simplified to generic mana plus a minimal colored subset (`White`, `Blue`, `Black`, `Green`, `Red`) and is currently exercised in main phases plus the currently supported open priority windows while the acting player holds priority
-- the current land-tap corridor is now backed by an explicit activated mana-ability profile, but general non-mana activated abilities are still out of scope
+- the current land-tap corridor is backed by an explicit activated mana-ability profile and remains stack-free, while the currently supported non-mana activated-ability subset is intentionally limited to one untargeted life-gain corridor
 - combat blocking is simplified to at most one blocker per attacker
 
 These constraints are expected to evolve in future slices.

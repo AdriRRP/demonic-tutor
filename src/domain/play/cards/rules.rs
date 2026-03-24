@@ -91,6 +91,37 @@ impl ActivatedManaAbilityProfile {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ActivatedAbilityEffect {
+    GainLifeToController(u32),
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ActivatedAbilityProfile {
+    requires_tap: bool,
+    effect: ActivatedAbilityEffect,
+}
+
+impl ActivatedAbilityProfile {
+    #[must_use]
+    pub const fn tap_to_gain_life_to_controller(amount: u32) -> Self {
+        Self {
+            requires_tap: true,
+            effect: ActivatedAbilityEffect::GainLifeToController(amount),
+        }
+    }
+
+    #[must_use]
+    pub const fn requires_tap(self) -> bool {
+        self.requires_tap
+    }
+
+    #[must_use]
+    pub const fn effect(self) -> ActivatedAbilityEffect {
+        self.effect
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ManaCost {
     generic: u32,
     colored: [u32; ManaColor::COUNT],

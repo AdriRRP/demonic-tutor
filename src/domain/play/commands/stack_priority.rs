@@ -38,3 +38,19 @@ impl CastSpellCommand {
         self
     }
 }
+
+#[derive(Debug, Clone)]
+pub struct ActivateAbilityCommand {
+    pub player_id: PlayerId,
+    pub source_card_id: CardInstanceId,
+}
+
+impl ActivateAbilityCommand {
+    #[must_use]
+    pub const fn new(player_id: PlayerId, source_card_id: CardInstanceId) -> Self {
+        Self {
+            player_id,
+            source_card_id,
+        }
+    }
+}

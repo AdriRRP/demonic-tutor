@@ -12,7 +12,8 @@ pub use combat::{
 pub use lifecycle::{GameEndReason, GameEnded, GameStarted, OpeningHandDealt};
 pub use resource_actions::{LandPlayed, LandTapped, LifeChanged, ManaAdded};
 pub use stack_priority::{
-    PriorityPassed, SpellCast, SpellCastOutcome, SpellPutOnStack, StackTopResolved,
+    ActivatedAbilityPutOnStack, PriorityPassed, SpellCast, SpellCastOutcome, SpellPutOnStack,
+    StackTopResolved,
 };
 pub use turn_flow::{
     CardDiscarded, CardDrawn, DiscardKind, DrawKind, MulliganTaken, TurnProgressed,
@@ -42,6 +43,7 @@ pub enum DomainEvent {
     LifeChanged(LifeChanged),
     LandTapped(LandTapped),
     ManaAdded(ManaAdded),
+    ActivatedAbilityPutOnStack(ActivatedAbilityPutOnStack),
     SpellPutOnStack(SpellPutOnStack),
     PriorityPassed(PriorityPassed),
     StackTopResolved(StackTopResolved),
@@ -64,6 +66,7 @@ impl_domain_event_from!(MulliganTaken, MulliganTaken);
 impl_domain_event_from!(LifeChanged, LifeChanged);
 impl_domain_event_from!(LandTapped, LandTapped);
 impl_domain_event_from!(ManaAdded, ManaAdded);
+impl_domain_event_from!(ActivatedAbilityPutOnStack, ActivatedAbilityPutOnStack);
 impl_domain_event_from!(SpellPutOnStack, SpellPutOnStack);
 impl_domain_event_from!(PriorityPassed, PriorityPassed);
 impl_domain_event_from!(StackTopResolved, StackTopResolved);

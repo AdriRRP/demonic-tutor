@@ -1,8 +1,36 @@
 use crate::domain::play::{
-    cards::CardType,
+    cards::{ActivatedAbilityEffect, CardType},
     game::SpellTarget,
     ids::{CardInstanceId, GameId, PlayerId, StackObjectId},
 };
+
+#[derive(Debug, Clone)]
+pub struct ActivatedAbilityPutOnStack {
+    pub game_id: GameId,
+    pub player_id: PlayerId,
+    pub source_card_id: CardInstanceId,
+    pub effect: ActivatedAbilityEffect,
+    pub stack_object_id: StackObjectId,
+}
+
+impl ActivatedAbilityPutOnStack {
+    #[must_use]
+    pub const fn new(
+        game_id: GameId,
+        player_id: PlayerId,
+        source_card_id: CardInstanceId,
+        effect: ActivatedAbilityEffect,
+        stack_object_id: StackObjectId,
+    ) -> Self {
+        Self {
+            game_id,
+            player_id,
+            source_card_id,
+            effect,
+            stack_object_id,
+        }
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct SpellPutOnStack {

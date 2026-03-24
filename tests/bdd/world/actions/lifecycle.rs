@@ -10,6 +10,7 @@ impl GameplayWorld {
         self.last_cards_drawn.clear();
         self.last_card_discarded = None;
         self.last_card_exiled = None;
+        self.last_activated_ability_put_on_stack = None;
         self.last_spell_put_on_stack = None;
         self.last_spell_cast = None;
         self.last_priority_passed = None;

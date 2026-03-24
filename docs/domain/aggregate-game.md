@@ -217,9 +217,11 @@ The current model includes:
 - automatic destruction of creatures with lethal marked damage
 - automatic destruction of creatures with 0 toughness through the shared review of supported state-based actions
 - minimal stack-aware spell casting and spell resolution
+- the stack may currently hold supported spells plus the first supported non-mana activated ability object family
 - explicit supported spell-effect profiles carried by card-face data rather than inferred from card-definition strings during resolution
 - explicit legal-target rules for the currently supported targeted-spell subset, currently covering players and creatures
 - spell-target and spell-resolution metadata can be projected into dedicated stack-borne spell snapshots instead of reusing full permanent runtime
+- non-mana activated abilities may ride the same aggregate-owned stack while mana abilities remain outside it
 - casting player retaining priority immediately after putting a spell on the stack
 - instant responses by the current priority holder in the currently supported windows
 - opening an empty priority window when entering `Upkeep`

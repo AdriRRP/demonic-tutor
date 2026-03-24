@@ -7,6 +7,8 @@
 #![allow(clippy::unreachable)]
 #![allow(clippy::unwrap_used)]
 
+#[path = "bdd/abilities.rs"]
+mod abilities;
 #[path = "bdd/cleanup.rs"]
 mod cleanup;
 #[path = "bdd/combat.rs"]
@@ -145,6 +147,7 @@ async fn run_stack_features_capabilities() {
         "features/stack/pump_spell_changes_combat_outcome.feature",
         "features/stack/targeted_gain_life_spell.feature",
         "features/stack/targeted_lose_life_spell.feature",
+        "features/stack/activate_nonmana_ability_in_priority_window.feature",
         "features/stack/reject_own_turn_priority_artifact_response.feature",
         "features/stack/reject_own_turn_priority_enchantment_response.feature",
     ])

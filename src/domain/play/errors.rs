@@ -86,6 +86,7 @@ pub enum CardError {
         card: CardInstanceId,
     },
     CannotCastLand(CardInstanceId),
+    NoActivatedAbility(CardInstanceId),
     CreatureHasSummoningSickness {
         player: PlayerId,
         card: CardInstanceId,
@@ -295,6 +296,9 @@ impl std::fmt::Display for CardError {
                 write!(f, "card {card} not on battlefield for player {player}")
             }
             Self::CannotCastLand(card) => write!(f, "cannot cast land {card} as a spell"),
+            Self::NoActivatedAbility(card) => {
+                write!(f, "card {card} has no supported activated ability")
+            }
             Self::CreatureHasSummoningSickness { player: _, card } => {
                 write!(
                     f,

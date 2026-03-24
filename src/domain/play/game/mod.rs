@@ -16,13 +16,15 @@ use crate::domain::play::{
 
 pub use model::Player;
 pub use model::{
-    PlayerCardZone, PriorityState, SpellOnStack, SpellTarget, StackObject, StackObjectKind,
-    StackZone, TerminalState,
+    ActivatedAbilityOnStack, PlayerCardZone, PriorityState, SpellOnStack, SpellTarget, StackObject,
+    StackObjectKind, StackZone, TerminalState,
 };
 pub use rules::{
     combat::ResolveCombatDamageOutcome,
     resource_actions::AdjustPlayerLifeEffectOutcome,
-    stack_priority::{CastSpellOutcome, PassPriorityOutcome, StackPriorityContext},
+    stack_priority::{
+        ActivateAbilityOutcome, CastSpellOutcome, PassPriorityOutcome, StackPriorityContext,
+    },
     turn_flow::TurnProgressionContext,
     turn_flow::{AdvanceTurnOutcome, DrawCardsEffectOutcome},
 };

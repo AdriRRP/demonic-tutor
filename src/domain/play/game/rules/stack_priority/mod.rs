@@ -1,3 +1,4 @@
+mod activation;
 mod casting;
 mod passing;
 mod resolution;
@@ -6,13 +7,14 @@ mod spell_effects;
 use super::super::{model::PriorityState, Player, TerminalState};
 use crate::domain::play::{
     events::{
-        CardExiled, CreatureDied, GameEnded, LifeChanged, PriorityPassed, SpellCast,
-        SpellPutOnStack, StackTopResolved,
+        ActivatedAbilityPutOnStack, CardExiled, CreatureDied, GameEnded, LifeChanged,
+        PriorityPassed, SpellCast, SpellPutOnStack, StackTopResolved,
     },
     ids::{GameId, PlayerId},
     phase::Phase,
 };
 
+pub use activation::activate_ability;
 pub use casting::cast_spell;
 pub use passing::pass_priority;
 
@@ -29,6 +31,11 @@ pub struct StackPriorityContext<'a> {
 #[derive(Debug, Clone)]
 pub struct CastSpellOutcome {
     pub spell_put_on_stack: SpellPutOnStack,
+}
+
+#[derive(Debug, Clone)]
+pub struct ActivateAbilityOutcome {
+    pub activated_ability_put_on_stack: ActivatedAbilityPutOnStack,
 }
 
 #[derive(Debug, Clone)]

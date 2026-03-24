@@ -1,6 +1,6 @@
 use super::{
-    ActivatedManaAbilityProfile, CardType, CastingPermissionProfile, CastingRule, ManaColor,
-    ManaCost, SupportedSpellRules,
+    ActivatedAbilityProfile, ActivatedManaAbilityProfile, CardType, CastingPermissionProfile,
+    CastingRule, ManaColor, ManaCost, SupportedSpellRules,
 };
 use crate::domain::play::ids::CardDefinitionId;
 
@@ -11,6 +11,7 @@ pub struct CardDefinition {
     casting_permission: Option<CastingPermissionProfile>,
     supported_spell_rules: SupportedSpellRules,
     activated_mana_ability: Option<ActivatedManaAbilityProfile>,
+    activated_ability: Option<ActivatedAbilityProfile>,
 }
 
 impl CardDefinition {
@@ -30,6 +31,7 @@ impl CardDefinition {
                 | CardType::Artifact
                 | CardType::Planeswalker => None,
             },
+            activated_ability: None,
         }
     }
 
@@ -44,6 +46,7 @@ impl CardDefinition {
                 produced_mana,
                 1,
             )),
+            activated_ability: None,
         }
     }
 
@@ -67,6 +70,15 @@ impl CardDefinition {
     #[must_use]
     pub const fn with_mana_cost(mut self, mana_cost: ManaCost) -> Self {
         self.mana_cost = mana_cost;
+        self
+    }
+
+    #[must_use]
+    pub const fn with_activated_ability(
+        mut self,
+        activated_ability: ActivatedAbilityProfile,
+    ) -> Self {
+        self.activated_ability = Some(activated_ability);
         self
     }
 
@@ -98,5 +110,10 @@ impl CardDefinition {
     #[must_use]
     pub const fn activated_mana_ability(&self) -> Option<ActivatedManaAbilityProfile> {
         self.activated_mana_ability
+    }
+
+    #[must_use]
+    pub const fn activated_ability(&self) -> Option<ActivatedAbilityProfile> {
+        self.activated_ability
     }
 }

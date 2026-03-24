@@ -1,4 +1,4 @@
-use super::{resolution::resolve_spell_from_stack, PassPriorityOutcome, StackPriorityContext};
+use super::{resolution::resolve_stack_object, PassPriorityOutcome, StackPriorityContext};
 use crate::domain::play::{
     commands::PassPriorityCommand,
     errors::{DomainError, GameError},
@@ -83,7 +83,7 @@ pub fn pass_priority(
         ))
     })?;
     let (stack_top_resolved, spell_cast, card_exiled, life_changed, creatures_died, game_ended) =
-        resolve_spell_from_stack(game_id, players, terminal_state, stack_object)?;
+        resolve_stack_object(game_id, players, terminal_state, stack_object)?;
 
     if terminal_state.is_over() {
         *priority = None;
@@ -94,7 +94,7 @@ pub fn pass_priority(
     Ok(PassPriorityOutcome {
         priority_passed,
         stack_top_resolved: Some(stack_top_resolved),
-        spell_cast: Some(spell_cast),
+        spell_cast,
         card_exiled,
         life_changed,
         creatures_died,

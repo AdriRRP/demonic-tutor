@@ -2,7 +2,7 @@
 #![allow(clippy::panic)]
 #![allow(dead_code)]
 
-use demonictutor::CastingRule;
+use demonictutor::{ActivatedAbilityProfile, CastingRule};
 use demonictutor::{
     AdvanceTurnCommand, AdvanceTurnOutcome, CardDefinitionId, CardType, CastSpellCommand,
     DealOpeningHandsCommand, DeckId, DeclareAttackersCommand, DiscardForCleanupCommand, Game,
@@ -240,6 +240,12 @@ pub fn sorcery_card(name: &str, mana_cost: u32) -> LibraryCard {
 
 pub fn artifact_card(name: &str, mana_cost: u32) -> LibraryCard {
     LibraryCard::new(CardDefinitionId::new(name), CardType::Artifact, mana_cost)
+}
+
+pub fn life_gain_artifact_card(name: &str, mana_cost: u32, amount: u32) -> LibraryCard {
+    artifact_card(name, mana_cost).with_activated_ability(
+        ActivatedAbilityProfile::tap_to_gain_life_to_controller(amount),
+    )
 }
 
 pub fn enchantment_card(name: &str, mana_cost: u32) -> LibraryCard {

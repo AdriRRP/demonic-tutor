@@ -76,6 +76,7 @@ Stack and priority behavior:
 - combat-relative targeted spells against attacking and blocking creatures
 - actor-relative combat-targeted spells such as `blocking creature you control` and `attacking creature an opponent controls`
 - minimal `Flash`-like creature casts in supported combat windows
+- first supported non-mana activated ability using the stack and priority windows
 
 ### `features/turn-flow/`
 
@@ -221,6 +222,7 @@ The following features are currently executed by `tests/bdd.rs`, grouped by area
 - `features/stack/pump_spell_changes_combat_outcome.feature`
 - `features/stack/targeted_gain_life_spell.feature`
 - `features/stack/targeted_lose_life_spell.feature`
+- `features/stack/activate_nonmana_ability_in_priority_window.feature`
 - `features/stack/reject_controlled_creature_for_opponents_creature_spell.feature`
 - `features/stack/resolve_opponents_creature_spell_in_first_main.feature`
 - `features/stack/target_controlled_attacking_creature_spell.feature`

@@ -1,6 +1,6 @@
 use super::{
-    ActivatedManaAbilityProfile, CardDefinition, CardType, CastingPermissionProfile,
-    KeywordAbility, KeywordAbilitySet, ManaCost, SupportedSpellRules,
+    ActivatedAbilityProfile, ActivatedManaAbilityProfile, CardDefinition, CardType,
+    CastingPermissionProfile, KeywordAbility, KeywordAbilitySet, ManaCost, SupportedSpellRules,
 };
 use crate::domain::play::ids::{CardDefinitionId, CardInstanceId};
 use std::sync::Arc;
@@ -256,6 +256,11 @@ impl CardInstance {
     #[must_use]
     pub fn supported_spell_rules(&self) -> SupportedSpellRules {
         self.face.definition.supported_spell_rules()
+    }
+
+    #[must_use]
+    pub fn activated_ability(&self) -> Option<ActivatedAbilityProfile> {
+        self.face.definition.activated_ability()
     }
 
     #[must_use]

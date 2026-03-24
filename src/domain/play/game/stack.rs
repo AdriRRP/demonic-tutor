@@ -1,10 +1,36 @@
-use super::{invariants, rules, CastSpellOutcome, Game, PassPriorityOutcome, StackPriorityContext};
+use super::{
+    invariants, rules, ActivateAbilityOutcome, CastSpellOutcome, Game, PassPriorityOutcome,
+    StackPriorityContext,
+};
 use crate::domain::play::{
-    commands::{CastSpellCommand, PassPriorityCommand},
+    commands::{ActivateAbilityCommand, CastSpellCommand, PassPriorityCommand},
     errors::DomainError,
 };
 
 impl Game {
+    /// Activates a supported non-mana ability from the battlefield.
+    ///
+    /// # Errors
+    /// See [`rules::stack_priority::activate_ability`].
+    pub fn activate_ability(
+        &mut self,
+        cmd: ActivateAbilityCommand,
+    ) -> Result<ActivateAbilityOutcome, DomainError> {
+        invariants::require_game_active(self.is_over())?;
+        rules::stack_priority::activate_ability(
+            StackPriorityContext {
+                game_id: &self.id,
+                players: &mut self.players,
+                active_player: &self.active_player,
+                phase: &self.phase,
+                stack: &mut self.stack,
+                priority: &mut self.priority,
+                terminal_state: &mut self.terminal_state,
+            },
+            cmd,
+        )
+    }
+
     /// Casts a spell.
     ///
     /// # Errors
