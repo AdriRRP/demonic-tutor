@@ -8,7 +8,6 @@ The backlog is intentionally organized by dependency order when active.
 
 Directory: `engine-audit-v6/`
 
-1. `engine-audit-v6/introduce-handle-first-runtime-identity.md`
 1. `engine-audit-v6/thin-stack-spell-payloads-beyond-shared-definitions.md`
 1. `engine-audit-v6/commit-spells-to-stack-through-a-single-prepared-object.md`
 1. `engine-audit-v6/rework-ordered-zone-visible-indexing.md`
