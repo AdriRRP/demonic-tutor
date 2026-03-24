@@ -26,10 +26,18 @@ struct CreatureRuntime {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-struct SpellCreatureProfile {
+pub struct CreatureSpellPayload {
+    id: CardInstanceId,
+    definition: Arc<CardDefinition>,
     power: u32,
     toughness: u32,
     keywords: KeywordAbilitySet,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct NonCreatureSpellPayload {
+    id: CardInstanceId,
+    definition: Arc<CardDefinition>,
 }
 
 impl CreatureRuntime {
@@ -118,10 +126,9 @@ pub struct CardInstance {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct SpellCardSnapshot {
-    id: CardInstanceId,
-    definition: Arc<CardDefinition>,
-    creature_profile: Option<SpellCreatureProfile>,
+pub enum SpellPayload {
+    NonCreature(NonCreatureSpellPayload),
+    Creature(CreatureSpellPayload),
 }
 
 impl CardInstance {
@@ -204,20 +211,19 @@ impl CardInstance {
     }
 
     #[must_use]
-    pub fn into_spell_snapshot(self) -> SpellCardSnapshot {
-        let creature_profile = match &self.runtime.kind {
-            CardRuntimeKind::NonCreature => None,
-            CardRuntimeKind::Creature(creature) => Some(SpellCreatureProfile {
+    pub fn into_spell_payload(self) -> SpellPayload {
+        match &self.runtime.kind {
+            CardRuntimeKind::NonCreature => SpellPayload::NonCreature(NonCreatureSpellPayload {
+                id: self.id,
+                definition: self.face.definition,
+            }),
+            CardRuntimeKind::Creature(creature) => SpellPayload::Creature(CreatureSpellPayload {
+                id: self.id,
+                definition: self.face.definition,
                 power: creature.power,
                 toughness: creature.toughness,
                 keywords: creature.keywords,
             }),
-        };
-
-        SpellCardSnapshot {
-            id: self.id,
-            definition: self.face.definition,
-            creature_profile,
         }
     }
 
@@ -466,45 +472,58 @@ impl CardInstance {
     }
 }
 
-impl SpellCardSnapshot {
+impl SpellPayload {
     #[must_use]
     pub const fn id(&self) -> &CardInstanceId {
-        &self.id
+        match self {
+            Self::NonCreature(payload) => &payload.id,
+            Self::Creature(payload) => &payload.id,
+        }
     }
 
     #[must_use]
     pub fn card_type(&self) -> &CardType {
-        self.definition.card_type()
+        match self {
+            Self::NonCreature(payload) => payload.definition.card_type(),
+            Self::Creature(payload) => payload.definition.card_type(),
+        }
     }
 
     #[must_use]
     pub fn supported_spell_rules(&self) -> SupportedSpellRules {
-        self.definition.supported_spell_rules()
+        match self {
+            Self::NonCreature(payload) => payload.definition.supported_spell_rules(),
+            Self::Creature(payload) => payload.definition.supported_spell_rules(),
+        }
     }
 
     #[must_use]
     pub fn into_card_instance(self) -> CardInstance {
-        let runtime = self.creature_profile.map_or(
-            CardRuntime {
-                tapped: false,
-                kind: CardRuntimeKind::NonCreature,
+        match self {
+            Self::NonCreature(payload) => CardInstance {
+                id: payload.id,
+                face: CardFace {
+                    definition: payload.definition,
+                },
+                runtime: CardRuntime {
+                    tapped: false,
+                    kind: CardRuntimeKind::NonCreature,
+                },
             },
-            |creature| CardRuntime {
-                tapped: false,
-                kind: CardRuntimeKind::Creature(CreatureRuntime::new_with_keywords(
-                    creature.power,
-                    creature.toughness,
-                    creature.keywords,
-                )),
+            Self::Creature(payload) => CardInstance {
+                id: payload.id,
+                face: CardFace {
+                    definition: payload.definition,
+                },
+                runtime: CardRuntime {
+                    tapped: false,
+                    kind: CardRuntimeKind::Creature(CreatureRuntime::new_with_keywords(
+                        payload.power,
+                        payload.toughness,
+                        payload.keywords,
+                    )),
+                },
             },
-        );
-
-        CardInstance {
-            id: self.id,
-            face: CardFace {
-                definition: self.definition,
-            },
-            runtime,
         }
     }
 }

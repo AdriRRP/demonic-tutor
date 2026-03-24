@@ -13,4 +13,4 @@ pub use rules::{
     ManaCost, PlayerTargetRule, SingleTargetRule, SpellResolutionProfile, SpellTargetKind,
     SpellTargetingProfile, SupportedSpellRules,
 };
-pub use runtime::{CardInstance, SpellCardSnapshot};
+pub use runtime::{CardInstance, SpellPayload};

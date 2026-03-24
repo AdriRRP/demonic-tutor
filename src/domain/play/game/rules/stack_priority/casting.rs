@@ -143,7 +143,7 @@ fn read_hand_spell_metadata(
 
 struct PreparedHandSpellCast {
     mana_cost_paid: u32,
-    snapshot: crate::domain::play::cards::SpellCardSnapshot,
+    payload: crate::domain::play::cards::SpellPayload,
 }
 
 fn prepare_validated_hand_spell_for_cast(
@@ -162,12 +162,11 @@ fn prepare_validated_hand_spell_for_cast(
         }));
     }
 
-    let snapshot =
-        helpers::remove_card_from_hand(player, player_id, card_id)?.into_spell_snapshot();
+    let payload = helpers::remove_card_from_hand(player, player_id, card_id)?.into_spell_payload();
 
     Ok(PreparedHandSpellCast {
         mana_cost_paid: mana_cost,
-        snapshot,
+        payload,
     })
 }
 
@@ -241,7 +240,7 @@ pub fn cast_spell(
 
     let PreparedHandSpellCast {
         mana_cost_paid,
-        snapshot,
+        payload,
     } = prepare_validated_hand_spell_for_cast(
         &mut players[player_idx],
         &player_id,
@@ -255,7 +254,7 @@ pub fn cast_spell(
     stack.push(StackObject::new(
         stack_object_number,
         player_id.clone(),
-        StackObjectKind::Spell(SpellOnStack::new(snapshot, mana_cost_paid, target.clone())),
+        StackObjectKind::Spell(SpellOnStack::new(payload, mana_cost_paid, target.clone())),
     ));
 
     *priority = Some(PriorityState::opened(player_id.clone()));

@@ -2,8 +2,8 @@
 
 use crate::domain::play::{
     cards::{
-        ActivatedAbilityEffect, ActivatedAbilityProfile, CardType, SpellCardSnapshot,
-        SpellTargetKind, SupportedSpellRules,
+        ActivatedAbilityEffect, ActivatedAbilityProfile, CardType, SpellPayload, SpellTargetKind,
+        SupportedSpellRules,
     },
     ids::{CardInstanceId, GameId, PlayerId, StackObjectId},
 };
@@ -146,7 +146,7 @@ pub enum StackObjectKind {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SpellOnStack {
-    card: SpellCardSnapshot,
+    payload: SpellPayload,
     mana_cost_paid: u32,
     target: Option<SpellTarget>,
 }
@@ -185,12 +185,12 @@ impl ActivatedAbilityOnStack {
 impl SpellOnStack {
     #[must_use]
     pub const fn new(
-        card: SpellCardSnapshot,
+        payload: SpellPayload,
         mana_cost_paid: u32,
         target: Option<SpellTarget>,
     ) -> Self {
         Self {
-            card,
+            payload,
             mana_cost_paid,
             target,
         }
@@ -198,22 +198,22 @@ impl SpellOnStack {
 
     #[must_use]
     pub const fn source_card_id(&self) -> &CardInstanceId {
-        self.card.id()
+        self.payload.id()
     }
 
     #[must_use]
-    pub const fn card(&self) -> &SpellCardSnapshot {
-        &self.card
+    pub const fn payload(&self) -> &SpellPayload {
+        &self.payload
     }
 
     #[must_use]
     pub fn card_type(&self) -> &CardType {
-        self.card.card_type()
+        self.payload.card_type()
     }
 
     #[must_use]
     pub fn supported_spell_rules(&self) -> SupportedSpellRules {
-        self.card.supported_spell_rules()
+        self.payload.supported_spell_rules()
     }
 
     #[must_use]
@@ -227,8 +227,8 @@ impl SpellOnStack {
     }
 
     #[must_use]
-    pub fn into_card(self) -> SpellCardSnapshot {
-        self.card
+    pub fn into_payload(self) -> SpellPayload {
+        self.payload
     }
 
     #[must_use]
