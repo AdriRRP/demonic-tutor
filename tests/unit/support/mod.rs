@@ -285,6 +285,15 @@ pub fn flash_enchantment_card(name: &str, mana_cost: u32) -> LibraryCard {
     .with_casting_rule(CastingRule::OpenPriorityWindow)
 }
 
+pub fn flash_planeswalker_card(name: &str, mana_cost: u32) -> LibraryCard {
+    LibraryCard::new(
+        CardDefinitionId::new(name),
+        CardType::Planeswalker,
+        mana_cost,
+    )
+    .with_casting_rule(CastingRule::OpenPriorityWindow)
+}
+
 pub fn own_turn_priority_artifact_card(name: &str, mana_cost: u32) -> LibraryCard {
     LibraryCard::new(CardDefinitionId::new(name), CardType::Artifact, mana_cost)
         .with_casting_rule(CastingRule::OpenPriorityWindowDuringOwnTurn)

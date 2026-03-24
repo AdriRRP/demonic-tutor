@@ -39,7 +39,7 @@ async fn run_features(features: &[&str]) {
 }
 
 #[allow(clippy::future_not_send)]
-async fn run_stack_features() {
+async fn run_stack_features_windows_and_timing() {
     run_features(&[
         "features/stack/stack_foundation.feature",
         "features/stack/respond_with_instant_spell.feature",
@@ -96,14 +96,25 @@ async fn run_stack_features() {
         "features/stack/cast_second_instant_after_blockers.feature",
         "features/stack/cast_instant_after_combat_damage.feature",
         "features/stack/cast_second_instant_after_combat_damage.feature",
+    ])
+    .await;
+}
+
+#[allow(clippy::future_not_send)]
+async fn run_stack_features_capabilities() {
+    run_features(&[
         "features/stack/respond_with_flash_artifact_spell.feature",
         "features/stack/respond_with_flash_enchantment_spell.feature",
+        "features/stack/respond_with_flash_planeswalker_spell.feature",
         "features/stack/cast_flash_artifact_in_beginning_of_combat_window.feature",
         "features/stack/cast_flash_artifact_after_blockers.feature",
         "features/stack/cast_flash_artifact_after_combat_damage.feature",
         "features/stack/cast_flash_enchantment_in_beginning_of_combat_window.feature",
         "features/stack/cast_flash_enchantment_after_blockers.feature",
         "features/stack/cast_flash_enchantment_after_combat_damage.feature",
+        "features/stack/cast_flash_planeswalker_in_beginning_of_combat_window.feature",
+        "features/stack/cast_flash_planeswalker_after_blockers.feature",
+        "features/stack/cast_flash_planeswalker_after_combat_damage.feature",
         "features/stack/cast_flash_creature_after_blockers.feature",
         "features/stack/cast_flash_creature_after_combat_damage.feature",
         "features/stack/cast_own_turn_priority_artifact_in_upkeep_window.feature",
@@ -178,7 +189,8 @@ async fn run_other_features() {
 
 #[tokio::main]
 async fn main() {
-    run_stack_features().await;
+    run_stack_features_windows_and_timing().await;
+    run_stack_features_capabilities().await;
     run_turn_flow_features().await;
     run_other_features().await;
 }

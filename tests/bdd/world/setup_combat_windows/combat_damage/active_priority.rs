@@ -97,6 +97,30 @@ impl GameplayWorld {
         );
     }
 
+    pub fn setup_priority_after_combat_damage_with_flash_planeswalker(&mut self) {
+        let attacker_id = prepare_priority_after_combat_damage(
+            self,
+            "bdd-post-combat-damage-flash-planeswalker",
+            vec![
+                attacker_card(),
+                support::flash_planeswalker_card("bdd-window-flash-planeswalker", 0),
+            ],
+            Vec::new(),
+        );
+        self.tracked_card_id =
+            Some(self.hand_card_by_definition("Alice", "bdd-window-flash-planeswalker"));
+        self.tracked_attacker_id = Some(attacker_id);
+        self.reset_observations();
+        assert_eq!(self.game().phase(), &Phase::EndOfCombat);
+        assert_eq!(
+            self.game()
+                .priority()
+                .expect("combat damage should reopen priority")
+                .current_holder(),
+            &Self::player_id("Alice")
+        );
+    }
+
     pub fn setup_priority_after_combat_damage_with_own_turn_artifact(&mut self) {
         let attacker_id = prepare_priority_after_combat_damage(
             self,

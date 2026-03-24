@@ -913,6 +913,37 @@ impl GameplayWorld {
             Some(self.hand_card_by_definition("Bob", "bdd-response-enchantment"));
     }
 
+    pub fn setup_spell_response_stack_with_flash_planeswalker(&mut self) {
+        self.reset_game_with_libraries(
+            "bdd-spell-response-flash-planeswalker",
+            support::filled_library(
+                vec![
+                    LibraryCard::creature(CardDefinitionId::new("bdd-primary-creature"), 1, 2, 2),
+                    support::land_card("bdd-forest"),
+                ],
+                10,
+            ),
+            support::filled_library(
+                vec![support::flash_planeswalker_card(
+                    "bdd-response-planeswalker",
+                    0,
+                )],
+                10,
+            ),
+        );
+
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &support::create_service(),
+            self.game_mut(),
+            "player-1",
+        );
+
+        self.tracked_card_id = Some(self.hand_card_by_definition("Alice", "bdd-primary-creature"));
+        self.tracked_blocker_id = Some(self.hand_card_by_definition("Alice", "bdd-forest"));
+        self.tracked_response_card_id =
+            Some(self.hand_card_by_definition("Bob", "bdd-response-planeswalker"));
+    }
+
     pub fn setup_spell_response_stack_with_mana_paid_instant(&mut self) {
         let alice_cards = vec![support::instant_card("bdd-primary-instant", 0); 10];
         let bob_cards = vec![support::instant_card("bdd-response-paid-instant", 1); 5]

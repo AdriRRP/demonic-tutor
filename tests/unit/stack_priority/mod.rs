@@ -26,6 +26,12 @@ mod cast_flash_enchantment_after_blockers;
 mod cast_flash_enchantment_after_combat_damage;
 #[path = "cast_flash_enchantment_in_beginning_of_combat_window.rs"]
 mod cast_flash_enchantment_in_beginning_of_combat_window;
+#[path = "cast_flash_planeswalker_after_blockers.rs"]
+mod cast_flash_planeswalker_after_blockers;
+#[path = "cast_flash_planeswalker_after_combat_damage.rs"]
+mod cast_flash_planeswalker_after_combat_damage;
+#[path = "cast_flash_planeswalker_in_beginning_of_combat_window.rs"]
+mod cast_flash_planeswalker_in_beginning_of_combat_window;
 #[path = "cast_instant_in_first_main_window.rs"]
 mod cast_instant_in_first_main_window;
 #[path = "cast_own_turn_priority_artifact_after_attackers.rs"]
@@ -112,6 +118,8 @@ mod respond_with_flash_artifact_spell;
 mod respond_with_flash_creature_spell;
 #[path = "respond_with_flash_enchantment_spell.rs"]
 mod respond_with_flash_enchantment_spell;
+#[path = "respond_with_flash_planeswalker_spell.rs"]
+mod respond_with_flash_planeswalker_spell;
 #[path = "respond_with_second_instant_in_beginning_of_combat_window.rs"]
 mod respond_with_second_instant_in_beginning_of_combat_window;
 #[path = "respond_with_second_instant_in_combat_damage_window.rs"]

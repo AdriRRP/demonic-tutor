@@ -188,12 +188,16 @@ The following features are currently executed by `tests/bdd.rs`, grouped by area
 - `features/stack/cast_second_instant_after_combat_damage.feature`
 - `features/stack/respond_with_flash_artifact_spell.feature`
 - `features/stack/respond_with_flash_enchantment_spell.feature`
+- `features/stack/respond_with_flash_planeswalker_spell.feature`
 - `features/stack/cast_flash_artifact_in_beginning_of_combat_window.feature`
 - `features/stack/cast_flash_artifact_after_blockers.feature`
 - `features/stack/cast_flash_artifact_after_combat_damage.feature`
 - `features/stack/cast_flash_enchantment_in_beginning_of_combat_window.feature`
 - `features/stack/cast_flash_enchantment_after_blockers.feature`
 - `features/stack/cast_flash_enchantment_after_combat_damage.feature`
+- `features/stack/cast_flash_planeswalker_in_beginning_of_combat_window.feature`
+- `features/stack/cast_flash_planeswalker_after_blockers.feature`
+- `features/stack/cast_flash_planeswalker_after_combat_damage.feature`
 - `features/stack/cast_flash_creature_after_blockers.feature`
 - `features/stack/cast_flash_creature_after_combat_damage.feature`
 - `features/stack/cast_own_turn_priority_artifact_in_upkeep_window.feature`

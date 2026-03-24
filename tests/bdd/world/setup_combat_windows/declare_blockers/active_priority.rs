@@ -71,6 +71,21 @@ impl GameplayWorld {
         self.reset_observations();
     }
 
+    pub fn setup_priority_after_blockers_declared_with_flash_planeswalker(&mut self) {
+        prepare_priority_after_blockers_declared(
+            self,
+            "bdd-combat-priority-blockers-flash-planeswalker",
+            vec![
+                attacker_card(),
+                support::flash_planeswalker_card("bdd-window-flash-planeswalker", 0),
+            ],
+            vec![blocker_card()],
+        );
+        self.tracked_card_id =
+            Some(self.hand_card_by_definition("Alice", "bdd-window-flash-planeswalker"));
+        self.reset_observations();
+    }
+
     pub fn setup_priority_after_blockers_declared_with_own_turn_artifact(&mut self) {
         prepare_priority_after_blockers_declared(
             self,

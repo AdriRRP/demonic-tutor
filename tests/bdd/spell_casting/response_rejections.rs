@@ -73,6 +73,25 @@ fn alice_has_cast_an_instant_spell_and_still_holds_priority_with_bobs_planeswalk
 }
 
 #[given(
+    "Alice has cast a creature spell and still holds priority with Bob's flash planeswalker in hand"
+)]
+fn alice_has_cast_a_creature_spell_and_still_holds_priority_with_bobs_flash_planeswalker_in_hand(
+    world: &mut GameplayWorld,
+) {
+    world.setup_spell_response_stack_with_flash_planeswalker();
+    world.ensure_tracked_land_provides_mana();
+    world.cast_tracked_spell("Alice");
+    let priority = world
+        .game()
+        .priority()
+        .expect("priority window should be open");
+    assert_eq!(
+        priority.current_holder(),
+        &GameplayWorld::player_id("Alice")
+    );
+}
+
+#[given(
     "Alice has cast an instant spell and still holds priority with Bob's own-turn artifact card in hand"
 )]
 fn alice_has_cast_an_instant_spell_and_still_holds_priority_with_bobs_own_turn_artifact_card_in_hand(
@@ -129,6 +148,11 @@ fn bob_tries_to_cast_the_sorcery_response_spell(world: &mut GameplayWorld) {
 #[when("Bob tries to cast the planeswalker response spell")]
 fn bob_tries_to_cast_the_planeswalker_response_spell(world: &mut GameplayWorld) {
     world.try_cast_tracked_response_spell("Bob");
+}
+
+#[when("Bob casts the planeswalker response spell")]
+fn bob_casts_the_planeswalker_response_spell(world: &mut GameplayWorld) {
+    world.cast_tracked_response_spell("Bob");
 }
 
 #[when("Bob tries to cast the artifact spell")]
