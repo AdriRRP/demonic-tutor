@@ -85,6 +85,8 @@ fn resolve_target(
         return Err(SpellTargetLegality::IllegalTargetKind);
     }
 
+    let actor_index = helpers::find_player_index(players, actor_id).ok();
+
     match target {
         SpellTarget::Player(player_id) => {
             let Some(target_player) = target_player_exists(players, player_id) else {
@@ -101,7 +103,7 @@ fn resolve_target(
             };
 
             Ok(ResolvedTarget::Creature {
-                is_actor: target_creature.owner_id() == actor_id,
+                is_actor: actor_index.is_some_and(|index| target_creature.owner_index() == index),
                 is_attacking: target_creature.card().is_attacking(),
                 is_blocking: target_creature.card().is_blocking(),
             })

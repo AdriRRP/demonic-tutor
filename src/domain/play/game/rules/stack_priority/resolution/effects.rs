@@ -57,7 +57,7 @@ fn destroy_creature(
 ) -> Option<CreatureDied> {
     let target = helpers::battlefield_card_location(players, target_id)?;
     let owner_index = target.owner_index();
-    let owner_id = target.owner_id().clone();
+    let owner_id = players[owner_index].id().clone();
     players[owner_index].move_battlefield_card_to_graveyard(target_id)?;
     Some(CreatureDied::new(
         game_id.clone(),
@@ -72,7 +72,7 @@ fn exile_creature_from_battlefield(
     target_id: &CardInstanceId,
 ) -> Option<CardExiled> {
     let target_owner = helpers::battlefield_card_location(players, target_id)
-        .map(|location| location.owner_id().clone());
+        .map(|location| players[location.owner_index()].id().clone());
     target_owner.and_then(|owner_id| {
         zones::exile_card_from_battlefield(game_id, players, &owner_id, target_id).ok()
     })
@@ -84,7 +84,7 @@ fn exile_card_from_graveyard(
     target_id: &CardInstanceId,
 ) -> Option<CardExiled> {
     let target_owner = helpers::graveyard_card_location(players, target_id)
-        .map(|location| location.owner_id().clone());
+        .map(|location| players[location.owner_index()].id().clone());
     target_owner.and_then(|owner_id| {
         zones::exile_card_from_graveyard(game_id, players, &owner_id, target_id).ok()
     })

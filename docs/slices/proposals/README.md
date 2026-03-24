@@ -2,13 +2,10 @@
 
 This directory contains the current proposal backlog for the next stable-engine wave.
 
-The backlog is intentionally organized by dependency order.
+The backlog is intentionally organized by dependency order when active.
 
-## Wave 1 — Engine Audit V3
+## Current State
 
-Directory: `engine-audit-v3/`
+There is currently no open slice backlog.
 
-1. `engine-audit-v3/introduce-dense-player-card-arena.md`
-1. `engine-audit-v3/move-public-ids-to-edge-only-materialization.md`
-
-These proposals are architectural and semantic follow-ups to the stable engine wave. They do not expand gameplay rules support by themselves.
+The latest architectural follow-up wave, `engine-audit-v3`, has been fully implemented and moved to `docs/slices/implemented/`.

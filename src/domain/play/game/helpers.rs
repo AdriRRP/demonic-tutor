@@ -10,28 +10,22 @@ use {
 };
 
 pub(super) struct BattlefieldCardLocation<'a> {
-    owner_id: &'a PlayerId,
     owner_index: usize,
     card: &'a CardInstance,
 }
 
-pub(super) struct GraveyardCardLocation<'a> {
-    owner_id: &'a PlayerId,
+pub(super) struct GraveyardCardLocation {
+    owner_index: usize,
 }
 
-impl<'a> GraveyardCardLocation<'a> {
+impl GraveyardCardLocation {
     #[must_use]
-    pub const fn owner_id(&self) -> &'a PlayerId {
-        self.owner_id
+    pub const fn owner_index(&self) -> usize {
+        self.owner_index
     }
 }
 
 impl<'a> BattlefieldCardLocation<'a> {
-    #[must_use]
-    pub const fn owner_id(&self) -> &'a PlayerId {
-        self.owner_id
-    }
-
     #[must_use]
     pub const fn owner_index(&self) -> usize {
         self.owner_index
@@ -121,11 +115,7 @@ pub(super) fn battlefield_card_location<'a>(
         .find_map(|(owner_index, player)| {
             player
                 .battlefield_card(card_id)
-                .map(|card| BattlefieldCardLocation {
-                    owner_id: player.id(),
-                    owner_index,
-                    card,
-                })
+                .map(|card| BattlefieldCardLocation { owner_index, card })
         })
 }
 
@@ -137,15 +127,16 @@ pub(super) fn battlefield_card_mut<'a>(
     players[owner_index].battlefield_card_mut(card_id)
 }
 
-pub(super) fn graveyard_card_location<'a>(
-    players: &'a [Player],
+pub(super) fn graveyard_card_location(
+    players: &[Player],
     card_id: &CardInstanceId,
-) -> Option<GraveyardCardLocation<'a>> {
-    players.iter().find_map(|player| {
-        player
-            .graveyard_card(card_id)
-            .map(|_| GraveyardCardLocation {
-                owner_id: player.id(),
-            })
-    })
+) -> Option<GraveyardCardLocation> {
+    players
+        .iter()
+        .enumerate()
+        .find_map(|(owner_index, player)| {
+            player
+                .graveyard_card(card_id)
+                .map(|_| GraveyardCardLocation { owner_index })
+        })
 }
