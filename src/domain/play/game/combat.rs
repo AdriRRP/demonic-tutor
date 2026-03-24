@@ -23,7 +23,6 @@ impl Game {
         invariants::require_no_open_priority_window(self.priority())?;
         let active_player = self.active_player().clone();
         let active_player_index = self.active_player_index;
-        self.refresh_card_locations();
         let event = rules::combat::declare_attackers(
             &self.id,
             &mut self.players,
@@ -33,7 +32,6 @@ impl Game {
         )?;
         self.phase = Phase::DeclareBlockers;
         self.priority = Some(PriorityState::opened(active_player));
-        self.refresh_card_locations();
         Ok(event)
     }
 
@@ -49,7 +47,6 @@ impl Game {
         invariants::require_no_open_priority_window(self.priority())?;
         let active_player = self.active_player().clone();
         let active_player_index = self.active_player_index;
-        self.refresh_card_locations();
         let event = rules::combat::declare_blockers(
             &self.id,
             &mut self.players,
@@ -59,7 +56,6 @@ impl Game {
         )?;
         self.phase = Phase::CombatDamage;
         self.priority = Some(PriorityState::opened(active_player));
-        self.refresh_card_locations();
         Ok(event)
     }
 
@@ -75,7 +71,8 @@ impl Game {
         invariants::require_no_open_priority_window(self.priority())?;
         let active_player = self.active_player().clone();
         let active_player_index = self.active_player_index;
-        self.refresh_card_locations();
+        self.refresh_card_locations_for_player(active_player_index);
+        self.refresh_card_locations_for_player(1 - active_player_index);
         let outcome = rules::combat::resolve_combat_damage(
             &self.id,
             &mut self.players,
@@ -93,7 +90,8 @@ impl Game {
             Some(PriorityState::opened(active_player))
         };
 
-        self.refresh_card_locations();
+        self.refresh_card_locations_for_player(active_player_index);
+        self.refresh_card_locations_for_player(1 - active_player_index);
         Ok(outcome)
     }
 }

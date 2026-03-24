@@ -30,7 +30,6 @@ These proposals focus on the next elite runtime pass: handle-first identity, thi
 Directory: `engine-audit-v9/`
 
 1. `engine-audit-v9/make-player-arena-handle-first-at-the-core.md`
-1. `engine-audit-v9/make-aggregate-card-location-index-live-and-incremental.md`
-2. `engine-audit-v9/finish-dual-layer-identity-at-true-boundaries.md`
+1. `engine-audit-v9/finish-dual-layer-identity-at-true-boundaries.md`
 
 These proposals focus on the next critical runtime pass: canonical handle-first identity, minimal in-flight payloads, and incremental aggregate indexing.

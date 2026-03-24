@@ -3,7 +3,7 @@
 use {
     super::{Player, PlayerCardZone},
     crate::domain::play::ids::{CardInstanceId, PlayerCardHandle},
-    std::collections::HashMap,
+    std::collections::{HashMap, HashSet},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -42,6 +42,7 @@ impl AggregateCardLocation {
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct AggregateCardLocationIndex {
     by_card_id: HashMap<CardInstanceId, AggregateCardLocation>,
+    card_ids_by_owner: Vec<HashSet<CardInstanceId>>,
 }
 
 impl AggregateCardLocationIndex {
@@ -53,14 +54,28 @@ impl AggregateCardLocationIndex {
     }
 
     pub fn refresh(&mut self, players: &[Player]) {
-        self.by_card_id.clear();
         for (owner_index, player) in players.iter().enumerate() {
-            for (card_id, handle, zone) in player.owned_card_locations() {
-                self.by_card_id.insert(
-                    card_id.clone(),
-                    AggregateCardLocation::new(owner_index, handle, zone),
-                );
-            }
+            self.refresh_player(owner_index, player);
+        }
+    }
+
+    pub fn refresh_player(&mut self, owner_index: usize, player: &Player) {
+        if self.card_ids_by_owner.len() <= owner_index {
+            self.card_ids_by_owner
+                .resize_with(owner_index + 1, HashSet::new);
+        }
+
+        let owner_cards = &mut self.card_ids_by_owner[owner_index];
+        for card_id in owner_cards.drain() {
+            self.by_card_id.remove(&card_id);
+        }
+
+        for (card_id, handle, zone) in player.owned_card_locations() {
+            owner_cards.insert(card_id.clone());
+            self.by_card_id.insert(
+                card_id.clone(),
+                AggregateCardLocation::new(owner_index, handle, zone),
+            );
         }
     }
 

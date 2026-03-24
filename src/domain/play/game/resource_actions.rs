@@ -18,7 +18,7 @@ impl Game {
         invariants::require_game_active(self.is_over())?;
         invariants::require_no_priority_with_pending_stack(self.priority(), self.stack.is_empty())?;
         let active_player_index = self.active_player_index;
-        self.refresh_card_locations();
+        self.refresh_card_locations_for_player(active_player_index);
         let result = rules::resource_actions::play_land(
             &self.id,
             &mut self.players,
@@ -26,7 +26,7 @@ impl Game {
             &self.phase,
             cmd,
         );
-        self.refresh_card_locations();
+        self.refresh_card_locations_for_player(active_player_index);
         result
     }
 
@@ -70,7 +70,6 @@ impl Game {
         if let Some(priority) = priority.as_ref() {
             invariants::require_priority_holder(Some(priority), &cmd.player_id)?;
         }
-        self.refresh_card_locations();
         let result = rules::resource_actions::tap_land(
             &self.id,
             &mut self.players,
@@ -79,7 +78,6 @@ impl Game {
             priority.as_ref(),
             cmd,
         );
-        self.refresh_card_locations();
         result
     }
 }

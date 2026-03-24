@@ -22,8 +22,7 @@ impl Game {
     ) -> Result<ActivateAbilityOutcome, DomainError> {
         invariants::require_game_active(self.is_over())?;
         let active_player = self.active_player().clone();
-        self.refresh_card_locations();
-        let result = rules::stack_priority::activate_ability(
+        rules::stack_priority::activate_ability(
             StackPriorityContext {
                 game_id: &self.id,
                 players: &mut self.players,
@@ -35,9 +34,7 @@ impl Game {
                 terminal_state: &mut self.terminal_state,
             },
             cmd,
-        );
-        self.refresh_card_locations();
-        result
+        )
     }
 
     /// Casts a spell.
@@ -47,7 +44,8 @@ impl Game {
     pub fn cast_spell(&mut self, cmd: CastSpellCommand) -> Result<CastSpellOutcome, DomainError> {
         invariants::require_game_active(self.is_over())?;
         let active_player = self.active_player().clone();
-        self.refresh_card_locations();
+        let caster_index = super::helpers::find_player_index(&self.players, &cmd.player_id)?;
+        self.refresh_card_locations_for_player(caster_index);
         let result = rules::stack_priority::cast_spell(
             StackPriorityContext {
                 game_id: &self.id,
@@ -61,7 +59,7 @@ impl Game {
             },
             cmd,
         );
-        self.refresh_card_locations();
+        self.refresh_card_locations_for_player(caster_index);
         result
     }
 

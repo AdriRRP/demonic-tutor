@@ -140,7 +140,15 @@ impl Game {
         self.terminal_state.end_reason()
     }
 
+    fn refresh_card_locations_for_player(&mut self, owner_index: usize) {
+        if let Some(player) = self.players.get(owner_index) {
+            self.card_locations.refresh_player(owner_index, player);
+        }
+    }
+
     fn refresh_card_locations(&mut self) {
-        self.card_locations.refresh(&self.players);
+        for owner_index in 0..self.players.len() {
+            self.refresh_card_locations_for_player(owner_index);
+        }
     }
 }
