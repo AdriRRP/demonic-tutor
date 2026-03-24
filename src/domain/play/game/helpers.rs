@@ -51,10 +51,19 @@ pub(super) fn opposing_player_id(
     players: &[Player],
     player_id: &PlayerId,
 ) -> Result<PlayerId, DomainError> {
+    let player_index = find_player_index(players, player_id)?;
+    let opposing_index = opposing_player_index(players, player_index)?;
+    Ok(players[opposing_index].id().clone())
+}
+
+pub(super) fn opposing_player_index(
+    players: &[Player],
+    player_index: usize,
+) -> Result<usize, DomainError> {
     players
         .iter()
-        .find(|player| player.id() != player_id)
-        .map(|player| player.id().clone())
+        .enumerate()
+        .find_map(|(index, _)| (index != player_index).then_some(index))
         .ok_or_else(|| {
             DomainError::Game(GameError::InternalInvariantViolation(
                 "a two-player game should always produce a winner when one player loses"

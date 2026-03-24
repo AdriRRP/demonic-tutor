@@ -9,7 +9,7 @@ use {
         commands::DiscardForCleanupCommand,
         errors::{DomainError, GameError, PhaseError},
         events::{CardDiscarded, DiscardKind},
-        ids::{GameId, PlayerId},
+        ids::GameId,
         phase::Phase,
     },
 };
@@ -25,11 +25,11 @@ use {
 pub fn discard_for_cleanup(
     game_id: &GameId,
     players: &mut [Player],
-    active_player: &PlayerId,
+    active_player_index: usize,
     phase: &Phase,
     cmd: DiscardForCleanupCommand,
 ) -> Result<CardDiscarded, DomainError> {
-    invariants::require_active_player(active_player, &cmd.player_id)?;
+    invariants::require_active_player_index(players, active_player_index, &cmd.player_id)?;
 
     if !matches!(phase, Phase::EndStep) {
         return Err(DomainError::Phase(PhaseError::InvalidForDiscard {

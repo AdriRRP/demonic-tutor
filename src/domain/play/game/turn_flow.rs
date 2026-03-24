@@ -49,6 +49,7 @@ impl Game {
         cmd: &DrawCardsEffectCommand,
     ) -> Result<rules::turn_flow::DrawCardsEffectOutcome, DomainError> {
         let active_player = self.active_player().clone();
+        let active_player_index = self.active_player_index;
         invariants::require_empty_stack_priority_action_window(
             self.priority(),
             self.stack.is_empty(),
@@ -58,7 +59,7 @@ impl Game {
         let result = rules::turn_flow::draw_cards_effect(
             &self.id,
             &mut self.players,
-            &active_player,
+            active_player_index,
             &self.phase,
             &mut self.terminal_state,
             cmd,
@@ -76,12 +77,12 @@ impl Game {
         cmd: DiscardForCleanupCommand,
     ) -> Result<CardDiscarded, DomainError> {
         invariants::require_game_active(self.is_over())?;
-        let active_player = self.active_player().clone();
+        let active_player_index = self.active_player_index;
         self.refresh_card_locations();
         let result = rules::turn_flow::discard_for_cleanup(
             &self.id,
             &mut self.players,
-            &active_player,
+            active_player_index,
             &self.phase,
             cmd,
         );

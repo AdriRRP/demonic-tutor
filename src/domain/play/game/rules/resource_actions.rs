@@ -161,8 +161,12 @@ pub fn adjust_player_life_effect(
     } = cmd;
 
     helpers::find_player_index(players, &caster_id)?;
-    let life_changed =
-        game_effects::adjust_player_life(game_id, players, &target_player_id, life_delta)?;
+    let life_changed = game_effects::adjust_player_life_by_index(
+        game_id,
+        players,
+        helpers::find_player_index(players, &target_player_id)?,
+        life_delta,
+    )?;
     let StateBasedActionsResult {
         creatures_died,
         game_ended,

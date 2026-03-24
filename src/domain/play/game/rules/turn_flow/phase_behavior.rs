@@ -1,11 +1,8 @@
 //! Supports rules turn flow phase behavior.
 
 use {
-    crate::domain::play::game::{
-        helpers,
-        model::{Player, MAX_HAND_SIZE},
-    },
-    crate::domain::play::{errors::DomainError, ids::PlayerId, phase::Phase},
+    crate::domain::play::game::model::{Player, MAX_HAND_SIZE},
+    crate::domain::play::{errors::DomainError, phase::Phase},
 };
 
 pub(super) trait PhaseBehavior {
@@ -16,7 +13,7 @@ pub(super) trait PhaseBehavior {
     fn on_enter(
         &self,
         _players: &mut [Player],
-        _active_player: &PlayerId,
+        _active_player_index: usize,
     ) -> Result<(), DomainError> {
         Ok(())
     }
@@ -24,7 +21,7 @@ pub(super) trait PhaseBehavior {
     fn on_exit(
         &self,
         _players: &mut [Player],
-        _active_player: &PlayerId,
+        _active_player_index: usize,
     ) -> Result<(), DomainError> {
         Ok(())
     }
@@ -69,9 +66,15 @@ impl PhaseBehavior for UntapPhase {
     fn on_enter(
         &self,
         players: &mut [Player],
-        active_player: &PlayerId,
+        active_player_index: usize,
     ) -> Result<(), DomainError> {
-        let player = helpers::find_player_mut(players, active_player)?;
+        let player = players.get_mut(active_player_index).ok_or_else(|| {
+            DomainError::Game(
+                crate::domain::play::errors::GameError::InternalInvariantViolation(
+                    "active player index should point to an existing player".to_string(),
+                ),
+            )
+        })?;
         player.for_each_battlefield_card_mut(|card| {
             card.untap();
             card.remove_summoning_sickness();
@@ -203,7 +206,7 @@ impl PhaseBehavior for EndStepPhase {
     fn on_exit(
         &self,
         players: &mut [Player],
-        _active_player: &PlayerId,
+        _active_player_index: usize,
     ) -> Result<(), DomainError> {
         for player in players.iter_mut() {
             player.for_each_battlefield_card_mut(|card| {
@@ -217,10 +220,18 @@ impl PhaseBehavior for EndStepPhase {
 
 pub(super) fn active_player_hand_size(
     players: &[Player],
-    active_player: &PlayerId,
+    active_player_index: usize,
 ) -> Result<usize, DomainError> {
-    let player_idx = helpers::find_player_index(players, active_player)?;
-    Ok(players[player_idx].hand_size())
+    players
+        .get(active_player_index)
+        .map(Player::hand_size)
+        .ok_or_else(|| {
+            DomainError::Game(
+                crate::domain::play::errors::GameError::InternalInvariantViolation(
+                    "active player index should point to an existing player".to_string(),
+                ),
+            )
+        })
 }
 
 pub(super) fn clear_all_mana(players: &mut [Player]) {

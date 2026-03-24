@@ -12,7 +12,7 @@ use {
         errors::{DomainError, GameError},
         events::{CardDrawn, DrawKind, GameEnded, TurnProgressed},
         game::{
-            helpers, invariants,
+            invariants,
             model::{AggregateCardLocationIndex, Player},
             PriorityState, TerminalState,
         },
@@ -61,16 +61,21 @@ fn rotate_to_next_player(
 fn auto_draw_card(
     game_id: &GameId,
     players: &mut [Player],
-    active_player: &PlayerId,
+    active_player_index: usize,
 ) -> Result<Option<CardDrawn>, DomainError> {
-    let player_idx = helpers::find_player_index(players, active_player)?;
-    let Some(card_id) = draw_one_card(&mut players[player_idx]) else {
+    let active_player = players.get(active_player_index).ok_or_else(|| {
+        DomainError::Game(GameError::InternalInvariantViolation(
+            "active player index should exist in player list".to_string(),
+        ))
+    })?;
+    let active_player_id = active_player.id().clone();
+    let Some(card_id) = draw_one_card(&mut players[active_player_index]) else {
         return Ok(None);
     };
 
     Ok(Some(CardDrawn::new(
         game_id.clone(),
-        active_player.clone(),
+        active_player_id,
         card_id,
         DrawKind::TurnStep,
     )))
@@ -141,7 +146,7 @@ pub fn advance_turn(
     let from_turn = *turn_number;
 
     if matches!(from_phase, Phase::EndStep) {
-        let hand_size = active_player_hand_size(players, active_player)?;
+        let hand_size = active_player_hand_size(players, *active_player_index)?;
         if hand_size > max_hand_size() {
             return Err(DomainError::Game(GameError::HandSizeLimitExceeded {
                 player: active_player.clone(),
@@ -152,7 +157,7 @@ pub fn advance_turn(
     }
 
     let current_phase_behavior = get_phase_behavior(from_phase);
-    current_phase_behavior.on_exit(players, active_player)?;
+    current_phase_behavior.on_exit(players, *active_player_index)?;
     clear_all_mana(players);
 
     let to_phase = current_phase_behavior.next_phase();
@@ -166,7 +171,7 @@ pub fn advance_turn(
             ))
         })?;
         *phase = to_phase;
-        to_phase_behavior.on_enter(players, active_player)?;
+        to_phase_behavior.on_enter(players, *active_player_index)?;
         *priority = if opens_priority_window(to_phase) {
             Some(PriorityState::opened(active_player.clone()))
         } else {
@@ -190,7 +195,7 @@ pub fn advance_turn(
     }
 
     let card_drawn_event = if current_phase_behavior.triggers_auto_draw() {
-        auto_draw_card(game_id, players, active_player)?
+        auto_draw_card(game_id, players, *active_player_index)?
     } else {
         None
     };
@@ -200,13 +205,13 @@ pub fn advance_turn(
             game_id,
             players,
             terminal_state,
-            active_player,
+            *active_player_index,
         )
         .map(AdvanceTurnOutcome::GameEnded);
     }
 
     *phase = to_phase;
-    to_phase_behavior.on_enter(players, active_player)?;
+    to_phase_behavior.on_enter(players, *active_player_index)?;
     *priority = if opens_priority_window(to_phase) {
         Some(PriorityState::opened(active_player.clone()))
     } else {

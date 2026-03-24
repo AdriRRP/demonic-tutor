@@ -5,7 +5,7 @@ use crate::domain::play::{
     errors::{DomainError, GameError},
     events::{CardDrawn, DrawKind, GameEnded},
     game::{helpers, invariants, model::Player, TerminalState},
-    ids::{CardInstanceId, GameId, PlayerId},
+    ids::{CardInstanceId, GameId},
     phase::Phase,
 };
 
@@ -39,13 +39,13 @@ pub(super) fn draw_one_card(player: &mut Player) -> Option<CardInstanceId> {
 pub fn draw_cards_effect(
     game_id: &GameId,
     players: &mut [Player],
-    active_player: &PlayerId,
+    active_player_index: usize,
     phase: &Phase,
     terminal_state: &mut TerminalState,
     cmd: &DrawCardsEffectCommand,
 ) -> Result<DrawCardsEffectOutcome, DomainError> {
     invariants::require_game_active(terminal_state.is_over())?;
-    invariants::require_active_player(active_player, &cmd.caster_id)?;
+    invariants::require_active_player_index(players, active_player_index, &cmd.caster_id)?;
 
     if !matches!(phase, Phase::FirstMain | Phase::SecondMain) {
         return Err(DomainError::Phase(
@@ -67,7 +67,7 @@ pub fn draw_cards_effect(
                     game_id,
                     players,
                     terminal_state,
-                    &cmd.target_player_id,
+                    target_player_idx,
                 )?;
             return Ok(DrawCardsEffectOutcome::new(cards_drawn, Some(game_ended)));
         };
