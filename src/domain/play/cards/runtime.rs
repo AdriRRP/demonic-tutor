@@ -45,9 +45,7 @@ struct SpellDefinitionPayload {
     id: CardDefinitionId,
     card_type: CardType,
     mana_cost: ManaCost,
-    casting_permission: Option<CastingPermissionProfile>,
     supported_spell_rules: SupportedSpellRules,
-    activated_mana_ability: Option<ActivatedManaAbilityProfile>,
     activated_ability: Option<ActivatedAbilityProfile>,
 }
 
@@ -57,23 +55,19 @@ impl SpellDefinitionPayload {
             id: definition.id().clone(),
             card_type: *definition.card_type(),
             mana_cost: definition.mana_cost_profile(),
-            casting_permission: definition.casting_permission(),
             supported_spell_rules: definition.supported_spell_rules(),
-            activated_mana_ability: definition.activated_mana_ability(),
             activated_ability: definition.activated_ability(),
         }
     }
 
     fn into_definition(self) -> CardDefinition {
-        CardDefinition::from_parts(
-            self.id,
-            self.card_type,
-            self.mana_cost,
-            self.casting_permission,
-            self.supported_spell_rules,
-            self.activated_mana_ability,
-            self.activated_ability,
-        )
+        let mut definition = CardDefinition::for_card_type(self.id, 0, &self.card_type)
+            .with_mana_cost(self.mana_cost)
+            .with_supported_spell_rules(self.supported_spell_rules);
+        if let Some(activated_ability) = self.activated_ability {
+            definition = definition.with_activated_ability(activated_ability);
+        }
+        definition
     }
 }
 
