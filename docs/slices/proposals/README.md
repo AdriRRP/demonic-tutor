@@ -10,10 +10,9 @@ Directory: `engine-audit-v10/`
 
 1. `engine-audit-v10/thin-stack-payloads-beyond-static-spell-metadata.md`
 2. `engine-audit-v10/separate-internal-stack-targets-from-public-target-materialization.md`
-3. `engine-audit-v10/make-aggregate-card-location-index-truly-incremental.md`
-4. `engine-audit-v10/move-combat-participants-to-internal-card-references.md`
-5. `engine-audit-v10/rework-visible-zone-indexing-for-sublinear-position-lookup.md`
-6. `engine-audit-v10/finish-dual-layer-identity-with-numeric-core-ids.md`
+3. `engine-audit-v10/move-combat-participants-to-internal-card-references.md`
+4. `engine-audit-v10/rework-visible-zone-indexing-for-sublinear-position-lookup.md`
+5. `engine-audit-v10/finish-dual-layer-identity-with-numeric-core-ids.md`
 
 These proposals focus on the next excellence pass: canonical internal handles, leaner stack carriers, truly incremental location indexing, and a numeric-first core identity model.
 

@@ -44,8 +44,6 @@ impl Game {
     pub fn cast_spell(&mut self, cmd: CastSpellCommand) -> Result<CastSpellOutcome, DomainError> {
         invariants::require_game_active(self.is_over())?;
         let active_player = self.active_player().clone();
-        let caster_index = super::helpers::find_player_index(&self.players, &cmd.player_id)?;
-        self.refresh_card_locations_for_player(caster_index);
         let result = rules::stack_priority::cast_spell(
             StackPriorityContext {
                 game_id: &self.id,
@@ -59,7 +57,10 @@ impl Game {
             },
             cmd,
         );
-        self.refresh_card_locations_for_player(caster_index);
+        if let Ok(outcome) = &result {
+            self.card_locations
+                .remove(&outcome.spell_put_on_stack.card_id);
+        }
         result
     }
 
@@ -73,7 +74,6 @@ impl Game {
     ) -> Result<PassPriorityOutcome, DomainError> {
         invariants::require_game_active(self.is_over())?;
         let active_player = self.active_player().clone();
-        self.refresh_card_locations();
         let result = rules::stack_priority::pass_priority(
             StackPriorityContext {
                 game_id: &self.id,
@@ -87,7 +87,23 @@ impl Game {
             },
             cmd,
         );
-        self.refresh_card_locations();
+        if let Ok(outcome) = &result {
+            if let Some(spell_cast) = &outcome.spell_cast {
+                let owner_index =
+                    super::helpers::find_player_index(&self.players, &spell_cast.player_id)?;
+                self.sync_card_location_from_player(owner_index, &spell_cast.card_id);
+            }
+            if let Some(card_exiled) = &outcome.card_exiled {
+                let owner_index =
+                    super::helpers::find_player_index(&self.players, &card_exiled.player_id)?;
+                self.sync_card_location_from_player(owner_index, &card_exiled.card_id);
+            }
+            for creature_died in &outcome.creatures_died {
+                let owner_index =
+                    super::helpers::find_player_index(&self.players, &creature_died.player_id)?;
+                self.sync_card_location_from_player(owner_index, &creature_died.card_id);
+            }
+        }
         result
     }
 }

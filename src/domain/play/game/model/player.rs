@@ -252,6 +252,13 @@ impl Player {
         self.id_to_handle.get(card_id).copied()
     }
 
+    pub(crate) fn resolve_public_card_handle(
+        &self,
+        card_id: &CardInstanceId,
+    ) -> Option<PlayerCardHandle> {
+        self.resolve_handle(card_id)
+    }
+
     fn handle_in_zone(
         &self,
         card_id: &CardInstanceId,

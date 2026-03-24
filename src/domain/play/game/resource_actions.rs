@@ -18,7 +18,6 @@ impl Game {
         invariants::require_game_active(self.is_over())?;
         invariants::require_no_priority_with_pending_stack(self.priority(), self.stack.is_empty())?;
         let active_player_index = self.active_player_index;
-        self.refresh_card_locations_for_player(active_player_index);
         let result = rules::resource_actions::play_land(
             &self.id,
             &mut self.players,
@@ -26,7 +25,9 @@ impl Game {
             &self.phase,
             cmd,
         );
-        self.refresh_card_locations_for_player(active_player_index);
+        if let Ok(event) = &result {
+            self.sync_card_location_from_player(active_player_index, &event.card_id);
+        }
         result
     }
 
@@ -45,7 +46,6 @@ impl Game {
             self.active_player(),
         )?;
         let caster_index = super::helpers::find_player_index(&self.players, &cmd.caster_id)?;
-        self.refresh_card_locations();
         let result = rules::resource_actions::adjust_player_life_effect(
             &self.id,
             &mut self.players,
@@ -53,7 +53,13 @@ impl Game {
             caster_index,
             cmd,
         );
-        self.refresh_card_locations();
+        if let Ok(outcome) = &result {
+            for creature_died in &outcome.creatures_died {
+                let owner_index =
+                    super::helpers::find_player_index(&self.players, &creature_died.player_id)?;
+                self.sync_card_location_from_player(owner_index, &creature_died.card_id);
+            }
+        }
         result
     }
 

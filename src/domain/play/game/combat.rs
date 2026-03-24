@@ -71,8 +71,6 @@ impl Game {
         invariants::require_no_open_priority_window(self.priority())?;
         let active_player = self.active_player().clone();
         let active_player_index = self.active_player_index;
-        self.refresh_card_locations_for_player(active_player_index);
-        self.refresh_card_locations_for_player(1 - active_player_index);
         let outcome = rules::combat::resolve_combat_damage(
             &self.id,
             &mut self.players,
@@ -90,8 +88,11 @@ impl Game {
             Some(PriorityState::opened(active_player))
         };
 
-        self.refresh_card_locations_for_player(active_player_index);
-        self.refresh_card_locations_for_player(1 - active_player_index);
+        for creature_died in &outcome.creatures_died {
+            let owner_index =
+                super::helpers::find_player_index(&self.players, &creature_died.player_id)?;
+            self.sync_card_location_from_player(owner_index, &creature_died.card_id);
+        }
         Ok(outcome)
     }
 }

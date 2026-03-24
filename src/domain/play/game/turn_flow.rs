@@ -56,7 +56,6 @@ impl Game {
         )?;
         let target_player_index =
             super::helpers::find_player_index(&self.players, &cmd.target_player_id)?;
-        self.refresh_card_locations();
         let result = rules::turn_flow::draw_cards_effect(
             &self.id,
             &mut self.players,
@@ -66,7 +65,11 @@ impl Game {
             &mut self.terminal_state,
             cmd,
         );
-        self.refresh_card_locations();
+        if let Ok(outcome) = &result {
+            for card_drawn in &outcome.cards_drawn {
+                self.sync_card_location_from_player(target_player_index, &card_drawn.card_id);
+            }
+        }
         result
     }
 
@@ -80,7 +83,6 @@ impl Game {
     ) -> Result<CardDiscarded, DomainError> {
         invariants::require_game_active(self.is_over())?;
         let active_player_index = self.active_player_index;
-        self.refresh_card_locations();
         let result = rules::turn_flow::discard_for_cleanup(
             &self.id,
             &mut self.players,
@@ -88,7 +90,9 @@ impl Game {
             &self.phase,
             cmd,
         );
-        self.refresh_card_locations();
+        if let Ok(event) = &result {
+            self.sync_card_location_from_player(active_player_index, &event.card_id);
+        }
         result
     }
 
@@ -98,7 +102,6 @@ impl Game {
     /// See [`rules::zones::exile_card_from_battlefield`] and [`rules::zones::exile_card_from_graveyard`].
     pub fn exile_card(&mut self, cmd: &ExileCardCommand) -> Result<CardExiled, DomainError> {
         invariants::require_game_active(self.is_over())?;
-        self.refresh_card_locations();
         let indexed_location = self
             .card_locations
             .location(&cmd.card_id)
@@ -142,7 +145,10 @@ impl Game {
                 &cmd.card_id,
             )
         };
-        self.refresh_card_locations();
+        if let Ok(event) = &result {
+            let owner_index = super::helpers::find_player_index(&self.players, &event.player_id)?;
+            self.sync_card_location_from_player(owner_index, &event.card_id);
+        }
         result
     }
 }

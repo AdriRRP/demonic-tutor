@@ -13,7 +13,7 @@ mod turn_flow;
 use crate::domain::play::{
     errors::{DomainError, GameError},
     events::GameEndReason,
-    ids::{GameId, PlayerId},
+    ids::{CardInstanceId, GameId, PlayerId},
     phase::Phase,
 };
 
@@ -150,5 +150,23 @@ impl Game {
         for owner_index in 0..self.players.len() {
             self.refresh_card_locations_for_player(owner_index);
         }
+    }
+
+    fn sync_card_location_from_player(&mut self, owner_index: usize, card_id: &CardInstanceId) {
+        let Some(player) = self.players.get(owner_index) else {
+            return;
+        };
+
+        let Some(handle) = player.resolve_public_card_handle(card_id) else {
+            self.card_locations.remove(card_id);
+            return;
+        };
+        let Some(zone) = player.card_zone(card_id) else {
+            self.card_locations.remove(card_id);
+            return;
+        };
+
+        self.card_locations
+            .upsert(card_id.clone(), owner_index, handle, zone);
     }
 }

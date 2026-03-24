@@ -2,18 +2,24 @@
 
 `MakeAggregateCardLocationIndexTrulyIncremental`
 
+## Status
+
+Implemented
+
 ## Goal
 
 Turn the aggregate card-location index into a live structure updated by concrete zone transitions instead of refreshing a whole player snapshot after each player-local change.
 
-## Why This Slice Exists Now
+## What Changed
 
-The current index already avoids global rebuilds, but it still drains and rebuilds all locations for an owner whenever that player changes. The next truthful optimization is transition-local maintenance.
+- `AggregateCardLocationIndex` keeps its bootstrap and broad refresh helpers, but `Game` now updates it through transition-local `upsert` and `remove` calls on concrete card movements.
+- `cast_spell`, `pass_priority`, `play_land`, `draw_cards_effect`, `discard_for_cleanup`, `exile_card`, `adjust_player_life_effect`, and `resolve_combat_damage` now synchronize the aggregate location index from the card-specific outcomes they already emit.
+- `Game` gained a small helper to resync one card from a player-owned handle and zone when a transition completes.
 
 ## Supported Behavior
 
 - aggregate card locations are updated incrementally when cards move or change zones
-- player-wide refresh snapshots are no longer the default maintenance path
+- player-wide refresh snapshots are no longer the default maintenance path for single-card transitions
 - targeting and location-sensitive gameplay behavior remain unchanged
 
 ## Invariants / Legality Rules
@@ -36,7 +42,7 @@ The current index already avoids global rebuilds, but it still drains and rebuil
 
 ### Entity / Value Object Impact
 - `AggregateCardLocationIndex`
-- player-zone transition helpers that must publish location updates
+- player-zone transition helpers that publish location updates
 
 ## Ownership Check
 
@@ -44,22 +50,18 @@ This belongs to the `Game` aggregate because cross-player card location is aggre
 
 ## Documentation Impact
 
-- this slice document
+- this implemented slice document
 - `docs/slices/proposals/README.md`
 
 ## Test Impact
 
 - location-sensitive targeting and exile/destroy flows remain green
-- focused regressions proving location index updates stay correct across single-card transitions
+- full repository validation stays green after removing the default player-snapshot refreshes from the main single-card transition corridors
 
 ## Rules Reference
 
-- no additional Comprehensive Rules scope; this is runtime bookkeeping behind existing supported behavior
+- no additional Comprehensive Rules scope; this remains runtime bookkeeping behind existing supported behavior
 
 ## Rules Support Statement
 
 This slice does not broaden rules support. It makes location bookkeeping more incremental behind the existing subset.
-
-## Open Questions
-
-- none
