@@ -17,12 +17,12 @@ impl Game {
     pub fn play_land(&mut self, cmd: PlayLandCommand) -> Result<LandPlayed, DomainError> {
         invariants::require_game_active(self.is_over())?;
         invariants::require_no_priority_with_pending_stack(self.priority(), self.stack.is_empty())?;
-        let active_player = self.active_player().clone();
+        let active_player_index = self.active_player_index;
         self.refresh_card_locations();
         let result = rules::resource_actions::play_land(
             &self.id,
             &mut self.players,
-            &active_player,
+            active_player_index,
             &self.phase,
             cmd,
         );
@@ -65,7 +65,7 @@ impl Game {
         cmd: TapLandCommand,
     ) -> Result<(LandTapped, ManaAdded), DomainError> {
         invariants::require_game_active(self.is_over())?;
-        let active_player = self.active_player().clone();
+        let active_player_index = self.active_player_index;
         let priority = self.priority.clone();
         if let Some(priority) = priority.as_ref() {
             invariants::require_priority_holder(Some(priority), &cmd.player_id)?;
@@ -74,7 +74,7 @@ impl Game {
         let result = rules::resource_actions::tap_land(
             &self.id,
             &mut self.players,
-            &active_player,
+            active_player_index,
             &self.phase,
             priority.as_ref(),
             cmd,

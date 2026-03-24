@@ -1,16 +1,13 @@
 //! Supports rules combat blocking legality.
 
 use {
-    super::{
-        super::super::{helpers, model::Player},
-        capabilities, progression,
-    },
+    super::{super::super::model::Player, capabilities, progression},
     crate::domain::play::{
         cards::CardType,
         commands::DeclareBlockersCommand,
         errors::{CardError, DomainError, GameError},
         events::BlockersDeclared,
-        ids::{CardInstanceId, GameId, PlayerId},
+        ids::{CardInstanceId, GameId},
     },
     std::collections::{HashMap, HashSet},
 };
@@ -18,11 +15,12 @@ use {
 pub fn declare_blockers(
     game_id: &GameId,
     players: &mut [Player],
-    active_player: &PlayerId,
+    active_player_index: usize,
     cmd: DeclareBlockersCommand,
 ) -> Result<BlockersDeclared, DomainError> {
-    let defending_player_idx = progression::find_defending_player_index(players, active_player)?;
-    let attacker_player_idx = helpers::find_player_index(players, active_player)?;
+    let defending_player_idx =
+        progression::find_defending_player_index(players, active_player_index)?;
+    let attacker_player_idx = active_player_index;
     let declared_attackers = players[attacker_player_idx]
         .battlefield_cards()
         .filter(|card| card.is_attacking())

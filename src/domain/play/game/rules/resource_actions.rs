@@ -11,7 +11,7 @@ use {
         commands::{AdjustPlayerLifeEffectCommand, PlayLandCommand, TapLandCommand},
         errors::{CardError, DomainError, PhaseError},
         events::{CreatureDied, GameEnded, LandPlayed, LandTapped, LifeChanged, ManaAdded},
-        ids::{GameId, PlayerId},
+        ids::GameId,
         phase::Phase,
     },
 };
@@ -45,11 +45,11 @@ impl AdjustPlayerLifeEffectOutcome {
 pub fn play_land(
     game_id: &GameId,
     players: &mut [Player],
-    active_player: &PlayerId,
+    active_player_index: usize,
     phase: &Phase,
     cmd: PlayLandCommand,
 ) -> Result<LandPlayed, DomainError> {
-    invariants::require_active_player(active_player, &cmd.player_id)?;
+    invariants::require_active_player_index(players, active_player_index, &cmd.player_id)?;
 
     if !matches!(phase, Phase::FirstMain | Phase::SecondMain) {
         return Err(DomainError::Phase(PhaseError::InvalidForLand));
@@ -84,13 +84,13 @@ pub fn play_land(
 pub fn tap_land(
     game_id: &GameId,
     players: &mut [Player],
-    active_player: &PlayerId,
+    active_player_index: usize,
     phase: &Phase,
     priority: Option<&crate::domain::play::game::PriorityState>,
     cmd: TapLandCommand,
 ) -> Result<(LandTapped, ManaAdded), DomainError> {
     if priority.is_none() {
-        invariants::require_active_player(active_player, &cmd.player_id)?;
+        invariants::require_active_player_index(players, active_player_index, &cmd.player_id)?;
     }
 
     if priority.is_none() && !matches!(phase, Phase::FirstMain | Phase::SecondMain) {

@@ -49,11 +49,12 @@ pub const fn require_combat_damage_step(phase: Phase) -> Result<(), DomainError>
 
 pub fn find_defending_player_index(
     players: &[Player],
-    active_player: &PlayerId,
+    active_player_index: usize,
 ) -> Result<usize, DomainError> {
     players
         .iter()
-        .position(|player| player.id() != active_player)
+        .enumerate()
+        .find_map(|(index, _player)| (index != active_player_index).then_some(index))
         .ok_or_else(|| {
             DomainError::Game(GameError::InternalInvariantViolation(
                 "defending player should exist".to_string(),

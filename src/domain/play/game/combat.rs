@@ -22,11 +22,12 @@ impl Game {
         invariants::require_game_active(self.is_over())?;
         invariants::require_no_open_priority_window(self.priority())?;
         let active_player = self.active_player().clone();
+        let active_player_index = self.active_player_index;
         self.refresh_card_locations();
         let event = rules::combat::declare_attackers(
             &self.id,
             &mut self.players,
-            &active_player,
+            active_player_index,
             &self.phase,
             cmd,
         )?;
@@ -47,11 +48,12 @@ impl Game {
         invariants::require_game_active(self.is_over())?;
         invariants::require_no_open_priority_window(self.priority())?;
         let active_player = self.active_player().clone();
+        let active_player_index = self.active_player_index;
         self.refresh_card_locations();
         let event = rules::combat::declare_blockers(
             &self.id,
             &mut self.players,
-            &active_player,
+            active_player_index,
             &self.phase,
             cmd,
         )?;
@@ -72,12 +74,13 @@ impl Game {
         invariants::require_game_active(self.is_over())?;
         invariants::require_no_open_priority_window(self.priority())?;
         let active_player = self.active_player().clone();
+        let active_player_index = self.active_player_index;
         self.refresh_card_locations();
         let outcome = rules::combat::resolve_combat_damage(
             &self.id,
             &mut self.players,
             &self.card_locations,
-            &active_player,
+            active_player_index,
             &self.phase,
             &mut self.terminal_state,
             cmd,

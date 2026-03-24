@@ -1,7 +1,7 @@
 //! Supports play game invariants.
 
 use {
-    super::PriorityState,
+    super::{model::Player, PriorityState},
     crate::domain::play::{
         errors::{DomainError, GameError},
         ids::PlayerId,
@@ -20,6 +20,20 @@ pub(super) fn require_active_player(
     }
 
     Ok(())
+}
+
+pub(super) fn require_active_player_index(
+    players: &[Player],
+    active_player_index: usize,
+    requested_player: &PlayerId,
+) -> Result<(), DomainError> {
+    let active_player = players.get(active_player_index).ok_or_else(|| {
+        DomainError::Game(GameError::InternalInvariantViolation(
+            "active player index should point to an existing player".to_string(),
+        ))
+    })?;
+
+    require_active_player(active_player.id(), requested_player)
 }
 
 pub(super) const fn require_game_active(game_is_over: bool) -> Result<(), DomainError> {
