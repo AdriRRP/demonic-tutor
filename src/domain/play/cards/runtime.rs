@@ -98,7 +98,13 @@ struct CardFace {
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct CardRuntime {
     tapped: bool,
-    creature: Option<CreatureRuntime>,
+    kind: CardRuntimeKind,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum CardRuntimeKind {
+    NonCreature,
+    Creature(CreatureRuntime),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -131,7 +137,7 @@ impl CardInstance {
             },
             runtime: CardRuntime {
                 tapped: false,
-                creature: None,
+                kind: CardRuntimeKind::NonCreature,
             },
         }
     }
@@ -170,7 +176,7 @@ impl CardInstance {
             },
             runtime: CardRuntime {
                 tapped: false,
-                creature: Some(CreatureRuntime::new(power, toughness)),
+                kind: CardRuntimeKind::Creature(CreatureRuntime::new(power, toughness)),
             },
         }
     }
@@ -191,7 +197,7 @@ impl CardInstance {
             },
             runtime: CardRuntime {
                 tapped: false,
-                creature: Some(CreatureRuntime::new_with_keywords(
+                kind: CardRuntimeKind::Creature(CreatureRuntime::new_with_keywords(
                     power, toughness, keywords,
                 )),
             },
@@ -200,15 +206,14 @@ impl CardInstance {
 
     #[must_use]
     pub fn into_spell_snapshot(self) -> SpellCardSnapshot {
-        let creature_profile =
-            self.runtime
-                .creature
-                .as_ref()
-                .map(|creature| SpellCreatureProfile {
-                    power: creature.power,
-                    toughness: creature.toughness,
-                    keywords: creature.keywords,
-                });
+        let creature_profile = match &self.runtime.kind {
+            CardRuntimeKind::NonCreature => None,
+            CardRuntimeKind::Creature(creature) => Some(SpellCreatureProfile {
+                power: creature.power,
+                toughness: creature.toughness,
+                keywords: creature.keywords,
+            }),
+        };
 
         SpellCardSnapshot {
             id: self.id,
@@ -270,52 +275,54 @@ impl CardInstance {
 
     #[must_use]
     pub const fn power(&self) -> Option<u32> {
-        match &self.runtime.creature {
-            Some(creature) => Some(creature.power + creature.temporary_power),
-            None => None,
+        match &self.runtime.kind {
+            CardRuntimeKind::Creature(creature) => Some(creature.power + creature.temporary_power),
+            CardRuntimeKind::NonCreature => None,
         }
     }
 
     #[must_use]
     pub const fn toughness(&self) -> Option<u32> {
-        match &self.runtime.creature {
-            Some(creature) => Some(creature.toughness + creature.temporary_toughness),
-            None => None,
+        match &self.runtime.kind {
+            CardRuntimeKind::Creature(creature) => {
+                Some(creature.toughness + creature.temporary_toughness)
+            }
+            CardRuntimeKind::NonCreature => None,
         }
     }
 
     #[must_use]
     pub const fn creature_stats(&self) -> Option<(u32, u32)> {
-        match (&self.face.card_type, &self.runtime.creature) {
-            (CardType::Creature, Some(creature)) => Some((
+        match &self.runtime.kind {
+            CardRuntimeKind::Creature(creature) => Some((
                 creature.power + creature.temporary_power,
                 creature.toughness + creature.temporary_toughness,
             )),
-            _ => None,
+            CardRuntimeKind::NonCreature => None,
         }
     }
 
     #[must_use]
     pub const fn has_summoning_sickness(&self) -> bool {
-        match &self.runtime.creature {
-            Some(creature) => creature.has_summoning_sickness(),
-            None => false,
+        match &self.runtime.kind {
+            CardRuntimeKind::Creature(creature) => creature.has_summoning_sickness(),
+            CardRuntimeKind::NonCreature => false,
         }
     }
 
     #[must_use]
     pub const fn is_attacking(&self) -> bool {
-        match &self.runtime.creature {
-            Some(creature) => creature.is_attacking(),
-            None => false,
+        match &self.runtime.kind {
+            CardRuntimeKind::Creature(creature) => creature.is_attacking(),
+            CardRuntimeKind::NonCreature => false,
         }
     }
 
     #[must_use]
     pub const fn is_blocking(&self) -> bool {
-        match &self.runtime.creature {
-            Some(creature) => creature.is_blocking(),
-            None => false,
+        match &self.runtime.kind {
+            CardRuntimeKind::Creature(creature) => creature.is_blocking(),
+            CardRuntimeKind::NonCreature => false,
         }
     }
 
@@ -328,33 +335,33 @@ impl CardInstance {
     }
 
     pub const fn remove_summoning_sickness(&mut self) {
-        if let Some(creature) = &mut self.runtime.creature {
+        if let CardRuntimeKind::Creature(creature) = &mut self.runtime.kind {
             creature.remove_summoning_sickness();
         }
     }
 
     pub const fn set_attacking(&mut self, attacking: bool) {
-        if let Some(creature) = &mut self.runtime.creature {
+        if let CardRuntimeKind::Creature(creature) = &mut self.runtime.kind {
             creature.set_attacking(attacking);
         }
     }
 
     pub fn set_blocking(&mut self, blocking: bool) {
-        if let Some(creature) = &mut self.runtime.creature {
+        if let CardRuntimeKind::Creature(creature) = &mut self.runtime.kind {
             creature.set_blocking(blocking);
         }
     }
 
     #[must_use]
     pub const fn blocking_target(&self) -> Option<&CardInstanceId> {
-        match &self.runtime.creature {
-            Some(creature) => creature.blocking_target.as_ref(),
-            None => None,
+        match &self.runtime.kind {
+            CardRuntimeKind::Creature(creature) => creature.blocking_target.as_ref(),
+            CardRuntimeKind::NonCreature => None,
         }
     }
 
     pub fn assign_blocking_target(&mut self, attacker_id: CardInstanceId) {
-        if let Some(creature) = &mut self.runtime.creature {
+        if let CardRuntimeKind::Creature(creature) = &mut self.runtime.kind {
             creature.set_blocking(true);
             creature.blocking_target = Some(attacker_id);
         }
@@ -362,49 +369,53 @@ impl CardInstance {
 
     #[must_use]
     pub const fn damage(&self) -> u32 {
-        match &self.runtime.creature {
-            Some(creature) => creature.damage,
-            None => 0,
+        match &self.runtime.kind {
+            CardRuntimeKind::Creature(creature) => creature.damage,
+            CardRuntimeKind::NonCreature => 0,
         }
     }
 
     #[must_use]
     pub const fn has_lethal_damage(&self) -> bool {
-        match &self.runtime.creature {
-            Some(creature) => creature.damage >= creature.toughness + creature.temporary_toughness,
-            None => false,
+        match &self.runtime.kind {
+            CardRuntimeKind::Creature(creature) => {
+                creature.damage >= creature.toughness + creature.temporary_toughness
+            }
+            CardRuntimeKind::NonCreature => false,
         }
     }
 
     #[must_use]
     pub const fn has_zero_toughness(&self) -> bool {
-        match &self.runtime.creature {
-            Some(creature) => creature.toughness + creature.temporary_toughness == 0,
-            None => false,
+        match &self.runtime.kind {
+            CardRuntimeKind::Creature(creature) => {
+                creature.toughness + creature.temporary_toughness == 0
+            }
+            CardRuntimeKind::NonCreature => false,
         }
     }
 
     pub const fn add_damage(&mut self, damage: u32) {
-        if let Some(creature) = &mut self.runtime.creature {
+        if let CardRuntimeKind::Creature(creature) = &mut self.runtime.kind {
             creature.damage += damage;
         }
     }
 
     pub const fn clear_damage(&mut self) {
-        if let Some(creature) = &mut self.runtime.creature {
+        if let CardRuntimeKind::Creature(creature) = &mut self.runtime.kind {
             creature.damage = 0;
         }
     }
 
     pub const fn apply_temporary_stat_bonus(&mut self, power: u32, toughness: u32) {
-        if let Some(creature) = &mut self.runtime.creature {
+        if let CardRuntimeKind::Creature(creature) = &mut self.runtime.kind {
             creature.temporary_power += power;
             creature.temporary_toughness += toughness;
         }
     }
 
     pub const fn clear_temporary_stat_bonuses(&mut self) {
-        if let Some(creature) = &mut self.runtime.creature {
+        if let CardRuntimeKind::Creature(creature) = &mut self.runtime.kind {
             creature.temporary_power = 0;
             creature.temporary_toughness = 0;
         }
@@ -412,9 +423,9 @@ impl CardInstance {
 
     #[must_use]
     pub const fn has_keyword(&self, ability: KeywordAbility) -> bool {
-        match &self.runtime.creature {
-            Some(creature) => creature.keywords.contains(ability),
-            None => false,
+        match &self.runtime.kind {
+            CardRuntimeKind::Creature(creature) => creature.keywords.contains(ability),
+            CardRuntimeKind::NonCreature => false,
         }
     }
 
@@ -450,9 +461,9 @@ impl CardInstance {
 
     #[must_use]
     pub const fn keyword_abilities(&self) -> Option<KeywordAbilitySet> {
-        match &self.runtime.creature {
-            Some(creature) => Some(creature.keywords),
-            None => None,
+        match &self.runtime.kind {
+            CardRuntimeKind::Creature(creature) => Some(creature.keywords),
+            CardRuntimeKind::NonCreature => None,
         }
     }
 }
@@ -478,11 +489,11 @@ impl SpellCardSnapshot {
         let runtime = self.creature_profile.map_or(
             CardRuntime {
                 tapped: false,
-                creature: None,
+                kind: CardRuntimeKind::NonCreature,
             },
             |creature| CardRuntime {
                 tapped: false,
-                creature: Some(CreatureRuntime::new_with_keywords(
+                kind: CardRuntimeKind::Creature(CreatureRuntime::new_with_keywords(
                     creature.power,
                     creature.toughness,
                     creature.keywords,
