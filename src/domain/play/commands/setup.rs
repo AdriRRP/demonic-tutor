@@ -159,7 +159,7 @@ impl LibraryCard {
     }
 
     #[must_use]
-    pub const fn mana_cost(&self) -> u32 {
+    pub fn mana_cost(&self) -> u32 {
         self.definition.mana_cost()
     }
 

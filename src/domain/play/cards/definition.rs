@@ -95,7 +95,7 @@ impl CardDefinition {
     }
 
     #[must_use]
-    pub const fn mana_cost(&self) -> u32 {
+    pub fn mana_cost(&self) -> u32 {
         self.mana_cost.total()
     }
 

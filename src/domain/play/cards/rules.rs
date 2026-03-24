@@ -185,13 +185,12 @@ impl ManaCost {
     }
 
     #[must_use]
-    pub const fn total(self) -> u32 {
+    pub fn total(self) -> u32 {
         self.generic
-            + self.colored[ManaColor::White.index()]
-            + self.colored[ManaColor::Blue.index()]
-            + self.colored[ManaColor::Black.index()]
-            + self.colored[ManaColor::Green.index()]
-            + self.colored[ManaColor::Red.index()]
+            + ManaColor::ALL
+                .into_iter()
+                .map(|color| self.colored_requirement(color))
+                .sum::<u32>()
     }
 
     #[must_use]

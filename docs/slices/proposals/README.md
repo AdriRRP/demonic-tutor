@@ -4,10 +4,8 @@ This directory contains the current proposal backlog for the next stable-engine 
 
 The backlog is intentionally organized by dependency order when active.
 
-## Wave 1 — Engine Audit V4
+## Current State
 
-Directory: `engine-audit-v4/`
+There is currently no open slice backlog.
 
-1. `engine-audit-v4/derive-mana-cost-total-without-manual-color-sums.md`
-
-These proposals focus on semantic storage, hot-path lifetime costs, and Rust-idiomatic simplification for the next elite engine pass.
+The latest architectural follow-up wave, `engine-audit-v4`, has been fully implemented and moved to `docs/slices/implemented/`.
