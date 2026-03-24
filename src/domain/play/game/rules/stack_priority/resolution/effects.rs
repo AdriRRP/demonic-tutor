@@ -66,7 +66,8 @@ fn destroy_creature(
     let target = helpers::battlefield_card_location(players, card_locations, target_id)?;
     let owner_index = target.owner_index();
     let owner_id = players[owner_index].id().clone();
-    players[owner_index].move_battlefield_card_to_graveyard(target_id)?;
+    let handle = card_locations.location(target_id)?.handle();
+    players[owner_index].move_battlefield_handle_to_graveyard(handle)?;
     Some(CreatureDied::new(
         game_id.clone(),
         owner_id,
@@ -80,9 +81,15 @@ fn exile_creature_from_battlefield(
     card_locations: &AggregateCardLocationIndex,
     target_id: &CardInstanceId,
 ) -> Option<CardExiled> {
-    let owner_index =
-        helpers::battlefield_card_location(players, card_locations, target_id)?.owner_index();
-    zones::exile_card_from_battlefield_by_index(game_id, players, owner_index, target_id).ok()
+    let location = card_locations.location(target_id)?;
+    (location.zone() == crate::domain::play::game::PlayerCardZone::Battlefield).then_some(())?;
+    zones::exile_card_from_battlefield_handle_by_index(
+        game_id,
+        players,
+        location.owner_index(),
+        location.handle(),
+    )
+    .ok()
 }
 
 fn exile_card_from_graveyard(
@@ -91,9 +98,15 @@ fn exile_card_from_graveyard(
     card_locations: &AggregateCardLocationIndex,
     target_id: &CardInstanceId,
 ) -> Option<CardExiled> {
-    let owner_index =
-        helpers::graveyard_card_location(players, card_locations, target_id)?.owner_index();
-    zones::exile_card_from_graveyard_by_index(game_id, players, owner_index, target_id).ok()
+    let location = card_locations.location(target_id)?;
+    (location.zone() == crate::domain::play::game::PlayerCardZone::Graveyard).then_some(())?;
+    zones::exile_card_from_graveyard_handle_by_index(
+        game_id,
+        players,
+        location.owner_index(),
+        location.handle(),
+    )
+    .ok()
 }
 
 fn review_state_based_actions(

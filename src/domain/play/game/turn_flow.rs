@@ -99,7 +99,35 @@ impl Game {
     pub fn exile_card(&mut self, cmd: &ExileCardCommand) -> Result<CardExiled, DomainError> {
         invariants::require_game_active(self.is_over())?;
         self.refresh_card_locations();
-        let result = if cmd.from_battlefield {
+        let indexed_location = self
+            .card_locations
+            .location(&cmd.card_id)
+            .filter(|location| {
+                let expected_zone = if cmd.from_battlefield {
+                    crate::domain::play::game::PlayerCardZone::Battlefield
+                } else {
+                    crate::domain::play::game::PlayerCardZone::Graveyard
+                };
+                location.zone() == expected_zone
+                    && self.players[location.owner_index()].id() == &cmd.player_id
+            });
+        let result = if let Some(location) = indexed_location {
+            if cmd.from_battlefield {
+                rules::zones::exile_card_from_battlefield_handle_by_index(
+                    &self.id,
+                    &mut self.players,
+                    location.owner_index(),
+                    location.handle(),
+                )
+            } else {
+                rules::zones::exile_card_from_graveyard_handle_by_index(
+                    &self.id,
+                    &mut self.players,
+                    location.owner_index(),
+                    location.handle(),
+                )
+            }
+        } else if cmd.from_battlefield {
             rules::zones::exile_card_from_battlefield(
                 &self.id,
                 &mut self.players,

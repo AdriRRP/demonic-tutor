@@ -122,7 +122,7 @@ fn resolve_target(
             })
         }
         SpellTarget::GraveyardCard(card_id) => {
-            if helpers::graveyard_card_location(players, card_locations, card_id).is_none() {
+            if !helpers::graveyard_card_exists(players, card_locations, card_id) {
                 return Err(SpellTargetLegality::MissingGraveyardCard(card_id.clone()));
             }
 

@@ -248,7 +248,7 @@ pub struct Player {
 
 #[allow(clippy::missing_const_for_fn)]
 impl Player {
-    fn handle(&self, card_id: &CardInstanceId) -> Option<PlayerCardHandle> {
+    fn resolve_handle(&self, card_id: &CardInstanceId) -> Option<PlayerCardHandle> {
         self.id_to_handle.get(card_id).copied()
     }
 
@@ -257,8 +257,22 @@ impl Player {
         card_id: &CardInstanceId,
         zone: PlayerCardZone,
     ) -> Option<PlayerCardHandle> {
-        let handle = self.handle(card_id)?;
+        let handle = self.resolve_handle(card_id)?;
         (self.cards.zone_by_handle(handle) == Some(zone)).then_some(handle)
+    }
+
+    fn handle_is_in_zone(&self, handle: PlayerCardHandle, zone: PlayerCardZone) -> bool {
+        self.cards.zone_by_handle(handle) == Some(zone)
+    }
+
+    fn card_by_handle_in_zone(
+        &self,
+        handle: PlayerCardHandle,
+        zone: PlayerCardZone,
+    ) -> Option<&CardInstance> {
+        self.handle_is_in_zone(handle, zone)
+            .then(|| self.cards.get_by_handle(handle))
+            .flatten()
     }
 
     fn card_in_zone(
@@ -518,6 +532,13 @@ impl Player {
         self.card_in_zone_mut(card_id, PlayerCardZone::Battlefield)
     }
 
+    pub(crate) fn battlefield_card_by_handle(
+        &self,
+        handle: PlayerCardHandle,
+    ) -> Option<&CardInstance> {
+        self.card_by_handle_in_zone(handle, PlayerCardZone::Battlefield)
+    }
+
     #[must_use]
     pub fn battlefield_card_at(&self, index: usize) -> Option<&CardInstance> {
         let handle = self.battlefield.handle_at(index)?;
@@ -613,6 +634,10 @@ impl Player {
             .filter_map(|handle| self.cards.get_by_handle(*handle).map(CardInstance::id))
     }
 
+    pub(crate) fn battlefield_handles(&self) -> impl Iterator<Item = PlayerCardHandle> + '_ {
+        self.battlefield.iter().copied()
+    }
+
     pub fn for_each_battlefield_card_mut<F>(&mut self, mut f: F)
     where
         F: FnMut(&mut CardInstance),
@@ -629,7 +654,7 @@ impl Player {
 
     #[must_use]
     pub fn card_zone(&self, card_id: &CardInstanceId) -> Option<PlayerCardZone> {
-        let handle = self.handle(card_id)?;
+        let handle = self.resolve_handle(card_id)?;
         self.cards.zone_by_handle(handle)
     }
 
@@ -667,14 +692,59 @@ impl Player {
         )
     }
 
+    pub(crate) fn move_battlefield_handle_to_graveyard(
+        &mut self,
+        handle: PlayerCardHandle,
+    ) -> Option<()> {
+        self.handle_is_in_zone(handle, PlayerCardZone::Battlefield)
+            .then_some(())
+            .and_then(|()| {
+                self.move_handle_between_zones(
+                    handle,
+                    PlayerCardZone::Battlefield,
+                    PlayerCardZone::Graveyard,
+                )
+            })
+    }
+
     pub fn move_battlefield_card_to_exile(&mut self, card_id: &CardInstanceId) -> Option<()> {
         let handle = self.handle_in_zone(card_id, PlayerCardZone::Battlefield)?;
         self.move_handle_between_zones(handle, PlayerCardZone::Battlefield, PlayerCardZone::Exile)
     }
 
+    pub(crate) fn move_battlefield_handle_to_exile(
+        &mut self,
+        handle: PlayerCardHandle,
+    ) -> Option<()> {
+        self.handle_is_in_zone(handle, PlayerCardZone::Battlefield)
+            .then_some(())
+            .and_then(|()| {
+                self.move_handle_between_zones(
+                    handle,
+                    PlayerCardZone::Battlefield,
+                    PlayerCardZone::Exile,
+                )
+            })
+    }
+
     pub fn move_graveyard_card_to_exile(&mut self, card_id: &CardInstanceId) -> Option<()> {
         let handle = self.handle_in_zone(card_id, PlayerCardZone::Graveyard)?;
         self.move_handle_between_zones(handle, PlayerCardZone::Graveyard, PlayerCardZone::Exile)
+    }
+
+    pub(crate) fn move_graveyard_handle_to_exile(
+        &mut self,
+        handle: PlayerCardHandle,
+    ) -> Option<()> {
+        self.handle_is_in_zone(handle, PlayerCardZone::Graveyard)
+            .then_some(())
+            .and_then(|()| {
+                self.move_handle_between_zones(
+                    handle,
+                    PlayerCardZone::Graveyard,
+                    PlayerCardZone::Exile,
+                )
+            })
     }
 
     pub fn receive_hand_cards(&mut self, cards: Vec<CardInstance>) {

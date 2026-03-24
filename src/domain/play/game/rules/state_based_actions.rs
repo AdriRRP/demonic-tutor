@@ -73,15 +73,21 @@ fn review_supported_creature_state_based_actions(
     let mut creatures_died = Vec::new();
 
     for player in players.iter_mut() {
-        let doomed_ids = player
-            .battlefield_cards()
-            .filter(|card| card.has_zero_toughness() || card.has_lethal_damage())
-            .map(|card| card.id().clone())
+        let doomed_handles = player
+            .battlefield_handles()
+            .filter(|handle| {
+                player
+                    .battlefield_card_by_handle(*handle)
+                    .is_some_and(|card| card.has_zero_toughness() || card.has_lethal_damage())
+            })
             .collect::<Vec<_>>();
 
-        for card_id in doomed_ids {
+        for handle in doomed_handles {
+            let Some(card_id) = player.card_by_handle(handle).map(|card| card.id().clone()) else {
+                continue;
+            };
             if player
-                .move_battlefield_card_to_graveyard(&card_id)
+                .move_battlefield_handle_to_graveyard(handle)
                 .is_some()
             {
                 creatures_died.push(CreatureDied::new(

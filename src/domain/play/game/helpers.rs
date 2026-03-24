@@ -14,17 +14,6 @@ pub(super) struct BattlefieldCardLocation<'a> {
     card: &'a CardInstance,
 }
 
-pub(super) struct GraveyardCardLocation {
-    owner_index: usize,
-}
-
-impl GraveyardCardLocation {
-    #[must_use]
-    pub const fn owner_index(&self) -> usize {
-        self.owner_index
-    }
-}
-
 impl<'a> BattlefieldCardLocation<'a> {
     #[must_use]
     pub const fn owner_index(&self) -> usize {
@@ -161,17 +150,19 @@ pub(super) fn battlefield_card_mut<'a>(
         .card_mut_by_handle(location.handle())
 }
 
-pub(super) fn graveyard_card_location(
+pub(super) fn graveyard_card_exists(
     players: &[Player],
     card_locations: &AggregateCardLocationIndex,
     card_id: &CardInstanceId,
-) -> Option<GraveyardCardLocation> {
-    let location = card_locations.location(card_id)?;
-    (location.zone() == PlayerCardZone::Graveyard).then_some(())?;
+) -> bool {
+    let Some(location) = card_locations.location(card_id) else {
+        return false;
+    };
+    if location.zone() != PlayerCardZone::Graveyard {
+        return false;
+    }
     players
-        .get(location.owner_index())?
-        .card_by_handle(location.handle())?;
-    Some(GraveyardCardLocation {
-        owner_index: location.owner_index(),
-    })
+        .get(location.owner_index())
+        .and_then(|player| player.card_by_handle(location.handle()))
+        .is_some()
 }
