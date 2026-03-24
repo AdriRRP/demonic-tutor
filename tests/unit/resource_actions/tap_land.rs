@@ -80,6 +80,35 @@ fn tap_land_adds_mana() {
 }
 
 #[test]
+fn lands_expose_a_minimal_activated_mana_ability_profile() {
+    let (mut game, service) = create_game_with_land_on_battlefield();
+
+    let land = game.players()[0]
+        .battlefield_card_at(0)
+        .unwrap_or_else(|| panic!("land should be on the battlefield"));
+
+    let mana_ability = land
+        .activated_mana_ability()
+        .unwrap_or_else(|| panic!("land should expose an activated mana ability"));
+
+    assert_eq!(mana_ability.color(), None);
+    assert_eq!(mana_ability.amount(), 1);
+
+    let (_, mana_event) = service
+        .tap_land(
+            &mut game,
+            TapLandCommand::new(
+                PlayerId::new("player-1"),
+                CardInstanceId::new("game-1-player-1-0"),
+            ),
+        )
+        .unwrap();
+
+    assert_eq!(mana_event.amount, mana_ability.amount());
+    assert_eq!(mana_event.color, mana_ability.color());
+}
+
+#[test]
 fn tap_land_fails_for_untapped_land() {
     let (mut game, service) = create_game_with_land_on_battlefield();
 
@@ -459,6 +488,13 @@ fn tapping_a_forest_adds_green_mana_to_the_pool() {
     assert_eq!(mana_event.color, Some(demonictutor::ManaColor::Green));
     assert_eq!(game.players()[0].mana_pool().green(), 1);
     assert_eq!(game.players()[0].mana(), 1);
+    assert_eq!(
+        game.players()[0]
+            .battlefield_card_at(0)
+            .and_then(demonictutor::CardInstance::activated_mana_ability)
+            .map(demonictutor::ActivatedManaAbilityProfile::color),
+        Some(Some(demonictutor::ManaColor::Green))
+    );
 }
 
 #[test]

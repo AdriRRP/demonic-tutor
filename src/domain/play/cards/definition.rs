@@ -1,5 +1,6 @@
 use super::{
-    CardType, CastingPermissionProfile, CastingRule, ManaColor, ManaCost, SupportedSpellRules,
+    ActivatedManaAbilityProfile, CardType, CastingPermissionProfile, CastingRule, ManaColor,
+    ManaCost, SupportedSpellRules,
 };
 use crate::domain::play::ids::CardDefinitionId;
 
@@ -9,7 +10,7 @@ pub struct CardDefinition {
     mana_cost: ManaCost,
     casting_permission: Option<CastingPermissionProfile>,
     supported_spell_rules: SupportedSpellRules,
-    produced_mana: Option<ManaColor>,
+    activated_mana_ability: Option<ActivatedManaAbilityProfile>,
 }
 
 impl CardDefinition {
@@ -20,7 +21,15 @@ impl CardDefinition {
             mana_cost: ManaCost::generic(mana_cost),
             casting_permission: CastingPermissionProfile::for_spell_card_type(card_type),
             supported_spell_rules: SupportedSpellRules::none(),
-            produced_mana: None,
+            activated_mana_ability: match card_type {
+                CardType::Land => Some(ActivatedManaAbilityProfile::tap_for_generic_mana(1)),
+                CardType::Creature
+                | CardType::Instant
+                | CardType::Sorcery
+                | CardType::Enchantment
+                | CardType::Artifact
+                | CardType::Planeswalker => None,
+            },
         }
     }
 
@@ -31,7 +40,10 @@ impl CardDefinition {
             mana_cost: ManaCost::generic(0),
             casting_permission: None,
             supported_spell_rules: SupportedSpellRules::none(),
-            produced_mana: Some(produced_mana),
+            activated_mana_ability: Some(ActivatedManaAbilityProfile::tap_for_colored_mana(
+                produced_mana,
+                1,
+            )),
         }
     }
 
@@ -84,7 +96,7 @@ impl CardDefinition {
     }
 
     #[must_use]
-    pub const fn produced_mana(&self) -> Option<ManaColor> {
-        self.produced_mana
+    pub const fn activated_mana_ability(&self) -> Option<ActivatedManaAbilityProfile> {
+        self.activated_mana_ability
     }
 }

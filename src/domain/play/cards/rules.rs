@@ -57,6 +57,40 @@ impl ManaColor {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ActivatedManaAbilityProfile {
+    color: Option<ManaColor>,
+    amount: u32,
+}
+
+impl ActivatedManaAbilityProfile {
+    #[must_use]
+    pub const fn tap_for_colored_mana(color: ManaColor, amount: u32) -> Self {
+        Self {
+            color: Some(color),
+            amount,
+        }
+    }
+
+    #[must_use]
+    pub const fn tap_for_generic_mana(amount: u32) -> Self {
+        Self {
+            color: None,
+            amount,
+        }
+    }
+
+    #[must_use]
+    pub const fn color(self) -> Option<ManaColor> {
+        self.color
+    }
+
+    #[must_use]
+    pub const fn amount(self) -> u32 {
+        self.amount
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ManaCost {
     generic: u32,
     colored: [u32; ManaColor::COUNT],

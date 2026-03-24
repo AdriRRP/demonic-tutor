@@ -117,17 +117,26 @@ pub fn tap_land(
 
     card.tap();
 
-    let produced_color = card.produced_mana();
-    if let Some(color) = produced_color {
-        player.add_colored_mana(color, 1);
+    let mana_ability = card
+        .activated_mana_ability()
+        .ok_or_else(|| DomainError::Card(CardError::NotALand(cmd.card_id.clone())))?;
+
+    if let Some(color) = mana_ability.color() {
+        player.add_colored_mana(color, mana_ability.amount());
     } else {
-        player.add_mana(1);
+        player.add_mana(mana_ability.amount());
     }
     let new_mana = player.mana();
 
     Ok((
         LandTapped::new(game_id.clone(), cmd.player_id.clone(), cmd.card_id.clone()),
-        ManaAdded::new(game_id.clone(), cmd.player_id, 1, produced_color, new_mana),
+        ManaAdded::new(
+            game_id.clone(),
+            cmd.player_id,
+            mana_ability.amount(),
+            mana_ability.color(),
+            new_mana,
+        ),
     ))
 }
 

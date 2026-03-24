@@ -8,9 +8,10 @@ pub use infrastructure::{GameLogProjection, InMemoryEventBus, InMemoryEventStore
 
 pub use domain::play::{
     cards::{
-        CardInstance, CardType, CastingPermissionProfile, CastingRule, CreatureTargetRule,
-        KeywordAbility, KeywordAbilitySet, ManaColor, ManaCost, PlayerTargetRule, SingleTargetRule,
-        SpellResolutionProfile, SpellTargetKind, SpellTargetingProfile, SupportedSpellRules,
+        ActivatedManaAbilityProfile, CardInstance, CardType, CastingPermissionProfile, CastingRule,
+        CreatureTargetRule, KeywordAbility, KeywordAbilitySet, ManaColor, ManaCost,
+        PlayerTargetRule, SingleTargetRule, SpellResolutionProfile, SpellTargetKind,
+        SpellTargetingProfile, SupportedSpellRules,
     },
     commands::{
         AdjustPlayerLifeEffectCommand, AdvanceTurnCommand, CastSpellCommand,

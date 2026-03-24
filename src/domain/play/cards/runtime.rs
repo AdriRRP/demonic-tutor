@@ -1,6 +1,6 @@
 use super::{
-    CardDefinition, CardType, CastingPermissionProfile, KeywordAbility, KeywordAbilitySet,
-    ManaColor, ManaCost, SupportedSpellRules,
+    ActivatedManaAbilityProfile, CardDefinition, CardType, CastingPermissionProfile,
+    KeywordAbility, KeywordAbilitySet, ManaCost, SupportedSpellRules,
 };
 use crate::domain::play::ids::{CardDefinitionId, CardInstanceId};
 use std::sync::Arc;
@@ -259,8 +259,8 @@ impl CardInstance {
     }
 
     #[must_use]
-    pub fn produced_mana(&self) -> Option<ManaColor> {
-        self.face.definition.produced_mana()
+    pub fn activated_mana_ability(&self) -> Option<ActivatedManaAbilityProfile> {
+        self.face.definition.activated_mana_ability()
     }
 
     #[must_use]
