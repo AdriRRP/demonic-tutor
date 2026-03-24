@@ -4,7 +4,21 @@ This directory contains the proposal backlog that still remains open after the l
 
 The backlog is intentionally organized by active legacy wave when proposals are still pending.
 
-## Wave 1 — Engine Audit V5
+## Wave 1 — Engine Audit V10
+
+Directory: `engine-audit-v10/`
+
+1. `engine-audit-v10/make-player-handle-the-canonical-runtime-identity.md`
+2. `engine-audit-v10/thin-stack-payloads-beyond-static-spell-metadata.md`
+3. `engine-audit-v10/separate-internal-stack-targets-from-public-target-materialization.md`
+4. `engine-audit-v10/make-aggregate-card-location-index-truly-incremental.md`
+5. `engine-audit-v10/move-combat-participants-to-internal-card-references.md`
+6. `engine-audit-v10/rework-visible-zone-indexing-for-sublinear-position-lookup.md`
+7. `engine-audit-v10/finish-dual-layer-identity-with-numeric-core-ids.md`
+
+These proposals focus on the next excellence pass: canonical internal handles, leaner stack carriers, truly incremental location indexing, and a numeric-first core identity model.
+
+## Wave 2 — Engine Audit V5
 
 Directory: `engine-audit-v5/`
 
@@ -17,7 +31,7 @@ Directory: `engine-audit-v5/`
 
 These proposals capture older runtime-identity and zone-indexing cuts that remain uncurated as explicit backlog items.
 
-## Wave 2 — Engine Audit V7
+## Wave 3 — Engine Audit V7
 
 Directory: `engine-audit-v7/`
 
@@ -25,7 +39,7 @@ Directory: `engine-audit-v7/`
 
 This proposal tracks the remaining long-tail cleanup toward edge-only public string ids.
 
-## Wave 3 — Engine Audit V8
+## Wave 4 — Engine Audit V8
 
 Directory: `engine-audit-v8/`
 
@@ -38,7 +52,7 @@ Directory: `engine-audit-v8/`
 
 These proposals preserve the pre-v9 wording of the same excellence direction and remain as legacy backlog until explicitly pruned.
 
-## Wave 4 — Engine Audit V9
+## Wave 5 — Engine Audit V9
 
 Directory: `engine-audit-v9/`
 
