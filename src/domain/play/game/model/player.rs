@@ -176,10 +176,6 @@ impl Player {
         &self.library
     }
 
-    pub fn library_mut(&mut self) -> &mut Library {
-        &mut self.library
-    }
-
     #[must_use]
     pub const fn battlefield(&self) -> &Battlefield {
         &self.battlefield
