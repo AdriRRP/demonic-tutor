@@ -144,10 +144,7 @@ pub enum StackObjectKind {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SpellOnStack {
-    source_card_id: CardInstanceId,
     card: SpellCardSnapshot,
-    card_type: CardType,
-    supported_spell_rules: SupportedSpellRules,
     mana_cost_paid: u32,
     target: Option<SpellTarget>,
 }
@@ -185,11 +182,12 @@ impl ActivatedAbilityOnStack {
 
 impl SpellOnStack {
     #[must_use]
-    pub fn new(card: SpellCardSnapshot, mana_cost_paid: u32, target: Option<SpellTarget>) -> Self {
+    pub const fn new(
+        card: SpellCardSnapshot,
+        mana_cost_paid: u32,
+        target: Option<SpellTarget>,
+    ) -> Self {
         Self {
-            source_card_id: card.id().clone(),
-            card_type: card.card_type().clone(),
-            supported_spell_rules: card.supported_spell_rules(),
             card,
             mana_cost_paid,
             target,
@@ -198,7 +196,7 @@ impl SpellOnStack {
 
     #[must_use]
     pub const fn source_card_id(&self) -> &CardInstanceId {
-        &self.source_card_id
+        self.card.id()
     }
 
     #[must_use]
@@ -208,12 +206,12 @@ impl SpellOnStack {
 
     #[must_use]
     pub const fn card_type(&self) -> &CardType {
-        &self.card_type
+        self.card.card_type()
     }
 
     #[must_use]
-    pub const fn supported_spell_rules(&self) -> SupportedSpellRules {
-        self.supported_spell_rules
+    pub fn supported_spell_rules(&self) -> SupportedSpellRules {
+        self.card.supported_spell_rules()
     }
 
     #[must_use]
