@@ -80,6 +80,28 @@ pub(super) fn find_player_mut<'a>(
     Ok(&mut players[player_index])
 }
 
+pub(super) fn player_by_index(
+    players: &[Player],
+    player_index: usize,
+) -> Result<&Player, DomainError> {
+    players.get(player_index).ok_or_else(|| {
+        DomainError::Game(GameError::InternalInvariantViolation(format!(
+            "missing player at index {player_index}"
+        )))
+    })
+}
+
+pub(super) fn player_mut_by_index(
+    players: &mut [Player],
+    player_index: usize,
+) -> Result<&mut Player, DomainError> {
+    players.get_mut(player_index).ok_or_else(|| {
+        DomainError::Game(GameError::InternalInvariantViolation(format!(
+            "missing player at index {player_index}"
+        )))
+    })
+}
+
 pub(super) fn hand_card_type(
     player: &Player,
     player_id: &PlayerId,

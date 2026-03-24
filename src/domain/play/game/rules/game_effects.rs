@@ -18,13 +18,7 @@ pub fn adjust_player_life_by_index(
     player_index: usize,
     life_delta: i32,
 ) -> Result<LifeChanged, crate::domain::play::errors::DomainError> {
-    let player = players.get_mut(player_index).ok_or_else(|| {
-        crate::domain::play::errors::DomainError::Game(
-            crate::domain::play::errors::GameError::InternalInvariantViolation(
-                "target player index should point to an existing player".to_string(),
-            ),
-        )
-    })?;
+    let player = helpers::player_mut_by_index(players, player_index)?;
     let player_id = player.id().clone();
     let old_life = player.life();
     player.adjust_life(life_delta);

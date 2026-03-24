@@ -37,7 +37,7 @@ pub fn discard_for_cleanup(
         }));
     }
 
-    let player = helpers::find_player_mut(players, &cmd.player_id)?;
+    let player = helpers::player_mut_by_index(players, active_player_index)?;
     let hand_size = player.hand_size();
     if hand_size <= MAX_HAND_SIZE {
         return Err(DomainError::Game(GameError::DiscardNotRequired {

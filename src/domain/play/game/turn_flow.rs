@@ -48,18 +48,20 @@ impl Game {
         &mut self,
         cmd: &DrawCardsEffectCommand,
     ) -> Result<rules::turn_flow::DrawCardsEffectOutcome, DomainError> {
-        let active_player = self.active_player().clone();
         let active_player_index = self.active_player_index;
         invariants::require_empty_stack_priority_action_window(
             self.priority(),
             self.stack.is_empty(),
-            &active_player,
+            self.active_player(),
         )?;
+        let target_player_index =
+            super::helpers::find_player_index(&self.players, &cmd.target_player_id)?;
         self.refresh_card_locations();
         let result = rules::turn_flow::draw_cards_effect(
             &self.id,
             &mut self.players,
             active_player_index,
+            target_player_index,
             &self.phase,
             &mut self.terminal_state,
             cmd,

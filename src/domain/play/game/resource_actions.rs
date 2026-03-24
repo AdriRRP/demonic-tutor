@@ -39,17 +39,18 @@ impl Game {
         cmd: AdjustPlayerLifeEffectCommand,
     ) -> Result<AdjustPlayerLifeEffectOutcome, DomainError> {
         invariants::require_game_active(self.is_over())?;
-        let active_player = self.active_player().clone();
         invariants::require_empty_stack_priority_action_window(
             self.priority(),
             self.stack.is_empty(),
-            &active_player,
+            self.active_player(),
         )?;
+        let caster_index = super::helpers::find_player_index(&self.players, &cmd.caster_id)?;
         self.refresh_card_locations();
         let result = rules::resource_actions::adjust_player_life_effect(
             &self.id,
             &mut self.players,
             &mut self.terminal_state,
+            caster_index,
             cmd,
         );
         self.refresh_card_locations();

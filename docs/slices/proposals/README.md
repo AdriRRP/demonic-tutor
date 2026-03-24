@@ -1,18 +1,31 @@
 # Slice Proposals
 
-This directory contains the current proposal backlog for the next stable-engine wave.
+This directory contains the proposal backlog that still remains open after the latest runtime audit passes.
 
-The backlog is intentionally organized by dependency order when active.
+The backlog is intentionally organized by active legacy wave when proposals are still pending.
 
-## Wave 1 — Engine Audit V7
+## Wave 1 — Engine Audit V5
+
+Directory: `engine-audit-v5/`
+
+1. `engine-audit-v5/introduce-internal-handle-first-card-identity.md`
+2. `engine-audit-v5/make-player-card-location-a-primary-index.md`
+3. `engine-audit-v5/thin-stack-spell-payloads-further.md`
+4. `engine-audit-v5/commit-spells-to-stack-through-one-internal-object.md`
+5. `engine-audit-v5/rework-ordered-zone-visible-indexing.md`
+6. `engine-audit-v5/move-public-string-ids-to-edge-materialization.md`
+
+These proposals capture older runtime-identity and zone-indexing cuts that remain uncurated as explicit backlog items.
+
+## Wave 2 — Engine Audit V7
 
 Directory: `engine-audit-v7/`
 
 1. `engine-audit-v7/materialize-public-string-ids-only-at-true-boundaries.md`
 
-These proposals focus on the next excellence pass: a stronger path away from public string ids in the core.
+This proposal tracks the remaining long-tail cleanup toward edge-only public string ids.
 
-## Wave 2 — Engine Audit V8
+## Wave 3 — Engine Audit V8
 
 Directory: `engine-audit-v8/`
 
@@ -23,13 +36,12 @@ Directory: `engine-audit-v8/`
 5. `engine-audit-v8/make-aggregate-card-location-index-incremental.md`
 6. `engine-audit-v8/finish-dual-layer-identity-with-edge-only-string-materialization.md`
 
-These proposals focus on the next elite runtime pass: handle-first identity, thinner stack carriers, and truly incremental aggregate indexing.
+These proposals preserve the pre-v9 wording of the same excellence direction and remain as legacy backlog until explicitly pruned.
 
-## Wave 3 — Engine Audit V9
+## Wave 4 — Engine Audit V9
 
 Directory: `engine-audit-v9/`
 
-1. `engine-audit-v9/make-player-arena-handle-first-at-the-core.md`
-1. `engine-audit-v9/finish-dual-layer-identity-at-true-boundaries.md`
+No active proposals remain in this wave.
 
-These proposals focus on the next critical runtime pass: canonical handle-first identity, minimal in-flight payloads, and incremental aggregate indexing.
+These proposals focused on canonical handle-first identity, minimal in-flight payloads, and incremental aggregate indexing, and are now implemented.

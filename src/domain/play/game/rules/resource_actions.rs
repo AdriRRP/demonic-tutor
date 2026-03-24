@@ -55,7 +55,7 @@ pub fn play_land(
         return Err(DomainError::Phase(PhaseError::InvalidForLand));
     }
 
-    let player = helpers::find_player_mut(players, &cmd.player_id)?;
+    let player = helpers::player_mut_by_index(players, active_player_index)?;
 
     if player.lands_played_this_turn() > 0 {
         return Err(DomainError::Phase(PhaseError::AlreadyPlayedLandThisTurn(
@@ -99,7 +99,12 @@ pub fn tap_land(
         }));
     }
 
-    let player = helpers::find_player_mut(players, &cmd.player_id)?;
+    let player_index = if priority.is_none() {
+        active_player_index
+    } else {
+        helpers::find_player_index(players, &cmd.player_id)?
+    };
+    let player = helpers::player_mut_by_index(players, player_index)?;
 
     let card = player.battlefield_card_mut(&cmd.card_id).ok_or_else(|| {
         DomainError::Card(CardError::NotOnBattlefield {
@@ -152,15 +157,16 @@ pub fn adjust_player_life_effect(
     game_id: &GameId,
     players: &mut [Player],
     terminal_state: &mut TerminalState,
+    caster_index: usize,
     cmd: AdjustPlayerLifeEffectCommand,
 ) -> Result<AdjustPlayerLifeEffectOutcome, DomainError> {
     let AdjustPlayerLifeEffectCommand {
-        caster_id,
         target_player_id,
         life_delta,
+        ..
     } = cmd;
 
-    helpers::find_player_index(players, &caster_id)?;
+    helpers::player_by_index(players, caster_index)?;
     let life_changed = game_effects::adjust_player_life_by_index(
         game_id,
         players,

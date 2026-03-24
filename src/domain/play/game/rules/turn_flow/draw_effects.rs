@@ -4,7 +4,7 @@ use crate::domain::play::{
     commands::DrawCardsEffectCommand,
     errors::{DomainError, GameError},
     events::{CardDrawn, DrawKind, GameEnded},
-    game::{helpers, invariants, model::Player, TerminalState},
+    game::{invariants, model::Player, TerminalState},
     ids::{CardInstanceId, GameId},
     phase::Phase,
 };
@@ -40,6 +40,7 @@ pub fn draw_cards_effect(
     game_id: &GameId,
     players: &mut [Player],
     active_player_index: usize,
+    target_player_index: usize,
     phase: &Phase,
     terminal_state: &mut TerminalState,
     cmd: &DrawCardsEffectCommand,
@@ -57,17 +58,16 @@ pub fn draw_cards_effect(
         return Err(DomainError::Game(GameError::InvalidDrawCount(0)));
     }
 
-    let target_player_idx = helpers::find_player_index(players, &cmd.target_player_id)?;
     let mut cards_drawn = Vec::new();
 
     for _ in 0..cmd.draw_count {
-        let Some(card_id) = draw_one_card(&mut players[target_player_idx]) else {
+        let Some(card_id) = draw_one_card(&mut players[target_player_index]) else {
             let game_ended =
                 crate::domain::play::game::rules::game_effects::end_game_for_empty_library_draw(
                     game_id,
                     players,
                     terminal_state,
-                    target_player_idx,
+                    target_player_index,
                 )?;
             return Ok(DrawCardsEffectOutcome::new(cards_drawn, Some(game_ended)));
         };
