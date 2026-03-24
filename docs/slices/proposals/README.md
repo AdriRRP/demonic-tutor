@@ -30,10 +30,9 @@ These proposals focus on the next elite runtime pass: handle-first identity, thi
 Directory: `engine-audit-v9/`
 
 1. `engine-audit-v9/make-player-arena-handle-first-at-the-core.md`
-1. `engine-audit-v9/thin-stack-payloads-to-minimal-in-flight-state.md`
-2. `engine-audit-v9/move-stack-runtime-references-off-public-ids.md`
-3. `engine-audit-v9/move-combat-runtime-links-to-internal-card-refs.md`
-4. `engine-audit-v9/make-aggregate-card-location-index-live-and-incremental.md`
-5. `engine-audit-v9/finish-dual-layer-identity-at-true-boundaries.md`
+1. `engine-audit-v9/move-stack-runtime-references-off-public-ids.md`
+2. `engine-audit-v9/move-combat-runtime-links-to-internal-card-refs.md`
+3. `engine-audit-v9/make-aggregate-card-location-index-live-and-incremental.md`
+4. `engine-audit-v9/finish-dual-layer-identity-at-true-boundaries.md`
 
 These proposals focus on the next critical runtime pass: canonical handle-first identity, minimal in-flight payloads, and incremental aggregate indexing.

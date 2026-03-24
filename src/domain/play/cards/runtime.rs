@@ -28,47 +28,29 @@ struct CreatureRuntime {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CreatureSpellPayload {
     id: CardInstanceId,
-    definition: SpellDefinitionPayload,
+    definition_id: CardDefinitionId,
+    mana_cost: ManaCost,
     power: u32,
     toughness: u32,
     keywords: KeywordAbilitySet,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct NonCreatureSpellPayload {
+pub struct PermanentSpellPayload {
     id: CardInstanceId,
-    definition: SpellDefinitionPayload,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-struct SpellDefinitionPayload {
-    id: CardDefinitionId,
+    definition_id: CardDefinitionId,
     card_type: CardType,
     mana_cost: ManaCost,
-    supported_spell_rules: SupportedSpellRules,
     activated_ability: Option<ActivatedAbilityProfile>,
 }
 
-impl SpellDefinitionPayload {
-    fn from_definition(definition: &CardDefinition) -> Self {
-        Self {
-            id: definition.id().clone(),
-            card_type: *definition.card_type(),
-            mana_cost: definition.mana_cost_profile(),
-            supported_spell_rules: definition.supported_spell_rules(),
-            activated_ability: definition.activated_ability(),
-        }
-    }
-
-    fn into_definition(self) -> CardDefinition {
-        let mut definition = CardDefinition::for_card_type(self.id, 0, &self.card_type)
-            .with_mana_cost(self.mana_cost)
-            .with_supported_spell_rules(self.supported_spell_rules);
-        if let Some(activated_ability) = self.activated_ability {
-            definition = definition.with_activated_ability(activated_ability);
-        }
-        definition
-    }
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct EffectSpellPayload {
+    id: CardInstanceId,
+    definition_id: CardDefinitionId,
+    card_type: CardType,
+    mana_cost: ManaCost,
+    supported_spell_rules: SupportedSpellRules,
 }
 
 impl CreatureRuntime {
@@ -158,7 +140,8 @@ pub struct CardInstance {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SpellPayload {
-    NonCreature(NonCreatureSpellPayload),
+    Effect(EffectSpellPayload),
+    Permanent(PermanentSpellPayload),
     Creature(CreatureSpellPayload),
 }
 
@@ -244,13 +227,30 @@ impl CardInstance {
     #[must_use]
     pub fn into_spell_payload(self) -> SpellPayload {
         match &self.runtime.kind {
-            CardRuntimeKind::NonCreature => SpellPayload::NonCreature(NonCreatureSpellPayload {
-                id: self.id,
-                definition: SpellDefinitionPayload::from_definition(self.face.definition.as_ref()),
-            }),
+            CardRuntimeKind::NonCreature => {
+                let definition = self.face.definition.as_ref();
+                if definition.card_type().is_permanent() {
+                    SpellPayload::Permanent(PermanentSpellPayload {
+                        id: self.id,
+                        definition_id: definition.id().clone(),
+                        card_type: *definition.card_type(),
+                        mana_cost: definition.mana_cost_profile(),
+                        activated_ability: definition.activated_ability(),
+                    })
+                } else {
+                    SpellPayload::Effect(EffectSpellPayload {
+                        id: self.id,
+                        definition_id: definition.id().clone(),
+                        card_type: *definition.card_type(),
+                        mana_cost: definition.mana_cost_profile(),
+                        supported_spell_rules: definition.supported_spell_rules(),
+                    })
+                }
+            }
             CardRuntimeKind::Creature(creature) => SpellPayload::Creature(CreatureSpellPayload {
                 id: self.id,
-                definition: SpellDefinitionPayload::from_definition(self.face.definition.as_ref()),
+                definition_id: self.face.definition.id().clone(),
+                mana_cost: self.face.definition.mana_cost_profile(),
                 power: creature.power,
                 toughness: creature.toughness,
                 keywords: creature.keywords,
@@ -507,7 +507,8 @@ impl SpellPayload {
     #[must_use]
     pub const fn id(&self) -> &CardInstanceId {
         match self {
-            Self::NonCreature(payload) => &payload.id,
+            Self::Effect(payload) => &payload.id,
+            Self::Permanent(payload) => &payload.id,
             Self::Creature(payload) => &payload.id,
         }
     }
@@ -515,36 +516,66 @@ impl SpellPayload {
     #[must_use]
     pub const fn card_type(&self) -> &CardType {
         match self {
-            Self::NonCreature(payload) => &payload.definition.card_type,
-            Self::Creature(payload) => &payload.definition.card_type,
+            Self::Effect(payload) => &payload.card_type,
+            Self::Permanent(payload) => &payload.card_type,
+            Self::Creature(_) => &CardType::Creature,
         }
     }
 
     #[must_use]
     pub const fn supported_spell_rules(&self) -> SupportedSpellRules {
         match self {
-            Self::NonCreature(payload) => payload.definition.supported_spell_rules,
-            Self::Creature(payload) => payload.definition.supported_spell_rules,
+            Self::Effect(payload) => payload.supported_spell_rules,
+            Self::Permanent(_) | Self::Creature(_) => SupportedSpellRules::none(),
         }
     }
 
     #[must_use]
     pub fn into_card_instance(self) -> CardInstance {
         match self {
-            Self::NonCreature(payload) => CardInstance {
+            Self::Effect(payload) => CardInstance {
                 id: payload.id,
                 face: CardFace {
-                    definition: Arc::new(payload.definition.into_definition()),
+                    definition: Arc::new(
+                        CardDefinition::for_card_type(payload.definition_id, 0, &payload.card_type)
+                            .with_mana_cost(payload.mana_cost)
+                            .with_supported_spell_rules(payload.supported_spell_rules),
+                    ),
                 },
                 runtime: CardRuntime {
                     tapped: false,
                     kind: CardRuntimeKind::NonCreature,
                 },
             },
+            Self::Permanent(payload) => {
+                let mut definition =
+                    CardDefinition::for_card_type(payload.definition_id, 0, &payload.card_type)
+                        .with_mana_cost(payload.mana_cost);
+                if let Some(activated_ability) = payload.activated_ability {
+                    definition = definition.with_activated_ability(activated_ability);
+                }
+                CardInstance {
+                    id: payload.id,
+                    face: CardFace {
+                        definition: Arc::new(definition),
+                    },
+                    runtime: CardRuntime {
+                        tapped: false,
+                        kind: CardRuntimeKind::NonCreature,
+                    },
+                }
+            }
             Self::Creature(payload) => CardInstance {
                 id: payload.id,
                 face: CardFace {
-                    definition: Arc::new(payload.definition.into_definition()),
+                    definition: Arc::new(
+                        CardDefinition::for_card_type(
+                            payload.definition_id,
+                            0,
+                            &CardType::Creature,
+                        )
+                        .with_mana_cost(payload.mana_cost),
+                    ),
                 },
                 runtime: CardRuntime {
                     tapped: false,
