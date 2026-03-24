@@ -8,7 +8,6 @@ The backlog is intentionally organized by dependency order when active.
 
 Directory: `engine-audit-v4/`
 
-1. `engine-audit-v4/recycle-player-card-arena-slots.md`
 1. `engine-audit-v4/stop-reconstructing-cards-across-stack-resolution.md`
 1. `engine-audit-v4/rework-indexed-ordered-zones-beyond-tombstones.md`
 1. `engine-audit-v4/remove-battlefield-temp-allocation-in-hot-mutations.md`

@@ -158,13 +158,20 @@ impl ManaPool {
 struct PlayerCardArena {
     cards: Vec<Option<CardInstance>>,
     id_to_handle: HashMap<CardInstanceId, PlayerCardHandle>,
+    free_slots: Vec<usize>,
 }
 
 impl PlayerCardArena {
     fn insert(&mut self, card: CardInstance) -> PlayerCardHandle {
         let card_id = card.id().clone();
-        let handle = PlayerCardHandle::new(self.cards.len());
-        self.cards.push(Some(card));
+        let handle = if let Some(index) = self.free_slots.pop() {
+            self.cards[index] = Some(card);
+            PlayerCardHandle::new(index)
+        } else {
+            let handle = PlayerCardHandle::new(self.cards.len());
+            self.cards.push(Some(card));
+            handle
+        };
         self.id_to_handle.insert(card_id, handle);
         handle
     }
@@ -198,6 +205,7 @@ impl PlayerCardArena {
     fn remove_by_handle(&mut self, handle: PlayerCardHandle) -> Option<CardInstance> {
         let card = self.cards.get_mut(handle.index())?.take()?;
         self.id_to_handle.remove(card.id());
+        self.free_slots.push(handle.index());
         Some(card)
     }
 }
