@@ -2,18 +2,29 @@
 
 `ThinStackPayloadsBeyondStaticSpellMetadata`
 
+## Status
+
+Implemented
+
 ## Goal
 
 Reduce `SpellPayload` further so spells on the stack carry only in-flight resolution state, not broad copies of static card metadata.
 
-## Why This Slice Exists Now
+## What Changed
 
-`SpellPayload` is already lighter than earlier versions, but each spell still stores card kind and rule metadata that are mostly canonical definition data rather than runtime state.
+- `SpellPayload` no longer stores `mana_cost` in effect, permanent, or creature carriers.
+- stack payload reconstruction now derives the rebuilt `CardDefinition` from the narrower canonical subset that still matters for the supported runtime:
+  - `definition_id`
+  - `card_type` when still needed
+  - `supported_spell_rules` for effect spells
+  - `activated_ability` for supported non-mana activated permanents
+  - creature stats and keywords for creature permanents
+- regression tests now pin that effect, permanent, and creature payloads still round-trip the supported semantics after this thinning.
 
 ## Supported Behavior
 
 - stack-borne spells carry a smaller runtime payload
-- static spell definition data is derived or referenced from a narrower canonical source
+- static spell definition data is derived from a narrower canonical subset during reconstruction
 - resolution behavior remains unchanged for the supported spell subset
 
 ## Invariants / Legality Rules
@@ -36,7 +47,7 @@ Reduce `SpellPayload` further so spells on the stack carry only in-flight resolu
 ### Entity / Value Object Impact
 - `SpellPayload`
 - stack resolution carriers
-- any helper rebuilding or reading spell metadata at resolution time
+- spell-payload reconstruction into `CardInstance`
 
 ## Ownership Check
 
@@ -44,13 +55,13 @@ This belongs to the `Game` aggregate because stack object representation is inte
 
 ## Documentation Impact
 
-- this slice document
+- this implemented slice document
 - `docs/slices/proposals/README.md`
 
 ## Test Impact
 
 - existing stack, targeting, and spell-resolution regressions remain green
-- focused regression proving payload thinning does not change destination or effect semantics
+- focused runtime regressions prove payload thinning does not change destination or effect semantics for the supported subset
 
 ## Rules Reference
 
@@ -60,7 +71,3 @@ This belongs to the `Game` aggregate because stack object representation is inte
 ## Rules Support Statement
 
 This slice keeps the same supported stack semantics while reducing redundant per-spell metadata in the runtime carrier.
-
-## Open Questions
-
-- none

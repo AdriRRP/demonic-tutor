@@ -29,7 +29,6 @@ struct CreatureRuntime {
 pub struct CreatureSpellPayload {
     id: CardInstanceId,
     definition_id: CardDefinitionId,
-    mana_cost: ManaCost,
     power: u32,
     toughness: u32,
     keywords: KeywordAbilitySet,
@@ -40,7 +39,6 @@ pub struct PermanentSpellPayload {
     id: CardInstanceId,
     definition_id: CardDefinitionId,
     card_type: CardType,
-    mana_cost: ManaCost,
     activated_ability: Option<ActivatedAbilityProfile>,
 }
 
@@ -49,7 +47,6 @@ pub struct EffectSpellPayload {
     id: CardInstanceId,
     definition_id: CardDefinitionId,
     card_type: CardType,
-    mana_cost: ManaCost,
     supported_spell_rules: SupportedSpellRules,
 }
 
@@ -234,7 +231,6 @@ impl CardInstance {
                         id: self.id,
                         definition_id: definition.id().clone(),
                         card_type: *definition.card_type(),
-                        mana_cost: definition.mana_cost_profile(),
                         activated_ability: definition.activated_ability(),
                     })
                 } else {
@@ -242,7 +238,6 @@ impl CardInstance {
                         id: self.id,
                         definition_id: definition.id().clone(),
                         card_type: *definition.card_type(),
-                        mana_cost: definition.mana_cost_profile(),
                         supported_spell_rules: definition.supported_spell_rules(),
                     })
                 }
@@ -250,7 +245,6 @@ impl CardInstance {
             CardRuntimeKind::Creature(creature) => SpellPayload::Creature(CreatureSpellPayload {
                 id: self.id,
                 definition_id: self.face.definition.id().clone(),
-                mana_cost: self.face.definition.mana_cost_profile(),
                 power: creature.power,
                 toughness: creature.toughness,
                 keywords: creature.keywords,
@@ -538,7 +532,6 @@ impl SpellPayload {
                 face: CardFace {
                     definition: Arc::new(
                         CardDefinition::for_card_type(payload.definition_id, 0, &payload.card_type)
-                            .with_mana_cost(payload.mana_cost)
                             .with_supported_spell_rules(payload.supported_spell_rules),
                     ),
                 },
@@ -549,8 +542,7 @@ impl SpellPayload {
             },
             Self::Permanent(payload) => {
                 let mut definition =
-                    CardDefinition::for_card_type(payload.definition_id, 0, &payload.card_type)
-                        .with_mana_cost(payload.mana_cost);
+                    CardDefinition::for_card_type(payload.definition_id, 0, &payload.card_type);
                 if let Some(activated_ability) = payload.activated_ability {
                     definition = definition.with_activated_ability(activated_ability);
                 }
@@ -568,14 +560,11 @@ impl SpellPayload {
             Self::Creature(payload) => CardInstance {
                 id: payload.id,
                 face: CardFace {
-                    definition: Arc::new(
-                        CardDefinition::for_card_type(
-                            payload.definition_id,
-                            0,
-                            &CardType::Creature,
-                        )
-                        .with_mana_cost(payload.mana_cost),
-                    ),
+                    definition: Arc::new(CardDefinition::for_card_type(
+                        payload.definition_id,
+                        0,
+                        &CardType::Creature,
+                    )),
                 },
                 runtime: CardRuntime {
                     tapped: false,
@@ -587,5 +576,113 @@ impl SpellPayload {
                 },
             },
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    //! Supports runtime payload regression tests.
+
+    use super::{
+        ActivatedAbilityProfile, CardDefinition, CardDefinitionId, CardInstance, CardInstanceId,
+        CardType, KeywordAbility, KeywordAbilitySet, SpellPayload, SupportedSpellRules,
+    };
+
+    #[test]
+    fn permanent_payload_round_trips_relevant_battlefield_traits_without_static_mana_metadata() {
+        let card = CardInstance::from_definition(
+            CardInstanceId::new("ivory-cup-on-stack"),
+            CardDefinition::for_card_type(
+                CardDefinitionId::new("ivory-cup-lite"),
+                3,
+                &CardType::Artifact,
+            )
+            .with_activated_ability(ActivatedAbilityProfile::tap_to_gain_life_to_controller(1)),
+            CardType::Artifact,
+        );
+
+        assert!(matches!(
+            card.clone().into_spell_payload(),
+            SpellPayload::Permanent(_)
+        ));
+        let SpellPayload::Permanent(payload) = card.into_spell_payload() else {
+            return;
+        };
+        let resolved = SpellPayload::Permanent(payload).into_card_instance();
+
+        assert_eq!(resolved.card_type(), &CardType::Artifact);
+        assert_eq!(
+            resolved.definition_id(),
+            &CardDefinitionId::new("ivory-cup-lite")
+        );
+        assert_eq!(
+            resolved.activated_ability(),
+            Some(ActivatedAbilityProfile::tap_to_gain_life_to_controller(1))
+        );
+        assert_eq!(resolved.mana_cost(), 0);
+    }
+
+    #[test]
+    fn effect_payload_round_trips_resolution_rules_without_static_mana_metadata() {
+        let card = CardInstance::from_definition(
+            CardInstanceId::new("shock-on-stack"),
+            CardDefinition::for_card_type(
+                CardDefinitionId::new("shock-lite"),
+                1,
+                &CardType::Instant,
+            )
+            .with_supported_spell_rules(SupportedSpellRules::deal_damage_to_any_target(2)),
+            CardType::Instant,
+        );
+
+        assert!(matches!(
+            card.clone().into_spell_payload(),
+            SpellPayload::Effect(_)
+        ));
+        let SpellPayload::Effect(payload) = card.into_spell_payload() else {
+            return;
+        };
+        let resolved = SpellPayload::Effect(payload).into_card_instance();
+
+        assert_eq!(resolved.card_type(), &CardType::Instant);
+        assert_eq!(
+            resolved.definition_id(),
+            &CardDefinitionId::new("shock-lite")
+        );
+        assert_eq!(
+            resolved.supported_spell_rules(),
+            SupportedSpellRules::deal_damage_to_any_target(2)
+        );
+        assert_eq!(resolved.mana_cost(), 0);
+    }
+
+    #[test]
+    fn creature_payload_round_trips_stats_and_keywords_without_static_mana_metadata() {
+        let card = CardInstance::new_creature_with_keywords(
+            CardInstanceId::new("bear-on-stack"),
+            CardDefinition::for_card_type(
+                CardDefinitionId::new("swift-bear"),
+                2,
+                &CardType::Creature,
+            ),
+            2,
+            2,
+            KeywordAbilitySet::only(KeywordAbility::Haste).with(KeywordAbility::Trample),
+        );
+
+        assert!(matches!(
+            card.clone().into_spell_payload(),
+            SpellPayload::Creature(_)
+        ));
+        let SpellPayload::Creature(payload) = card.into_spell_payload() else {
+            return;
+        };
+        let resolved = SpellPayload::Creature(payload).into_card_instance();
+
+        assert_eq!(resolved.card_type(), &CardType::Creature);
+        assert_eq!(resolved.creature_stats(), Some((2, 2)));
+        assert!(resolved.has_haste());
+        assert!(resolved.has_trample());
+        assert_eq!(resolved.mana_cost(), 0);
     }
 }
