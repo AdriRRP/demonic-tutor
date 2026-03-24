@@ -302,29 +302,45 @@ impl Player {
         self.cards.remove_by_handle(handle)
     }
 
-    fn move_handle_between_zones(
+    fn remove_handle_from_zone(
         &mut self,
         handle: PlayerCardHandle,
-        from: PlayerCardZone,
-        to: PlayerCardZone,
-    ) -> Option<()> {
-        match from {
-            PlayerCardZone::Library => return None,
-            PlayerCardZone::Hand => self.hand.remove(handle)?,
-            PlayerCardZone::Battlefield => self.battlefield.remove(handle)?,
-            PlayerCardZone::Graveyard => self.graveyard.remove(handle)?,
-            PlayerCardZone::Exile => self.exile.remove(handle)?,
-        };
+        zone: PlayerCardZone,
+    ) -> Option<PlayerCardHandle> {
+        match zone {
+            PlayerCardZone::Library => None,
+            PlayerCardZone::Hand => self.hand.remove(handle),
+            PlayerCardZone::Battlefield => self.battlefield.remove(handle),
+            PlayerCardZone::Graveyard => self.graveyard.remove(handle),
+            PlayerCardZone::Exile => self.exile.remove(handle),
+        }
+    }
 
-        match to {
+    fn add_handle_to_zone(&mut self, handle: PlayerCardHandle, zone: PlayerCardZone) -> Option<()> {
+        match zone {
             PlayerCardZone::Library => return None,
             PlayerCardZone::Hand => self.hand.receive(vec![handle]),
             PlayerCardZone::Battlefield => self.battlefield.add(handle),
             PlayerCardZone::Graveyard => self.graveyard.add(handle),
             PlayerCardZone::Exile => self.exile.add(handle),
         }
+        Some(())
+    }
 
-        self.cards.set_zone(handle, to)?;
+    fn move_handle_between_zones(
+        &mut self,
+        handle: PlayerCardHandle,
+        from: PlayerCardZone,
+        to: PlayerCardZone,
+    ) -> Option<()> {
+        self.cards.zone_by_handle(handle)?;
+        self.remove_handle_from_zone(handle, from)?;
+        self.add_handle_to_zone(handle, to)?;
+        if self.cards.set_zone(handle, to).is_none() {
+            let _ = self.remove_handle_from_zone(handle, to);
+            let _ = self.add_handle_to_zone(handle, from);
+            return None;
+        }
         Some(())
     }
 
@@ -818,5 +834,34 @@ mod tests {
         assert_eq!(player.mana(), 1);
         assert_eq!(player.card_zone(&card_id), Some(PlayerCardZone::Hand));
         assert!(player.hand_card(&card_id).is_some());
+    }
+
+    #[test]
+    fn move_handle_between_zones_rolls_back_visible_zone_when_arena_update_fails() {
+        let player_id = PlayerId::new("player-a");
+        let card_id = CardInstanceId::new("card-a");
+        let mut player = Player::new(player_id);
+        player.receive_battlefield_card(CardInstance::new(
+            card_id.clone(),
+            CardDefinitionId::new("definition-a"),
+            crate::domain::play::cards::CardType::Creature,
+            2,
+        ));
+
+        let handle = player.handle_in_zone(&card_id, PlayerCardZone::Battlefield);
+        assert!(handle.is_some());
+        let Some(handle) = handle else { return };
+        let removed = player.cards.begin_remove_by_handle(handle);
+        assert!(removed.is_some());
+
+        let moved = player.move_handle_between_zones(
+            handle,
+            PlayerCardZone::Battlefield,
+            PlayerCardZone::Graveyard,
+        );
+
+        assert_eq!(moved, None);
+        assert!(player.battlefield.contains(handle));
+        assert!(!player.graveyard.contains(handle));
     }
 }
