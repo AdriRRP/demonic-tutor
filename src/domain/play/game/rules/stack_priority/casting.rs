@@ -16,7 +16,8 @@ use {
         game::{
             helpers, invariants,
             model::{
-                PriorityState, SpellOnStack, SpellTarget, StackObject, StackObjectKind, StackZone,
+                PrepareHandSpellCastError, PriorityState, SpellOnStack, SpellTarget, StackObject,
+                StackObjectKind, StackZone,
             },
         },
         ids::{CardInstanceId, PlayerId},
@@ -141,35 +142,6 @@ fn read_hand_spell_metadata(
     })
 }
 
-struct PreparedHandSpellCast {
-    mana_cost_paid: u32,
-    payload: crate::domain::play::cards::SpellPayload,
-}
-
-fn prepare_validated_hand_spell_for_cast(
-    player: &mut crate::domain::play::game::Player,
-    player_id: &PlayerId,
-    card_id: &CardInstanceId,
-    mana_cost: u32,
-    mana_cost_profile: crate::domain::play::cards::ManaCost,
-) -> Result<PreparedHandSpellCast, DomainError> {
-    let available_mana = player.mana();
-    if !player.spend_mana_cost(mana_cost_profile) {
-        return Err(DomainError::Game(GameError::InsufficientMana {
-            player: player_id.clone(),
-            required: mana_cost,
-            available: available_mana,
-        }));
-    }
-
-    let payload = helpers::remove_card_from_hand(player, player_id, card_id)?.into_spell_payload();
-
-    Ok(PreparedHandSpellCast {
-        mana_cost_paid: mana_cost,
-        payload,
-    })
-}
-
 /// Puts a spell card from hand onto the stack and opens a priority window.
 ///
 /// # Errors
@@ -238,16 +210,25 @@ pub fn cast_spell(
         )));
     }
 
-    let PreparedHandSpellCast {
-        mana_cost_paid,
-        payload,
-    } = prepare_validated_hand_spell_for_cast(
-        &mut players[player_idx],
-        &player_id,
-        &card_id,
-        mana_cost,
-        mana_cost_profile,
-    )?;
+    let prepared_cast =
+        match players[player_idx].prepare_hand_spell_cast(&card_id, mana_cost, mana_cost_profile) {
+            Ok(prepared) => prepared,
+            Err(PrepareHandSpellCastError::MissingCard) => {
+                return Err(DomainError::Card(CardError::NotInHand {
+                    player: player_id,
+                    card: card_id,
+                }))
+            }
+            Err(PrepareHandSpellCastError::InsufficientMana { available }) => {
+                return Err(DomainError::Game(GameError::InsufficientMana {
+                    player: player_id,
+                    required: mana_cost,
+                    available,
+                }))
+            }
+        };
+    let mana_cost_paid = prepared_cast.mana_cost_paid();
+    let payload = prepared_cast.into_payload();
 
     let stack_object_number = stack.next_object_number();
     let stack_object_id = stack.object_id(game_id, stack_object_number);

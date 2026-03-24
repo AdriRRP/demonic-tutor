@@ -1,7 +1,7 @@
 //! Supports game model player.
 
 use {
-    crate::domain::play::cards::{CardInstance, ManaColor, ManaCost},
+    crate::domain::play::cards::{CardInstance, ManaColor, ManaCost, SpellPayload},
     crate::domain::play::ids::{CardDefinitionId, CardInstanceId, PlayerCardHandle, PlayerId},
     crate::domain::play::zones::{Battlefield, Exile, Graveyard, Hand, Library},
     std::collections::HashMap,
@@ -18,6 +18,30 @@ pub enum PlayerCardZone {
     Battlefield,
     Graveyard,
     Exile,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PreparedHandSpellCast {
+    mana_cost_paid: u32,
+    payload: SpellPayload,
+}
+
+impl PreparedHandSpellCast {
+    #[must_use]
+    pub const fn mana_cost_paid(&self) -> u32 {
+        self.mana_cost_paid
+    }
+
+    #[must_use]
+    pub fn into_payload(self) -> SpellPayload {
+        self.payload
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum PrepareHandSpellCastError {
+    MissingCard,
+    InsufficientMana { available: u32 },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -614,6 +638,37 @@ impl Player {
 
     pub fn shuffle_library(&mut self) {
         self.library.shuffle();
+    }
+
+    /// Prepares a spell cast atomically from the player's hand.
+    ///
+    /// # Errors
+    /// Returns `MissingCard` if the card is not still in hand, or
+    /// `InsufficientMana` if the player cannot currently pay the provided cost.
+    pub fn prepare_hand_spell_cast(
+        &mut self,
+        card_id: &CardInstanceId,
+        mana_cost: u32,
+        mana_cost_profile: ManaCost,
+    ) -> Result<PreparedHandSpellCast, PrepareHandSpellCastError> {
+        if !self.hand_contains(card_id) {
+            return Err(PrepareHandSpellCastError::MissingCard);
+        }
+
+        let available = self.mana();
+        if !self.spend_mana_cost(mana_cost_profile) {
+            return Err(PrepareHandSpellCastError::InsufficientMana { available });
+        }
+
+        let payload = self
+            .remove_hand_card(card_id)
+            .ok_or(PrepareHandSpellCastError::MissingCard)?
+            .into_spell_payload();
+
+        Ok(PreparedHandSpellCast {
+            mana_cost_paid: mana_cost,
+            payload,
+        })
     }
 
     pub fn adjust_life(&mut self, delta: i32) {
