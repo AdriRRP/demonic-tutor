@@ -2,19 +2,26 @@
 
 `ReworkVisibleZoneIndexingForSublinearPositionLookup`
 
+## Status
+
+Implemented
+
 ## Goal
 
 Improve ordered zone indexing so visible-position lookups do not require walking the linked list from `head` on each `handle_at()` query.
 
-## Why This Slice Exists Now
+## What Changed
 
-The current zone storage already removed the worst-case suffix rewrite on deletion. The remaining clear weakness is visible indexing by position, which is still linear.
+- ordered zone storage now keeps an explicit visible-slot index alongside linked slot topology
+- `handle_at()` for `Hand`, `Graveyard`, and `Exile` now resolves through that visible index instead of traversing from `head`
+- removal keeps visible order stable while refreshing the visible-slot index after deletions
+- focused regression now proves repeated removals and insertions preserve visible order and indexed lookup stability
 
 ## Supported Behavior
 
 - hand, graveyard, and exile continue preserving visible insertion order
 - removal semantics remain stable
-- visible-position lookup becomes cheaper than the current linear walk
+- visible-position lookup is now direct instead of linear from the list head
 
 ## Invariants / Legality Rules
 
@@ -39,13 +46,13 @@ This belongs to the gameplay domain because zone ordering is part of aggregate-o
 
 ## Documentation Impact
 
-- this slice document
+- this implemented slice document
 - `docs/slices/proposals/README.md`
 
 ## Test Impact
 
 - ordered-zone regressions for visible order and slot reuse remain green
-- focused regression for stable visible indexing after repeated removals and insertions
+- focused regression now proves stable visible indexing after repeated removals and insertions
 
 ## Rules Reference
 
@@ -54,7 +61,3 @@ This belongs to the gameplay domain because zone ordering is part of aggregate-o
 ## Rules Support Statement
 
 This slice preserves the current supported zone subset while tightening the performance characteristics of visible indexing.
-
-## Open Questions
-
-- none

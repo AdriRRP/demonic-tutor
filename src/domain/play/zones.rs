@@ -10,6 +10,8 @@ use {
 struct IndexedOrderedZone {
     slots: Vec<Option<OrderedHandleSlot>>,
     handle_to_slot: HashMap<PlayerCardHandle, usize>,
+    visible_slots: Vec<usize>,
+    slot_to_visible: HashMap<usize, usize>,
     free_slots: Vec<usize>,
     head: Option<usize>,
     tail: Option<usize>,
@@ -60,6 +62,9 @@ impl IndexedOrderedZone {
         self.slots[slot_index] = Some(slot);
         self.tail = Some(slot_index);
         self.handle_to_slot.insert(handle, slot_index);
+        self.slot_to_visible
+            .insert(slot_index, self.visible_slots.len());
+        self.visible_slots.push(slot_index);
         self.len += 1;
     }
 
@@ -83,23 +88,16 @@ impl IndexedOrderedZone {
     }
 
     fn handle_at(&self, index: usize) -> Option<PlayerCardHandle> {
-        let mut current = self.head?;
-        let mut visible_index = 0;
-
-        loop {
-            let slot = self.slots.get(current)?.as_ref()?;
-            if visible_index == index {
-                return Some(slot.handle);
-            }
-            current = slot.next?;
-            visible_index += 1;
-        }
+        let slot_index = *self.visible_slots.get(index)?;
+        self.slots.get(slot_index)?.as_ref().map(|slot| slot.handle)
     }
 
     fn drain_all(&mut self) -> Vec<PlayerCardHandle> {
         let handles = self.iter().copied().collect();
         self.slots.clear();
         self.handle_to_slot.clear();
+        self.visible_slots.clear();
+        self.slot_to_visible.clear();
         self.free_slots.clear();
         self.head = None;
         self.tail = None;
@@ -110,6 +108,7 @@ impl IndexedOrderedZone {
     fn remove_preserving_order(&mut self, handle: PlayerCardHandle) -> Option<PlayerCardHandle> {
         let slot_index = self.handle_to_slot.remove(&handle)?;
         let slot = self.slots.get_mut(slot_index)?.take()?;
+        let visible_index = self.slot_to_visible.remove(&slot_index)?;
 
         if let Some(prev_index) = slot.prev {
             if let Some(prev_slot) = self.slots[prev_index].as_mut() {
@@ -127,6 +126,16 @@ impl IndexedOrderedZone {
             self.tail = slot.prev;
         }
 
+        self.visible_slots.remove(visible_index);
+        for (index, slot_index) in self
+            .visible_slots
+            .iter()
+            .copied()
+            .enumerate()
+            .skip(visible_index)
+        {
+            self.slot_to_visible.insert(slot_index, index);
+        }
         self.free_slots.push(slot_index);
         self.len -= 1;
         Some(slot.handle)
@@ -433,5 +442,27 @@ mod tests {
         let visible: Vec<_> = hand.iter().copied().collect();
         assert_eq!(visible, vec![first, third, fourth]);
         assert_eq!(hand.handle_at(2), Some(fourth));
+    }
+
+    #[test]
+    fn hand_visible_indexing_stays_stable_after_repeated_removals_and_insertions() {
+        let mut hand = Hand::new();
+        let first = PlayerCardHandle::new(1);
+        let second = PlayerCardHandle::new(2);
+        let third = PlayerCardHandle::new(3);
+        let fourth = PlayerCardHandle::new(4);
+        let fifth = PlayerCardHandle::new(5);
+
+        hand.receive(vec![first, second, third, fourth]);
+        assert_eq!(hand.remove(second), Some(second));
+        hand.receive(vec![fifth]);
+        assert_eq!(hand.remove(third), Some(third));
+
+        let visible: Vec<_> = hand.iter().copied().collect();
+        assert_eq!(visible, vec![first, fourth, fifth]);
+        assert_eq!(hand.handle_at(0), Some(first));
+        assert_eq!(hand.handle_at(1), Some(fourth));
+        assert_eq!(hand.handle_at(2), Some(fifth));
+        assert_eq!(hand.handle_at(3), None);
     }
 }
