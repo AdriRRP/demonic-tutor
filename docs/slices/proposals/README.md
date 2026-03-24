@@ -4,24 +4,16 @@ This directory contains the current proposal backlog for the next stable-engine 
 
 The backlog is intentionally organized by dependency order.
 
-## Wave 1 — Mana V1
+## Wave 1 — Engine Audit V2
 
-Wave 1 is fully implemented.
+Directory: `engine-audit-v2/`
 
-## Wave 2 — Contextual Noncombat Targeting
+1. `engine-audit-v2/close-player-zone-storage-escape-hatches.md`
+2. `engine-audit-v2/model-card-runtime-with-valid-state-shapes.md`
+3. `engine-audit-v2/remove-duplicated-spell-metadata-from-stack-objects.md`
+4. `engine-audit-v2/unify-indexed-ordered-zone-storage.md`
+5. `engine-audit-v2/prepare-spell-casts-through-one-semantic-corridor.md`
+6. `engine-audit-v2/push-target-legality-predicates-into-target-rules.md`
+7. `engine-audit-v2/derive-mana-pool-queries-from-color-iteration.md`
 
-Wave 2 is fully implemented.
-
-## Wave 3 — Useful Spell Effects
-
-Wave 3 is fully implemented.
-
-## Wave 4 — Casting And Activations
-
-Wave 4 is fully implemented.
-
-## Wave 5 — Combat And Stability Closure
-
-Wave 5 is fully implemented.
-
-There is currently no live stable-engine proposal backlog in this directory. New proposal waves should be added only when a new planning cycle begins.
+These proposals are architectural and semantic follow-ups to the stable engine wave. They do not expand gameplay rules support by themselves.
