@@ -4,6 +4,8 @@ mod blocking_legality;
 mod combat_subphases;
 #[path = "declare_blockers.rs"]
 mod declare_blockers;
+#[path = "first_strike.rs"]
+mod first_strike;
 #[path = "haste.rs"]
 mod haste;
 #[path = "permanent_type.rs"]

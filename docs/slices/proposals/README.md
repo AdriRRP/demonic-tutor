@@ -30,8 +30,7 @@ Wave 4 is fully implemented.
 
 Directory: `combat-v1/`
 
-9. `combat-v1/first-strike-changes-combat-damage-order.md`
-10. `combat-v1/expand-state-based-actions-for-new-effects.md`
-11. `combat-v1/stable-capability-matrix-sync.md`
+9. `combat-v1/expand-state-based-actions-for-new-effects.md`
+10. `combat-v1/stable-capability-matrix-sync.md`
 
 The proposal files that were already implemented or superseded have been removed from this directory so it reflects only the live planning backlog.

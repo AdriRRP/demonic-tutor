@@ -137,6 +137,36 @@ impl GameplayWorld {
         self.reset_observations();
     }
 
+    pub fn setup_first_strike_combat(&mut self) {
+        self.setup_combat(
+            "bdd-first-strike-combat",
+            "bdd-first-strike-attacker",
+            support::creature_card_with_keyword(
+                "bdd-first-strike-attacker",
+                0,
+                2,
+                2,
+                demonictutor::KeywordAbility::FirstStrike,
+            ),
+            Some("bdd-first-strike-blocker"),
+            Some(LibraryCard::creature(
+                CardDefinitionId::new("bdd-first-strike-blocker"),
+                0,
+                2,
+                2,
+            )),
+        );
+
+        let service = support::create_service();
+        support::advance_to_phase_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            Phase::CombatDamage,
+        );
+        support::close_empty_priority_window(&service, self.game_mut());
+        self.reset_observations();
+    }
+
     pub fn setup_multiple_blockers_not_supported(&mut self) {
         self.reset_game_with_libraries(
             "bdd-single-blocker",

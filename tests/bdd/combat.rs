@@ -14,6 +14,13 @@ fn alice_attacks_with_a_trample_creature_and_bob_blocks_with_a_smaller_creature(
     world.setup_trample_combat();
 }
 
+#[given("Alice attacks with a first-strike creature and Bob blocks with an equal creature")]
+fn alice_attacks_with_a_first_strike_creature_and_bob_blocks_with_an_equal_creature(
+    world: &mut GameplayWorld,
+) {
+    world.setup_first_strike_combat();
+}
+
 #[given("Alice is in DeclareAttackers with a haste creature that entered this turn")]
 fn alice_is_in_declare_attackers_with_a_haste_creature_that_entered_this_turn(
     world: &mut GameplayWorld,
@@ -246,6 +253,11 @@ fn bobs_blocker_dies_in_combat(world: &mut GameplayWorld) {
         .expect("tracked blocker should exist");
     assert!(!world.battlefield_contains("Bob", card_id));
     assert!(world.graveyard_contains("Bob", card_id));
+}
+
+#[then("Alice's attacker has no combat damage marked on it")]
+fn alices_attacker_has_no_combat_damage_marked_on_it(world: &mut GameplayWorld) {
+    assert_eq!(world.tracked_attacker().damage(), 0);
 }
 
 #[then("no CreatureDied event is emitted for that creature")]

@@ -9,6 +9,7 @@ pub(super) struct AttackerParticipant {
     id: CardInstanceId,
     power: u32,
     has_trample: bool,
+    has_first_strike: bool,
 }
 
 impl AttackerParticipant {
@@ -26,6 +27,11 @@ impl AttackerParticipant {
     pub const fn has_trample(&self) -> bool {
         self.has_trample
     }
+
+    #[must_use]
+    pub const fn has_first_strike(&self) -> bool {
+        self.has_first_strike
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -35,6 +41,7 @@ pub(super) struct BlockerParticipant {
     power: u32,
     toughness: u32,
     marked_damage: u32,
+    has_first_strike: bool,
 }
 
 impl BlockerParticipant {
@@ -57,6 +64,11 @@ impl BlockerParticipant {
     pub const fn lethal_damage_threshold(&self) -> u32 {
         self.toughness.saturating_sub(self.marked_damage)
     }
+
+    #[must_use]
+    pub const fn has_first_strike(&self) -> bool {
+        self.has_first_strike
+    }
 }
 
 pub(super) fn collect_attackers(player: &Player) -> Result<Vec<AttackerParticipant>, DomainError> {
@@ -75,6 +87,7 @@ pub(super) fn collect_attackers(player: &Player) -> Result<Vec<AttackerParticipa
                 id: card.id().clone(),
                 power,
                 has_trample: card.has_trample(),
+                has_first_strike: card.has_first_strike(),
             })
         })
         .collect()
@@ -104,6 +117,7 @@ pub(super) fn collect_blockers(player: &Player) -> Result<Vec<BlockerParticipant
                 power,
                 toughness,
                 marked_damage: card.damage(),
+                has_first_strike: card.has_first_strike(),
             })
         })
         .collect()

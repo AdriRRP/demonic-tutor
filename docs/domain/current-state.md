@@ -52,7 +52,7 @@ Implemented capabilities include:
 - resolving explicit targeted life effects
 - advancing turns
 - full phase progression using State pattern (Setup, Untap, Upkeep, Draw, FirstMain, BeginningOfCombat, DeclareAttackers, DeclareBlockers, CombatDamage, EndOfCombat, SecondMain, EndStep)
-- keyword abilities: Flying and Reach affect combat blocking legality, Haste bypasses summoning-sickness attack restriction, Vigilance avoids tapping on attack, and Trample assigns excess damage to the defending player in the current one-blocker model
+- keyword abilities: Flying and Reach affect combat blocking legality, Haste bypasses summoning-sickness attack restriction, Vigilance avoids tapping on attack, Trample assigns excess damage to the defending player in the current one-blocker model, and First strike splits combat damage into an earlier and later supported pass
 
 These capabilities correspond to the slices currently implemented in the system.
 

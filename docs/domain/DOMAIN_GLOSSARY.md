@@ -175,6 +175,14 @@ In the current runtime, `Trample` is supported only in the one-blocker combat mo
 
 ---
 
+## First Strike
+
+A keyword ability that lets a creature deal combat damage in an earlier combat-damage pass.
+
+In the current runtime, creatures with `First strike` deal damage before creatures without it, and creatures destroyed in that earlier pass do not deal normal combat damage later that combat.
+
+---
+
 ## Stack
 
 A conceptual zone where spells and abilities wait to resolve.

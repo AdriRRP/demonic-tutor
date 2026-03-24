@@ -100,6 +100,7 @@ Combat behavior:
 - single-blocker simplification
 - creature destruction after damage
 - keyword-ability blocking legality
+- first-strike combat ordering
 - haste attack legality
 - trample excess damage to defending player
 - vigilance attack state
@@ -264,6 +265,7 @@ The following features are currently executed by `tests/bdd.rs`, grouped by area
 - `features/combat/single_blocker_per_attacker.feature`
 - `features/combat/keyword_abilities.feature`
 - `features/combat/creature_destruction.feature`
+- `features/combat/first_strike_changes_combat_damage_order.feature`
 - `features/combat/haste_creatures_can_attack_immediately.feature`
 - `features/combat/trample_assigns_excess_damage_to_player.feature`
 - `features/combat/vigilance_creatures_do_not_tap_to_attack.feature`
