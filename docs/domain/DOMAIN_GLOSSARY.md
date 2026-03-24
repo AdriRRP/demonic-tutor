@@ -247,6 +247,7 @@ The current non-combat target matrix exercised by repository-owned features is:
 - `OpponentOfActor`
 - `CreatureControlledByActor`
 - `CreatureControlledByOpponent`
+- explicit graveyard-card targeting for the supported exile corridor
 
 ---
 

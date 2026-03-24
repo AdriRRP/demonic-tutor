@@ -85,6 +85,7 @@ The domain currently includes:
 - automatic destruction of creatures with lethal marked damage
 - automatic destruction of creatures with 0 toughness after creature-spell resolution
 - shared state-based action review after relevant gameplay actions for the currently supported SBA subset
+- the current SBA subset remains limited to `0 toughness`, lethal marked damage, and `0 life`, and that same subset now also covers the supported pump, trample, and first-strike corridors
 - cleanup-based removal of marked damage from surviving creatures
 - explicit cleanup discard to maximum hand size during `EndStep`
 - exile zone as a player-owned zone where cards can be moved from battlefield or graveyard
@@ -134,6 +135,109 @@ The domain currently includes:
 - combat actions reopen priority after attackers and blockers are declared, and combat damage resolution moves the game into `EndOfCombat` with a reopened priority window while the game remains active
 
 The system intentionally excludes complex gameplay mechanics at this stage.
+
+---
+
+# Stable Capability Matrices
+
+These matrices compress the stable supported subset without implying broader Magic support.
+
+## Mana
+
+- sources:
+  - `Forest -> Green`
+  - `Mountain -> Red`
+  - `Plains -> White`
+  - `Island -> Blue`
+  - `Swamp -> Black`
+- payment:
+  - generic costs are supported
+  - single colored costs are supported
+  - mixed costs like `1G` are supported
+  - repeated colored costs like `GG` are supported
+  - colored mana may pay generic requirements
+  - missing required color still rejects the cast
+- activation:
+  - the current land-tap corridor is a supported mana ability
+  - supported mana abilities remain stack-free
+  - supported non-mana activated abilities use the stack
+
+## Casting And Stack
+
+- spell-card subset:
+  - `Creature`
+  - `Instant`
+  - `Sorcery`
+  - `Artifact`
+  - `Enchantment`
+  - `Planeswalker`
+- sorcery-speed windows:
+  - active player only
+  - `FirstMain`
+  - `SecondMain`
+  - stack empty
+- open-priority casting windows:
+  - `Upkeep`
+  - `Draw`
+  - `FirstMain`
+  - `BeginningOfCombat`
+  - post-attackers
+  - post-blockers
+  - `EndOfCombat`
+  - `SecondMain`
+  - `EndStep`
+- explicit `Flash`-like support:
+  - supported creatures
+  - supported `Artifact`
+  - supported `Enchantment`
+  - supported `Planeswalker`
+- stack objects:
+  - spells
+  - one supported non-mana activated ability family
+
+## Targeting
+
+- player target rules:
+  - `AnyPlayer`
+  - `OpponentOfActor`
+- creature target rules:
+  - `AnyCreatureOnBattlefield`
+  - `CreatureControlledByActor`
+  - `CreatureControlledByOpponent`
+  - `AttackingCreature`
+  - `BlockingCreature`
+  - `CreatureControlledByActorAndAttacking`
+  - `CreatureControlledByActorAndBlocking`
+  - `BlockingCreatureControlledByOpponent`
+  - `AttackingCreatureControlledByOpponent`
+- graveyard targets:
+  - explicit card target in graveyard for the supported exile corridor
+- legality:
+  - casting and resolution share the same explicit legality semantics
+  - unsupported target families are not implied
+
+## Combat
+
+- core flow:
+  - `BeginningOfCombat`
+  - `DeclareAttackers`
+  - `DeclareBlockers`
+  - `CombatDamage`
+  - `EndOfCombat`
+- supported invariants:
+  - at most one blocker per attacker
+  - combat damage reopens priority into `EndOfCombat` if the game remains active
+  - shared SBA review covers `0 toughness`, lethal marked damage, and `0 life`
+- supported combat keywords:
+  - `Haste`
+  - `Vigilance`
+  - `Trample`
+  - `First strike`
+- current combat-relative corridors:
+  - attacking-creature targeting
+  - blocking-creature targeting
+  - temporary pump can change combat outcomes
+  - combat damage to players uses shared life-change semantics
 
 ---
 
@@ -219,7 +323,7 @@ The next gameplay expansion requires choosing which domain capability to introdu
 Possible directions include:
 
 - broader stack and priority behavior on top of the current minimal implementation
-- broader state-based actions beyond lethal creature damage and zero-toughness creature death
+- broader state-based actions beyond the current explicit subset of `0 toughness`, lethal creature damage, and `0 life`
 - broader game-loss and game-end conditions beyond empty-library draw and zero life
 - richer cleanup and end-of-turn semantics
 

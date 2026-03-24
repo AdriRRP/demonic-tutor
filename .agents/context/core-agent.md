@@ -60,6 +60,7 @@ Prefer:
 - phased storage refactors that prove id-backed carriers first in colder zones before touching hotter paths such as battlefield or stack
 - once battlefield follows the same id-backed pattern, prefer the next storage/performance refactor in stack or shared lookup helpers rather than widening player accessors again
 - keep mana abilities and non-mana activated abilities semantically distinct: mana abilities stay stack-free, while supported non-mana activations must go through the normal priority-and-stack corridor
+- once the supported subset becomes broad, prefer compact capability matrices in canonical docs over ever-longer linear capability checklists
 
 Avoid:
 

@@ -6,31 +6,22 @@ The backlog is intentionally organized by dependency order.
 
 ## Wave 1 — Mana V1
 
-Directory: `mana-v1/`
+Wave 1 is fully implemented.
 
 ## Wave 2 — Contextual Noncombat Targeting
-
-Directory: `targeting-v1/`
 
 Wave 2 is fully implemented.
 
 ## Wave 3 — Useful Spell Effects
 
-Directory: `effects-v1/`
-
 Wave 3 is fully implemented.
 
 ## Wave 4 — Casting And Activations
-
-Directory: `abilities-v1/`
 
 Wave 4 is fully implemented.
 
 ## Wave 5 — Combat And Stability Closure
 
-Directory: `combat-v1/`
+Wave 5 is fully implemented.
 
-9. `combat-v1/expand-state-based-actions-for-new-effects.md`
-10. `combat-v1/stable-capability-matrix-sync.md`
-
-The proposal files that were already implemented or superseded have been removed from this directory so it reflects only the live planning backlog.
+There is currently no live stable-engine proposal backlog in this directory. New proposal waves should be added only when a new planning cycle begins.
