@@ -195,9 +195,10 @@ impl PlayerCardArena {
         self.cards.get_mut(handle.index()).and_then(Option::as_mut)
     }
 
-    fn remove(&mut self, card_id: &CardInstanceId) -> Option<CardInstance> {
-        let handle = self.id_to_handle.remove(card_id)?;
-        self.cards.get_mut(handle.index())?.take()
+    fn remove_by_handle(&mut self, handle: PlayerCardHandle) -> Option<CardInstance> {
+        let card = self.cards.get_mut(handle.index())?.take()?;
+        self.id_to_handle.remove(card.id());
+        Some(card)
     }
 }
 
@@ -524,19 +525,19 @@ impl Player {
     pub fn remove_hand_card(&mut self, card_id: &CardInstanceId) -> Option<CardInstance> {
         let handle = self.cards.handle(card_id)?;
         self.hand.remove(handle)?;
-        self.cards.remove(card_id)
+        self.cards.remove_by_handle(handle)
     }
 
     pub fn remove_battlefield_card(&mut self, card_id: &CardInstanceId) -> Option<CardInstance> {
         let handle = self.cards.handle(card_id)?;
         self.battlefield.remove(handle)?;
-        self.cards.remove(card_id)
+        self.cards.remove_by_handle(handle)
     }
 
     pub fn remove_graveyard_card(&mut self, card_id: &CardInstanceId) -> Option<CardInstance> {
         let handle = self.cards.handle(card_id)?;
         self.graveyard.remove(handle)?;
-        self.cards.remove(card_id)
+        self.cards.remove_by_handle(handle)
     }
 
     pub fn move_hand_card_to_battlefield(&mut self, card_id: &CardInstanceId) -> Option<()> {
@@ -651,19 +652,26 @@ impl Player {
         mana_cost: u32,
         mana_cost_profile: ManaCost,
     ) -> Result<PreparedHandSpellCast, PrepareHandSpellCastError> {
-        if !self.hand_contains(card_id) {
-            return Err(PrepareHandSpellCastError::MissingCard);
-        }
-
+        let handle = self
+            .cards
+            .handle(card_id)
+            .filter(|handle| self.hand.contains(*handle))
+            .ok_or(PrepareHandSpellCastError::MissingCard)?;
         let available = self.mana();
-        if !self.spend_mana_cost(mana_cost_profile) {
+        let mut next_mana = self.mana.clone();
+        if !next_mana.spend(mana_cost_profile) {
             return Err(PrepareHandSpellCastError::InsufficientMana { available });
         }
 
+        self.hand
+            .remove(handle)
+            .ok_or(PrepareHandSpellCastError::MissingCard)?;
         let payload = self
-            .remove_hand_card(card_id)
+            .cards
+            .remove_by_handle(handle)
             .ok_or(PrepareHandSpellCastError::MissingCard)?
             .into_spell_payload();
+        self.mana = next_mana;
 
         Ok(PreparedHandSpellCast {
             mana_cost_paid: mana_cost,
