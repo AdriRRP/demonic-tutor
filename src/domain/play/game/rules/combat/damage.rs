@@ -5,7 +5,9 @@ mod participants;
 
 use self::{
     application::{apply_damage, clear_combat_state},
-    participants::{collect_attackers, collect_blockers, AttackerParticipant, BlockerParticipant},
+    participants::{
+        collect_attackers, collect_blockers, AttackerParticipant, BlockerParticipant, CombatCardRef,
+    },
 };
 use super::super::{
     super::{model::Player, AggregateCardLocationIndex, TerminalState},
@@ -20,6 +22,37 @@ use crate::domain::play::{
     },
     ids::{CardInstanceId, GameId},
 };
+
+type DamageResolution = (Vec<DamageEvent>, Vec<(CardInstanceId, u32)>, u32);
+type DamageStepOutcome = (
+    Vec<DamageEvent>,
+    Option<LifeChanged>,
+    Vec<CreatureDied>,
+    Option<GameEnded>,
+);
+
+struct DamageStepContext<'a> {
+    game_id: &'a GameId,
+    players: &'a mut [Player],
+    card_locations: &'a AggregateCardLocationIndex,
+    terminal_state: &'a mut TerminalState,
+    defender_player_id: &'a crate::domain::play::ids::PlayerId,
+}
+
+fn resolve_combat_card_id(
+    players: &[Player],
+    card_ref: &CombatCardRef,
+    missing_message: &str,
+) -> Result<CardInstanceId, DomainError> {
+    players[card_ref.owner_index()]
+        .card_by_handle(card_ref.handle())
+        .map(|card| card.id().clone())
+        .ok_or_else(|| {
+            DomainError::Game(GameError::InternalInvariantViolation(
+                missing_message.to_string(),
+            ))
+        })
+}
 
 fn add_damage(
     damage_received: &mut Vec<(CardInstanceId, u32)>,
@@ -38,11 +71,12 @@ fn add_damage(
 
 fn blocker_for_attacker<'a>(
     blockers: &'a [BlockerParticipant],
-    attacker_id: &CardInstanceId,
+    attacker: &AttackerParticipant,
 ) -> Option<&'a BlockerParticipant> {
-    blockers
-        .iter()
-        .find(|blocker| blocker.blocked_attacker_id() == attacker_id)
+    blockers.iter().find(|blocker| {
+        blocker.blocked_attacker_ref().owner_index() == attacker.card_ref().owner_index()
+            && blocker.blocked_attacker_ref().handle() == attacker.card_ref().handle()
+    })
 }
 
 fn merge_life_changed(aggregate: &mut Option<LifeChanged>, step_life_changed: Option<LifeChanged>) {
@@ -57,12 +91,13 @@ fn merge_life_changed(aggregate: &mut Option<LifeChanged>, step_life_changed: Op
 }
 
 fn resolve_damage_step(
+    players: &[Player],
     attackers: &[AttackerParticipant],
     blockers: &[BlockerParticipant],
     defender_player_id: &crate::domain::play::ids::PlayerId,
     attackers_deal_damage: impl Fn(&AttackerParticipant) -> bool,
     blockers_deal_damage: impl Fn(&BlockerParticipant) -> bool,
-) -> (Vec<DamageEvent>, Vec<(CardInstanceId, u32)>, u32) {
+) -> Result<DamageResolution, DomainError> {
     let mut damage_events: Vec<DamageEvent> = Vec::new();
     let mut damage_received: Vec<(CardInstanceId, u32)> = Vec::new();
     let mut player_damage = 0;
@@ -71,7 +106,17 @@ fn resolve_damage_step(
         .iter()
         .filter(|attacker| attackers_deal_damage(attacker))
     {
-        if let Some(blocker) = blocker_for_attacker(blockers, attacker.id()) {
+        let attacker_id = resolve_combat_card_id(
+            players,
+            attacker.card_ref(),
+            "combat attacker participant points to a missing battlefield card",
+        )?;
+        if let Some(blocker) = blocker_for_attacker(blockers, attacker) {
+            let blocker_id = resolve_combat_card_id(
+                players,
+                blocker.card_ref(),
+                "combat blocker participant points to a missing battlefield card",
+            )?;
             let lethal_to_blocker = blocker.lethal_damage_threshold();
             let blocker_damage = if attacker.has_trample() {
                 attacker.power().min(lethal_to_blocker)
@@ -84,16 +129,16 @@ fn resolve_damage_step(
                 0
             };
 
-            add_damage(&mut damage_received, blocker.id(), blocker_damage);
+            add_damage(&mut damage_received, &blocker_id, blocker_damage);
             damage_events.push(DamageEvent {
-                source: attacker.id().clone(),
-                target: DamageTarget::Creature(blocker.id().clone()),
+                source: attacker_id.clone(),
+                target: DamageTarget::Creature(blocker_id),
                 damage_amount: blocker_damage,
             });
             if excess_to_player > 0 {
                 player_damage += excess_to_player;
                 damage_events.push(DamageEvent {
-                    source: attacker.id().clone(),
+                    source: attacker_id.clone(),
                     target: DamageTarget::Player(defender_player_id.clone()),
                     damage_amount: excess_to_player,
                 });
@@ -101,7 +146,7 @@ fn resolve_damage_step(
         } else {
             player_damage += attacker.power();
             damage_events.push(DamageEvent {
-                source: attacker.id().clone(),
+                source: attacker_id,
                 target: DamageTarget::Player(defender_player_id.clone()),
                 damage_amount: attacker.power(),
             });
@@ -112,19 +157,82 @@ fn resolve_damage_step(
         .iter()
         .filter(|blocker| blockers_deal_damage(blocker))
     {
-        add_damage(
-            &mut damage_received,
-            blocker.blocked_attacker_id(),
-            blocker.power(),
-        );
+        let blocker_id = resolve_combat_card_id(
+            players,
+            blocker.card_ref(),
+            "combat blocker participant points to a missing battlefield card",
+        )?;
+        let blocked_attacker_id = resolve_combat_card_id(
+            players,
+            blocker.blocked_attacker_ref(),
+            "combat blocker participant points to a missing blocked attacker",
+        )?;
+        add_damage(&mut damage_received, &blocked_attacker_id, blocker.power());
         damage_events.push(DamageEvent {
-            source: blocker.id().clone(),
-            target: DamageTarget::Creature(blocker.blocked_attacker_id().clone()),
+            source: blocker_id,
+            target: DamageTarget::Creature(blocked_attacker_id),
             damage_amount: blocker.power(),
         });
     }
 
-    (damage_events, damage_received, player_damage)
+    Ok((damage_events, damage_received, player_damage))
+}
+
+fn apply_player_combat_damage(
+    game_id: &GameId,
+    players: &mut [Player],
+    defender_player_id: &crate::domain::play::ids::PlayerId,
+    player_damage: u32,
+) -> Result<Option<LifeChanged>, DomainError> {
+    if player_damage == 0 {
+        return Ok(None);
+    }
+
+    let life_delta = i32::try_from(player_damage).map_err(|_| {
+        DomainError::Game(GameError::InternalInvariantViolation(
+            "combat damage should fit within i32 life adjustments".to_string(),
+        ))
+    })?;
+    Ok(Some(game_effects::adjust_player_life(
+        game_id,
+        players,
+        defender_player_id,
+        -life_delta,
+    )?))
+}
+
+fn resolve_combat_damage_step(
+    ctx: &mut DamageStepContext<'_>,
+    attackers: &[AttackerParticipant],
+    blockers: &[BlockerParticipant],
+    attackers_deal_damage: impl Fn(&AttackerParticipant) -> bool,
+    blockers_deal_damage: impl Fn(&BlockerParticipant) -> bool,
+) -> Result<DamageStepOutcome, DomainError> {
+    let (damage_events, damage_received, player_damage) = resolve_damage_step(
+        ctx.players,
+        attackers,
+        blockers,
+        ctx.defender_player_id,
+        attackers_deal_damage,
+        blockers_deal_damage,
+    )?;
+    apply_damage(ctx.players, ctx.card_locations, &damage_received);
+    let life_changed = apply_player_combat_damage(
+        ctx.game_id,
+        ctx.players,
+        ctx.defender_player_id,
+        player_damage,
+    )?;
+    let StateBasedActionsResult {
+        creatures_died,
+        game_ended,
+    } = state_based_actions::check_state_based_actions(
+        ctx.game_id,
+        ctx.players,
+        ctx.terminal_state,
+    )?;
+
+    Ok((damage_events, life_changed, creatures_died, game_ended))
 }
 
 #[derive(Debug, Clone)]
@@ -162,11 +270,16 @@ pub fn resolve_combat_damage(
     defender_idx: usize,
 ) -> Result<ResolveCombatDamageOutcome, DomainError> {
     let defender_player_id = players[defender_idx].id().clone();
-    let attackers = collect_attackers(&players[attacker_player_idx])?;
+    let attackers = collect_attackers(&players[attacker_player_idx], attacker_player_idx)?;
     if attackers.is_empty() {
         return Err(DomainError::Game(GameError::NoAttackersDeclared));
     }
-    let blockers = collect_blockers(&players[defender_idx], &players[attacker_player_idx])?;
+    let blockers = collect_blockers(
+        &players[defender_idx],
+        defender_idx,
+        &players[attacker_player_idx],
+        attacker_player_idx,
+    )?;
     let has_first_strike_step = attackers.iter().any(AttackerParticipant::has_first_strike)
         || blockers.iter().any(BlockerParticipant::has_first_strike);
 
@@ -175,86 +288,77 @@ pub fn resolve_combat_damage(
     let mut creatures_died: Vec<CreatureDied> = Vec::new();
     let mut game_ended: Option<GameEnded> = None;
 
-    let (first_step_events, first_step_damage, first_step_player_damage) = if has_first_strike_step
-    {
-        resolve_damage_step(
+    let (
+        first_step_events,
+        first_step_life_changed,
+        first_step_creatures_died,
+        first_step_game_ended,
+    ) = if has_first_strike_step {
+        resolve_combat_damage_step(
+            &mut DamageStepContext {
+                game_id,
+                players,
+                card_locations,
+                terminal_state,
+                defender_player_id: &defender_player_id,
+            },
             &attackers,
             &blockers,
-            &defender_player_id,
             AttackerParticipant::has_first_strike,
             BlockerParticipant::has_first_strike,
         )
     } else {
-        resolve_damage_step(
+        resolve_combat_damage_step(
+            &mut DamageStepContext {
+                game_id,
+                players,
+                card_locations,
+                terminal_state,
+                defender_player_id: &defender_player_id,
+            },
             &attackers,
             &blockers,
-            &defender_player_id,
             |_| true,
             |_| true,
         )
-    };
+    }?;
 
     damage_events.extend(first_step_events);
-    apply_damage(players, card_locations, &first_step_damage);
-    let first_step_life_changed = if first_step_player_damage > 0 {
-        let life_delta = i32::try_from(first_step_player_damage).map_err(|_| {
-            DomainError::Game(GameError::InternalInvariantViolation(
-                "combat damage should fit within i32 life adjustments".to_string(),
-            ))
-        })?;
-        Some(game_effects::adjust_player_life(
-            game_id,
-            players,
-            &defender_player_id,
-            -life_delta,
-        )?)
-    } else {
-        None
-    };
     merge_life_changed(&mut life_changed, first_step_life_changed);
-    let StateBasedActionsResult {
-        creatures_died: first_step_creatures_died,
-        game_ended: first_step_game_ended,
-    } = state_based_actions::check_state_based_actions(game_id, players, terminal_state)?;
     creatures_died.extend(first_step_creatures_died);
     if let Some(ended) = first_step_game_ended {
         game_ended = Some(ended);
     }
 
     if has_first_strike_step && game_ended.is_none() {
-        let surviving_attackers = collect_attackers(&players[attacker_player_idx])?;
-        let surviving_blockers =
-            collect_blockers(&players[defender_idx], &players[attacker_player_idx])?;
-        let (second_step_events, second_step_damage, second_step_player_damage) =
-            resolve_damage_step(
-                &surviving_attackers,
-                &surviving_blockers,
-                &defender_player_id,
-                |attacker| !attacker.has_first_strike(),
-                |blocker| !blocker.has_first_strike(),
-            );
-        damage_events.extend(second_step_events);
-        apply_damage(players, card_locations, &second_step_damage);
-        let second_step_life_changed = if second_step_player_damage > 0 {
-            let life_delta = i32::try_from(second_step_player_damage).map_err(|_| {
-                DomainError::Game(GameError::InternalInvariantViolation(
-                    "combat damage should fit within i32 life adjustments".to_string(),
-                ))
-            })?;
-            Some(game_effects::adjust_player_life(
+        let surviving_attackers =
+            collect_attackers(&players[attacker_player_idx], attacker_player_idx)?;
+        let surviving_blockers = collect_blockers(
+            &players[defender_idx],
+            defender_idx,
+            &players[attacker_player_idx],
+            attacker_player_idx,
+        )?;
+        let (
+            second_step_events,
+            second_step_life_changed,
+            second_step_creatures_died,
+            second_step_game_ended,
+        ) = resolve_combat_damage_step(
+            &mut DamageStepContext {
                 game_id,
                 players,
-                &defender_player_id,
-                -life_delta,
-            )?)
-        } else {
-            None
-        };
+                card_locations,
+                terminal_state,
+                defender_player_id: &defender_player_id,
+            },
+            &surviving_attackers,
+            &surviving_blockers,
+            |attacker| !attacker.has_first_strike(),
+            |blocker| !blocker.has_first_strike(),
+        )?;
+        damage_events.extend(second_step_events);
         merge_life_changed(&mut life_changed, second_step_life_changed);
-        let StateBasedActionsResult {
-            creatures_died: second_step_creatures_died,
-            game_ended: second_step_game_ended,
-        } = state_based_actions::check_state_based_actions(game_id, players, terminal_state)?;
         creatures_died.extend(second_step_creatures_died);
         game_ended = second_step_game_ended;
     }

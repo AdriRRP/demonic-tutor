@@ -3,12 +3,38 @@
 use crate::domain::play::{
     errors::{DomainError, GameError},
     game::model::Player,
-    ids::CardInstanceId,
+    ids::PlayerCardHandle,
 };
 
 #[derive(Debug, Clone)]
+pub(super) struct CombatCardRef {
+    owner_index: usize,
+    handle: PlayerCardHandle,
+}
+
+impl CombatCardRef {
+    #[must_use]
+    pub const fn new(owner_index: usize, handle: PlayerCardHandle) -> Self {
+        Self {
+            owner_index,
+            handle,
+        }
+    }
+
+    #[must_use]
+    pub const fn owner_index(&self) -> usize {
+        self.owner_index
+    }
+
+    #[must_use]
+    pub const fn handle(&self) -> PlayerCardHandle {
+        self.handle
+    }
+}
+
+#[derive(Debug, Clone)]
 pub(super) struct AttackerParticipant {
-    id: CardInstanceId,
+    card_ref: CombatCardRef,
     power: u32,
     has_trample: bool,
     has_first_strike: bool,
@@ -16,8 +42,8 @@ pub(super) struct AttackerParticipant {
 
 impl AttackerParticipant {
     #[must_use]
-    pub const fn id(&self) -> &CardInstanceId {
-        &self.id
+    pub const fn card_ref(&self) -> &CombatCardRef {
+        &self.card_ref
     }
 
     #[must_use]
@@ -38,8 +64,8 @@ impl AttackerParticipant {
 
 #[derive(Debug, Clone)]
 pub(super) struct BlockerParticipant {
-    id: CardInstanceId,
-    blocked_attacker_id: CardInstanceId,
+    card_ref: CombatCardRef,
+    blocked_attacker_ref: CombatCardRef,
     power: u32,
     toughness: u32,
     marked_damage: u32,
@@ -48,13 +74,13 @@ pub(super) struct BlockerParticipant {
 
 impl BlockerParticipant {
     #[must_use]
-    pub const fn id(&self) -> &CardInstanceId {
-        &self.id
+    pub const fn card_ref(&self) -> &CombatCardRef {
+        &self.card_ref
     }
 
     #[must_use]
-    pub const fn blocked_attacker_id(&self) -> &CardInstanceId {
-        &self.blocked_attacker_id
+    pub const fn blocked_attacker_ref(&self) -> &CombatCardRef {
+        &self.blocked_attacker_ref
     }
 
     #[must_use]
@@ -73,7 +99,10 @@ impl BlockerParticipant {
     }
 }
 
-pub(super) fn collect_attackers(player: &Player) -> Result<Vec<AttackerParticipant>, DomainError> {
+pub(super) fn collect_attackers(
+    player: &Player,
+    owner_index: usize,
+) -> Result<Vec<AttackerParticipant>, DomainError> {
     player
         .battlefield_cards()
         .filter(|card| card.is_attacking())
@@ -84,9 +113,15 @@ pub(super) fn collect_attackers(player: &Player) -> Result<Vec<AttackerParticipa
                     card.id()
                 )))
             })?;
+            let attacker_handle = player.battlefield_handle(card.id()).ok_or_else(|| {
+                DomainError::Game(GameError::InternalInvariantViolation(format!(
+                    "attacking creature {} must have a battlefield handle",
+                    card.id()
+                )))
+            })?;
 
             Ok(AttackerParticipant {
-                id: card.id().clone(),
+                card_ref: CombatCardRef::new(owner_index, attacker_handle),
                 power,
                 has_trample: card.has_trample(),
                 has_first_strike: card.has_first_strike(),
@@ -97,7 +132,9 @@ pub(super) fn collect_attackers(player: &Player) -> Result<Vec<AttackerParticipa
 
 pub(super) fn collect_blockers(
     player: &Player,
+    owner_index: usize,
     attacker_player: &Player,
+    attacker_owner_index: usize,
 ) -> Result<Vec<BlockerParticipant>, DomainError> {
     player
         .battlefield_cards()
@@ -115,20 +152,24 @@ pub(super) fn collect_blockers(
                     card.id()
                 )))
             })?;
-            let attacker_id = attacker_player
+            attacker_player
                 .card_by_handle(attacker_handle)
                 .ok_or_else(|| {
                     DomainError::Game(GameError::InternalInvariantViolation(format!(
                         "blocking creature {} points to a missing attacker handle",
                         card.id()
                     )))
-                })?
-                .id()
-                .clone();
+                })?;
+            let blocker_handle = player.battlefield_handle(card.id()).ok_or_else(|| {
+                DomainError::Game(GameError::InternalInvariantViolation(format!(
+                    "blocking creature {} must have a battlefield handle",
+                    card.id()
+                )))
+            })?;
 
             Ok(BlockerParticipant {
-                id: card.id().clone(),
-                blocked_attacker_id: attacker_id,
+                card_ref: CombatCardRef::new(owner_index, blocker_handle),
+                blocked_attacker_ref: CombatCardRef::new(attacker_owner_index, attacker_handle),
                 power,
                 toughness,
                 marked_damage: card.damage(),
@@ -136,4 +177,63 @@ pub(super) fn collect_blockers(
             })
         })
         .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use {
+        super::collect_blockers,
+        crate::domain::play::{
+            cards::CardInstance,
+            game::model::Player,
+            ids::{CardDefinitionId, CardInstanceId, PlayerId},
+        },
+    };
+
+    #[test]
+    fn collect_blockers_keeps_internal_attacker_handle_reference() {
+        let attacker_id = CardInstanceId::new("attacker");
+        let blocker_id = CardInstanceId::new("blocker");
+        let mut attacker_player = Player::new(PlayerId::new("attacker-player"));
+        let mut blocker_player = Player::new(PlayerId::new("blocker-player"));
+
+        let mut attacker = CardInstance::new_creature(
+            attacker_id.clone(),
+            CardDefinitionId::new("attacker-definition"),
+            2,
+            3,
+            3,
+        );
+        attacker.remove_summoning_sickness();
+        attacker.set_attacking(true);
+        attacker_player.receive_battlefield_card(attacker);
+
+        let attacker_handle = attacker_player.battlefield_handle(&attacker_id);
+        assert!(attacker_handle.is_some());
+        let Some(attacker_handle) = attacker_handle else {
+            return;
+        };
+
+        let mut blocker = CardInstance::new_creature(
+            blocker_id,
+            CardDefinitionId::new("blocker-definition"),
+            2,
+            2,
+            2,
+        );
+        blocker.remove_summoning_sickness();
+        blocker.assign_blocking_target(attacker_handle);
+        blocker_player.receive_battlefield_card(blocker);
+
+        let blockers = collect_blockers(&blocker_player, 1, &attacker_player, 0);
+        assert!(blockers.is_ok());
+        let Ok(blockers) = blockers else {
+            return;
+        };
+
+        assert_eq!(blockers.len(), 1);
+        assert_eq!(blockers[0].card_ref().owner_index(), 1);
+        assert_eq!(blockers[0].blocked_attacker_ref().owner_index(), 0);
+        assert_eq!(blockers[0].blocked_attacker_ref().handle(), attacker_handle);
+    }
 }
