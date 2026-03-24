@@ -32,13 +32,12 @@ impl ManaPool {
     }
 
     #[must_use]
-    pub const fn total(&self) -> u32 {
+    pub fn total(&self) -> u32 {
         self.generic
-            + self.colored[ManaColor::White.index()]
-            + self.colored[ManaColor::Blue.index()]
-            + self.colored[ManaColor::Black.index()]
-            + self.colored[ManaColor::Green.index()]
-            + self.colored[ManaColor::Red.index()]
+            + ManaColor::ALL
+                .into_iter()
+                .map(|color| self.colored(color))
+                .sum::<u32>()
     }
 
     #[must_use]
@@ -197,7 +196,7 @@ impl Player {
     }
 
     #[must_use]
-    pub const fn mana(&self) -> u32 {
+    pub fn mana(&self) -> u32 {
         self.mana.total()
     }
 
