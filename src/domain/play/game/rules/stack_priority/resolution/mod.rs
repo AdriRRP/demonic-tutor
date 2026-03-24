@@ -41,13 +41,13 @@ fn resolve_spell_from_stack(
     stack_object: StackObject,
 ) -> Result<ResolvedSpellOutcome, crate::domain::play::errors::DomainError> {
     let ResolvedSpellObject {
+        stack_object_number,
         source_card_id,
         controller_id,
-        stack_object_id,
         payload,
         mana_cost_paid,
         target,
-    } = extract_resolved_spell_object(game_id, stack_object)?;
+    } = extract_resolved_spell_object(stack_object)?;
     let card_type = *payload.card_type();
     let supported_spell_rules = payload.supported_spell_rules();
 
@@ -57,7 +57,7 @@ fn resolve_spell_from_stack(
     let (stack_top_resolved, spell_cast) = build_resolution_events(
         game_id,
         &controller_id,
-        &stack_object_id,
+        stack_object_number,
         &source_card_id,
         card_type,
         mana_cost_paid,
@@ -90,16 +90,16 @@ fn resolve_activated_ability_from_stack(
     stack_object: StackObject,
 ) -> Result<ResolvedSpellOutcome, crate::domain::play::errors::DomainError> {
     let ResolvedActivatedAbility {
+        stack_object_number,
         source_card_id,
         controller_id,
-        stack_object_id,
         ability,
-    } = extract_resolved_activated_ability(game_id, stack_object)?;
+    } = extract_resolved_activated_ability(stack_object)?;
 
     let stack_top_resolved = StackTopResolved::new(
         game_id.clone(),
         controller_id.clone(),
-        stack_object_id,
+        crate::domain::play::ids::StackObjectId::for_stack_object(game_id, stack_object_number),
         source_card_id,
     );
 

@@ -5,23 +5,22 @@ use crate::domain::play::{
     errors::{DomainError, GameError},
     game::model::{StackObject, StackObjectKind},
     game::SpellTarget,
-    ids::{CardInstanceId, GameId, PlayerId, StackObjectId},
+    ids::{CardInstanceId, PlayerId},
 };
 
 pub(super) struct ResolvedSpellObject {
+    pub stack_object_number: u32,
     pub source_card_id: CardInstanceId,
     pub controller_id: PlayerId,
-    pub stack_object_id: StackObjectId,
     pub payload: SpellPayload,
     pub mana_cost_paid: u32,
     pub target: Option<SpellTarget>,
 }
 
 pub(super) fn extract_resolved_spell_object(
-    game_id: &GameId,
     stack_object: StackObject,
 ) -> Result<ResolvedSpellObject, DomainError> {
-    let stack_object_id = stack_object.id(game_id);
+    let stack_object_number = stack_object.number();
     let controller_id = stack_object.controller_id().clone();
     let StackObjectKind::Spell(spell) = stack_object.into_kind() else {
         return Err(DomainError::Game(GameError::InternalInvariantViolation(
@@ -34,9 +33,9 @@ pub(super) fn extract_resolved_spell_object(
     let payload = spell.into_payload();
 
     Ok(ResolvedSpellObject {
+        stack_object_number,
         source_card_id,
         controller_id,
-        stack_object_id,
         payload,
         mana_cost_paid,
         target,
@@ -44,17 +43,16 @@ pub(super) fn extract_resolved_spell_object(
 }
 
 pub(super) struct ResolvedActivatedAbility {
+    pub stack_object_number: u32,
     pub source_card_id: CardInstanceId,
     pub controller_id: PlayerId,
-    pub stack_object_id: StackObjectId,
     pub ability: ActivatedAbilityProfile,
 }
 
 pub(super) fn extract_resolved_activated_ability(
-    game_id: &GameId,
     stack_object: StackObject,
 ) -> Result<ResolvedActivatedAbility, DomainError> {
-    let stack_object_id = stack_object.id(game_id);
+    let stack_object_number = stack_object.number();
     let controller_id = stack_object.controller_id().clone();
     let StackObjectKind::ActivatedAbility(ability) = stack_object.into_kind() else {
         return Err(DomainError::Game(GameError::InternalInvariantViolation(
@@ -63,9 +61,9 @@ pub(super) fn extract_resolved_activated_ability(
     };
 
     Ok(ResolvedActivatedAbility {
+        stack_object_number,
         source_card_id: ability.source_card_id().clone(),
         controller_id,
-        stack_object_id,
         ability: ability.ability(),
     })
 }

@@ -5,7 +5,7 @@ use crate::domain::play::{
         ActivatedAbilityEffect, ActivatedAbilityProfile, CardType, SpellPayload, SpellTargetKind,
         SupportedSpellRules,
     },
-    ids::{CardInstanceId, GameId, PlayerId, StackObjectId},
+    ids::{CardInstanceId, PlayerId},
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -51,11 +51,6 @@ impl StackZone {
         let number = self.next_object_number;
         self.next_object_number += 1;
         number
-    }
-
-    #[must_use]
-    pub fn object_id(&self, game_id: &GameId, object_number: u32) -> StackObjectId {
-        StackObjectId::for_stack_object(game_id, object_number)
     }
 
     #[must_use]
@@ -107,11 +102,6 @@ impl StackObject {
     #[must_use]
     pub const fn number(&self) -> u32 {
         self.number
-    }
-
-    #[must_use]
-    pub fn id(&self, game_id: &GameId) -> StackObjectId {
-        StackObjectId::for_stack_object(game_id, self.number)
     }
 
     #[must_use]

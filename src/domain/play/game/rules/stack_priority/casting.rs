@@ -265,7 +265,6 @@ pub fn cast_spell(
     let spell_card_type = prepared_stack_spell.card_type;
     let spell_mana_cost = prepared_stack_spell.mana_cost;
     let stack_object_number = stack.next_object_number();
-    let stack_object_id = stack.object_id(game_id, stack_object_number);
     stack.push(prepared_stack_spell.into_stack_object(stack_object_number, player_id.clone()));
 
     *priority = Some(PriorityState::opened(player_id.clone()));
@@ -277,7 +276,7 @@ pub fn cast_spell(
             card_id,
             spell_card_type,
             spell_mana_cost,
-            stack_object_id,
+            crate::domain::play::ids::StackObjectId::for_stack_object(game_id, stack_object_number),
             target,
         ),
     })

@@ -63,7 +63,6 @@ pub fn activate_ability(
     }
 
     let stack_object_number = stack.next_object_number();
-    let stack_object_id = stack.object_id(game_id, stack_object_number);
     stack.push(StackObject::new(
         stack_object_number,
         player_id.clone(),
@@ -81,7 +80,7 @@ pub fn activate_ability(
             player_id,
             source_card_id,
             ability.effect(),
-            stack_object_id,
+            crate::domain::play::ids::StackObjectId::for_stack_object(game_id, stack_object_number),
         ),
     })
 }
