@@ -136,6 +136,36 @@ fn read_hand_spell_metadata(
     })
 }
 
+struct PreparedHandSpellCast {
+    mana_cost_paid: u32,
+    snapshot: crate::domain::play::cards::SpellCardSnapshot,
+}
+
+fn prepare_validated_hand_spell_for_cast(
+    player: &mut crate::domain::play::game::Player,
+    player_id: &PlayerId,
+    card_id: &CardInstanceId,
+    mana_cost: u32,
+    mana_cost_profile: crate::domain::play::cards::ManaCost,
+) -> Result<PreparedHandSpellCast, DomainError> {
+    let available_mana = player.mana();
+    if !player.spend_mana_cost(mana_cost_profile) {
+        return Err(DomainError::Game(GameError::InsufficientMana {
+            player: player_id.clone(),
+            required: mana_cost,
+            available: available_mana,
+        }));
+    }
+
+    let snapshot =
+        helpers::remove_card_from_hand(player, player_id, card_id)?.into_spell_snapshot();
+
+    Ok(PreparedHandSpellCast {
+        mana_cost_paid: mana_cost,
+        snapshot,
+    })
+}
+
 /// Puts a spell card from hand onto the stack and opens a priority window.
 ///
 /// # Errors
@@ -204,24 +234,23 @@ pub fn cast_spell(
         )));
     }
 
-    let player = &mut players[player_idx];
-    let available_mana = player.mana();
-    if !player.spend_mana_cost(mana_cost_profile) {
-        return Err(DomainError::Game(GameError::InsufficientMana {
-            player: player_id.clone(),
-            required: mana_cost,
-            available: available_mana,
-        }));
-    }
-
-    let card = helpers::remove_card_from_hand(player, &player_id, &card_id)?.into_spell_snapshot();
+    let PreparedHandSpellCast {
+        mana_cost_paid,
+        snapshot,
+    } = prepare_validated_hand_spell_for_cast(
+        &mut players[player_idx],
+        &player_id,
+        &card_id,
+        mana_cost,
+        mana_cost_profile,
+    )?;
 
     let stack_object_number = stack.next_object_number();
     let stack_object_id = stack.object_id(game_id, stack_object_number);
     stack.push(StackObject::new(
         stack_object_number,
         player_id.clone(),
-        StackObjectKind::Spell(SpellOnStack::new(card, mana_cost, target.clone())),
+        StackObjectKind::Spell(SpellOnStack::new(snapshot, mana_cost_paid, target.clone())),
     ));
 
     *priority = Some(PriorityState::opened(player_id.clone()));
