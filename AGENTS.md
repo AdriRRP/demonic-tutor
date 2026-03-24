@@ -71,6 +71,7 @@ The following documents define project truth.
 ### System architecture
 
 - `docs/architecture/system-overview.md`
+- `docs/architecture/runtime-abstractions.md`
 - `docs/architecture/vertical-slices.md`
 
 ### Architecture decisions
@@ -97,6 +98,7 @@ Load:
 Load:
 
 - `docs/architecture/system-overview.md`
+- `docs/architecture/runtime-abstractions.md`
 - `docs/architecture/vertical-slices.md`
 - relevant ADRs
 
@@ -149,6 +151,7 @@ Agents must:
 - never imply unsupported Magic rules
 - preserve aggregate boundaries
 - maintain ubiquitous language consistency
+- when core runtime representations change, ensure `docs/architecture/runtime-abstractions.md` stays truthful and readable for humans
 - ensure every Rust module in `src/` and `tests/` starts with a brief `//!` rustdoc describing its responsibility
 - ensure top-level Rust imports in each module follow repository `rustfmt` settings and prefer grouped imports when they read better and the formatter preserves them
 - prefer the **domain-canonical action** over temporary convenience commands
@@ -187,6 +190,7 @@ When implementation structure needs to evolve, prefer:
 - thin application orchestration with explicit outcome-to-event mapping helpers instead of speculative abstraction layers
 - small public application facades with capability-local handlers when the service layer grows
 - centralized low-level representation choices, such as shared id backing, that can be revisited from one place after profiling
+- one canonical human-readable explanation of major runtime abstractions instead of scattering that reasoning across slice history
 
 Avoid introducing generic frameworks when a small explicit module split keeps the code more legible.
 

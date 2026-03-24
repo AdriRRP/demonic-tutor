@@ -85,6 +85,7 @@ Examples include:
 - constraints
 - domain language
 - architecture
+- runtime abstraction explanations
 - bounded contexts
 - aggregate responsibilities
 - current system state
@@ -238,6 +239,10 @@ The architecture maps conceptually to the repository layout:
 
 The architecture is not defined by the directory tree, but the structure reflects the architectural model.
 
+For the human-oriented explanation of the engine's current compact runtime abstractions, see:
+
+- `docs/architecture/runtime-abstractions.md`
+
 ## Canonical Working Templates
 
 The repository may include canonical templates for recurring project artifacts.
@@ -258,6 +263,8 @@ The agent architecture should reinforce the repository's preferred implementatio
 - grow the `Game` aggregate through internal modules by capability, not new aggregates by default
 - prefer explicit enums, small state structs, and deterministic transition helpers over generic engines
 - prefer closed rule representations over optional-field cross-products when the supported cases are finite
+- when the runtime becomes denser or more optimized, preserve a plain-language explanation in `docs/architecture/runtime-abstractions.md`
+- architecture docs should reduce cognitive load for humans before sending them into low-level storage or identity code
 - prefer small semantic snapshots over cloning full runtime objects in validation-heavy paths
 - keep partial rule support honest in code, features, slices, and current-state docs
 - when widening priority-window support, synchronize the behavior triangle explicitly: active-player casting, non-active instant response, and active-player self-stacking

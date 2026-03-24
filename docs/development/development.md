@@ -134,6 +134,7 @@ In particular:
 * the public domain model should prefer **canonical game semantics** over convenience APIs
 * duplicate commands or events representing the same real-world concept should be removed once the canonical form is clear
 * broad semantic refactors should close with repository curation so code, canonical docs, ADRs, and agent guidance agree before commit or release
+* when a refactor introduces or significantly changes a core runtime abstraction, `docs/architecture/runtime-abstractions.md` must be updated so humans can understand the model without reverse-engineering the code first
 
 When in doubt, prefer **clear domain modeling over technical shortcuts**.
 

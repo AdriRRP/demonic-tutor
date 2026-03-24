@@ -11,6 +11,10 @@ It explains:
 
 Detailed design decisions are documented in ADRs.
 
+For a human-first explanation of the main runtime abstractions used by the current engine, see:
+
+- `docs/architecture/runtime-abstractions.md`
+
 ---
 
 # Architectural Principles
@@ -108,6 +112,10 @@ Key properties:
 - explicit domain language
 
 Aggregates enforce gameplay rules and maintain consistent domain state.
+
+When the domain core uses compact internal carriers such as handles, aggregate location indexes, or in-flight spell payloads, the intended explanatory reference is:
+
+- `docs/architecture/runtime-abstractions.md`
 
 ---
 
@@ -218,6 +226,11 @@ Slices must remain:
 - small
 - deterministic
 - reviewable.
+
+When a slice materially changes a core runtime abstraction, also update:
+
+- the relevant implemented slice document
+- `docs/architecture/runtime-abstractions.md` if the human explanation changed
 
 Examples of slices include:
 

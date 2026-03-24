@@ -57,6 +57,8 @@ Prefer:
 - shared immutable card metadata behind instance-local mutable runtime when card definitions would otherwise be duplicated across zones
 - zone APIs consumed through semantic queries and iterators rather than exposing storage details to core rules
 - explicit stack-borne spell metadata preferred over rediscovering immutable spell facts from moved card values during resolution
+- when a refactor introduces a compact or non-obvious runtime abstraction, update `docs/architecture/runtime-abstractions.md` with a human-first explanation of what it is, why it exists, and what boundary it preserves
+- explain dense internal structures as if onboarding a new teammate, not only as terse architecture labels
 - phased storage refactors that prove id-backed carriers first in colder zones before touching hotter paths such as battlefield or stack
 - once battlefield follows the same id-backed pattern, prefer the next storage/performance refactor in stack or shared lookup helpers rather than widening player accessors again
 - keep mana abilities and non-mana activated abilities semantically distinct: mana abilities stay stack-free, while supported non-mana activations must go through the normal priority-and-stack corridor
@@ -109,6 +111,7 @@ If a change affects multiple concerns, verify whether it requires updates to:
 - glossary
 - context map
 - ADRs
+- architecture abstraction guides
 - operational agent context
 - reusable skills
 
@@ -159,6 +162,8 @@ When new gameplay semantics are introduced through stack, combat, or state-based
 - current-state, rules-map, and feature indexes now need broader wording rather than per-slice omissions
 
 Documentation updates are required only when the owned truth of that document has changed.
+
+When a change materially alters how humans must reason about the runtime, treat `docs/architecture/runtime-abstractions.md` as owned truth for that explanatory layer and sync it before closure.
 
 If gameplay behavior is already tracked through repository features, verify whether the relevant `.feature` files must also be updated.
 
