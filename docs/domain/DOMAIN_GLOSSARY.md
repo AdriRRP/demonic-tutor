@@ -167,6 +167,14 @@ In the current runtime, a creature with `Vigilance` still becomes an attacker no
 
 ---
 
+## Trample
+
+A keyword ability that lets a blocked attacker assign excess combat damage to the defending player.
+
+In the current runtime, `Trample` is supported only in the one-blocker combat model: lethal damage must be assigned to the blocker first, and only the excess reaches the defending player.
+
+---
+
 ## Stack
 
 A conceptual zone where spells and abilities wait to resolve.

@@ -8,6 +8,7 @@ use crate::domain::play::{
 pub(super) struct AttackerParticipant {
     id: CardInstanceId,
     power: u32,
+    has_trample: bool,
 }
 
 impl AttackerParticipant {
@@ -20,6 +21,11 @@ impl AttackerParticipant {
     pub const fn power(&self) -> u32 {
         self.power
     }
+
+    #[must_use]
+    pub const fn has_trample(&self) -> bool {
+        self.has_trample
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -27,6 +33,8 @@ pub(super) struct BlockerParticipant {
     id: CardInstanceId,
     blocked_attacker_id: CardInstanceId,
     power: u32,
+    toughness: u32,
+    marked_damage: u32,
 }
 
 impl BlockerParticipant {
@@ -43,6 +51,11 @@ impl BlockerParticipant {
     #[must_use]
     pub const fn power(&self) -> u32 {
         self.power
+    }
+
+    #[must_use]
+    pub const fn lethal_damage_threshold(&self) -> u32 {
+        self.toughness.saturating_sub(self.marked_damage)
     }
 }
 
@@ -61,6 +74,7 @@ pub(super) fn collect_attackers(player: &Player) -> Result<Vec<AttackerParticipa
             Ok(AttackerParticipant {
                 id: card.id().clone(),
                 power,
+                has_trample: card.has_trample(),
             })
         })
         .collect()
@@ -71,7 +85,7 @@ pub(super) fn collect_blockers(player: &Player) -> Result<Vec<BlockerParticipant
         .battlefield_cards()
         .filter(|card| card.is_blocking())
         .map(|card| {
-            let (power, _) = card.creature_stats().ok_or_else(|| {
+            let (power, toughness) = card.creature_stats().ok_or_else(|| {
                 DomainError::Game(GameError::InternalInvariantViolation(format!(
                     "blocking creature {} must have power and toughness",
                     card.id()
@@ -88,6 +102,8 @@ pub(super) fn collect_blockers(player: &Player) -> Result<Vec<BlockerParticipant
                 id: card.id().clone(),
                 blocked_attacker_id: attacker_id,
                 power,
+                toughness,
+                marked_damage: card.damage(),
             })
         })
         .collect()

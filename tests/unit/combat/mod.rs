@@ -8,5 +8,7 @@ mod declare_blockers;
 mod haste;
 #[path = "permanent_type.rs"]
 mod permanent_type;
+#[path = "trample.rs"]
+mod trample;
 #[path = "vigilance.rs"]
 mod vigilance;

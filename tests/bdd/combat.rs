@@ -7,6 +7,13 @@ fn alice_attacks_with_a_creature(world: &mut GameplayWorld) {
     world.setup_blocked_damage_marking();
 }
 
+#[given("Alice attacks with a trample creature and Bob blocks with a smaller creature")]
+fn alice_attacks_with_a_trample_creature_and_bob_blocks_with_a_smaller_creature(
+    world: &mut GameplayWorld,
+) {
+    world.setup_trample_combat();
+}
+
 #[given("Alice is in DeclareAttackers with a haste creature that entered this turn")]
 fn alice_is_in_declare_attackers_with_a_haste_creature_that_entered_this_turn(
     world: &mut GameplayWorld,
@@ -147,6 +154,11 @@ fn bob_loses_life_equal_to_the_attackers_power(world: &mut GameplayWorld) {
 #[then("Bob loses 3 life")]
 fn bob_loses_3_life(world: &mut GameplayWorld) {
     assert_eq!(world.player_life("Bob"), 17);
+}
+
+#[then("Bob loses 2 life from trample damage")]
+fn bob_loses_2_life_from_trample_damage(world: &mut GameplayWorld) {
+    assert_eq!(world.player_life("Bob"), 18);
 }
 
 #[then("Bob loses the game due to zero life")]

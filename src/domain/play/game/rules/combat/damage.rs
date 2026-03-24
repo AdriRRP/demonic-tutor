@@ -89,12 +89,32 @@ pub fn resolve_combat_damage(
 
     for attacker in &attackers {
         if let Some(blocker) = blocker_for_attacker(&blockers, attacker.id()) {
-            add_damage(&mut damage_received, blocker.id(), attacker.power());
+            let lethal_to_blocker = blocker.lethal_damage_threshold();
+            let blocker_damage = if attacker.has_trample() {
+                attacker.power().min(lethal_to_blocker)
+            } else {
+                attacker.power()
+            };
+            let excess_to_player = if attacker.has_trample() {
+                attacker.power().saturating_sub(blocker_damage)
+            } else {
+                0
+            };
+
+            add_damage(&mut damage_received, blocker.id(), blocker_damage);
             damage_events.push(DamageEvent {
                 source: attacker.id().clone(),
                 target: DamageTarget::Creature(blocker.id().clone()),
-                damage_amount: attacker.power(),
+                damage_amount: blocker_damage,
             });
+            if excess_to_player > 0 {
+                player_damage += excess_to_player;
+                damage_events.push(DamageEvent {
+                    source: attacker.id().clone(),
+                    target: DamageTarget::Player(defender_player_id.clone()),
+                    damage_amount: excess_to_player,
+                });
+            }
         } else {
             player_damage += attacker.power();
             damage_events.push(DamageEvent {

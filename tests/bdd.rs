@@ -183,6 +183,7 @@ async fn run_other_features() {
         "features/combat/single_blocker_per_attacker.feature",
         "features/combat/creature_destruction.feature",
         "features/combat/haste_creatures_can_attack_immediately.feature",
+        "features/combat/trample_assigns_excess_damage_to_player.feature",
         "features/combat/vigilance_creatures_do_not_tap_to_attack.feature",
         "features/life/adjust_player_life_effect.feature",
         "features/life/lose_on_zero_life.feature",

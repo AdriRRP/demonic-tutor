@@ -107,6 +107,36 @@ impl GameplayWorld {
         );
     }
 
+    pub fn setup_trample_combat(&mut self) {
+        self.setup_combat(
+            "bdd-trample-combat",
+            "bdd-trample-attacker",
+            support::creature_card_with_keyword(
+                "bdd-trample-attacker",
+                0,
+                4,
+                4,
+                demonictutor::KeywordAbility::Trample,
+            ),
+            Some("bdd-trample-blocker"),
+            Some(LibraryCard::creature(
+                CardDefinitionId::new("bdd-trample-blocker"),
+                0,
+                2,
+                2,
+            )),
+        );
+
+        let service = support::create_service();
+        support::advance_to_phase_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            Phase::CombatDamage,
+        );
+        support::close_empty_priority_window(&service, self.game_mut());
+        self.reset_observations();
+    }
+
     pub fn setup_multiple_blockers_not_supported(&mut self) {
         self.reset_game_with_libraries(
             "bdd-single-blocker",

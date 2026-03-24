@@ -101,6 +101,7 @@ Combat behavior:
 - creature destruction after damage
 - keyword-ability blocking legality
 - haste attack legality
+- trample excess damage to defending player
 - vigilance attack state
 
 ### `features/life/`
@@ -264,6 +265,7 @@ The following features are currently executed by `tests/bdd.rs`, grouped by area
 - `features/combat/keyword_abilities.feature`
 - `features/combat/creature_destruction.feature`
 - `features/combat/haste_creatures_can_attack_immediately.feature`
+- `features/combat/trample_assigns_excess_damage_to_player.feature`
 - `features/combat/vigilance_creatures_do_not_tap_to_attack.feature`
 
 ### Spells
