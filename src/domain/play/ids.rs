@@ -60,6 +60,21 @@ shared_string_id!(DeckId);
 shared_string_id!(CardInstanceId, display);
 shared_string_id!(CardDefinitionId, display);
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct PlayerCardHandle(usize);
+
+impl PlayerCardHandle {
+    #[must_use]
+    pub const fn new(index: usize) -> Self {
+        Self(index)
+    }
+
+    #[must_use]
+    pub const fn index(self) -> usize {
+        self.0
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct StackObjectId(pub SharedIdStr);
 

@@ -2,7 +2,7 @@
 
 use {
     crate::domain::play::cards::{CardInstance, ManaColor, ManaCost},
-    crate::domain::play::ids::{CardDefinitionId, CardInstanceId, PlayerId},
+    crate::domain::play::ids::{CardDefinitionId, CardInstanceId, PlayerCardHandle, PlayerId},
     crate::domain::play::zones::{Battlefield, Exile, Graveyard, Hand, Library},
     std::collections::HashMap,
 };
@@ -130,6 +130,53 @@ impl ManaPool {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+struct PlayerCardArena {
+    cards: Vec<Option<CardInstance>>,
+    id_to_handle: HashMap<CardInstanceId, PlayerCardHandle>,
+}
+
+impl PlayerCardArena {
+    fn insert(&mut self, card: CardInstance) -> PlayerCardHandle {
+        let card_id = card.id().clone();
+        let handle = PlayerCardHandle::new(self.cards.len());
+        self.cards.push(Some(card));
+        self.id_to_handle.insert(card_id, handle);
+        handle
+    }
+
+    fn handle(&self, card_id: &CardInstanceId) -> Option<PlayerCardHandle> {
+        self.id_to_handle.get(card_id).copied()
+    }
+
+    fn contains_handle(&self, handle: PlayerCardHandle) -> bool {
+        self.cards.get(handle.index()).is_some_and(Option::is_some)
+    }
+
+    fn get(&self, card_id: &CardInstanceId) -> Option<&CardInstance> {
+        let handle = self.handle(card_id)?;
+        self.get_by_handle(handle)
+    }
+
+    fn get_mut(&mut self, card_id: &CardInstanceId) -> Option<&mut CardInstance> {
+        let handle = self.handle(card_id)?;
+        self.get_mut_by_handle(handle)
+    }
+
+    fn get_by_handle(&self, handle: PlayerCardHandle) -> Option<&CardInstance> {
+        self.cards.get(handle.index()).and_then(Option::as_ref)
+    }
+
+    fn get_mut_by_handle(&mut self, handle: PlayerCardHandle) -> Option<&mut CardInstance> {
+        self.cards.get_mut(handle.index()).and_then(Option::as_mut)
+    }
+
+    fn remove(&mut self, card_id: &CardInstanceId) -> Option<CardInstance> {
+        let handle = self.id_to_handle.remove(card_id)?;
+        self.cards.get_mut(handle.index())?.take()
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Player {
     id: PlayerId,
@@ -138,7 +185,7 @@ pub struct Player {
     battlefield: Battlefield,
     graveyard: Graveyard,
     exile: Exile,
-    cards: HashMap<CardInstanceId, CardInstance>,
+    cards: PlayerCardArena,
     life: u32,
     mana: ManaPool,
     lands_played_this_turn: usize,
@@ -156,7 +203,7 @@ impl Player {
             battlefield: Battlefield::new(),
             graveyard: Graveyard::new(),
             exile: Exile::new(),
-            cards: HashMap::new(),
+            cards: PlayerCardArena::default(),
             life: DEFAULT_STARTING_LIFE,
             mana: ManaPool::empty(),
             lands_played_this_turn: 0,
@@ -266,28 +313,37 @@ impl Player {
 
     #[must_use]
     pub fn hand_contains(&self, card_id: &CardInstanceId) -> bool {
-        self.hand.contains(card_id)
+        self.cards
+            .handle(card_id)
+            .is_some_and(|handle| self.hand.contains(handle))
     }
 
     #[must_use]
     pub fn library_contains(&self, card_id: &CardInstanceId) -> bool {
-        self.library.iter().any(|stored_id| stored_id == card_id)
-            && self.cards.contains_key(card_id)
+        self.cards
+            .handle(card_id)
+            .is_some_and(|handle| self.library.contains(handle))
     }
 
     #[must_use]
     pub fn battlefield_contains(&self, card_id: &CardInstanceId) -> bool {
-        self.battlefield.contains(card_id)
+        self.cards
+            .handle(card_id)
+            .is_some_and(|handle| self.battlefield.contains(handle))
     }
 
     #[must_use]
     pub fn graveyard_contains(&self, card_id: &CardInstanceId) -> bool {
-        self.graveyard.contains(card_id)
+        self.cards
+            .handle(card_id)
+            .is_some_and(|handle| self.graveyard.contains(handle))
     }
 
     #[must_use]
     pub fn exile_contains(&self, card_id: &CardInstanceId) -> bool {
-        self.exile.contains(card_id)
+        self.cards
+            .handle(card_id)
+            .is_some_and(|handle| self.exile.contains(handle))
     }
 
     #[must_use]
@@ -306,8 +362,8 @@ impl Player {
 
     #[must_use]
     pub fn hand_card_at(&self, index: usize) -> Option<&CardInstance> {
-        let card_id = self.hand.card_id_at(index)?;
-        self.cards.get(card_id)
+        let handle = self.hand.handle_at(index)?;
+        self.cards.get_by_handle(handle)
     }
 
     #[must_use]
@@ -325,8 +381,8 @@ impl Player {
 
     #[must_use]
     pub fn battlefield_card_at(&self, index: usize) -> Option<&CardInstance> {
-        let card_id = self.battlefield.card_id_at(index)?;
-        self.cards.get(card_id)
+        let handle = self.battlefield.handle_at(index)?;
+        self.cards.get_by_handle(handle)
     }
 
     #[must_use]
@@ -338,8 +394,8 @@ impl Player {
 
     #[must_use]
     pub fn graveyard_card_at(&self, index: usize) -> Option<&CardInstance> {
-        let card_id = self.graveyard.card_id_at(index)?;
-        self.cards.get(card_id)
+        let handle = self.graveyard.handle_at(index)?;
+        self.cards.get_by_handle(handle)
     }
 
     #[must_use]
@@ -351,8 +407,8 @@ impl Player {
 
     #[must_use]
     pub fn exile_card_at(&self, index: usize) -> Option<&CardInstance> {
-        let card_id = self.exile.card_id_at(index)?;
-        self.cards.get(card_id)
+        let handle = self.exile.handle_at(index)?;
+        self.cards.get_by_handle(handle)
     }
 
     #[must_use]
@@ -362,13 +418,17 @@ impl Player {
     ) -> Option<&CardInstance> {
         self.hand
             .iter()
-            .filter_map(|card_id| self.cards.get(card_id))
+            .filter_map(|handle| self.cards.get_by_handle(*handle))
             .find(|card| card.definition_id() == definition_id)
     }
 
     #[must_use]
     pub fn hand_card_ids(&self) -> Vec<CardInstanceId> {
-        self.hand.iter().cloned().collect()
+        self.hand
+            .iter()
+            .filter_map(|handle| self.cards.get_by_handle(*handle))
+            .map(|card| card.id().clone())
+            .collect()
     }
 
     #[must_use]
@@ -378,18 +438,20 @@ impl Player {
     ) -> Option<&CardInstance> {
         self.battlefield
             .iter()
-            .filter_map(|card_id| self.cards.get(card_id))
+            .filter_map(|handle| self.cards.get_by_handle(*handle))
             .find(|card| card.definition_id() == definition_id)
     }
 
     pub fn battlefield_cards(&self) -> impl Iterator<Item = &CardInstance> {
         self.battlefield
             .iter()
-            .filter_map(|card_id| self.cards.get(card_id))
+            .filter_map(|handle| self.cards.get_by_handle(*handle))
     }
 
     pub fn battlefield_card_ids(&self) -> impl Iterator<Item = &CardInstanceId> {
-        self.battlefield.iter()
+        self.battlefield
+            .iter()
+            .filter_map(|handle| self.cards.get_by_handle(*handle).map(CardInstance::id))
     }
 
     pub fn for_each_battlefield_card_mut<F>(&mut self, mut f: F)
@@ -399,27 +461,13 @@ impl Player {
         let card_ids = self
             .battlefield
             .iter()
-            .cloned()
-            .collect::<Vec<CardInstanceId>>();
+            .copied()
+            .collect::<Vec<PlayerCardHandle>>();
 
-        for card_id in card_ids {
-            if let Some(card) = self.cards.get_mut(&card_id) {
+        for handle in card_ids {
+            if let Some(card) = self.cards.get_mut_by_handle(handle) {
                 f(card);
             }
-        }
-    }
-
-    fn move_owned_card(
-        cards: &HashMap<CardInstanceId, CardInstance>,
-        source_remove: impl FnOnce() -> Option<CardInstanceId>,
-        destination_add: impl FnOnce(CardInstanceId),
-    ) -> Option<()> {
-        let card_id = source_remove()?;
-        if cards.contains_key(&card_id) {
-            destination_add(card_id);
-            Some(())
-        } else {
-            None
         }
     }
 
@@ -450,116 +498,118 @@ impl Player {
     }
 
     pub fn remove_hand_card(&mut self, card_id: &CardInstanceId) -> Option<CardInstance> {
-        self.hand.remove(card_id)?;
+        let handle = self.cards.handle(card_id)?;
+        self.hand.remove(handle)?;
         self.cards.remove(card_id)
     }
 
     pub fn remove_battlefield_card(&mut self, card_id: &CardInstanceId) -> Option<CardInstance> {
-        self.battlefield.remove(card_id)?;
+        let handle = self.cards.handle(card_id)?;
+        self.battlefield.remove(handle)?;
         self.cards.remove(card_id)
     }
 
     pub fn remove_graveyard_card(&mut self, card_id: &CardInstanceId) -> Option<CardInstance> {
-        self.graveyard.remove(card_id)?;
+        let handle = self.cards.handle(card_id)?;
+        self.graveyard.remove(handle)?;
         self.cards.remove(card_id)
     }
 
     pub fn move_hand_card_to_battlefield(&mut self, card_id: &CardInstanceId) -> Option<()> {
-        Self::move_owned_card(
-            &self.cards,
-            || self.hand.remove(card_id),
-            |moved_card_id| {
-                self.battlefield.add(moved_card_id);
-            },
-        )
+        let handle = self.cards.handle(card_id)?;
+        self.hand.remove(handle)?;
+        if self.cards.contains_handle(handle) {
+            self.battlefield.add(handle);
+            Some(())
+        } else {
+            None
+        }
     }
 
     pub fn move_battlefield_card_to_graveyard(&mut self, card_id: &CardInstanceId) -> Option<()> {
-        Self::move_owned_card(
-            &self.cards,
-            || self.battlefield.remove(card_id),
-            |moved_card_id| {
-                self.graveyard.add(moved_card_id);
-            },
-        )
+        let handle = self.cards.handle(card_id)?;
+        self.battlefield.remove(handle)?;
+        if self.cards.contains_handle(handle) {
+            self.graveyard.add(handle);
+            Some(())
+        } else {
+            None
+        }
     }
 
     pub fn move_battlefield_card_to_exile(&mut self, card_id: &CardInstanceId) -> Option<()> {
-        Self::move_owned_card(
-            &self.cards,
-            || self.battlefield.remove(card_id),
-            |moved_card_id| {
-                self.exile.add(moved_card_id);
-            },
-        )
+        let handle = self.cards.handle(card_id)?;
+        self.battlefield.remove(handle)?;
+        if self.cards.contains_handle(handle) {
+            self.exile.add(handle);
+            Some(())
+        } else {
+            None
+        }
     }
 
     pub fn move_graveyard_card_to_exile(&mut self, card_id: &CardInstanceId) -> Option<()> {
-        Self::move_owned_card(
-            &self.cards,
-            || self.graveyard.remove(card_id),
-            |moved_card_id| {
-                self.exile.add(moved_card_id);
-            },
-        )
+        let handle = self.cards.handle(card_id)?;
+        self.graveyard.remove(handle)?;
+        if self.cards.contains_handle(handle) {
+            self.exile.add(handle);
+            Some(())
+        } else {
+            None
+        }
     }
 
     pub fn receive_hand_cards(&mut self, cards: Vec<CardInstance>) {
-        let mut card_ids = Vec::with_capacity(cards.len());
+        let mut handles = Vec::with_capacity(cards.len());
         for card in cards {
-            let card_id = card.id().clone();
-            card_ids.push(card_id.clone());
-            self.cards.insert(card_id, card);
+            handles.push(self.cards.insert(card));
         }
-        self.hand.receive(card_ids);
+        self.hand.receive(handles);
     }
 
     pub fn receive_library_cards(&mut self, cards: Vec<CardInstance>) {
-        let mut card_ids = Vec::with_capacity(cards.len());
+        let mut handles = Vec::with_capacity(cards.len());
         for card in cards {
-            let card_id = card.id().clone();
-            card_ids.push(card_id.clone());
-            self.cards.insert(card_id, card);
+            handles.push(self.cards.insert(card));
         }
-        self.library.receive(card_ids);
+        self.library.receive(handles);
     }
 
     pub fn receive_battlefield_card(&mut self, card: CardInstance) {
-        let card_id = card.id().clone();
-        self.battlefield.add(card_id.clone());
-        self.cards.insert(card_id, card);
+        let handle = self.cards.insert(card);
+        self.battlefield.add(handle);
     }
 
     pub fn receive_graveyard_card(&mut self, card: CardInstance) {
-        let card_id = card.id().clone();
-        self.graveyard.add(card_id.clone());
-        self.cards.insert(card_id, card);
+        let handle = self.cards.insert(card);
+        self.graveyard.add(handle);
     }
 
     pub fn receive_exile_card(&mut self, card: CardInstance) {
-        let card_id = card.id().clone();
-        self.exile.add(card_id.clone());
-        self.cards.insert(card_id, card);
+        let handle = self.cards.insert(card);
+        self.exile.add(handle);
     }
 
     pub fn draw_cards_into_hand(&mut self, count: usize) -> Option<()> {
-        let card_ids = self.library.draw(count)?;
-        self.hand.receive(card_ids);
+        let handles = self.library.draw(count)?;
+        self.hand.receive(handles);
         Some(())
     }
 
     pub fn draw_one_into_hand(&mut self) -> Option<CardInstanceId> {
-        let card_id = self.library.draw_one()?;
-        if !self.cards.contains_key(&card_id) {
+        let handle = self.library.draw_one()?;
+        let card_id = if let Some(card) = self.cards.get_by_handle(handle) {
+            card.id().clone()
+        } else {
             return None;
-        }
-        self.hand.receive(vec![card_id.clone()]);
+        };
+        self.hand.receive(vec![handle]);
         Some(card_id)
     }
 
     pub fn recycle_hand_into_library(&mut self) {
-        let card_ids = self.hand.drain_all();
-        self.library.receive(card_ids);
+        let handles = self.hand.drain_all();
+        self.library.receive(handles);
     }
 
     pub fn shuffle_library(&mut self) {

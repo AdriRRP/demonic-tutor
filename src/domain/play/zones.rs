@@ -1,80 +1,80 @@
 //! Supports domain play zones.
 
 use {
-    crate::domain::play::ids::CardInstanceId,
+    crate::domain::play::ids::PlayerCardHandle,
     rand::seq::SliceRandom,
     std::collections::{HashMap, VecDeque},
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 struct IndexedOrderedZone {
-    card_ids: Vec<CardInstanceId>,
-    positions: HashMap<CardInstanceId, usize>,
+    handles: Vec<PlayerCardHandle>,
+    positions: HashMap<PlayerCardHandle, usize>,
 }
 
 impl IndexedOrderedZone {
-    fn receive_many(&mut self, card_ids: Vec<CardInstanceId>) {
-        for card_id in card_ids {
-            self.push(card_id);
+    fn receive_many(&mut self, handles: Vec<PlayerCardHandle>) {
+        for handle in handles {
+            self.push(handle);
         }
     }
 
-    fn push(&mut self, card_id: CardInstanceId) {
-        let index = self.card_ids.len();
-        self.positions.insert(card_id.clone(), index);
-        self.card_ids.push(card_id);
+    fn push(&mut self, handle: PlayerCardHandle) {
+        let index = self.handles.len();
+        self.positions.insert(handle, index);
+        self.handles.push(handle);
     }
 
     const fn len(&self) -> usize {
-        self.card_ids.len()
+        self.handles.len()
     }
 
     const fn is_empty(&self) -> bool {
-        self.card_ids.is_empty()
+        self.handles.is_empty()
     }
 
-    fn iter(&self) -> impl Iterator<Item = &CardInstanceId> {
-        self.card_ids.iter()
+    fn iter(&self) -> impl Iterator<Item = &PlayerCardHandle> {
+        self.handles.iter()
     }
 
-    fn contains(&self, card_id: &CardInstanceId) -> bool {
-        self.positions.contains_key(card_id)
+    fn contains(&self, handle: PlayerCardHandle) -> bool {
+        self.positions.contains_key(&handle)
     }
 
-    fn card_id_at(&self, index: usize) -> Option<&CardInstanceId> {
-        self.card_ids.get(index)
+    fn handle_at(&self, index: usize) -> Option<PlayerCardHandle> {
+        self.handles.get(index).copied()
     }
 
-    fn drain_all(&mut self) -> Vec<CardInstanceId> {
+    fn drain_all(&mut self) -> Vec<PlayerCardHandle> {
         self.positions.clear();
-        std::mem::take(&mut self.card_ids)
+        std::mem::take(&mut self.handles)
     }
 
-    fn remove_preserving_order(&mut self, card_id: &CardInstanceId) -> Option<CardInstanceId> {
-        let index = self.positions.remove(card_id)?;
-        let removed = self.card_ids.remove(index);
-        for shifted_index in index..self.card_ids.len() {
+    fn remove_preserving_order(&mut self, handle: PlayerCardHandle) -> Option<PlayerCardHandle> {
+        let index = self.positions.remove(&handle)?;
+        let removed = self.handles.remove(index);
+        for shifted_index in index..self.handles.len() {
             self.positions
-                .insert(self.card_ids[shifted_index].clone(), shifted_index);
+                .insert(self.handles[shifted_index], shifted_index);
         }
         Some(removed)
     }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
-pub struct Library(VecDeque<CardInstanceId>);
+pub struct Library(VecDeque<PlayerCardHandle>);
 
 impl Library {
     #[must_use]
-    pub fn new(card_ids: Vec<CardInstanceId>) -> Self {
-        Self(VecDeque::from(card_ids))
+    pub fn new(handles: Vec<PlayerCardHandle>) -> Self {
+        Self(VecDeque::from(handles))
     }
 
-    pub fn draw_one(&mut self) -> Option<CardInstanceId> {
+    pub fn draw_one(&mut self) -> Option<PlayerCardHandle> {
         self.0.pop_front()
     }
 
-    pub fn draw(&mut self, n: usize) -> Option<Vec<CardInstanceId>> {
+    pub fn draw(&mut self, n: usize) -> Option<Vec<PlayerCardHandle>> {
         if self.0.len() >= n {
             Some((0..n).filter_map(|_| self.0.pop_front()).collect())
         } else {
@@ -92,8 +92,13 @@ impl Library {
         self.0.is_empty()
     }
 
-    pub fn receive(&mut self, card_ids: Vec<CardInstanceId>) {
-        self.0.extend(card_ids);
+    pub fn receive(&mut self, handles: Vec<PlayerCardHandle>) {
+        self.0.extend(handles);
+    }
+
+    #[must_use]
+    pub fn contains(&self, handle: PlayerCardHandle) -> bool {
+        self.0.contains(&handle)
     }
 
     pub fn shuffle(&mut self) {
@@ -101,7 +106,7 @@ impl Library {
         self.0.make_contiguous().shuffle(&mut rng);
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = &CardInstanceId> {
+    pub fn iter(&self) -> impl Iterator<Item = &PlayerCardHandle> {
         self.0.iter()
     }
 }
@@ -119,8 +124,8 @@ impl Hand {
         }
     }
 
-    pub fn receive(&mut self, card_ids: Vec<CardInstanceId>) {
-        self.storage.receive_many(card_ids);
+    pub fn receive(&mut self, handles: Vec<PlayerCardHandle>) {
+        self.storage.receive_many(handles);
     }
 
     #[must_use]
@@ -133,82 +138,82 @@ impl Hand {
         self.storage.is_empty()
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = &CardInstanceId> {
+    pub fn iter(&self) -> impl Iterator<Item = &PlayerCardHandle> {
         self.storage.iter()
     }
 
     #[must_use]
-    pub fn contains(&self, card_id: &CardInstanceId) -> bool {
-        self.storage.contains(card_id)
+    pub fn contains(&self, handle: PlayerCardHandle) -> bool {
+        self.storage.contains(handle)
     }
 
     #[must_use]
-    pub fn card_id_at(&self, index: usize) -> Option<&CardInstanceId> {
-        self.storage.card_id_at(index)
+    pub fn handle_at(&self, index: usize) -> Option<PlayerCardHandle> {
+        self.storage.handle_at(index)
     }
 
     /// Removes and returns all card ids from the hand, leaving it empty.
-    pub fn drain_all(&mut self) -> Vec<CardInstanceId> {
+    pub fn drain_all(&mut self) -> Vec<PlayerCardHandle> {
         self.storage.drain_all()
     }
 
     #[must_use]
-    pub fn remove(&mut self, card_id: &CardInstanceId) -> Option<CardInstanceId> {
-        self.storage.remove_preserving_order(card_id)
+    pub fn remove(&mut self, handle: PlayerCardHandle) -> Option<PlayerCardHandle> {
+        self.storage.remove_preserving_order(handle)
     }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct Battlefield {
-    card_ids: Vec<CardInstanceId>,
-    positions: HashMap<CardInstanceId, usize>,
+    handles: Vec<PlayerCardHandle>,
+    positions: HashMap<PlayerCardHandle, usize>,
 }
 
 impl Battlefield {
     #[must_use]
     pub fn new() -> Self {
         Self {
-            card_ids: Vec::new(),
+            handles: Vec::new(),
             positions: HashMap::new(),
         }
     }
 
-    pub fn add(&mut self, card_id: CardInstanceId) {
-        let index = self.card_ids.len();
-        self.positions.insert(card_id.clone(), index);
-        self.card_ids.push(card_id);
+    pub fn add(&mut self, handle: PlayerCardHandle) {
+        let index = self.handles.len();
+        self.positions.insert(handle, index);
+        self.handles.push(handle);
     }
 
     #[must_use]
     pub const fn len(&self) -> usize {
-        self.card_ids.len()
+        self.handles.len()
     }
 
     #[must_use]
     pub const fn is_empty(&self) -> bool {
-        self.card_ids.is_empty()
+        self.handles.is_empty()
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = &CardInstanceId> {
-        self.card_ids.iter()
-    }
-
-    #[must_use]
-    pub fn contains(&self, card_id: &CardInstanceId) -> bool {
-        self.positions.contains_key(card_id)
+    pub fn iter(&self) -> impl Iterator<Item = &PlayerCardHandle> {
+        self.handles.iter()
     }
 
     #[must_use]
-    pub fn card_id_at(&self, index: usize) -> Option<&CardInstanceId> {
-        self.card_ids.get(index)
+    pub fn contains(&self, handle: PlayerCardHandle) -> bool {
+        self.positions.contains_key(&handle)
     }
 
     #[must_use]
-    pub fn remove(&mut self, card_id: &CardInstanceId) -> Option<CardInstanceId> {
-        let index = self.positions.remove(card_id)?;
-        let removed = self.card_ids.swap_remove(index);
-        if let Some(swapped_card_id) = self.card_ids.get(index) {
-            self.positions.insert(swapped_card_id.clone(), index);
+    pub fn handle_at(&self, index: usize) -> Option<PlayerCardHandle> {
+        self.handles.get(index).copied()
+    }
+
+    #[must_use]
+    pub fn remove(&mut self, handle: PlayerCardHandle) -> Option<PlayerCardHandle> {
+        let index = self.positions.remove(&handle)?;
+        let removed = self.handles.swap_remove(index);
+        if let Some(swapped_handle) = self.handles.get(index) {
+            self.positions.insert(*swapped_handle, index);
         }
         Some(removed)
     }
@@ -227,8 +232,8 @@ impl Graveyard {
         }
     }
 
-    pub fn add(&mut self, card_id: CardInstanceId) {
-        self.storage.push(card_id);
+    pub fn add(&mut self, handle: PlayerCardHandle) {
+        self.storage.push(handle);
     }
 
     #[must_use]
@@ -241,23 +246,23 @@ impl Graveyard {
         self.storage.is_empty()
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = &CardInstanceId> {
+    pub fn iter(&self) -> impl Iterator<Item = &PlayerCardHandle> {
         self.storage.iter()
     }
 
     #[must_use]
-    pub fn contains(&self, card_id: &CardInstanceId) -> bool {
-        self.storage.contains(card_id)
+    pub fn contains(&self, handle: PlayerCardHandle) -> bool {
+        self.storage.contains(handle)
     }
 
     #[must_use]
-    pub fn card_id_at(&self, index: usize) -> Option<&CardInstanceId> {
-        self.storage.card_id_at(index)
+    pub fn handle_at(&self, index: usize) -> Option<PlayerCardHandle> {
+        self.storage.handle_at(index)
     }
 
     #[must_use]
-    pub fn remove(&mut self, card_id: &CardInstanceId) -> Option<CardInstanceId> {
-        self.storage.remove_preserving_order(card_id)
+    pub fn remove(&mut self, handle: PlayerCardHandle) -> Option<PlayerCardHandle> {
+        self.storage.remove_preserving_order(handle)
     }
 }
 
@@ -274,8 +279,8 @@ impl Exile {
         }
     }
 
-    pub fn add(&mut self, card_id: CardInstanceId) {
-        self.storage.push(card_id);
+    pub fn add(&mut self, handle: PlayerCardHandle) {
+        self.storage.push(handle);
     }
 
     #[must_use]
@@ -288,22 +293,22 @@ impl Exile {
         self.storage.is_empty()
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = &CardInstanceId> {
+    pub fn iter(&self) -> impl Iterator<Item = &PlayerCardHandle> {
         self.storage.iter()
     }
 
     #[must_use]
-    pub fn contains(&self, card_id: &CardInstanceId) -> bool {
-        self.storage.contains(card_id)
+    pub fn contains(&self, handle: PlayerCardHandle) -> bool {
+        self.storage.contains(handle)
     }
 
     #[must_use]
-    pub fn card_id_at(&self, index: usize) -> Option<&CardInstanceId> {
-        self.storage.card_id_at(index)
+    pub fn handle_at(&self, index: usize) -> Option<PlayerCardHandle> {
+        self.storage.handle_at(index)
     }
 
     #[must_use]
-    pub fn remove(&mut self, card_id: &CardInstanceId) -> Option<CardInstanceId> {
-        self.storage.remove_preserving_order(card_id)
+    pub fn remove(&mut self, handle: PlayerCardHandle) -> Option<PlayerCardHandle> {
+        self.storage.remove_preserving_order(handle)
     }
 }
