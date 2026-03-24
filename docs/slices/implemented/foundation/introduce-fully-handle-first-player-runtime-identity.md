@@ -1,4 +1,4 @@
-# Proposal Slice — Introduce Fully Handle-First Player Runtime Identity
+# Implemented Slice — Introduce Fully Handle-First Player Runtime Identity
 
 ## Summary
 
@@ -10,11 +10,11 @@ Finish the identity inversion inside `Player` so the runtime core treats `Player
 - align the runtime with the dense arena already in place
 - move the core closer to embedded-class locality and memory goals
 
-## Target Shape
+## Delivered Shape
 
-- internal player-owned operations accept and propagate handles first
-- outward card ids are resolved only at command, event, or test-facing edges
-- the player runtime keeps one explicit internal ownership identity
+- internal player-owned lookups now resolve a handle once at the boundary and operate through handle-based arena access
+- repeated internal `CardInstanceId -> handle -> arena` lookups were collapsed behind zone-aware helpers
+- the public API still accepts stable outward ids where commands, events and tests expect them
 
 ## Invariants
 

@@ -187,16 +187,6 @@ impl PlayerCardArena {
         self.id_to_handle.get(card_id).copied()
     }
 
-    fn get(&self, card_id: &CardInstanceId) -> Option<&CardInstance> {
-        let handle = self.handle(card_id)?;
-        self.get_by_handle(handle)
-    }
-
-    fn get_mut(&mut self, card_id: &CardInstanceId) -> Option<&mut CardInstance> {
-        let handle = self.handle(card_id)?;
-        self.get_mut_by_handle(handle)
-    }
-
     fn get_by_handle(&self, handle: PlayerCardHandle) -> Option<&CardInstance> {
         self.cards
             .get(handle.index())
@@ -277,6 +267,24 @@ impl Player {
     ) -> Option<PlayerCardHandle> {
         let handle = self.handle(card_id)?;
         (self.cards.zone_by_handle(handle) == Some(zone)).then_some(handle)
+    }
+
+    fn card_in_zone(
+        &self,
+        card_id: &CardInstanceId,
+        zone: PlayerCardZone,
+    ) -> Option<&CardInstance> {
+        let handle = self.handle_in_zone(card_id, zone)?;
+        self.cards.get_by_handle(handle)
+    }
+
+    fn card_in_zone_mut(
+        &mut self,
+        card_id: &CardInstanceId,
+        zone: PlayerCardZone,
+    ) -> Option<&mut CardInstance> {
+        let handle = self.handle_in_zone(card_id, zone)?;
+        self.cards.get_mut_by_handle(handle)
     }
 
     fn remove_hand_handle(&mut self, handle: PlayerCardHandle) -> Option<CardInstance> {
@@ -468,16 +476,12 @@ impl Player {
 
     #[must_use]
     pub fn hand_card(&self, card_id: &CardInstanceId) -> Option<&CardInstance> {
-        self.hand_contains(card_id)
-            .then(|| self.cards.get(card_id))
-            .flatten()
+        self.card_in_zone(card_id, PlayerCardZone::Hand)
     }
 
     #[must_use]
     pub fn library_card(&self, card_id: &CardInstanceId) -> Option<&CardInstance> {
-        self.library_contains(card_id)
-            .then(|| self.cards.get(card_id))
-            .flatten()
+        self.card_in_zone(card_id, PlayerCardZone::Library)
     }
 
     #[must_use]
@@ -488,15 +492,11 @@ impl Player {
 
     #[must_use]
     pub fn battlefield_card(&self, card_id: &CardInstanceId) -> Option<&CardInstance> {
-        self.battlefield_contains(card_id)
-            .then(|| self.cards.get(card_id))
-            .flatten()
+        self.card_in_zone(card_id, PlayerCardZone::Battlefield)
     }
 
     pub fn battlefield_card_mut(&mut self, card_id: &CardInstanceId) -> Option<&mut CardInstance> {
-        self.battlefield_contains(card_id)
-            .then(|| self.cards.get_mut(card_id))
-            .flatten()
+        self.card_in_zone_mut(card_id, PlayerCardZone::Battlefield)
     }
 
     #[must_use]
@@ -507,9 +507,7 @@ impl Player {
 
     #[must_use]
     pub fn graveyard_card(&self, card_id: &CardInstanceId) -> Option<&CardInstance> {
-        self.graveyard_contains(card_id)
-            .then(|| self.cards.get(card_id))
-            .flatten()
+        self.card_in_zone(card_id, PlayerCardZone::Graveyard)
     }
 
     #[must_use]
@@ -520,9 +518,7 @@ impl Player {
 
     #[must_use]
     pub fn exile_card(&self, card_id: &CardInstanceId) -> Option<&CardInstance> {
-        self.exile_contains(card_id)
-            .then(|| self.cards.get(card_id))
-            .flatten()
+        self.card_in_zone(card_id, PlayerCardZone::Exile)
     }
 
     #[must_use]
@@ -821,6 +817,6 @@ mod tests {
         assert_eq!(result, Err(PrepareHandSpellCastError::MissingCard));
         assert_eq!(player.mana(), 1);
         assert_eq!(player.card_zone(&card_id), Some(PlayerCardZone::Hand));
-        assert!(player.cards.get(&card_id).is_some());
+        assert!(player.hand_card(&card_id).is_some());
     }
 }
