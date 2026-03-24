@@ -29,7 +29,7 @@ struct ResolutionContext<'a> {
     players: &'a mut [Player],
     card_locations: &'a AggregateCardLocationIndex,
     terminal_state: &'a mut TerminalState,
-    controller_id: &'a PlayerId,
+    controller_index: usize,
     supported_spell_rules: SupportedSpellRules,
     target: Option<&'a SpellTarget>,
 }
@@ -111,7 +111,7 @@ fn review_state_based_actions(
 fn resolve_target_legality_for_effect(
     players: &[Player],
     card_locations: &AggregateCardLocationIndex,
-    controller_id: &PlayerId,
+    controller_index: usize,
     supported_spell_rules: SupportedSpellRules,
     target: Option<&SpellTarget>,
     missing_profile_message: &str,
@@ -120,7 +120,7 @@ fn resolve_target_legality_for_effect(
         TargetLegalityContext::Resolution {
             players,
             card_locations,
-            controller_id,
+            actor_index: controller_index,
         },
         supported_spell_rules.targeting(),
         target,
@@ -173,14 +173,14 @@ fn resolve_exile_target_creature_effect(
     players: &mut [Player],
     terminal_state: &mut TerminalState,
     card_locations: &AggregateCardLocationIndex,
-    controller_id: &PlayerId,
+    controller_index: usize,
     supported_spell_rules: SupportedSpellRules,
     target: Option<&SpellTarget>,
 ) -> Result<SpellResolutionSideEffects, DomainError> {
     let Some(target) = resolve_target_legality_for_effect(
         players,
         card_locations,
-        controller_id,
+        controller_index,
         supported_spell_rules,
         target,
         "exile spell resolved without a targeting profile",
@@ -211,14 +211,14 @@ fn resolve_exile_target_graveyard_card_effect(
     players: &mut [Player],
     terminal_state: &mut TerminalState,
     card_locations: &AggregateCardLocationIndex,
-    controller_id: &PlayerId,
+    controller_index: usize,
     supported_spell_rules: SupportedSpellRules,
     target: Option<&SpellTarget>,
 ) -> Result<SpellResolutionSideEffects, DomainError> {
     let Some(target) = resolve_target_legality_for_effect(
         players,
         card_locations,
-        controller_id,
+        controller_index,
         supported_spell_rules,
         target,
         "graveyard exile spell resolved without a targeting profile",
@@ -251,7 +251,7 @@ fn resolve_pump_target_creature_effect(
     let Some(target) = resolve_target_legality_for_effect(
         context.players,
         context.card_locations,
-        context.controller_id,
+        context.controller_index,
         context.supported_spell_rules,
         context.target,
         "pump spell resolved without a targeting profile",
@@ -292,7 +292,7 @@ fn resolve_targeted_player_life_effect(
     let Some(target) = resolve_target_legality_for_effect(
         context.players,
         context.card_locations,
-        context.controller_id,
+        context.controller_index,
         context.supported_spell_rules,
         context.target,
         missing_profile_message,
@@ -307,12 +307,15 @@ fn resolve_targeted_player_life_effect(
 
     let life_changed = match target {
         SpellTarget::Player(player_id) => {
-            Some(super::super::super::game_effects::adjust_player_life(
-                context.game_id,
-                context.players,
-                &player_id,
-                life_delta,
-            )?)
+            let player_index = helpers::find_player_index(context.players, &player_id)?;
+            Some(
+                super::super::super::game_effects::adjust_player_life_by_index(
+                    context.game_id,
+                    context.players,
+                    player_index,
+                    life_delta,
+                )?,
+            )
         }
         SpellTarget::Creature(_) | SpellTarget::GraveyardCard(_) => None,
     };
@@ -334,7 +337,7 @@ fn resolve_damage_effect(
     let Some(target) = resolve_target_legality_for_effect(
         context.players,
         context.card_locations,
-        context.controller_id,
+        context.controller_index,
         context.supported_spell_rules,
         context.target,
         "damage spell resolved without a targeting profile",
@@ -349,12 +352,15 @@ fn resolve_damage_effect(
 
     let life_changed = match target {
         SpellTarget::Player(player_id) => {
-            Some(super::super::super::game_effects::adjust_player_life(
-                context.game_id,
-                context.players,
-                &player_id,
-                -(damage).cast_signed(),
-            )?)
+            let player_index = helpers::find_player_index(context.players, &player_id)?;
+            Some(
+                super::super::super::game_effects::adjust_player_life_by_index(
+                    context.game_id,
+                    context.players,
+                    player_index,
+                    -(damage).cast_signed(),
+                )?,
+            )
         }
         SpellTarget::Creature(card_id) => {
             apply_damage_to_creature(context.players, context.card_locations, &card_id, damage);
@@ -379,7 +385,7 @@ fn resolve_destroy_target_creature_effect(
     let Some(target) = resolve_target_legality_for_effect(
         context.players,
         context.card_locations,
-        context.controller_id,
+        context.controller_index,
         context.supported_spell_rules,
         context.target,
         "destroy spell resolved without a targeting profile",
@@ -423,6 +429,7 @@ pub(super) fn apply_supported_spell_rules(
     supported_spell_rules: SupportedSpellRules,
     target: Option<&SpellTarget>,
 ) -> Result<SpellResolutionSideEffects, DomainError> {
+    let controller_index = helpers::find_player_index(players, controller_id)?;
     match supported_spell_rules.resolution() {
         SpellResolutionProfile::None => {
             review_state_based_actions(game_id, players, terminal_state)
@@ -433,7 +440,7 @@ pub(super) fn apply_supported_spell_rules(
                 players,
                 card_locations,
                 terminal_state,
-                controller_id,
+                controller_index,
                 supported_spell_rules,
                 target,
             };
@@ -445,7 +452,7 @@ pub(super) fn apply_supported_spell_rules(
                 players,
                 card_locations,
                 terminal_state,
-                controller_id,
+                controller_index,
                 supported_spell_rules,
                 target,
             };
@@ -461,7 +468,7 @@ pub(super) fn apply_supported_spell_rules(
                 players,
                 card_locations,
                 terminal_state,
-                controller_id,
+                controller_index,
                 supported_spell_rules,
                 target,
             };
@@ -477,7 +484,7 @@ pub(super) fn apply_supported_spell_rules(
                 players,
                 card_locations,
                 terminal_state,
-                controller_id,
+                controller_index,
                 supported_spell_rules,
                 target,
             };
@@ -488,7 +495,7 @@ pub(super) fn apply_supported_spell_rules(
             players,
             terminal_state,
             card_locations,
-            controller_id,
+            controller_index,
             supported_spell_rules,
             target,
         ),
@@ -498,7 +505,7 @@ pub(super) fn apply_supported_spell_rules(
                 players,
                 terminal_state,
                 card_locations,
-                controller_id,
+                controller_index,
                 supported_spell_rules,
                 target,
             )
@@ -509,7 +516,7 @@ pub(super) fn apply_supported_spell_rules(
                 players,
                 card_locations,
                 terminal_state,
-                controller_id,
+                controller_index,
                 supported_spell_rules,
                 target,
             };

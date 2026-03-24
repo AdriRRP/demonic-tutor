@@ -28,12 +28,12 @@ pub enum TargetLegalityContext<'a> {
     Cast {
         players: &'a [Player],
         card_locations: &'a AggregateCardLocationIndex,
-        caster_id: &'a PlayerId,
+        actor_index: usize,
     },
     Resolution {
         players: &'a [Player],
         card_locations: &'a AggregateCardLocationIndex,
-        controller_id: &'a PlayerId,
+        actor_index: usize,
     },
 }
 
@@ -55,10 +55,9 @@ impl<'a> TargetLegalityContext<'a> {
     }
 
     #[must_use]
-    pub const fn actor_id(self) -> &'a PlayerId {
+    pub const fn actor_index(self) -> usize {
         match self {
-            Self::Cast { caster_id, .. } => caster_id,
-            Self::Resolution { controller_id, .. } => controller_id,
+            Self::Cast { actor_index, .. } | Self::Resolution { actor_index, .. } => actor_index,
         }
     }
 }
@@ -91,13 +90,11 @@ fn resolve_target(
 ) -> Result<ResolvedTarget, SpellTargetLegality> {
     let players = context.players();
     let card_locations = context.card_locations();
-    let actor_id = context.actor_id();
+    let actor_index = context.actor_index();
 
     if !accepts_target(targeting, target) {
         return Err(SpellTargetLegality::IllegalTargetKind);
     }
-
-    let actor_index = helpers::find_player_index(players, actor_id).ok();
 
     match target {
         SpellTarget::Player(player_id) => {
@@ -106,7 +103,9 @@ fn resolve_target(
             };
 
             Ok(ResolvedTarget::Player {
-                is_actor: target_player.id() == actor_id,
+                is_actor: players
+                    .get(actor_index)
+                    .is_some_and(|actor| target_player.id() == actor.id()),
             })
         }
         SpellTarget::Creature(card_id) => {
@@ -117,7 +116,7 @@ fn resolve_target(
             };
 
             Ok(ResolvedTarget::Creature {
-                is_actor: actor_index.is_some_and(|index| target_creature.owner_index() == index),
+                is_actor: target_creature.owner_index() == actor_index,
                 is_attacking: target_creature.card().is_attacking(),
                 is_blocking: target_creature.card().is_blocking(),
             })

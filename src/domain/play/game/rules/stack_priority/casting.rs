@@ -76,7 +76,7 @@ fn require_cast_timing(
 fn validate_spell_target(
     players: &[crate::domain::play::game::Player],
     card_locations: &crate::domain::play::game::AggregateCardLocationIndex,
-    caster_id: &PlayerId,
+    caster_index: usize,
     card_id: &CardInstanceId,
     supported_spell_rules: SupportedSpellRules,
     target: Option<&SpellTarget>,
@@ -86,7 +86,7 @@ fn validate_spell_target(
         TargetLegalityContext::Cast {
             players,
             card_locations,
-            caster_id,
+            actor_index: caster_index,
         },
         targeting,
         target,
@@ -230,7 +230,7 @@ pub fn cast_spell(
     validate_spell_target(
         players,
         card_locations,
-        &player_id,
+        player_idx,
         &card_id,
         supported_spell_rules,
         target.as_ref(),
