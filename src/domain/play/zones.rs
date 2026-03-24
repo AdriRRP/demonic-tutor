@@ -14,6 +14,33 @@ struct IndexedOrderedZone {
 }
 
 impl IndexedOrderedZone {
+    fn compact(&mut self) {
+        let mut next_handles = Vec::with_capacity(self.len);
+        let mut next_positions = HashMap::with_capacity(self.len);
+
+        for handle in self.handles.iter().flatten().copied() {
+            let index = next_handles.len();
+            next_positions.insert(handle, index);
+            next_handles.push(Some(handle));
+        }
+
+        self.handles = next_handles;
+        self.positions = next_positions;
+    }
+
+    fn compact_if_sparse(&mut self) {
+        if self.len == 0 {
+            self.handles.clear();
+            self.positions.clear();
+            return;
+        }
+
+        let tombstones = self.handles.len().saturating_sub(self.len);
+        if tombstones >= self.len {
+            self.compact();
+        }
+    }
+
     fn receive_many(&mut self, handles: Vec<PlayerCardHandle>) {
         for handle in handles {
             self.push(handle);
@@ -60,6 +87,7 @@ impl IndexedOrderedZone {
         let index = self.positions.remove(&handle)?;
         let removed = self.handles.get_mut(index)?.take()?;
         self.len -= 1;
+        self.compact_if_sparse();
         Some(removed)
     }
 }
