@@ -211,6 +211,24 @@ impl PlayerCardArena {
             .map(|owned| &mut owned.card)
     }
 
+    fn begin_remove_by_handle(&mut self, handle: PlayerCardHandle) -> Option<PlayerOwnedCard> {
+        self.cards.get_mut(handle.index())?.take()
+    }
+
+    fn commit_removed(&mut self, handle: PlayerCardHandle, card_id: &CardInstanceId) {
+        self.id_to_handle.remove(card_id);
+        self.free_slots.push(handle.index());
+    }
+
+    fn rollback_remove(&mut self, handle: PlayerCardHandle, owned: PlayerOwnedCard) -> Option<()> {
+        let slot = self.cards.get_mut(handle.index())?;
+        if slot.is_some() {
+            return None;
+        }
+        *slot = Some(owned);
+        Some(())
+    }
+
     fn zone_by_handle(&self, handle: PlayerCardHandle) -> Option<PlayerCardZone> {
         self.cards
             .get(handle.index())
@@ -225,9 +243,8 @@ impl PlayerCardArena {
     }
 
     fn remove_by_handle(&mut self, handle: PlayerCardHandle) -> Option<CardInstance> {
-        let owned = self.cards.get_mut(handle.index())?.take()?;
-        self.id_to_handle.remove(owned.card.id());
-        self.free_slots.push(handle.index());
+        let owned = self.begin_remove_by_handle(handle)?;
+        self.commit_removed(handle, owned.card.id());
         Some(owned.card)
     }
 }
@@ -705,14 +722,16 @@ impl Player {
             return Err(PrepareHandSpellCastError::InsufficientMana { available });
         }
 
-        self.hand
-            .remove(handle)
-            .ok_or(PrepareHandSpellCastError::MissingCard)?;
-        let payload = self
+        let owned = self
             .cards
-            .remove_by_handle(handle)
-            .ok_or(PrepareHandSpellCastError::MissingCard)?
-            .into_spell_payload();
+            .begin_remove_by_handle(handle)
+            .ok_or(PrepareHandSpellCastError::MissingCard)?;
+        if self.hand.remove(handle).is_none() {
+            let _ = self.cards.rollback_remove(handle, owned);
+            return Err(PrepareHandSpellCastError::MissingCard);
+        }
+        self.cards.commit_removed(handle, owned.card.id());
+        let payload = owned.card.into_spell_payload();
         self.mana = next_mana;
 
         Ok(PreparedHandSpellCast {
@@ -720,20 +739,19 @@ impl Player {
             payload,
         })
     }
-
-    pub fn adjust_life(&mut self, delta: i32) {
+    pub const fn adjust_life(&mut self, delta: i32) {
         self.life = self.life.saturating_add_signed(delta);
     }
 
-    pub fn add_mana(&mut self, amount: u32) {
+    pub const fn add_mana(&mut self, amount: u32) {
         self.mana.add_generic(amount);
     }
 
-    pub fn add_colored_mana(&mut self, color: ManaColor, amount: u32) {
+    pub const fn add_colored_mana(&mut self, color: ManaColor, amount: u32) {
         self.mana.add_colored(color, amount);
     }
 
-    pub fn clear_mana(&mut self) {
+    pub const fn clear_mana(&mut self) {
         self.mana.clear();
     }
 
@@ -745,19 +763,55 @@ impl Player {
         self.mana.spend(cost)
     }
 
-    pub fn record_land_played(&mut self) {
+    pub const fn record_land_played(&mut self) {
         self.lands_played_this_turn += 1;
     }
 
-    pub fn reset_lands_played(&mut self) {
+    pub const fn reset_lands_played(&mut self) {
         self.lands_played_this_turn = 0;
     }
 
-    pub fn use_mulligan(&mut self) {
+    pub const fn use_mulligan(&mut self) {
         self.mulligan_used = true;
     }
 
-    pub fn reset_mulligan(&mut self) {
+    pub const fn reset_mulligan(&mut self) {
         self.mulligan_used = false;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use {
+        super::{ManaCost, Player, PlayerCardZone, PrepareHandSpellCastError},
+        crate::domain::play::cards::CardInstance,
+        crate::domain::play::ids::{CardDefinitionId, CardInstanceId, PlayerId},
+    };
+
+    #[test]
+    fn prepare_hand_spell_cast_rolls_back_arena_state_when_hand_and_arena_are_desynchronized() {
+        let player_id = PlayerId::new("player-a");
+        let card_id = CardInstanceId::new("card-a");
+        let mut player = Player::new(player_id);
+        player.receive_hand_cards(vec![CardInstance::new(
+            card_id.clone(),
+            CardDefinitionId::new("definition-a"),
+            crate::domain::play::cards::CardType::Instant,
+            1,
+        )]);
+        player.add_mana(1);
+
+        let handle = player.handle_in_zone(&card_id, PlayerCardZone::Hand);
+        assert!(handle.is_some());
+        let Some(handle) = handle else { return };
+        let removed_handle = player.hand.remove(handle);
+        assert_eq!(removed_handle, Some(handle));
+
+        let result = player.prepare_hand_spell_cast(&card_id, 1, ManaCost::generic(1));
+
+        assert_eq!(result, Err(PrepareHandSpellCastError::MissingCard));
+        assert_eq!(player.mana(), 1);
+        assert_eq!(player.card_zone(&card_id), Some(PlayerCardZone::Hand));
+        assert!(player.cards.get(&card_id).is_some());
     }
 }

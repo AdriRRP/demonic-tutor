@@ -8,7 +8,6 @@ The backlog is intentionally organized by dependency order when active.
 
 Directory: `engine-audit-v7/`
 
-1. `engine-audit-v7/make-hand-to-stack-commit-truly-indivisible.md`
 1. `engine-audit-v7/introduce-fully-handle-first-player-runtime-identity.md`
 1. `engine-audit-v7/separate-stack-spell-definition-from-in-flight-payload.md`
 1. `engine-audit-v7/remove-derived-spell-metadata-from-resolution-carriers.md`
