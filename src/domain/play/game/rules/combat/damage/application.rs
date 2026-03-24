@@ -1,3 +1,5 @@
+//! Supports combat damage application.
+
 use crate::domain::play::{
     game::{helpers, model::Player},
     ids::CardInstanceId,

@@ -1,3 +1,5 @@
+//! Supports combat damage participants.
+
 use crate::domain::play::{
     errors::{DomainError, GameError},
     game::model::Player,

@@ -7,6 +7,8 @@
 #![allow(clippy::unreachable)]
 #![allow(clippy::unwrap_used)]
 
+//! Test support for BDD test entrypoints.
+
 #[path = "bdd/abilities.rs"]
 mod abilities;
 #[path = "bdd/cleanup.rs"]

@@ -1,5 +1,9 @@
-use crate::domain::play::cards::ManaColor;
-use crate::domain::play::ids::{CardInstanceId, GameId, PlayerId};
+//! Supports play events resource actions.
+
+use {
+    crate::domain::play::cards::ManaColor,
+    crate::domain::play::ids::{CardInstanceId, GameId, PlayerId},
+};
 
 #[derive(Debug, Clone)]
 pub struct LandPlayed {

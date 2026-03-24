@@ -1,7 +1,11 @@
-use crate::domain::play::cards::{CardInstance, ManaColor, ManaCost};
-use crate::domain::play::ids::{CardDefinitionId, CardInstanceId, PlayerId};
-use crate::domain::play::zones::{Battlefield, Exile, Graveyard, Hand, Library};
-use std::collections::HashMap;
+//! Supports game model player.
+
+use {
+    crate::domain::play::cards::{CardInstance, ManaColor, ManaCost},
+    crate::domain::play::ids::{CardDefinitionId, CardInstanceId, PlayerId},
+    crate::domain::play::zones::{Battlefield, Exile, Graveyard, Hand, Library},
+    std::collections::HashMap,
+};
 
 const DEFAULT_STARTING_LIFE: u32 = 20;
 pub const OPENING_HAND_SIZE: usize = 7;

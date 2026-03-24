@@ -1,15 +1,19 @@
-use super::{
-    super::{helpers, invariants, model::Player, TerminalState},
-    game_effects,
-    state_based_actions::{self, StateBasedActionsResult},
-};
-use crate::domain::play::{
-    cards::CardType,
-    commands::{AdjustPlayerLifeEffectCommand, PlayLandCommand, TapLandCommand},
-    errors::{CardError, DomainError, PhaseError},
-    events::{CreatureDied, GameEnded, LandPlayed, LandTapped, LifeChanged, ManaAdded},
-    ids::{GameId, PlayerId},
-    phase::Phase,
+//! Supports game rules resource actions.
+
+use {
+    super::{
+        super::{helpers, invariants, model::Player, TerminalState},
+        game_effects,
+        state_based_actions::{self, StateBasedActionsResult},
+    },
+    crate::domain::play::{
+        cards::CardType,
+        commands::{AdjustPlayerLifeEffectCommand, PlayLandCommand, TapLandCommand},
+        errors::{CardError, DomainError, PhaseError},
+        events::{CreatureDied, GameEnded, LandPlayed, LandTapped, LifeChanged, ManaAdded},
+        ids::{GameId, PlayerId},
+        phase::Phase,
+    },
 };
 
 #[derive(Debug, Clone)]

@@ -1,3 +1,5 @@
+//! Supports rules stack priority spell effects.
+
 use crate::domain::play::{
     cards::{CardInstance, SpellTargetingProfile, SupportedSpellRules},
     game::{helpers, Player, SpellTarget},

@@ -1,3 +1,5 @@
+//! Supports application.
+
 pub mod game_service;
 pub mod ports;
 

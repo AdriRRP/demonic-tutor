@@ -1,11 +1,15 @@
-use super::{common::DomainEvents, GameService};
-use crate::{
-    application::{EventBus, EventStore},
-    domain::play::{
-        commands::{AdvanceTurnCommand, DiscardForCleanupCommand, DrawCardsEffectCommand},
-        errors::DomainError,
-        events::{CardDiscarded, DomainEvent},
-        game::{AdvanceTurnOutcome, DrawCardsEffectOutcome, Game},
+//! Supports application game service turn flow.
+
+use {
+    super::{common::DomainEvents, GameService},
+    crate::{
+        application::{EventBus, EventStore},
+        domain::play::{
+            commands::{AdvanceTurnCommand, DiscardForCleanupCommand, DrawCardsEffectCommand},
+            errors::DomainError,
+            events::{CardDiscarded, DomainEvent},
+            game::{AdvanceTurnOutcome, DrawCardsEffectOutcome, Game},
+        },
     },
 };
 

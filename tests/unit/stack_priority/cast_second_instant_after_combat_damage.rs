@@ -1,12 +1,16 @@
 #![allow(clippy::unwrap_used)]
 
-use crate::support::{
-    advance_to_player_first_main_satisfying_cleanup, close_empty_priority_window, filled_library,
-    instant_card, resolve_top_stack_with_passes, setup_two_player_game,
-};
-use demonictutor::{
-    CardDefinitionId, CardInstanceId, CastSpellCommand, DeclareAttackersCommand, LibraryCard,
-    Phase, PlayerId, ResolveCombatDamageCommand,
+//! Unit coverage for unit stack priority cast second instant after combat damage.
+
+use {
+    crate::support::{
+        advance_to_player_first_main_satisfying_cleanup, close_empty_priority_window,
+        filled_library, instant_card, resolve_top_stack_with_passes, setup_two_player_game,
+    },
+    demonictutor::{
+        CardDefinitionId, CardInstanceId, CastSpellCommand, DeclareAttackersCommand, LibraryCard,
+        Phase, PlayerId, ResolveCombatDamageCommand,
+    },
 };
 
 #[test]

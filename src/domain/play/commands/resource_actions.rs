@@ -1,3 +1,5 @@
+//! Supports play commands resource actions.
+
 use crate::domain::play::ids::{CardInstanceId, PlayerId};
 
 #[derive(Debug, Clone)]

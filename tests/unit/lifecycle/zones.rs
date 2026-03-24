@@ -1,8 +1,12 @@
 #![allow(clippy::panic)]
 #![allow(clippy::unwrap_used)]
 
-use crate::support::{self};
-use demonictutor::{ExileCardCommand, PlayerId};
+//! Unit coverage for unit lifecycle zones.
+
+use {
+    crate::support::{self},
+    demonictutor::{ExileCardCommand, PlayerId},
+};
 
 #[test]
 fn test_exile_from_battlefield() {

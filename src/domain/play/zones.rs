@@ -1,3 +1,5 @@
+//! Supports domain play zones.
+
 use {
     crate::domain::play::ids::CardInstanceId,
     rand::seq::SliceRandom,

@@ -1,8 +1,12 @@
-use super::{
-    ActivatedAbilityProfile, ActivatedManaAbilityProfile, CardType, CastingPermissionProfile,
-    CastingRule, ManaColor, ManaCost, SupportedSpellRules,
+//! Supports play cards definition.
+
+use {
+    super::{
+        ActivatedAbilityProfile, ActivatedManaAbilityProfile, CardType, CastingPermissionProfile,
+        CastingRule, ManaColor, ManaCost, SupportedSpellRules,
+    },
+    crate::domain::play::ids::CardDefinitionId,
 };
-use crate::domain::play::ids::CardDefinitionId;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CardDefinition {

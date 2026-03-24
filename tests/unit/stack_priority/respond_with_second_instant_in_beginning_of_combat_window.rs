@@ -1,7 +1,11 @@
 #![allow(clippy::unwrap_used)]
 
-use crate::support::{filled_library, instant_card, setup_two_player_game};
-use demonictutor::{CardInstanceId, CastSpellCommand, Phase, PlayerId};
+//! Unit coverage for unit stack priority respond with second instant in beginning of combat window.
+
+use {
+    crate::support::{filled_library, instant_card, setup_two_player_game},
+    demonictutor::{CardInstanceId, CastSpellCommand, Phase, PlayerId},
+};
 
 #[test]
 fn responding_player_can_cast_a_second_instant_before_passing_at_beginning_of_combat() {

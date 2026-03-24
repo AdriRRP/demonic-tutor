@@ -1,17 +1,21 @@
 #![allow(clippy::panic)]
 #![allow(clippy::unwrap_used)]
 
-use crate::support::{
-    advance_to_first_main_satisfying_cleanup, advance_to_player_first_main_satisfying_cleanup,
-    artifact_card, double_green_instant_card, filled_library, forest_card, green_instant_card,
-    instant_card, land_card, mixed_green_instant_card, mountain_card, plains_card,
-    setup_two_player_game, vanilla_creature,
-};
-use demonictutor::{
-    domain::play::game::{Player, TerminalState},
-    CardDefinitionId, CardError, CardInstance, CardInstanceId, CardType, CastSpellCommand,
-    DomainError, Game, GameError, GameId, LibraryCard, Phase, PlayLandCommand, PlayerId,
-    SpellCastOutcome, TapLandCommand,
+//! Unit coverage for unit resource actions cast spell.
+
+use {
+    crate::support::{
+        advance_to_first_main_satisfying_cleanup, advance_to_player_first_main_satisfying_cleanup,
+        artifact_card, double_green_instant_card, filled_library, forest_card, green_instant_card,
+        instant_card, land_card, mixed_green_instant_card, mountain_card, plains_card,
+        setup_two_player_game, vanilla_creature,
+    },
+    demonictutor::{
+        domain::play::game::{Player, TerminalState},
+        CardDefinitionId, CardError, CardInstance, CardInstanceId, CardType, CastSpellCommand,
+        DomainError, Game, GameError, GameId, LibraryCard, Phase, PlayLandCommand, PlayerId,
+        SpellCastOutcome, TapLandCommand,
+    },
 };
 
 fn resolve_current_stack(

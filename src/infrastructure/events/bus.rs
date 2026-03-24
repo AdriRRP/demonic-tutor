@@ -1,3 +1,5 @@
+//! Supports infrastructure events bus.
+
 use {
     crate::{application::EventBus, domain::play::events::DomainEvent},
     std::sync::Arc,

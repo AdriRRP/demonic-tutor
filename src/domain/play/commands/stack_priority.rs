@@ -1,3 +1,5 @@
+//! Supports play commands stack priority.
+
 use crate::domain::play::{
     game::SpellTarget,
     ids::{CardInstanceId, PlayerId},

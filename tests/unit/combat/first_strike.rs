@@ -1,8 +1,12 @@
 #![allow(clippy::expect_used)]
 
-use crate::support;
-use demonictutor::{
-    CastSpellCommand, DeclareAttackersCommand, DeclareBlockersCommand, KeywordAbility, PlayerId,
+//! Unit coverage for unit combat first strike.
+
+use {
+    crate::support,
+    demonictutor::{
+        CastSpellCommand, DeclareAttackersCommand, DeclareBlockersCommand, KeywordAbility, PlayerId,
+    },
 };
 
 #[test]

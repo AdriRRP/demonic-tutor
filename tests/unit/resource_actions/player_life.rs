@@ -1,6 +1,8 @@
 #![allow(clippy::panic)]
 #![allow(clippy::unwrap_used)]
 
+//! Unit coverage for unit resource actions player life.
+
 use demonictutor::{
     domain::play::game::{Player, TerminalState},
     AdjustPlayerLifeEffectCommand, CardDefinitionId, CardInstance, CardInstanceId, DeckId,

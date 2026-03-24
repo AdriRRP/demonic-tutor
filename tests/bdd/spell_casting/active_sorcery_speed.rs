@@ -1,7 +1,10 @@
-use cucumber::{given, when};
-use demonictutor::Phase;
+//! BDD coverage for bdd spell casting active sorcery speed.
 
-use crate::world::GameplayWorld;
+use {
+    crate::world::GameplayWorld,
+    cucumber::{given, when},
+    demonictutor::Phase,
+};
 
 #[given("Alice is the active player in SecondMain with a creature card in hand and priority")]
 fn alice_is_the_active_player_in_second_main_with_a_creature_card_in_hand_and_priority(

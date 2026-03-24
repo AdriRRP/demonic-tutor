@@ -1,7 +1,11 @@
-use super::super::{helpers, model::Player, TerminalState};
-use crate::domain::play::{
-    events::{CreatureDied, GameEndReason, GameEnded},
-    ids::GameId,
+//! Supports game rules state based actions.
+
+use {
+    super::super::{helpers, model::Player, TerminalState},
+    crate::domain::play::{
+        events::{CreatureDied, GameEndReason, GameEnded},
+        ids::GameId,
+    },
 };
 
 #[derive(Debug, Clone)]

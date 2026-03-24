@@ -1,13 +1,18 @@
 #![allow(clippy::unwrap_used)]
 #![allow(clippy::expect_used)]
 
-use crate::support::{
-    advance_to_player_first_main_satisfying_cleanup, advance_turn_raw, cast_spell_and_resolve,
-    close_empty_priority_window, filled_library, setup_two_player_game,
-};
-use demonictutor::{
-    CardDefinitionId, CardError, CardInstanceId, DeclareAttackersCommand, DeclareBlockersCommand,
-    DomainError, GameError, LibraryCard, PlayerId, ResolveCombatDamageCommand,
+//! Unit coverage for unit combat declare blockers.
+
+use {
+    crate::support::{
+        advance_to_player_first_main_satisfying_cleanup, advance_turn_raw, cast_spell_and_resolve,
+        close_empty_priority_window, filled_library, setup_two_player_game,
+    },
+    demonictutor::{
+        CardDefinitionId, CardError, CardInstanceId, DeclareAttackersCommand,
+        DeclareBlockersCommand, DomainError, GameError, LibraryCard, PlayerId,
+        ResolveCombatDamageCommand,
+    },
 };
 
 #[test]

@@ -1,3 +1,5 @@
+//! Supports game rules turn flow.
+
 mod cleanup;
 mod draw_effects;
 mod phase_behavior;

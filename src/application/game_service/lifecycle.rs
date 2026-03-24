@@ -1,11 +1,15 @@
-use super::GameService;
-use crate::{
-    application::{EventBus, EventStore},
-    domain::play::{
-        commands::{DealOpeningHandsCommand, MulliganCommand, StartGameCommand},
-        errors::DomainError,
-        events::{GameStarted, MulliganTaken, OpeningHandDealt},
-        game::Game,
+//! Supports application game service lifecycle.
+
+use {
+    super::GameService,
+    crate::{
+        application::{EventBus, EventStore},
+        domain::play::{
+            commands::{DealOpeningHandsCommand, MulliganCommand, StartGameCommand},
+            errors::DomainError,
+            events::{GameStarted, MulliganTaken, OpeningHandDealt},
+            game::Game,
+        },
     },
 };
 

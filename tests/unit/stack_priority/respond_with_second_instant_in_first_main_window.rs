@@ -1,9 +1,14 @@
 #![allow(clippy::unwrap_used)]
 
-use crate::support::{
-    advance_to_first_main_satisfying_cleanup, filled_library, instant_card, setup_two_player_game,
+//! Unit coverage for unit stack priority respond with second instant in first main window.
+
+use {
+    crate::support::{
+        advance_to_first_main_satisfying_cleanup, filled_library, instant_card,
+        setup_two_player_game,
+    },
+    demonictutor::{CardInstanceId, CastSpellCommand, Phase, PlayerId},
 };
-use demonictutor::{CardInstanceId, CastSpellCommand, Phase, PlayerId};
 
 #[test]
 fn responding_player_can_cast_a_second_instant_before_passing_in_first_main() {

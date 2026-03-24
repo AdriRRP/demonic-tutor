@@ -1,3 +1,5 @@
+//! Supports rules turn flow draw effects.
+
 use crate::domain::play::{
     commands::DrawCardsEffectCommand,
     errors::{DomainError, GameError},

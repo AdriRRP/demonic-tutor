@@ -1,3 +1,5 @@
+//! Supports infrastructure events.
+
 pub mod bus;
 pub mod store;
 

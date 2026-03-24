@@ -1,16 +1,20 @@
-use super::super::{
-    model::{Player, OPENING_HAND_SIZE},
-    Game, TerminalState,
+//! Supports game rules lifecycle.
+
+use {
+    super::super::{
+        model::{Player, OPENING_HAND_SIZE},
+        Game, TerminalState,
+    },
+    crate::domain::play::{
+        cards::CardInstance,
+        commands::{DealOpeningHandsCommand, MulliganCommand, PlayerLibrary, StartGameCommand},
+        errors::{DomainError, GameError, PlayerError},
+        events::{GameStarted, MulliganTaken, OpeningHandDealt},
+        ids::{CardInstanceId, GameId, PlayerId},
+        phase::Phase,
+    },
+    std::collections::HashSet,
 };
-use crate::domain::play::{
-    cards::CardInstance,
-    commands::{DealOpeningHandsCommand, MulliganCommand, PlayerLibrary, StartGameCommand},
-    errors::{DomainError, GameError, PlayerError},
-    events::{GameStarted, MulliganTaken, OpeningHandDealt},
-    ids::{CardInstanceId, GameId, PlayerId},
-    phase::Phase,
-};
-use std::collections::HashSet;
 
 type RuntimeLibrary = (PlayerId, Vec<CardInstance>);
 

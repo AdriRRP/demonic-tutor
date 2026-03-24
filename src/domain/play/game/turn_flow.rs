@@ -1,10 +1,14 @@
-use super::{invariants, rules, Game, TurnProgressionContext};
-use crate::domain::play::{
-    commands::{
-        AdvanceTurnCommand, DiscardForCleanupCommand, DrawCardsEffectCommand, ExileCardCommand,
+//! Supports play game turn flow.
+
+use {
+    super::{invariants, rules, Game, TurnProgressionContext},
+    crate::domain::play::{
+        commands::{
+            AdvanceTurnCommand, DiscardForCleanupCommand, DrawCardsEffectCommand, ExileCardCommand,
+        },
+        errors::DomainError,
+        events::{CardDiscarded, CardExiled},
     },
-    errors::DomainError,
-    events::{CardDiscarded, CardExiled},
 };
 
 impl Game {

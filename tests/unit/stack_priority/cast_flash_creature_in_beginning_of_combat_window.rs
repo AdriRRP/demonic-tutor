@@ -1,10 +1,14 @@
 #![allow(clippy::unwrap_used)]
 
-use crate::support::{
-    advance_to_phase_satisfying_cleanup, close_empty_priority_window, filled_library,
-    flash_creature_card, setup_two_player_game,
+//! Unit coverage for unit stack priority cast flash creature in beginning of combat window.
+
+use {
+    crate::support::{
+        advance_to_phase_satisfying_cleanup, close_empty_priority_window, filled_library,
+        flash_creature_card, setup_two_player_game,
+    },
+    demonictutor::{AdvanceTurnCommand, CardInstanceId, CastSpellCommand, Phase, PlayerId},
 };
-use demonictutor::{AdvanceTurnCommand, CardInstanceId, CastSpellCommand, Phase, PlayerId};
 
 #[test]
 fn active_player_can_cast_a_flash_creature_at_beginning_of_combat() {

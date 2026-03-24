@@ -1,12 +1,16 @@
 #![allow(clippy::unwrap_used)]
 
-use crate::support::{
-    advance_n_raw, advance_to_player_first_main_satisfying_cleanup, filled_library, land_card,
-    setup_two_player_game, vanilla_creature,
-};
-use demonictutor::{
-    CardInstanceId, DomainError, DrawCardsEffectCommand, DrawCardsEffectOutcome, GameEndReason,
-    GameError, Phase, PlayLandCommand, PlayerId,
+//! Unit coverage for unit turn flow draw card.
+
+use {
+    crate::support::{
+        advance_n_raw, advance_to_player_first_main_satisfying_cleanup, filled_library, land_card,
+        setup_two_player_game, vanilla_creature,
+    },
+    demonictutor::{
+        CardInstanceId, DomainError, DrawCardsEffectCommand, DrawCardsEffectOutcome, GameEndReason,
+        GameError, Phase, PlayLandCommand, PlayerId,
+    },
 };
 
 fn create_game_with_library_cards() -> demonictutor::Game {

@@ -1,13 +1,17 @@
 #![allow(clippy::unwrap_used)]
 
-use crate::support::{
-    advance_to_player_first_main_satisfying_cleanup, close_empty_priority_window, filled_library,
-    resolve_top_stack_with_passes, setup_two_player_game,
-    targeted_opponents_blocking_creature_damage_instant_card,
-};
-use demonictutor::{
-    CardDefinitionId, CardInstanceId, CastSpellCommand, DeclareAttackersCommand,
-    DeclareBlockersCommand, LibraryCard, Phase, PlayerId, SpellTarget,
+//! Unit coverage for unit stack priority nonlethal opponents blocking target damage.
+
+use {
+    crate::support::{
+        advance_to_player_first_main_satisfying_cleanup, close_empty_priority_window,
+        filled_library, resolve_top_stack_with_passes, setup_two_player_game,
+        targeted_opponents_blocking_creature_damage_instant_card,
+    },
+    demonictutor::{
+        CardDefinitionId, CardInstanceId, CastSpellCommand, DeclareAttackersCommand,
+        DeclareBlockersCommand, LibraryCard, Phase, PlayerId, SpellTarget,
+    },
 };
 
 fn hand_card_id_by_definition(

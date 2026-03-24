@@ -1,11 +1,15 @@
 #![allow(clippy::expect_used)]
 #![allow(clippy::unwrap_used)]
 
-use crate::support::{
-    filled_library, instant_card, pass_priority_to_non_active_player_in_end_of_combat,
-    setup_two_player_game, vanilla_creature,
+//! Unit coverage for unit stack priority respond with second instant in end of combat window.
+
+use {
+    crate::support::{
+        filled_library, instant_card, pass_priority_to_non_active_player_in_end_of_combat,
+        setup_two_player_game, vanilla_creature,
+    },
+    demonictutor::{CardDefinitionId, CastSpellCommand, LibraryCard, Phase, PlayerId},
 };
-use demonictutor::{CardDefinitionId, CastSpellCommand, LibraryCard, Phase, PlayerId};
 
 #[test]
 fn responding_player_can_cast_a_second_instant_before_passing_in_end_of_combat() {

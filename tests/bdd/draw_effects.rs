@@ -1,6 +1,9 @@
-use cucumber::{given, then, when};
+//! BDD coverage for bdd draw effects.
 
-use crate::world::GameplayWorld;
+use {
+    crate::world::GameplayWorld,
+    cucumber::{given, then, when},
+};
 
 #[given("Alice is the active player in FirstMain with at least two cards in her library for an explicit draw effect")]
 fn alice_is_in_first_main_with_two_cards_for_explicit_draw(world: &mut GameplayWorld) {

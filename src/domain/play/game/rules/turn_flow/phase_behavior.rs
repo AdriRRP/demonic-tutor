@@ -1,8 +1,12 @@
-use crate::domain::play::game::{
-    helpers,
-    model::{Player, MAX_HAND_SIZE},
+//! Supports rules turn flow phase behavior.
+
+use {
+    crate::domain::play::game::{
+        helpers,
+        model::{Player, MAX_HAND_SIZE},
+    },
+    crate::domain::play::{errors::DomainError, ids::PlayerId, phase::Phase},
 };
-use crate::domain::play::{errors::DomainError, ids::PlayerId, phase::Phase};
 
 pub(super) trait PhaseBehavior {
     fn next_phase(&self) -> Phase;

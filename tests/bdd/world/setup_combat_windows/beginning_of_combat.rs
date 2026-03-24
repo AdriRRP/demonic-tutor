@@ -1,6 +1,6 @@
-use super::super::support;
-use super::super::GameplayWorld;
-use demonictutor::Phase;
+//! BDD coverage for world setup combat windows beginning of combat.
+
+use {super::super::support, super::super::GameplayWorld, demonictutor::Phase};
 
 impl GameplayWorld {
     pub fn setup_priority_when_entering_combat(&mut self) {

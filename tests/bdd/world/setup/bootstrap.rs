@@ -1,6 +1,10 @@
-use super::super::support;
-use super::super::GameplayWorld;
-use demonictutor::{DiscardForCleanupCommand, GameId, Phase, StartGameCommand};
+//! BDD coverage for world setup bootstrap.
+
+use {
+    super::super::support,
+    super::super::GameplayWorld,
+    demonictutor::{DiscardForCleanupCommand, GameId, Phase, StartGameCommand},
+};
 
 impl GameplayWorld {
     pub fn setup_started_game(&mut self, game_id: &str) {

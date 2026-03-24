@@ -1,3 +1,5 @@
+//! Supports play commands turn flow.
+
 use crate::domain::play::ids::{CardInstanceId, PlayerId};
 
 #[derive(Debug, Clone, Default)]

@@ -1,3 +1,5 @@
+//! Supports play commands zones.
+
 use crate::domain::play::ids::{CardInstanceId, PlayerId};
 
 #[derive(Debug, Clone)]

@@ -1,3 +1,5 @@
+//! Supports play cards keywords.
+
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum KeywordAbility {

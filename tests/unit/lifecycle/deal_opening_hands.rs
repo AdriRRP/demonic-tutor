@@ -1,7 +1,11 @@
 #![allow(clippy::unwrap_used)]
 
-use crate::support::{create_service, creature_library};
-use demonictutor::{CardDefinitionId, CardType, DomainError, GameError, LibraryCard};
+//! Unit coverage for unit lifecycle deal opening hands.
+
+use {
+    crate::support::{create_service, creature_library},
+    demonictutor::{CardDefinitionId, CardType, DomainError, GameError, LibraryCard},
+};
 
 #[test]
 fn deal_opening_hands_moves_cards_to_hand() {

@@ -1,6 +1,6 @@
-use super::super::support;
-use super::super::GameplayWorld;
-use demonictutor::ActivateAbilityCommand;
+//! BDD coverage for world actions activated abilities.
+
+use {super::super::support, super::super::GameplayWorld, demonictutor::ActivateAbilityCommand};
 
 impl GameplayWorld {
     pub fn activate_tracked_ability(&mut self, alias: &str) {

@@ -1,11 +1,15 @@
-use super::{common::DomainEvents, GameService};
-use crate::{
-    application::{EventBus, EventStore},
-    domain::play::{
-        commands::{ActivateAbilityCommand, CastSpellCommand, PassPriorityCommand},
-        errors::DomainError,
-        events::DomainEvent,
-        game::{ActivateAbilityOutcome, CastSpellOutcome, Game, PassPriorityOutcome},
+//! Supports application game service stack.
+
+use {
+    super::{common::DomainEvents, GameService},
+    crate::{
+        application::{EventBus, EventStore},
+        domain::play::{
+            commands::{ActivateAbilityCommand, CastSpellCommand, PassPriorityCommand},
+            errors::DomainError,
+            events::DomainEvent,
+            game::{ActivateAbilityOutcome, CastSpellOutcome, Game, PassPriorityOutcome},
+        },
     },
 };
 

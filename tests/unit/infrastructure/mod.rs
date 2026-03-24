@@ -1,6 +1,8 @@
 #![allow(clippy::unwrap_used)]
 #![allow(clippy::significant_drop_tightening)]
 
+//! Unit coverage for unit infrastructure.
+
 use demonictutor::{
     CardDiscarded, CardDrawn, CardInstanceId, CardType, CreatureDied, DiscardKind, DomainEvent,
     DrawKind, EventBus, EventStore, GameEndReason, GameEnded, GameId, GameLogProjection,

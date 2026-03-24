@@ -1,10 +1,15 @@
 #![allow(clippy::unwrap_used)]
 
-use crate::support::{
-    advance_to_first_main_satisfying_cleanup, filled_library, setup_two_player_game, sorcery_card,
-};
-use demonictutor::{
-    CardInstanceId, CastSpellCommand, DomainError, GameError, PassPriorityCommand, PlayerId,
+//! Unit coverage for unit stack priority reject sorcery response.
+
+use {
+    crate::support::{
+        advance_to_first_main_satisfying_cleanup, filled_library, setup_two_player_game,
+        sorcery_card,
+    },
+    demonictutor::{
+        CardInstanceId, CastSpellCommand, DomainError, GameError, PassPriorityCommand, PlayerId,
+    },
 };
 
 #[test]

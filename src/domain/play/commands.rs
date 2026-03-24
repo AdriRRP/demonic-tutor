@@ -1,3 +1,5 @@
+//! Supports domain play commands.
+
 mod combat;
 mod lifecycle;
 mod resource_actions;

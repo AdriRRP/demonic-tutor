@@ -1,6 +1,10 @@
-use super::super::super::{support, GameplayWorld};
-use super::common::{attacker_card, prepare_priority_after_combat_damage};
-use demonictutor::Phase;
+//! BDD coverage for setup combat windows combat damage active priority.
+
+use {
+    super::super::super::{support, GameplayWorld},
+    super::common::{attacker_card, prepare_priority_after_combat_damage},
+    demonictutor::Phase,
+};
 
 impl GameplayWorld {
     pub fn setup_priority_after_combat_damage_with_instant(&mut self) {

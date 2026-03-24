@@ -1,10 +1,14 @@
-use super::{resolution::resolve_stack_object, PassPriorityOutcome, StackPriorityContext};
-use crate::domain::play::{
-    commands::PassPriorityCommand,
-    errors::{DomainError, GameError},
-    events::PriorityPassed,
-    game::{invariants, model::PriorityState, Player},
-    ids::PlayerId,
+//! Supports rules stack priority passing.
+
+use {
+    super::{resolution::resolve_stack_object, PassPriorityOutcome, StackPriorityContext},
+    crate::domain::play::{
+        commands::PassPriorityCommand,
+        errors::{DomainError, GameError},
+        events::PriorityPassed,
+        game::{invariants, model::PriorityState, Player},
+        ids::PlayerId,
+    },
 };
 
 fn other_player_id(players: &[Player], player_id: &PlayerId) -> Result<PlayerId, DomainError> {

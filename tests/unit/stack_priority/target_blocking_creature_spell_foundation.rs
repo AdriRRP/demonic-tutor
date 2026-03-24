@@ -1,11 +1,15 @@
 #![allow(clippy::unwrap_used)]
 
-use crate::support::{
-    advance_to_first_main_satisfying_cleanup, filled_library, setup_two_player_game,
-    targeted_blocking_creature_damage_instant_card,
-};
-use demonictutor::{
-    CardInstanceId, CastSpellCommand, DomainError, GameError, PlayerId, SpellTarget,
+//! Unit coverage for unit stack priority target blocking creature spell foundation.
+
+use {
+    crate::support::{
+        advance_to_first_main_satisfying_cleanup, filled_library, setup_two_player_game,
+        targeted_blocking_creature_damage_instant_card,
+    },
+    demonictutor::{
+        CardInstanceId, CastSpellCommand, DomainError, GameError, PlayerId, SpellTarget,
+    },
 };
 
 #[test]

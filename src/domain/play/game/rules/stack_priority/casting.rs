@@ -1,22 +1,27 @@
-use super::{
-    spell_effects::{
-        evaluate_target_legality, supported_spell_rules, SpellTargetLegality, TargetLegalityContext,
-    },
-    CastSpellOutcome, StackPriorityContext,
-};
-use crate::domain::play::{
-    cards::{CardType, CastingPermissionProfile, CastingRule, SupportedSpellRules},
-    commands::CastSpellCommand,
-    errors::{CardError, DomainError, GameError, PhaseError},
-    events::SpellPutOnStack,
-    game::{
-        helpers, invariants,
-        model::{
-            PriorityState, SpellOnStack, SpellTarget, StackObject, StackObjectKind, StackZone,
+//! Supports rules stack priority casting.
+
+use {
+    super::{
+        spell_effects::{
+            evaluate_target_legality, supported_spell_rules, SpellTargetLegality,
+            TargetLegalityContext,
         },
+        CastSpellOutcome, StackPriorityContext,
     },
-    ids::{CardInstanceId, PlayerId},
-    phase::Phase,
+    crate::domain::play::{
+        cards::{CardType, CastingPermissionProfile, CastingRule, SupportedSpellRules},
+        commands::CastSpellCommand,
+        errors::{CardError, DomainError, GameError, PhaseError},
+        events::SpellPutOnStack,
+        game::{
+            helpers, invariants,
+            model::{
+                PriorityState, SpellOnStack, SpellTarget, StackObject, StackObjectKind, StackZone,
+            },
+        },
+        ids::{CardInstanceId, PlayerId},
+        phase::Phase,
+    },
 };
 
 fn require_cast_timing(

@@ -1,11 +1,15 @@
-use super::{ActivateAbilityOutcome, StackPriorityContext};
-use crate::domain::play::{
-    commands::ActivateAbilityCommand,
-    errors::{CardError, DomainError},
-    events::ActivatedAbilityPutOnStack,
-    game::{
-        helpers, invariants,
-        model::{ActivatedAbilityOnStack, PriorityState, StackObject, StackObjectKind},
+//! Supports rules stack priority activation.
+
+use {
+    super::{ActivateAbilityOutcome, StackPriorityContext},
+    crate::domain::play::{
+        commands::ActivateAbilityCommand,
+        errors::{CardError, DomainError},
+        events::ActivatedAbilityPutOnStack,
+        game::{
+            helpers, invariants,
+            model::{ActivatedAbilityOnStack, PriorityState, StackObject, StackObjectKind},
+        },
     },
 };
 

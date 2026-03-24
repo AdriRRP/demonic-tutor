@@ -1,5 +1,9 @@
-use super::GameplayWorld;
-use demonictutor::{CardDefinitionId, CardInstance, CardInstanceId, Game, Phase, PlayerId};
+//! BDD coverage for bdd world queries.
+
+use {
+    super::GameplayWorld,
+    demonictutor::{CardDefinitionId, CardInstance, CardInstanceId, Game, Phase, PlayerId},
+};
 
 impl GameplayWorld {
     pub fn is_initialized(&self) -> bool {

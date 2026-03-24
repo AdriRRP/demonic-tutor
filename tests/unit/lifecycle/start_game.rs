@@ -1,5 +1,7 @@
 #![allow(clippy::unwrap_used)]
 
+//! Unit coverage for unit lifecycle start game.
+
 use demonictutor::{
     DeckId, DomainError, GameError, GameId, GameService, InMemoryEventBus, InMemoryEventStore,
     PlayerDeck, PlayerError, PlayerId, StartGameCommand,

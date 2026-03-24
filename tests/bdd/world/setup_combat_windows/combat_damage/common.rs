@@ -1,5 +1,9 @@
-use super::super::super::{support, GameplayWorld};
-use demonictutor::{CardDefinitionId, CastSpellCommand, LibraryCard, ResolveCombatDamageCommand};
+//! BDD coverage for setup combat windows combat damage common.
+
+use {
+    super::super::super::{support, GameplayWorld},
+    demonictutor::{CardDefinitionId, CastSpellCommand, LibraryCard, ResolveCombatDamageCommand},
+};
 
 pub(super) fn prepare_priority_after_combat_damage(
     world: &mut GameplayWorld,

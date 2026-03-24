@@ -1,3 +1,5 @@
+//! Supports play events turn flow.
+
 use crate::domain::play::{
     ids::{CardInstanceId, GameId, PlayerId},
     phase::Phase,

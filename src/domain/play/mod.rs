@@ -1,3 +1,5 @@
+//! Supports domain play.
+
 pub mod cards;
 pub mod commands;
 pub mod errors;

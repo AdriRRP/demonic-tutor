@@ -1,13 +1,17 @@
 #![allow(clippy::unwrap_used)]
 #![allow(clippy::panic)]
 
-use crate::support::{
-    advance_to_first_main_satisfying_cleanup, filled_library, instant_card,
-    life_gain_artifact_card, player, setup_two_player_game,
-};
-use demonictutor::{
-    ActivateAbilityCommand, CardError, CardInstanceId, CastSpellCommand, DomainError,
-    PassPriorityCommand, PlayerId,
+//! Unit coverage for unit stack priority activate nonmana ability in priority window.
+
+use {
+    crate::support::{
+        advance_to_first_main_satisfying_cleanup, filled_library, instant_card,
+        life_gain_artifact_card, player, setup_two_player_game,
+    },
+    demonictutor::{
+        ActivateAbilityCommand, CardError, CardInstanceId, CastSpellCommand, DomainError,
+        PassPriorityCommand, PlayerId,
+    },
 };
 
 #[test]

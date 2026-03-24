@@ -1,3 +1,5 @@
+//! Supports infrastructure.
+
 pub mod events;
 pub mod projections;
 

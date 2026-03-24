@@ -1,3 +1,5 @@
+//! Supports domain play cards.
+
 mod definition;
 mod keywords;
 mod rules;

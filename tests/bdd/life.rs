@@ -1,6 +1,9 @@
-use cucumber::{given, then, when};
+//! BDD coverage for bdd life.
 
-use crate::world::GameplayWorld;
+use {
+    crate::world::GameplayWorld,
+    cucumber::{given, then, when},
+};
 
 #[given(expr = "{word} has {int} life")]
 fn player_has_specific_life(world: &mut GameplayWorld, player: String, life: u32) {

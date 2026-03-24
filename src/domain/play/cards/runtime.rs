@@ -1,9 +1,13 @@
-use super::{
-    ActivatedAbilityProfile, ActivatedManaAbilityProfile, CardDefinition, CardType,
-    CastingPermissionProfile, KeywordAbility, KeywordAbilitySet, ManaCost, SupportedSpellRules,
+//! Supports play cards runtime.
+
+use {
+    super::{
+        ActivatedAbilityProfile, ActivatedManaAbilityProfile, CardDefinition, CardType,
+        CastingPermissionProfile, KeywordAbility, KeywordAbilitySet, ManaCost, SupportedSpellRules,
+    },
+    crate::domain::play::ids::{CardDefinitionId, CardInstanceId},
+    std::sync::Arc,
 };
-use crate::domain::play::ids::{CardDefinitionId, CardInstanceId};
-use std::sync::Arc;
 
 const CREATURE_FLAG_SUMMONING_SICKNESS: u8 = 1 << 0;
 const CREATURE_FLAG_ATTACKING: u8 = 1 << 1;

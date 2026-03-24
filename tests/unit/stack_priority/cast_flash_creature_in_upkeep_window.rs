@@ -1,10 +1,14 @@
 #![allow(clippy::unwrap_used)]
 
-use crate::support::{
-    advance_to_phase_satisfying_cleanup, filled_library, flash_creature_card,
-    resolve_top_stack_with_passes, setup_two_player_game,
+//! Unit coverage for unit stack priority cast flash creature in upkeep window.
+
+use {
+    crate::support::{
+        advance_to_phase_satisfying_cleanup, filled_library, flash_creature_card,
+        resolve_top_stack_with_passes, setup_two_player_game,
+    },
+    demonictutor::{CardInstanceId, CastSpellCommand, Phase, PlayerId},
 };
-use demonictutor::{CardInstanceId, CastSpellCommand, Phase, PlayerId};
 
 #[test]
 fn active_player_can_cast_and_resolve_a_flash_creature_in_upkeep() {

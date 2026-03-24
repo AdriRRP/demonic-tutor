@@ -1,10 +1,14 @@
-use super::super::super::{helpers, model::Player};
-use crate::domain::play::{
-    cards::CardType,
-    commands::DeclareAttackersCommand,
-    errors::{CardError, DomainError},
-    events::AttackersDeclared,
-    ids::{CardInstanceId, GameId},
+//! Supports rules combat declaring.
+
+use {
+    super::super::super::{helpers, model::Player},
+    crate::domain::play::{
+        cards::CardType,
+        commands::DeclareAttackersCommand,
+        errors::{CardError, DomainError},
+        events::AttackersDeclared,
+        ids::{CardInstanceId, GameId},
+    },
 };
 
 pub fn declare_attackers(

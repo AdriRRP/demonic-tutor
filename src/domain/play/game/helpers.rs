@@ -1,8 +1,12 @@
-use super::model::Player;
-use crate::domain::play::{
-    cards::{CardInstance, CardType},
-    errors::{CardError, DomainError, GameError},
-    ids::{CardInstanceId, PlayerId},
+//! Supports play game helpers.
+
+use {
+    super::model::Player,
+    crate::domain::play::{
+        cards::{CardInstance, CardType},
+        errors::{CardError, DomainError, GameError},
+        ids::{CardInstanceId, PlayerId},
+    },
 };
 
 pub(super) struct BattlefieldCardLocation<'a> {

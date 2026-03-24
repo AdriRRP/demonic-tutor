@@ -1,16 +1,20 @@
-use super::super::super::{
-    super::{helpers, Player, TerminalState},
-    state_based_actions::{self, StateBasedActionsResult},
-};
-use super::super::spell_effects::{
-    evaluate_target_legality, SpellTargetLegality, TargetLegalityContext,
-};
-use crate::domain::play::{
-    cards::{SpellResolutionProfile, SupportedSpellRules},
-    errors::{DomainError, GameError},
-    events::{CardExiled, CreatureDied, GameEnded, LifeChanged},
-    game::{rules::zones, SpellTarget},
-    ids::{CardInstanceId, GameId, PlayerId},
+//! Supports stack priority resolution effects.
+
+use {
+    super::super::super::{
+        super::{helpers, Player, TerminalState},
+        state_based_actions::{self, StateBasedActionsResult},
+    },
+    super::super::spell_effects::{
+        evaluate_target_legality, SpellTargetLegality, TargetLegalityContext,
+    },
+    crate::domain::play::{
+        cards::{SpellResolutionProfile, SupportedSpellRules},
+        errors::{DomainError, GameError},
+        events::{CardExiled, CreatureDied, GameEnded, LifeChanged},
+        game::{rules::zones, SpellTarget},
+        ids::{CardInstanceId, GameId, PlayerId},
+    },
 };
 
 type SpellResolutionSideEffects = (

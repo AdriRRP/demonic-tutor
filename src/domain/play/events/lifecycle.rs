@@ -1,3 +1,5 @@
+//! Supports play events lifecycle.
+
 use crate::domain::play::ids::{CardInstanceId, GameId, PlayerId};
 
 #[derive(Debug, Clone)]

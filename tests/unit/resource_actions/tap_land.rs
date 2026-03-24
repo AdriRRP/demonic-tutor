@@ -1,14 +1,18 @@
 #![allow(clippy::unwrap_used)]
 #![allow(clippy::panic)]
 
-use crate::support::{
-    advance_to_first_main_satisfying_cleanup, advance_to_player_phase_satisfying_cleanup,
-    advance_turn_raw, create_service, filled_library, forest_card, instant_card, island_card,
-    land_card, plains_card, setup_two_player_game, swamp_card,
-};
-use demonictutor::{
-    CardError, CardInstanceId, CastSpellCommand, DomainError, GameService, InMemoryEventBus,
-    InMemoryEventStore, PassPriorityCommand, Phase, PlayLandCommand, PlayerId, TapLandCommand,
+//! Unit coverage for unit resource actions tap land.
+
+use {
+    crate::support::{
+        advance_to_first_main_satisfying_cleanup, advance_to_player_phase_satisfying_cleanup,
+        advance_turn_raw, create_service, filled_library, forest_card, instant_card, island_card,
+        land_card, plains_card, setup_two_player_game, swamp_card,
+    },
+    demonictutor::{
+        CardError, CardInstanceId, CastSpellCommand, DomainError, GameService, InMemoryEventBus,
+        InMemoryEventStore, PassPriorityCommand, Phase, PlayLandCommand, PlayerId, TapLandCommand,
+    },
 };
 
 fn create_game_with_land_on_battlefield() -> (

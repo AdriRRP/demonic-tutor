@@ -1,10 +1,14 @@
 #![allow(clippy::unwrap_used)]
 
-use crate::support::{
-    advance_to_first_main_satisfying_cleanup, filled_library, flash_planeswalker_card,
-    instant_card, setup_two_player_game,
+//! Unit coverage for unit stack priority respond with flash planeswalker spell.
+
+use {
+    crate::support::{
+        advance_to_first_main_satisfying_cleanup, filled_library, flash_planeswalker_card,
+        instant_card, setup_two_player_game,
+    },
+    demonictutor::{CardInstanceId, CastSpellCommand, PassPriorityCommand, PlayerId},
 };
-use demonictutor::{CardInstanceId, CastSpellCommand, PassPriorityCommand, PlayerId};
 
 #[test]
 fn opponent_can_respond_to_an_existing_stack_with_a_flash_planeswalker() {

@@ -1,7 +1,11 @@
-use super::PriorityState;
-use crate::domain::play::{
-    errors::{DomainError, GameError},
-    ids::PlayerId,
+//! Supports play game invariants.
+
+use {
+    super::PriorityState,
+    crate::domain::play::{
+        errors::{DomainError, GameError},
+        ids::PlayerId,
+    },
 };
 
 pub(super) fn require_active_player(

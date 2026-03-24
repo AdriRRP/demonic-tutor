@@ -1,6 +1,6 @@
-use super::super::support;
-use super::super::GameplayWorld;
-use demonictutor::Phase;
+//! BDD coverage for world setup priority windows combat response windows.
+
+use {super::super::support, super::super::GameplayWorld, demonictutor::Phase};
 
 impl GameplayWorld {
     pub fn setup_non_active_priority_in_declare_blockers_with_two_instants(&mut self) {

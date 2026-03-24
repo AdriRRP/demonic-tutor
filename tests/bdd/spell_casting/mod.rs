@@ -1,3 +1,5 @@
+//! BDD coverage for bdd spell casting.
+
 mod active_instant_windows;
 mod active_self_stacking;
 mod active_sorcery_speed;

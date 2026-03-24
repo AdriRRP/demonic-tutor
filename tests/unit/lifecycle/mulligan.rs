@@ -1,9 +1,13 @@
 #![allow(clippy::unwrap_used)]
 
-use crate::support::{create_service, creature_library, setup_two_player_game};
-use demonictutor::{
-    AdvanceTurnCommand, AdvanceTurnOutcome, DomainError, GameError, MulliganCommand, Phase,
-    PhaseError, PlayerId,
+//! Unit coverage for unit lifecycle mulligan.
+
+use {
+    crate::support::{create_service, creature_library, setup_two_player_game},
+    demonictutor::{
+        AdvanceTurnCommand, AdvanceTurnOutcome, DomainError, GameError, MulliganCommand, Phase,
+        PhaseError, PlayerId,
+    },
 };
 
 #[test]

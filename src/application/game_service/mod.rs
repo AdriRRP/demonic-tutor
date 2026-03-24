@@ -1,3 +1,5 @@
+//! Supports application game service.
+
 mod combat;
 mod common;
 mod lifecycle;

@@ -1,8 +1,12 @@
-use super::{invariants, rules, AdjustPlayerLifeEffectOutcome, Game};
-use crate::domain::play::{
-    commands::{AdjustPlayerLifeEffectCommand, PlayLandCommand, TapLandCommand},
-    errors::DomainError,
-    events::{LandPlayed, LandTapped, ManaAdded},
+//! Supports play game resource actions.
+
+use {
+    super::{invariants, rules, AdjustPlayerLifeEffectOutcome, Game},
+    crate::domain::play::{
+        commands::{AdjustPlayerLifeEffectCommand, PlayLandCommand, TapLandCommand},
+        errors::DomainError,
+        events::{LandPlayed, LandTapped, ManaAdded},
+    },
 };
 
 impl Game {

@@ -1,7 +1,10 @@
-use cucumber::{given, when};
-use demonictutor::CardType;
+//! BDD coverage for bdd spell casting shared setup.
 
-use crate::world::GameplayWorld;
+use {
+    crate::world::GameplayWorld,
+    cucumber::{given, when},
+    demonictutor::CardType,
+};
 
 #[given(expr = "{word} is the active player in {word}")]
 fn player_is_active_in_phase(world: &mut GameplayWorld, player: String, phase: String) {

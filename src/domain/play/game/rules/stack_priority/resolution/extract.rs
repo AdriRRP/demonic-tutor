@@ -1,3 +1,5 @@
+//! Supports stack priority resolution extract.
+
 use crate::domain::play::{
     cards::{ActivatedAbilityProfile, CardInstance, CardType, SupportedSpellRules},
     errors::{DomainError, GameError},

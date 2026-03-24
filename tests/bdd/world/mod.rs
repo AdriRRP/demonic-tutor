@@ -1,3 +1,5 @@
+//! BDD coverage for bdd world.
+
 #[path = "../../unit/support/mod.rs"]
 pub mod support;
 

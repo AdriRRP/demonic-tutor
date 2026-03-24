@@ -61,6 +61,8 @@ Prefer:
 - once battlefield follows the same id-backed pattern, prefer the next storage/performance refactor in stack or shared lookup helpers rather than widening player accessors again
 - keep mana abilities and non-mana activated abilities semantically distinct: mana abilities stay stack-free, while supported non-mana activations must go through the normal priority-and-stack corridor
 - once the supported subset becomes broad, prefer compact capability matrices in canonical docs over ever-longer linear capability checklists
+- every Rust module in `src/` and `tests/` must start with a brief `//!` rustdoc explaining its job
+- top-level Rust imports must follow repository `rustfmt` settings, preferring grouped imports when they improve readability
 
 Avoid:
 
@@ -71,6 +73,8 @@ Avoid:
 - representational cross-products that permit invalid domain states the model never intends to support
 - keeping obsolete commands, events, or docs alive once they are no longer canonical
 - broad framework extraction when a local helper or module split is enough
+- creating or editing Rust modules without the required top-level `//!` rustdoc
+- creating or editing Rust modules with import layout that fights repository `rustfmt` settings or obvious semantic grouping
 
 ---
 

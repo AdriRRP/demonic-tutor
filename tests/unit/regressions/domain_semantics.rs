@@ -1,5 +1,7 @@
 #![allow(clippy::unwrap_used)]
 
+//! Unit coverage for unit regressions domain semantics.
+
 use demonictutor::{
     AdjustPlayerLifeEffectCommand, CardDefinitionId, CardError, CardInstanceId, CardType,
     CastSpellCommand, CreatureDied, DealOpeningHandsCommand, DeckId, DeclareAttackersCommand,

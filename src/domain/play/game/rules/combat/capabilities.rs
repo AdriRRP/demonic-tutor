@@ -1,3 +1,5 @@
+//! Supports rules combat capabilities.
+
 use crate::domain::play::cards::{CardInstance, KeywordAbility};
 
 #[must_use]

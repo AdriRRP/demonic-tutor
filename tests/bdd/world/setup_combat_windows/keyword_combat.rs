@@ -1,6 +1,10 @@
-use super::super::support;
-use super::super::GameplayWorld;
-use demonictutor::{CastSpellCommand, LibraryCard, Phase};
+//! BDD coverage for world setup combat windows keyword combat.
+
+use {
+    super::super::support,
+    super::super::GameplayWorld,
+    demonictutor::{CastSpellCommand, LibraryCard, Phase},
+};
 
 impl GameplayWorld {
     pub fn setup_haste_attack(&mut self) {

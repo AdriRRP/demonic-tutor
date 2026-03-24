@@ -1,7 +1,11 @@
 #![allow(clippy::expect_used)]
 
-use crate::support;
-use demonictutor::{CastSpellCommand, DeclareAttackersCommand, DeclareBlockersCommand, PlayerId};
+//! Unit coverage for unit combat blocking legality.
+
+use {
+    crate::support,
+    demonictutor::{CastSpellCommand, DeclareAttackersCommand, DeclareBlockersCommand, PlayerId},
+};
 
 fn cast_spell_and_resolve_for_player(
     service: &support::TestService,

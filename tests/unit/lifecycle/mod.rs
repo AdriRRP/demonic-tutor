@@ -1,3 +1,5 @@
+//! Unit coverage for unit lifecycle.
+
 #[path = "deal_opening_hands.rs"]
 mod deal_opening_hands;
 #[path = "mulligan.rs"]

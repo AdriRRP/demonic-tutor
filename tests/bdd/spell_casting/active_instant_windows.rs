@@ -1,7 +1,10 @@
-use cucumber::{given, when};
-use demonictutor::Phase;
+//! BDD coverage for bdd spell casting active instant windows.
 
-use crate::world::GameplayWorld;
+use {
+    crate::world::GameplayWorld,
+    cucumber::{given, when},
+    demonictutor::Phase,
+};
 
 #[given("Alice is the active player in Upkeep with an instant card in hand and priority")]
 fn alice_is_the_active_player_in_upkeep_with_an_instant_card_in_hand_and_priority(

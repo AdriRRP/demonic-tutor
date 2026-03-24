@@ -1,7 +1,10 @@
-use cucumber::{given, then, when};
-use demonictutor::{DrawKind, GameEndReason, Phase};
+//! BDD coverage for bdd turn progression.
 
-use crate::world::GameplayWorld;
+use {
+    crate::world::GameplayWorld,
+    cucumber::{given, then, when},
+    demonictutor::{DrawKind, GameEndReason, Phase},
+};
 
 #[given(expr = "a two-player game is in {word}")]
 fn a_two_player_game_is_in_phase(world: &mut GameplayWorld, phase: String) {

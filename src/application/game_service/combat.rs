@@ -1,11 +1,17 @@
-use super::{common::DomainEvents, GameService};
-use crate::{
-    application::{EventBus, EventStore},
-    domain::play::{
-        commands::{DeclareAttackersCommand, DeclareBlockersCommand, ResolveCombatDamageCommand},
-        errors::DomainError,
-        events::{AttackersDeclared, BlockersDeclared, DomainEvent},
-        game::{Game, ResolveCombatDamageOutcome},
+//! Supports application game service combat.
+
+use {
+    super::{common::DomainEvents, GameService},
+    crate::{
+        application::{EventBus, EventStore},
+        domain::play::{
+            commands::{
+                DeclareAttackersCommand, DeclareBlockersCommand, ResolveCombatDamageCommand,
+            },
+            errors::DomainError,
+            events::{AttackersDeclared, BlockersDeclared, DomainEvent},
+            game::{Game, ResolveCombatDamageOutcome},
+        },
     },
 };
 

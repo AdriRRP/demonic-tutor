@@ -1,8 +1,12 @@
-use super::super::super::model::Player;
-use crate::domain::play::{
-    errors::{DomainError, GameError, PhaseError},
-    ids::PlayerId,
-    phase::Phase,
+//! Supports rules combat progression.
+
+use {
+    super::super::super::model::Player,
+    crate::domain::play::{
+        errors::{DomainError, GameError, PhaseError},
+        ids::PlayerId,
+        phase::Phase,
+    },
 };
 
 pub fn require_defending_player(

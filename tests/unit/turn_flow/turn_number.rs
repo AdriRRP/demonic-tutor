@@ -1,13 +1,17 @@
 #![allow(clippy::unwrap_used)]
 
-use std::sync::Arc;
+//! Unit coverage for unit turn flow turn number.
 
-use crate::support::{
-    advance_to_player_phase_satisfying_cleanup, filled_library, land_card, setup_two_player_game,
-};
-use demonictutor::{
-    AdvanceTurnCommand, AdvanceTurnOutcome, DomainEvent, GameLogProjection, GameService,
-    InMemoryEventBus, InMemoryEventStore, Phase,
+use {
+    crate::support::{
+        advance_to_player_phase_satisfying_cleanup, filled_library, land_card,
+        setup_two_player_game,
+    },
+    demonictutor::{
+        AdvanceTurnCommand, AdvanceTurnOutcome, DomainEvent, GameLogProjection, GameService,
+        InMemoryEventBus, InMemoryEventStore, Phase,
+    },
+    std::sync::Arc,
 };
 
 #[test]

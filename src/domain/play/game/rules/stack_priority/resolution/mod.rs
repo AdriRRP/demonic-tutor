@@ -1,3 +1,5 @@
+//! Supports rules stack priority resolution.
+
 mod destination;
 mod effects;
 mod events;

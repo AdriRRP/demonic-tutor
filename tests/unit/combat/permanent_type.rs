@@ -1,7 +1,11 @@
-use demonictutor::domain::play::cards::{
-    CardDefinition, CardInstance, CardType, CastingPermissionProfile,
+//! Unit coverage for unit combat permanent type.
+
+use {
+    demonictutor::domain::play::cards::{
+        CardDefinition, CardInstance, CardType, CastingPermissionProfile,
+    },
+    demonictutor::domain::play::ids::{CardDefinitionId, CardInstanceId},
 };
-use demonictutor::domain::play::ids::{CardDefinitionId, CardInstanceId};
 
 #[test]
 fn test_is_permanent_returns_true_for_permanent_types() {

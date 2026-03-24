@@ -1,12 +1,17 @@
 #![allow(clippy::unwrap_used)]
 
-use crate::support::{
-    advance_to_player_first_main_satisfying_cleanup, advance_turn_raw, close_empty_priority_window,
-    filled_library, resolve_top_stack_with_passes, setup_two_player_game,
-};
-use demonictutor::{
-    CardDefinitionId, CardInstanceId, CastSpellCommand, DeclareAttackersCommand,
-    DeclareBlockersCommand, LibraryCard, Phase, PlayerId, ResolveCombatDamageCommand,
+//! Unit coverage for unit combat combat subphases.
+
+use {
+    crate::support::{
+        advance_to_player_first_main_satisfying_cleanup, advance_turn_raw,
+        close_empty_priority_window, filled_library, resolve_top_stack_with_passes,
+        setup_two_player_game,
+    },
+    demonictutor::{
+        CardDefinitionId, CardInstanceId, CastSpellCommand, DeclareAttackersCommand,
+        DeclareBlockersCommand, LibraryCard, Phase, PlayerId, ResolveCombatDamageCommand,
+    },
 };
 
 #[test]

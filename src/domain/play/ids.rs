@@ -1,3 +1,5 @@
+//! Supports domain play ids.
+
 use std::sync::Arc;
 
 // Centralize the backing storage for domain ids so we can revisit the choice

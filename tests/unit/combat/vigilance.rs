@@ -2,8 +2,12 @@
 #![allow(clippy::panic)]
 #![allow(clippy::expect_used)]
 
-use crate::support;
-use demonictutor::{CastSpellCommand, DeclareAttackersCommand, KeywordAbility, PlayerId};
+//! Unit coverage for unit combat vigilance.
+
+use {
+    crate::support,
+    demonictutor::{CastSpellCommand, DeclareAttackersCommand, KeywordAbility, PlayerId},
+};
 
 #[test]
 fn vigilance_creature_does_not_tap_when_it_attacks() {

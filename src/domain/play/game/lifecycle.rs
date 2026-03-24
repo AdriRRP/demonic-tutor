@@ -1,8 +1,12 @@
-use super::{invariants, rules, Game};
-use crate::domain::play::{
-    commands::{DealOpeningHandsCommand, MulliganCommand, StartGameCommand},
-    errors::DomainError,
-    events::{GameStarted, MulliganTaken, OpeningHandDealt},
+//! Supports play game lifecycle.
+
+use {
+    super::{invariants, rules, Game},
+    crate::domain::play::{
+        commands::{DealOpeningHandsCommand, MulliganCommand, StartGameCommand},
+        errors::DomainError,
+        events::{GameStarted, MulliganTaken, OpeningHandDealt},
+    },
 };
 
 impl Game {

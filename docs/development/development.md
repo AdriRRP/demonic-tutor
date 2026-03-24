@@ -206,13 +206,26 @@ This is the default bar: one real behavior, one small model extension, focused t
 
 Use grouped imports to keep modules readable.
 
+This is mandatory in this repository:
+
+- every Rust module file under `src/` and `tests/` must start with a brief module rustdoc comment using `//!`
+- top-level imports in each Rust module must follow repository `rustfmt` settings rather than per-file ad hoc formatting
+- when multiple imports can be grouped semantically, prefer compact grouped imports
+
+These rules are repository policy and must be preserved in every new file and every edited file.
+
 Example:
 
 ```rust
-use crate::domain::play::{
-    commands::{Cmd1, Cmd2},
-    errors::DomainError,
-    events::Event,
+//! Supports spell casting orchestration.
+
+use {
+    crate::domain::play::{
+        commands::{Cmd1, Cmd2},
+        errors::DomainError,
+        events::Event,
+    },
+    std::sync::Arc,
 };
 ```
 

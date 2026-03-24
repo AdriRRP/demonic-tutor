@@ -1,5 +1,9 @@
-use crate::world::GameplayWorld;
-use cucumber::{given, then, when};
+//! BDD coverage for bdd zones.
+
+use {
+    crate::world::GameplayWorld,
+    cucumber::{given, then, when},
+};
 
 #[given("Alice controls a creature on the battlefield")]
 fn alice_controls_creature_on_battlefield(world: &mut GameplayWorld) {

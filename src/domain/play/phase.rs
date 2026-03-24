@@ -1,3 +1,5 @@
+//! Supports domain play phase.
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Phase {
     Setup,

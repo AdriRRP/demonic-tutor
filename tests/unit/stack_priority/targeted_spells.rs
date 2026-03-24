@@ -1,20 +1,24 @@
 #![allow(clippy::unwrap_used)]
 
-use crate::support::{
-    advance_to_first_main_satisfying_cleanup, advance_to_player_first_main_satisfying_cleanup,
-    advance_turn_raw, close_empty_priority_window, creature_card, filled_library, land_card,
-    setup_two_player_game, targeted_attacking_creature_damage_instant_card,
-    targeted_controlled_creature_damage_instant_card, targeted_damage_instant_card,
-    targeted_destroy_creature_instant_card, targeted_exile_creature_instant_card,
-    targeted_exile_graveyard_card_instant_card, targeted_gain_life_instant_card,
-    targeted_lose_life_instant_card, targeted_opponent_damage_instant_card,
-    targeted_opponents_creature_damage_instant_card, targeted_player_damage_instant_card,
-    targeted_pump_creature_instant_card,
-};
-use demonictutor::{
-    CardDefinitionId, CardInstanceId, CastSpellCommand, DeclareAttackersCommand, DomainError,
-    GameEndReason, GameError, LibraryCard, PlayerId, ResolveCombatDamageCommand, SpellCastOutcome,
-    SpellTarget,
+//! Unit coverage for unit stack priority targeted spells.
+
+use {
+    crate::support::{
+        advance_to_first_main_satisfying_cleanup, advance_to_player_first_main_satisfying_cleanup,
+        advance_turn_raw, close_empty_priority_window, creature_card, filled_library, land_card,
+        setup_two_player_game, targeted_attacking_creature_damage_instant_card,
+        targeted_controlled_creature_damage_instant_card, targeted_damage_instant_card,
+        targeted_destroy_creature_instant_card, targeted_exile_creature_instant_card,
+        targeted_exile_graveyard_card_instant_card, targeted_gain_life_instant_card,
+        targeted_lose_life_instant_card, targeted_opponent_damage_instant_card,
+        targeted_opponents_creature_damage_instant_card, targeted_player_damage_instant_card,
+        targeted_pump_creature_instant_card,
+    },
+    demonictutor::{
+        CardDefinitionId, CardInstanceId, CastSpellCommand, DeclareAttackersCommand, DomainError,
+        GameEndReason, GameError, LibraryCard, PlayerId, ResolveCombatDamageCommand,
+        SpellCastOutcome, SpellTarget,
+    },
 };
 
 fn resolve_current_stack(

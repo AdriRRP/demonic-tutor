@@ -1,3 +1,5 @@
+//! Supports play commands lifecycle.
+
 use crate::domain::play::{
     commands::setup::{PlayerDeck, PlayerLibrary},
     ids::{GameId, PlayerId},

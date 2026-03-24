@@ -1,3 +1,5 @@
+//! Supports game model stack.
+
 use crate::domain::play::{
     cards::{
         ActivatedAbilityEffect, ActivatedAbilityProfile, CardType, SpellCardSnapshot,

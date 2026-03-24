@@ -1,3 +1,5 @@
+//! Supports stack priority resolution destination.
+
 use crate::domain::play::{
     cards::{CardInstance, CardType},
     errors::{DomainError, GameError},

@@ -1,16 +1,20 @@
 #![allow(clippy::unwrap_used)]
 
-use crate::support::{
-    advance_to_player_first_main_satisfying_cleanup, close_empty_priority_window, filled_library,
-    land_card, resolve_top_stack_with_passes, setup_two_player_game,
-    targeted_controlled_attacking_creature_damage_instant_card,
-    targeted_controlled_blocking_creature_damage_instant_card,
-    targeted_opponents_attacking_creature_damage_instant_card,
-    targeted_opponents_blocking_creature_damage_instant_card,
-};
-use demonictutor::{
-    CardDefinitionId, CardInstanceId, CastSpellCommand, DeclareAttackersCommand,
-    DeclareBlockersCommand, DomainError, GameError, LibraryCard, PlayerId, SpellTarget,
+//! Unit coverage for unit stack priority reject non actor relative combat targets.
+
+use {
+    crate::support::{
+        advance_to_player_first_main_satisfying_cleanup, close_empty_priority_window,
+        filled_library, land_card, resolve_top_stack_with_passes, setup_two_player_game,
+        targeted_controlled_attacking_creature_damage_instant_card,
+        targeted_controlled_blocking_creature_damage_instant_card,
+        targeted_opponents_attacking_creature_damage_instant_card,
+        targeted_opponents_blocking_creature_damage_instant_card,
+    },
+    demonictutor::{
+        CardDefinitionId, CardInstanceId, CastSpellCommand, DeclareAttackersCommand,
+        DeclareBlockersCommand, DomainError, GameError, LibraryCard, PlayerId, SpellTarget,
+    },
 };
 
 fn hand_card_id_by_definition(

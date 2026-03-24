@@ -1,7 +1,10 @@
-use cucumber::{given, then, when};
-use demonictutor::Phase;
+//! BDD coverage for bdd spell casting active self stacking.
 
-use crate::world::GameplayWorld;
+use {
+    crate::world::GameplayWorld,
+    cucumber::{given, then, when},
+    demonictutor::Phase,
+};
 
 #[given("Alice is the active player in Upkeep with two instant cards in hand and priority")]
 fn alice_is_the_active_player_in_upkeep_with_two_instant_cards_in_hand_and_priority(

@@ -1,3 +1,5 @@
+//! BDD coverage for bdd world setup combat windows.
+
 mod beginning_of_combat;
 mod combat_core;
 mod combat_damage;

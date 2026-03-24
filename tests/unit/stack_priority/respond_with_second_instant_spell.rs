@@ -1,10 +1,14 @@
 #![allow(clippy::unwrap_used)]
 
-use crate::support::{
-    advance_to_first_main_satisfying_cleanup, filled_library, instant_card, land_card,
-    setup_two_player_game, vanilla_creature,
+//! Unit coverage for unit stack priority respond with second instant spell.
+
+use {
+    crate::support::{
+        advance_to_first_main_satisfying_cleanup, filled_library, instant_card, land_card,
+        setup_two_player_game, vanilla_creature,
+    },
+    demonictutor::{CardInstanceId, CastSpellCommand, PlayLandCommand, PlayerId, TapLandCommand},
 };
-use demonictutor::{CardInstanceId, CastSpellCommand, PlayLandCommand, PlayerId, TapLandCommand};
 
 #[test]
 fn responding_player_can_cast_a_second_instant_before_passing_on_existing_stack() {

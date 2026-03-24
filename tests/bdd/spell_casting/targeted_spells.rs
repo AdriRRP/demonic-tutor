@@ -1,6 +1,9 @@
-use cucumber::{given, then, when};
+//! BDD coverage for bdd spell casting targeted spells.
 
-use crate::world::GameplayWorld;
+use {
+    crate::world::GameplayWorld,
+    cucumber::{given, then, when},
+};
 
 #[given("Alice is the active player in FirstMain with a targeted instant spell in hand")]
 fn alice_is_the_active_player_in_first_main_with_a_targeted_instant_spell_in_hand(

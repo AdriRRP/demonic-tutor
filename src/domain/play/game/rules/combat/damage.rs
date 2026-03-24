@@ -1,3 +1,5 @@
+//! Supports rules combat damage.
+
 mod application;
 mod participants;
 

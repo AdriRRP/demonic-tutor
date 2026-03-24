@@ -1,3 +1,5 @@
+//! Supports application ports.
+
 use {crate::domain::play::events::DomainEvent, std::error::Error};
 
 pub trait EventBus: Send + Sync {

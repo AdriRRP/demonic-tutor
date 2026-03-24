@@ -1,12 +1,16 @@
 #![allow(clippy::unwrap_used)]
 #![allow(clippy::panic)]
 
-use crate::support::{
-    advance_to_player_first_main_satisfying_cleanup, create_service, filled_library, land_card,
-    setup_two_player_game, vanilla_creature,
-};
-use demonictutor::{
-    CardError, CardInstanceId, DomainError, GameError, PhaseError, PlayLandCommand, PlayerId,
+//! Unit coverage for unit resource actions play land.
+
+use {
+    crate::support::{
+        advance_to_player_first_main_satisfying_cleanup, create_service, filled_library, land_card,
+        setup_two_player_game, vanilla_creature,
+    },
+    demonictutor::{
+        CardError, CardInstanceId, DomainError, GameError, PhaseError, PlayLandCommand, PlayerId,
+    },
 };
 
 fn create_game_with_land_in_hand() -> (demonictutor::Game, CardInstanceId) {

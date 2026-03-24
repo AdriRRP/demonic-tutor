@@ -1,14 +1,20 @@
-use super::{
-    draw_effects::draw_one_card,
-    phase_behavior::{active_player_hand_size, clear_all_mana, get_phase_behavior, max_hand_size},
-};
-use crate::domain::play::{
-    commands::AdvanceTurnCommand,
-    errors::{DomainError, GameError},
-    events::{CardDrawn, DrawKind, GameEnded, TurnProgressed},
-    game::{helpers, invariants, model::Player, PriorityState, TerminalState},
-    ids::{GameId, PlayerId},
-    phase::Phase,
+//! Supports rules turn flow turn progression.
+
+use {
+    super::{
+        draw_effects::draw_one_card,
+        phase_behavior::{
+            active_player_hand_size, clear_all_mana, get_phase_behavior, max_hand_size,
+        },
+    },
+    crate::domain::play::{
+        commands::AdvanceTurnCommand,
+        errors::{DomainError, GameError},
+        events::{CardDrawn, DrawKind, GameEnded, TurnProgressed},
+        game::{helpers, invariants, model::Player, PriorityState, TerminalState},
+        ids::{GameId, PlayerId},
+        phase::Phase,
+    },
 };
 
 #[derive(Debug, Clone)]

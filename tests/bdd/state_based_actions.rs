@@ -1,6 +1,9 @@
-use cucumber::{given, then, when};
+//! BDD coverage for bdd state based actions.
 
-use crate::world::GameplayWorld;
+use {
+    crate::world::GameplayWorld,
+    cucumber::{given, then, when},
+};
 
 #[given("Alice has a creature card in hand with zero toughness")]
 fn alice_has_a_creature_card_in_hand_with_zero_toughness(world: &mut GameplayWorld) {

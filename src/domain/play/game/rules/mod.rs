@@ -1,3 +1,5 @@
+//! Supports play game rules.
+
 pub mod combat;
 pub mod game_effects;
 pub mod lifecycle;

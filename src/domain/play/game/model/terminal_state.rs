@@ -1,3 +1,5 @@
+//! Supports game model terminal state.
+
 use crate::domain::play::{events::GameEndReason, ids::PlayerId};
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]

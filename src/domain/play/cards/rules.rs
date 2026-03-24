@@ -1,3 +1,5 @@
+//! Supports play cards rules.
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum CardType {
     Land,

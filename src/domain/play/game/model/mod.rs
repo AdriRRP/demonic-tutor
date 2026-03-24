@@ -1,3 +1,5 @@
+//! Supports play game model.
+
 mod player;
 mod priority;
 mod stack;

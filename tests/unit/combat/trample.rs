@@ -1,10 +1,14 @@
 #![allow(clippy::expect_used)]
 #![allow(clippy::unwrap_used)]
 
-use crate::support;
-use demonictutor::{
-    domain::play::events::DamageTarget, CastSpellCommand, DeclareAttackersCommand,
-    DeclareBlockersCommand, KeywordAbility, PlayerId,
+//! Unit coverage for unit combat trample.
+
+use {
+    crate::support,
+    demonictutor::{
+        domain::play::events::DamageTarget, CastSpellCommand, DeclareAttackersCommand,
+        DeclareBlockersCommand, KeywordAbility, PlayerId,
+    },
 };
 
 #[test]

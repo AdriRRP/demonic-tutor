@@ -1,13 +1,18 @@
 #![allow(clippy::unwrap_used)]
 #![allow(clippy::panic)]
 
-use crate::support::{
-    advance_to_player_first_main_satisfying_cleanup, advance_to_player_phase_satisfying_cleanup,
-    close_empty_priority_window, creature_library, setup_two_player_game,
-};
-use demonictutor::{
-    AdvanceTurnCommand, AdvanceTurnOutcome, DiscardForCleanupCommand, DiscardKind, DomainError,
-    GameError, Phase, PhaseError, PlayerId,
+//! Unit coverage for unit turn flow discard for cleanup.
+
+use {
+    crate::support::{
+        advance_to_player_first_main_satisfying_cleanup,
+        advance_to_player_phase_satisfying_cleanup, close_empty_priority_window, creature_library,
+        setup_two_player_game,
+    },
+    demonictutor::{
+        AdvanceTurnCommand, AdvanceTurnOutcome, DiscardForCleanupCommand, DiscardKind, DomainError,
+        GameError, Phase, PhaseError, PlayerId,
+    },
 };
 
 fn setup_game_with_eight_cards_in_hand() -> (crate::support::TestService, demonictutor::Game) {

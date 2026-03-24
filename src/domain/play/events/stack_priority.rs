@@ -1,3 +1,5 @@
+//! Supports play events stack priority.
+
 use crate::domain::play::{
     cards::{ActivatedAbilityEffect, CardType},
     game::SpellTarget,

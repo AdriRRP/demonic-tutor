@@ -1,6 +1,10 @@
-use super::super::support;
-use super::super::GameplayWorld;
-use demonictutor::{CardDefinitionId, CastSpellCommand, LibraryCard, PlayLandCommand};
+//! BDD coverage for world setup spell scenarios.
+
+use {
+    super::super::support,
+    super::super::GameplayWorld,
+    demonictutor::{CardDefinitionId, CastSpellCommand, LibraryCard, PlayLandCommand},
+};
 
 impl GameplayWorld {
     pub fn setup_cast_creature_spell(&mut self) {

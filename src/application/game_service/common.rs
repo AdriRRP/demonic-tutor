@@ -1,3 +1,5 @@
+//! Supports application game service common.
+
 use crate::domain::play::events::DomainEvent;
 
 #[derive(Default)]

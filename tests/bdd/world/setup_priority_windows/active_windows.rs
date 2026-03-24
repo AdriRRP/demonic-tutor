@@ -1,6 +1,6 @@
-use super::super::support;
-use super::super::GameplayWorld;
-use demonictutor::Phase;
+//! BDD coverage for world setup priority windows active windows.
+
+use {super::super::support, super::super::GameplayWorld, demonictutor::Phase};
 
 impl GameplayWorld {
     pub fn setup_active_priority_window_with_instant(&mut self, game_id: &str, phase: Phase) {

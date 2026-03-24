@@ -1,7 +1,10 @@
-use cucumber::{given, then, when};
-use demonictutor::Phase;
+//! BDD coverage for bdd spell casting response self stacking.
 
-use crate::world::GameplayWorld;
+use {
+    crate::world::GameplayWorld,
+    cucumber::{given, then, when},
+    demonictutor::Phase,
+};
 
 #[given("Alice has cast a creature spell and Bob has priority with two instant cards in hand")]
 fn alice_has_cast_a_creature_spell_and_bob_has_priority_with_two_instant_cards_in_hand(

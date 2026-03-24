@@ -1,6 +1,10 @@
-use super::super::support;
-use super::super::GameplayWorld;
-use demonictutor::{DealOpeningHandsCommand, GameId, LibraryCard, StartGameCommand};
+//! BDD coverage for world actions lifecycle.
+
+use {
+    super::super::support,
+    super::super::GameplayWorld,
+    demonictutor::{DealOpeningHandsCommand, GameId, LibraryCard, StartGameCommand},
+};
 
 impl GameplayWorld {
     pub fn reset_observations(&mut self) {

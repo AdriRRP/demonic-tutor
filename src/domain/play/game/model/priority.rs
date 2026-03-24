@@ -1,3 +1,5 @@
+//! Supports game model priority.
+
 use crate::domain::play::ids::PlayerId;
 
 #[derive(Debug, Clone, PartialEq, Eq)]

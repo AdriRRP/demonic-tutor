@@ -1,16 +1,20 @@
 #![allow(clippy::unwrap_used)]
 
-use crate::support::{
-    advance_n_raw, advance_n_satisfying_cleanup, advance_to_first_main_satisfying_cleanup,
-    advance_to_player_first_main_satisfying_cleanup, advance_to_player_phase_satisfying_cleanup,
-    advance_turn_raw, advance_turn_satisfying_cleanup, cast_spell_and_resolve,
-    close_empty_priority_window, filled_library, land_card, setup_two_player_game,
-    vanilla_creature,
-};
-use demonictutor::{
-    AdvanceTurnCommand, AdvanceTurnOutcome, CardDefinitionId, CardInstanceId,
-    DeclareAttackersCommand, DeclareBlockersCommand, DomainError, GameEndReason, LibraryCard,
-    Phase, PlayLandCommand, PlayerId, ResolveCombatDamageCommand,
+//! Unit coverage for unit turn flow advance turn.
+
+use {
+    crate::support::{
+        advance_n_raw, advance_n_satisfying_cleanup, advance_to_first_main_satisfying_cleanup,
+        advance_to_player_first_main_satisfying_cleanup,
+        advance_to_player_phase_satisfying_cleanup, advance_turn_raw,
+        advance_turn_satisfying_cleanup, cast_spell_and_resolve, close_empty_priority_window,
+        filled_library, land_card, setup_two_player_game, vanilla_creature,
+    },
+    demonictutor::{
+        AdvanceTurnCommand, AdvanceTurnOutcome, CardDefinitionId, CardInstanceId,
+        DeclareAttackersCommand, DeclareBlockersCommand, DomainError, GameEndReason, LibraryCard,
+        Phase, PlayLandCommand, PlayerId, ResolveCombatDamageCommand,
+    },
 };
 
 fn create_game_with_land_in_hand() -> demonictutor::Game {

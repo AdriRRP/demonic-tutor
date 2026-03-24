@@ -1,3 +1,5 @@
+//! Supports infrastructure events store.
+
 use {
     crate::{application::EventStore, domain::play::events::DomainEvent},
     std::{collections::HashMap, error::Error, sync::RwLock},

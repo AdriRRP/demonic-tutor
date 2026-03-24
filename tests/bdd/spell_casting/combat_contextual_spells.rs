@@ -1,6 +1,9 @@
-use cucumber::{given, then, when};
+//! BDD coverage for bdd spell casting combat contextual spells.
 
-use crate::world::GameplayWorld;
+use {
+    crate::world::GameplayWorld,
+    cucumber::{given, then, when},
+};
 
 #[given(
     "Bob has declared blockers and Alice still has a flash creature card in hand with priority"

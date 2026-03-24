@@ -1,6 +1,10 @@
-use super::super::support;
-use super::super::GameplayWorld;
-use demonictutor::{CardDefinitionId, CastSpellCommand};
+//! BDD coverage for world setup abilities.
+
+use {
+    super::super::support,
+    super::super::GameplayWorld,
+    demonictutor::{CardDefinitionId, CastSpellCommand},
+};
 
 impl GameplayWorld {
     pub fn setup_activated_life_ability_in_first_main(&mut self) {

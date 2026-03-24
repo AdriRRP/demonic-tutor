@@ -1,5 +1,9 @@
-use super::super::super::{support, GameplayWorld};
-use super::common::{attacker_card, prepare_priority_after_attackers_declared};
+//! BDD coverage for setup combat windows declare attackers response priority.
+
+use {
+    super::super::super::{support, GameplayWorld},
+    super::common::{attacker_card, prepare_priority_after_attackers_declared},
+};
 
 impl GameplayWorld {
     pub fn setup_non_active_priority_after_attackers_declared_with_instant(&mut self) {

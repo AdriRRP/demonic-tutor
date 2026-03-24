@@ -1,13 +1,17 @@
-use super::{common::DomainEvents, GameService};
-use crate::{
-    application::{EventBus, EventStore},
-    domain::play::{
-        commands::{
-            AdjustPlayerLifeEffectCommand, ExileCardCommand, PlayLandCommand, TapLandCommand,
+//! Supports application game service resource actions.
+
+use {
+    super::{common::DomainEvents, GameService},
+    crate::{
+        application::{EventBus, EventStore},
+        domain::play::{
+            commands::{
+                AdjustPlayerLifeEffectCommand, ExileCardCommand, PlayLandCommand, TapLandCommand,
+            },
+            errors::DomainError,
+            events::{CardExiled, DomainEvent, LandPlayed, LandTapped, ManaAdded},
+            game::{AdjustPlayerLifeEffectOutcome, Game},
         },
-        errors::DomainError,
-        events::{CardExiled, DomainEvent, LandPlayed, LandTapped, ManaAdded},
-        game::{AdjustPlayerLifeEffectOutcome, Game},
     },
 };
 

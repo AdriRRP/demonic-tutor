@@ -1,11 +1,15 @@
 #![allow(clippy::unwrap_used)]
 
-use crate::support::{
-    advance_to_first_main_satisfying_cleanup, artifact_card, creature_card, enchantment_card,
-    filled_library, planeswalker_card, setup_two_player_game, sorcery_card,
-};
-use demonictutor::{
-    CardInstanceId, CastSpellCommand, DomainError, GameError, PassPriorityCommand, PlayerId,
+//! Unit coverage for unit stack priority sorcery speed spells require active player priority.
+
+use {
+    crate::support::{
+        advance_to_first_main_satisfying_cleanup, artifact_card, creature_card, enchantment_card,
+        filled_library, planeswalker_card, setup_two_player_game, sorcery_card,
+    },
+    demonictutor::{
+        CardInstanceId, CastSpellCommand, DomainError, GameError, PassPriorityCommand, PlayerId,
+    },
 };
 
 #[test]

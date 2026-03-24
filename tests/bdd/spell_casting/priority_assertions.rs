@@ -1,6 +1,9 @@
-use cucumber::{given, then, when};
+//! BDD coverage for bdd spell casting priority assertions.
 
-use crate::world::GameplayWorld;
+use {
+    crate::world::GameplayWorld,
+    cucumber::{given, then, when},
+};
 
 #[when(expr = "{word} passes priority")]
 fn player_passes_priority(world: &mut GameplayWorld, player: String) {

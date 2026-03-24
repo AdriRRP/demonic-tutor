@@ -1,3 +1,5 @@
+//! Unit coverage for unit resource actions.
+
 #[path = "cast_spell.rs"]
 mod cast_spell;
 #[path = "play_land.rs"]

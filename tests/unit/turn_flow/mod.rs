@@ -1,3 +1,5 @@
+//! Unit coverage for unit turn flow.
+
 #[path = "advance_turn.rs"]
 mod advance_turn;
 #[path = "discard_for_cleanup.rs"]

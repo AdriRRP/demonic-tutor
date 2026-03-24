@@ -1,3 +1,5 @@
+//! Supports game rules stack priority.
+
 mod activation;
 mod casting;
 mod passing;

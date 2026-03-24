@@ -1,10 +1,14 @@
-use super::{
-    invariants, rules, ActivateAbilityOutcome, CastSpellOutcome, Game, PassPriorityOutcome,
-    StackPriorityContext,
-};
-use crate::domain::play::{
-    commands::{ActivateAbilityCommand, CastSpellCommand, PassPriorityCommand},
-    errors::DomainError,
+//! Supports play game stack.
+
+use {
+    super::{
+        invariants, rules, ActivateAbilityOutcome, CastSpellOutcome, Game, PassPriorityOutcome,
+        StackPriorityContext,
+    },
+    crate::domain::play::{
+        commands::{ActivateAbilityCommand, CastSpellCommand, PassPriorityCommand},
+        errors::DomainError,
+    },
 };
 
 impl Game {

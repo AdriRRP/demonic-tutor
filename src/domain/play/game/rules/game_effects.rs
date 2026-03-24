@@ -1,7 +1,11 @@
-use super::super::{helpers, model::Player, TerminalState};
-use crate::domain::play::{
-    events::{GameEndReason, GameEnded, LifeChanged},
-    ids::{GameId, PlayerId},
+//! Supports game rules game effects.
+
+use {
+    super::super::{helpers, model::Player, TerminalState},
+    crate::domain::play::{
+        events::{GameEndReason, GameEnded, LifeChanged},
+        ids::{GameId, PlayerId},
+    },
 };
 
 /// Applies a life delta without resolving further automatic gameplay consequences.

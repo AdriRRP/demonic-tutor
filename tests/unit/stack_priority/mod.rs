@@ -1,3 +1,5 @@
+//! Unit coverage for unit stack priority.
+
 #[path = "activate_nonmana_ability_in_priority_window.rs"]
 mod activate_nonmana_ability_in_priority_window;
 #[path = "cast_artifact_in_main_window.rs"]

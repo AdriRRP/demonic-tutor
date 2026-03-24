@@ -1,6 +1,9 @@
-use cucumber::{given, then, when};
+//! BDD coverage for bdd combat.
 
-use crate::world::GameplayWorld;
+use {
+    crate::world::GameplayWorld,
+    cucumber::{given, then, when},
+};
 
 #[given("Alice attacks with a creature")]
 fn alice_attacks_with_a_creature(world: &mut GameplayWorld) {

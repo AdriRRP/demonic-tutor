@@ -1,6 +1,9 @@
-use cucumber::{given, then};
+//! BDD coverage for bdd stack foundation.
 
-use crate::world::GameplayWorld;
+use {
+    crate::world::GameplayWorld,
+    cucumber::{given, then},
+};
 
 #[given("a new two-player game has started")]
 fn a_new_two_player_game_has_started(world: &mut GameplayWorld) {

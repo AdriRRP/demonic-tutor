@@ -1,6 +1,6 @@
-use super::super::support;
-use super::super::GameplayWorld;
-use demonictutor::Phase;
+//! BDD coverage for world setup priority windows common.
+
+use {super::super::support, super::super::GameplayWorld, demonictutor::Phase};
 
 impl GameplayWorld {
     pub(super) fn advance_to_turn_one_priority_window(&mut self, phase: Phase) {

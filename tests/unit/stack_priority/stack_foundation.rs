@@ -1,5 +1,7 @@
 #![allow(clippy::unwrap_used)]
 
+//! Unit coverage for unit stack priority stack foundation.
+
 use demonictutor::{
     DeckId, GameId, GameService, InMemoryEventBus, InMemoryEventStore, Phase, PlayerDeck, PlayerId,
     StartGameCommand,

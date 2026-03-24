@@ -1,12 +1,16 @@
 #![allow(clippy::unwrap_used)]
 
-use crate::support::{
-    advance_to_first_main_satisfying_cleanup, advance_to_phase_satisfying_cleanup,
-    enchantment_card, filled_library, setup_two_player_game,
-};
-use demonictutor::{
-    CardInstanceId, CardType, CastSpellCommand, PassPriorityCommand, Phase, PlayerId,
-    SpellCastOutcome,
+//! Unit coverage for unit stack priority cast enchantment in main window.
+
+use {
+    crate::support::{
+        advance_to_first_main_satisfying_cleanup, advance_to_phase_satisfying_cleanup,
+        enchantment_card, filled_library, setup_two_player_game,
+    },
+    demonictutor::{
+        CardInstanceId, CardType, CastSpellCommand, PassPriorityCommand, Phase, PlayerId,
+        SpellCastOutcome,
+    },
 };
 
 #[test]

@@ -1,3 +1,5 @@
+//! Supports game rules combat.
+
 mod blocking_legality;
 mod capabilities;
 mod damage;

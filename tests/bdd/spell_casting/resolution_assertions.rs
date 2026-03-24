@@ -1,7 +1,6 @@
-use cucumber::then;
-use demonictutor::SpellCastOutcome;
+//! BDD coverage for bdd spell casting resolution assertions.
 
-use crate::world::GameplayWorld;
+use {crate::world::GameplayWorld, cucumber::then, demonictutor::SpellCastOutcome};
 
 #[then("the card leaves Alice's hand")]
 fn the_card_leaves_alices_hand(world: &mut GameplayWorld) {

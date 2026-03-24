@@ -1,3 +1,5 @@
+//! BDD coverage for bdd world actions.
+
 mod activated_abilities;
 mod combat_zones;
 mod lifecycle;

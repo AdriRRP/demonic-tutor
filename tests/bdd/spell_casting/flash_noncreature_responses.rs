@@ -1,6 +1,9 @@
-use cucumber::{given, when};
+//! BDD coverage for bdd spell casting flash noncreature responses.
 
-use crate::world::GameplayWorld;
+use {
+    crate::world::GameplayWorld,
+    cucumber::{given, when},
+};
 
 #[given(
     "Alice has cast a creature spell and still holds priority with Bob's flash artifact in hand"

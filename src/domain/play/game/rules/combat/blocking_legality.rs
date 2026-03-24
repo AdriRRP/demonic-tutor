@@ -1,15 +1,19 @@
-use super::{
-    super::super::{helpers, model::Player},
-    capabilities, progression,
+//! Supports rules combat blocking legality.
+
+use {
+    super::{
+        super::super::{helpers, model::Player},
+        capabilities, progression,
+    },
+    crate::domain::play::{
+        cards::CardType,
+        commands::DeclareBlockersCommand,
+        errors::{CardError, DomainError, GameError},
+        events::BlockersDeclared,
+        ids::{CardInstanceId, GameId, PlayerId},
+    },
+    std::collections::{HashMap, HashSet},
 };
-use crate::domain::play::{
-    cards::CardType,
-    commands::DeclareBlockersCommand,
-    errors::{CardError, DomainError, GameError},
-    events::BlockersDeclared,
-    ids::{CardInstanceId, GameId, PlayerId},
-};
-use std::collections::{HashMap, HashSet};
 
 pub fn declare_blockers(
     game_id: &GameId,

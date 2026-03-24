@@ -1,7 +1,12 @@
-use super::super::support;
-use super::super::GameplayWorld;
-use demonictutor::{
-    DeclareAttackersCommand, DeclareBlockersCommand, ExileCardCommand, ResolveCombatDamageCommand,
+//! BDD coverage for world actions combat zones.
+
+use {
+    super::super::support,
+    super::super::GameplayWorld,
+    demonictutor::{
+        DeclareAttackersCommand, DeclareBlockersCommand, ExileCardCommand,
+        ResolveCombatDamageCommand,
+    },
 };
 
 impl GameplayWorld {

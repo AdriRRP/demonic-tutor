@@ -2,8 +2,12 @@
 #![allow(clippy::panic)]
 #![allow(clippy::expect_used)]
 
-use crate::support;
-use demonictutor::{CastSpellCommand, DeclareAttackersCommand, KeywordAbility, PlayerId};
+//! Unit coverage for unit combat haste.
+
+use {
+    crate::support,
+    demonictutor::{CastSpellCommand, DeclareAttackersCommand, KeywordAbility, PlayerId},
+};
 
 #[test]
 fn haste_creature_can_attack_on_the_turn_it_enters() {

@@ -1,6 +1,9 @@
-use cucumber::{given, then, when};
+//! BDD coverage for bdd abilities.
 
-use crate::world::GameplayWorld;
+use {
+    crate::world::GameplayWorld,
+    cucumber::{given, then, when},
+};
 
 #[given("Alice is in first main with a life-gain artifact on the battlefield and priority")]
 fn alice_is_in_first_main_with_a_life_gain_artifact_on_the_battlefield_and_priority(

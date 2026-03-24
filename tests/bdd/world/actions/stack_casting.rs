@@ -1,6 +1,10 @@
-use super::super::support;
-use super::super::GameplayWorld;
-use demonictutor::{CastSpellCommand, PlayerId, SpellTarget};
+//! BDD coverage for world actions stack casting.
+
+use {
+    super::super::support,
+    super::super::GameplayWorld,
+    demonictutor::{CastSpellCommand, PlayerId, SpellTarget},
+};
 
 impl GameplayWorld {
     fn cast_targeted_creature_spell_with_card(

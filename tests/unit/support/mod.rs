@@ -2,13 +2,18 @@
 #![allow(clippy::panic)]
 #![allow(dead_code)]
 
-use demonictutor::{ActivatedAbilityProfile, CastingRule};
-use demonictutor::{
-    AdvanceTurnCommand, AdvanceTurnOutcome, CardDefinitionId, CardType, CastSpellCommand,
-    DealOpeningHandsCommand, DeckId, DeclareAttackersCommand, DiscardForCleanupCommand, Game,
-    GameId, GameService, InMemoryEventBus, InMemoryEventStore, KeywordAbility, KeywordAbilitySet,
-    LibraryCard, ManaColor, ManaCost, PassPriorityCommand, Phase, PlayerDeck, PlayerId,
-    PlayerLibrary, ResolveCombatDamageCommand, StartGameCommand, SupportedSpellRules,
+//! Unit coverage for unit support.
+
+use {
+    demonictutor::{ActivatedAbilityProfile, CastingRule},
+    demonictutor::{
+        AdvanceTurnCommand, AdvanceTurnOutcome, CardDefinitionId, CardType, CastSpellCommand,
+        DealOpeningHandsCommand, DeckId, DeclareAttackersCommand, DiscardForCleanupCommand, Game,
+        GameId, GameService, InMemoryEventBus, InMemoryEventStore, KeywordAbility,
+        KeywordAbilitySet, LibraryCard, ManaColor, ManaCost, PassPriorityCommand, Phase,
+        PlayerDeck, PlayerId, PlayerLibrary, ResolveCombatDamageCommand, StartGameCommand,
+        SupportedSpellRules,
+    },
 };
 
 pub type TestService = GameService<InMemoryEventStore, InMemoryEventBus>;

@@ -1,9 +1,13 @@
-use super::{invariants, rules, Game, PriorityState, ResolveCombatDamageOutcome};
-use crate::domain::play::{
-    commands::{DeclareAttackersCommand, DeclareBlockersCommand, ResolveCombatDamageCommand},
-    errors::DomainError,
-    events::{AttackersDeclared, BlockersDeclared},
-    phase::Phase,
+//! Supports play game combat.
+
+use {
+    super::{invariants, rules, Game, PriorityState, ResolveCombatDamageOutcome},
+    crate::domain::play::{
+        commands::{DeclareAttackersCommand, DeclareBlockersCommand, ResolveCombatDamageCommand},
+        errors::DomainError,
+        events::{AttackersDeclared, BlockersDeclared},
+        phase::Phase,
+    },
 };
 
 impl Game {

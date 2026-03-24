@@ -1,3 +1,5 @@
+//! Supports infrastructure projections game log.
+
 use {crate::domain::play::events::DomainEvent, std::sync::RwLock};
 
 #[derive(Debug, Default)]

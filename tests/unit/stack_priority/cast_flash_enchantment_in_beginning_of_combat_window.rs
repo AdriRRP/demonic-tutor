@@ -1,10 +1,14 @@
 #![allow(clippy::unwrap_used)]
 
-use crate::support::{
-    advance_to_phase_satisfying_cleanup, close_empty_priority_window, filled_library,
-    flash_enchantment_card, resolve_top_stack_with_passes, setup_two_player_game,
+//! Unit coverage for unit stack priority cast flash enchantment in beginning of combat window.
+
+use {
+    crate::support::{
+        advance_to_phase_satisfying_cleanup, close_empty_priority_window, filled_library,
+        flash_enchantment_card, resolve_top_stack_with_passes, setup_two_player_game,
+    },
+    demonictutor::{AdvanceTurnCommand, CardInstanceId, CastSpellCommand, Phase, PlayerId},
 };
-use demonictutor::{AdvanceTurnCommand, CardInstanceId, CastSpellCommand, Phase, PlayerId};
 
 #[test]
 fn active_player_can_cast_and_resolve_a_flash_enchantment_at_beginning_of_combat() {

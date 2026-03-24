@@ -1,12 +1,16 @@
 #![allow(clippy::unwrap_used)]
 
-use crate::support::{
-    advance_to_player_first_main_satisfying_cleanup, creature_card, filled_library, land_card,
-    resolve_top_stack_with_passes, setup_two_player_game,
-    targeted_blocking_creature_damage_instant_card,
-};
-use demonictutor::{
-    CardInstanceId, CastSpellCommand, DomainError, GameError, PlayerId, SpellTarget,
+//! Unit coverage for unit stack priority reject non blocking creature for block only spell.
+
+use {
+    crate::support::{
+        advance_to_player_first_main_satisfying_cleanup, creature_card, filled_library, land_card,
+        resolve_top_stack_with_passes, setup_two_player_game,
+        targeted_blocking_creature_damage_instant_card,
+    },
+    demonictutor::{
+        CardInstanceId, CastSpellCommand, DomainError, GameError, PlayerId, SpellTarget,
+    },
 };
 
 #[test]

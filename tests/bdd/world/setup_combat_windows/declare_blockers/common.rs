@@ -1,5 +1,9 @@
-use super::super::super::{support, GameplayWorld};
-use demonictutor::{CardDefinitionId, CastSpellCommand, LibraryCard};
+//! BDD coverage for setup combat windows declare blockers common.
+
+use {
+    super::super::super::{support, GameplayWorld},
+    demonictutor::{CardDefinitionId, CastSpellCommand, LibraryCard},
+};
 
 pub(super) fn prepare_priority_after_blockers_declared(
     world: &mut GameplayWorld,

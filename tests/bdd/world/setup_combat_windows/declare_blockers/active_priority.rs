@@ -1,6 +1,10 @@
-use super::super::super::{support, GameplayWorld};
-use super::common::{attacker_card, blocker_card, prepare_priority_after_blockers_declared};
-use demonictutor::Phase;
+//! BDD coverage for setup combat windows declare blockers active priority.
+
+use {
+    super::super::super::{support, GameplayWorld},
+    super::common::{attacker_card, blocker_card, prepare_priority_after_blockers_declared},
+    demonictutor::Phase,
+};
 
 impl GameplayWorld {
     pub fn setup_priority_after_blockers_declared(&mut self) {

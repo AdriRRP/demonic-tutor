@@ -1,13 +1,17 @@
-use crate::domain::play::game::{
-    helpers, invariants,
-    model::{Player, MAX_HAND_SIZE},
-};
-use crate::domain::play::{
-    commands::DiscardForCleanupCommand,
-    errors::{DomainError, GameError, PhaseError},
-    events::{CardDiscarded, DiscardKind},
-    ids::{GameId, PlayerId},
-    phase::Phase,
+//! Supports rules turn flow cleanup.
+
+use {
+    crate::domain::play::game::{
+        helpers, invariants,
+        model::{Player, MAX_HAND_SIZE},
+    },
+    crate::domain::play::{
+        commands::DiscardForCleanupCommand,
+        errors::{DomainError, GameError, PhaseError},
+        events::{CardDiscarded, DiscardKind},
+        ids::{GameId, PlayerId},
+        phase::Phase,
+    },
 };
 
 /// Discards one card from hand to graveyard as an explicit cleanup action.

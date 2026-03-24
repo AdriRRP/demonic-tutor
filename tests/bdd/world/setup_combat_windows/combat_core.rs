@@ -1,8 +1,12 @@
-use super::super::support;
-use super::super::GameplayWorld;
-use demonictutor::{
-    AdjustPlayerLifeEffectCommand, CardDefinitionId, CastSpellCommand, DiscardForCleanupCommand,
-    LibraryCard, Phase,
+//! BDD coverage for world setup combat windows combat core.
+
+use {
+    super::super::support,
+    super::super::GameplayWorld,
+    demonictutor::{
+        AdjustPlayerLifeEffectCommand, CardDefinitionId, CastSpellCommand,
+        DiscardForCleanupCommand, LibraryCard, Phase,
+    },
 };
 
 impl GameplayWorld {

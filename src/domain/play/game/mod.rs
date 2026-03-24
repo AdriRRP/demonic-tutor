@@ -1,3 +1,5 @@
+//! Supports domain play game.
+
 mod combat;
 mod helpers;
 mod invariants;

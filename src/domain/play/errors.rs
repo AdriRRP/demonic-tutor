@@ -1,3 +1,5 @@
+//! Supports domain play errors.
+
 use crate::domain::play::{
     cards::{CastingPermissionProfile, CastingRule},
     ids::{CardInstanceId, PlayerId},

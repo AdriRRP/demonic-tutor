@@ -1,3 +1,5 @@
+//! Unit coverage for unit combat.
+
 #[path = "blocking_legality.rs"]
 mod blocking_legality;
 #[path = "combat_subphases.rs"]

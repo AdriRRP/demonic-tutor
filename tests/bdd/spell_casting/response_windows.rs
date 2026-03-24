@@ -1,7 +1,10 @@
-use cucumber::{given, when};
-use demonictutor::Phase;
+//! BDD coverage for bdd spell casting response windows.
 
-use crate::world::GameplayWorld;
+use {
+    crate::world::GameplayWorld,
+    cucumber::{given, when},
+    demonictutor::Phase,
+};
 
 #[given("Bob has priority in Upkeep with an instant card in hand")]
 fn bob_has_priority_in_upkeep_with_an_instant_card_in_hand(world: &mut GameplayWorld) {

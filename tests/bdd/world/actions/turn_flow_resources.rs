@@ -1,10 +1,14 @@
-use super::super::support;
-use super::super::GameplayWorld;
-use demonictutor::domain::play::game::PlayerCardZone;
-use demonictutor::{
-    AdjustPlayerLifeEffectCommand, AdvanceTurnCommand, AdvanceTurnOutcome,
-    DiscardForCleanupCommand, DrawCardsEffectCommand, PassPriorityCommand, PlayLandCommand,
-    PlayerId, TapLandCommand,
+//! BDD coverage for world actions turn flow resources.
+
+use {
+    super::super::support,
+    super::super::GameplayWorld,
+    demonictutor::domain::play::game::PlayerCardZone,
+    demonictutor::{
+        AdjustPlayerLifeEffectCommand, AdvanceTurnCommand, AdvanceTurnOutcome,
+        DiscardForCleanupCommand, DrawCardsEffectCommand, PassPriorityCommand, PlayLandCommand,
+        PlayerId, TapLandCommand,
+    },
 };
 
 impl GameplayWorld {

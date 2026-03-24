@@ -1,7 +1,10 @@
-use cucumber::{given, then, when};
-use demonictutor::DiscardKind;
+//! BDD coverage for bdd cleanup.
 
-use crate::world::GameplayWorld;
+use {
+    crate::world::GameplayWorld,
+    cucumber::{given, then, when},
+    demonictutor::DiscardKind,
+};
 
 #[given("Alice is the active player in EndStep and has eight cards in hand")]
 fn alice_is_active_in_end_step_and_has_eight_cards_in_hand(world: &mut GameplayWorld) {

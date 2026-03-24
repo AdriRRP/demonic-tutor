@@ -1,3 +1,5 @@
+//! Supports play commands setup.
+
 use crate::domain::play::{
     cards::{
         ActivatedAbilityProfile, CardDefinition, CardInstance, CardType, CastingRule,

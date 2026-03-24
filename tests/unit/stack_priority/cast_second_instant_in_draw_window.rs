@@ -1,7 +1,11 @@
 #![allow(clippy::unwrap_used)]
 
-use crate::support::{filled_library, instant_card, setup_two_player_game};
-use demonictutor::{CardInstanceId, CastSpellCommand, Phase, PlayerId};
+//! Unit coverage for unit stack priority cast second instant in draw window.
+
+use {
+    crate::support::{filled_library, instant_card, setup_two_player_game},
+    demonictutor::{CardInstanceId, CastSpellCommand, Phase, PlayerId},
+};
 
 #[test]
 fn active_player_can_cast_a_second_instant_before_passing_in_draw() {

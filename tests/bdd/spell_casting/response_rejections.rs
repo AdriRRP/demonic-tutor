@@ -1,7 +1,10 @@
-use cucumber::{given, then, when};
-use demonictutor::Phase;
+//! BDD coverage for bdd spell casting response rejections.
 
-use crate::world::GameplayWorld;
+use {
+    crate::world::GameplayWorld,
+    cucumber::{given, then, when},
+    demonictutor::Phase,
+};
 
 #[given("Alice has cast a creature spell and still holds priority with Bob's instant in hand")]
 fn alice_has_cast_a_creature_spell_and_still_holds_priority_with_bobs_instant_in_hand(

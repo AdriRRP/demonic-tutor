@@ -1,6 +1,10 @@
-use super::super::support;
-use super::super::GameplayWorld;
-use demonictutor::{AdjustPlayerLifeEffectCommand, Phase, PlayLandCommand};
+//! BDD coverage for world setup effects and zones.
+
+use {
+    super::super::support,
+    super::super::GameplayWorld,
+    demonictutor::{AdjustPlayerLifeEffectCommand, Phase, PlayLandCommand},
+};
 
 impl GameplayWorld {
     pub fn setup_upkeep_with_land_on_battlefield(&mut self) {

@@ -1,11 +1,15 @@
 #![allow(clippy::unwrap_used)]
 
-use crate::support::{
-    advance_to_first_main_satisfying_cleanup, filled_library, instant_card,
-    own_turn_priority_artifact_card, setup_two_player_game,
-};
-use demonictutor::{
-    CardInstanceId, CastSpellCommand, DomainError, GameError, PassPriorityCommand, PlayerId,
+//! Unit coverage for unit stack priority reject own turn priority artifact response.
+
+use {
+    crate::support::{
+        advance_to_first_main_satisfying_cleanup, filled_library, instant_card,
+        own_turn_priority_artifact_card, setup_two_player_game,
+    },
+    demonictutor::{
+        CardInstanceId, CastSpellCommand, DomainError, GameError, PassPriorityCommand, PlayerId,
+    },
 };
 
 #[test]

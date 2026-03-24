@@ -1,3 +1,5 @@
+//! Test support for unit test entrypoints.
+
 #[path = "unit/support/mod.rs"]
 mod support;
 

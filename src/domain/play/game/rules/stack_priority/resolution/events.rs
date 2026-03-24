@@ -1,3 +1,5 @@
+//! Supports stack priority resolution events.
+
 use crate::domain::play::{
     cards::CardType,
     events::{SpellCast, SpellCastOutcome, StackTopResolved},

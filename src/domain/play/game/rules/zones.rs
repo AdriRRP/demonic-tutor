@@ -1,8 +1,12 @@
-use super::super::model::Player;
-use crate::domain::play::{
-    errors::DomainError,
-    events::{CardExiled, ZoneType},
-    ids::{CardInstanceId, GameId, PlayerId},
+//! Supports game rules zones.
+
+use {
+    super::super::model::Player,
+    crate::domain::play::{
+        errors::DomainError,
+        events::{CardExiled, ZoneType},
+        ids::{CardInstanceId, GameId, PlayerId},
+    },
 };
 
 /// Exiles a card from the battlefield.
