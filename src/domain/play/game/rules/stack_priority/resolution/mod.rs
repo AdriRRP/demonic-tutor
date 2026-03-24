@@ -43,14 +43,15 @@ fn resolve_spell_from_stack(
         source_card_id,
         controller_id,
         stack_object_id,
-        card,
+        payload,
         card_type,
         mana_cost_paid,
         supported_spell_rules,
         target,
     } = extract_resolved_spell_object(game_id, stack_object)?;
 
-    let outcome = move_resolved_spell_to_its_destination(players, &controller_id, card_type, card)?;
+    let outcome =
+        move_resolved_spell_to_its_destination(players, &controller_id, card_type, payload)?;
 
     let (stack_top_resolved, spell_cast) = build_resolution_events(
         game_id,

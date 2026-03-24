@@ -1,7 +1,7 @@
 //! Supports stack priority resolution destination.
 
 use crate::domain::play::{
-    cards::{CardInstance, CardType},
+    cards::{CardType, SpellPayload},
     errors::{DomainError, GameError},
     events::SpellCastOutcome,
     game::{helpers, Player},
@@ -12,7 +12,7 @@ pub(super) fn move_resolved_spell_to_its_destination(
     players: &mut [Player],
     controller_id: &PlayerId,
     card_type: CardType,
-    card: CardInstance,
+    payload: SpellPayload,
 ) -> Result<SpellCastOutcome, DomainError> {
     let player = helpers::find_player_mut(players, controller_id)?;
 
@@ -21,11 +21,11 @@ pub(super) fn move_resolved_spell_to_its_destination(
         | CardType::Enchantment
         | CardType::Artifact
         | CardType::Planeswalker => {
-            player.receive_battlefield_card(card);
+            player.receive_battlefield_card(payload.into_card_instance());
             Ok(SpellCastOutcome::EnteredBattlefield)
         }
         CardType::Instant | CardType::Sorcery => {
-            player.receive_graveyard_card(card);
+            player.receive_graveyard_card(payload.into_card_instance());
             Ok(SpellCastOutcome::ResolvedToGraveyard)
         }
         CardType::Land => Err(DomainError::Game(GameError::InternalInvariantViolation(
