@@ -4,8 +4,15 @@ This directory contains the current proposal backlog for the next stable-engine 
 
 The backlog is intentionally organized by dependency order when active.
 
-## Current State
+## Wave 1 — Engine Audit V4
 
-There is currently no open slice backlog.
+Directory: `engine-audit-v4/`
 
-The latest architectural follow-up wave, `engine-audit-v3`, has been fully implemented and moved to `docs/slices/implemented/`.
+1. `engine-audit-v4/make-hand-spell-cast-commit-truly-atomic.md`
+1. `engine-audit-v4/recycle-player-card-arena-slots.md`
+1. `engine-audit-v4/stop-reconstructing-cards-across-stack-resolution.md`
+1. `engine-audit-v4/rework-indexed-ordered-zones-beyond-tombstones.md`
+1. `engine-audit-v4/remove-battlefield-temp-allocation-in-hot-mutations.md`
+1. `engine-audit-v4/derive-mana-cost-total-without-manual-color-sums.md`
+
+These proposals focus on semantic storage, hot-path lifetime costs, and Rust-idiomatic simplification for the next elite engine pass.
