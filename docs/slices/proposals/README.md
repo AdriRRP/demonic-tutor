@@ -9,6 +9,6 @@ The backlog is intentionally organized by dependency order.
 Directory: `engine-audit-v2/`
 
 1. `engine-audit-v2/close-player-zone-storage-escape-hatches.md`
-1. `engine-audit-v2/push-target-legality-predicates-into-target-rules.md`
+Wave 1 is fully implemented.
 
 These proposals are architectural and semantic follow-ups to the stable engine wave. They do not expand gameplay rules support by themselves.

@@ -491,6 +491,43 @@ impl SingleTargetRule {
             Self::Player(_) | Self::Creature(_) | Self::PlayerOrCreature { .. } => None,
         }
     }
+
+    #[must_use]
+    pub const fn allows_player_target(self, target_is_actor: bool) -> Option<bool> {
+        match self {
+            Self::Player(rule) | Self::PlayerOrCreature { player: rule, .. } => {
+                Some(rule.allows(target_is_actor))
+            }
+            Self::Creature(_) | Self::GraveyardCard(_) => None,
+        }
+    }
+
+    #[must_use]
+    pub const fn allows_creature_target(
+        self,
+        target_controlled_by_actor: bool,
+        target_is_attacking: bool,
+        target_is_blocking: bool,
+    ) -> Option<bool> {
+        match self {
+            Self::Creature(rule) | Self::PlayerOrCreature { creature: rule, .. } => {
+                Some(rule.allows(
+                    target_controlled_by_actor,
+                    target_is_attacking,
+                    target_is_blocking,
+                ))
+            }
+            Self::Player(_) | Self::GraveyardCard(_) => None,
+        }
+    }
+
+    #[must_use]
+    pub const fn allows_graveyard_card_target(self) -> Option<bool> {
+        match self {
+            Self::GraveyardCard(rule) => Some(rule.allows()),
+            Self::Player(_) | Self::Creature(_) | Self::PlayerOrCreature { .. } => None,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

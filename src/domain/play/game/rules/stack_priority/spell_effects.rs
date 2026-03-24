@@ -1,8 +1,5 @@
 use crate::domain::play::{
-    cards::{
-        CardInstance, CreatureTargetRule, GraveyardCardTargetRule, PlayerTargetRule,
-        SpellTargetingProfile, SupportedSpellRules,
-    },
+    cards::{CardInstance, SpellTargetingProfile, SupportedSpellRules},
     game::{helpers, Player, SpellTarget},
     ids::{CardInstanceId, PlayerId},
 };
@@ -87,13 +84,9 @@ pub fn evaluate_target_legality(
                         return SpellTargetLegality::MissingPlayer(player_id.clone());
                     };
 
-                    match rule.player_rule() {
-                        Some(rule) if rule.allows(target_player.id() == actor_id) => {
-                            SpellTargetLegality::Legal
-                        }
-                        Some(PlayerTargetRule::AnyPlayer | PlayerTargetRule::OpponentOfActor) => {
-                            SpellTargetLegality::IllegalTargetRule
-                        }
+                    match rule.allows_player_target(target_player.id() == actor_id) {
+                        Some(true) => SpellTargetLegality::Legal,
+                        Some(false) => SpellTargetLegality::IllegalTargetRule,
                         None => SpellTargetLegality::IllegalTargetKind,
                     }
                 }
@@ -104,27 +97,13 @@ pub fn evaluate_target_legality(
                         return SpellTargetLegality::MissingCreature(card_id.clone());
                     };
 
-                    match rule.creature_rule() {
-                        Some(rule)
-                            if rule.allows(
-                                target_creature.owner_id() == actor_id,
-                                target_creature.card().is_attacking(),
-                                target_creature.card().is_blocking(),
-                            ) =>
-                        {
-                            SpellTargetLegality::Legal
-                        }
-                        Some(
-                            CreatureTargetRule::AnyCreatureOnBattlefield
-                            | CreatureTargetRule::CreatureControlledByActor
-                            | CreatureTargetRule::CreatureControlledByOpponent
-                            | CreatureTargetRule::AttackingCreature
-                            | CreatureTargetRule::BlockingCreature
-                            | CreatureTargetRule::CreatureControlledByActorAndAttacking
-                            | CreatureTargetRule::CreatureControlledByActorAndBlocking
-                            | CreatureTargetRule::BlockingCreatureControlledByOpponent
-                            | CreatureTargetRule::AttackingCreatureControlledByOpponent,
-                        ) => SpellTargetLegality::IllegalTargetRule,
+                    match rule.allows_creature_target(
+                        target_creature.owner_id() == actor_id,
+                        target_creature.card().is_attacking(),
+                        target_creature.card().is_blocking(),
+                    ) {
+                        Some(true) => SpellTargetLegality::Legal,
+                        Some(false) => SpellTargetLegality::IllegalTargetRule,
                         None => SpellTargetLegality::IllegalTargetKind,
                     }
                 }
@@ -134,11 +113,9 @@ pub fn evaluate_target_legality(
                         return SpellTargetLegality::MissingGraveyardCard(card_id.clone());
                     };
 
-                    match rule.graveyard_card_rule() {
-                        Some(rule) if rule.allows() => SpellTargetLegality::Legal,
-                        Some(GraveyardCardTargetRule::AnyCardInAGraveyard) => {
-                            SpellTargetLegality::IllegalTargetRule
-                        }
+                    match rule.allows_graveyard_card_target() {
+                        Some(true) => SpellTargetLegality::Legal,
+                        Some(false) => SpellTargetLegality::IllegalTargetRule,
                         None => SpellTargetLegality::IllegalTargetKind,
                     }
                 }
