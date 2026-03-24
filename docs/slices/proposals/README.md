@@ -4,15 +4,15 @@ This directory contains the current proposal backlog for the next stable-engine 
 
 The backlog is intentionally organized by dependency order when active.
 
-## Wave 1 — Engine Audit V5
+## Wave 1 — Engine Audit V6
 
-Directory: `engine-audit-v5/`
+Directory: `engine-audit-v6/`
 
-1. `engine-audit-v5/introduce-internal-handle-first-card-identity.md`
-1. `engine-audit-v5/make-player-card-location-a-primary-index.md`
-1. `engine-audit-v5/thin-stack-spell-payloads-further.md`
-1. `engine-audit-v5/commit-spells-to-stack-through-one-internal-object.md`
-1. `engine-audit-v5/rework-ordered-zone-visible-indexing.md`
-1. `engine-audit-v5/move-public-string-ids-to-edge-materialization.md`
+1. `engine-audit-v6/introduce-handle-first-runtime-identity.md`
+1. `engine-audit-v6/make-player-card-location-a-primary-runtime-index.md`
+1. `engine-audit-v6/thin-stack-spell-payloads-beyond-shared-definitions.md`
+1. `engine-audit-v6/commit-spells-to-stack-through-a-single-prepared-object.md`
+1. `engine-audit-v6/rework-ordered-zone-visible-indexing.md`
+1. `engine-audit-v6/materialize-public-string-ids-only-at-boundaries.md`
 
-These proposals focus on the next internal-representation step for an embedded-class engine: handle-first identity, slimmer stack carriers, and cheaper zone/location queries.
+These proposals focus on the next elite engine pass: handle-first runtime identity, primary location indexing, slimmer stack carriers, and stricter edge-only public ids.
