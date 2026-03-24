@@ -8,8 +8,9 @@ use {
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 struct IndexedOrderedZone {
-    handles: Vec<PlayerCardHandle>,
+    handles: Vec<Option<PlayerCardHandle>>,
     positions: HashMap<PlayerCardHandle, usize>,
+    len: usize,
 }
 
 impl IndexedOrderedZone {
@@ -22,19 +23,20 @@ impl IndexedOrderedZone {
     fn push(&mut self, handle: PlayerCardHandle) {
         let index = self.handles.len();
         self.positions.insert(handle, index);
-        self.handles.push(handle);
+        self.handles.push(Some(handle));
+        self.len += 1;
     }
 
     const fn len(&self) -> usize {
-        self.handles.len()
+        self.len
     }
 
     const fn is_empty(&self) -> bool {
-        self.handles.is_empty()
+        self.len == 0
     }
 
     fn iter(&self) -> impl Iterator<Item = &PlayerCardHandle> {
-        self.handles.iter()
+        self.handles.iter().filter_map(Option::as_ref)
     }
 
     fn contains(&self, handle: PlayerCardHandle) -> bool {
@@ -42,21 +44,22 @@ impl IndexedOrderedZone {
     }
 
     fn handle_at(&self, index: usize) -> Option<PlayerCardHandle> {
-        self.handles.get(index).copied()
+        self.handles.iter().filter_map(|handle| *handle).nth(index)
     }
 
     fn drain_all(&mut self) -> Vec<PlayerCardHandle> {
         self.positions.clear();
+        self.len = 0;
         std::mem::take(&mut self.handles)
+            .into_iter()
+            .flatten()
+            .collect()
     }
 
     fn remove_preserving_order(&mut self, handle: PlayerCardHandle) -> Option<PlayerCardHandle> {
         let index = self.positions.remove(&handle)?;
-        let removed = self.handles.remove(index);
-        for shifted_index in index..self.handles.len() {
-            self.positions
-                .insert(self.handles[shifted_index], shifted_index);
-        }
+        let removed = self.handles.get_mut(index)?.take()?;
+        self.len -= 1;
         Some(removed)
     }
 }
