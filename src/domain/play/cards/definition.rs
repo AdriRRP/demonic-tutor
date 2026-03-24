@@ -90,6 +90,27 @@ impl CardDefinition {
     }
 
     #[must_use]
+    pub const fn from_parts(
+        id: CardDefinitionId,
+        card_type: CardType,
+        mana_cost: ManaCost,
+        casting_permission: Option<CastingPermissionProfile>,
+        supported_spell_rules: SupportedSpellRules,
+        activated_mana_ability: Option<ActivatedManaAbilityProfile>,
+        activated_ability: Option<ActivatedAbilityProfile>,
+    ) -> Self {
+        Self {
+            id,
+            card_type,
+            mana_cost,
+            casting_permission,
+            supported_spell_rules,
+            activated_mana_ability,
+            activated_ability,
+        }
+    }
+
+    #[must_use]
     pub const fn id(&self) -> &CardDefinitionId {
         &self.id
     }

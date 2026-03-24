@@ -28,7 +28,7 @@ struct CreatureRuntime {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CreatureSpellPayload {
     id: CardInstanceId,
-    definition: Arc<CardDefinition>,
+    definition: SpellDefinitionPayload,
     power: u32,
     toughness: u32,
     keywords: KeywordAbilitySet,
@@ -37,7 +37,44 @@ pub struct CreatureSpellPayload {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct NonCreatureSpellPayload {
     id: CardInstanceId,
-    definition: Arc<CardDefinition>,
+    definition: SpellDefinitionPayload,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct SpellDefinitionPayload {
+    id: CardDefinitionId,
+    card_type: CardType,
+    mana_cost: ManaCost,
+    casting_permission: Option<CastingPermissionProfile>,
+    supported_spell_rules: SupportedSpellRules,
+    activated_mana_ability: Option<ActivatedManaAbilityProfile>,
+    activated_ability: Option<ActivatedAbilityProfile>,
+}
+
+impl SpellDefinitionPayload {
+    fn from_definition(definition: &CardDefinition) -> Self {
+        Self {
+            id: definition.id().clone(),
+            card_type: *definition.card_type(),
+            mana_cost: definition.mana_cost_profile(),
+            casting_permission: definition.casting_permission(),
+            supported_spell_rules: definition.supported_spell_rules(),
+            activated_mana_ability: definition.activated_mana_ability(),
+            activated_ability: definition.activated_ability(),
+        }
+    }
+
+    fn into_definition(self) -> CardDefinition {
+        CardDefinition::from_parts(
+            self.id,
+            self.card_type,
+            self.mana_cost,
+            self.casting_permission,
+            self.supported_spell_rules,
+            self.activated_mana_ability,
+            self.activated_ability,
+        )
+    }
 }
 
 impl CreatureRuntime {
@@ -215,11 +252,11 @@ impl CardInstance {
         match &self.runtime.kind {
             CardRuntimeKind::NonCreature => SpellPayload::NonCreature(NonCreatureSpellPayload {
                 id: self.id,
-                definition: self.face.definition,
+                definition: SpellDefinitionPayload::from_definition(self.face.definition.as_ref()),
             }),
             CardRuntimeKind::Creature(creature) => SpellPayload::Creature(CreatureSpellPayload {
                 id: self.id,
-                definition: self.face.definition,
+                definition: SpellDefinitionPayload::from_definition(self.face.definition.as_ref()),
                 power: creature.power,
                 toughness: creature.toughness,
                 keywords: creature.keywords,
@@ -482,18 +519,18 @@ impl SpellPayload {
     }
 
     #[must_use]
-    pub fn card_type(&self) -> &CardType {
+    pub const fn card_type(&self) -> &CardType {
         match self {
-            Self::NonCreature(payload) => payload.definition.card_type(),
-            Self::Creature(payload) => payload.definition.card_type(),
+            Self::NonCreature(payload) => &payload.definition.card_type,
+            Self::Creature(payload) => &payload.definition.card_type,
         }
     }
 
     #[must_use]
-    pub fn supported_spell_rules(&self) -> SupportedSpellRules {
+    pub const fn supported_spell_rules(&self) -> SupportedSpellRules {
         match self {
-            Self::NonCreature(payload) => payload.definition.supported_spell_rules(),
-            Self::Creature(payload) => payload.definition.supported_spell_rules(),
+            Self::NonCreature(payload) => payload.definition.supported_spell_rules,
+            Self::Creature(payload) => payload.definition.supported_spell_rules,
         }
     }
 
@@ -503,7 +540,7 @@ impl SpellPayload {
             Self::NonCreature(payload) => CardInstance {
                 id: payload.id,
                 face: CardFace {
-                    definition: payload.definition,
+                    definition: Arc::new(payload.definition.into_definition()),
                 },
                 runtime: CardRuntime {
                     tapped: false,
@@ -513,7 +550,7 @@ impl SpellPayload {
             Self::Creature(payload) => CardInstance {
                 id: payload.id,
                 face: CardFace {
-                    definition: payload.definition,
+                    definition: Arc::new(payload.definition.into_definition()),
                 },
                 runtime: CardRuntime {
                     tapped: false,

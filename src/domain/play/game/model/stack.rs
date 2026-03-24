@@ -207,12 +207,12 @@ impl SpellOnStack {
     }
 
     #[must_use]
-    pub fn card_type(&self) -> &CardType {
+    pub const fn card_type(&self) -> &CardType {
         self.payload.card_type()
     }
 
     #[must_use]
-    pub fn supported_spell_rules(&self) -> SupportedSpellRules {
+    pub const fn supported_spell_rules(&self) -> SupportedSpellRules {
         self.payload.supported_spell_rules()
     }
 
