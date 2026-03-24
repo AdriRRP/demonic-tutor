@@ -114,7 +114,7 @@ pub(super) fn battlefield_card_location<'a>(
     (location.zone() == PlayerCardZone::Battlefield).then_some(())?;
     let owner_index = location.owner_index();
     let player = players.get(owner_index)?;
-    let card = player.battlefield_card(card_id)?;
+    let card = player.card_by_handle(location.handle())?;
     Some(BattlefieldCardLocation { owner_index, card })
 }
 
@@ -123,8 +123,11 @@ pub(super) fn battlefield_card_mut<'a>(
     card_locations: &AggregateCardLocationIndex,
     card_id: &CardInstanceId,
 ) -> Option<&'a mut CardInstance> {
-    let owner_index = battlefield_card_location(players, card_locations, card_id)?.owner_index();
-    players[owner_index].battlefield_card_mut(card_id)
+    let location = card_locations.location(card_id)?;
+    (location.zone() == PlayerCardZone::Battlefield).then_some(())?;
+    players
+        .get_mut(location.owner_index())?
+        .card_mut_by_handle(location.handle())
 }
 
 pub(super) fn graveyard_card_location(
@@ -136,7 +139,7 @@ pub(super) fn graveyard_card_location(
     (location.zone() == PlayerCardZone::Graveyard).then_some(())?;
     players
         .get(location.owner_index())?
-        .graveyard_card(card_id)?;
+        .card_by_handle(location.handle())?;
     Some(GraveyardCardLocation {
         owner_index: location.owner_index(),
     })

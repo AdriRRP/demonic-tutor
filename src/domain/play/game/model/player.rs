@@ -582,11 +582,26 @@ impl Player {
 
     pub(crate) fn owned_card_locations(
         &self,
-    ) -> impl Iterator<Item = (&CardInstanceId, PlayerCardZone)> {
+    ) -> impl Iterator<Item = (&CardInstanceId, PlayerCardHandle, PlayerCardZone)> {
         self.cards
             .cards
             .iter()
-            .filter_map(|slot| slot.as_ref().map(|owned| (owned.card.id(), owned.zone)))
+            .enumerate()
+            .filter_map(|(index, slot)| {
+                slot.as_ref()
+                    .map(|owned| (owned.card.id(), PlayerCardHandle::new(index), owned.zone))
+            })
+    }
+
+    pub(crate) fn card_by_handle(&self, handle: PlayerCardHandle) -> Option<&CardInstance> {
+        self.cards.get_by_handle(handle)
+    }
+
+    pub(crate) fn card_mut_by_handle(
+        &mut self,
+        handle: PlayerCardHandle,
+    ) -> Option<&mut CardInstance> {
+        self.cards.get_mut_by_handle(handle)
     }
 
     pub fn battlefield_card_ids(&self) -> impl Iterator<Item = &CardInstanceId> {
