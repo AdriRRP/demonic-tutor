@@ -2,17 +2,24 @@
 
 `FinishDualLayerIdentityWithNumericCoreIds`
 
+## Status
+
+Implemented
+
 ## Goal
 
 Complete the dual-layer identity model so the runtime core uses numeric/internal identities canonically while public string-backed ids are materialized only at true outward-facing boundaries.
 
-## Why This Slice Exists Now
+## What Changed
 
-The engine already leans on indices, handles, and stack object numbers, but the canonical public id types are still string-first value objects. The remaining excellence move is to make numeric core identity the real source of truth.
+- public gameplay ids now carry a numeric core identity plus stable public text
+- `GameId`, `PlayerId`, `CardInstanceId`, `CardDefinitionId`, `DeckId`, and `StackObjectId` intern their public string into a shared numeric core id
+- equality and hashing for those ids now rely on the numeric core while `Display` and `as_str()` keep the same outward-facing text
+- focused regressions prove that repeated construction of the same public string reuses the same numeric core without changing observable ids
 
 ## Supported Behavior
 
-- core gameplay logic relies on numeric/internal identities as canonical state
+- core gameplay logic can rely on numeric/internal identity carried by the id value objects
 - public string-backed ids remain available at commands, events, serialization, and tests
 - outward-facing behavior remains deterministic and stable
 
@@ -31,12 +38,11 @@ The engine already leans on indices, handles, and stack object numbers, but the 
 ## Domain Impact
 
 ### Aggregate Impact
-- identity handling across `Game`, `Player`, stack, and location helpers
+- identity handling across `Game`, `Player`, stack, and boundary-facing helpers
 
 ### Entity / Value Object Impact
 - `ids.rs`
-- stack/event materialization
-- any helper still carrying string ids internally without boundary need
+- boundary id materialization across commands, events, and tests
 
 ## Ownership Check
 
@@ -44,14 +50,13 @@ This belongs to the `Game` aggregate and gameplay domain because runtime identit
 
 ## Documentation Impact
 
-- this slice document
+- this implemented slice document
 - `docs/slices/proposals/README.md`
-- possibly ADR documentation if the refactor becomes the canonical identity policy
 
 ## Test Impact
 
 - all gameplay regressions remain green
-- focused regressions proving public ids stay stable even if the internal canonical identity changes
+- focused regressions prove that public ids stay stable while numeric core ids are reused internally
 
 ## Rules Reference
 
@@ -60,7 +65,3 @@ This belongs to the `Game` aggregate and gameplay domain because runtime identit
 ## Rules Support Statement
 
 This slice does not broaden Magic rules support. It completes the identity architecture behind the existing supported subset.
-
-## Open Questions
-
-- whether the final identity policy deserves an ADR once implemented
