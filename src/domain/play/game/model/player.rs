@@ -491,13 +491,10 @@ impl Player {
     where
         F: FnMut(&mut CardInstance),
     {
-        let card_ids = self
-            .battlefield
-            .iter()
-            .copied()
-            .collect::<Vec<PlayerCardHandle>>();
-
-        for handle in card_ids {
+        for index in 0..self.battlefield.len() {
+            let Some(handle) = self.battlefield.handle_at(index) else {
+                continue;
+            };
             if let Some(card) = self.cards.get_mut_by_handle(handle) {
                 f(card);
             }
