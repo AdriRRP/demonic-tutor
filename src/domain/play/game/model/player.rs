@@ -882,7 +882,17 @@ impl Player {
     }
 
     pub fn mill_cards_to_graveyard(&mut self, count: usize) -> Option<Vec<CardInstanceId>> {
-        let handles = self.library.draw(count)?;
+        let mut handles = Vec::with_capacity(count);
+        for _ in 0..count {
+            let Some(handle) = self.library.draw_one() else {
+                break;
+            };
+            handles.push(handle);
+        }
+        if handles.is_empty() {
+            return Some(Vec::new());
+        }
+
         let mut card_ids = Vec::with_capacity(handles.len());
         for handle in handles {
             let card_id = self.cards.get_by_handle(handle)?.id().clone();

@@ -8,5 +8,5 @@ The supported subset can now move cards from library to graveyard through explic
 
 - supported self-mill profile
 - supported target-player mill profile
-- mills the top `N` cards when enough library cards exist
+- mills up to the top `N` cards, stopping early if the library runs out
 - keeps milling distinct from draw and discard

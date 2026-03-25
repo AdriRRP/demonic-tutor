@@ -299,6 +299,27 @@ fn supported_mill_effects_move_cards_from_library_to_graveyard() {
 }
 
 #[test]
+fn supported_mill_effects_move_as_many_cards_as_possible_from_a_short_library() {
+    let (service, mut game) = setup_two_player_game(
+        "game-mill-short-library",
+        filled_library(vec![mill_self_sorcery_card("study-loss", 0, 3)], 10),
+        filled_library(Vec::new(), 10),
+    );
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
+
+    let self_mill_id = player(&game, "player-1")
+        .hand_card_by_definition(&demonictutor::CardDefinitionId::new("study-loss"))
+        .unwrap()
+        .id()
+        .clone();
+
+    cast_spell_and_resolve(&service, &mut game, "player-1", self_mill_id);
+
+    assert_eq!(player(&game, "player-1").graveyard_size(), 3);
+    assert_eq!(player(&game, "player-1").library_size(), 0);
+}
+
+#[test]
 fn explicit_profile_allows_casting_a_supported_spell_from_its_own_graveyard() {
     let (service, mut game) = setup_two_player_game(
         "game-cast-from-graveyard",
