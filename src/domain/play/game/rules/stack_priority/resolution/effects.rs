@@ -128,6 +128,32 @@ fn return_permanent_to_owners_hand(
     Some(target_id.clone())
 }
 
+fn return_creature_card_from_graveyard_to_hand(
+    players: &mut [Player],
+    card_locations: &AggregateCardLocationIndex,
+    target_id: &CardInstanceId,
+) -> Option<CardInstanceId> {
+    let location = card_locations.location(target_id)?;
+    (location.zone() == crate::domain::play::game::PlayerCardZone::Graveyard).then_some(())?;
+    let card = players[location.owner_index()].card_by_handle(location.handle())?;
+    card.card_type().is_creature().then_some(())?;
+    players[location.owner_index()].move_graveyard_handle_to_hand(location.handle())?;
+    Some(target_id.clone())
+}
+
+fn reanimate_creature_card_to_battlefield(
+    players: &mut [Player],
+    card_locations: &AggregateCardLocationIndex,
+    target_id: &CardInstanceId,
+) -> Option<CardInstanceId> {
+    let location = card_locations.location(target_id)?;
+    (location.zone() == crate::domain::play::game::PlayerCardZone::Graveyard).then_some(())?;
+    let card = players[location.owner_index()].card_by_handle(location.handle())?;
+    card.card_type().is_creature().then_some(())?;
+    players[location.owner_index()].move_graveyard_handle_to_battlefield(location.handle())?;
+    Some(target_id.clone())
+}
+
 fn destroy_noncreature_permanent(
     players: &mut [Player],
     card_locations: &AggregateCardLocationIndex,
@@ -279,6 +305,124 @@ fn review_state_based_actions_after_effect(
         moved_cards,
         game_ended,
     ))
+}
+
+fn resolve_return_target_creature_from_graveyard_effect(
+    context: &mut ResolutionContext<'_>,
+) -> Result<SpellResolutionSideEffects, DomainError> {
+    let Some(target) = resolve_target_legality_for_effect(
+        context.players,
+        context.card_locations,
+        context.stack,
+        context.controller_index,
+        context.supported_spell_rules,
+        context.target,
+        "graveyard recursion spell resolved without a targeting profile",
+    )?
+    else {
+        return review_state_based_actions(
+            context.game_id,
+            context.players,
+            context.terminal_state,
+        );
+    };
+
+    let moved_cards = match target {
+        SpellTarget::GraveyardCard(card_id) => return_creature_card_from_graveyard_to_hand(
+            context.players,
+            context.card_locations,
+            &card_id,
+        )
+        .into_iter()
+        .collect(),
+        _ => Vec::new(),
+    };
+
+    review_state_based_actions_after_effect(
+        context.game_id,
+        context.players,
+        context.terminal_state,
+        EffectOutcomeSeed {
+            card_exiled: None,
+            card_discarded: None,
+            life_changed: None,
+            creatures_died: Vec::new(),
+            moved_cards,
+        },
+    )
+}
+
+fn resolve_reanimate_target_creature_effect(
+    context: &mut ResolutionContext<'_>,
+) -> Result<SpellResolutionSideEffects, DomainError> {
+    let Some(target) = resolve_target_legality_for_effect(
+        context.players,
+        context.card_locations,
+        context.stack,
+        context.controller_index,
+        context.supported_spell_rules,
+        context.target,
+        "reanimation spell resolved without a targeting profile",
+    )?
+    else {
+        return review_state_based_actions(
+            context.game_id,
+            context.players,
+            context.terminal_state,
+        );
+    };
+
+    let moved_cards = match target {
+        SpellTarget::GraveyardCard(card_id) => reanimate_creature_card_to_battlefield(
+            context.players,
+            context.card_locations,
+            &card_id,
+        )
+        .into_iter()
+        .collect(),
+        _ => Vec::new(),
+    };
+
+    review_state_based_actions_after_effect(
+        context.game_id,
+        context.players,
+        context.terminal_state,
+        EffectOutcomeSeed {
+            card_exiled: None,
+            card_discarded: None,
+            life_changed: None,
+            creatures_died: Vec::new(),
+            moved_cards,
+        },
+    )
+}
+
+fn resolve_mill_effect(
+    context: &mut ResolutionContext<'_>,
+    amount: u32,
+) -> Result<SpellResolutionSideEffects, DomainError> {
+    let target_player_index = match context.target {
+        Some(SpellTarget::Player(player_id)) => {
+            helpers::find_player_index(context.players, player_id)?
+        }
+        None | Some(_) => context.controller_index,
+    };
+    let moved_cards = context.players[target_player_index]
+        .mill_cards_to_graveyard(amount as usize)
+        .unwrap_or_default();
+
+    review_state_based_actions_after_effect(
+        context.game_id,
+        context.players,
+        context.terminal_state,
+        EffectOutcomeSeed {
+            card_exiled: None,
+            card_discarded: None,
+            life_changed: None,
+            creatures_died: Vec::new(),
+            moved_cards,
+        },
+    )
 }
 
 fn resolve_create_vanilla_creature_token_effect(
@@ -874,6 +1018,13 @@ pub(super) fn apply_supported_spell_rules(
         SpellResolutionProfile::PutPlusOnePlusOneCounterOnTargetCreature => {
             resolve_put_counter_on_target_creature_effect(&mut context)
         }
+        SpellResolutionProfile::ReturnTargetCreatureCardFromGraveyardToHand => {
+            resolve_return_target_creature_from_graveyard_effect(&mut context)
+        }
+        SpellResolutionProfile::ReanimateTargetCreatureCard => {
+            resolve_reanimate_target_creature_effect(&mut context)
+        }
+        SpellResolutionProfile::MillCards { amount } => resolve_mill_effect(&mut context, amount),
         SpellResolutionProfile::CounterTargetSpell => {
             resolve_counter_target_spell_effect(&mut context)
         }

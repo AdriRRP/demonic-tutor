@@ -144,6 +144,37 @@ pub fn self_growing_creature_card(
         .with_activated_ability(ActivatedAbilityProfile::put_plus_one_plus_one_counter_on_source())
 }
 
+pub fn return_target_creature_card_from_graveyard_to_hand_sorcery_card(
+    name: &str,
+    mana_cost: u32,
+) -> LibraryCard {
+    LibraryCard::new(CardDefinitionId::new(name), CardType::Sorcery, mana_cost)
+        .with_supported_spell_rules(
+            SupportedSpellRules::return_target_creature_card_from_graveyard_to_hand(),
+        )
+}
+
+pub fn reanimate_target_creature_card_sorcery_card(name: &str, mana_cost: u32) -> LibraryCard {
+    LibraryCard::new(CardDefinitionId::new(name), CardType::Sorcery, mana_cost)
+        .with_supported_spell_rules(SupportedSpellRules::reanimate_target_creature_card())
+}
+
+pub fn mill_target_player_sorcery_card(name: &str, mana_cost: u32, amount: u32) -> LibraryCard {
+    LibraryCard::new(CardDefinitionId::new(name), CardType::Sorcery, mana_cost)
+        .with_supported_spell_rules(SupportedSpellRules::mill_target_player(amount))
+}
+
+pub fn mill_self_sorcery_card(name: &str, mana_cost: u32, amount: u32) -> LibraryCard {
+    LibraryCard::new(CardDefinitionId::new(name), CardType::Sorcery, mana_cost)
+        .with_supported_spell_rules(SupportedSpellRules::mill_self(amount))
+}
+
+pub fn graveyard_cast_instant_card(name: &str, mana_cost: u32, damage: u32) -> LibraryCard {
+    LibraryCard::new(CardDefinitionId::new(name), CardType::Instant, mana_cost)
+        .with_supported_spell_rules(SupportedSpellRules::deal_damage_to_any_target(damage))
+        .with_casting_rule(CastingRule::CastFromOwnGraveyard)
+}
+
 pub fn targeted_opponent_damage_instant_card(
     name: &str,
     mana_cost: u32,

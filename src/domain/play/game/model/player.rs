@@ -800,6 +800,33 @@ impl Player {
             })
     }
 
+    pub(crate) fn move_graveyard_handle_to_hand(&mut self, handle: PlayerCardHandle) -> Option<()> {
+        self.handle_is_in_zone(handle, PlayerCardZone::Graveyard)
+            .then_some(())
+            .and_then(|()| {
+                self.move_handle_between_zones(
+                    handle,
+                    PlayerCardZone::Graveyard,
+                    PlayerCardZone::Hand,
+                )
+            })
+    }
+
+    pub(crate) fn move_graveyard_handle_to_battlefield(
+        &mut self,
+        handle: PlayerCardHandle,
+    ) -> Option<()> {
+        self.handle_is_in_zone(handle, PlayerCardZone::Graveyard)
+            .then_some(())
+            .and_then(|()| {
+                self.move_handle_between_zones(
+                    handle,
+                    PlayerCardZone::Graveyard,
+                    PlayerCardZone::Battlefield,
+                )
+            })
+    }
+
     pub fn receive_hand_cards(&mut self, cards: Vec<CardInstance>) {
         let mut handles = Vec::with_capacity(cards.len());
         for card in cards {
@@ -854,6 +881,18 @@ impl Player {
         Some(card_id)
     }
 
+    pub fn mill_cards_to_graveyard(&mut self, count: usize) -> Option<Vec<CardInstanceId>> {
+        let handles = self.library.draw(count)?;
+        let mut card_ids = Vec::with_capacity(handles.len());
+        for handle in handles {
+            let card_id = self.cards.get_by_handle(handle)?.id().clone();
+            self.cards.set_zone(handle, PlayerCardZone::Graveyard)?;
+            self.graveyard.add(handle);
+            card_ids.push(card_id);
+        }
+        Some(card_ids)
+    }
+
     pub fn recycle_hand_into_library(&mut self) {
         let handles = self.hand.drain_all();
         for handle in handles.iter().copied() {
@@ -891,6 +930,45 @@ impl Player {
             .begin_remove_by_handle(handle)
             .ok_or(PrepareHandSpellCastError::MissingCard)?;
         if self.hand.remove(handle).is_none() {
+            let _ = self.cards.rollback_remove(handle, owned);
+            return Err(PrepareHandSpellCastError::MissingCard);
+        }
+        self.cards.commit_removed(handle, owned.card.id());
+        let payload = owned.card.into_spell_payload();
+        self.mana = next_mana;
+
+        Ok(PreparedHandSpellCast {
+            mana_cost_paid: mana_cost,
+            payload,
+        })
+    }
+
+    /// Prepares a spell cast atomically from the player's graveyard when an
+    /// explicit casting permission allows it.
+    ///
+    /// # Errors
+    /// Returns `MissingCard` if the card is not still in graveyard, or
+    /// `InsufficientMana` if the player cannot currently pay the provided cost.
+    pub fn prepare_graveyard_spell_cast(
+        &mut self,
+        card_id: &CardInstanceId,
+        mana_cost: u32,
+        mana_cost_profile: ManaCost,
+    ) -> Result<PreparedHandSpellCast, PrepareHandSpellCastError> {
+        let handle = self
+            .handle_in_zone(card_id, PlayerCardZone::Graveyard)
+            .ok_or(PrepareHandSpellCastError::MissingCard)?;
+        let available = self.mana();
+        let mut next_mana = self.mana.clone();
+        if !next_mana.spend(mana_cost_profile) {
+            return Err(PrepareHandSpellCastError::InsufficientMana { available });
+        }
+
+        let owned = self
+            .cards
+            .begin_remove_by_handle(handle)
+            .ok_or(PrepareHandSpellCastError::MissingCard)?;
+        if self.graveyard.remove(handle).is_none() {
             let _ = self.cards.rollback_remove(handle, owned);
             return Err(PrepareHandSpellCastError::MissingCard);
         }

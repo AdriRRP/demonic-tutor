@@ -3,8 +3,8 @@
 use {
     super::{
         ActivatedAbilityProfile, ActivatedManaAbilityProfile, CardDefinition, CardType,
-        CastingPermissionProfile, KeywordAbility, KeywordAbilitySet, ManaCost, SupportedSpellRules,
-        TriggeredAbilityProfile,
+        CastingPermissionProfile, CastingRule, KeywordAbility, KeywordAbilitySet, ManaCost,
+        SupportedSpellRules, TriggeredAbilityProfile,
     },
     crate::domain::play::ids::{CardDefinitionId, CardInstanceId, PlayerCardHandle},
     std::sync::Arc,
@@ -47,6 +47,7 @@ pub struct PermanentSpellPayload {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct EffectSpellPayload {
+    casting_permission: Option<CastingPermissionProfile>,
     supported_spell_rules: SupportedSpellRules,
 }
 
@@ -331,6 +332,7 @@ impl CardInstance {
                         id: self.id,
                         definition_id,
                         kind: SpellPayloadKind::Instant(EffectSpellPayload {
+                            casting_permission: definition.casting_permission(),
                             supported_spell_rules: definition.supported_spell_rules(),
                         }),
                     },
@@ -338,6 +340,7 @@ impl CardInstance {
                         id: self.id,
                         definition_id,
                         kind: SpellPayloadKind::Sorcery(EffectSpellPayload {
+                            casting_permission: definition.casting_permission(),
                             supported_spell_rules: definition.supported_spell_rules(),
                         }),
                     },
@@ -395,13 +398,21 @@ impl SpellPayload {
         payload: &EffectSpellPayload,
         card_type: CardType,
     ) -> CardInstance {
+        let mut definition = CardDefinition::for_card_type(definition_id, 0, &card_type)
+            .with_supported_spell_rules(payload.supported_spell_rules);
+        if let Some(permission) = payload.casting_permission {
+            if permission.supports(CastingRule::OpenPriorityWindowDuringOwnTurn) {
+                definition =
+                    definition.with_casting_rule(CastingRule::OpenPriorityWindowDuringOwnTurn);
+            }
+            if permission.supports(CastingRule::CastFromOwnGraveyard) {
+                definition = definition.with_casting_rule(CastingRule::CastFromOwnGraveyard);
+            }
+        }
         CardInstance {
             id,
             face: CardFace {
-                definition: Arc::new(
-                    CardDefinition::for_card_type(definition_id, 0, &card_type)
-                        .with_supported_spell_rules(payload.supported_spell_rules),
-                ),
+                definition: Arc::new(definition),
             },
             runtime: CardRuntime {
                 tapped: false,

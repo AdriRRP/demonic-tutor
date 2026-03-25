@@ -126,6 +126,7 @@ struct HandSpellMetadata {
     has_creature_stats: bool,
     mana_cost: u32,
     mana_cost_profile: crate::domain::play::cards::ManaCost,
+    from_graveyard: bool,
 }
 
 struct PreparedStackSpellObject {
@@ -194,20 +195,41 @@ fn prepare_stack_target(
     }
 }
 
-fn read_hand_spell_metadata(
+fn read_spell_metadata(
     player: &crate::domain::play::game::Player,
     player_id: &PlayerId,
     card_id: &CardInstanceId,
 ) -> Result<HandSpellMetadata, DomainError> {
-    let hand_card = helpers::hand_card(player, player_id, card_id)?;
-    let card_type = *hand_card.card_type();
+    let (spell_card, from_graveyard) =
+        if let Ok(hand_card) = helpers::hand_card(player, player_id, card_id) {
+            (hand_card, false)
+        } else if let Some(graveyard_card) = player.graveyard_card(card_id) {
+            let permission = graveyard_card.casting_permission_profile().ok_or_else(|| {
+                DomainError::Game(GameError::InternalInvariantViolation(format!(
+                    "spell card {card_id} must define casting permission"
+                )))
+            })?;
+            if !permission.supports(CastingRule::CastFromOwnGraveyard) {
+                return Err(DomainError::Card(CardError::NotInHand {
+                    player: player_id.clone(),
+                    card: card_id.clone(),
+                }));
+            }
+            (graveyard_card, true)
+        } else {
+            return Err(DomainError::Card(CardError::NotInHand {
+                player: player_id.clone(),
+                card: card_id.clone(),
+            }));
+        };
+    let card_type = *spell_card.card_type();
     let casting_permission = if card_type.is_land() {
         None
     } else {
-        Some(hand_card.casting_permission_profile().ok_or_else(|| {
+        Some(spell_card.casting_permission_profile().ok_or_else(|| {
             DomainError::Game(GameError::InternalInvariantViolation(format!(
                 "spell card {} must define casting permission",
-                hand_card.id()
+                spell_card.id()
             )))
         })?)
     };
@@ -215,10 +237,11 @@ fn read_hand_spell_metadata(
     Ok(HandSpellMetadata {
         card_type,
         casting_permission,
-        supported_spell_rules: supported_spell_rules(hand_card),
-        has_creature_stats: hand_card.creature_stats().is_some(),
-        mana_cost: hand_card.mana_cost(),
-        mana_cost_profile: hand_card.mana_cost_profile(),
+        supported_spell_rules: supported_spell_rules(spell_card),
+        has_creature_stats: spell_card.creature_stats().is_some(),
+        mana_cost: spell_card.mana_cost(),
+        mana_cost_profile: spell_card.mana_cost_profile(),
+        from_graveyard,
     })
 }
 
@@ -344,7 +367,8 @@ pub fn cast_spell(
         has_creature_stats,
         mana_cost,
         mana_cost_profile,
-    } = read_hand_spell_metadata(&players[player_idx], &player_id, &card_id)?;
+        from_graveyard,
+    } = read_spell_metadata(&players[player_idx], &player_id, &card_id)?;
     if card_type.is_land() {
         return Err(DomainError::Card(CardError::CannotCastLand(card_id)));
     }
@@ -387,23 +411,26 @@ pub fn cast_spell(
         )));
     }
 
-    let prepared_cast =
-        match players[player_idx].prepare_hand_spell_cast(&card_id, mana_cost, mana_cost_profile) {
-            Ok(prepared) => prepared,
-            Err(PrepareHandSpellCastError::MissingCard) => {
-                return Err(DomainError::Card(CardError::NotInHand {
-                    player: player_id,
-                    card: card_id,
-                }))
-            }
-            Err(PrepareHandSpellCastError::InsufficientMana { available }) => {
-                return Err(DomainError::Game(GameError::InsufficientMana {
-                    player: player_id,
-                    required: mana_cost,
-                    available,
-                }))
-            }
-        };
+    let prepared_cast = match if from_graveyard {
+        players[player_idx].prepare_graveyard_spell_cast(&card_id, mana_cost, mana_cost_profile)
+    } else {
+        players[player_idx].prepare_hand_spell_cast(&card_id, mana_cost, mana_cost_profile)
+    } {
+        Ok(prepared) => prepared,
+        Err(PrepareHandSpellCastError::MissingCard) => {
+            return Err(DomainError::Card(CardError::NotInHand {
+                player: player_id,
+                card: card_id,
+            }))
+        }
+        Err(PrepareHandSpellCastError::InsufficientMana { available }) => {
+            return Err(DomainError::Game(GameError::InsufficientMana {
+                player: player_id,
+                required: mana_cost,
+                available,
+            }))
+        }
+    };
     let prepared_stack_target =
         prepare_stack_target(players, card_locations, stack, target.as_ref())?;
     let prepared_stack_choice = prepare_stack_choice(

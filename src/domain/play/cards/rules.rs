@@ -410,12 +410,14 @@ impl ManaCost {
 const PERMISSION_OPEN_PRIORITY_WINDOW: u8 = 1 << 0;
 const PERMISSION_ACTIVE_PLAYER_EMPTY_MAIN_PHASE_WINDOW: u8 = 1 << 1;
 const PERMISSION_OPEN_PRIORITY_WINDOW_DURING_OWN_TURN: u8 = 1 << 2;
+const PERMISSION_CAST_FROM_OWN_GRAVEYARD: u8 = 1 << 3;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CastingRule {
     OpenPriorityWindow,
     ActivePlayerEmptyMainPhaseWindow,
     OpenPriorityWindowDuringOwnTurn,
+    CastFromOwnGraveyard,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -457,6 +459,9 @@ impl CastingPermissionProfile {
             CastingRule::OpenPriorityWindowDuringOwnTurn => {
                 self.0 |= PERMISSION_OPEN_PRIORITY_WINDOW_DURING_OWN_TURN;
             }
+            CastingRule::CastFromOwnGraveyard => {
+                self.0 |= PERMISSION_CAST_FROM_OWN_GRAVEYARD;
+            }
         }
         self
     }
@@ -471,6 +476,7 @@ impl CastingPermissionProfile {
             CastingRule::OpenPriorityWindowDuringOwnTurn => {
                 self.0 & PERMISSION_OPEN_PRIORITY_WINDOW_DURING_OWN_TURN != 0
             }
+            CastingRule::CastFromOwnGraveyard => self.0 & PERMISSION_CAST_FROM_OWN_GRAVEYARD != 0,
         }
     }
 }
@@ -829,6 +835,9 @@ pub enum SpellResolutionProfile {
     LoseLife { amount: u32 },
     CreateVanillaCreatureToken { power: u32, toughness: u32 },
     PutPlusOnePlusOneCounterOnTargetCreature,
+    ReturnTargetCreatureCardFromGraveyardToHand,
+    ReanimateTargetCreatureCard,
+    MillCards { amount: u32 },
     CounterTargetSpell,
     ReturnTargetPermanentToHand,
     DestroyTargetArtifactOrEnchantment,
@@ -903,6 +912,42 @@ impl SupportedSpellRules {
                 SingleTargetRule::any_creature_on_battlefield(),
             ),
             resolution: SpellResolutionProfile::PutPlusOnePlusOneCounterOnTargetCreature,
+        }
+    }
+
+    #[must_use]
+    pub const fn return_target_creature_card_from_graveyard_to_hand() -> Self {
+        Self {
+            targeting: SpellTargetingProfile::ExactlyOne(
+                SingleTargetRule::any_card_in_a_graveyard(),
+            ),
+            resolution: SpellResolutionProfile::ReturnTargetCreatureCardFromGraveyardToHand,
+        }
+    }
+
+    #[must_use]
+    pub const fn reanimate_target_creature_card() -> Self {
+        Self {
+            targeting: SpellTargetingProfile::ExactlyOne(
+                SingleTargetRule::any_card_in_a_graveyard(),
+            ),
+            resolution: SpellResolutionProfile::ReanimateTargetCreatureCard,
+        }
+    }
+
+    #[must_use]
+    pub const fn mill_target_player(amount: u32) -> Self {
+        Self {
+            targeting: SpellTargetingProfile::ExactlyOne(SingleTargetRule::any_player()),
+            resolution: SpellResolutionProfile::MillCards { amount },
+        }
+    }
+
+    #[must_use]
+    pub const fn mill_self(amount: u32) -> Self {
+        Self {
+            targeting: SpellTargetingProfile::None,
+            resolution: SpellResolutionProfile::MillCards { amount },
         }
     }
 

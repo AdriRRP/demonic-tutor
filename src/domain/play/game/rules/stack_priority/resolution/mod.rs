@@ -226,6 +226,29 @@ fn resolve_spell_from_stack(
             target.as_ref(),
             choice,
         ))?;
+    for card_id in &moved_cards {
+        let Some((owner_index, handle)) =
+            players
+                .iter()
+                .enumerate()
+                .find_map(|(owner_index, player)| {
+                    let handle = player.resolve_public_card_handle(card_id)?;
+                    (player.card_zone(card_id)
+                        == Some(crate::domain::play::game::PlayerCardZone::Battlefield))
+                    .then_some((owner_index, handle))
+                })
+        else {
+            continue;
+        };
+        triggered_abilities_put_on_stack.extend(super::triggers::enqueue_trigger_for_card_handle(
+            game_id,
+            players,
+            owner_index,
+            handle,
+            TriggeredAbilityEvent::EntersBattlefield,
+            stack,
+        )?);
+    }
     triggered_abilities_put_on_stack.extend(enqueue_dies_triggers(
         game_id,
         players,

@@ -100,6 +100,8 @@ mod create_vanilla_creature_token;
 mod dies_trigger_foundation;
 #[path = "enter_the_battlefield_trigger_foundation.rs"]
 mod enter_the_battlefield_trigger_foundation;
+#[path = "graveyard_recursion.rs"]
+mod graveyard_recursion;
 #[path = "nonlethal_blocking_target_damage.rs"]
 mod nonlethal_blocking_target_damage;
 #[path = "nonlethal_controlled_attacking_target_damage.rs"]
