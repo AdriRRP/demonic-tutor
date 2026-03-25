@@ -92,6 +92,8 @@ mod cast_targeted_controlled_blocking_creature_spell_after_blockers;
 mod cast_targeted_opponents_attacking_creature_spell_after_attackers;
 #[path = "cast_targeted_opponents_blocking_creature_spell_after_blockers.rs"]
 mod cast_targeted_opponents_blocking_creature_spell_after_blockers;
+#[path = "dies_trigger_foundation.rs"]
+mod dies_trigger_foundation;
 #[path = "enter_the_battlefield_trigger_foundation.rs"]
 mod enter_the_battlefield_trigger_foundation;
 #[path = "nonlethal_blocking_target_damage.rs"]

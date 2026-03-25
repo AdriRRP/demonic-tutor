@@ -14,7 +14,6 @@ Highest-return interactive spell families that unlock much more realistic gamepl
 
 Minimal triggered-ability engine for common and high-value card behavior:
 
-- `dies-trigger-foundation.md`
 - `upkeep-trigger-foundation.md`
 - `end-step-trigger-foundation.md`
 
