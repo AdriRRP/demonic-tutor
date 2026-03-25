@@ -69,14 +69,20 @@ fn add_damage(
     }
 }
 
-fn blocker_for_attacker<'a>(
+fn blockers_for_attacker<'a>(
     blockers: &'a [BlockerParticipant],
     attacker: &AttackerParticipant,
-) -> Option<&'a BlockerParticipant> {
-    blockers.iter().find(|blocker| {
-        blocker.blocked_attacker_ref().owner_index() == attacker.card_ref().owner_index()
-            && blocker.blocked_attacker_ref().handle() == attacker.card_ref().handle()
-    })
+) -> Vec<&'a BlockerParticipant> {
+    attacker
+        .blocked_by_refs()
+        .iter()
+        .filter_map(|blocker_ref| {
+            blockers.iter().find(|blocker| {
+                blocker.card_ref().owner_index() == blocker_ref.owner_index()
+                    && blocker.card_ref().handle() == blocker_ref.handle()
+            })
+        })
+        .collect()
 }
 
 fn merge_life_changed(aggregate: &mut Option<LifeChanged>, step_life_changed: Option<LifeChanged>) {
@@ -111,36 +117,40 @@ fn resolve_damage_step(
             attacker.card_ref(),
             "combat attacker participant points to a missing battlefield card",
         )?;
-        if let Some(blocker) = blocker_for_attacker(blockers, attacker) {
-            let blocker_id = resolve_combat_card_id(
-                players,
-                blocker.card_ref(),
-                "combat blocker participant points to a missing battlefield card",
-            )?;
-            let lethal_to_blocker = blocker.lethal_damage_threshold();
-            let blocker_damage = if attacker.has_trample() {
-                attacker.power().min(lethal_to_blocker)
-            } else {
-                attacker.power()
-            };
-            let excess_to_player = if attacker.has_trample() {
-                attacker.power().saturating_sub(blocker_damage)
-            } else {
-                0
-            };
+        let ordered_blockers = blockers_for_attacker(blockers, attacker);
+        if !ordered_blockers.is_empty() {
+            let mut remaining_damage = attacker.power();
+            for (index, blocker) in ordered_blockers.iter().enumerate() {
+                let blocker_id = resolve_combat_card_id(
+                    players,
+                    blocker.card_ref(),
+                    "combat blocker participant points to a missing battlefield card",
+                )?;
+                let is_last = index + 1 == ordered_blockers.len();
+                let lethal_to_blocker = blocker.lethal_damage_threshold();
+                let blocker_damage = if attacker.has_trample() {
+                    remaining_damage.min(lethal_to_blocker)
+                } else if is_last {
+                    remaining_damage
+                } else {
+                    remaining_damage.min(lethal_to_blocker)
+                };
 
-            add_damage(&mut damage_received, &blocker_id, blocker_damage);
-            damage_events.push(DamageEvent {
-                source: attacker_id.clone(),
-                target: DamageTarget::Creature(blocker_id),
-                damage_amount: blocker_damage,
-            });
-            if excess_to_player > 0 {
-                player_damage += excess_to_player;
+                add_damage(&mut damage_received, &blocker_id, blocker_damage);
+                damage_events.push(DamageEvent {
+                    source: attacker_id.clone(),
+                    target: DamageTarget::Creature(blocker_id),
+                    damage_amount: blocker_damage,
+                });
+                remaining_damage = remaining_damage.saturating_sub(blocker_damage);
+            }
+
+            if attacker.has_trample() && remaining_damage > 0 {
+                player_damage += remaining_damage;
                 damage_events.push(DamageEvent {
                     source: attacker_id.clone(),
                     target: DamageTarget::Player(defender_player_id.clone()),
-                    damage_amount: excess_to_player,
+                    damage_amount: remaining_damage,
                 });
             }
         } else {
@@ -270,7 +280,11 @@ pub fn resolve_combat_damage(
     defender_idx: usize,
 ) -> Result<ResolveCombatDamageOutcome, DomainError> {
     let defender_player_id = players[defender_idx].id().clone();
-    let attackers = collect_attackers(&players[attacker_player_idx], attacker_player_idx)?;
+    let attackers = collect_attackers(
+        &players[attacker_player_idx],
+        attacker_player_idx,
+        defender_idx,
+    )?;
     if attackers.is_empty() {
         return Err(DomainError::Game(GameError::NoAttackersDeclared));
     }
@@ -331,8 +345,11 @@ pub fn resolve_combat_damage(
     }
 
     if has_first_strike_step && game_ended.is_none() {
-        let surviving_attackers =
-            collect_attackers(&players[attacker_player_idx], attacker_player_idx)?;
+        let surviving_attackers = collect_attackers(
+            &players[attacker_player_idx],
+            attacker_player_idx,
+            defender_idx,
+        )?;
         let surviving_blockers = collect_blockers(
             &players[defender_idx],
             defender_idx,

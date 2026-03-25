@@ -96,6 +96,14 @@ It is not a literal restatement of the rules text.
 
 ---
 
+## Combat Damage Assignment Order
+
+- 510.1c
+- 702.19
+- 702.4
+
+---
+
 ## Combat Damage Step
 
 - 510

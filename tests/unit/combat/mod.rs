@@ -6,6 +6,8 @@ mod blocking_legality;
 mod combat_subphases;
 #[path = "declare_blockers.rs"]
 mod declare_blockers;
+#[path = "damage_assignment_order.rs"]
+mod damage_assignment_order;
 #[path = "first_strike.rs"]
 mod first_strike;
 #[path = "haste.rs"]

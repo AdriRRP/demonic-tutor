@@ -35,6 +35,7 @@ impl CombatCardRef {
 #[derive(Debug, Clone)]
 pub(super) struct AttackerParticipant {
     card_ref: CombatCardRef,
+    blocked_by_refs: Vec<CombatCardRef>,
     power: u32,
     has_trample: bool,
     has_first_strike: bool,
@@ -44,6 +45,11 @@ impl AttackerParticipant {
     #[must_use]
     pub const fn card_ref(&self) -> &CombatCardRef {
         &self.card_ref
+    }
+
+    #[must_use]
+    pub fn blocked_by_refs(&self) -> &[CombatCardRef] {
+        &self.blocked_by_refs
     }
 
     #[must_use]
@@ -102,6 +108,7 @@ impl BlockerParticipant {
 pub(super) fn collect_attackers(
     player: &Player,
     owner_index: usize,
+    blocker_owner_index: usize,
 ) -> Result<Vec<AttackerParticipant>, DomainError> {
     player
         .battlefield_cards()
@@ -119,9 +126,16 @@ pub(super) fn collect_attackers(
                     card.id()
                 )))
             })?;
+            let blocked_by_refs = card
+                .blocked_by()
+                .iter()
+                .copied()
+                .map(|handle| CombatCardRef::new(blocker_owner_index, handle))
+                .collect();
 
             Ok(AttackerParticipant {
                 card_ref: CombatCardRef::new(owner_index, attacker_handle),
+                blocked_by_refs,
                 power,
                 has_trample: card.has_trample(),
                 has_first_strike: card.has_first_strike(),
@@ -182,7 +196,7 @@ pub(super) fn collect_blockers(
 #[cfg(test)]
 mod tests {
     use {
-        super::collect_blockers,
+        super::{collect_attackers, collect_blockers},
         crate::domain::play::{
             cards::CardInstance,
             game::model::Player,
@@ -235,5 +249,64 @@ mod tests {
         assert_eq!(blockers[0].card_ref().owner_index(), 1);
         assert_eq!(blockers[0].blocked_attacker_ref().owner_index(), 0);
         assert_eq!(blockers[0].blocked_attacker_ref().handle(), attacker_handle);
+    }
+
+    #[test]
+    fn collect_attackers_keeps_ordered_blocker_handle_references() {
+        let attacker_id = CardInstanceId::new("attacker");
+        let blocker_a_id = CardInstanceId::new("blocker-a");
+        let blocker_b_id = CardInstanceId::new("blocker-b");
+        let mut attacker_player = Player::new(PlayerId::new("attacker-player"));
+        let mut blocker_player = Player::new(PlayerId::new("blocker-player"));
+
+        let mut attacker = CardInstance::new_creature(
+            attacker_id,
+            CardDefinitionId::new("attacker-definition"),
+            2,
+            4,
+            4,
+        );
+        attacker.remove_summoning_sickness();
+        attacker.set_attacking(true);
+        attacker_player.receive_battlefield_card(attacker);
+
+        let blocker_a = CardInstance::new_creature(
+            blocker_a_id.clone(),
+            CardDefinitionId::new("blocker-a-definition"),
+            2,
+            2,
+            2,
+        );
+        blocker_player.receive_battlefield_card(blocker_a);
+        let blocker_b = CardInstance::new_creature(
+            blocker_b_id.clone(),
+            CardDefinitionId::new("blocker-b-definition"),
+            2,
+            2,
+            2,
+        );
+        blocker_player.receive_battlefield_card(blocker_b);
+
+        let blocker_a_handle = blocker_player
+            .battlefield_handle(&blocker_a_id)
+            .expect("blocker a should have battlefield handle");
+        let blocker_b_handle = blocker_player
+            .battlefield_handle(&blocker_b_id)
+            .expect("blocker b should have battlefield handle");
+
+        attacker_player
+            .battlefield_card_mut(&CardInstanceId::new("attacker"))
+            .expect("attacker should be on battlefield")
+            .add_blocker(blocker_a_handle);
+        attacker_player
+            .battlefield_card_mut(&CardInstanceId::new("attacker"))
+            .expect("attacker should be on battlefield")
+            .add_blocker(blocker_b_handle);
+
+        let attackers = collect_attackers(&attacker_player, 0, 1).expect("attackers should collect");
+        assert_eq!(attackers.len(), 1);
+        assert_eq!(attackers[0].blocked_by_refs()[0].owner_index(), 1);
+        assert_eq!(attackers[0].blocked_by_refs()[0].handle(), blocker_a_handle);
+        assert_eq!(attackers[0].blocked_by_refs()[1].handle(), blocker_b_handle);
     }
 }

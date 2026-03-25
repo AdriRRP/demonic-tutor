@@ -46,6 +46,7 @@ Implemented capabilities include:
 - reopening priority after combat damage resolves while the game remains active in `EndOfCombat`
 - allowing instant responses and active-player self-stacking in the currently supported stack windows
 - resolving combat damage
+- assigning attacker combat damage across multiple blockers in declared order
 - applying unblocked combat damage to players through shared life-change semantics
 - destroying creatures automatically when marked combat damage is lethal
 - destroying creatures with 0 toughness automatically after creature-spell resolution
@@ -143,6 +144,7 @@ The domain currently includes:
 - ordered visible zones now combine reusable slots, visible indexing, and sparse-position compaction so position lookup and ordered removal both avoid the earlier linear hot-path costs
 - resolving the top stack object after two consecutive passes
 - the explicit combat corridor progresses through `BeginningOfCombat`, `DeclareAttackers`, `DeclareBlockers`, `CombatDamage`, and `EndOfCombat`
+- multi-blocked attackers now use declared blocker order when assigning combat damage in the supported subset
 - empty combat windows close forward coherently from `BeginningOfCombat` into `DeclareAttackers`, from `DeclareAttackers` into `DeclareBlockers`, from `DeclareBlockers` into `CombatDamage`, and from `EndOfCombat` into `SecondMain`
 - combat actions reopen priority after attackers and blockers are declared, and combat damage resolution moves the game into `EndOfCombat` with a reopened priority window while the game remains active
 
@@ -238,6 +240,7 @@ These matrices compress the stable supported subset without implying broader Mag
   - `EndOfCombat`
 - supported invariants:
   - one blocker still blocks at most one attacker in the current subset
+  - multi-blocked attackers assign damage forward through blockers in declared order
   - combat damage reopens priority into `EndOfCombat` if the game remains active
   - shared SBA review covers `0 toughness`, lethal marked damage, and `0 life`
 - supported combat keywords:

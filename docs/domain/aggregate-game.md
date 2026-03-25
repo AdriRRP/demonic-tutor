@@ -203,6 +203,7 @@ Fields include:
 - is_blocking (for creatures)
 - blocking target (for blocking creatures)
 - ordered blockers assigned against the attacker (for attacking creatures)
+- combat-damage assignment following that ordered blocker group in the supported subset
 - damage marked on the creature
 
 Responsibilities:
