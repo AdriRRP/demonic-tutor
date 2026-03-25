@@ -56,6 +56,11 @@ impl AttackerParticipant {
     }
 
     #[must_use]
+    pub const fn was_blocked(&self) -> bool {
+        !self.blocked_by_refs.is_empty()
+    }
+
+    #[must_use]
     pub const fn power(&self) -> u32 {
         self.power
     }
@@ -340,5 +345,6 @@ mod tests {
         assert_eq!(attackers[0].blocked_by_refs()[0].owner_index(), 1);
         assert_eq!(attackers[0].blocked_by_refs()[0].handle(), blocker_a_handle);
         assert_eq!(attackers[0].blocked_by_refs()[1].handle(), blocker_b_handle);
+        assert!(attackers[0].was_blocked());
     }
 }

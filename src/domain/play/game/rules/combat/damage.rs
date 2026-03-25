@@ -131,12 +131,14 @@ fn resolve_damage_step(
         )?;
         let ordered_blockers = blockers_for_attacker(blockers, attacker);
         if ordered_blockers.is_empty() {
-            player_damage += attacker.power();
-            damage_events.push(DamageEvent {
-                source: attacker_id,
-                target: DamageTarget::Player(defender_player_id.clone()),
-                damage_amount: attacker.power(),
-            });
+            if !attacker.was_blocked() {
+                player_damage += attacker.power();
+                damage_events.push(DamageEvent {
+                    source: attacker_id,
+                    target: DamageTarget::Player(defender_player_id.clone()),
+                    damage_amount: attacker.power(),
+                });
+            }
         } else {
             let mut remaining_damage = attacker.power();
             for (index, blocker) in ordered_blockers.iter().enumerate() {
@@ -146,7 +148,11 @@ fn resolve_damage_step(
                     "combat blocker participant points to a missing battlefield card",
                 )?;
                 let is_last = index + 1 == ordered_blockers.len();
-                let lethal_to_blocker = blocker.lethal_damage_threshold();
+                let lethal_to_blocker = if attacker.has_deathtouch() {
+                    u32::from(blocker.lethal_damage_threshold() > 0)
+                } else {
+                    blocker.lethal_damage_threshold()
+                };
                 let blocker_damage = if attacker.has_trample() {
                     remaining_damage.min(lethal_to_blocker)
                 } else if is_last {
