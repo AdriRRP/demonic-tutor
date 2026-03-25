@@ -7,6 +7,37 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ---
 
+## [0.6.0] - 2026-03-25
+
+### Added
+
+- **Wave 1 stack interaction baseline**: the current subset now supports `counter target spell`, `return target permanent to hand`, `destroy target artifact or enchantment`, and targeted chosen-card discard
+- **Wave 2 triggered-ability baseline**: supported permanents now exercise explicit `enter-the-battlefield`, `dies`, `beginning of upkeep`, and `beginning of end step` triggers through the stack
+- **Wave 3 activated-ability usability**: the current engine now supports generalized non-mana tap abilities, mana-costed activations, sacrifice-as-cost activations, and the first explicit loyalty-ability corridor for supported planeswalkers
+- **Wave 4 combat usability**: combat now supports multiple blockers per attacker, ordered damage assignment, `Deathtouch`, and `Double strike` in the current subset
+- **Wave 7 counters and tokens baseline**: explicit vanilla creature-token creation, `+1/+1` counters, and explicit counter-placement effects are now supported
+- **Wave 8 graveyard recursion baseline**: the subset now supports return-from-graveyard-to-hand, reanimation from the caster's own graveyard, explicit self/target mill, and explicit cast-from-own-graveyard profiles
+- **Keyword resilience pass**: added current-subset support for `Menace`, `Lifelink`, creature `Hexproof`, and creature `Indestructible`
+
+### Changed
+
+- **Combat correctness tightened**: blocked attackers remain blocked across later combat-damage passes, and `Deathtouch + Trample` now uses one nonzero damage as lethal assignment before excess reaches the defending player
+- **Triggered timing is broader and more truthful**: supported upkeep and end-step triggers now scan all relevant battlefields, not only the active player's
+- **Planeswalker activation semantics tightened**: supported loyalty abilities are now limited to one activation per planeswalker each turn
+- **Mill semantics corrected**: explicit mill effects now move as many cards as possible when the library contains fewer than `N`
+- **Reanimation scope narrowed honestly**: reanimation now truthfully targets only creature cards in the caster's own graveyard until owner/controller separation is modeled correctly
+
+### Documentation
+
+- Synchronized canonical domain docs, implemented slices, and rules map with the final supported `0.6.0` subset
+- Added and curated implemented slice docs for the `0.6.0` functional waves and their follow-up correctness fixes
+- Kept the repository's architecture and release notes aligned with the actual supported gameplay surface
+
+### Quality
+
+- Multiple elite-audit follow-up fixes were folded into the release before tagging
+- Strict repository validation remains clean through `./scripts/check-all.sh`
+
 ## [0.5.0] - 2026-03-25
 
 ### Added
