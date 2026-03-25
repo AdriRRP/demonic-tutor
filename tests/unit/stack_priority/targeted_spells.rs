@@ -6,8 +6,9 @@ use {
     crate::support::{
         advance_to_first_main_satisfying_cleanup, advance_to_player_first_main_satisfying_cleanup,
         advance_turn_raw, artifact_card, close_empty_priority_window,
-        counter_target_spell_instant_card, creature_card, filled_library, land_card,
-        return_target_permanent_to_hand_instant_card, setup_two_player_game,
+        counter_target_spell_instant_card, creature_card,
+        destroy_target_artifact_or_enchantment_instant_card, enchantment_card, filled_library,
+        land_card, return_target_permanent_to_hand_instant_card, setup_two_player_game,
         targeted_attacking_creature_damage_instant_card,
         targeted_controlled_creature_damage_instant_card, targeted_damage_instant_card,
         targeted_destroy_creature_instant_card, targeted_exile_creature_instant_card,
@@ -394,6 +395,198 @@ fn lower_bounce_spell_does_nothing_if_target_permanent_is_already_gone() {
 
     assert!(resolution.life_changed.is_none());
     assert!(game.players()[1].hand_card(&artifact_id).is_some());
+    assert!(game.players()[1].battlefield_card(&artifact_id).is_none());
+}
+
+#[test]
+fn destroy_artifact_or_enchantment_spell_destroys_target_artifact() {
+    let (service, mut game) = setup_two_player_game(
+        "game-destroy-artifact",
+        filled_library(
+            vec![
+                destroy_target_artifact_or_enchantment_instant_card("shatter-lite", 0),
+                destroy_target_artifact_or_enchantment_instant_card("shatter-lite", 0),
+                destroy_target_artifact_or_enchantment_instant_card("shatter-lite", 0),
+                destroy_target_artifact_or_enchantment_instant_card("shatter-lite", 0),
+                destroy_target_artifact_or_enchantment_instant_card("shatter-lite", 0),
+                destroy_target_artifact_or_enchantment_instant_card("shatter-lite", 0),
+                destroy_target_artifact_or_enchantment_instant_card("shatter-lite", 0),
+            ],
+            10,
+        ),
+        filled_library(vec![artifact_card("howling-mine", 0)], 10),
+    );
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-2");
+
+    let artifact_id = hand_card_id_by_definition(&game, 1, "howling-mine");
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-2"), artifact_id.clone()),
+        )
+        .unwrap();
+    let _ = resolve_current_stack(&service, &mut game);
+    let _ = pass_priority_once(&service, &mut game);
+
+    let removal_id = game.players()[0].hand_card_ids()[0].clone();
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), removal_id)
+                .with_target(SpellTarget::Permanent(artifact_id.clone())),
+        )
+        .unwrap();
+
+    let _ = resolve_current_stack(&service, &mut game);
+    assert!(game.players()[1].graveyard_card(&artifact_id).is_some());
+    assert!(game.players()[1].battlefield_card(&artifact_id).is_none());
+}
+
+#[test]
+fn destroy_artifact_or_enchantment_spell_destroys_target_enchantment() {
+    let (service, mut game) = setup_two_player_game(
+        "game-destroy-enchantment",
+        filled_library(
+            vec![
+                destroy_target_artifact_or_enchantment_instant_card("disenchant-lite", 0),
+                destroy_target_artifact_or_enchantment_instant_card("disenchant-lite", 0),
+                destroy_target_artifact_or_enchantment_instant_card("disenchant-lite", 0),
+                destroy_target_artifact_or_enchantment_instant_card("disenchant-lite", 0),
+                destroy_target_artifact_or_enchantment_instant_card("disenchant-lite", 0),
+                destroy_target_artifact_or_enchantment_instant_card("disenchant-lite", 0),
+                destroy_target_artifact_or_enchantment_instant_card("disenchant-lite", 0),
+            ],
+            10,
+        ),
+        filled_library(vec![enchantment_card("battle-rite", 0)], 10),
+    );
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-2");
+
+    let enchantment_id = hand_card_id_by_definition(&game, 1, "battle-rite");
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-2"), enchantment_id.clone()),
+        )
+        .unwrap();
+    let _ = resolve_current_stack(&service, &mut game);
+    let _ = pass_priority_once(&service, &mut game);
+
+    let removal_id = game.players()[0].hand_card_ids()[0].clone();
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), removal_id)
+                .with_target(SpellTarget::Permanent(enchantment_id.clone())),
+        )
+        .unwrap();
+
+    let _ = resolve_current_stack(&service, &mut game);
+    assert!(game.players()[1].graveyard_card(&enchantment_id).is_some());
+    assert!(game.players()[1].battlefield_card(&enchantment_id).is_none());
+}
+
+#[test]
+fn destroy_artifact_or_enchantment_spell_rejects_creature_target() {
+    let (service, mut game) = setup_two_player_game(
+        "game-destroy-artifact-illegal-target",
+        filled_library(
+            vec![
+                destroy_target_artifact_or_enchantment_instant_card("disenchant-lite", 0),
+                destroy_target_artifact_or_enchantment_instant_card("disenchant-lite", 0),
+                destroy_target_artifact_or_enchantment_instant_card("disenchant-lite", 0),
+                destroy_target_artifact_or_enchantment_instant_card("disenchant-lite", 0),
+                destroy_target_artifact_or_enchantment_instant_card("disenchant-lite", 0),
+                destroy_target_artifact_or_enchantment_instant_card("disenchant-lite", 0),
+                destroy_target_artifact_or_enchantment_instant_card("disenchant-lite", 0),
+            ],
+            10,
+        ),
+        filled_library(vec![creature_card("bear", 0, 2, 2)], 10),
+    );
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-2");
+
+    let creature_id = hand_card_id_by_definition(&game, 1, "bear");
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-2"), creature_id.clone()),
+        )
+        .unwrap();
+    let _ = resolve_current_stack(&service, &mut game);
+    let _ = pass_priority_once(&service, &mut game);
+
+    let removal_id = game.players()[0].hand_card_ids()[0].clone();
+    let result = service.cast_spell(
+        &mut game,
+        CastSpellCommand::new(PlayerId::new("player-1"), removal_id)
+            .with_target(SpellTarget::Creature(creature_id)),
+    );
+
+    assert!(matches!(
+        result,
+        Err(DomainError::Game(GameError::IllegalSpellTarget(_)))
+    ));
+}
+
+#[test]
+fn lower_artifact_removal_does_nothing_if_target_is_already_gone() {
+    let (service, mut game) = setup_two_player_game(
+        "game-destroy-artifact-target-gone",
+        filled_library(
+            vec![
+                destroy_target_artifact_or_enchantment_instant_card("shatter-a", 0),
+                destroy_target_artifact_or_enchantment_instant_card("shatter-b", 0),
+                destroy_target_artifact_or_enchantment_instant_card("shatter-c", 0),
+                destroy_target_artifact_or_enchantment_instant_card("shatter-d", 0),
+                destroy_target_artifact_or_enchantment_instant_card("shatter-e", 0),
+                destroy_target_artifact_or_enchantment_instant_card("shatter-f", 0),
+                destroy_target_artifact_or_enchantment_instant_card("shatter-g", 0),
+            ],
+            10,
+        ),
+        filled_library(vec![artifact_card("howling-mine", 0)], 10),
+    );
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-2");
+
+    let artifact_id = hand_card_id_by_definition(&game, 1, "howling-mine");
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-2"), artifact_id.clone()),
+        )
+        .unwrap();
+    let _ = resolve_current_stack(&service, &mut game);
+    let _ = pass_priority_once(&service, &mut game);
+
+    let first_removal_id = game.players()[0].hand_card_ids()[0].clone();
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), first_removal_id)
+                .with_target(SpellTarget::Permanent(artifact_id.clone())),
+        )
+        .unwrap();
+
+    let second_removal_id = game.players()[0].hand_card_ids()[0].clone();
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), second_removal_id)
+                .with_target(SpellTarget::Permanent(artifact_id.clone())),
+        )
+        .unwrap();
+
+    let _ = resolve_current_stack(&service, &mut game);
+    let _ = pass_priority_once(&service, &mut game);
+    let resolution = pass_priority_once(&service, &mut game);
+
+    assert!(resolution.life_changed.is_none());
+    assert!(game.players()[1].graveyard_card(&artifact_id).is_some());
     assert!(game.players()[1].battlefield_card(&artifact_id).is_none());
 }
 

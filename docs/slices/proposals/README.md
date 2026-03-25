@@ -10,7 +10,6 @@ The next release plan is organized as **functional waves** aimed at making the e
 
 Highest-return interactive spell families that unlock much more realistic gameplay:
 
-- `destroy-target-artifact-or-enchantment.md`
 - `discard-target-player-card.md`
 
 ### `release-0.6.0-wave-2-triggered-abilities-baseline`
