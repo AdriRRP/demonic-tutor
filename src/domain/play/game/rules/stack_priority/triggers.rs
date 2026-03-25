@@ -105,3 +105,26 @@ pub fn enqueue_battlefield_step_triggers(
 
     Ok(events)
 }
+
+pub fn enqueue_battlefield_step_triggers_apnap(
+    game_id: &GameId,
+    players: &[Player],
+    active_player_index: usize,
+    expected_event: TriggeredAbilityEvent,
+    stack: &mut StackZone,
+) -> Result<Vec<TriggeredAbilityPutOnStack>, DomainError> {
+    let mut events = Vec::new();
+
+    for offset in 0..players.len() {
+        let controller_index = (active_player_index + offset) % players.len();
+        events.extend(enqueue_battlefield_step_triggers(
+            game_id,
+            players,
+            controller_index,
+            expected_event,
+            stack,
+        )?);
+    }
+
+    Ok(events)
+}

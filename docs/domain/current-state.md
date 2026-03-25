@@ -30,7 +30,7 @@ Implemented capabilities include:
 - activating the current supported non-mana tap-ability subset through the stack in open priority windows
 - activating the current supported mana-costed non-mana ability subset when the controller can pay the explicit activation cost
 - activating the current supported sacrifice-cost ability subset when the source can be sacrificed as part of the activation cost
-- activating the first explicit planeswalker loyalty ability subset in the active player's main phase
+- activating the first explicit planeswalker loyalty ability subset in the active player's main phase, limited to one loyalty activation per supported planeswalker each turn
 - casting spells that require mana
 - casting creature spells that enter the battlefield with power and toughness
 - resolving instants and sorceries to graveyard
@@ -285,8 +285,8 @@ Current constraints include:
 - minimal explicit triggered abilities only for the currently modeled subset:
   - enter-the-battlefield life-gain triggers from supported permanents
   - dies life-gain triggers from supported creatures that move from battlefield to graveyard
-  - beginning-of-upkeep triggers from supported battlefield permanents
-  - beginning-of-end-step triggers from supported battlefield permanents
+  - beginning-of-upkeep triggers from supported battlefield permanents across all controllers
+  - beginning-of-end-step triggers from supported battlefield permanents across all controllers
 - limited card behavior modeling
 - permanent spells resolve from the stack into the battlefield in the current simplified stack model
 - mana production is simplified to generic mana plus a minimal colored subset (`White`, `Blue`, `Black`, `Green`, `Red`) and is currently exercised in main phases plus the currently supported open priority windows while the acting player holds priority

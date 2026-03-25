@@ -108,7 +108,7 @@ fn build_events(
 fn enqueue_phase_entry_triggers(
     game_id: &GameId,
     players: &[Player],
-    controller_index: usize,
+    active_player_index: usize,
     phase: Phase,
     stack: &mut StackZone,
 ) -> Result<Vec<TriggeredAbilityPutOnStack>, DomainError> {
@@ -122,10 +122,10 @@ fn enqueue_phase_entry_triggers(
         return Ok(Vec::new());
     };
 
-    crate::domain::play::game::rules::stack_priority::triggers::enqueue_battlefield_step_triggers(
+    crate::domain::play::game::rules::stack_priority::triggers::enqueue_battlefield_step_triggers_apnap(
         game_id,
         players,
-        controller_index,
+        active_player_index,
         expected_event,
         stack,
     )

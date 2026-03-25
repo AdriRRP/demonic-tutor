@@ -13,7 +13,7 @@ The engine already models `EndStep`, cleanup discard, and end-step priority. Beg
 ## Supported Behavior
 
 - detect the beginning of `EndStep`
-- enqueue supported end-step triggers before ordinary end-step priority actions
+- enqueue supported end-step triggers from supported battlefield permanents across all controllers before ordinary end-step priority actions
 - resolve those triggers through the stack
 
 ## Invariants / Legality Rules
@@ -63,4 +63,3 @@ This belongs to the `Game` aggregate because phase entry timing and triggered st
 ## Rules Support Statement
 
 This slice adds a minimal beginning-of-end-step trigger family only. It does not yet imply generic delayed trigger support or full cleanup-step trigger handling.
-

@@ -13,7 +13,7 @@ The engine already has a real `Upkeep` step and priority windows there. Beginnin
 ## Supported Behavior
 
 - detect the beginning of upkeep for the active player
-- enqueue supported upkeep triggers controlled by permanents that player controls
+- enqueue supported upkeep triggers from supported battlefield permanents across all controllers
 - put those triggers on the stack before ordinary upkeep priority actions continue
 
 ## Invariants / Legality Rules
@@ -27,6 +27,7 @@ The engine already has a real `Upkeep` step and priority windows there. Beginnin
 - delayed upkeep triggers created by other spells
 - cumulative upkeep
 - multiple upkeep trigger ordering choices by the same player
+- generic delayed upkeep triggers created by prior effects
 
 ## Domain Impact
 
@@ -63,4 +64,3 @@ This belongs to the `Game` aggregate because step entry and trigger timing are a
 ## Rules Support Statement
 
 This slice adds a minimal beginning-of-upkeep trigger family only. It does not imply full triggered-step support across every phase or delayed triggered abilities.
-

@@ -257,8 +257,8 @@ The current triggered-ability support is intentionally tiny and explicit:
 
 - enter-the-battlefield triggers on supported permanents
 - dies triggers on supported creatures
-- beginning-of-upkeep triggers on supported battlefield permanents
-- beginning-of-end-step triggers on supported battlefield permanents
+- beginning-of-upkeep triggers on supported battlefield permanents across all controllers
+- beginning-of-end-step triggers on supported battlefield permanents across all controllers
 
 This is not yet a generic trigger engine for arbitrary delayed, intervening-if, or multi-object ordering cases.
 
