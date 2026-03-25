@@ -343,6 +343,19 @@ That package says:
 - what target or controller matters
 - what data must survive until resolution
 
+In the current shape, the enum variant itself now carries more meaning.
+
+So instead of "payload plus repeated card type field", the runtime prefers families like:
+
+- creature payload
+- instant payload
+- sorcery payload
+- artifact payload
+- enchantment payload
+- planeswalker payload
+
+That keeps less repeated metadata inside each stack object.
+
 ## Why It Exists
 
 This reduces:
