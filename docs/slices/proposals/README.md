@@ -10,12 +10,6 @@ The next release plan is organized as **functional waves** aimed at making the e
 
 Highest-return interactive spell families that unlock much more realistic gameplay:
 
-### `release-0.6.0-wave-2-triggered-abilities-baseline`
-
-Minimal triggered-ability engine for common and high-value card behavior:
-
-- `end-step-trigger-foundation.md`
-
 ### `release-0.6.0-wave-3-activated-ability-usability`
 
 Broader activated-ability support so more permanents become meaningfully playable:

@@ -192,6 +192,42 @@ It is not a literal restatement of the rules text.
 
 ---
 
+## Triggered Ability Foundation
+
+- 117
+- 405
+- 603
+
+---
+
+## Enter The Battlefield Trigger Foundation
+
+- 603.2
+- 603.3
+
+---
+
+## Dies Trigger Foundation
+
+- 603.6
+- 700.4
+
+---
+
+## Upkeep Trigger Foundation
+
+- 503
+- 603
+
+---
+
+## End Step Trigger Foundation
+
+- 513
+- 603
+
+---
+
 ## Spell Target Foundation
 
 - 114

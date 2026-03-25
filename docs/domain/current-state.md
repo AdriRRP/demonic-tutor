@@ -266,7 +266,11 @@ Current constraints include:
 - outside stack-aware operations, general turn advancement still requires the priority window to be closed
 - broader priority windows for non-main-phase turn flow beyond `Upkeep`, `Draw`, `EndStep`, and the current combat windows are not modeled yet
 - combat now uses explicit subphases, but still omits many richer combat mechanics and triggered timing details
-- no triggered abilities
+- minimal explicit triggered abilities only for the currently modeled subset:
+  - enter-the-battlefield life-gain triggers from supported permanents
+  - dies life-gain triggers from supported creatures that move from battlefield to graveyard
+  - beginning-of-upkeep triggers from supported battlefield permanents
+  - beginning-of-end-step triggers from supported battlefield permanents
 - limited card behavior modeling
 - permanent spells resolve from the stack into the battlefield in the current simplified stack model
 - mana production is simplified to generic mana plus a minimal colored subset (`White`, `Blue`, `Black`, `Green`, `Red`) and is currently exercised in main phases plus the currently supported open priority windows while the acting player holds priority

@@ -403,6 +403,18 @@ The same idea now also applies to supported activated abilities:
 
 That keeps the hot stack model more compact and leaves public source ids at the boundary where they are actually needed.
 
+The trigger baseline now reuses that same corridor too.
+
+The engine does not create a second hidden path for "things that just trigger".
+
+Instead it:
+
+- detects a supported trigger at the right gameplay moment
+- builds a triggered stack object with an internal source reference
+- resolves that object through the same priority and stack corridor as other stack objects
+
+That keeps ETB, dies, upkeep, and end-step triggers inside one rules pipeline instead of inventing a parallel one.
+
 ---
 
 # Abstraction 8: Internal Runtime Targets Vs Public Targets

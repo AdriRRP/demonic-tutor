@@ -245,11 +245,19 @@ Card instances can be checked for whether they represent permanents (cards that 
 The current model intentionally omits:
 
 - rules text
-- triggered abilities
 - counters
 - non-instant spell responses while a priority window is open
 
 These may be introduced incrementally in future slices.
+
+The current triggered-ability support is intentionally tiny and explicit:
+
+- enter-the-battlefield triggers on supported permanents
+- dies triggers on supported creatures
+- beginning-of-upkeep triggers on supported battlefield permanents
+- beginning-of-end-step triggers on supported battlefield permanents
+
+This is not yet a generic trigger engine for arbitrary delayed, intervening-if, or multi-object ordering cases.
 
 ---
 
