@@ -700,6 +700,11 @@ impl Player {
         )
     }
 
+    pub fn move_battlefield_card_to_hand(&mut self, card_id: &CardInstanceId) -> Option<()> {
+        let handle = self.handle_in_zone(card_id, PlayerCardZone::Battlefield)?;
+        self.move_handle_between_zones(handle, PlayerCardZone::Battlefield, PlayerCardZone::Hand)
+    }
+
     pub(crate) fn move_battlefield_handle_to_graveyard(
         &mut self,
         handle: PlayerCardHandle,
@@ -712,6 +717,17 @@ impl Player {
                     PlayerCardZone::Battlefield,
                     PlayerCardZone::Graveyard,
                 )
+            })
+    }
+
+    pub(crate) fn move_battlefield_handle_to_hand(
+        &mut self,
+        handle: PlayerCardHandle,
+    ) -> Option<()> {
+        self.handle_is_in_zone(handle, PlayerCardZone::Battlefield)
+            .then_some(())
+            .and_then(|()| {
+                self.move_handle_between_zones(handle, PlayerCardZone::Battlefield, PlayerCardZone::Hand)
             })
     }
 

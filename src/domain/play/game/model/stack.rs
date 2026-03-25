@@ -38,6 +38,7 @@ impl StackCardRef {
 pub enum StackTargetRef {
     Player(usize),
     Creature(StackCardRef),
+    Permanent(StackCardRef),
     GraveyardCard(StackCardRef),
     StackSpell(u32),
 }
@@ -48,6 +49,7 @@ impl StackTargetRef {
         match self {
             Self::Player(_) => SpellTargetKind::Player,
             Self::Creature(_) => SpellTargetKind::Creature,
+            Self::Permanent(_) => SpellTargetKind::Permanent,
             Self::GraveyardCard(_) => SpellTargetKind::GraveyardCard,
             Self::StackSpell(_) => SpellTargetKind::StackSpell,
         }

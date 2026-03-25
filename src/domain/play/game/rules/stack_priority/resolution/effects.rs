@@ -77,6 +77,30 @@ fn destroy_creature(
     ))
 }
 
+fn return_permanent_to_owners_hand(
+    players: &mut [Player],
+    card_locations: &AggregateCardLocationIndex,
+    target_id: &CardInstanceId,
+) -> Option<CardInstanceId> {
+    let location = card_locations.location(target_id)?;
+    (location.zone() == crate::domain::play::game::PlayerCardZone::Battlefield).then_some(())?;
+    players[location.owner_index()].move_battlefield_handle_to_hand(location.handle())?;
+    Some(target_id.clone())
+}
+
+fn destroy_noncreature_permanent(
+    game_id: &GameId,
+    players: &mut [Player],
+    card_locations: &AggregateCardLocationIndex,
+    target_id: &CardInstanceId,
+) -> Option<CardInstanceId> {
+    let location = card_locations.location(target_id)?;
+    (location.zone() == crate::domain::play::game::PlayerCardZone::Battlefield).then_some(())?;
+    players[location.owner_index()].move_battlefield_handle_to_graveyard(location.handle())?;
+    let _ = game_id;
+    Some(target_id.clone())
+}
+
 fn exile_creature_from_battlefield(
     game_id: &GameId,
     players: &mut [Player],
@@ -163,6 +187,7 @@ fn resolve_target_legality_for_effect(
             | SpellTargetLegality::IllegalTargetRule
             | SpellTargetLegality::MissingPlayer(_)
             | SpellTargetLegality::MissingCreature(_)
+            | SpellTargetLegality::MissingPermanent(_)
             | SpellTargetLegality::MissingGraveyardCard(_)
             | SpellTargetLegality::MissingStackSpell(_),
             _,
@@ -213,9 +238,10 @@ fn resolve_exile_target_creature_effect(
         SpellTarget::Creature(card_id) => {
             exile_creature_from_battlefield(game_id, players, card_locations, &card_id)
         }
-        SpellTarget::Player(_) | SpellTarget::GraveyardCard(_) | SpellTarget::StackObject(_) => {
-            None
-        }
+        SpellTarget::Player(_)
+        | SpellTarget::Permanent(_)
+        | SpellTarget::GraveyardCard(_)
+        | SpellTarget::StackObject(_) => None,
     };
 
     review_state_based_actions_after_effect(
@@ -255,7 +281,10 @@ fn resolve_exile_target_graveyard_card_effect(
         SpellTarget::GraveyardCard(card_id) => {
             exile_card_from_graveyard(game_id, players, card_locations, &card_id)
         }
-        SpellTarget::Player(_) | SpellTarget::Creature(_) | SpellTarget::StackObject(_) => None,
+        SpellTarget::Player(_)
+        | SpellTarget::Creature(_)
+        | SpellTarget::Permanent(_)
+        | SpellTarget::StackObject(_) => None,
     };
 
     review_state_based_actions_after_effect(
@@ -345,9 +374,10 @@ fn resolve_targeted_player_life_effect(
                 )?,
             )
         }
-        SpellTarget::Creature(_) | SpellTarget::GraveyardCard(_) | SpellTarget::StackObject(_) => {
-            None
-        }
+        SpellTarget::Creature(_)
+        | SpellTarget::Permanent(_)
+        | SpellTarget::GraveyardCard(_)
+        | SpellTarget::StackObject(_) => None,
     };
 
     review_state_based_actions_after_effect(
@@ -398,7 +428,9 @@ fn resolve_damage_effect(
             apply_damage_to_creature(context.players, context.card_locations, &card_id, damage);
             None
         }
-        SpellTarget::GraveyardCard(_) | SpellTarget::StackObject(_) => None,
+        SpellTarget::Permanent(_)
+        | SpellTarget::GraveyardCard(_)
+        | SpellTarget::StackObject(_) => None,
     };
 
     review_state_based_actions_after_effect(
@@ -452,6 +484,97 @@ fn resolve_destroy_target_creature_effect(
         None,
         creatures_died,
         Vec::new(),
+    )
+}
+
+fn resolve_return_target_permanent_to_hand_effect(
+    context: &mut ResolutionContext<'_>,
+) -> Result<SpellResolutionSideEffects, DomainError> {
+    let Some(target) = resolve_target_legality_for_effect(
+        context.players,
+        context.card_locations,
+        context.stack,
+        context.controller_index,
+        context.supported_spell_rules,
+        context.target,
+        "bounce spell resolved without a targeting profile",
+    )?
+    else {
+        return review_state_based_actions(
+            context.game_id,
+            context.players,
+            context.terminal_state,
+        );
+    };
+
+    let moved_cards = match target {
+        SpellTarget::Permanent(card_id) => return_permanent_to_owners_hand(
+            context.players,
+            context.card_locations,
+            &card_id,
+        )
+        .into_iter()
+        .collect(),
+        SpellTarget::Player(_)
+        | SpellTarget::Creature(_)
+        | SpellTarget::GraveyardCard(_)
+        | SpellTarget::StackObject(_) => Vec::new(),
+    };
+
+    review_state_based_actions_after_effect(
+        context.game_id,
+        context.players,
+        context.terminal_state,
+        None,
+        None,
+        Vec::new(),
+        moved_cards,
+    )
+}
+
+fn resolve_destroy_target_artifact_or_enchantment_effect(
+    context: &mut ResolutionContext<'_>,
+) -> Result<SpellResolutionSideEffects, DomainError> {
+    let Some(target) = resolve_target_legality_for_effect(
+        context.players,
+        context.card_locations,
+        context.stack,
+        context.controller_index,
+        context.supported_spell_rules,
+        context.target,
+        "artifact or enchantment destruction spell resolved without a targeting profile",
+    )?
+    else {
+        return review_state_based_actions(
+            context.game_id,
+            context.players,
+            context.terminal_state,
+        );
+    };
+
+    let moved_cards = match target {
+        SpellTarget::Permanent(card_id) => destroy_noncreature_permanent(
+            context.game_id,
+            context.players,
+            context.card_locations,
+            &card_id,
+        )
+        .into_iter()
+        .collect(),
+        SpellTarget::Player(_)
+        | SpellTarget::Creature(_)
+        | SpellTarget::GraveyardCard(_)
+        | SpellTarget::StackObject(_) => Vec::new(),
+    };
+
+    review_state_based_actions_after_effect(
+        context.game_id,
+        context.players,
+        context.terminal_state,
+        None,
+        None,
+        Vec::new(),
+        moved_cards,
     )
 }
 
@@ -589,6 +712,32 @@ pub(super) fn apply_supported_spell_rules(
                 target,
             };
             resolve_counter_target_spell_effect(&mut context)
+        }
+        SpellResolutionProfile::ReturnTargetPermanentToHand => {
+            let mut context = ResolutionContext {
+                game_id,
+                players,
+                card_locations,
+                terminal_state,
+                stack,
+                controller_index,
+                supported_spell_rules,
+                target,
+            };
+            resolve_return_target_permanent_to_hand_effect(&mut context)
+        }
+        SpellResolutionProfile::DestroyTargetArtifactOrEnchantment => {
+            let mut context = ResolutionContext {
+                game_id,
+                players,
+                card_locations,
+                terminal_state,
+                stack,
+                controller_index,
+                supported_spell_rules,
+                target,
+            };
+            resolve_destroy_target_artifact_or_enchantment_effect(&mut context)
         }
         SpellResolutionProfile::DestroyTargetCreature => {
             let mut context = ResolutionContext {

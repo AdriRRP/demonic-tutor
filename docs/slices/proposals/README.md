@@ -10,7 +10,6 @@ The next release plan is organized as **functional waves** aimed at making the e
 
 Highest-return interactive spell families that unlock much more realistic gameplay:
 
-- `return-target-permanent-to-hand.md`
 - `destroy-target-artifact-or-enchantment.md`
 - `discard-target-player-card.md`
 

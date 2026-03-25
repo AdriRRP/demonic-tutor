@@ -55,6 +55,7 @@ pub enum GameError {
     IllegalSpellTarget(CardInstanceId),
     InvalidPlayerTarget(PlayerId),
     InvalidCreatureTarget(CardInstanceId),
+    InvalidPermanentTarget(CardInstanceId),
     InvalidGraveyardCardTarget(CardInstanceId),
     InvalidStackObjectTarget(StackObjectId),
     NoAttackersDeclared,
@@ -211,6 +212,9 @@ impl std::fmt::Display for GameError {
             }
             Self::InvalidCreatureTarget(card_id) => {
                 write!(f, "creature target {card_id} is not on the battlefield")
+            }
+            Self::InvalidPermanentTarget(card_id) => {
+                write!(f, "permanent target {card_id} is not on the battlefield")
             }
             Self::InvalidGraveyardCardTarget(card_id) => {
                 write!(f, "graveyard card target {card_id} is not in a graveyard")

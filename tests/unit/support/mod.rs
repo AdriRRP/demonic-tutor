@@ -222,6 +222,19 @@ pub fn counter_target_spell_instant_card(name: &str, mana_cost: u32) -> LibraryC
         .with_supported_spell_rules(SupportedSpellRules::counter_target_spell())
 }
 
+pub fn return_target_permanent_to_hand_instant_card(name: &str, mana_cost: u32) -> LibraryCard {
+    LibraryCard::new(CardDefinitionId::new(name), CardType::Instant, mana_cost)
+        .with_supported_spell_rules(SupportedSpellRules::return_target_permanent_to_hand())
+}
+
+pub fn destroy_target_artifact_or_enchantment_instant_card(
+    name: &str,
+    mana_cost: u32,
+) -> LibraryCard {
+    LibraryCard::new(CardDefinitionId::new(name), CardType::Instant, mana_cost)
+        .with_supported_spell_rules(SupportedSpellRules::destroy_target_artifact_or_enchantment())
+}
+
 pub fn targeted_exile_creature_instant_card(name: &str, mana_cost: u32) -> LibraryCard {
     LibraryCard::new(CardDefinitionId::new(name), CardType::Instant, mana_cost)
         .with_supported_spell_rules(SupportedSpellRules::exile_target_creature())

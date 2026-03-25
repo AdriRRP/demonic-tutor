@@ -67,6 +67,20 @@ fn materialize_spell_target(
                 .id()
                 .clone(),
         )),
+        StackTargetRef::Permanent(card_ref) => Ok(SpellTarget::Permanent(
+            players
+                .get(card_ref.owner_index())
+                .and_then(|player| player.card_by_handle(card_ref.handle()))
+                .ok_or_else(|| {
+                    crate::domain::play::errors::DomainError::Game(
+                        crate::domain::play::errors::GameError::InternalInvariantViolation(
+                            "missing permanent stack target handle".to_string(),
+                        ),
+                    )
+                })?
+                .id()
+                .clone(),
+        )),
         StackTargetRef::GraveyardCard(card_ref) => Ok(SpellTarget::GraveyardCard(
             players
                 .get(card_ref.owner_index())

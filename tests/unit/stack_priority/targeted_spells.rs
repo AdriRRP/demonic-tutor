@@ -5,8 +5,9 @@
 use {
     crate::support::{
         advance_to_first_main_satisfying_cleanup, advance_to_player_first_main_satisfying_cleanup,
-        advance_turn_raw, close_empty_priority_window, counter_target_spell_instant_card,
-        creature_card, filled_library, land_card, setup_two_player_game,
+        advance_turn_raw, artifact_card, close_empty_priority_window,
+        counter_target_spell_instant_card, creature_card, filled_library, land_card,
+        return_target_permanent_to_hand_instant_card, setup_two_player_game,
         targeted_attacking_creature_damage_instant_card,
         targeted_controlled_creature_damage_instant_card, targeted_damage_instant_card,
         targeted_destroy_creature_instant_card, targeted_exile_creature_instant_card,
@@ -265,6 +266,135 @@ fn lower_counterspell_does_nothing_if_target_spell_is_already_gone() {
     assert!(third_resolution.life_changed.is_none());
     assert_eq!(game.players()[0].life(), 20);
     assert_eq!(game.stack().len(), 0);
+}
+
+#[test]
+fn bounce_spell_returns_target_permanent_to_its_owners_hand() {
+    let (service, mut game) = setup_two_player_game(
+        "game-bounce-permanent",
+        filled_library(
+            vec![
+                return_target_permanent_to_hand_instant_card("unsummon-relic", 0),
+                return_target_permanent_to_hand_instant_card("unsummon-relic", 0),
+                return_target_permanent_to_hand_instant_card("unsummon-relic", 0),
+                return_target_permanent_to_hand_instant_card("unsummon-relic", 0),
+                return_target_permanent_to_hand_instant_card("unsummon-relic", 0),
+                return_target_permanent_to_hand_instant_card("unsummon-relic", 0),
+                return_target_permanent_to_hand_instant_card("unsummon-relic", 0),
+            ],
+            10,
+        ),
+        filled_library(vec![artifact_card("howling-mine", 0)], 10),
+    );
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-2");
+
+    let artifact_id = hand_card_id_by_definition(&game, 1, "howling-mine");
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-2"), artifact_id.clone()),
+        )
+        .unwrap();
+    let _ = resolve_current_stack(&service, &mut game);
+    let _ = pass_priority_once(&service, &mut game);
+
+    let bounce_id = game.players()[0].hand_card_ids()[0].clone();
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), bounce_id)
+                .with_target(SpellTarget::Permanent(artifact_id.clone())),
+        )
+        .unwrap();
+
+    let _ = resolve_current_stack(&service, &mut game);
+    assert!(game.players()[1].hand_card(&artifact_id).is_some());
+    assert!(game.players()[1].battlefield_card(&artifact_id).is_none());
+}
+
+#[test]
+fn bounce_spell_rejects_non_battlefield_target_when_cast() {
+    let (service, mut game) = setup_two_player_game(
+        "game-bounce-illegal-target",
+        filled_library(
+            vec![return_target_permanent_to_hand_instant_card("unsummon-relic", 0)],
+            10,
+        ),
+        filled_library(vec![land_card("mountain")], 10),
+    );
+
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
+
+    let bounce_id = hand_card_id_by_definition(&game, 0, "unsummon-relic");
+    let result = service.cast_spell(
+        &mut game,
+        CastSpellCommand::new(PlayerId::new("player-1"), bounce_id)
+            .with_target(SpellTarget::Player(PlayerId::new("player-2"))),
+    );
+
+    assert!(matches!(
+        result,
+        Err(DomainError::Game(GameError::IllegalSpellTarget(_)))
+    ));
+}
+
+#[test]
+fn lower_bounce_spell_does_nothing_if_target_permanent_is_already_gone() {
+    let (service, mut game) = setup_two_player_game(
+        "game-bounce-target-gone",
+        filled_library(
+            vec![
+                return_target_permanent_to_hand_instant_card("unsummon-a", 0),
+                return_target_permanent_to_hand_instant_card("unsummon-b", 0),
+                return_target_permanent_to_hand_instant_card("unsummon-c", 0),
+                return_target_permanent_to_hand_instant_card("unsummon-d", 0),
+                return_target_permanent_to_hand_instant_card("unsummon-e", 0),
+                return_target_permanent_to_hand_instant_card("unsummon-f", 0),
+                return_target_permanent_to_hand_instant_card("unsummon-g", 0),
+            ],
+            10,
+        ),
+        filled_library(vec![artifact_card("howling-mine", 0)], 10),
+    );
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-2");
+
+    let artifact_id = hand_card_id_by_definition(&game, 1, "howling-mine");
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-2"), artifact_id.clone()),
+        )
+        .unwrap();
+    let _ = resolve_current_stack(&service, &mut game);
+    let _ = pass_priority_once(&service, &mut game);
+
+    let first_bounce_id = game.players()[0].hand_card_ids()[0].clone();
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), first_bounce_id)
+                .with_target(SpellTarget::Permanent(artifact_id.clone())),
+        )
+        .unwrap();
+
+    let second_bounce_id = game.players()[0].hand_card_ids()[0].clone();
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), second_bounce_id)
+                .with_target(SpellTarget::Permanent(artifact_id.clone())),
+        )
+        .unwrap();
+
+    let _ = resolve_current_stack(&service, &mut game);
+    let _ = pass_priority_once(&service, &mut game);
+    let resolution = pass_priority_once(&service, &mut game);
+
+    assert!(resolution.life_changed.is_none());
+    assert!(game.players()[1].hand_card(&artifact_id).is_some());
+    assert!(game.players()[1].battlefield_card(&artifact_id).is_none());
 }
 
 #[test]

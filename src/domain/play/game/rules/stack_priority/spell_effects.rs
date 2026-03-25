@@ -19,6 +19,7 @@ pub enum SpellTargetLegality {
     IllegalTargetRule,
     MissingPlayer(PlayerId),
     MissingCreature(CardInstanceId),
+    MissingPermanent(CardInstanceId),
     MissingGraveyardCard(CardInstanceId),
     MissingStackSpell(StackObjectId),
     Legal,
@@ -90,6 +91,9 @@ enum ResolvedTarget {
         is_attacking: bool,
         is_blocking: bool,
     },
+    Permanent {
+        card_type: crate::domain::play::cards::CardType,
+    },
     GraveyardCard,
     StackSpell,
 }
@@ -131,6 +135,17 @@ fn resolve_target(
                 is_actor: target_creature.owner_index() == actor_index,
                 is_attacking: target_creature.card().is_attacking(),
                 is_blocking: target_creature.card().is_blocking(),
+            })
+        }
+        SpellTarget::Permanent(card_id) => {
+            let Some(target_permanent) =
+                helpers::battlefield_card_location(players, card_locations, card_id)
+            else {
+                return Err(SpellTargetLegality::MissingPermanent(card_id.clone()));
+            };
+
+            Ok(ResolvedTarget::Permanent {
+                card_type: *target_permanent.card().card_type(),
             })
         }
         SpellTarget::GraveyardCard(card_id) => {
@@ -186,6 +201,13 @@ const fn evaluate_resolved_target_rule(
         },
         (SpellTargetingProfile::ExactlyOne(rule), ResolvedTarget::GraveyardCard) => {
             match rule.allows_graveyard_card_target() {
+                Some(true) => SpellTargetLegality::Legal,
+                Some(false) => SpellTargetLegality::IllegalTargetRule,
+                None => SpellTargetLegality::IllegalTargetKind,
+            }
+        }
+        (SpellTargetingProfile::ExactlyOne(rule), ResolvedTarget::Permanent { card_type }) => {
+            match rule.allows_permanent_target(*card_type) {
                 Some(true) => SpellTargetLegality::Legal,
                 Some(false) => SpellTargetLegality::IllegalTargetRule,
                 None => SpellTargetLegality::IllegalTargetKind,

@@ -107,6 +107,9 @@ fn validate_spell_target(
         SpellTargetLegality::MissingCreature(target_card_id) => Err(DomainError::Game(
             GameError::InvalidCreatureTarget(target_card_id),
         )),
+        SpellTargetLegality::MissingPermanent(target_card_id) => Err(DomainError::Game(
+            GameError::InvalidPermanentTarget(target_card_id),
+        )),
         SpellTargetLegality::MissingGraveyardCard(target_card_id) => Err(DomainError::Game(
             GameError::InvalidGraveyardCardTarget(target_card_id),
         )),
@@ -155,6 +158,17 @@ fn prepare_stack_target(
                 )))
             })?;
             Ok(Some(StackTargetRef::Creature(StackCardRef::new(
+                location.owner_index(),
+                location.handle(),
+            ))))
+        }
+        Some(SpellTarget::Permanent(card_id)) => {
+            let location = card_locations.location(card_id).ok_or_else(|| {
+                DomainError::Game(GameError::InternalInvariantViolation(format!(
+                    "target permanent {card_id} disappeared before stack insertion"
+                )))
+            })?;
+            Ok(Some(StackTargetRef::Permanent(StackCardRef::new(
                 location.owner_index(),
                 location.handle(),
             ))))

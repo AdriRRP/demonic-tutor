@@ -301,6 +301,7 @@ impl CastingPermissionProfile {
 pub enum SpellTargetKind {
     Player,
     Creature,
+    Permanent,
     GraveyardCard,
     StackSpell,
 }
@@ -348,6 +349,24 @@ pub enum CreatureTargetRule {
     AttackingCreatureControlledByOpponent,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PermanentTargetRule {
+    AnyPermanentOnBattlefield,
+    ArtifactOrEnchantmentOnBattlefield,
+}
+
+impl PermanentTargetRule {
+    #[must_use]
+    pub const fn allows(self, card_type: CardType) -> bool {
+        match self {
+            Self::AnyPermanentOnBattlefield => card_type.is_permanent(),
+            Self::ArtifactOrEnchantmentOnBattlefield => {
+                matches!(card_type, CardType::Artifact | CardType::Enchantment)
+            }
+        }
+    }
+}
+
 impl CreatureTargetRule {
     #[must_use]
     pub const fn allows(
@@ -382,6 +401,7 @@ impl CreatureTargetRule {
 pub enum SingleTargetRule {
     Player(PlayerTargetRule),
     Creature(CreatureTargetRule),
+    Permanent(PermanentTargetRule),
     GraveyardCard(GraveyardCardTargetRule),
     StackSpell,
     PlayerOrCreature {
@@ -465,10 +485,21 @@ impl SingleTargetRule {
     }
 
     #[must_use]
+    pub const fn any_permanent_on_battlefield() -> Self {
+        Self::Permanent(PermanentTargetRule::AnyPermanentOnBattlefield)
+    }
+
+    #[must_use]
+    pub const fn artifact_or_enchantment_on_battlefield() -> Self {
+        Self::Permanent(PermanentTargetRule::ArtifactOrEnchantmentOnBattlefield)
+    }
+
+    #[must_use]
     pub const fn matches_target_kind(self, kind: SpellTargetKind) -> bool {
         match self {
             Self::Player(_) => matches!(kind, SpellTargetKind::Player),
             Self::Creature(_) => matches!(kind, SpellTargetKind::Creature),
+            Self::Permanent(_) => matches!(kind, SpellTargetKind::Permanent),
             Self::GraveyardCard(_) => matches!(kind, SpellTargetKind::GraveyardCard),
             Self::StackSpell => matches!(kind, SpellTargetKind::StackSpell),
             Self::PlayerOrCreature { .. } => {
@@ -481,7 +512,7 @@ impl SingleTargetRule {
     pub const fn player_rule(self) -> Option<PlayerTargetRule> {
         match self {
             Self::Player(rule) | Self::PlayerOrCreature { player: rule, .. } => Some(rule),
-            Self::Creature(_) | Self::GraveyardCard(_) => None,
+            Self::Creature(_) | Self::Permanent(_) | Self::GraveyardCard(_) => None,
             Self::StackSpell => None,
         }
     }
@@ -490,8 +521,20 @@ impl SingleTargetRule {
     pub const fn creature_rule(self) -> Option<CreatureTargetRule> {
         match self {
             Self::Creature(rule) | Self::PlayerOrCreature { creature: rule, .. } => Some(rule),
-            Self::Player(_) | Self::GraveyardCard(_) => None,
+            Self::Player(_) | Self::Permanent(_) | Self::GraveyardCard(_) => None,
             Self::StackSpell => None,
+        }
+    }
+
+    #[must_use]
+    pub const fn permanent_rule(self) -> Option<PermanentTargetRule> {
+        match self {
+            Self::Permanent(rule) => Some(rule),
+            Self::Player(_)
+            | Self::Creature(_)
+            | Self::GraveyardCard(_)
+            | Self::StackSpell
+            | Self::PlayerOrCreature { .. } => None,
         }
     }
 
@@ -499,7 +542,11 @@ impl SingleTargetRule {
     pub const fn graveyard_card_rule(self) -> Option<GraveyardCardTargetRule> {
         match self {
             Self::GraveyardCard(rule) => Some(rule),
-            Self::Player(_) | Self::Creature(_) | Self::PlayerOrCreature { .. } | Self::StackSpell => None,
+            Self::Player(_)
+            | Self::Creature(_)
+            | Self::Permanent(_)
+            | Self::PlayerOrCreature { .. }
+            | Self::StackSpell => None,
         }
     }
 
@@ -509,7 +556,7 @@ impl SingleTargetRule {
             Self::Player(rule) | Self::PlayerOrCreature { player: rule, .. } => {
                 Some(rule.allows(target_is_actor))
             }
-            Self::Creature(_) | Self::GraveyardCard(_) => None,
+            Self::Creature(_) | Self::Permanent(_) | Self::GraveyardCard(_) => None,
             Self::StackSpell => None,
         }
     }
@@ -529,7 +576,21 @@ impl SingleTargetRule {
                     target_is_blocking,
                 ))
             }
-            Self::Player(_) | Self::GraveyardCard(_) | Self::StackSpell => None,
+            Self::Player(_) | Self::Permanent(_) | Self::GraveyardCard(_) | Self::StackSpell => {
+                None
+            }
+        }
+    }
+
+    #[must_use]
+    pub const fn allows_permanent_target(self, card_type: CardType) -> Option<bool> {
+        match self {
+            Self::Permanent(rule) => Some(rule.allows(card_type)),
+            Self::Player(_)
+            | Self::Creature(_)
+            | Self::GraveyardCard(_)
+            | Self::StackSpell
+            | Self::PlayerOrCreature { .. } => None,
         }
     }
 
@@ -537,7 +598,11 @@ impl SingleTargetRule {
     pub const fn allows_graveyard_card_target(self) -> Option<bool> {
         match self {
             Self::GraveyardCard(rule) => Some(rule.allows()),
-            Self::Player(_) | Self::Creature(_) | Self::PlayerOrCreature { .. } | Self::StackSpell => None,
+            Self::Player(_)
+            | Self::Creature(_)
+            | Self::Permanent(_)
+            | Self::PlayerOrCreature { .. }
+            | Self::StackSpell => None,
         }
     }
 
@@ -547,6 +612,7 @@ impl SingleTargetRule {
             Self::StackSpell => Some(true),
             Self::Player(_)
             | Self::Creature(_)
+            | Self::Permanent(_)
             | Self::GraveyardCard(_)
             | Self::PlayerOrCreature { .. } => None,
         }
@@ -581,6 +647,8 @@ pub enum SpellResolutionProfile {
     GainLife { amount: u32 },
     LoseLife { amount: u32 },
     CounterTargetSpell,
+    ReturnTargetPermanentToHand,
+    DestroyTargetArtifactOrEnchantment,
     DestroyTargetCreature,
     ExileTargetCreature,
     ExileTargetCardFromGraveyard,
@@ -733,6 +801,26 @@ impl SupportedSpellRules {
         Self {
             targeting: SpellTargetingProfile::ExactlyOne(SingleTargetRule::any_spell_on_the_stack()),
             resolution: SpellResolutionProfile::CounterTargetSpell,
+        }
+    }
+
+    #[must_use]
+    pub const fn return_target_permanent_to_hand() -> Self {
+        Self {
+            targeting: SpellTargetingProfile::ExactlyOne(
+                SingleTargetRule::any_permanent_on_battlefield(),
+            ),
+            resolution: SpellResolutionProfile::ReturnTargetPermanentToHand,
+        }
+    }
+
+    #[must_use]
+    pub const fn destroy_target_artifact_or_enchantment() -> Self {
+        Self {
+            targeting: SpellTargetingProfile::ExactlyOne(
+                SingleTargetRule::artifact_or_enchantment_on_battlefield(),
+            ),
+            resolution: SpellResolutionProfile::DestroyTargetArtifactOrEnchantment,
         }
     }
 
