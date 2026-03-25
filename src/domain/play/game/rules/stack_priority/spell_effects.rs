@@ -130,6 +130,10 @@ fn resolve_target(
             else {
                 return Err(SpellTargetLegality::MissingCreature(card_id.clone()));
             };
+            if target_creature.owner_index() != actor_index && target_creature.card().has_hexproof()
+            {
+                return Err(SpellTargetLegality::IllegalTargetRule);
+            }
 
             Ok(ResolvedTarget::Creature {
                 is_actor: target_creature.owner_index() == actor_index,
@@ -143,6 +147,11 @@ fn resolve_target(
             else {
                 return Err(SpellTargetLegality::MissingPermanent(card_id.clone()));
             };
+            if target_permanent.owner_index() != actor_index
+                && target_permanent.card().has_hexproof()
+            {
+                return Err(SpellTargetLegality::IllegalTargetRule);
+            }
 
             Ok(ResolvedTarget::Permanent {
                 card_type: *target_permanent.card().card_type(),

@@ -6,10 +6,10 @@ use {
     crate::support::{
         advance_to_first_main_satisfying_cleanup, advance_to_player_first_main_satisfying_cleanup,
         advance_turn_raw, artifact_card, close_empty_priority_window,
-        counter_target_spell_instant_card, creature_card,
+        counter_target_spell_instant_card, creature_card, creature_card_with_keyword,
         destroy_target_artifact_or_enchantment_instant_card, enchantment_card, filled_library,
-        land_card, return_target_permanent_to_hand_instant_card, setup_two_player_game,
-        target_player_discards_chosen_card_sorcery_card,
+        land_card, resolve_top_stack_with_passes, return_target_permanent_to_hand_instant_card,
+        setup_two_player_game, target_player_discards_chosen_card_sorcery_card,
         targeted_attacking_creature_damage_instant_card,
         targeted_controlled_creature_damage_instant_card, targeted_damage_instant_card,
         targeted_destroy_creature_instant_card, targeted_exile_creature_instant_card,
@@ -20,8 +20,8 @@ use {
     },
     demonictutor::{
         CardDefinitionId, CardInstanceId, CastSpellCommand, DeclareAttackersCommand, DiscardKind,
-        DomainError, GameEndReason, GameError, LibraryCard, PlayerId, ResolveCombatDamageCommand,
-        SpellCastOutcome, SpellChoice, SpellTarget,
+        DomainError, GameEndReason, GameError, KeywordAbility, LibraryCard, PlayerId,
+        ResolveCombatDamageCommand, SpellCastOutcome, SpellChoice, SpellTarget,
     },
 };
 
@@ -267,6 +267,154 @@ fn lower_counterspell_does_nothing_if_target_spell_is_already_gone() {
     assert!(third_resolution.life_changed.is_none());
     assert_eq!(game.players()[0].life(), 20);
     assert_eq!(game.stack().len(), 0);
+}
+
+#[test]
+fn targeted_spell_rejects_opponents_hexproof_creature_when_cast() {
+    let (service, mut game) = setup_two_player_game(
+        "game-hexproof-creature-target",
+        filled_library(
+            vec![
+                targeted_destroy_creature_instant_card("murder-lite", 0),
+                targeted_destroy_creature_instant_card("murder-lite", 0),
+                targeted_destroy_creature_instant_card("murder-lite", 0),
+                targeted_destroy_creature_instant_card("murder-lite", 0),
+                targeted_destroy_creature_instant_card("murder-lite", 0),
+                targeted_destroy_creature_instant_card("murder-lite", 0),
+                targeted_destroy_creature_instant_card("murder-lite", 0),
+            ],
+            10,
+        ),
+        filled_library(
+            vec![creature_card_with_keyword(
+                "slippery-bear",
+                0,
+                2,
+                2,
+                KeywordAbility::Hexproof,
+            )],
+            10,
+        ),
+    );
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-2");
+    let creature_id = CardInstanceId::new("game-hexproof-creature-target-player-2-0");
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-2"), creature_id.clone()),
+        )
+        .unwrap();
+    resolve_top_stack_with_passes(&service, &mut game);
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
+    let removal_id = hand_card_id_by_definition(&game, 0, "murder-lite");
+    let result = service.cast_spell(
+        &mut game,
+        CastSpellCommand::new(PlayerId::new("player-1"), removal_id.clone())
+            .with_target(SpellTarget::Creature(creature_id)),
+    );
+
+    assert!(matches!(
+        result,
+        Err(DomainError::Game(GameError::IllegalSpellTarget(card_id)))
+            if card_id == removal_id
+    ));
+}
+
+#[test]
+fn targeted_spell_can_target_own_hexproof_creature() {
+    let (service, mut game) = setup_two_player_game(
+        "game-hexproof-own-target",
+        filled_library(
+            vec![
+                targeted_destroy_creature_instant_card("murder-lite", 0),
+                targeted_destroy_creature_instant_card("murder-lite", 0),
+                targeted_destroy_creature_instant_card("murder-lite", 0),
+                targeted_destroy_creature_instant_card("murder-lite", 0),
+                targeted_destroy_creature_instant_card("murder-lite", 0),
+                targeted_destroy_creature_instant_card("murder-lite", 0),
+                targeted_destroy_creature_instant_card("murder-lite", 0),
+                creature_card_with_keyword("slippery-bear", 0, 2, 2, KeywordAbility::Hexproof),
+            ],
+            10,
+        ),
+        filled_library(Vec::new(), 10),
+    );
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
+    let creature_id = hand_card_id_by_definition(&game, 0, "slippery-bear");
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), creature_id.clone()),
+        )
+        .unwrap();
+    resolve_top_stack_with_passes(&service, &mut game);
+
+    let removal_id = hand_card_id_by_definition(&game, 0, "murder-lite");
+    let result = service.cast_spell(
+        &mut game,
+        CastSpellCommand::new(PlayerId::new("player-1"), removal_id)
+            .with_target(SpellTarget::Creature(creature_id)),
+    );
+
+    assert!(result.is_ok());
+}
+
+#[test]
+fn destroy_target_creature_does_not_destroy_indestructible_creature() {
+    let (service, mut game) = setup_two_player_game(
+        "game-indestructible-destroy",
+        filled_library(
+            vec![
+                targeted_destroy_creature_instant_card("murder-lite", 0),
+                targeted_destroy_creature_instant_card("murder-lite", 0),
+                targeted_destroy_creature_instant_card("murder-lite", 0),
+                targeted_destroy_creature_instant_card("murder-lite", 0),
+                targeted_destroy_creature_instant_card("murder-lite", 0),
+                targeted_destroy_creature_instant_card("murder-lite", 0),
+                targeted_destroy_creature_instant_card("murder-lite", 0),
+            ],
+            10,
+        ),
+        filled_library(
+            vec![creature_card_with_keyword(
+                "adamant-guardian",
+                0,
+                2,
+                2,
+                KeywordAbility::Indestructible,
+            )],
+            10,
+        ),
+    );
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-2");
+    let creature_id = CardInstanceId::new("game-indestructible-destroy-player-2-0");
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-2"), creature_id.clone()),
+        )
+        .unwrap();
+    resolve_top_stack_with_passes(&service, &mut game);
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
+    let removal_id = hand_card_id_by_definition(&game, 0, "murder-lite");
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), removal_id)
+                .with_target(SpellTarget::Creature(creature_id.clone())),
+        )
+        .unwrap();
+
+    let outcome = resolve_current_stack(&service, &mut game);
+
+    assert!(outcome.creatures_died.is_empty());
+    assert!(game.players()[1].battlefield_card(&creature_id).is_some());
+    assert!(game.players()[1].graveyard_card(&creature_id).is_none());
 }
 
 #[test]
