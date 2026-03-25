@@ -15,17 +15,18 @@ Planeswalkers are already castable permanents in the current engine but not yet 
 - allow a supported planeswalker to activate one explicit loyalty ability during the controller's main phase
 - add or remove loyalty as part of activation cost
 - put the loyalty ability on the stack and resolve it through the normal corridor
+- enforce the current one-loyalty-activation-per-turn limit for that supported planeswalker
 
 ## Invariants / Legality Rules
 
 - loyalty abilities follow the current active-player main-phase timing restriction for the supported subset
 - changing loyalty is part of activation, not resolution
 - activation fails if the planeswalker lacks enough loyalty for a minus ability
+- a supported planeswalker cannot activate a second loyalty ability in the same turn
 
 ## Out of Scope
 
 - planeswalker combat damage redirection history
-- one-loyalty-activation-per-turn enforcement beyond the supported planeswalker subset if not modeled yet
 - static or triggered planeswalker text
 
 ## Domain Impact
@@ -60,4 +61,3 @@ This belongs to the `Game` aggregate because loyalty state, activation timing, a
 ## Rules Support Statement
 
 This slice introduces a minimal explicit loyalty-ability corridor for supported planeswalkers only. It does not imply full planeswalker rules coverage.
-

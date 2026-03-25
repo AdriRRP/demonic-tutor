@@ -161,6 +161,11 @@ fn pay_activation_costs(
             })?;
         let changed = card.adjust_loyalty(ability.loyalty_change());
         debug_assert!(changed, "validated loyalty change should remain payable");
+        let marked = card.mark_loyalty_ability_activated();
+        debug_assert!(
+            marked,
+            "validated loyalty activation should only happen once per turn"
+        );
     }
 
     if matches!(
@@ -348,6 +353,18 @@ pub fn activate_ability(
         }
         let _ = prepared.loyalty;
         validate_loyalty_timing(&source_card_id, &player_id, active_player, *phase, stack)?;
+        if players[player_index]
+            .card_by_handle(prepared.handle.handle())
+            .is_some_and(
+                crate::domain::play::cards::CardInstance::loyalty_ability_activated_this_turn,
+            )
+        {
+            return Err(DomainError::Game(
+                GameError::ActivatedAbilityTimingNotAllowed {
+                    card: source_card_id,
+                },
+            ));
+        }
     }
     let prepared_target = prepare_ability_target(players, card_locations, target.as_ref())?;
     let (creatures_died, moved_cards) = pay_activation_costs(

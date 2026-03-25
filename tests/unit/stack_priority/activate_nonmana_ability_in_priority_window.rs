@@ -12,7 +12,7 @@ use {
     },
     demonictutor::{
         ActivateAbilityCommand, CardError, CardInstanceId, CastSpellCommand, DomainError,
-        PassPriorityCommand, PlayLandCommand, PlayerId, SpellTarget, TapLandCommand,
+        GameError, PassPriorityCommand, PlayLandCommand, PlayerId, SpellTarget, TapLandCommand,
     },
 };
 
@@ -810,6 +810,68 @@ fn loyalty_minus_ability_rejects_insufficient_loyalty() {
             .unwrap()
             .loyalty(),
         Some(0)
+    );
+}
+
+#[test]
+fn loyalty_ability_cannot_be_activated_twice_in_the_same_turn() {
+    let (service, mut game) = setup_two_player_game(
+        "game-loyalty-once-per-turn",
+        filled_library(
+            vec![loyalty_planeswalker_card("ajani-lite", 0, 3, 1, 2)],
+            10,
+        ),
+        filled_library(Vec::new(), 10),
+    );
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
+    let walker_id = player(&game, "player-1")
+        .hand_card_by_definition(&demonictutor::CardDefinitionId::new("ajani-lite"))
+        .unwrap()
+        .id()
+        .clone();
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), walker_id.clone()),
+        )
+        .unwrap();
+    service
+        .pass_priority(
+            &mut game,
+            PassPriorityCommand::new(PlayerId::new("player-1")),
+        )
+        .unwrap();
+    service
+        .pass_priority(
+            &mut game,
+            PassPriorityCommand::new(PlayerId::new("player-2")),
+        )
+        .unwrap();
+
+    service
+        .activate_ability(
+            &mut game,
+            ActivateAbilityCommand::new(PlayerId::new("player-1"), walker_id.clone()),
+        )
+        .unwrap();
+
+    let err = service
+        .activate_ability(
+            &mut game,
+            ActivateAbilityCommand::new(PlayerId::new("player-1"), walker_id.clone()),
+        )
+        .unwrap_err();
+
+    assert!(matches!(
+        err,
+        DomainError::Game(GameError::ActivatedAbilityTimingNotAllowed { card }) if card == walker_id
+    ));
+    assert_eq!(
+        player(&game, "player-1")
+            .battlefield_card(&walker_id)
+            .unwrap()
+            .loyalty(),
+        Some(4)
     );
 }
 

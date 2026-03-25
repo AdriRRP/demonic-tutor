@@ -135,6 +135,7 @@ struct CardFace {
 struct CardRuntime {
     tapped: bool,
     loyalty: u32,
+    loyalty_ability_activated_this_turn: bool,
     kind: CardRuntimeKind,
 }
 
@@ -179,6 +180,7 @@ impl CardInstance {
             runtime: CardRuntime {
                 tapped: false,
                 loyalty,
+                loyalty_ability_activated_this_turn: false,
                 kind: CardRuntimeKind::NonCreature,
             },
         }
@@ -218,6 +220,7 @@ impl CardInstance {
             runtime: CardRuntime {
                 tapped: false,
                 loyalty: 0,
+                loyalty_ability_activated_this_turn: false,
                 kind: CardRuntimeKind::Creature(CreatureRuntime::new(power, toughness)),
             },
         }
@@ -239,6 +242,7 @@ impl CardInstance {
             runtime: CardRuntime {
                 tapped: false,
                 loyalty: 0,
+                loyalty_ability_activated_this_turn: false,
                 kind: CardRuntimeKind::Creature(CreatureRuntime::new_with_keywords(
                     power, toughness, keywords,
                 )),
@@ -367,6 +371,7 @@ impl SpellPayload {
             runtime: CardRuntime {
                 tapped: false,
                 loyalty: 0,
+                loyalty_ability_activated_this_turn: false,
                 kind: CardRuntimeKind::NonCreature,
             },
         }
@@ -396,6 +401,7 @@ impl SpellPayload {
             runtime: CardRuntime {
                 tapped: false,
                 loyalty: payload.initial_loyalty.unwrap_or(0),
+                loyalty_ability_activated_this_turn: false,
                 kind: CardRuntimeKind::NonCreature,
             },
         }
@@ -476,6 +482,7 @@ impl SpellPayload {
                 runtime: CardRuntime {
                     tapped: false,
                     loyalty: 0,
+                    loyalty_ability_activated_this_turn: false,
                     kind: CardRuntimeKind::Creature(CreatureRuntime::new_with_keywords(
                         payload.power,
                         payload.toughness,
@@ -506,6 +513,12 @@ impl CardInstance {
     #[must_use]
     pub fn loyalty(&self) -> Option<u32> {
         matches!(self.card_type(), CardType::Planeswalker).then_some(self.runtime.loyalty)
+    }
+
+    #[must_use]
+    pub fn loyalty_ability_activated_this_turn(&self) -> bool {
+        matches!(self.card_type(), CardType::Planeswalker)
+            && self.runtime.loyalty_ability_activated_this_turn
     }
 
     #[must_use]
@@ -618,6 +631,23 @@ impl CardInstance {
             self.runtime.loyalty = self.runtime.loyalty.saturating_add(delta.cast_unsigned());
         }
         true
+    }
+
+    pub fn mark_loyalty_ability_activated(&mut self) -> bool {
+        if !matches!(self.card_type(), CardType::Planeswalker) {
+            return false;
+        }
+        if self.runtime.loyalty_ability_activated_this_turn {
+            return false;
+        }
+        self.runtime.loyalty_ability_activated_this_turn = true;
+        true
+    }
+
+    pub fn reset_loyalty_activation_for_new_turn(&mut self) {
+        if matches!(self.card_type(), CardType::Planeswalker) {
+            self.runtime.loyalty_ability_activated_this_turn = false;
+        }
     }
 
     pub const fn remove_summoning_sickness(&mut self) {

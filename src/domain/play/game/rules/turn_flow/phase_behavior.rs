@@ -78,6 +78,7 @@ impl PhaseBehavior for UntapPhase {
         player.for_each_battlefield_card_mut(|card| {
             card.untap();
             card.remove_summoning_sickness();
+            card.reset_loyalty_activation_for_new_turn();
         });
         player.reset_lands_played();
         Ok(())
