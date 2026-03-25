@@ -18,6 +18,7 @@ const CREATURE_FLAG_BLOCKING: u8 = 1 << 2;
 struct CreatureRuntime {
     power: u32,
     toughness: u32,
+    plus_one_plus_one_counters: u32,
     damage: u32,
     deathtouch_damage: bool,
     temporary_power: u32,
@@ -64,6 +65,7 @@ impl CreatureRuntime {
         Self {
             power,
             toughness,
+            plus_one_plus_one_counters: 0,
             damage: 0,
             deathtouch_damage: false,
             temporary_power: 0,
@@ -79,6 +81,7 @@ impl CreatureRuntime {
         Self {
             power,
             toughness,
+            plus_one_plus_one_counters: 0,
             damage: 0,
             deathtouch_damage: false,
             temporary_power: 0,
@@ -597,7 +600,9 @@ impl CardInstance {
     #[must_use]
     pub const fn power(&self) -> Option<u32> {
         match &self.runtime.kind {
-            CardRuntimeKind::Creature(creature) => Some(creature.power + creature.temporary_power),
+            CardRuntimeKind::Creature(creature) => Some(
+                creature.power + creature.plus_one_plus_one_counters + creature.temporary_power,
+            ),
             CardRuntimeKind::NonCreature => None,
         }
     }
@@ -606,7 +611,11 @@ impl CardInstance {
     pub const fn toughness(&self) -> Option<u32> {
         match &self.runtime.kind {
             CardRuntimeKind::Creature(creature) => {
-                Some(creature.toughness + creature.temporary_toughness)
+                Some(
+                    creature.toughness
+                        + creature.plus_one_plus_one_counters
+                        + creature.temporary_toughness,
+                )
             }
             CardRuntimeKind::NonCreature => None,
         }
@@ -616,8 +625,10 @@ impl CardInstance {
     pub const fn creature_stats(&self) -> Option<(u32, u32)> {
         match &self.runtime.kind {
             CardRuntimeKind::Creature(creature) => Some((
-                creature.power + creature.temporary_power,
-                creature.toughness + creature.temporary_toughness,
+                creature.power + creature.plus_one_plus_one_counters + creature.temporary_power,
+                creature.toughness
+                    + creature.plus_one_plus_one_counters
+                    + creature.temporary_toughness,
             )),
             CardRuntimeKind::NonCreature => None,
         }
@@ -749,7 +760,10 @@ impl CardInstance {
     pub const fn has_lethal_damage(&self) -> bool {
         match &self.runtime.kind {
             CardRuntimeKind::Creature(creature) => {
-                creature.damage >= creature.toughness + creature.temporary_toughness
+                creature.damage
+                    >= creature.toughness
+                        + creature.plus_one_plus_one_counters
+                        + creature.temporary_toughness
                     || (creature.deathtouch_damage && creature.damage > 0)
             }
             CardRuntimeKind::NonCreature => false,
@@ -760,9 +774,19 @@ impl CardInstance {
     pub const fn has_zero_toughness(&self) -> bool {
         match &self.runtime.kind {
             CardRuntimeKind::Creature(creature) => {
-                creature.toughness + creature.temporary_toughness == 0
+                creature.toughness
+                    + creature.plus_one_plus_one_counters
+                    + creature.temporary_toughness
+                    == 0
             }
             CardRuntimeKind::NonCreature => false,
+        }
+    }
+
+    pub const fn add_plus_one_plus_one_counters(&mut self, amount: u32) {
+        if let CardRuntimeKind::Creature(creature) = &mut self.runtime.kind {
+            creature.plus_one_plus_one_counters =
+                creature.plus_one_plus_one_counters.saturating_add(amount);
         }
     }
 
@@ -978,5 +1002,24 @@ mod tests {
         assert!(resolved.has_haste());
         assert!(resolved.has_trample());
         assert_eq!(resolved.mana_cost(), 0);
+    }
+
+    #[test]
+    fn plus_one_plus_one_counters_modify_current_creature_stats() {
+        let mut card = CardInstance::new_creature(
+            CardInstanceId::new("counter-bear"),
+            CardDefinitionId::new("counter-bear"),
+            2,
+            2,
+            2,
+        );
+
+        assert_eq!(card.creature_stats(), Some((2, 2)));
+        card.add_plus_one_plus_one_counters(2);
+
+        assert_eq!(card.power(), Some(4));
+        assert_eq!(card.toughness(), Some(4));
+        assert_eq!(card.creature_stats(), Some((4, 4)));
+        assert!(!card.has_zero_toughness());
     }
 }
