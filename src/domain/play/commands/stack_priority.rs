@@ -58,6 +58,7 @@ impl CastSpellCommand {
 pub struct ActivateAbilityCommand {
     pub player_id: PlayerId,
     pub source_card_id: CardInstanceId,
+    pub target: Option<SpellTarget>,
 }
 
 impl ActivateAbilityCommand {
@@ -66,6 +67,13 @@ impl ActivateAbilityCommand {
         Self {
             player_id,
             source_card_id,
+            target: None,
         }
+    }
+
+    #[must_use]
+    pub fn with_target(mut self, target: SpellTarget) -> Self {
+        self.target = Some(target);
+        self
     }
 }

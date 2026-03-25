@@ -197,6 +197,7 @@ pub struct ActivatedAbilityOnStack {
     source_card_ref: StackCardRef,
     source_card_core: u64,
     ability: ActivatedAbilityProfile,
+    target: Option<StackTargetRef>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -212,11 +213,13 @@ impl ActivatedAbilityOnStack {
         source_card_ref: StackCardRef,
         source_card_core: u64,
         ability: ActivatedAbilityProfile,
+        target: Option<StackTargetRef>,
     ) -> Self {
         Self {
             source_card_ref,
             source_card_core,
             ability,
+            target,
         }
     }
 
@@ -235,6 +238,11 @@ impl ActivatedAbilityOnStack {
     #[must_use]
     pub const fn ability(&self) -> ActivatedAbilityProfile {
         self.ability
+    }
+
+    #[must_use]
+    pub const fn target(&self) -> Option<&StackTargetRef> {
+        self.target.as_ref()
     }
 
     #[must_use]

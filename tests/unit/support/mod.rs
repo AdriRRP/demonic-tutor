@@ -276,6 +276,12 @@ pub fn life_gain_artifact_card(name: &str, mana_cost: u32, amount: u32) -> Libra
     )
 }
 
+pub fn targeted_life_gain_artifact_card(name: &str, mana_cost: u32, amount: u32) -> LibraryCard {
+    artifact_card(name, mana_cost).with_activated_ability(
+        ActivatedAbilityProfile::tap_to_gain_life_to_target_player(amount),
+    )
+}
+
 pub fn etb_life_gain_creature_card(
     name: &str,
     mana_cost: u32,

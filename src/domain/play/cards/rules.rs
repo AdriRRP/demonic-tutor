@@ -95,6 +95,7 @@ impl ActivatedManaAbilityProfile {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ActivatedAbilityEffect {
     GainLifeToController(u32),
+    GainLifeToTargetPlayer(u32),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -113,6 +114,7 @@ pub enum TriggeredAbilityEffect {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ActivatedAbilityProfile {
     requires_tap: bool,
+    targeting: SpellTargetingProfile,
     effect: ActivatedAbilityEffect,
 }
 
@@ -121,13 +123,28 @@ impl ActivatedAbilityProfile {
     pub const fn tap_to_gain_life_to_controller(amount: u32) -> Self {
         Self {
             requires_tap: true,
+            targeting: SpellTargetingProfile::None,
             effect: ActivatedAbilityEffect::GainLifeToController(amount),
+        }
+    }
+
+    #[must_use]
+    pub const fn tap_to_gain_life_to_target_player(amount: u32) -> Self {
+        Self {
+            requires_tap: true,
+            targeting: SpellTargetingProfile::ExactlyOne(SingleTargetRule::any_player()),
+            effect: ActivatedAbilityEffect::GainLifeToTargetPlayer(amount),
         }
     }
 
     #[must_use]
     pub const fn requires_tap(self) -> bool {
         self.requires_tap
+    }
+
+    #[must_use]
+    pub const fn targeting(self) -> SpellTargetingProfile {
+        self.targeting
     }
 
     #[must_use]

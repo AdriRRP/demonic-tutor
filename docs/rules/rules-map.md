@@ -228,6 +228,14 @@ It is not a literal restatement of the rules text.
 
 ---
 
+## Generalize Tap Activated Abilities
+
+- 117
+- 602
+- 405
+
+---
+
 ## Spell Target Foundation
 
 - 114

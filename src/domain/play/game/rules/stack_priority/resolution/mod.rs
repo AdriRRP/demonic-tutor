@@ -257,6 +257,7 @@ fn resolve_activated_ability_from_stack(
         source_card_ref,
         controller_index,
         ability,
+        target,
     } = extract_resolved_activated_ability(stack_object)?;
     let controller_id = players[controller_index].id().clone();
     let source_card_id = materialize_stack_card_id(
@@ -272,8 +273,12 @@ fn resolve_activated_ability_from_stack(
         source_card_id,
     );
 
-    let life_changed = match ability.effect() {
-        ActivatedAbilityEffect::GainLifeToController(amount) => {
+    let materialized_target = match target {
+        Some(target_ref) => Some(materialize_spell_target(game_id, players, target_ref)?),
+        None => None,
+    };
+    let life_changed = match (ability.effect(), materialized_target.as_ref()) {
+        (ActivatedAbilityEffect::GainLifeToController(amount), _) => {
             Some(super::super::game_effects::adjust_player_life_by_index(
                 game_id,
                 players,
@@ -281,6 +286,16 @@ fn resolve_activated_ability_from_stack(
                 amount.cast_signed(),
             )?)
         }
+        (
+            ActivatedAbilityEffect::GainLifeToTargetPlayer(amount),
+            Some(SpellTarget::Player(player_id)),
+        ) => Some(super::super::game_effects::adjust_player_life(
+            game_id,
+            players,
+            player_id,
+            amount.cast_signed(),
+        )?),
+        (ActivatedAbilityEffect::GainLifeToTargetPlayer(_), _) => None,
     };
 
     let super::super::state_based_actions::StateBasedActionsResult {

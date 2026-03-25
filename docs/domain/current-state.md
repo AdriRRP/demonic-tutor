@@ -27,7 +27,7 @@ Implemented capabilities include:
 - playing lands
 - tapping lands for mana
 - tapping lands for mana in the currently exercised open priority windows while the acting player holds priority
-- activating the first supported non-mana activated ability through the stack in open priority windows
+- activating the current supported non-mana tap-ability subset through the stack in open priority windows
 - casting spells that require mana
 - casting creature spells that enter the battlefield with power and toughness
 - resolving instants and sorceries to graveyard
@@ -74,7 +74,7 @@ The domain currently includes:
 - public `CardInstanceId` and `PlayerId` values are now treated primarily as readable boundary identities for commands, events, and tests
 - mana production from lands
 - explicit activated mana-ability profiles for the currently supported mana-producing permanents
-- the first supported non-mana activated ability corridor (`Tap: you gain 1 life`) using the same priority and stack model as other stack interactions
+- the current supported non-mana tap-ability corridor using the same priority and stack model as other stack interactions, including no-target `Tap: you gain life` and targeted `Tap: target player gains life`
 - minimal colored mana support for `Forest -> Green`, `Mountain -> Red`, `Plains -> White`, `Island -> Blue`, `Swamp -> Black`, single-color instant costs, a first mixed `generic + colored` spell cost corridor, repeated same-color costs such as `GG`, colored mana satisfying generic requirements after colored symbols are reserved, and explicit rejection when a required colored symbol is missing
 - spell casting with mana cost
 - transient mana pools cleared when the game advances to the next phase or turn
@@ -103,7 +103,7 @@ The domain currently includes:
 - in each currently supported instant-speed window, the active player may cast an instant and self-stack a second instant before passing priority
 - in each currently supported instant-speed window, the non-active player may respond with an instant after the first pass and may self-stack a second instant before passing priority
 - the current response corridor also supports producing generic mana from a land, without using the stack, and immediately spending it to cast a paid instant response on the same open stack
-- the current stack model now supports both spells and the first supported non-mana activated ability object family
+- the current stack model now supports both spells and the current supported non-mana activated ability object family
 - sorcery-speed spells are supported for the active player in empty `FirstMain` and `SecondMain` windows for the currently modeled spell-card subset: creature, sorcery, artifact, enchantment, and planeswalker
 - the current supported spell-card subset also allows explicit card-face casting rules that open non-instant spells to open priority windows, providing minimal `Flash`-like support for the currently exercised subset
 - the current minimal `Flash`-like support is currently exercised by supported creatures in `Upkeep`, `BeginningOfCombat`, on an existing stack response window, and after attackers, blockers, or combat damage, and by the current supported noncreature subset (`Artifact`, `Enchantment`, `Planeswalker`) on an existing stack response window, in `BeginningOfCombat`, and after blockers or combat damage
@@ -199,7 +199,7 @@ These matrices compress the stable supported subset without implying broader Mag
   - supported `Planeswalker`
 - stack objects:
   - spells
-  - one supported non-mana activated ability family
+  - supported non-mana activated tap abilities with explicit profile-based targeting when modeled
 
 ## Targeting
 

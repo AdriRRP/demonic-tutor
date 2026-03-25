@@ -45,6 +45,7 @@ pub(super) struct ResolvedActivatedAbility {
     pub source_card_ref: StackCardRef,
     pub controller_index: usize,
     pub ability: ActivatedAbilityProfile,
+    pub target: Option<StackTargetRef>,
 }
 
 pub(super) struct ResolvedTriggeredAbility {
@@ -70,6 +71,7 @@ pub(super) fn extract_resolved_activated_ability(
         source_card_ref: ability.source_card_ref(),
         controller_index,
         ability: ability.ability(),
+        target: ability.target().copied(),
     })
 }
 

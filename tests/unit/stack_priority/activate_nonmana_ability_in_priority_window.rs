@@ -6,11 +6,11 @@
 use {
     crate::support::{
         advance_to_first_main_satisfying_cleanup, filled_library, instant_card,
-        life_gain_artifact_card, player, setup_two_player_game,
+        life_gain_artifact_card, player, setup_two_player_game, targeted_life_gain_artifact_card,
     },
     demonictutor::{
         ActivateAbilityCommand, CardError, CardInstanceId, CastSpellCommand, DomainError,
-        PassPriorityCommand, PlayerId,
+        PassPriorityCommand, PlayerId, SpellTarget,
     },
 };
 
@@ -258,6 +258,128 @@ fn activated_ability_resolution_changes_life() {
     assert_eq!(resolve_second.life_changed.unwrap().to_life, 21);
     assert!(resolve_second.spell_cast.is_none());
     assert_eq!(player(&game, "player-1").life(), 21);
+}
+
+#[test]
+fn targeted_tap_ability_requires_a_target_and_resolves_through_the_stack() {
+    let (service, mut game) = setup_two_player_game(
+        "game-activate-ability-targeted",
+        filled_library(
+            vec![targeted_life_gain_artifact_card("chalice-ally", 0, 2)],
+            10,
+        ),
+        filled_library(Vec::new(), 10),
+    );
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
+    let artifact_id = player(&game, "player-1")
+        .hand_card_by_definition(&demonictutor::CardDefinitionId::new("chalice-ally"))
+        .unwrap()
+        .id()
+        .clone();
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), artifact_id.clone()),
+        )
+        .unwrap();
+    service
+        .pass_priority(
+            &mut game,
+            PassPriorityCommand::new(PlayerId::new("player-1")),
+        )
+        .unwrap();
+    service
+        .pass_priority(
+            &mut game,
+            PassPriorityCommand::new(PlayerId::new("player-2")),
+        )
+        .unwrap();
+
+    let err = service
+        .activate_ability(
+            &mut game,
+            ActivateAbilityCommand::new(PlayerId::new("player-1"), artifact_id.clone()),
+        )
+        .unwrap_err();
+    assert!(matches!(
+        err,
+        DomainError::Game(demonictutor::GameError::MissingSpellTarget(_))
+    ));
+
+    service
+        .activate_ability(
+            &mut game,
+            ActivateAbilityCommand::new(PlayerId::new("player-1"), artifact_id)
+                .with_target(SpellTarget::Player(PlayerId::new("player-2"))),
+        )
+        .unwrap();
+
+    let _ = service
+        .pass_priority(
+            &mut game,
+            PassPriorityCommand::new(PlayerId::new("player-1")),
+        )
+        .unwrap();
+    let resolve = service
+        .pass_priority(
+            &mut game,
+            PassPriorityCommand::new(PlayerId::new("player-2")),
+        )
+        .unwrap();
+
+    assert_eq!(player(&game, "player-2").life(), 22);
+    assert_eq!(resolve.life_changed.unwrap().to_life, 22);
+}
+
+#[test]
+fn tapped_source_cannot_activate_again() {
+    let (service, mut game) = setup_two_player_game(
+        "game-activate-ability-tapped",
+        filled_library(vec![life_gain_artifact_card("ivory-cup-lite", 0, 1)], 10),
+        filled_library(Vec::new(), 10),
+    );
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
+    let artifact_id = player(&game, "player-1")
+        .hand_card_by_definition(&demonictutor::CardDefinitionId::new("ivory-cup-lite"))
+        .unwrap()
+        .id()
+        .clone();
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), artifact_id.clone()),
+        )
+        .unwrap();
+    service
+        .pass_priority(
+            &mut game,
+            PassPriorityCommand::new(PlayerId::new("player-1")),
+        )
+        .unwrap();
+    service
+        .pass_priority(
+            &mut game,
+            PassPriorityCommand::new(PlayerId::new("player-2")),
+        )
+        .unwrap();
+    service
+        .activate_ability(
+            &mut game,
+            ActivateAbilityCommand::new(PlayerId::new("player-1"), artifact_id.clone()),
+        )
+        .unwrap();
+
+    let err = service
+        .activate_ability(
+            &mut game,
+            ActivateAbilityCommand::new(PlayerId::new("player-1"), artifact_id),
+        )
+        .unwrap_err();
+
+    assert!(matches!(
+        err,
+        DomainError::Card(CardError::AlreadyTapped { .. })
+    ));
 }
 
 #[test]
