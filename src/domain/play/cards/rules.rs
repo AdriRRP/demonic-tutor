@@ -861,6 +861,7 @@ pub enum SpellResolutionProfile {
     GainLife { amount: u32 },
     LoseLife { amount: u32 },
     ChooseOneTargetPlayerGainOrLoseLife { gain_amount: u32, lose_amount: u32 },
+    Scry { amount: u32 },
     LootDrawThenDiscard { draw_count: u32 },
     RummageDiscardThenDraw { draw_count: u32 },
     CreateVanillaCreatureToken { power: u32, toughness: u32 },
@@ -938,6 +939,14 @@ impl SupportedSpellRules {
                 gain_amount,
                 lose_amount,
             },
+        }
+    }
+
+    #[must_use]
+    pub const fn scry(amount: u32) -> Self {
+        Self {
+            targeting: SpellTargetingProfile::None,
+            resolution: SpellResolutionProfile::Scry { amount },
         }
     }
 

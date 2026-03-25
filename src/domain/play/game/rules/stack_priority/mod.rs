@@ -6,6 +6,7 @@ mod hand_choice_effect;
 mod optional_effect;
 mod passing;
 mod resolution;
+mod scry_effect;
 mod spell_effects;
 pub(crate) mod triggers;
 
@@ -28,6 +29,7 @@ pub use casting::cast_spell;
 pub use hand_choice_effect::resolve_pending_hand_choice;
 pub use optional_effect::resolve_optional_effect;
 pub use passing::pass_priority;
+pub use scry_effect::resolve_pending_scry;
 
 pub struct StackPriorityContext<'a> {
     pub game_id: &'a GameId,
@@ -39,6 +41,7 @@ pub struct StackPriorityContext<'a> {
     pub priority: &'a mut Option<PriorityState>,
     pub pending_optional_effect: &'a mut Option<super::super::PendingOptionalEffect>,
     pub pending_hand_choice_effect: &'a mut Option<super::super::PendingHandChoiceEffect>,
+    pub pending_scry_effect: &'a mut Option<super::super::PendingScryEffect>,
     pub terminal_state: &'a mut TerminalState,
 }
 
@@ -88,6 +91,15 @@ pub struct ResolvePendingHandChoiceOutcome {
     pub stack_top_resolved: Option<StackTopResolved>,
     pub spell_cast: Option<SpellCast>,
     pub card_discarded: Option<CardDiscarded>,
+    pub moved_cards: Vec<CardInstanceId>,
+    pub game_ended: Option<GameEnded>,
+    pub priority_still_open: bool,
+}
+
+#[derive(Debug, Clone)]
+pub struct ResolvePendingScryOutcome {
+    pub stack_top_resolved: Option<StackTopResolved>,
+    pub spell_cast: Option<SpellCast>,
     pub moved_cards: Vec<CardInstanceId>,
     pub game_ended: Option<GameEnded>,
     pub priority_still_open: bool,

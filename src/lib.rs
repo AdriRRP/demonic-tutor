@@ -9,7 +9,7 @@ pub use application::{
     PublicBinaryChoice, PublicCardView, PublicCastableCard, PublicChoiceCandidate,
     PublicChoiceRequest, PublicCommandRejection, PublicCommandResult, PublicCommandStatus,
     PublicGameCommand, PublicGameView, PublicLegalAction, PublicModalSpellChoice, PublicPlayerView,
-    PublicPriorityView, PublicStackObjectView, PublicStackTargetView,
+    PublicPriorityView, PublicScryChoice, PublicStackObjectView, PublicStackTargetView,
 };
 pub use application::{EventBus, EventStore, GameService};
 
@@ -30,7 +30,8 @@ pub use domain::play::{
         DiscardForCleanupCommand, DrawCardsEffectCommand, ExileCardCommand, LibraryCard,
         LibraryCreature, ModalSpellMode, MulliganCommand, PassPriorityCommand, PlayLandCommand,
         PlayerDeck, PlayerLibrary, ResolveCombatDamageCommand, ResolveOptionalEffectCommand,
-        ResolvePendingHandChoiceCommand, SpellChoice, StartGameCommand, TapLandCommand,
+        ResolvePendingHandChoiceCommand, ResolvePendingScryCommand, SpellChoice, StartGameCommand,
+        TapLandCommand,
     },
     errors::{CardError, DomainError, GameError, PhaseError, PlayerError},
     events::{
@@ -43,9 +44,10 @@ pub use domain::play::{
     game::{
         ActivateAbilityOutcome, ActivatedAbilityOnStack, AdjustPlayerLifeEffectOutcome,
         AdvanceTurnOutcome, CastSpellOutcome, DrawCardsEffectOutcome, Game, PassPriorityOutcome,
-        PendingHandChoiceEffect, PendingHandChoiceKind, PendingOptionalEffect, PriorityState,
-        ResolveOptionalEffectOutcome, ResolvePendingHandChoiceOutcome, SpellOnStack, SpellTarget,
-        StackObject, StackObjectKind, StackZone, TriggeredAbilityOnStack,
+        PendingHandChoiceEffect, PendingHandChoiceKind, PendingOptionalEffect, PendingScryEffect,
+        PriorityState, ResolveOptionalEffectOutcome, ResolvePendingHandChoiceOutcome,
+        ResolvePendingScryOutcome, SpellOnStack, SpellTarget, StackObject, StackObjectKind,
+        StackZone, TriggeredAbilityOnStack,
     },
     ids::{CardDefinitionId, CardInstanceId, DeckId, GameId, PlayerId, StackObjectId},
     phase::Phase,

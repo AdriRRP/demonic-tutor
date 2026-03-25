@@ -6,12 +6,9 @@ Goal:
 
 Slice count:
 
-- `1`
+- `0`
 
 Slices:
-
-- `support-scry-on-explicit-card-profiles`
-  - support looking at top cards and choosing keep-on-top versus bottom ordering in a bounded subset
 
 Why this wave has high return:
 

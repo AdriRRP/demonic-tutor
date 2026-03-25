@@ -8,12 +8,14 @@ use {
             commands::{
                 ActivateAbilityCommand, CastSpellCommand, PassPriorityCommand,
                 ResolveOptionalEffectCommand, ResolvePendingHandChoiceCommand,
+                ResolvePendingScryCommand,
             },
             errors::DomainError,
             events::DomainEvent,
             game::{
                 ActivateAbilityOutcome, CastSpellOutcome, Game, PassPriorityOutcome,
                 ResolveOptionalEffectOutcome, ResolvePendingHandChoiceOutcome,
+                ResolvePendingScryOutcome,
             },
         },
     },
@@ -62,6 +64,16 @@ pub fn domain_events_for_resolve_pending_hand_choice(
     domain_events.push_optional(outcome.stack_top_resolved.clone());
     domain_events.push_optional(outcome.spell_cast.clone());
     domain_events.push_optional(outcome.card_discarded.clone());
+    domain_events.push_optional(outcome.game_ended.clone());
+    domain_events.into_vec()
+}
+
+pub fn domain_events_for_resolve_pending_scry(
+    outcome: &ResolvePendingScryOutcome,
+) -> Vec<DomainEvent> {
+    let mut domain_events = DomainEvents::default();
+    domain_events.push_optional(outcome.stack_top_resolved.clone());
+    domain_events.push_optional(outcome.spell_cast.clone());
     domain_events.push_optional(outcome.game_ended.clone());
     domain_events.into_vec()
 }
@@ -151,6 +163,23 @@ where
     ) -> Result<ResolvePendingHandChoiceOutcome, DomainError> {
         let outcome = game.resolve_pending_hand_choice(cmd)?;
         let domain_events = domain_events_for_resolve_pending_hand_choice(&outcome);
+        self.persist_and_publish_events(game.id().as_str(), &domain_events)?;
+
+        Ok(outcome)
+    }
+
+    /// Resolves a pending scry decision.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the command is invalid.
+    pub fn resolve_pending_scry(
+        &self,
+        game: &mut Game,
+        cmd: ResolvePendingScryCommand,
+    ) -> Result<ResolvePendingScryOutcome, DomainError> {
+        let outcome = game.resolve_pending_scry(cmd)?;
+        let domain_events = domain_events_for_resolve_pending_scry(&outcome);
         self.persist_and_publish_events(game.id().as_str(), &domain_events)?;
 
         Ok(outcome)

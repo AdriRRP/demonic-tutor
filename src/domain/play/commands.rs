@@ -14,7 +14,8 @@ pub use resource_actions::{AdjustPlayerLifeEffectCommand, PlayLandCommand, TapLa
 pub use setup::{LibraryCard, LibraryCreature, PlayerDeck, PlayerLibrary};
 pub use stack_priority::{
     ActivateAbilityCommand, CastSpellCommand, ModalSpellMode, PassPriorityCommand,
-    ResolveOptionalEffectCommand, ResolvePendingHandChoiceCommand, SpellChoice,
+    ResolveOptionalEffectCommand, ResolvePendingHandChoiceCommand, ResolvePendingScryCommand,
+    SpellChoice,
 };
 pub use turn_flow::{AdvanceTurnCommand, DiscardForCleanupCommand, DrawCardsEffectCommand};
 pub use zones::ExileCardCommand;

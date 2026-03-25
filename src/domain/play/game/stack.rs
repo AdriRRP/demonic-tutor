@@ -3,12 +3,14 @@
 use {
     super::{
         invariants, rules, ActivateAbilityOutcome, CastSpellOutcome, Game, PassPriorityOutcome,
-        ResolveOptionalEffectOutcome, ResolvePendingHandChoiceOutcome, StackPriorityContext,
+        ResolveOptionalEffectOutcome, ResolvePendingHandChoiceOutcome, ResolvePendingScryOutcome,
+        StackPriorityContext,
     },
     crate::domain::play::{
         commands::{
             ActivateAbilityCommand, CastSpellCommand, PassPriorityCommand,
             ResolveOptionalEffectCommand, ResolvePendingHandChoiceCommand,
+            ResolvePendingScryCommand,
         },
         errors::DomainError,
     },
@@ -36,6 +38,7 @@ impl Game {
                 priority: &mut self.priority,
                 pending_optional_effect: &mut self.pending_optional_effect,
                 pending_hand_choice_effect: &mut self.pending_hand_choice_effect,
+                pending_scry_effect: &mut self.pending_scry_effect,
                 terminal_state: &mut self.terminal_state,
             },
             cmd,
@@ -68,6 +71,7 @@ impl Game {
                 priority: &mut self.priority,
                 pending_optional_effect: &mut self.pending_optional_effect,
                 pending_hand_choice_effect: &mut self.pending_hand_choice_effect,
+                pending_scry_effect: &mut self.pending_scry_effect,
                 terminal_state: &mut self.terminal_state,
             },
             cmd,
@@ -100,6 +104,7 @@ impl Game {
                 priority: &mut self.priority,
                 pending_optional_effect: &mut self.pending_optional_effect,
                 pending_hand_choice_effect: &mut self.pending_hand_choice_effect,
+                pending_scry_effect: &mut self.pending_scry_effect,
                 terminal_state: &mut self.terminal_state,
             },
             cmd,
@@ -153,6 +158,7 @@ impl Game {
                 priority: &mut self.priority,
                 pending_optional_effect: &mut self.pending_optional_effect,
                 pending_hand_choice_effect: &mut self.pending_hand_choice_effect,
+                pending_scry_effect: &mut self.pending_scry_effect,
                 terminal_state: &mut self.terminal_state,
             },
             cmd,
@@ -201,6 +207,7 @@ impl Game {
                 priority: &mut self.priority,
                 pending_optional_effect: &mut self.pending_optional_effect,
                 pending_hand_choice_effect: &mut self.pending_hand_choice_effect,
+                pending_scry_effect: &mut self.pending_scry_effect,
                 terminal_state: &mut self.terminal_state,
             },
             cmd,
@@ -218,6 +225,42 @@ impl Game {
             }
             for card_id in &outcome.moved_cards {
                 self.sync_card_location_from_any_player(card_id);
+            }
+        }
+        result
+    }
+
+    /// Resolves a pending scry decision.
+    ///
+    /// # Errors
+    /// See [`rules::stack_priority::resolve_pending_scry`].
+    pub fn resolve_pending_scry(
+        &mut self,
+        cmd: ResolvePendingScryCommand,
+    ) -> Result<ResolvePendingScryOutcome, DomainError> {
+        invariants::require_game_active(self.is_over())?;
+        let active_player = self.active_player().clone();
+        let result = rules::stack_priority::resolve_pending_scry(
+            StackPriorityContext {
+                game_id: &self.id,
+                players: &mut self.players,
+                card_locations: &self.card_locations,
+                active_player: &active_player,
+                phase: &self.phase,
+                stack: &mut self.stack,
+                priority: &mut self.priority,
+                pending_optional_effect: &mut self.pending_optional_effect,
+                pending_hand_choice_effect: &mut self.pending_hand_choice_effect,
+                pending_scry_effect: &mut self.pending_scry_effect,
+                terminal_state: &mut self.terminal_state,
+            },
+            cmd,
+        );
+        if let Ok(outcome) = &result {
+            if let Some(spell_cast) = &outcome.spell_cast {
+                let owner_index =
+                    super::helpers::find_player_index(&self.players, &spell_cast.player_id)?;
+                self.sync_card_location_from_player(owner_index, &spell_cast.card_id);
             }
         }
         result

@@ -463,6 +463,14 @@ impl Player {
     }
 
     #[must_use]
+    pub fn top_library_card_id(&self) -> Option<CardInstanceId> {
+        let handle = self.library.peek_one()?;
+        self.cards
+            .get_by_handle(handle)
+            .map(|card| card.id().clone())
+    }
+
+    #[must_use]
     pub fn hand_is_empty(&self) -> bool {
         self.hand.is_empty()
     }
@@ -925,6 +933,13 @@ impl Player {
 
     pub fn shuffle_library(&mut self) {
         self.library.shuffle();
+    }
+
+    pub fn move_top_library_card_to_bottom(&mut self) -> Option<CardInstanceId> {
+        let handle = self.library.move_top_to_bottom()?;
+        self.cards
+            .get_by_handle(handle)
+            .map(|card| card.id().clone())
     }
 
     /// Prepares a spell cast atomically from the player's hand.

@@ -156,6 +156,8 @@ mod respond_with_second_instant_in_second_main_window;
 mod respond_with_second_instant_in_upkeep_window;
 #[path = "respond_with_second_instant_spell.rs"]
 mod respond_with_second_instant_spell;
+#[path = "scry.rs"]
+mod scry;
 #[path = "sorcery_speed_spells_require_active_player_priority.rs"]
 mod sorcery_speed_spells_require_active_player_priority;
 #[path = "stack_foundation.rs"]

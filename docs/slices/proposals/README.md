@@ -22,7 +22,6 @@ See:
 
 ## Active Proposal Waves
 
-- [release-0.7.0-wave-2-choice-and-selection-baseline](/Users/adrianramos/Repos/demonictutor/docs/slices/proposals/release-0.7.0-wave-2-choice-and-selection-baseline/README.md)
 - [release-0.7.0-wave-3-attachments-and-static-effects-baseline](/Users/adrianramos/Repos/demonictutor/docs/slices/proposals/release-0.7.0-wave-3-attachments-and-static-effects-baseline/README.md)
 - [release-0.8.0-wave-1-board-control-and-combat-utility](/Users/adrianramos/Repos/demonictutor/docs/slices/proposals/release-0.8.0-wave-1-board-control-and-combat-utility/README.md)
 - [release-0.8.0-wave-2-tokens-counters-and-trigger-density](/Users/adrianramos/Repos/demonictutor/docs/slices/proposals/release-0.8.0-wave-2-tokens-counters-and-trigger-density/README.md)

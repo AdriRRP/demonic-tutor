@@ -282,6 +282,11 @@ impl Library {
         self.0.pop_front()
     }
 
+    #[must_use]
+    pub fn peek_one(&self) -> Option<PlayerCardHandle> {
+        self.0.front().copied()
+    }
+
     pub fn draw(&mut self, n: usize) -> Option<Vec<PlayerCardHandle>> {
         if self.0.len() >= n {
             Some((0..n).filter_map(|_| self.0.pop_front()).collect())
@@ -302,6 +307,12 @@ impl Library {
 
     pub fn receive(&mut self, handles: Vec<PlayerCardHandle>) {
         self.0.extend(handles);
+    }
+
+    pub fn move_top_to_bottom(&mut self) -> Option<PlayerCardHandle> {
+        let handle = self.0.pop_front()?;
+        self.0.push_back(handle);
+        Some(handle)
     }
 
     #[must_use]

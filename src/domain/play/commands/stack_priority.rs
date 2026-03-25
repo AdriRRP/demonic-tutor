@@ -75,6 +75,32 @@ impl ResolvePendingHandChoiceCommand {
 }
 
 #[derive(Debug, Clone)]
+pub struct ResolvePendingScryCommand {
+    pub player_id: PlayerId,
+    pub move_to_bottom: bool,
+}
+
+impl ResolvePendingScryCommand {
+    #[must_use]
+    pub const fn new(player_id: PlayerId, move_to_bottom: bool) -> Self {
+        Self {
+            player_id,
+            move_to_bottom,
+        }
+    }
+
+    #[must_use]
+    pub const fn keep_on_top(player_id: PlayerId) -> Self {
+        Self::new(player_id, false)
+    }
+
+    #[must_use]
+    pub const fn move_to_bottom(player_id: PlayerId) -> Self {
+        Self::new(player_id, true)
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct CastSpellCommand {
     pub player_id: PlayerId,
     pub card_id: CardInstanceId,

@@ -59,6 +59,11 @@ pub enum GameError {
         current: PlayerId,
         requested: PlayerId,
     },
+    NoPendingScry,
+    NotPendingScryController {
+        current: PlayerId,
+        requested: PlayerId,
+    },
     NotEnoughCardsInLibrary {
         player: PlayerId,
         available: usize,
@@ -234,6 +239,13 @@ impl std::fmt::Display for GameError {
                 write!(
                     f,
                     "not {requested}'s pending hand choice, current controller is {current}"
+                )
+            }
+            Self::NoPendingScry => write!(f, "no pending scry effect is currently waiting"),
+            Self::NotPendingScryController { current, requested } => {
+                write!(
+                    f,
+                    "not {requested}'s pending scry decision, current controller is {current}"
                 )
             }
             Self::NotEnoughCardsInLibrary {

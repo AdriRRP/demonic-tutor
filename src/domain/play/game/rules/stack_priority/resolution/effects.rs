@@ -1045,6 +1045,7 @@ pub(super) fn apply_supported_spell_rules(
 ) -> Result<SpellResolutionSideEffects, DomainError> {
     match context.supported_spell_rules.resolution() {
         SpellResolutionProfile::None
+        | SpellResolutionProfile::Scry { .. }
         | SpellResolutionProfile::LootDrawThenDiscard { .. }
         | SpellResolutionProfile::RummageDiscardThenDraw { .. } => {
             review_state_based_actions(context.game_id, context.players, context.terminal_state)

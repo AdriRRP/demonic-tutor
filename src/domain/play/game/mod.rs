@@ -29,7 +29,8 @@ pub use rules::{
     resource_actions::AdjustPlayerLifeEffectOutcome,
     stack_priority::{
         ActivateAbilityOutcome, CastSpellOutcome, PassPriorityOutcome,
-        ResolveOptionalEffectOutcome, ResolvePendingHandChoiceOutcome, StackPriorityContext,
+        ResolveOptionalEffectOutcome, ResolvePendingHandChoiceOutcome, ResolvePendingScryOutcome,
+        StackPriorityContext,
     },
     turn_flow::TurnProgressionContext,
     turn_flow::{AdvanceTurnOutcome, DrawCardsEffectOutcome},
@@ -106,6 +107,39 @@ impl PendingHandChoiceEffect {
 }
 
 #[derive(Debug, Clone)]
+pub struct PendingScryEffect {
+    controller_index: usize,
+    stack_object_number: u32,
+    amount: u32,
+}
+
+impl PendingScryEffect {
+    #[must_use]
+    pub const fn new(controller_index: usize, stack_object_number: u32, amount: u32) -> Self {
+        Self {
+            controller_index,
+            stack_object_number,
+            amount,
+        }
+    }
+
+    #[must_use]
+    pub const fn controller_index(&self) -> usize {
+        self.controller_index
+    }
+
+    #[must_use]
+    pub const fn stack_object_number(&self) -> u32 {
+        self.stack_object_number
+    }
+
+    #[must_use]
+    pub const fn amount(&self) -> u32 {
+        self.amount
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct Game {
     id: GameId,
     player_ids: Vec<PlayerId>,
@@ -118,6 +152,7 @@ pub struct Game {
     priority: Option<PriorityState>,
     pending_optional_effect: Option<PendingOptionalEffect>,
     pending_hand_choice_effect: Option<PendingHandChoiceEffect>,
+    pending_scry_effect: Option<PendingScryEffect>,
     terminal_state: TerminalState,
 }
 
@@ -152,6 +187,7 @@ impl Game {
             priority: None,
             pending_optional_effect: None,
             pending_hand_choice_effect: None,
+            pending_scry_effect: None,
             terminal_state,
         })
     }
@@ -199,6 +235,11 @@ impl Game {
     #[must_use]
     pub const fn pending_hand_choice_effect(&self) -> Option<&PendingHandChoiceEffect> {
         self.pending_hand_choice_effect.as_ref()
+    }
+
+    #[must_use]
+    pub const fn pending_scry_effect(&self) -> Option<&PendingScryEffect> {
+        self.pending_scry_effect.as_ref()
     }
 
     #[must_use]
