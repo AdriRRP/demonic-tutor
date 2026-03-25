@@ -57,7 +57,7 @@ Implemented capabilities include:
 - resolving explicit targeted life effects
 - advancing turns
 - full phase progression using State pattern (Setup, Untap, Upkeep, Draw, FirstMain, BeginningOfCombat, DeclareAttackers, DeclareBlockers, CombatDamage, EndOfCombat, SecondMain, EndStep)
-- keyword abilities: Flying and Reach affect combat blocking legality, Haste bypasses summoning-sickness attack restriction, Vigilance avoids tapping on attack, Menace requires at least two blockers, Trample assigns excess damage after forward lethal assignment through declared blockers, First strike splits combat damage into an earlier and later supported pass, Double strike deals damage in both supported combat-damage passes, Lifelink gains life equal to combat damage dealt in the supported subset, and Deathtouch makes nonzero combat damage lethal for the current SBA subset
+- keyword abilities: Flying and Reach affect combat blocking legality, Haste bypasses summoning-sickness attack restriction, Vigilance avoids tapping on attack, Menace requires at least two blockers, Trample assigns excess damage after forward lethal assignment through declared blockers, First strike splits combat damage into an earlier and later supported pass, Double strike deals damage in both supported combat-damage passes, Lifelink gains life equal to combat damage dealt in the supported subset, Hexproof rejects opposing targeted spells against the supported creature subset, Indestructible survives the current lethal-damage and destroy corridors, and Deathtouch makes nonzero combat damage lethal for the current SBA subset
 - the supported `Deathtouch + Trample` interaction now uses 1 nonzero damage as lethal assignment before excess reaches the defending player
 
 These capabilities correspond to the slices currently implemented in the system.
@@ -131,11 +131,14 @@ The domain currently includes:
 - the current targeted-spell subset now also supports explicit combat-relative target restrictions such as `attacking creature`, `blocking creature`, `attacking creature you control`, `blocking creature you control`, `blocking creature an opponent controls`, and `attacking creature an opponent controls`
 - the current combat-relative targeted-spell subset is currently exercised in the post-attackers and post-blockers windows, including lethal and nonlethal damage against attacking, blocking, controlled-attacking, controlled-blocking, opponent-controlled attacking, and opponent-controlled blocking creatures
 - the current spell-effect subset also supports first direct `destroy target creature`, `exile target creature`, `exile target card from graveyard`, and minimal `+N/+N until end of turn` corridors outside combat in `FirstMain`
+- the current targeted-spell subset now rejects opposing targets with supported creature `Hexproof` during cast validation and resolution revalidation
+- the current `destroy target creature` subset now leaves supported indestructible creatures on the battlefield
 - the current spell-effect subset also supports chosen-card discard from a targeted player's hand through an explicit target-plus-choice command corridor
 - the current temporary pump subset is also exercised in combat by casting a pump spell after blockers to change the same turn's combat outcome
 - the current player-target spell subset now also supports explicit `gain life` and explicit `lose life` as distinct effects from damage while reusing the shared life-change corridor
 - supported targeted instant damage to a player emits `LifeChanged` on resolution
 - supported targeted instant damage to a creature marks damage and then relies on shared SBA review for lethal destruction
+- supported indestructible creatures survive the current SBA lethal-damage review while still dying to zero toughness
 - supported targeted instants currently do not apply their effect if their only legal creature target is gone on resolution
 - legal-target evaluation for the current targeted-spell subset is shared between cast-time validation and resolution-time revalidation, using explicit cast and resolution contexts
 - supported spell targeting, casting rules, and resolution are currently carried as explicit card-face profiles rather than inferred from card-definition strings during casting or resolution

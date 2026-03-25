@@ -103,6 +103,9 @@ fn destroy_creature(
     target_id: &CardInstanceId,
 ) -> Option<CreatureDied> {
     let target = helpers::battlefield_card_location(players, card_locations, target_id)?;
+    if target.card().has_indestructible() {
+        return None;
+    }
     let owner_index = target.owner_index();
     let owner_id = players[owner_index].id().clone();
     let handle = card_locations.location(target_id)?.handle();

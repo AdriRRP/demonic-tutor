@@ -78,7 +78,10 @@ fn review_supported_creature_state_based_actions(
             .filter(|handle| {
                 player
                     .battlefield_card_by_handle(*handle)
-                    .is_some_and(|card| card.has_zero_toughness() || card.has_lethal_damage())
+                    .is_some_and(|card| {
+                        card.has_zero_toughness()
+                            || (card.has_lethal_damage() && !card.has_indestructible())
+                    })
             })
             .collect::<Vec<_>>();
 

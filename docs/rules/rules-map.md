@@ -135,6 +135,21 @@ It is not a literal restatement of the rules text.
 
 ---
 
+## Creature Hexproof Targeting Foundation
+
+- 702.11
+- 601.2c
+- 608.2b
+
+---
+
+## Creature Indestructible Foundation
+
+- 702.12
+- 704.5g
+
+---
+
 ## Double Strike Foundation
 
 - 702.4

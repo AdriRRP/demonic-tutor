@@ -42,6 +42,18 @@ This is a repository-owned interpretation note, not a copy of the Comprehensive 
 - this currently applies to damage dealt to players and to creatures during combat
 - life gain is resolved in the same combat-damage corridor before SBA review completes
 
+### Hexproof
+
+- a creature with `Hexproof` cannot be targeted by opponents in the supported targeted-spell subset
+- the creature's controller can still target that creature with supported spells
+- cast validation and resolution revalidation share the same `Hexproof` legality corridor
+
+### Indestructible
+
+- a creature with `Indestructible` is not destroyed by lethal damage in the current SBA subset
+- `destroy target creature` does not move an indestructible creature to the graveyard
+- `Indestructible` does not stop a creature from dying to zero toughness
+
 ## Out of Scope
 
 - Trample (excess damage to defending player)
@@ -51,8 +63,7 @@ This is a repository-owned interpretation note, not a copy of the Comprehensive 
 - Vigilance (attack without tapping)
 - Haste (no summoning sickness)
 - Protection (cannot be targeted, damaged, enchanted, or blocked by specific colors)
-- Hexproof/Shroud (cannot be targeted)
-- Indestructible (cannot be destroyed by damage)
+- Shroud (cannot be targeted)
 - Keyword counters
 - Keywords on non-creature permanents
 

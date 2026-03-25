@@ -16,7 +16,7 @@ This slice is the logical next step after the combat foundation because:
 2. the single-blocker-per-attacker limit is already modeled
 3. flying is the most common keyword ability and fundamentally changes combat
 4. the domain model can represent a small closed set of supported keyword abilities without introducing a generic rules engine
-5. future combat slices (trample, first strike, double strike, menace, lifelink) will follow the same pattern
+5. future keyword slices (trample, first strike, double strike, menace, lifelink, hexproof, indestructible) will follow the same pattern
 
 ---
 
@@ -62,8 +62,8 @@ This slice is the logical next step after the combat foundation because:
 - Vigilance (CR 702.2) — attack without tapping
 - Haste — no summoning sickness
 - Protection — cannot be targeted, damaged, enchanted, or blocked by specific colors
-- Hexproof/Shroud — cannot be targeted
-- Indestructible — cannot be destroyed by damage or "destroy" effects
+- Hexproof/Shroud — moved to later dedicated slice
+- Indestructible — moved to later dedicated slice
 - Keyword counters that add or remove keywords dynamically
 - Keyword abilities on non-creature permanents (Auras, Equipment)
 
