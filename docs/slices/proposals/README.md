@@ -14,7 +14,6 @@ Highest-return interactive spell families that unlock much more realistic gamepl
 
 Combat upgrades with large gameplay payoff and good rules coverage:
 
-- `double-strike-foundation.md`
 
 ## Recommended Release Shape
 

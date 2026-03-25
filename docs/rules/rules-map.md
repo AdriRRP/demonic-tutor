@@ -111,6 +111,12 @@ It is not a literal restatement of the rules text.
 
 ---
 
+## Double Strike Foundation
+
+- 702.4
+
+---
+
 ## Combat Damage Step
 
 - 510

@@ -316,8 +316,12 @@ pub fn resolve_combat_damage(
         &players[attacker_player_idx],
         attacker_player_idx,
     )?;
-    let has_first_strike_step = attackers.iter().any(AttackerParticipant::has_first_strike)
-        || blockers.iter().any(BlockerParticipant::has_first_strike);
+    let has_first_strike_step = attackers
+        .iter()
+        .any(|attacker| attacker.has_first_strike() || attacker.has_double_strike())
+        || blockers
+            .iter()
+            .any(|blocker| blocker.has_first_strike() || blocker.has_double_strike());
 
     let mut damage_events: Vec<DamageEvent> = Vec::new();
     let mut life_changed: Option<LifeChanged> = None;
@@ -340,8 +344,8 @@ pub fn resolve_combat_damage(
             },
             &attackers,
             &blockers,
-            AttackerParticipant::has_first_strike,
-            BlockerParticipant::has_first_strike,
+            |attacker| attacker.has_first_strike() || attacker.has_double_strike(),
+            |blocker| blocker.has_first_strike() || blocker.has_double_strike(),
         )
     } else {
         resolve_combat_damage_step(
@@ -393,8 +397,8 @@ pub fn resolve_combat_damage(
             },
             &surviving_attackers,
             &surviving_blockers,
-            |attacker| !attacker.has_first_strike(),
-            |blocker| !blocker.has_first_strike(),
+            |attacker| !attacker.has_first_strike() || attacker.has_double_strike(),
+            |blocker| !blocker.has_first_strike() || blocker.has_double_strike(),
         )?;
         damage_events.extend(second_step_events);
         merge_life_changed(&mut life_changed, second_step_life_changed);

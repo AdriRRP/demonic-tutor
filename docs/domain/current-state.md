@@ -56,7 +56,7 @@ Implemented capabilities include:
 - resolving explicit targeted life effects
 - advancing turns
 - full phase progression using State pattern (Setup, Untap, Upkeep, Draw, FirstMain, BeginningOfCombat, DeclareAttackers, DeclareBlockers, CombatDamage, EndOfCombat, SecondMain, EndStep)
-- keyword abilities: Flying and Reach affect combat blocking legality, Haste bypasses summoning-sickness attack restriction, Vigilance avoids tapping on attack, Trample assigns excess damage after forward lethal assignment through declared blockers, First strike splits combat damage into an earlier and later supported pass, and Deathtouch makes nonzero combat damage lethal for the current SBA subset
+- keyword abilities: Flying and Reach affect combat blocking legality, Haste bypasses summoning-sickness attack restriction, Vigilance avoids tapping on attack, Trample assigns excess damage after forward lethal assignment through declared blockers, First strike splits combat damage into an earlier and later supported pass, Double strike deals damage in both supported combat-damage passes, and Deathtouch makes nonzero combat damage lethal for the current SBA subset
 
 These capabilities correspond to the slices currently implemented in the system.
 
@@ -248,6 +248,7 @@ These matrices compress the stable supported subset without implying broader Mag
   - `Vigilance`
   - `Trample`
   - `First strike`
+  - `Double strike`
   - `Deathtouch`
 - current combat-relative corridors:
   - attacking-creature targeting

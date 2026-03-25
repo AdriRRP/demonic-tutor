@@ -10,6 +10,8 @@ mod declare_blockers;
 mod deathtouch;
 #[path = "damage_assignment_order.rs"]
 mod damage_assignment_order;
+#[path = "double_strike.rs"]
+mod double_strike;
 #[path = "first_strike.rs"]
 mod first_strike;
 #[path = "haste.rs"]

@@ -778,6 +778,11 @@ impl CardInstance {
     }
 
     #[must_use]
+    pub const fn has_double_strike(&self) -> bool {
+        self.has_keyword(KeywordAbility::DoubleStrike)
+    }
+
+    #[must_use]
     pub const fn keyword_abilities(&self) -> Option<KeywordAbilitySet> {
         match &self.runtime.kind {
             CardRuntimeKind::Creature(creature) => Some(creature.keywords),
