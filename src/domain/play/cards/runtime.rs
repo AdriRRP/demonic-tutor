@@ -34,6 +34,7 @@ pub struct CreatureSpellPayload {
     power: u32,
     toughness: u32,
     keywords: KeywordAbilitySet,
+    activated_ability: Option<ActivatedAbilityProfile>,
     triggered_ability: Option<TriggeredAbilityProfile>,
 }
 
@@ -364,6 +365,7 @@ impl CardInstance {
                     power: creature.power,
                     toughness: creature.toughness,
                     keywords: creature.keywords,
+                    activated_ability: self.face.definition.activated_ability(),
                     triggered_ability: self.face.definition.triggered_ability(),
                 }),
             },
@@ -508,6 +510,9 @@ impl SpellPayload {
                     definition: Arc::new({
                         let mut definition =
                             CardDefinition::for_card_type(definition_id, 0, &CardType::Creature);
+                        if let Some(activated_ability) = payload.activated_ability {
+                            definition = definition.with_activated_ability(activated_ability);
+                        }
                         if let Some(triggered_ability) = payload.triggered_ability {
                             definition = definition.with_triggered_ability(triggered_ability);
                         }

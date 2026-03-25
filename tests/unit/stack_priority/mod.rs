@@ -92,6 +92,8 @@ mod cast_targeted_controlled_blocking_creature_spell_after_blockers;
 mod cast_targeted_opponents_attacking_creature_spell_after_attackers;
 #[path = "cast_targeted_opponents_blocking_creature_spell_after_blockers.rs"]
 mod cast_targeted_opponents_blocking_creature_spell_after_blockers;
+#[path = "counter_placement_effects.rs"]
+mod counter_placement_effects;
 #[path = "create_vanilla_creature_token.rs"]
 mod create_vanilla_creature_token;
 #[path = "dies_trigger_foundation.rs"]

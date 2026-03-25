@@ -96,6 +96,7 @@ impl ActivatedManaAbilityProfile {
 pub enum ActivatedAbilityEffect {
     GainLifeToController(u32),
     GainLifeToTargetPlayer(u32),
+    PutPlusOnePlusOneCounterOnSource,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -172,6 +173,30 @@ impl ActivatedAbilityProfile {
             loyalty_change,
             targeting: SpellTargetingProfile::None,
             effect: ActivatedAbilityEffect::GainLifeToController(amount),
+        }
+    }
+
+    #[must_use]
+    pub const fn tap_to_put_plus_one_plus_one_counter_on_source() -> Self {
+        Self {
+            requires_tap: true,
+            mana_cost: ManaCost::generic(0),
+            sacrifice_cost: None,
+            loyalty_change: 0,
+            targeting: SpellTargetingProfile::None,
+            effect: ActivatedAbilityEffect::PutPlusOnePlusOneCounterOnSource,
+        }
+    }
+
+    #[must_use]
+    pub const fn put_plus_one_plus_one_counter_on_source() -> Self {
+        Self {
+            requires_tap: false,
+            mana_cost: ManaCost::generic(0),
+            sacrifice_cost: None,
+            loyalty_change: 0,
+            targeting: SpellTargetingProfile::None,
+            effect: ActivatedAbilityEffect::PutPlusOnePlusOneCounterOnSource,
         }
     }
 
@@ -803,6 +828,7 @@ pub enum SpellResolutionProfile {
     GainLife { amount: u32 },
     LoseLife { amount: u32 },
     CreateVanillaCreatureToken { power: u32, toughness: u32 },
+    PutPlusOnePlusOneCounterOnTargetCreature,
     CounterTargetSpell,
     ReturnTargetPermanentToHand,
     DestroyTargetArtifactOrEnchantment,
@@ -867,6 +893,16 @@ impl SupportedSpellRules {
         Self {
             targeting: SpellTargetingProfile::None,
             resolution: SpellResolutionProfile::CreateVanillaCreatureToken { power, toughness },
+        }
+    }
+
+    #[must_use]
+    pub const fn put_plus_one_plus_one_counter_on_target_creature() -> Self {
+        Self {
+            targeting: SpellTargetingProfile::ExactlyOne(
+                SingleTargetRule::any_creature_on_battlefield(),
+            ),
+            resolution: SpellResolutionProfile::PutPlusOnePlusOneCounterOnTargetCreature,
         }
     }
 

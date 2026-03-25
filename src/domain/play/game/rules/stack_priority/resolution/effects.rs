@@ -446,6 +446,48 @@ fn resolve_pump_target_creature_effect(
     )
 }
 
+fn resolve_put_counter_on_target_creature_effect(
+    context: &mut ResolutionContext<'_>,
+) -> Result<SpellResolutionSideEffects, DomainError> {
+    let Some(target) = resolve_target_legality_for_effect(
+        context.players,
+        context.card_locations,
+        context.stack,
+        context.controller_index,
+        context.supported_spell_rules,
+        context.target,
+        "counter-placement spell resolved without a targeting profile",
+    )?
+    else {
+        return review_state_based_actions(
+            context.game_id,
+            context.players,
+            context.terminal_state,
+        );
+    };
+
+    if let SpellTarget::Creature(card_id) = target {
+        if let Some(card) =
+            helpers::battlefield_card_mut(context.players, context.card_locations, &card_id)
+        {
+            card.add_plus_one_plus_one_counters(1);
+        }
+    }
+
+    review_state_based_actions_after_effect(
+        context.game_id,
+        context.players,
+        context.terminal_state,
+        EffectOutcomeSeed {
+            card_exiled: None,
+            card_discarded: None,
+            life_changed: None,
+            creatures_died: Vec::new(),
+            moved_cards: Vec::new(),
+        },
+    )
+}
+
 fn resolve_targeted_player_life_effect(
     context: &mut ResolutionContext<'_>,
     life_delta: i32,
@@ -830,6 +872,9 @@ pub(super) fn apply_supported_spell_rules(
         ),
         SpellResolutionProfile::CreateVanillaCreatureToken { power, toughness } => {
             resolve_create_vanilla_creature_token_effect(&mut context, power, toughness)
+        }
+        SpellResolutionProfile::PutPlusOnePlusOneCounterOnTargetCreature => {
+            resolve_put_counter_on_target_creature_effect(&mut context)
         }
         SpellResolutionProfile::CounterTargetSpell => {
             resolve_counter_target_spell_effect(&mut context)

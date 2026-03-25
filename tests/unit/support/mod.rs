@@ -127,6 +127,21 @@ pub fn create_vanilla_creature_token_sorcery_card(
         ))
 }
 
+pub fn put_counter_on_target_creature_sorcery_card(name: &str, mana_cost: u32) -> LibraryCard {
+    LibraryCard::new(CardDefinitionId::new(name), CardType::Sorcery, mana_cost)
+        .with_supported_spell_rules(SupportedSpellRules::put_plus_one_plus_one_counter_on_target_creature())
+}
+
+pub fn self_growing_creature_card(
+    name: &str,
+    mana_cost: u32,
+    power: u32,
+    toughness: u32,
+) -> LibraryCard {
+    LibraryCard::creature(CardDefinitionId::new(name), mana_cost, power, toughness)
+        .with_activated_ability(ActivatedAbilityProfile::put_plus_one_plus_one_counter_on_source())
+}
+
 pub fn targeted_opponent_damage_instant_card(
     name: &str,
     mana_cost: u32,

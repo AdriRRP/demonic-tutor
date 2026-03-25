@@ -286,6 +286,12 @@ fn resolve_activated_ability_from_stack(
                 amount.cast_signed(),
             )?)
         }
+        (ActivatedAbilityEffect::PutPlusOnePlusOneCounterOnSource, _) => {
+            if let Some(card) = players[controller_index].card_mut_by_handle(source_card_ref.handle()) {
+                card.add_plus_one_plus_one_counters(1);
+            }
+            None
+        }
         (
             ActivatedAbilityEffect::GainLifeToTargetPlayer(amount),
             Some(SpellTarget::Player(player_id)),
