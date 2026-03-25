@@ -102,12 +102,24 @@ It is not a literal restatement of the rules text.
 - 702.19
 - 702.4
 
+## Blocked Attacker Stays Blocked Across Damage Passes
+
+- 509
+- 510
+- 702.4
+
 ---
 
 ## Deathtouch Foundation
 
 - 702.2
 - 704.5g
+
+## Deathtouch Trample Lethal Assignment
+
+- 510.1c
+- 702.2
+- 702.19
 
 ---
 

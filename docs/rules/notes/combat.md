@@ -28,20 +28,22 @@ This is a repository-owned interpretation note, not a copy of the Comprehensive 
 - declaring blockers opens a priority window for the active player
 - resolving combat damage moves the game into `EndOfCombat` and reopens a priority window for the active player when the game remains active
 - blocker-to-attacker assignments are stored in runtime combat state and reused during damage resolution
-- the current combat model supports at most one blocker per attacker
+- the current combat model supports multiple blockers per attacker in declared order
 - combat damage is assigned and marked on the creatures that receive it
+- a creature that was blocked remains blocked for the later supported combat-damage pass even if all of its blockers died in the earlier pass
 - player life changes from unblocked combat damage are supported through the same life-change semantics used by explicit targeted life effects elsewhere in the aggregate
 - unblocked combat damage can end the game when it reduces a defending player to 0 life
+- trample currently assigns excess damage after forward lethal assignment through blockers in order
+- deathtouch currently makes nonzero combat damage lethal and reduces lethal assignment to 1 damage in the supported `Deathtouch + Trample` corridor
+- the supported combat model currently includes first strike and double strike through explicit earlier and later combat-damage passes
 - creatures with lethal marked damage are destroyed automatically through the shared state-based action review and moved to graveyard
 - surviving creatures keep damage marked until the turn ends, then lose it automatically
 
 ## Out of Scope
 
-- first strike
-- double strike
-- trample
-- multiple blockers per attacker
 - rules-complete combat timing beyond the currently supported explicit subphases
+- removing creatures from combat through broader effect families not yet modeled
+- damage prevention and replacement effects
 - a general state-based action engine
 
 ## Related Features

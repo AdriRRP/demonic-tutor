@@ -47,6 +47,7 @@ Implemented capabilities include:
 - allowing instant responses and active-player self-stacking in the currently supported stack windows
 - resolving combat damage
 - assigning attacker combat damage across multiple blockers in declared order
+- keeping a blocked attacker blocked across the later supported combat-damage pass even if its blockers died earlier in combat
 - applying unblocked combat damage to players through shared life-change semantics
 - destroying creatures automatically when marked combat damage is lethal
 - destroying creatures with 0 toughness automatically after creature-spell resolution
@@ -57,6 +58,7 @@ Implemented capabilities include:
 - advancing turns
 - full phase progression using State pattern (Setup, Untap, Upkeep, Draw, FirstMain, BeginningOfCombat, DeclareAttackers, DeclareBlockers, CombatDamage, EndOfCombat, SecondMain, EndStep)
 - keyword abilities: Flying and Reach affect combat blocking legality, Haste bypasses summoning-sickness attack restriction, Vigilance avoids tapping on attack, Trample assigns excess damage after forward lethal assignment through declared blockers, First strike splits combat damage into an earlier and later supported pass, Double strike deals damage in both supported combat-damage passes, and Deathtouch makes nonzero combat damage lethal for the current SBA subset
+- the supported `Deathtouch + Trample` interaction now uses 1 nonzero damage as lethal assignment before excess reaches the defending player
 
 These capabilities correspond to the slices currently implemented in the system.
 
@@ -145,6 +147,7 @@ The domain currently includes:
 - resolving the top stack object after two consecutive passes
 - the explicit combat corridor progresses through `BeginningOfCombat`, `DeclareAttackers`, `DeclareBlockers`, `CombatDamage`, and `EndOfCombat`
 - multi-blocked attackers now use declared blocker order when assigning combat damage in the supported subset
+- attackers that were blocked remain blocked for the later supported combat-damage pass even if no blocker survives into that pass
 - empty combat windows close forward coherently from `BeginningOfCombat` into `DeclareAttackers`, from `DeclareAttackers` into `DeclareBlockers`, from `DeclareBlockers` into `CombatDamage`, and from `EndOfCombat` into `SecondMain`
 - combat actions reopen priority after attackers and blockers are declared, and combat damage resolution moves the game into `EndOfCombat` with a reopened priority window while the game remains active
 
@@ -241,6 +244,8 @@ These matrices compress the stable supported subset without implying broader Mag
 - supported invariants:
   - one blocker still blocks at most one attacker in the current subset
   - multi-blocked attackers assign damage forward through blockers in declared order
+  - an attacker that was blocked stays blocked across the later supported combat-damage pass even if all blockers died in the earlier pass
+  - `Deathtouch + Trample` uses 1 nonzero damage as lethal assignment per blocker in the current subset
   - combat damage reopens priority into `EndOfCombat` if the game remains active
   - shared SBA review covers `0 toughness`, lethal marked damage, and `0 life`
 - supported combat keywords:
