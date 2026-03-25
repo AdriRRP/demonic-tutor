@@ -10,6 +10,5 @@ Definitive closure wave for the remaining runtime-architecture debt after the `v
 
 Open slices:
 
-1. `move-stack-source-and-ability-references-to-internal-refs`
-2. `make-aggregate-location-index-purely-transactional`
-3. `remove-linear-visible-zone-reindex-on-ordered-removal`
+1. `make-aggregate-location-index-purely-transactional`
+2. `remove-linear-visible-zone-reindex-on-ordered-removal`

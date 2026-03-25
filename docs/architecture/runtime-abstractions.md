@@ -370,6 +370,11 @@ The stack should model a spell in flight, not a full card pretending to still be
 
 If the arena models **where the full card lives**, then stack payloads model **what the game still needs while the spell is flying**.
 
+The same idea now also applies to supported activated abilities:
+
+- inside the stack, the source is tracked by internal owner/handle reference
+- when the engine emits events or builds user-facing errors, it materializes the readable public card id
+
 ---
 
 # Abstraction 8: Internal Runtime Targets Vs Public Targets

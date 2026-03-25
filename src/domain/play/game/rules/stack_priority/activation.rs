@@ -8,7 +8,9 @@ use {
         events::ActivatedAbilityPutOnStack,
         game::{
             helpers, invariants,
-            model::{ActivatedAbilityOnStack, PriorityState, StackObject, StackObjectKind},
+            model::{
+                ActivatedAbilityOnStack, PriorityState, StackCardRef, StackObject, StackObjectKind,
+            },
         },
     },
 };
@@ -40,8 +42,14 @@ pub fn activate_ability(
     invariants::require_priority_holder(priority.as_ref(), &player_id)?;
     let player_index = helpers::find_player_index(players, &player_id)?;
     let player = &mut players[player_index];
+    let source_card_handle = player.battlefield_handle(&source_card_id).ok_or_else(|| {
+        DomainError::Card(CardError::NotOnBattlefield {
+            player: player_id.clone(),
+            card: source_card_id.clone(),
+        })
+    })?;
     let card = player
-        .battlefield_card_mut(&source_card_id)
+        .card_mut_by_handle(source_card_handle)
         .ok_or_else(|| {
             DomainError::Card(CardError::NotOnBattlefield {
                 player: player_id.clone(),
@@ -67,6 +75,7 @@ pub fn activate_ability(
         stack_object_number,
         player_index,
         StackObjectKind::ActivatedAbility(ActivatedAbilityOnStack::new(
+            StackCardRef::new(player_index, source_card_handle),
             source_card_id.clone(),
             ability,
         )),

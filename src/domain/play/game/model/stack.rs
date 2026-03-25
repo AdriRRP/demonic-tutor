@@ -169,22 +169,33 @@ pub struct SpellOnStack {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ActivatedAbilityOnStack {
-    source_card_id: CardInstanceId,
+    source_card_ref: StackCardRef,
+    public_source_card_id: CardInstanceId,
     ability: ActivatedAbilityProfile,
 }
 
 impl ActivatedAbilityOnStack {
     #[must_use]
-    pub const fn new(source_card_id: CardInstanceId, ability: ActivatedAbilityProfile) -> Self {
+    pub const fn new(
+        source_card_ref: StackCardRef,
+        public_source_card_id: CardInstanceId,
+        ability: ActivatedAbilityProfile,
+    ) -> Self {
         Self {
-            source_card_id,
+            source_card_ref,
+            public_source_card_id,
             ability,
         }
     }
 
     #[must_use]
+    pub const fn source_card_ref(&self) -> StackCardRef {
+        self.source_card_ref
+    }
+
+    #[must_use]
     pub const fn source_card_id(&self) -> &CardInstanceId {
-        &self.source_card_id
+        &self.public_source_card_id
     }
 
     #[must_use]

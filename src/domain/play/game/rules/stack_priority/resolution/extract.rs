@@ -3,7 +3,7 @@
 use crate::domain::play::{
     cards::{ActivatedAbilityProfile, SpellPayload},
     errors::{DomainError, GameError},
-    game::model::{StackObject, StackObjectKind, StackTargetRef},
+    game::model::{StackCardRef, StackObject, StackObjectKind, StackTargetRef},
     ids::CardInstanceId,
 };
 
@@ -43,7 +43,7 @@ pub(super) fn extract_resolved_spell_object(
 
 pub(super) struct ResolvedActivatedAbility {
     pub stack_object_number: u32,
-    pub source_card_id: CardInstanceId,
+    pub source_card_ref: StackCardRef,
     pub controller_index: usize,
     pub ability: ActivatedAbilityProfile,
 }
@@ -61,7 +61,7 @@ pub(super) fn extract_resolved_activated_ability(
 
     Ok(ResolvedActivatedAbility {
         stack_object_number,
-        source_card_id: ability.source_card_id().clone(),
+        source_card_ref: ability.source_card_ref(),
         controller_index,
         ability: ability.ability(),
     })

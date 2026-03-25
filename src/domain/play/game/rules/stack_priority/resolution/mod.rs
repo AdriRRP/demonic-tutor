@@ -18,7 +18,7 @@ use crate::domain::play::{
     cards::ActivatedAbilityEffect,
     events::{CardExiled, CreatureDied, GameEnded, LifeChanged, SpellCast, StackTopResolved},
     game::{
-        model::{StackObject, StackObjectKind, StackTargetRef},
+        model::{StackCardRef, StackObject, StackObjectKind, StackTargetRef},
         Player, SpellTarget, TerminalState,
     },
     ids::GameId,
@@ -80,6 +80,25 @@ fn materialize_spell_target(
                 .clone(),
         )),
     }
+}
+
+fn materialize_stack_card_id(
+    players: &[Player],
+    card_ref: StackCardRef,
+    missing_message: &str,
+) -> Result<crate::domain::play::ids::CardInstanceId, crate::domain::play::errors::DomainError> {
+    Ok(players
+        .get(card_ref.owner_index())
+        .and_then(|player| player.card_by_handle(card_ref.handle()))
+        .ok_or_else(|| {
+            crate::domain::play::errors::DomainError::Game(
+                crate::domain::play::errors::GameError::InternalInvariantViolation(
+                    missing_message.to_string(),
+                ),
+            )
+        })?
+        .id()
+        .clone())
 }
 
 fn resolve_spell_from_stack(
@@ -144,11 +163,16 @@ fn resolve_activated_ability_from_stack(
 ) -> Result<ResolvedSpellOutcome, crate::domain::play::errors::DomainError> {
     let ResolvedActivatedAbility {
         stack_object_number,
-        source_card_id,
+        source_card_ref,
         controller_index,
         ability,
     } = extract_resolved_activated_ability(stack_object)?;
     let controller_id = players[controller_index].id().clone();
+    let source_card_id = materialize_stack_card_id(
+        players,
+        source_card_ref,
+        "missing activated ability source handle",
+    )?;
 
     let stack_top_resolved = StackTopResolved::new(
         game_id.clone(),
