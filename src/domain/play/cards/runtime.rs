@@ -19,6 +19,7 @@ struct CreatureRuntime {
     power: u32,
     toughness: u32,
     damage: u32,
+    deathtouch_damage: bool,
     temporary_power: u32,
     temporary_toughness: u32,
     flags: u8,
@@ -64,6 +65,7 @@ impl CreatureRuntime {
             power,
             toughness,
             damage: 0,
+            deathtouch_damage: false,
             temporary_power: 0,
             temporary_toughness: 0,
             flags: CREATURE_FLAG_SUMMONING_SICKNESS,
@@ -78,6 +80,7 @@ impl CreatureRuntime {
             power,
             toughness,
             damage: 0,
+            deathtouch_damage: false,
             temporary_power: 0,
             temporary_toughness: 0,
             flags: CREATURE_FLAG_SUMMONING_SICKNESS,
@@ -679,6 +682,7 @@ impl CardInstance {
         match &self.runtime.kind {
             CardRuntimeKind::Creature(creature) => {
                 creature.damage >= creature.toughness + creature.temporary_toughness
+                    || (creature.deathtouch_damage && creature.damage > 0)
             }
             CardRuntimeKind::NonCreature => false,
         }
@@ -700,9 +704,19 @@ impl CardInstance {
         }
     }
 
+    pub const fn add_deathtouch_damage(&mut self, damage: u32) {
+        if let CardRuntimeKind::Creature(creature) = &mut self.runtime.kind {
+            creature.damage += damage;
+            if damage > 0 {
+                creature.deathtouch_damage = true;
+            }
+        }
+    }
+
     pub const fn clear_damage(&mut self) {
         if let CardRuntimeKind::Creature(creature) = &mut self.runtime.kind {
             creature.damage = 0;
+            creature.deathtouch_damage = false;
         }
     }
 
@@ -756,6 +770,11 @@ impl CardInstance {
     #[must_use]
     pub const fn has_first_strike(&self) -> bool {
         self.has_keyword(KeywordAbility::FirstStrike)
+    }
+
+    #[must_use]
+    pub const fn has_deathtouch(&self) -> bool {
+        self.has_keyword(KeywordAbility::Deathtouch)
     }
 
     #[must_use]

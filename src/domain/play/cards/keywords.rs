@@ -9,6 +9,7 @@ pub enum KeywordAbility {
     Vigilance = 1 << 3,
     Trample = 1 << 4,
     FirstStrike = 1 << 5,
+    Deathtouch = 1 << 6,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]

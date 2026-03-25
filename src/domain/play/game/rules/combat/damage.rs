@@ -23,7 +23,13 @@ use crate::domain::play::{
     ids::{CardInstanceId, GameId},
 };
 
-type DamageResolution = (Vec<DamageEvent>, Vec<(CardInstanceId, u32)>, u32);
+struct CreatureDamageAssignment {
+    target: CardInstanceId,
+    damage: u32,
+    source_has_deathtouch: bool,
+}
+
+type DamageResolution = (Vec<DamageEvent>, Vec<CreatureDamageAssignment>, u32);
 type DamageStepOutcome = (
     Vec<DamageEvent>,
     Option<LifeChanged>,
@@ -55,17 +61,23 @@ fn resolve_combat_card_id(
 }
 
 fn add_damage(
-    damage_received: &mut Vec<(CardInstanceId, u32)>,
+    damage_received: &mut Vec<CreatureDamageAssignment>,
     target: &CardInstanceId,
     damage: u32,
+    source_has_deathtouch: bool,
 ) {
-    if let Some((_, accumulated)) = damage_received
+    if let Some(existing) = damage_received
         .iter_mut()
-        .find(|(card_id, _)| card_id == target)
+        .find(|assignment| assignment.target == *target)
     {
-        *accumulated += damage;
+        existing.damage += damage;
+        existing.source_has_deathtouch |= source_has_deathtouch && damage > 0;
     } else {
-        damage_received.push((target.clone(), damage));
+        damage_received.push(CreatureDamageAssignment {
+            target: target.clone(),
+            damage,
+            source_has_deathtouch: source_has_deathtouch && damage > 0,
+        });
     }
 }
 
@@ -105,7 +117,7 @@ fn resolve_damage_step(
     blockers_deal_damage: impl Fn(&BlockerParticipant) -> bool,
 ) -> Result<DamageResolution, DomainError> {
     let mut damage_events: Vec<DamageEvent> = Vec::new();
-    let mut damage_received: Vec<(CardInstanceId, u32)> = Vec::new();
+    let mut damage_received: Vec<CreatureDamageAssignment> = Vec::new();
     let mut player_damage = 0;
 
     for attacker in attackers
@@ -136,7 +148,12 @@ fn resolve_damage_step(
                     remaining_damage.min(lethal_to_blocker)
                 };
 
-                add_damage(&mut damage_received, &blocker_id, blocker_damage);
+                add_damage(
+                    &mut damage_received,
+                    &blocker_id,
+                    blocker_damage,
+                    attacker.has_deathtouch(),
+                );
                 damage_events.push(DamageEvent {
                     source: attacker_id.clone(),
                     target: DamageTarget::Creature(blocker_id),
@@ -177,7 +194,12 @@ fn resolve_damage_step(
             blocker.blocked_attacker_ref(),
             "combat blocker participant points to a missing blocked attacker",
         )?;
-        add_damage(&mut damage_received, &blocked_attacker_id, blocker.power());
+        add_damage(
+            &mut damage_received,
+            &blocked_attacker_id,
+            blocker.power(),
+            blocker.has_deathtouch(),
+        );
         damage_events.push(DamageEvent {
             source: blocker_id,
             target: DamageTarget::Creature(blocked_attacker_id),

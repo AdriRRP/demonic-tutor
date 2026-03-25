@@ -39,6 +39,7 @@ pub(super) struct AttackerParticipant {
     power: u32,
     has_trample: bool,
     has_first_strike: bool,
+    has_deathtouch: bool,
 }
 
 impl AttackerParticipant {
@@ -66,6 +67,11 @@ impl AttackerParticipant {
     pub const fn has_first_strike(&self) -> bool {
         self.has_first_strike
     }
+
+    #[must_use]
+    pub const fn has_deathtouch(&self) -> bool {
+        self.has_deathtouch
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -76,6 +82,7 @@ pub(super) struct BlockerParticipant {
     toughness: u32,
     marked_damage: u32,
     has_first_strike: bool,
+    has_deathtouch: bool,
 }
 
 impl BlockerParticipant {
@@ -102,6 +109,11 @@ impl BlockerParticipant {
     #[must_use]
     pub const fn has_first_strike(&self) -> bool {
         self.has_first_strike
+    }
+
+    #[must_use]
+    pub const fn has_deathtouch(&self) -> bool {
+        self.has_deathtouch
     }
 }
 
@@ -139,6 +151,7 @@ pub(super) fn collect_attackers(
                 power,
                 has_trample: card.has_trample(),
                 has_first_strike: card.has_first_strike(),
+                has_deathtouch: card.has_deathtouch(),
             })
         })
         .collect()
@@ -188,6 +201,7 @@ pub(super) fn collect_blockers(
                 toughness,
                 marked_damage: card.damage(),
                 has_first_strike: card.has_first_strike(),
+                has_deathtouch: card.has_deathtouch(),
             })
         })
         .collect()

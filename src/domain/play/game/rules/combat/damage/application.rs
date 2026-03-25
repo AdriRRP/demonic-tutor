@@ -2,17 +2,24 @@
 
 use crate::domain::play::{
     game::{helpers, model::Player, AggregateCardLocationIndex},
-    ids::CardInstanceId,
 };
+
+use super::CreatureDamageAssignment;
 
 pub(super) fn apply_damage(
     players: &mut [Player],
     card_locations: &AggregateCardLocationIndex,
-    damage_received: &[(CardInstanceId, u32)],
+    damage_received: &[CreatureDamageAssignment],
 ) {
-    for (card_id, damage) in damage_received {
-        if let Some(card) = helpers::battlefield_card_mut(players, card_locations, card_id) {
-            card.add_damage(*damage);
+    for assignment in damage_received {
+        if let Some(card) =
+            helpers::battlefield_card_mut(players, card_locations, &assignment.target)
+        {
+            if assignment.source_has_deathtouch {
+                card.add_deathtouch_damage(assignment.damage);
+            } else {
+                card.add_damage(assignment.damage);
+            }
         }
     }
 }

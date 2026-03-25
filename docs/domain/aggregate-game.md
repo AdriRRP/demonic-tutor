@@ -215,7 +215,7 @@ Responsibilities:
 The current model includes:
 
 - power and toughness for creature cards
-- a closed set of creature keyword abilities for the currently supported `Flying` and `Reach` subset
+- a closed set of creature keyword abilities for the currently supported combat subset
 - summoning sickness tracking and automatic removal at turn start
 - declare attackers and blockers in combat phase
 - marked combat damage on creatures

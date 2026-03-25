@@ -104,6 +104,13 @@ It is not a literal restatement of the rules text.
 
 ---
 
+## Deathtouch Foundation
+
+- 702.2
+- 704.5g
+
+---
+
 ## Combat Damage Step
 
 - 510
