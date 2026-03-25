@@ -235,6 +235,11 @@ pub fn destroy_target_artifact_or_enchantment_instant_card(
         .with_supported_spell_rules(SupportedSpellRules::destroy_target_artifact_or_enchantment())
 }
 
+pub fn target_player_discards_chosen_card_sorcery_card(name: &str, mana_cost: u32) -> LibraryCard {
+    LibraryCard::new(CardDefinitionId::new(name), CardType::Sorcery, mana_cost)
+        .with_supported_spell_rules(SupportedSpellRules::target_player_discards_chosen_card())
+}
+
 pub fn targeted_exile_creature_instant_card(name: &str, mana_cost: u32) -> LibraryCard {
     LibraryCard::new(CardDefinitionId::new(name), CardType::Instant, mana_cost)
         .with_supported_spell_rules(SupportedSpellRules::exile_target_creature())

@@ -11,7 +11,7 @@ use {
     crate::domain::play::{
         cards::{SpellResolutionProfile, SupportedSpellRules},
         errors::{DomainError, GameError},
-        events::{CardExiled, CreatureDied, GameEnded, LifeChanged},
+        events::{CardDiscarded, CardExiled, CreatureDied, DiscardKind, GameEnded, LifeChanged},
         game::{rules::zones, SpellTarget},
         ids::{CardInstanceId, GameId},
     },
@@ -19,13 +19,14 @@ use {
 
 type SpellResolutionSideEffects = (
     Option<CardExiled>,
+    Option<CardDiscarded>,
     Option<LifeChanged>,
     Vec<CreatureDied>,
     Vec<CardInstanceId>,
     Option<GameEnded>,
 );
 
-struct ResolutionContext<'a> {
+pub(super) struct ResolutionContext<'a> {
     game_id: &'a GameId,
     players: &'a mut [Player],
     card_locations: &'a AggregateCardLocationIndex,
@@ -34,6 +35,42 @@ struct ResolutionContext<'a> {
     controller_index: usize,
     supported_spell_rules: SupportedSpellRules,
     target: Option<&'a SpellTarget>,
+    choice: Option<crate::domain::play::game::model::StackSpellChoice>,
+}
+
+impl<'a> ResolutionContext<'a> {
+    #[allow(clippy::too_many_arguments)]
+    pub(super) const fn new(
+        game_id: &'a GameId,
+        players: &'a mut [Player],
+        card_locations: &'a AggregateCardLocationIndex,
+        terminal_state: &'a mut TerminalState,
+        stack: &'a mut StackZone,
+        controller_index: usize,
+        supported_spell_rules: SupportedSpellRules,
+        target: Option<&'a SpellTarget>,
+        choice: Option<crate::domain::play::game::model::StackSpellChoice>,
+    ) -> Self {
+        Self {
+            game_id,
+            players,
+            card_locations,
+            terminal_state,
+            stack,
+            controller_index,
+            supported_spell_rules,
+            target,
+            choice,
+        }
+    }
+}
+
+struct EffectOutcomeSeed {
+    card_exiled: Option<CardExiled>,
+    card_discarded: Option<CardDiscarded>,
+    life_changed: Option<LifeChanged>,
+    creatures_died: Vec<CreatureDied>,
+    moved_cards: Vec<CardInstanceId>,
 }
 
 fn apply_damage_to_creature(
@@ -89,7 +126,6 @@ fn return_permanent_to_owners_hand(
 }
 
 fn destroy_noncreature_permanent(
-    game_id: &GameId,
     players: &mut [Player],
     card_locations: &AggregateCardLocationIndex,
     target_id: &CardInstanceId,
@@ -97,8 +133,27 @@ fn destroy_noncreature_permanent(
     let location = card_locations.location(target_id)?;
     (location.zone() == crate::domain::play::game::PlayerCardZone::Battlefield).then_some(())?;
     players[location.owner_index()].move_battlefield_handle_to_graveyard(location.handle())?;
-    let _ = game_id;
     Some(target_id.clone())
+}
+
+fn discard_chosen_hand_card(
+    game_id: &GameId,
+    players: &mut [Player],
+    target_player_index: usize,
+    choice: crate::domain::play::game::model::StackSpellChoice,
+) -> Option<(CardDiscarded, CardInstanceId)> {
+    let crate::domain::play::game::model::StackSpellChoice::HandCard(card_ref) = choice;
+    (card_ref.owner_index() == target_player_index).then_some(())?;
+    let player = players.get_mut(target_player_index)?;
+    player.move_hand_handle_to_graveyard(card_ref.handle())?;
+    let card_id = player.card_by_handle(card_ref.handle())?.id().clone();
+    let event = CardDiscarded::new(
+        game_id.clone(),
+        player.id().clone(),
+        card_id.clone(),
+        DiscardKind::SpellEffect,
+    );
+    Some((event, card_id))
 }
 
 fn exile_creature_from_battlefield(
@@ -144,7 +199,7 @@ fn review_state_based_actions(
         creatures_died,
         game_ended,
     } = state_based_actions::check_state_based_actions(game_id, players, terminal_state)?;
-    Ok((None, None, creatures_died, Vec::new(), game_ended))
+    Ok((None, None, None, creatures_died, Vec::new(), game_ended))
 }
 
 fn resolve_target_legality_for_effect(
@@ -199,17 +254,28 @@ fn review_state_based_actions_after_effect(
     game_id: &GameId,
     players: &mut [Player],
     terminal_state: &mut TerminalState,
-    card_exiled: Option<CardExiled>,
-    life_changed: Option<LifeChanged>,
-    mut creatures_died: Vec<CreatureDied>,
-    moved_cards: Vec<CardInstanceId>,
+    seed: EffectOutcomeSeed,
 ) -> Result<SpellResolutionSideEffects, DomainError> {
+    let EffectOutcomeSeed {
+        card_exiled,
+        card_discarded,
+        life_changed,
+        mut creatures_died,
+        moved_cards,
+    } = seed;
     let StateBasedActionsResult {
         creatures_died: sba_creatures_died,
         game_ended,
     } = state_based_actions::check_state_based_actions(game_id, players, terminal_state)?;
     creatures_died.extend(sba_creatures_died);
-    Ok((card_exiled, life_changed, creatures_died, moved_cards, game_ended))
+    Ok((
+        card_exiled,
+        card_discarded,
+        life_changed,
+        creatures_died,
+        moved_cards,
+        game_ended,
+    ))
 }
 
 fn resolve_exile_target_creature_effect(
@@ -248,10 +314,13 @@ fn resolve_exile_target_creature_effect(
         game_id,
         players,
         terminal_state,
-        card_exiled,
-        None,
-        Vec::new(),
-        Vec::new(),
+        EffectOutcomeSeed {
+            card_exiled,
+            card_discarded: None,
+            life_changed: None,
+            creatures_died: Vec::new(),
+            moved_cards: Vec::new(),
+        },
     )
 }
 
@@ -291,10 +360,13 @@ fn resolve_exile_target_graveyard_card_effect(
         game_id,
         players,
         terminal_state,
-        card_exiled,
-        None,
-        Vec::new(),
-        Vec::new(),
+        EffectOutcomeSeed {
+            card_exiled,
+            card_discarded: None,
+            life_changed: None,
+            creatures_died: Vec::new(),
+            moved_cards: Vec::new(),
+        },
     )
 }
 
@@ -333,10 +405,13 @@ fn resolve_pump_target_creature_effect(
         context.game_id,
         context.players,
         context.terminal_state,
-        None,
-        None,
-        Vec::new(),
-        Vec::new(),
+        EffectOutcomeSeed {
+            card_exiled: None,
+            card_discarded: None,
+            life_changed: None,
+            creatures_died: Vec::new(),
+            moved_cards: Vec::new(),
+        },
     )
 }
 
@@ -384,10 +459,13 @@ fn resolve_targeted_player_life_effect(
         context.game_id,
         context.players,
         context.terminal_state,
-        None,
-        life_changed,
-        Vec::new(),
-        Vec::new(),
+        EffectOutcomeSeed {
+            card_exiled: None,
+            card_discarded: None,
+            life_changed,
+            creatures_died: Vec::new(),
+            moved_cards: Vec::new(),
+        },
     )
 }
 
@@ -428,19 +506,22 @@ fn resolve_damage_effect(
             apply_damage_to_creature(context.players, context.card_locations, &card_id, damage);
             None
         }
-        SpellTarget::Permanent(_)
-        | SpellTarget::GraveyardCard(_)
-        | SpellTarget::StackObject(_) => None,
+        SpellTarget::Permanent(_) | SpellTarget::GraveyardCard(_) | SpellTarget::StackObject(_) => {
+            None
+        }
     };
 
     review_state_based_actions_after_effect(
         context.game_id,
         context.players,
         context.terminal_state,
-        None,
-        life_changed,
-        Vec::new(),
-        Vec::new(),
+        EffectOutcomeSeed {
+            card_exiled: None,
+            card_discarded: None,
+            life_changed,
+            creatures_died: Vec::new(),
+            moved_cards: Vec::new(),
+        },
     )
 }
 
@@ -480,10 +561,13 @@ fn resolve_destroy_target_creature_effect(
         context.game_id,
         context.players,
         context.terminal_state,
-        None,
-        None,
-        creatures_died,
-        Vec::new(),
+        EffectOutcomeSeed {
+            card_exiled: None,
+            card_discarded: None,
+            life_changed: None,
+            creatures_died,
+            moved_cards: Vec::new(),
+        },
     )
 }
 
@@ -508,13 +592,11 @@ fn resolve_return_target_permanent_to_hand_effect(
     };
 
     let moved_cards = match target {
-        SpellTarget::Permanent(card_id) => return_permanent_to_owners_hand(
-            context.players,
-            context.card_locations,
-            &card_id,
-        )
-        .into_iter()
-        .collect(),
+        SpellTarget::Permanent(card_id) => {
+            return_permanent_to_owners_hand(context.players, context.card_locations, &card_id)
+                .into_iter()
+                .collect()
+        }
         SpellTarget::Player(_)
         | SpellTarget::Creature(_)
         | SpellTarget::GraveyardCard(_)
@@ -525,10 +607,13 @@ fn resolve_return_target_permanent_to_hand_effect(
         context.game_id,
         context.players,
         context.terminal_state,
-        None,
-        None,
-        Vec::new(),
-        moved_cards,
+        EffectOutcomeSeed {
+            card_exiled: None,
+            card_discarded: None,
+            life_changed: None,
+            creatures_died: Vec::new(),
+            moved_cards,
+        },
     )
 }
 
@@ -553,14 +638,11 @@ fn resolve_destroy_target_artifact_or_enchantment_effect(
     };
 
     let moved_cards = match target {
-        SpellTarget::Permanent(card_id) => destroy_noncreature_permanent(
-            context.game_id,
-            context.players,
-            context.card_locations,
-            &card_id,
-        )
-        .into_iter()
-        .collect(),
+        SpellTarget::Permanent(card_id) => {
+            destroy_noncreature_permanent(context.players, context.card_locations, &card_id)
+                .into_iter()
+                .collect()
+        }
         SpellTarget::Player(_)
         | SpellTarget::Creature(_)
         | SpellTarget::GraveyardCard(_)
@@ -571,10 +653,13 @@ fn resolve_destroy_target_artifact_or_enchantment_effect(
         context.game_id,
         context.players,
         context.terminal_state,
-        None,
-        None,
-        Vec::new(),
-        moved_cards,
+        EffectOutcomeSeed {
+            card_exiled: None,
+            card_discarded: None,
+            life_changed: None,
+            creatures_died: Vec::new(),
+            moved_cards,
+        },
     )
 }
 
@@ -632,157 +717,122 @@ fn resolve_counter_target_spell_effect(
         context.game_id,
         context.players,
         context.terminal_state,
-        None,
-        None,
-        Vec::new(),
-        moved_cards,
+        EffectOutcomeSeed {
+            card_exiled: None,
+            card_discarded: None,
+            life_changed: None,
+            creatures_died: Vec::new(),
+            moved_cards,
+        },
+    )
+}
+
+fn resolve_target_player_discards_chosen_card_effect(
+    context: &mut ResolutionContext<'_>,
+) -> Result<SpellResolutionSideEffects, DomainError> {
+    let Some(target) = resolve_target_legality_for_effect(
+        context.players,
+        context.card_locations,
+        context.stack,
+        context.controller_index,
+        context.supported_spell_rules,
+        context.target,
+        "discard spell resolved without a targeting profile",
+    )?
+    else {
+        return review_state_based_actions(
+            context.game_id,
+            context.players,
+            context.terminal_state,
+        );
+    };
+
+    let (card_discarded, moved_cards) = match (target, context.choice) {
+        (SpellTarget::Player(player_id), Some(choice)) => {
+            let target_player_index = helpers::find_player_index(context.players, &player_id)?;
+            match discard_chosen_hand_card(
+                context.game_id,
+                context.players,
+                target_player_index,
+                choice,
+            ) {
+                Some((event, card_id)) => (Some(event), vec![card_id]),
+                None => (None, Vec::new()),
+            }
+        }
+        _ => (None, Vec::new()),
+    };
+
+    review_state_based_actions_after_effect(
+        context.game_id,
+        context.players,
+        context.terminal_state,
+        EffectOutcomeSeed {
+            card_exiled: None,
+            card_discarded,
+            life_changed: None,
+            creatures_died: Vec::new(),
+            moved_cards,
+        },
     )
 }
 
 pub(super) fn apply_supported_spell_rules(
-    game_id: &GameId,
-    players: &mut [Player],
-    card_locations: &AggregateCardLocationIndex,
-    terminal_state: &mut TerminalState,
-    stack: &mut StackZone,
-    controller_index: usize,
-    supported_spell_rules: SupportedSpellRules,
-    target: Option<&SpellTarget>,
+    mut context: ResolutionContext<'_>,
 ) -> Result<SpellResolutionSideEffects, DomainError> {
-    match supported_spell_rules.resolution() {
+    match context.supported_spell_rules.resolution() {
         SpellResolutionProfile::None => {
-            review_state_based_actions(game_id, players, terminal_state)
+            review_state_based_actions(context.game_id, context.players, context.terminal_state)
         }
         SpellResolutionProfile::DealDamage { damage } => {
-            let mut context = ResolutionContext {
-                game_id,
-                players,
-                card_locations,
-                terminal_state,
-                stack,
-                controller_index,
-                supported_spell_rules,
-                target,
-            };
             resolve_damage_effect(&mut context, damage)
         }
-        SpellResolutionProfile::GainLife { amount } => {
-            let mut context = ResolutionContext {
-                game_id,
-                players,
-                card_locations,
-                terminal_state,
-                stack,
-                controller_index,
-                supported_spell_rules,
-                target,
-            };
-            resolve_targeted_player_life_effect(
-                &mut context,
-                amount.cast_signed(),
-                "gain-life spell resolved without a targeting profile",
-            )
-        }
-        SpellResolutionProfile::LoseLife { amount } => {
-            let mut context = ResolutionContext {
-                game_id,
-                players,
-                card_locations,
-                terminal_state,
-                stack,
-                controller_index,
-                supported_spell_rules,
-                target,
-            };
-            resolve_targeted_player_life_effect(
-                &mut context,
-                -(amount).cast_signed(),
-                "lose-life spell resolved without a targeting profile",
-            )
-        }
+        SpellResolutionProfile::GainLife { amount } => resolve_targeted_player_life_effect(
+            &mut context,
+            amount.cast_signed(),
+            "gain-life spell resolved without a targeting profile",
+        ),
+        SpellResolutionProfile::LoseLife { amount } => resolve_targeted_player_life_effect(
+            &mut context,
+            -(amount).cast_signed(),
+            "lose-life spell resolved without a targeting profile",
+        ),
         SpellResolutionProfile::CounterTargetSpell => {
-            let mut context = ResolutionContext {
-                game_id,
-                players,
-                card_locations,
-                terminal_state,
-                stack,
-                controller_index,
-                supported_spell_rules,
-                target,
-            };
             resolve_counter_target_spell_effect(&mut context)
         }
         SpellResolutionProfile::ReturnTargetPermanentToHand => {
-            let mut context = ResolutionContext {
-                game_id,
-                players,
-                card_locations,
-                terminal_state,
-                stack,
-                controller_index,
-                supported_spell_rules,
-                target,
-            };
             resolve_return_target_permanent_to_hand_effect(&mut context)
         }
         SpellResolutionProfile::DestroyTargetArtifactOrEnchantment => {
-            let mut context = ResolutionContext {
-                game_id,
-                players,
-                card_locations,
-                terminal_state,
-                stack,
-                controller_index,
-                supported_spell_rules,
-                target,
-            };
             resolve_destroy_target_artifact_or_enchantment_effect(&mut context)
         }
+        SpellResolutionProfile::TargetPlayerDiscardsChosenCard => {
+            resolve_target_player_discards_chosen_card_effect(&mut context)
+        }
         SpellResolutionProfile::DestroyTargetCreature => {
-            let mut context = ResolutionContext {
-                game_id,
-                players,
-                card_locations,
-                terminal_state,
-                stack,
-                controller_index,
-                supported_spell_rules,
-                target,
-            };
             resolve_destroy_target_creature_effect(&mut context)
         }
         SpellResolutionProfile::ExileTargetCreature => resolve_exile_target_creature_effect(
-            game_id,
-            players,
-            terminal_state,
-            card_locations,
-            controller_index,
-            supported_spell_rules,
-            target,
+            context.game_id,
+            context.players,
+            context.terminal_state,
+            context.card_locations,
+            context.controller_index,
+            context.supported_spell_rules,
+            context.target,
         ),
         SpellResolutionProfile::ExileTargetCardFromGraveyard => {
             resolve_exile_target_graveyard_card_effect(
-                game_id,
-                players,
-                terminal_state,
-                card_locations,
-                controller_index,
-                supported_spell_rules,
-                target,
+                context.game_id,
+                context.players,
+                context.terminal_state,
+                context.card_locations,
+                context.controller_index,
+                context.supported_spell_rules,
+                context.target,
             )
         }
         SpellResolutionProfile::PumpTargetCreatureUntilEndOfTurn { power, toughness } => {
-            let mut context = ResolutionContext {
-                game_id,
-                players,
-                card_locations,
-                terminal_state,
-                stack,
-                controller_index,
-                supported_spell_rules,
-                target,
-            };
             resolve_pump_target_creature_effect(&mut context, (power, toughness))
         }
     }

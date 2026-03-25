@@ -157,10 +157,14 @@ fn resolve_target(
         }
         SpellTarget::StackObject(stack_object_id) => {
             let Some(object_number) = stack_object_id.object_number() else {
-                return Err(SpellTargetLegality::MissingStackSpell(stack_object_id.clone()));
+                return Err(SpellTargetLegality::MissingStackSpell(
+                    stack_object_id.clone(),
+                ));
             };
             let Some(stack_object) = stack.object(object_number) else {
-                return Err(SpellTargetLegality::MissingStackSpell(stack_object_id.clone()));
+                return Err(SpellTargetLegality::MissingStackSpell(
+                    stack_object_id.clone(),
+                ));
             };
             if !matches!(
                 stack_object.kind(),

@@ -3,7 +3,7 @@
 use crate::domain::play::{
     cards::{ActivatedAbilityProfile, SpellPayload},
     errors::{DomainError, GameError},
-    game::model::{StackCardRef, StackObject, StackObjectKind, StackTargetRef},
+    game::model::{StackCardRef, StackObject, StackObjectKind, StackSpellChoice, StackTargetRef},
 };
 
 pub(super) struct ResolvedSpellObject {
@@ -12,6 +12,7 @@ pub(super) struct ResolvedSpellObject {
     pub payload: SpellPayload,
     pub mana_cost_paid: u32,
     pub target: Option<StackTargetRef>,
+    pub choice: Option<StackSpellChoice>,
 }
 
 pub(super) fn extract_resolved_spell_object(
@@ -26,6 +27,7 @@ pub(super) fn extract_resolved_spell_object(
     };
     let mana_cost_paid = spell.mana_cost_paid();
     let target = spell.target().copied();
+    let choice = spell.choice().copied();
     let payload = spell.into_payload();
 
     Ok(ResolvedSpellObject {
@@ -34,6 +36,7 @@ pub(super) fn extract_resolved_spell_object(
         payload,
         mana_cost_paid,
         target,
+        choice,
     })
 }
 

@@ -512,8 +512,9 @@ impl SingleTargetRule {
     pub const fn player_rule(self) -> Option<PlayerTargetRule> {
         match self {
             Self::Player(rule) | Self::PlayerOrCreature { player: rule, .. } => Some(rule),
-            Self::Creature(_) | Self::Permanent(_) | Self::GraveyardCard(_) => None,
-            Self::StackSpell => None,
+            Self::Creature(_) | Self::Permanent(_) | Self::GraveyardCard(_) | Self::StackSpell => {
+                None
+            }
         }
     }
 
@@ -521,8 +522,9 @@ impl SingleTargetRule {
     pub const fn creature_rule(self) -> Option<CreatureTargetRule> {
         match self {
             Self::Creature(rule) | Self::PlayerOrCreature { creature: rule, .. } => Some(rule),
-            Self::Player(_) | Self::Permanent(_) | Self::GraveyardCard(_) => None,
-            Self::StackSpell => None,
+            Self::Player(_) | Self::Permanent(_) | Self::GraveyardCard(_) | Self::StackSpell => {
+                None
+            }
         }
     }
 
@@ -556,8 +558,9 @@ impl SingleTargetRule {
             Self::Player(rule) | Self::PlayerOrCreature { player: rule, .. } => {
                 Some(rule.allows(target_is_actor))
             }
-            Self::Creature(_) | Self::Permanent(_) | Self::GraveyardCard(_) => None,
-            Self::StackSpell => None,
+            Self::Creature(_) | Self::Permanent(_) | Self::GraveyardCard(_) | Self::StackSpell => {
+                None
+            }
         }
     }
 
@@ -649,6 +652,7 @@ pub enum SpellResolutionProfile {
     CounterTargetSpell,
     ReturnTargetPermanentToHand,
     DestroyTargetArtifactOrEnchantment,
+    TargetPlayerDiscardsChosenCard,
     DestroyTargetCreature,
     ExileTargetCreature,
     ExileTargetCardFromGraveyard,
@@ -825,6 +829,14 @@ impl SupportedSpellRules {
     }
 
     #[must_use]
+    pub const fn target_player_discards_chosen_card() -> Self {
+        Self {
+            targeting: SpellTargetingProfile::ExactlyOne(SingleTargetRule::any_player()),
+            resolution: SpellResolutionProfile::TargetPlayerDiscardsChosenCard,
+        }
+    }
+
+    #[must_use]
     pub const fn exile_target_creature() -> Self {
         Self {
             targeting: SpellTargetingProfile::ExactlyOne(
@@ -865,5 +877,13 @@ impl SupportedSpellRules {
     #[must_use]
     pub const fn resolution(self) -> SpellResolutionProfile {
         self.resolution
+    }
+
+    #[must_use]
+    pub const fn requires_explicit_hand_card_choice(self) -> bool {
+        matches!(
+            self.resolution,
+            SpellResolutionProfile::TargetPlayerDiscardsChosenCard
+        )
     }
 }

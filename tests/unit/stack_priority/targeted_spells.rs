@@ -9,6 +9,7 @@ use {
         counter_target_spell_instant_card, creature_card,
         destroy_target_artifact_or_enchantment_instant_card, enchantment_card, filled_library,
         land_card, return_target_permanent_to_hand_instant_card, setup_two_player_game,
+        target_player_discards_chosen_card_sorcery_card,
         targeted_attacking_creature_damage_instant_card,
         targeted_controlled_creature_damage_instant_card, targeted_damage_instant_card,
         targeted_destroy_creature_instant_card, targeted_exile_creature_instant_card,
@@ -18,9 +19,9 @@ use {
         targeted_pump_creature_instant_card,
     },
     demonictutor::{
-        CardDefinitionId, CardInstanceId, CastSpellCommand, DeclareAttackersCommand, DomainError,
-        GameEndReason, GameError, LibraryCard, PlayerId, ResolveCombatDamageCommand,
-        SpellCastOutcome, SpellTarget,
+        CardDefinitionId, CardInstanceId, CastSpellCommand, DeclareAttackersCommand, DiscardKind,
+        DomainError, GameEndReason, GameError, LibraryCard, PlayerId, ResolveCombatDamageCommand,
+        SpellCastOutcome, SpellChoice, SpellTarget,
     },
 };
 
@@ -153,10 +154,9 @@ fn counterspell_counters_target_spell_on_the_stack() {
     service
         .cast_spell(
             &mut game,
-            CastSpellCommand::new(PlayerId::new("player-1"), cancel_id)
-                .with_target(SpellTarget::StackObject(
-                    shock_outcome.spell_put_on_stack.stack_object_id.clone(),
-                )),
+            CastSpellCommand::new(PlayerId::new("player-1"), cancel_id).with_target(
+                SpellTarget::StackObject(shock_outcome.spell_put_on_stack.stack_object_id),
+            ),
         )
         .unwrap();
 
@@ -236,22 +236,22 @@ fn lower_counterspell_does_nothing_if_target_spell_is_already_gone() {
         .unwrap();
     let _ = pass_priority_once(&service, &mut game);
 
-    let cancel_a_id = game.players()[0].hand_card_ids()[0].clone();
+    let first_cancel_id = game.players()[0].hand_card_ids()[0].clone();
     service
         .cast_spell(
             &mut game,
-            CastSpellCommand::new(PlayerId::new("player-1"), cancel_a_id).with_target(
+            CastSpellCommand::new(PlayerId::new("player-1"), first_cancel_id).with_target(
                 SpellTarget::StackObject(shock_outcome.spell_put_on_stack.stack_object_id.clone()),
             ),
         )
         .unwrap();
 
-    let cancel_b_id = game.players()[0].hand_card_ids()[0].clone();
+    let second_cancel_id = game.players()[0].hand_card_ids()[0].clone();
     service
         .cast_spell(
             &mut game,
-            CastSpellCommand::new(PlayerId::new("player-1"), cancel_b_id).with_target(
-                SpellTarget::StackObject(shock_outcome.spell_put_on_stack.stack_object_id.clone()),
+            CastSpellCommand::new(PlayerId::new("player-1"), second_cancel_id).with_target(
+                SpellTarget::StackObject(shock_outcome.spell_put_on_stack.stack_object_id),
             ),
         )
         .unwrap();
@@ -319,7 +319,10 @@ fn bounce_spell_rejects_non_battlefield_target_when_cast() {
     let (service, mut game) = setup_two_player_game(
         "game-bounce-illegal-target",
         filled_library(
-            vec![return_target_permanent_to_hand_instant_card("unsummon-relic", 0)],
+            vec![return_target_permanent_to_hand_instant_card(
+                "unsummon-relic",
+                0,
+            )],
             10,
         ),
         filled_library(vec![land_card("mountain")], 10),
@@ -485,7 +488,9 @@ fn destroy_artifact_or_enchantment_spell_destroys_target_enchantment() {
 
     let _ = resolve_current_stack(&service, &mut game);
     assert!(game.players()[1].graveyard_card(&enchantment_id).is_some());
-    assert!(game.players()[1].battlefield_card(&enchantment_id).is_none());
+    assert!(game.players()[1]
+        .battlefield_card(&enchantment_id)
+        .is_none());
 }
 
 #[test]
@@ -1799,5 +1804,125 @@ fn targeted_instant_does_not_apply_if_its_only_creature_target_is_gone_on_resolu
     assert!(second_resolution.life_changed.is_none());
     assert!(second_resolution.creatures_died.is_empty());
     assert!(game.players()[1].battlefield_is_empty());
+    assert_eq!(game.players()[1].graveyard_size(), 1);
+}
+
+#[test]
+fn discard_spell_forces_target_player_to_discard_the_chosen_card() {
+    let (service, mut game) = setup_two_player_game(
+        "game-discard-chosen-card",
+        filled_library(
+            vec![target_player_discards_chosen_card_sorcery_card(
+                "coercion-lite",
+                0,
+            )],
+            10,
+        ),
+        filled_library(
+            vec![creature_card("bob-bear", 0, 2, 2), land_card("bob-land")],
+            10,
+        ),
+    );
+
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
+
+    let discard_id = hand_card_id_by_definition(&game, 0, "coercion-lite");
+    let chosen_id = hand_card_id_by_definition(&game, 1, "bob-bear");
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), discard_id)
+                .with_target(SpellTarget::Player(PlayerId::new("player-2")))
+                .with_choice(SpellChoice::HandCard(chosen_id.clone())),
+        )
+        .unwrap();
+
+    let resolution = resolve_current_stack(&service, &mut game);
+
+    assert!(game.players()[1].hand_card(&chosen_id).is_none());
+    assert!(game.players()[1].graveyard_card(&chosen_id).is_some());
+    assert!(resolution.card_discarded.is_some());
+    if let Some(discarded) = resolution.card_discarded.as_ref() {
+        assert_eq!(discarded.player_id, PlayerId::new("player-2"));
+        assert_eq!(discarded.card_id, chosen_id);
+        assert_eq!(discarded.discard_kind, DiscardKind::SpellEffect);
+    }
+}
+
+#[test]
+fn discard_spell_rejects_a_chosen_card_not_in_the_target_players_hand() {
+    let (service, mut game) = setup_two_player_game(
+        "game-discard-invalid-choice",
+        filled_library(
+            vec![target_player_discards_chosen_card_sorcery_card(
+                "coercion-lite",
+                0,
+            )],
+            10,
+        ),
+        filled_library(vec![creature_card("bob-bear", 0, 2, 2)], 10),
+    );
+
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
+
+    let discard_id = hand_card_id_by_definition(&game, 0, "coercion-lite");
+    let illegal_choice = hand_card_id_by_definition(&game, 0, "coercion-lite");
+    let result = service.cast_spell(
+        &mut game,
+        CastSpellCommand::new(PlayerId::new("player-1"), discard_id)
+            .with_target(SpellTarget::Player(PlayerId::new("player-2")))
+            .with_choice(SpellChoice::HandCard(illegal_choice.clone())),
+    );
+
+    assert!(matches!(
+        result,
+        Err(DomainError::Game(GameError::InvalidHandCardChoice(card_id)))
+            if card_id == illegal_choice
+    ));
+}
+
+#[test]
+fn discard_spell_does_nothing_if_the_chosen_card_leaves_hand_before_resolution() {
+    let (service, mut game) = setup_two_player_game(
+        "game-discard-choice-gone",
+        filled_library(
+            vec![target_player_discards_chosen_card_sorcery_card(
+                "coercion-lite",
+                0,
+            )],
+            10,
+        ),
+        filled_library(vec![targeted_damage_instant_card("shock", 0, 2)], 10),
+    );
+
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
+
+    let discard_id = hand_card_id_by_definition(&game, 0, "coercion-lite");
+    let chosen_id = hand_card_id_by_definition(&game, 1, "shock");
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), discard_id)
+                .with_target(SpellTarget::Player(PlayerId::new("player-2")))
+                .with_choice(SpellChoice::HandCard(chosen_id.clone())),
+        )
+        .unwrap();
+    let _ = pass_priority_once(&service, &mut game);
+
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-2"), chosen_id.clone())
+                .with_target(SpellTarget::Player(PlayerId::new("player-1"))),
+        )
+        .unwrap();
+
+    let first_resolution = resolve_current_stack(&service, &mut game);
+    assert!(first_resolution.life_changed.is_some());
+
+    let second_resolution = resolve_current_stack(&service, &mut game);
+    assert!(second_resolution.card_discarded.is_none());
+    assert!(game.players()[1].hand_card(&chosen_id).is_none());
+    assert!(game.players()[1].graveyard_card(&chosen_id).is_some());
     assert_eq!(game.players()[1].graveyard_size(), 1);
 }

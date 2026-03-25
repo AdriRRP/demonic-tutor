@@ -10,14 +10,14 @@ use {
     },
     crate::domain::play::{
         cards::{CardType, CastingPermissionProfile, CastingRule, SupportedSpellRules},
-        commands::CastSpellCommand,
+        commands::{CastSpellCommand, SpellChoice},
         errors::{CardError, DomainError, GameError, PhaseError},
         events::SpellPutOnStack,
         game::{
             helpers, invariants,
             model::{
                 PrepareHandSpellCastError, PriorityState, SpellOnStack, StackCardRef, StackObject,
-                StackObjectKind, StackTargetRef, StackZone,
+                StackObjectKind, StackSpellChoice, StackTargetRef, StackZone,
             },
             SpellTarget,
         },
@@ -113,9 +113,9 @@ fn validate_spell_target(
         SpellTargetLegality::MissingGraveyardCard(target_card_id) => Err(DomainError::Game(
             GameError::InvalidGraveyardCardTarget(target_card_id),
         )),
-        SpellTargetLegality::MissingStackSpell(target_stack_object_id) => Err(
-            DomainError::Game(GameError::InvalidStackObjectTarget(target_stack_object_id)),
-        ),
+        SpellTargetLegality::MissingStackSpell(target_stack_object_id) => Err(DomainError::Game(
+            GameError::InvalidStackObjectTarget(target_stack_object_id),
+        )),
     }
 }
 
@@ -227,12 +227,84 @@ fn prepare_stack_spell_object(
     card_type: CardType,
     mana_cost: u32,
     target: Option<StackTargetRef>,
+    choice: Option<StackSpellChoice>,
 ) -> PreparedStackSpellObject {
     PreparedStackSpellObject {
         card_type,
         mana_cost,
-        spell: SpellOnStack::new(prepared_cast.into_payload(), mana_cost, target),
+        spell: SpellOnStack::new(prepared_cast.into_payload(), mana_cost, target, choice),
     }
+}
+
+fn validate_spell_choice(
+    players: &[crate::domain::play::game::Player],
+    supported_spell_rules: SupportedSpellRules,
+    card_id: &CardInstanceId,
+    target: Option<&SpellTarget>,
+    choice: Option<&SpellChoice>,
+) -> Result<(), DomainError> {
+    if !supported_spell_rules.requires_explicit_hand_card_choice() {
+        return Ok(());
+    }
+
+    let Some(SpellChoice::HandCard(chosen_card_id)) = choice else {
+        return Err(DomainError::Game(GameError::MissingSpellChoice(
+            card_id.clone(),
+        )));
+    };
+
+    let Some(SpellTarget::Player(target_player_id)) = target else {
+        return Err(DomainError::Game(GameError::InternalInvariantViolation(
+            "discard spell choice requires a player target".to_string(),
+        )));
+    };
+
+    let target_player_index = helpers::find_player_index(players, target_player_id)?;
+    let target_player = &players[target_player_index];
+    if target_player.hand_card(chosen_card_id).is_none() {
+        return Err(DomainError::Game(GameError::InvalidHandCardChoice(
+            chosen_card_id.clone(),
+        )));
+    }
+
+    Ok(())
+}
+
+fn prepare_stack_choice(
+    players: &[crate::domain::play::game::Player],
+    supported_spell_rules: SupportedSpellRules,
+    target: Option<&SpellTarget>,
+    choice: Option<&SpellChoice>,
+) -> Result<Option<StackSpellChoice>, DomainError> {
+    if !supported_spell_rules.requires_explicit_hand_card_choice() {
+        return Ok(None);
+    }
+
+    let Some(SpellChoice::HandCard(chosen_card_id)) = choice else {
+        return Err(DomainError::Game(GameError::InternalInvariantViolation(
+            "missing hand-card spell choice during stack insertion".to_string(),
+        )));
+    };
+
+    let Some(SpellTarget::Player(target_player_id)) = target else {
+        return Err(DomainError::Game(GameError::InternalInvariantViolation(
+            "discard spell choice requires a player target during stack insertion".to_string(),
+        )));
+    };
+
+    let target_player_index = helpers::find_player_index(players, target_player_id)?;
+    let handle = players[target_player_index]
+        .resolve_public_card_handle(chosen_card_id)
+        .ok_or_else(|| {
+            DomainError::Game(GameError::InternalInvariantViolation(format!(
+                "chosen discard card {chosen_card_id} disappeared before stack insertion"
+            )))
+        })?;
+
+    Ok(Some(StackSpellChoice::HandCard(StackCardRef::new(
+        target_player_index,
+        handle,
+    ))))
 }
 
 /// Puts a spell card from hand onto the stack and opens a priority window.
@@ -241,6 +313,7 @@ fn prepare_stack_spell_object(
 /// Returns an error if the player is not allowed to cast now, if the card is
 /// not a spell card in that player's hand, if mana is insufficient, or if the
 /// current priority holder does not match the command issuer.
+#[allow(clippy::too_many_lines)]
 pub fn cast_spell(
     ctx: StackPriorityContext<'_>,
     cmd: CastSpellCommand,
@@ -260,6 +333,7 @@ pub fn cast_spell(
         player_id,
         card_id,
         target,
+        choice,
     } = cmd;
 
     let player_idx = helpers::find_player_index(players, &player_id)?;
@@ -299,6 +373,13 @@ pub fn cast_spell(
         supported_spell_rules,
         target.as_ref(),
     )?;
+    validate_spell_choice(
+        players,
+        supported_spell_rules,
+        &card_id,
+        target.as_ref(),
+        choice.as_ref(),
+    )?;
 
     if matches!(card_type, CardType::Creature) && !has_creature_stats {
         return Err(DomainError::Game(GameError::InternalInvariantViolation(
@@ -323,9 +404,21 @@ pub fn cast_spell(
                 }))
             }
         };
-    let prepared_stack_target = prepare_stack_target(players, card_locations, stack, target.as_ref())?;
-    let prepared_stack_spell =
-        prepare_stack_spell_object(prepared_cast, card_type, mana_cost, prepared_stack_target);
+    let prepared_stack_target =
+        prepare_stack_target(players, card_locations, stack, target.as_ref())?;
+    let prepared_stack_choice = prepare_stack_choice(
+        players,
+        supported_spell_rules,
+        target.as_ref(),
+        choice.as_ref(),
+    )?;
+    let prepared_stack_spell = prepare_stack_spell_object(
+        prepared_cast,
+        card_type,
+        mana_cost,
+        prepared_stack_target,
+        prepared_stack_choice,
+    );
 
     let spell_card_type = prepared_stack_spell.card_type;
     let spell_mana_cost = prepared_stack_spell.mana_cost;

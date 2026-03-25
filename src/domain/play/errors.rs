@@ -52,12 +52,14 @@ pub enum GameError {
     GameAlreadyEnded,
     InvalidDrawCount(u32),
     MissingSpellTarget(CardInstanceId),
+    MissingSpellChoice(CardInstanceId),
     IllegalSpellTarget(CardInstanceId),
     InvalidPlayerTarget(PlayerId),
     InvalidCreatureTarget(CardInstanceId),
     InvalidPermanentTarget(CardInstanceId),
     InvalidGraveyardCardTarget(CardInstanceId),
     InvalidStackObjectTarget(StackObjectId),
+    InvalidHandCardChoice(CardInstanceId),
     NoAttackersDeclared,
     MulliganAlreadyUsed(PlayerId),
     HandSizeLimitExceeded {
@@ -146,6 +148,7 @@ impl std::fmt::Display for DomainError {
 }
 
 impl std::fmt::Display for GameError {
+    #[allow(clippy::too_many_lines)]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::NotYourTurn { current, requested } => {
@@ -201,6 +204,9 @@ impl std::fmt::Display for GameError {
             Self::MissingSpellTarget(card_id) => {
                 write!(f, "spell {card_id} requires an explicit target")
             }
+            Self::MissingSpellChoice(card_id) => {
+                write!(f, "spell {card_id} requires an explicit choice in the current model")
+            }
             Self::IllegalSpellTarget(card_id) => {
                 write!(
                     f,
@@ -221,6 +227,9 @@ impl std::fmt::Display for GameError {
             }
             Self::InvalidStackObjectTarget(stack_object_id) => {
                 write!(f, "stack target {stack_object_id} is not a spell currently on the stack")
+            }
+            Self::InvalidHandCardChoice(card_id) => {
+                write!(f, "hand card choice {card_id} is not currently legal")
             }
             Self::NoAttackersDeclared => write!(f, "no attackers have been declared"),
             Self::MulliganAlreadyUsed(pid) => {

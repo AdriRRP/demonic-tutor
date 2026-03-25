@@ -16,7 +16,10 @@ use self::{
 };
 use crate::domain::play::{
     cards::ActivatedAbilityEffect,
-    events::{CardExiled, CreatureDied, GameEnded, LifeChanged, SpellCast, StackTopResolved},
+    events::{
+        CardDiscarded, CardExiled, CreatureDied, GameEnded, LifeChanged, SpellCast,
+        StackTopResolved,
+    },
     game::{
         model::{StackCardRef, StackObject, StackObjectKind, StackTargetRef, StackZone},
         Player, SpellTarget, TerminalState,
@@ -28,6 +31,7 @@ type ResolvedSpellOutcome = (
     StackTopResolved,
     Option<SpellCast>,
     Option<CardExiled>,
+    Option<CardDiscarded>,
     Option<LifeChanged>,
     Vec<CreatureDied>,
     Vec<crate::domain::play::ids::CardInstanceId>,
@@ -134,6 +138,7 @@ fn resolve_spell_from_stack(
         payload,
         mana_cost_paid,
         target,
+        choice,
     } = extract_resolved_spell_object(stack_object)?;
     let target = target
         .map(|target_ref| materialize_spell_target(game_id, players, target_ref))
@@ -155,22 +160,24 @@ fn resolve_spell_from_stack(
         mana_cost_paid,
         outcome,
     );
-    let (card_exiled, life_changed, creatures_died, moved_cards, game_ended) =
-        apply_supported_spell_rules(
-        game_id,
-        players,
-        card_locations,
-        terminal_state,
-        stack,
-        controller_index,
-        supported_spell_rules,
-        target.as_ref(),
-    )?;
+    let (card_exiled, card_discarded, life_changed, creatures_died, moved_cards, game_ended) =
+        apply_supported_spell_rules(self::effects::ResolutionContext::new(
+            game_id,
+            players,
+            card_locations,
+            terminal_state,
+            stack,
+            controller_index,
+            supported_spell_rules,
+            target.as_ref(),
+            choice,
+        ))?;
 
     Ok((
         stack_top_resolved,
         Some(spell_cast),
         card_exiled,
+        card_discarded,
         life_changed,
         creatures_died,
         moved_cards,
@@ -226,6 +233,7 @@ fn resolve_activated_ability_from_stack(
 
     Ok((
         stack_top_resolved,
+        None,
         None,
         None,
         life_changed,

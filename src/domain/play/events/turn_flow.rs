@@ -45,6 +45,7 @@ pub enum DrawKind {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DiscardKind {
     CleanupHandSize,
+    SpellEffect,
 }
 
 #[derive(Debug, Clone)]

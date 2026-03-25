@@ -6,6 +6,11 @@ use crate::domain::play::{
 };
 
 #[derive(Debug, Clone)]
+pub enum SpellChoice {
+    HandCard(CardInstanceId),
+}
+
+#[derive(Debug, Clone)]
 pub struct PassPriorityCommand {
     pub player_id: PlayerId,
 }
@@ -22,6 +27,7 @@ pub struct CastSpellCommand {
     pub player_id: PlayerId,
     pub card_id: CardInstanceId,
     pub target: Option<SpellTarget>,
+    pub choice: Option<SpellChoice>,
 }
 
 impl CastSpellCommand {
@@ -31,12 +37,19 @@ impl CastSpellCommand {
             player_id,
             card_id,
             target: None,
+            choice: None,
         }
     }
 
     #[must_use]
     pub fn with_target(mut self, target: SpellTarget) -> Self {
         self.target = Some(target);
+        self
+    }
+
+    #[must_use]
+    pub fn with_choice(mut self, choice: SpellChoice) -> Self {
+        self.choice = Some(choice);
         self
     }
 }

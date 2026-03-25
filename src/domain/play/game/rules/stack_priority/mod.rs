@@ -12,8 +12,8 @@ use super::super::{
 };
 use crate::domain::play::{
     events::{
-        ActivatedAbilityPutOnStack, CardExiled, CreatureDied, GameEnded, LifeChanged,
-        PriorityPassed, SpellCast, SpellPutOnStack, StackTopResolved,
+        ActivatedAbilityPutOnStack, CardDiscarded, CardExiled, CreatureDied, GameEnded,
+        LifeChanged, PriorityPassed, SpellCast, SpellPutOnStack, StackTopResolved,
     },
     ids::{CardInstanceId, GameId, PlayerId},
     phase::Phase,
@@ -50,6 +50,7 @@ pub struct PassPriorityOutcome {
     pub stack_top_resolved: Option<StackTopResolved>,
     pub spell_cast: Option<SpellCast>,
     pub card_exiled: Option<CardExiled>,
+    pub card_discarded: Option<CardDiscarded>,
     pub life_changed: Option<LifeChanged>,
     pub creatures_died: Vec<CreatureDied>,
     pub moved_cards: Vec<CardInstanceId>,

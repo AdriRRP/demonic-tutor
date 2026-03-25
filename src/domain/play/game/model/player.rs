@@ -705,6 +705,11 @@ impl Player {
         self.move_handle_between_zones(handle, PlayerCardZone::Battlefield, PlayerCardZone::Hand)
     }
 
+    pub fn move_hand_card_to_graveyard(&mut self, card_id: &CardInstanceId) -> Option<()> {
+        let handle = self.handle_in_zone(card_id, PlayerCardZone::Hand)?;
+        self.move_handle_between_zones(handle, PlayerCardZone::Hand, PlayerCardZone::Graveyard)
+    }
+
     pub(crate) fn move_battlefield_handle_to_graveyard(
         &mut self,
         handle: PlayerCardHandle,
@@ -727,7 +732,23 @@ impl Player {
         self.handle_is_in_zone(handle, PlayerCardZone::Battlefield)
             .then_some(())
             .and_then(|()| {
-                self.move_handle_between_zones(handle, PlayerCardZone::Battlefield, PlayerCardZone::Hand)
+                self.move_handle_between_zones(
+                    handle,
+                    PlayerCardZone::Battlefield,
+                    PlayerCardZone::Hand,
+                )
+            })
+    }
+
+    pub(crate) fn move_hand_handle_to_graveyard(&mut self, handle: PlayerCardHandle) -> Option<()> {
+        self.handle_is_in_zone(handle, PlayerCardZone::Hand)
+            .then_some(())
+            .and_then(|()| {
+                self.move_handle_between_zones(
+                    handle,
+                    PlayerCardZone::Hand,
+                    PlayerCardZone::Graveyard,
+                )
             })
     }
 

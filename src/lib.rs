@@ -20,7 +20,7 @@ pub use domain::play::{
         CastSpellCommand, DealOpeningHandsCommand, DeclareAttackersCommand, DeclareBlockersCommand,
         DiscardForCleanupCommand, DrawCardsEffectCommand, ExileCardCommand, LibraryCard,
         LibraryCreature, MulliganCommand, PassPriorityCommand, PlayLandCommand, PlayerDeck,
-        PlayerLibrary, ResolveCombatDamageCommand, StartGameCommand, TapLandCommand,
+        PlayerLibrary, ResolveCombatDamageCommand, SpellChoice, StartGameCommand, TapLandCommand,
     },
     errors::{CardError, DomainError, GameError, PhaseError, PlayerError},
     events::{

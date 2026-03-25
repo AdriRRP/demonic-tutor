@@ -61,6 +61,7 @@ pub fn pass_priority(
             stack_top_resolved: None,
             spell_cast: None,
             card_exiled: None,
+            card_discarded: None,
             life_changed: None,
             creatures_died: Vec::new(),
             moved_cards: Vec::new(),
@@ -76,6 +77,7 @@ pub fn pass_priority(
             stack_top_resolved: None,
             spell_cast: None,
             card_exiled: None,
+            card_discarded: None,
             life_changed: None,
             creatures_died: Vec::new(),
             moved_cards: Vec::new(),
@@ -93,19 +95,19 @@ pub fn pass_priority(
         stack_top_resolved,
         spell_cast,
         card_exiled,
+        card_discarded,
         life_changed,
         creatures_died,
         moved_cards,
         game_ended,
-    ) =
-        resolve_stack_object(
-            game_id,
-            players,
-            card_locations,
-            terminal_state,
-            stack,
-            stack_object,
-        )?;
+    ) = resolve_stack_object(
+        game_id,
+        players,
+        card_locations,
+        terminal_state,
+        stack,
+        stack_object,
+    )?;
 
     if terminal_state.is_over() {
         *priority = None;
@@ -118,6 +120,7 @@ pub fn pass_priority(
         stack_top_resolved: Some(stack_top_resolved),
         spell_cast,
         card_exiled,
+        card_discarded,
         life_changed,
         creatures_died,
         moved_cards,

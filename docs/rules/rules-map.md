@@ -199,6 +199,15 @@ It is not a literal restatement of the rules text.
 
 ---
 
+## Chosen Card Discard From Target Player
+
+- 114
+- 121
+- 608.2
+- 701.8
+
+---
+
 ## Targeted Instant Damage To Player
 
 - 114

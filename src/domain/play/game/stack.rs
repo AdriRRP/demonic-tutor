@@ -98,6 +98,11 @@ impl Game {
                     super::helpers::find_player_index(&self.players, &card_exiled.player_id)?;
                 self.sync_card_location_from_player(owner_index, &card_exiled.card_id);
             }
+            if let Some(card_discarded) = &outcome.card_discarded {
+                let owner_index =
+                    super::helpers::find_player_index(&self.players, &card_discarded.player_id)?;
+                self.sync_card_location_from_player(owner_index, &card_discarded.card_id);
+            }
             for creature_died in &outcome.creatures_died {
                 let owner_index =
                     super::helpers::find_player_index(&self.players, &creature_died.player_id)?;

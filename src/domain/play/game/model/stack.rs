@@ -43,6 +43,11 @@ pub enum StackTargetRef {
     StackSpell(u32),
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum StackSpellChoice {
+    HandCard(StackCardRef),
+}
+
 impl StackTargetRef {
     #[must_use]
     pub const fn kind(&self) -> SpellTargetKind {
@@ -117,7 +122,10 @@ impl StackZone {
     }
 
     pub fn remove_by_number(&mut self, number: u32) -> Option<StackObject> {
-        let position = self.objects.iter().position(|object| object.number() == number)?;
+        let position = self
+            .objects
+            .iter()
+            .position(|object| object.number() == number)?;
         Some(self.objects.remove(position))
     }
 }
@@ -179,6 +187,7 @@ pub struct SpellOnStack {
     payload: SpellPayload,
     mana_cost_paid: u32,
     target: Option<StackTargetRef>,
+    choice: Option<StackSpellChoice>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -231,11 +240,13 @@ impl SpellOnStack {
         payload: SpellPayload,
         mana_cost_paid: u32,
         target: Option<StackTargetRef>,
+        choice: Option<StackSpellChoice>,
     ) -> Self {
         Self {
             payload,
             mana_cost_paid,
             target,
+            choice,
         }
     }
 
@@ -270,6 +281,11 @@ impl SpellOnStack {
     }
 
     #[must_use]
+    pub const fn choice(&self) -> Option<&StackSpellChoice> {
+        self.choice.as_ref()
+    }
+
+    #[must_use]
     pub fn into_payload(self) -> SpellPayload {
         self.payload
     }
@@ -277,5 +293,10 @@ impl SpellOnStack {
     #[must_use]
     pub fn into_target(self) -> Option<StackTargetRef> {
         self.target
+    }
+
+    #[must_use]
+    pub fn into_choice(self) -> Option<StackSpellChoice> {
+        self.choice
     }
 }
