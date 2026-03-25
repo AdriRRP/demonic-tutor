@@ -7,6 +7,36 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ---
 
+## [0.5.0] - 2026-03-25
+
+### Added
+
+- **First supported non-mana activated ability corridor**: supported non-mana activations now use the same aggregate-owned stack and priority corridor as other stack interactions
+- **Keyword and combat effect coverage expanded**: the current subset now exercises `Haste`, `Vigilance`, `Trample`, `First strike`, and temporary pump effects that can change combat outcomes
+- **Broader targeted effect subset**: the supported spell-effect corridor now includes `destroy target creature`, `exile target creature`, `exile target card from graveyard`, explicit life gain/loss effects, and actor-relative plus combat-relative target restrictions
+- **Broader open-priority casting subset**: the current explicit `Flash`-like support now exercises supported creatures plus selected noncreature permanents across the modeled open-priority windows
+- **Human-first runtime architecture guide**: added `docs/architecture/runtime-abstractions.md` with Feynman-style explanations and Mermaid diagrams for the core runtime abstractions
+
+### Changed
+
+- **Runtime identity model consolidated**: the core now prefers numeric-core ids, owner indices, and player card handles internally while materializing readable public ids at true boundaries
+- **Player-owned runtime storage consolidated**: players now operate through a dense handle-first arena with boundary-only card-id lookups instead of treating public card ids as the canonical runtime path
+- **Stack runtime compacted further**: stack objects now use thinner spell payloads, internal target references, internal source references for activated abilities, and less duplicated resolution metadata
+- **Zone storage and lookup hot paths tightened**: ordered zones now combine reusable slots, visible indexing, and sparse-position compaction to keep reads and removals efficient without suffix-wide rewrites
+- **Aggregate support structures tightened**: the aggregate-level location index now updates transactionally during known card moves instead of relying on player snapshot refreshes
+- **Turn flow, combat, targeting, and resolution hot paths** now operate much more consistently on indices, handles, and compact refs instead of repeatedly cloning or resolving public ids
+
+### Documentation
+
+- Synchronized canonical architecture and domain docs with the final handle-first, compact-runtime model
+- Curated proposal waves and implemented slices so the remaining backlog reflects only live work
+- Refined Mermaid diagrams to a more conservative GitHub-friendly subset
+
+### Quality
+
+- Completed the `engine-audit` closure waves through `v11`, including the final runtime hot-path cleanup pass
+- Strict repository validation remains clean through `./scripts/check-all.sh`
+
 ## [0.4.0] - 2026-03-22
 
 ### Added
