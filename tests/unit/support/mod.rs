@@ -217,6 +217,11 @@ pub fn targeted_destroy_creature_instant_card(name: &str, mana_cost: u32) -> Lib
         .with_supported_spell_rules(SupportedSpellRules::destroy_target_creature())
 }
 
+pub fn counter_target_spell_instant_card(name: &str, mana_cost: u32) -> LibraryCard {
+    LibraryCard::new(CardDefinitionId::new(name), CardType::Instant, mana_cost)
+        .with_supported_spell_rules(SupportedSpellRules::counter_target_spell())
+}
+
 pub fn targeted_exile_creature_instant_card(name: &str, mana_cost: u32) -> LibraryCard {
     LibraryCard::new(CardDefinitionId::new(name), CardType::Instant, mana_cost)
         .with_supported_spell_rules(SupportedSpellRules::exile_target_creature())

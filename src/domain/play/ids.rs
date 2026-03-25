@@ -345,6 +345,11 @@ impl StackObjectId {
     pub fn as_str(&self) -> &str {
         &self.public
     }
+
+    #[must_use]
+    pub fn object_number(&self) -> Option<u32> {
+        self.as_str().rsplit_once("-stack-")?.1.parse().ok()
+    }
 }
 
 impl From<String> for StackObjectId {

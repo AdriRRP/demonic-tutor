@@ -302,6 +302,7 @@ pub enum SpellTargetKind {
     Player,
     Creature,
     GraveyardCard,
+    StackSpell,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -382,6 +383,7 @@ pub enum SingleTargetRule {
     Player(PlayerTargetRule),
     Creature(CreatureTargetRule),
     GraveyardCard(GraveyardCardTargetRule),
+    StackSpell,
     PlayerOrCreature {
         player: PlayerTargetRule,
         creature: CreatureTargetRule,
@@ -458,11 +460,17 @@ impl SingleTargetRule {
     }
 
     #[must_use]
+    pub const fn any_spell_on_the_stack() -> Self {
+        Self::StackSpell
+    }
+
+    #[must_use]
     pub const fn matches_target_kind(self, kind: SpellTargetKind) -> bool {
         match self {
             Self::Player(_) => matches!(kind, SpellTargetKind::Player),
             Self::Creature(_) => matches!(kind, SpellTargetKind::Creature),
             Self::GraveyardCard(_) => matches!(kind, SpellTargetKind::GraveyardCard),
+            Self::StackSpell => matches!(kind, SpellTargetKind::StackSpell),
             Self::PlayerOrCreature { .. } => {
                 matches!(kind, SpellTargetKind::Player | SpellTargetKind::Creature)
             }
@@ -474,6 +482,7 @@ impl SingleTargetRule {
         match self {
             Self::Player(rule) | Self::PlayerOrCreature { player: rule, .. } => Some(rule),
             Self::Creature(_) | Self::GraveyardCard(_) => None,
+            Self::StackSpell => None,
         }
     }
 
@@ -482,6 +491,7 @@ impl SingleTargetRule {
         match self {
             Self::Creature(rule) | Self::PlayerOrCreature { creature: rule, .. } => Some(rule),
             Self::Player(_) | Self::GraveyardCard(_) => None,
+            Self::StackSpell => None,
         }
     }
 
@@ -489,7 +499,7 @@ impl SingleTargetRule {
     pub const fn graveyard_card_rule(self) -> Option<GraveyardCardTargetRule> {
         match self {
             Self::GraveyardCard(rule) => Some(rule),
-            Self::Player(_) | Self::Creature(_) | Self::PlayerOrCreature { .. } => None,
+            Self::Player(_) | Self::Creature(_) | Self::PlayerOrCreature { .. } | Self::StackSpell => None,
         }
     }
 
@@ -500,6 +510,7 @@ impl SingleTargetRule {
                 Some(rule.allows(target_is_actor))
             }
             Self::Creature(_) | Self::GraveyardCard(_) => None,
+            Self::StackSpell => None,
         }
     }
 
@@ -518,7 +529,7 @@ impl SingleTargetRule {
                     target_is_blocking,
                 ))
             }
-            Self::Player(_) | Self::GraveyardCard(_) => None,
+            Self::Player(_) | Self::GraveyardCard(_) | Self::StackSpell => None,
         }
     }
 
@@ -526,7 +537,18 @@ impl SingleTargetRule {
     pub const fn allows_graveyard_card_target(self) -> Option<bool> {
         match self {
             Self::GraveyardCard(rule) => Some(rule.allows()),
-            Self::Player(_) | Self::Creature(_) | Self::PlayerOrCreature { .. } => None,
+            Self::Player(_) | Self::Creature(_) | Self::PlayerOrCreature { .. } | Self::StackSpell => None,
+        }
+    }
+
+    #[must_use]
+    pub const fn allows_stack_spell_target(self) -> Option<bool> {
+        match self {
+            Self::StackSpell => Some(true),
+            Self::Player(_)
+            | Self::Creature(_)
+            | Self::GraveyardCard(_)
+            | Self::PlayerOrCreature { .. } => None,
         }
     }
 }
@@ -558,6 +580,7 @@ pub enum SpellResolutionProfile {
     DealDamage { damage: u32 },
     GainLife { amount: u32 },
     LoseLife { amount: u32 },
+    CounterTargetSpell,
     DestroyTargetCreature,
     ExileTargetCreature,
     ExileTargetCardFromGraveyard,
@@ -702,6 +725,14 @@ impl SupportedSpellRules {
                 SingleTargetRule::any_creature_on_battlefield(),
             ),
             resolution: SpellResolutionProfile::DestroyTargetCreature,
+        }
+    }
+
+    #[must_use]
+    pub const fn counter_target_spell() -> Self {
+        Self {
+            targeting: SpellTargetingProfile::ExactlyOne(SingleTargetRule::any_spell_on_the_stack()),
+            resolution: SpellResolutionProfile::CounterTargetSpell,
         }
     }
 

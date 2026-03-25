@@ -5,8 +5,9 @@
 use {
     crate::support::{
         advance_to_first_main_satisfying_cleanup, advance_to_player_first_main_satisfying_cleanup,
-        advance_turn_raw, close_empty_priority_window, creature_card, filled_library, land_card,
-        setup_two_player_game, targeted_attacking_creature_damage_instant_card,
+        advance_turn_raw, close_empty_priority_window, counter_target_spell_instant_card,
+        creature_card, filled_library, land_card, setup_two_player_game,
+        targeted_attacking_creature_damage_instant_card,
         targeted_controlled_creature_damage_instant_card, targeted_damage_instant_card,
         targeted_destroy_creature_instant_card, targeted_exile_creature_instant_card,
         targeted_exile_graveyard_card_instant_card, targeted_gain_life_instant_card,
@@ -36,6 +37,19 @@ fn resolve_current_stack(
     let second_holder = game.priority().unwrap().current_holder().clone();
     service
         .pass_priority(game, demonictutor::PassPriorityCommand::new(second_holder))
+        .unwrap()
+}
+
+fn pass_priority_once(
+    service: &demonictutor::GameService<
+        demonictutor::InMemoryEventStore,
+        demonictutor::InMemoryEventBus,
+    >,
+    game: &mut demonictutor::Game,
+) -> demonictutor::PassPriorityOutcome {
+    let holder = game.priority().unwrap().current_holder().clone();
+    service
+        .pass_priority(game, demonictutor::PassPriorityCommand::new(holder))
         .unwrap()
 }
 
@@ -100,6 +114,157 @@ fn targeted_instant_rejects_unknown_player_target_when_cast() {
         Err(DomainError::Game(GameError::InvalidPlayerTarget(player_id)))
             if player_id == PlayerId::new("missing-player")
     ));
+}
+
+#[test]
+fn counterspell_counters_target_spell_on_the_stack() {
+    let (service, mut game) = setup_two_player_game(
+        "game-counterspell-resolve",
+        filled_library(
+            vec![
+                counter_target_spell_instant_card("cancel-lite", 0),
+                counter_target_spell_instant_card("cancel-lite", 0),
+                counter_target_spell_instant_card("cancel-lite", 0),
+                counter_target_spell_instant_card("cancel-lite", 0),
+                counter_target_spell_instant_card("cancel-lite", 0),
+                counter_target_spell_instant_card("cancel-lite", 0),
+                counter_target_spell_instant_card("cancel-lite", 0),
+            ],
+            10,
+        ),
+        filled_library(vec![targeted_damage_instant_card("shock", 0, 2)], 10),
+    );
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-2");
+
+    let shock_id = CardInstanceId::new("game-counterspell-resolve-player-2-0");
+    let shock_outcome = service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-2"), shock_id.clone())
+                .with_target(SpellTarget::Player(PlayerId::new("player-1"))),
+        )
+        .unwrap();
+    let _ = pass_priority_once(&service, &mut game);
+
+    let cancel_id = game.players()[0].hand_card_ids()[0].clone();
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), cancel_id)
+                .with_target(SpellTarget::StackObject(
+                    shock_outcome.spell_put_on_stack.stack_object_id.clone(),
+                )),
+        )
+        .unwrap();
+
+    let resolution = resolve_current_stack(&service, &mut game);
+    assert!(matches!(
+        resolution.spell_cast.as_ref().unwrap().outcome,
+        SpellCastOutcome::ResolvedToGraveyard
+    ));
+    assert_eq!(game.players()[0].life(), 20);
+    assert_eq!(game.stack().len(), 0);
+    assert!(game.players()[1].graveyard_card(&shock_id).is_some());
+}
+
+#[test]
+fn counterspell_rejects_non_stack_targets_when_cast() {
+    let (service, mut game) = setup_two_player_game(
+        "game-counterspell-illegal-target",
+        filled_library(
+            vec![
+                counter_target_spell_instant_card("cancel-lite", 0),
+                counter_target_spell_instant_card("cancel-lite", 0),
+                counter_target_spell_instant_card("cancel-lite", 0),
+                counter_target_spell_instant_card("cancel-lite", 0),
+                counter_target_spell_instant_card("cancel-lite", 0),
+                counter_target_spell_instant_card("cancel-lite", 0),
+                counter_target_spell_instant_card("cancel-lite", 0),
+            ],
+            10,
+        ),
+        filled_library(vec![land_card("mountain")], 10),
+    );
+
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
+
+    let cancel_id = game.players()[0].hand_card_ids()[0].clone();
+    let result = service.cast_spell(
+        &mut game,
+        CastSpellCommand::new(PlayerId::new("player-1"), cancel_id)
+            .with_target(SpellTarget::Player(PlayerId::new("player-2"))),
+    );
+
+    assert!(matches!(
+        result,
+        Err(DomainError::Game(GameError::IllegalSpellTarget(card_id)))
+            if card_id == CardInstanceId::new("game-counterspell-illegal-target-player-1-0")
+    ));
+}
+
+#[test]
+fn lower_counterspell_does_nothing_if_target_spell_is_already_gone() {
+    let (service, mut game) = setup_two_player_game(
+        "game-counterspell-target-gone",
+        filled_library(
+            vec![
+                counter_target_spell_instant_card("cancel-a", 0),
+                counter_target_spell_instant_card("cancel-b", 0),
+                counter_target_spell_instant_card("cancel-c", 0),
+                counter_target_spell_instant_card("cancel-d", 0),
+                counter_target_spell_instant_card("cancel-e", 0),
+                counter_target_spell_instant_card("cancel-f", 0),
+                counter_target_spell_instant_card("cancel-g", 0),
+            ],
+            10,
+        ),
+        filled_library(vec![targeted_damage_instant_card("shock", 0, 2)], 10),
+    );
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-2");
+
+    let shock_id = CardInstanceId::new("game-counterspell-target-gone-player-2-0");
+    let shock_outcome = service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-2"), shock_id.clone())
+                .with_target(SpellTarget::Player(PlayerId::new("player-1"))),
+        )
+        .unwrap();
+    let _ = pass_priority_once(&service, &mut game);
+
+    let cancel_a_id = game.players()[0].hand_card_ids()[0].clone();
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), cancel_a_id).with_target(
+                SpellTarget::StackObject(shock_outcome.spell_put_on_stack.stack_object_id.clone()),
+            ),
+        )
+        .unwrap();
+
+    let cancel_b_id = game.players()[0].hand_card_ids()[0].clone();
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), cancel_b_id).with_target(
+                SpellTarget::StackObject(shock_outcome.spell_put_on_stack.stack_object_id.clone()),
+            ),
+        )
+        .unwrap();
+
+    let first_resolution = resolve_current_stack(&service, &mut game);
+    assert!(game.players()[1].graveyard_card(&shock_id).is_some());
+    assert_eq!(game.stack().len(), 1);
+    assert!(first_resolution.life_changed.is_none());
+
+    let second_resolution = pass_priority_once(&service, &mut game);
+    assert!(second_resolution.priority_still_open);
+    let third_resolution = pass_priority_once(&service, &mut game);
+    assert!(third_resolution.life_changed.is_none());
+    assert_eq!(game.players()[0].life(), 20);
+    assert_eq!(game.stack().len(), 0);
 }
 
 #[test]

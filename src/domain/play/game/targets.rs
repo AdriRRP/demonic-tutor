@@ -2,7 +2,7 @@
 
 use crate::domain::play::{
     cards::SpellTargetKind,
-    ids::{CardInstanceId, PlayerId},
+    ids::{CardInstanceId, PlayerId, StackObjectId},
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -10,6 +10,7 @@ pub enum SpellTarget {
     Player(PlayerId),
     Creature(CardInstanceId),
     GraveyardCard(CardInstanceId),
+    StackObject(StackObjectId),
 }
 
 impl SpellTarget {
@@ -19,6 +20,7 @@ impl SpellTarget {
             Self::Player(_) => SpellTargetKind::Player,
             Self::Creature(_) => SpellTargetKind::Creature,
             Self::GraveyardCard(_) => SpellTargetKind::GraveyardCard,
+            Self::StackObject(_) => SpellTargetKind::StackSpell,
         }
     }
 }

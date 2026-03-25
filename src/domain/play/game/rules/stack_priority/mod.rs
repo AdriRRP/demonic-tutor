@@ -15,7 +15,7 @@ use crate::domain::play::{
         ActivatedAbilityPutOnStack, CardExiled, CreatureDied, GameEnded, LifeChanged,
         PriorityPassed, SpellCast, SpellPutOnStack, StackTopResolved,
     },
-    ids::{GameId, PlayerId},
+    ids::{CardInstanceId, GameId, PlayerId},
     phase::Phase,
 };
 
@@ -52,6 +52,7 @@ pub struct PassPriorityOutcome {
     pub card_exiled: Option<CardExiled>,
     pub life_changed: Option<LifeChanged>,
     pub creatures_died: Vec<CreatureDied>,
+    pub moved_cards: Vec<CardInstanceId>,
     pub game_ended: Option<GameEnded>,
     pub priority_still_open: bool,
 }

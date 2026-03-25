@@ -39,6 +39,7 @@ pub enum StackTargetRef {
     Player(usize),
     Creature(StackCardRef),
     GraveyardCard(StackCardRef),
+    StackSpell(u32),
 }
 
 impl StackTargetRef {
@@ -48,6 +49,7 @@ impl StackTargetRef {
             Self::Player(_) => SpellTargetKind::Player,
             Self::Creature(_) => SpellTargetKind::Creature,
             Self::GraveyardCard(_) => SpellTargetKind::GraveyardCard,
+            Self::StackSpell(_) => SpellTargetKind::StackSpell,
         }
     }
 }
@@ -105,6 +107,16 @@ impl StackZone {
 
     pub fn pop(&mut self) -> Option<StackObject> {
         self.objects.pop()
+    }
+
+    #[must_use]
+    pub fn object(&self, number: u32) -> Option<&StackObject> {
+        self.objects.iter().find(|object| object.number() == number)
+    }
+
+    pub fn remove_by_number(&mut self, number: u32) -> Option<StackObject> {
+        let position = self.objects.iter().position(|object| object.number() == number)?;
+        Some(self.objects.remove(position))
     }
 }
 

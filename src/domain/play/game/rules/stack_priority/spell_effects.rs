@@ -2,8 +2,8 @@
 
 use crate::domain::play::{
     cards::{CardInstance, SpellTargetingProfile, SupportedSpellRules},
-    game::{helpers, AggregateCardLocationIndex, Player, SpellTarget},
-    ids::{CardInstanceId, PlayerId},
+    game::{helpers, model::StackZone, AggregateCardLocationIndex, Player, SpellTarget},
+    ids::{CardInstanceId, PlayerId, StackObjectId},
 };
 
 #[must_use]
@@ -20,6 +20,7 @@ pub enum SpellTargetLegality {
     MissingPlayer(PlayerId),
     MissingCreature(CardInstanceId),
     MissingGraveyardCard(CardInstanceId),
+    MissingStackSpell(StackObjectId),
     Legal,
 }
 
@@ -28,11 +29,13 @@ pub enum TargetLegalityContext<'a> {
     Cast {
         players: &'a [Player],
         card_locations: &'a AggregateCardLocationIndex,
+        stack: &'a StackZone,
         actor_index: usize,
     },
     Resolution {
         players: &'a [Player],
         card_locations: &'a AggregateCardLocationIndex,
+        stack: &'a StackZone,
         actor_index: usize,
     },
 }
@@ -51,6 +54,13 @@ impl<'a> TargetLegalityContext<'a> {
             Self::Cast { card_locations, .. } | Self::Resolution { card_locations, .. } => {
                 card_locations
             }
+        }
+    }
+
+    #[must_use]
+    pub const fn stack(self) -> &'a StackZone {
+        match self {
+            Self::Cast { stack, .. } | Self::Resolution { stack, .. } => stack,
         }
     }
 
@@ -81,6 +91,7 @@ enum ResolvedTarget {
         is_blocking: bool,
     },
     GraveyardCard,
+    StackSpell,
 }
 
 fn resolve_target(
@@ -90,6 +101,7 @@ fn resolve_target(
 ) -> Result<ResolvedTarget, SpellTargetLegality> {
     let players = context.players();
     let card_locations = context.card_locations();
+    let stack = context.stack();
     let actor_index = context.actor_index();
 
     if !accepts_target(targeting, target) {
@@ -128,6 +140,22 @@ fn resolve_target(
 
             Ok(ResolvedTarget::GraveyardCard)
         }
+        SpellTarget::StackObject(stack_object_id) => {
+            let Some(object_number) = stack_object_id.object_number() else {
+                return Err(SpellTargetLegality::MissingStackSpell(stack_object_id.clone()));
+            };
+            let Some(stack_object) = stack.object(object_number) else {
+                return Err(SpellTargetLegality::MissingStackSpell(stack_object_id.clone()));
+            };
+            if !matches!(
+                stack_object.kind(),
+                crate::domain::play::game::model::StackObjectKind::Spell(_)
+            ) {
+                return Err(SpellTargetLegality::IllegalTargetRule);
+            }
+
+            Ok(ResolvedTarget::StackSpell)
+        }
     }
 }
 
@@ -158,6 +186,13 @@ const fn evaluate_resolved_target_rule(
         },
         (SpellTargetingProfile::ExactlyOne(rule), ResolvedTarget::GraveyardCard) => {
             match rule.allows_graveyard_card_target() {
+                Some(true) => SpellTargetLegality::Legal,
+                Some(false) => SpellTargetLegality::IllegalTargetRule,
+                None => SpellTargetLegality::IllegalTargetKind,
+            }
+        }
+        (SpellTargetingProfile::ExactlyOne(rule), ResolvedTarget::StackSpell) => {
+            match rule.allows_stack_spell_target() {
                 Some(true) => SpellTargetLegality::Legal,
                 Some(false) => SpellTargetLegality::IllegalTargetRule,
                 None => SpellTargetLegality::IllegalTargetKind,

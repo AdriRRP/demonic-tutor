@@ -77,6 +77,7 @@ fn require_cast_timing(
 fn validate_spell_target(
     players: &[crate::domain::play::game::Player],
     card_locations: &crate::domain::play::game::AggregateCardLocationIndex,
+    stack: &StackZone,
     caster_index: usize,
     card_id: &CardInstanceId,
     supported_spell_rules: SupportedSpellRules,
@@ -87,6 +88,7 @@ fn validate_spell_target(
         TargetLegalityContext::Cast {
             players,
             card_locations,
+            stack,
             actor_index: caster_index,
         },
         targeting,
@@ -108,6 +110,9 @@ fn validate_spell_target(
         SpellTargetLegality::MissingGraveyardCard(target_card_id) => Err(DomainError::Game(
             GameError::InvalidGraveyardCardTarget(target_card_id),
         )),
+        SpellTargetLegality::MissingStackSpell(target_stack_object_id) => Err(
+            DomainError::Game(GameError::InvalidStackObjectTarget(target_stack_object_id)),
+        ),
     }
 }
 
@@ -135,6 +140,7 @@ impl PreparedStackSpellObject {
 fn prepare_stack_target(
     players: &[crate::domain::play::game::Player],
     card_locations: &crate::domain::play::game::AggregateCardLocationIndex,
+    _stack: &StackZone,
     target: Option<&SpellTarget>,
 ) -> Result<Option<StackTargetRef>, DomainError> {
     match target {
@@ -164,6 +170,13 @@ fn prepare_stack_target(
                 location.handle(),
             ))))
         }
+        Some(SpellTarget::StackObject(stack_object_id)) => Ok(Some(StackTargetRef::StackSpell(
+            stack_object_id.object_number().ok_or_else(|| {
+                DomainError::Game(GameError::InternalInvariantViolation(format!(
+                    "invalid stack object target identifier {stack_object_id}"
+                )))
+            })?,
+        ))),
     }
 }
 
@@ -266,6 +279,7 @@ pub fn cast_spell(
     validate_spell_target(
         players,
         card_locations,
+        stack,
         player_idx,
         &card_id,
         supported_spell_rules,
@@ -295,7 +309,7 @@ pub fn cast_spell(
                 }))
             }
         };
-    let prepared_stack_target = prepare_stack_target(players, card_locations, target.as_ref())?;
+    let prepared_stack_target = prepare_stack_target(players, card_locations, stack, target.as_ref())?;
     let prepared_stack_spell =
         prepare_stack_spell_object(prepared_cast, card_type, mana_cost, prepared_stack_target);
 

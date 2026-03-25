@@ -159,4 +159,20 @@ impl Game {
         self.card_locations
             .upsert(card_id.clone(), owner_index, handle, zone);
     }
+
+    fn sync_card_location_from_any_player(&mut self, card_id: &CardInstanceId) {
+        for (owner_index, player) in self.players.iter().enumerate() {
+            let Some(handle) = player.resolve_public_card_handle(card_id) else {
+                continue;
+            };
+            let Some(zone) = player.card_zone(card_id) else {
+                continue;
+            };
+            self.card_locations
+                .upsert(card_id.clone(), owner_index, handle, zone);
+            return;
+        }
+
+        self.card_locations.remove(card_id);
+    }
 }

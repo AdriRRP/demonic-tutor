@@ -103,6 +103,9 @@ impl Game {
                     super::helpers::find_player_index(&self.players, &creature_died.player_id)?;
                 self.sync_card_location_from_player(owner_index, &creature_died.card_id);
             }
+            for card_id in &outcome.moved_cards {
+                self.sync_card_location_from_any_player(card_id);
+            }
         }
         result
     }

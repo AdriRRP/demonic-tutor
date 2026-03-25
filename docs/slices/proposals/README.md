@@ -10,7 +10,6 @@ The next release plan is organized as **functional waves** aimed at making the e
 
 Highest-return interactive spell families that unlock much more realistic gameplay:
 
-- `counter-target-spell.md`
 - `return-target-permanent-to-hand.md`
 - `destroy-target-artifact-or-enchantment.md`
 - `discard-target-player-card.md`
@@ -59,4 +58,3 @@ This ordering aims for:
 - more real deck interaction
 - more cards behaving like cards instead of vanilla runtime carriers
 - better approximation of the rules players expect first
-

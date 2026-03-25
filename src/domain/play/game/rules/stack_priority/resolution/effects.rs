@@ -2,7 +2,7 @@
 
 use {
     super::super::super::{
-        super::{helpers, AggregateCardLocationIndex, Player, TerminalState},
+        super::{helpers, model::StackZone, AggregateCardLocationIndex, Player, TerminalState},
         state_based_actions::{self, StateBasedActionsResult},
     },
     super::super::spell_effects::{
@@ -21,6 +21,7 @@ type SpellResolutionSideEffects = (
     Option<CardExiled>,
     Option<LifeChanged>,
     Vec<CreatureDied>,
+    Vec<CardInstanceId>,
     Option<GameEnded>,
 );
 
@@ -29,6 +30,7 @@ struct ResolutionContext<'a> {
     players: &'a mut [Player],
     card_locations: &'a AggregateCardLocationIndex,
     terminal_state: &'a mut TerminalState,
+    stack: &'a mut StackZone,
     controller_index: usize,
     supported_spell_rules: SupportedSpellRules,
     target: Option<&'a SpellTarget>,
@@ -118,12 +120,13 @@ fn review_state_based_actions(
         creatures_died,
         game_ended,
     } = state_based_actions::check_state_based_actions(game_id, players, terminal_state)?;
-    Ok((None, None, creatures_died, game_ended))
+    Ok((None, None, creatures_died, Vec::new(), game_ended))
 }
 
 fn resolve_target_legality_for_effect(
     players: &[Player],
     card_locations: &AggregateCardLocationIndex,
+    stack: &StackZone,
     controller_index: usize,
     supported_spell_rules: SupportedSpellRules,
     target: Option<&SpellTarget>,
@@ -133,6 +136,7 @@ fn resolve_target_legality_for_effect(
         TargetLegalityContext::Resolution {
             players,
             card_locations,
+            stack,
             actor_index: controller_index,
         },
         supported_spell_rules.targeting(),
@@ -159,7 +163,8 @@ fn resolve_target_legality_for_effect(
             | SpellTargetLegality::IllegalTargetRule
             | SpellTargetLegality::MissingPlayer(_)
             | SpellTargetLegality::MissingCreature(_)
-            | SpellTargetLegality::MissingGraveyardCard(_),
+            | SpellTargetLegality::MissingGraveyardCard(_)
+            | SpellTargetLegality::MissingStackSpell(_),
             _,
         ) => Ok(None),
     }
@@ -172,13 +177,14 @@ fn review_state_based_actions_after_effect(
     card_exiled: Option<CardExiled>,
     life_changed: Option<LifeChanged>,
     mut creatures_died: Vec<CreatureDied>,
+    moved_cards: Vec<CardInstanceId>,
 ) -> Result<SpellResolutionSideEffects, DomainError> {
     let StateBasedActionsResult {
         creatures_died: sba_creatures_died,
         game_ended,
     } = state_based_actions::check_state_based_actions(game_id, players, terminal_state)?;
     creatures_died.extend(sba_creatures_died);
-    Ok((card_exiled, life_changed, creatures_died, game_ended))
+    Ok((card_exiled, life_changed, creatures_died, moved_cards, game_ended))
 }
 
 fn resolve_exile_target_creature_effect(
@@ -193,6 +199,7 @@ fn resolve_exile_target_creature_effect(
     let Some(target) = resolve_target_legality_for_effect(
         players,
         card_locations,
+        &StackZone::empty(),
         controller_index,
         supported_spell_rules,
         target,
@@ -206,7 +213,9 @@ fn resolve_exile_target_creature_effect(
         SpellTarget::Creature(card_id) => {
             exile_creature_from_battlefield(game_id, players, card_locations, &card_id)
         }
-        SpellTarget::Player(_) | SpellTarget::GraveyardCard(_) => None,
+        SpellTarget::Player(_) | SpellTarget::GraveyardCard(_) | SpellTarget::StackObject(_) => {
+            None
+        }
     };
 
     review_state_based_actions_after_effect(
@@ -215,6 +224,7 @@ fn resolve_exile_target_creature_effect(
         terminal_state,
         card_exiled,
         None,
+        Vec::new(),
         Vec::new(),
     )
 }
@@ -231,6 +241,7 @@ fn resolve_exile_target_graveyard_card_effect(
     let Some(target) = resolve_target_legality_for_effect(
         players,
         card_locations,
+        &StackZone::empty(),
         controller_index,
         supported_spell_rules,
         target,
@@ -244,7 +255,7 @@ fn resolve_exile_target_graveyard_card_effect(
         SpellTarget::GraveyardCard(card_id) => {
             exile_card_from_graveyard(game_id, players, card_locations, &card_id)
         }
-        SpellTarget::Player(_) | SpellTarget::Creature(_) => None,
+        SpellTarget::Player(_) | SpellTarget::Creature(_) | SpellTarget::StackObject(_) => None,
     };
 
     review_state_based_actions_after_effect(
@@ -253,6 +264,7 @@ fn resolve_exile_target_graveyard_card_effect(
         terminal_state,
         card_exiled,
         None,
+        Vec::new(),
         Vec::new(),
     )
 }
@@ -264,6 +276,7 @@ fn resolve_pump_target_creature_effect(
     let Some(target) = resolve_target_legality_for_effect(
         context.players,
         context.card_locations,
+        context.stack,
         context.controller_index,
         context.supported_spell_rules,
         context.target,
@@ -294,6 +307,7 @@ fn resolve_pump_target_creature_effect(
         None,
         None,
         Vec::new(),
+        Vec::new(),
     )
 }
 
@@ -305,6 +319,7 @@ fn resolve_targeted_player_life_effect(
     let Some(target) = resolve_target_legality_for_effect(
         context.players,
         context.card_locations,
+        context.stack,
         context.controller_index,
         context.supported_spell_rules,
         context.target,
@@ -330,7 +345,9 @@ fn resolve_targeted_player_life_effect(
                 )?,
             )
         }
-        SpellTarget::Creature(_) | SpellTarget::GraveyardCard(_) => None,
+        SpellTarget::Creature(_) | SpellTarget::GraveyardCard(_) | SpellTarget::StackObject(_) => {
+            None
+        }
     };
 
     review_state_based_actions_after_effect(
@@ -339,6 +356,7 @@ fn resolve_targeted_player_life_effect(
         context.terminal_state,
         None,
         life_changed,
+        Vec::new(),
         Vec::new(),
     )
 }
@@ -350,6 +368,7 @@ fn resolve_damage_effect(
     let Some(target) = resolve_target_legality_for_effect(
         context.players,
         context.card_locations,
+        context.stack,
         context.controller_index,
         context.supported_spell_rules,
         context.target,
@@ -379,7 +398,7 @@ fn resolve_damage_effect(
             apply_damage_to_creature(context.players, context.card_locations, &card_id, damage);
             None
         }
-        SpellTarget::GraveyardCard(_) => None,
+        SpellTarget::GraveyardCard(_) | SpellTarget::StackObject(_) => None,
     };
 
     review_state_based_actions_after_effect(
@@ -388,6 +407,7 @@ fn resolve_damage_effect(
         context.terminal_state,
         None,
         life_changed,
+        Vec::new(),
         Vec::new(),
     )
 }
@@ -398,6 +418,7 @@ fn resolve_destroy_target_creature_effect(
     let Some(target) = resolve_target_legality_for_effect(
         context.players,
         context.card_locations,
+        context.stack,
         context.controller_index,
         context.supported_spell_rules,
         context.target,
@@ -430,6 +451,68 @@ fn resolve_destroy_target_creature_effect(
         None,
         None,
         creatures_died,
+        Vec::new(),
+    )
+}
+
+fn resolve_counter_target_spell_effect(
+    context: &mut ResolutionContext<'_>,
+) -> Result<SpellResolutionSideEffects, DomainError> {
+    let Some(target) = resolve_target_legality_for_effect(
+        context.players,
+        context.card_locations,
+        context.stack,
+        context.controller_index,
+        context.supported_spell_rules,
+        context.target,
+        "counter spell resolved without a targeting profile",
+    )?
+    else {
+        return review_state_based_actions(
+            context.game_id,
+            context.players,
+            context.terminal_state,
+        );
+    };
+
+    let mut moved_cards = Vec::new();
+    if let SpellTarget::StackObject(stack_object_id) = target {
+        let object_number = stack_object_id.object_number().ok_or_else(|| {
+            DomainError::Game(GameError::InternalInvariantViolation(format!(
+                "counter target lost stack object number for {stack_object_id}"
+            )))
+        })?;
+
+        if let Some(countered_object) = context.stack.remove_by_number(object_number) {
+            let countered_controller_index = countered_object.controller_index();
+            let crate::domain::play::game::model::StackObjectKind::Spell(countered_spell) =
+                countered_object.into_kind()
+            else {
+                return Err(DomainError::Game(GameError::InternalInvariantViolation(
+                    "counter target must remove a spell stack object".to_string(),
+                )));
+            };
+
+            let payload = countered_spell.into_payload();
+            let countered_card_id = payload.id().clone();
+            let player = context.players.get_mut(countered_controller_index).ok_or_else(|| {
+                DomainError::Game(GameError::InternalInvariantViolation(format!(
+                    "missing countered spell controller at player index {countered_controller_index}"
+                )))
+            })?;
+            player.receive_graveyard_card(payload.into_card_instance());
+            moved_cards.push(countered_card_id);
+        }
+    }
+
+    review_state_based_actions_after_effect(
+        context.game_id,
+        context.players,
+        context.terminal_state,
+        None,
+        None,
+        Vec::new(),
+        moved_cards,
     )
 }
 
@@ -438,6 +521,7 @@ pub(super) fn apply_supported_spell_rules(
     players: &mut [Player],
     card_locations: &AggregateCardLocationIndex,
     terminal_state: &mut TerminalState,
+    stack: &mut StackZone,
     controller_index: usize,
     supported_spell_rules: SupportedSpellRules,
     target: Option<&SpellTarget>,
@@ -452,6 +536,7 @@ pub(super) fn apply_supported_spell_rules(
                 players,
                 card_locations,
                 terminal_state,
+                stack,
                 controller_index,
                 supported_spell_rules,
                 target,
@@ -464,6 +549,7 @@ pub(super) fn apply_supported_spell_rules(
                 players,
                 card_locations,
                 terminal_state,
+                stack,
                 controller_index,
                 supported_spell_rules,
                 target,
@@ -480,6 +566,7 @@ pub(super) fn apply_supported_spell_rules(
                 players,
                 card_locations,
                 terminal_state,
+                stack,
                 controller_index,
                 supported_spell_rules,
                 target,
@@ -490,12 +577,26 @@ pub(super) fn apply_supported_spell_rules(
                 "lose-life spell resolved without a targeting profile",
             )
         }
+        SpellResolutionProfile::CounterTargetSpell => {
+            let mut context = ResolutionContext {
+                game_id,
+                players,
+                card_locations,
+                terminal_state,
+                stack,
+                controller_index,
+                supported_spell_rules,
+                target,
+            };
+            resolve_counter_target_spell_effect(&mut context)
+        }
         SpellResolutionProfile::DestroyTargetCreature => {
             let mut context = ResolutionContext {
                 game_id,
                 players,
                 card_locations,
                 terminal_state,
+                stack,
                 controller_index,
                 supported_spell_rules,
                 target,
@@ -528,6 +629,7 @@ pub(super) fn apply_supported_spell_rules(
                 players,
                 card_locations,
                 terminal_state,
+                stack,
                 controller_index,
                 supported_spell_rules,
                 target,

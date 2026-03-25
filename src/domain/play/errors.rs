@@ -2,7 +2,7 @@
 
 use crate::domain::play::{
     cards::{CastingPermissionProfile, CastingRule},
-    ids::{CardInstanceId, PlayerId},
+    ids::{CardInstanceId, PlayerId, StackObjectId},
     phase::Phase,
 };
 
@@ -56,6 +56,7 @@ pub enum GameError {
     InvalidPlayerTarget(PlayerId),
     InvalidCreatureTarget(CardInstanceId),
     InvalidGraveyardCardTarget(CardInstanceId),
+    InvalidStackObjectTarget(StackObjectId),
     NoAttackersDeclared,
     MulliganAlreadyUsed(PlayerId),
     HandSizeLimitExceeded {
@@ -213,6 +214,9 @@ impl std::fmt::Display for GameError {
             }
             Self::InvalidGraveyardCardTarget(card_id) => {
                 write!(f, "graveyard card target {card_id} is not in a graveyard")
+            }
+            Self::InvalidStackObjectTarget(stack_object_id) => {
+                write!(f, "stack target {stack_object_id} is not a spell currently on the stack")
             }
             Self::NoAttackersDeclared => write!(f, "no attackers have been declared"),
             Self::MulliganAlreadyUsed(pid) => {
