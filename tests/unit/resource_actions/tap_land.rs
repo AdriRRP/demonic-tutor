@@ -413,7 +413,7 @@ fn tapping_a_land_for_mana_does_not_use_the_stack_or_change_priority() {
         .unwrap();
 
     assert_eq!(game.stack().len(), 1);
-    assert_eq!(game.stack().top().unwrap().source_card_id(), &alice_spell);
+    assert_eq!(game.stack().top().unwrap().source_card_id(), alice_spell);
     assert_eq!(
         game.priority().unwrap().current_holder(),
         &PlayerId::new("player-2")
@@ -427,7 +427,7 @@ fn tapping_a_land_for_mana_does_not_use_the_stack_or_change_priority() {
         .unwrap();
 
     assert_eq!(game.stack().len(), 1);
-    assert_eq!(game.stack().top().unwrap().source_card_id(), &alice_spell);
+    assert_eq!(game.stack().top().unwrap().source_card_id(), alice_spell);
     assert_eq!(
         game.priority().unwrap().current_holder(),
         &PlayerId::new("player-2")

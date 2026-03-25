@@ -146,6 +146,7 @@ impl NumericCoreId {
 struct IdInterner {
     next: u64,
     by_public: HashMap<SharedIdStr, NumericCoreId>,
+    by_core: HashMap<NumericCoreId, SharedIdStr>,
 }
 
 impl IdInterner {
@@ -157,7 +158,12 @@ impl IdInterner {
         self.next += 1;
         let core = NumericCoreId::new(self.next);
         self.by_public.insert(public.clone(), core);
+        self.by_core.insert(core, public.clone());
         core
+    }
+
+    fn public_for_core(&self, core: NumericCoreId) -> Option<SharedIdStr> {
+        self.by_core.get(&core).cloned()
     }
 }
 
@@ -172,6 +178,14 @@ fn intern_numeric_core(public: &SharedIdStr) -> NumericCoreId {
         Err(poisoned) => poisoned.into_inner(),
     };
     interner.intern(public)
+}
+
+fn public_for_numeric_core(core: NumericCoreId) -> Option<SharedIdStr> {
+    let interner = match shared_interner().lock() {
+        Ok(guard) => guard,
+        Err(poisoned) => poisoned.into_inner(),
+    };
+    interner.public_for_core(core)
 }
 
 macro_rules! dual_layer_id {
@@ -275,6 +289,18 @@ dual_layer_id!(PlayerId, display);
 dual_layer_id!(DeckId);
 dual_layer_id!(CardInstanceId, display);
 dual_layer_id!(CardDefinitionId, display);
+
+impl CardInstanceId {
+    pub(crate) const fn core_u64(&self) -> u64 {
+        self.core.0
+    }
+
+    pub(crate) fn from_core_u64(core: u64) -> Option<Self> {
+        let core = NumericCoreId::new(core);
+        let public = public_for_numeric_core(core)?;
+        Some(Self { core, public })
+    }
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct PlayerCardHandle(usize);

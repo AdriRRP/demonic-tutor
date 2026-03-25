@@ -62,7 +62,7 @@ fn responding_player_can_cast_a_second_instant_before_passing_at_beginning_of_co
     assert_eq!(game.stack().len(), 2);
     assert_eq!(
         game.stack().top().unwrap().source_card_id(),
-        &CardInstanceId::new("game-respond-second-beginning-combat-player-2-1")
+        CardInstanceId::new("game-respond-second-beginning-combat-player-2-1")
     );
     assert_eq!(
         game.priority().unwrap().current_holder(),

@@ -196,7 +196,7 @@ fn opponent_can_cast_an_instant_response_after_the_caster_passes_priority() {
         CardInstanceId::new("game-respond-instant-player-2-0")
     );
     assert_eq!(game.stack().len(), 1);
-    assert_eq!(game.stack().top().unwrap().source_card_id(), &alice_spell);
+    assert_eq!(game.stack().top().unwrap().source_card_id(), alice_spell);
     assert_eq!(
         game.priority().unwrap().current_holder(),
         &PlayerId::new("player-1")

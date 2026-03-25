@@ -86,7 +86,7 @@ fn active_player_can_cast_a_second_instant_before_passing_after_combat_damage() 
     assert_eq!(game.stack().len(), 2);
     assert_eq!(
         game.stack().top().unwrap().source_card_id(),
-        &CardInstanceId::new("game-second-after-combat-damage-player-1-2")
+        CardInstanceId::new("game-second-after-combat-damage-player-1-2")
     );
     assert_eq!(
         game.priority().unwrap().current_holder(),

@@ -136,9 +136,9 @@ impl StackObject {
     }
 
     #[must_use]
-    pub const fn source_card_id(&self) -> &CardInstanceId {
+    pub fn source_card_id(&self) -> CardInstanceId {
         match &self.kind {
-            StackObjectKind::Spell(spell) => spell.source_card_id(),
+            StackObjectKind::Spell(spell) => spell.source_card_id().clone(),
             StackObjectKind::ActivatedAbility(ability) => ability.source_card_id(),
         }
     }
@@ -170,7 +170,7 @@ pub struct SpellOnStack {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ActivatedAbilityOnStack {
     source_card_ref: StackCardRef,
-    public_source_card_id: CardInstanceId,
+    source_card_core: u64,
     ability: ActivatedAbilityProfile,
 }
 
@@ -178,12 +178,12 @@ impl ActivatedAbilityOnStack {
     #[must_use]
     pub const fn new(
         source_card_ref: StackCardRef,
-        public_source_card_id: CardInstanceId,
+        source_card_core: u64,
         ability: ActivatedAbilityProfile,
     ) -> Self {
         Self {
             source_card_ref,
-            public_source_card_id,
+            source_card_core,
             ability,
         }
     }
@@ -194,8 +194,10 @@ impl ActivatedAbilityOnStack {
     }
 
     #[must_use]
-    pub const fn source_card_id(&self) -> &CardInstanceId {
-        &self.public_source_card_id
+    pub fn source_card_id(&self) -> CardInstanceId {
+        CardInstanceId::from_core_u64(self.source_card_core).unwrap_or_else(|| {
+            CardInstanceId::new(format!("missing-card-core-{}", self.source_card_core))
+        })
     }
 
     #[must_use]

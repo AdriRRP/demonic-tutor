@@ -94,7 +94,7 @@ fn alices_original_spell_remains_on_the_stack(world: &mut GameplayWorld) {
             .top()
             .expect("stack should contain original spell")
             .source_card_id(),
-        tracked_card_id
+        tracked_card_id.clone()
     );
 }
 

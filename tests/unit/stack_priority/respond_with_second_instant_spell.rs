@@ -70,9 +70,9 @@ fn responding_player_can_cast_a_second_instant_before_passing_on_existing_stack(
         .unwrap();
 
     assert_eq!(game.stack().len(), 3);
-    assert_eq!(game.stack().objects()[0].source_card_id(), &alice_spell);
-    assert_eq!(game.stack().objects()[1].source_card_id(), &bob_first);
-    assert_eq!(game.stack().objects()[2].source_card_id(), &bob_second);
+    assert_eq!(game.stack().objects()[0].source_card_id(), alice_spell);
+    assert_eq!(game.stack().objects()[1].source_card_id(), bob_first);
+    assert_eq!(game.stack().objects()[2].source_card_id(), bob_second);
     assert_eq!(
         game.priority().unwrap().current_holder(),
         &PlayerId::new("player-2")
@@ -95,8 +95,8 @@ fn responding_player_can_cast_a_second_instant_before_passing_on_existing_stack(
     let spell_cast = top_resolution.spell_cast.unwrap();
     assert_eq!(spell_cast.card_id, bob_second);
     assert_eq!(game.stack().len(), 2);
-    assert_eq!(game.stack().objects()[0].source_card_id(), &alice_spell);
-    assert_eq!(game.stack().objects()[1].source_card_id(), &bob_first);
+    assert_eq!(game.stack().objects()[0].source_card_id(), alice_spell);
+    assert_eq!(game.stack().objects()[1].source_card_id(), bob_first);
     assert_eq!(
         game.priority().unwrap().current_holder(),
         &PlayerId::new("player-1")

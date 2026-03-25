@@ -54,7 +54,7 @@ fn active_player_can_cast_a_second_instant_before_passing_in_end_step() {
     assert_eq!(game.stack().len(), 2);
     assert_eq!(
         game.stack().top().unwrap().source_card_id(),
-        &CardInstanceId::new("game-second-end-step-instant-player-1-1")
+        CardInstanceId::new("game-second-end-step-instant-player-1-1")
     );
     assert_eq!(
         game.priority().unwrap().current_holder(),

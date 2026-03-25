@@ -118,7 +118,7 @@ fn the_stack_contains_alices_original_spell_below_two_spells_controlled_by_bob(
     assert_eq!(world.game().stack().len(), 3);
     assert_eq!(
         world.game().stack().objects()[0].source_card_id(),
-        original_spell
+        original_spell.clone()
     );
     assert_eq!(world.game().stack().objects()[1].controller_index(), 1);
     assert_eq!(world.game().stack().objects()[2].controller_index(), 1);
@@ -138,7 +138,7 @@ fn bobs_original_response_remains_on_the_stack(world: &mut GameplayWorld) {
             .top()
             .expect("stack should contain original response")
             .source_card_id(),
-        tracked_card_id
+        tracked_card_id.clone()
     );
 }
 
@@ -157,10 +157,10 @@ fn bobs_original_response_remains_on_the_stack_above_alices_original_spell(
     assert_eq!(world.game().stack().len(), 2);
     assert_eq!(
         world.game().stack().objects()[0].source_card_id(),
-        original_spell
+        original_spell.clone()
     );
     assert_eq!(
         world.game().stack().objects()[1].source_card_id(),
-        original_response
+        original_response.clone()
     );
 }

@@ -76,7 +76,7 @@ pub fn activate_ability(
         player_index,
         StackObjectKind::ActivatedAbility(ActivatedAbilityOnStack::new(
             StackCardRef::new(player_index, source_card_handle),
-            source_card_id.clone(),
+            source_card_id.core_u64(),
             ability,
         )),
     ));
