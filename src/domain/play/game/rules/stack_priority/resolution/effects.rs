@@ -106,10 +106,13 @@ fn destroy_creature(
     if target.card().has_indestructible() {
         return None;
     }
-    let owner_index = target.owner_index();
-    let owner_id = players[owner_index].id().clone();
     let handle = card_locations.location(target_id)?.handle();
-    players[owner_index].move_battlefield_handle_to_graveyard(handle)?;
+    let (owner_id, _) = zones::move_battlefield_handle_to_owner_graveyard_by_index(
+        players,
+        target.owner_index(),
+        handle,
+    )
+    .ok()?;
     Some(CreatureDied::new(
         game_id.clone(),
         owner_id,
@@ -124,7 +127,12 @@ fn return_permanent_to_owners_hand(
 ) -> Option<CardInstanceId> {
     let location = card_locations.location(target_id)?;
     (location.zone() == crate::domain::play::game::PlayerCardZone::Battlefield).then_some(())?;
-    players[location.owner_index()].move_battlefield_handle_to_hand(location.handle())?;
+    zones::move_battlefield_handle_to_owner_hand_by_index(
+        players,
+        location.owner_index(),
+        location.handle(),
+    )
+    .ok()?;
     Some(target_id.clone())
 }
 
@@ -168,7 +176,12 @@ fn destroy_noncreature_permanent(
 ) -> Option<CardInstanceId> {
     let location = card_locations.location(target_id)?;
     (location.zone() == crate::domain::play::game::PlayerCardZone::Battlefield).then_some(())?;
-    players[location.owner_index()].move_battlefield_handle_to_graveyard(location.handle())?;
+    zones::move_battlefield_handle_to_owner_graveyard_by_index(
+        players,
+        location.owner_index(),
+        location.handle(),
+    )
+    .ok()?;
     Some(target_id.clone())
 }
 
@@ -1071,5 +1084,44 @@ pub(super) fn apply_supported_spell_rules(
         SpellResolutionProfile::PumpTargetCreatureUntilEndOfTurn { power, toughness } => {
             resolve_pump_target_creature_effect(&mut context, (power, toughness))
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #![allow(clippy::expect_used)]
+
+    use super::*;
+    use crate::domain::play::{
+        cards::{CardInstance, CardType},
+        game::AggregateCardLocationIndex,
+        ids::{CardDefinitionId, CardInstanceId, PlayerId},
+    };
+
+    #[test]
+    fn bounce_returns_foreign_owned_permanent_to_owners_hand() {
+        let mut players = vec![
+            Player::new(PlayerId::new("p1")),
+            Player::new(PlayerId::new("p2")),
+        ];
+        let card_id = CardInstanceId::new("borrowed-relic");
+
+        players[1].receive_graveyard_card(CardInstance::new(
+            card_id.clone(),
+            CardDefinitionId::new("borrowed-relic"),
+            CardType::Artifact,
+            0,
+        ));
+        let card = players[1]
+            .remove_graveyard_card(&card_id)
+            .expect("owner graveyard should contain the card");
+        players[0].receive_battlefield_card(card);
+        let card_locations = AggregateCardLocationIndex::from_players(&players);
+
+        let moved = return_permanent_to_owners_hand(&mut players, &card_locations, &card_id);
+
+        assert_eq!(moved, Some(card_id.clone()));
+        assert!(players[0].battlefield_card(&card_id).is_none());
+        assert!(players[1].hand_card(&card_id).is_some());
     }
 }

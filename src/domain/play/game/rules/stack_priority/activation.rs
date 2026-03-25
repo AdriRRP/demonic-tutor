@@ -14,6 +14,7 @@ use {
                 ActivatedAbilityOnStack, PriorityState, StackCardRef, StackObject, StackObjectKind,
                 StackTargetRef,
             },
+            rules::zones,
         },
         ids::CardInstanceId,
     },
@@ -181,21 +182,14 @@ fn pay_activation_costs(
                     card: source_card_id.clone(),
                 })
             })?;
-        players[player_index]
-            .move_battlefield_handle_to_graveyard(source_handle.handle())
-            .ok_or_else(|| {
-                DomainError::Card(CardError::NotOnBattlefield {
-                    player: player_id.clone(),
-                    card: source_card_id.clone(),
-                })
-            })?;
+        let (owner_id, _) = zones::move_battlefield_handle_to_owner_graveyard_by_index(
+            players,
+            player_index,
+            source_handle.handle(),
+        )?;
         moved_cards.push(source_card_id.clone());
         if matches!(source_type, CardType::Creature) {
-            creatures_died.push(CreatureDied::new(
-                game_id.clone(),
-                player_id,
-                source_card_id,
-            ));
+            creatures_died.push(CreatureDied::new(game_id.clone(), owner_id, source_card_id));
         }
     }
 

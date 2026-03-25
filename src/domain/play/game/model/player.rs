@@ -318,6 +318,13 @@ impl Player {
         self.cards.remove_by_handle(handle)
     }
 
+    pub(crate) fn take_battlefield_handle(
+        &mut self,
+        handle: PlayerCardHandle,
+    ) -> Option<CardInstance> {
+        self.remove_battlefield_handle(handle)
+    }
+
     fn remove_graveyard_handle(&mut self, handle: PlayerCardHandle) -> Option<CardInstance> {
         self.graveyard.remove(handle)?;
         self.cards.remove_by_handle(handle)
@@ -829,7 +836,8 @@ impl Player {
 
     pub fn receive_hand_cards(&mut self, cards: Vec<CardInstance>) {
         let mut handles = Vec::with_capacity(cards.len());
-        for card in cards {
+        for mut card in cards {
+            card.ensure_owner(&self.id);
             let handle = self.cards.insert(card, PlayerCardZone::Hand);
             handles.push(handle);
         }
@@ -838,24 +846,28 @@ impl Player {
 
     pub fn receive_library_cards(&mut self, cards: Vec<CardInstance>) {
         let mut handles = Vec::with_capacity(cards.len());
-        for card in cards {
+        for mut card in cards {
+            card.ensure_owner(&self.id);
             let handle = self.cards.insert(card, PlayerCardZone::Library);
             handles.push(handle);
         }
         self.library.receive(handles);
     }
 
-    pub fn receive_battlefield_card(&mut self, card: CardInstance) {
+    pub fn receive_battlefield_card(&mut self, mut card: CardInstance) {
+        card.ensure_owner(&self.id);
         let handle = self.cards.insert(card, PlayerCardZone::Battlefield);
         self.battlefield.add(handle);
     }
 
-    pub fn receive_graveyard_card(&mut self, card: CardInstance) {
+    pub fn receive_graveyard_card(&mut self, mut card: CardInstance) {
+        card.ensure_owner(&self.id);
         let handle = self.cards.insert(card, PlayerCardZone::Graveyard);
         self.graveyard.add(handle);
     }
 
-    pub fn receive_exile_card(&mut self, card: CardInstance) {
+    pub fn receive_exile_card(&mut self, mut card: CardInstance) {
+        card.ensure_owner(&self.id);
         let handle = self.cards.insert(card, PlayerCardZone::Exile);
         self.exile.add(handle);
     }

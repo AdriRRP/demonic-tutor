@@ -1,7 +1,7 @@
 //! Supports game rules state based actions.
 
 use {
-    super::super::{helpers, model::Player, TerminalState},
+    super::super::{helpers, model::Player, rules::zones, TerminalState},
     crate::domain::play::{
         events::{CreatureDied, GameEndReason, GameEnded},
         ids::GameId,
@@ -72,11 +72,11 @@ fn review_supported_creature_state_based_actions(
 ) -> StateBasedActionCheckResult {
     let mut creatures_died = Vec::new();
 
-    for player in players.iter_mut() {
-        let doomed_handles = player
+    for player_index in 0..players.len() {
+        let doomed_handles = players[player_index]
             .battlefield_handles()
             .filter(|handle| {
-                player
+                players[player_index]
                     .battlefield_card_by_handle(*handle)
                     .is_some_and(|card| {
                         card.has_zero_toughness()
@@ -86,18 +86,14 @@ fn review_supported_creature_state_based_actions(
             .collect::<Vec<_>>();
 
         for handle in doomed_handles {
-            let Some(card_id) = player.card_by_handle(handle).map(|card| card.id().clone()) else {
-                continue;
-            };
-            if player
-                .move_battlefield_handle_to_graveyard(handle)
-                .is_some()
+            if let Ok((owner_id, card_id)) =
+                zones::move_battlefield_handle_to_owner_graveyard_by_index(
+                    players,
+                    player_index,
+                    handle,
+                )
             {
-                creatures_died.push(CreatureDied::new(
-                    game_id.clone(),
-                    player.id().clone(),
-                    card_id,
-                ));
+                creatures_died.push(CreatureDied::new(game_id.clone(), owner_id, card_id));
             }
         }
     }
@@ -160,4 +156,47 @@ pub fn check_state_based_actions(
         total_creatures_died,
         final_game_ended,
     ))
+}
+
+#[cfg(test)]
+mod tests {
+    #![allow(clippy::expect_used, clippy::unwrap_used)]
+
+    use super::*;
+    use crate::domain::play::{
+        cards::CardInstance,
+        ids::{CardDefinitionId, CardInstanceId, PlayerId},
+    };
+
+    #[test]
+    fn lethal_damage_moves_foreign_owned_creature_to_owners_graveyard() {
+        let game_id = GameId::new("game-owner-sba");
+        let mut players = vec![
+            Player::new(PlayerId::new("p1")),
+            Player::new(PlayerId::new("p2")),
+        ];
+        let mut terminal_state = TerminalState::default();
+        let card_id = CardInstanceId::new("borrowed-bear");
+
+        players[1].receive_graveyard_card(CardInstance::new_creature(
+            card_id.clone(),
+            CardDefinitionId::new("borrowed-bear"),
+            0,
+            2,
+            2,
+        ));
+        let mut card = players[1]
+            .remove_graveyard_card(&card_id)
+            .expect("owner graveyard should contain the card");
+        card.add_damage(2);
+        players[0].receive_battlefield_card(card);
+
+        let result =
+            check_state_based_actions(&game_id, &mut players, &mut terminal_state).unwrap();
+
+        assert_eq!(result.creatures_died.len(), 1);
+        assert_eq!(result.creatures_died[0].player_id, PlayerId::new("p2"));
+        assert!(players[0].battlefield_card(&card_id).is_none());
+        assert!(players[1].graveyard_card(&card_id).is_some());
+    }
 }
