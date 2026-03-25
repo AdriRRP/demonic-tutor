@@ -20,6 +20,18 @@ pub struct CardDefinition {
     triggered_ability: Option<TriggeredAbilityProfile>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CardDefinitionParts {
+    pub id: CardDefinitionId,
+    pub card_type: CardType,
+    pub mana_cost: ManaCost,
+    pub casting_permission: Option<CastingPermissionProfile>,
+    pub supported_spell_rules: SupportedSpellRules,
+    pub activated_mana_ability: Option<ActivatedManaAbilityProfile>,
+    pub activated_ability: Option<ActivatedAbilityProfile>,
+    pub triggered_ability: Option<TriggeredAbilityProfile>,
+}
+
 impl CardDefinition {
     #[must_use]
     pub const fn for_card_type(id: CardDefinitionId, mana_cost: u32, card_type: &CardType) -> Self {
@@ -102,25 +114,16 @@ impl CardDefinition {
     }
 
     #[must_use]
-    pub const fn from_parts(
-        id: CardDefinitionId,
-        card_type: CardType,
-        mana_cost: ManaCost,
-        casting_permission: Option<CastingPermissionProfile>,
-        supported_spell_rules: SupportedSpellRules,
-        activated_mana_ability: Option<ActivatedManaAbilityProfile>,
-        activated_ability: Option<ActivatedAbilityProfile>,
-        triggered_ability: Option<TriggeredAbilityProfile>,
-    ) -> Self {
+    pub fn from_parts(parts: CardDefinitionParts) -> Self {
         Self {
-            id,
-            card_type,
-            mana_cost,
-            casting_permission,
-            supported_spell_rules,
-            activated_mana_ability,
-            activated_ability,
-            triggered_ability,
+            id: parts.id,
+            card_type: parts.card_type,
+            mana_cost: parts.mana_cost,
+            casting_permission: parts.casting_permission,
+            supported_spell_rules: parts.supported_spell_rules,
+            activated_mana_ability: parts.activated_mana_ability,
+            activated_ability: parts.activated_ability,
+            triggered_ability: parts.triggered_ability,
         }
     }
 

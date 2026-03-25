@@ -33,7 +33,10 @@ fn resolve_current_stack(
 fn permanent_entry_enqueues_supported_etb_trigger_on_the_stack() {
     let (service, mut game) = setup_two_player_game(
         "game-etb-trigger",
-        filled_library(vec![etb_life_gain_creature_card("healer-cub", 0, 2, 2, 2)], 10),
+        filled_library(
+            vec![etb_life_gain_creature_card("healer-cub", 0, 2, 2, 2)],
+            10,
+        ),
         filled_library(Vec::new(), 10),
     );
     advance_to_first_main_satisfying_cleanup(&service, &mut game);
@@ -70,7 +73,10 @@ fn permanent_entry_enqueues_supported_etb_trigger_on_the_stack() {
 fn etb_trigger_resolves_through_the_existing_stack_corridor() {
     let (service, mut game) = setup_two_player_game(
         "game-etb-trigger-resolve",
-        filled_library(vec![etb_life_gain_creature_card("healer-cub", 0, 2, 2, 2)], 10),
+        filled_library(
+            vec![etb_life_gain_creature_card("healer-cub", 0, 2, 2, 2)],
+            10,
+        ),
         filled_library(Vec::new(), 10),
     );
     advance_to_first_main_satisfying_cleanup(&service, &mut game);
@@ -83,7 +89,7 @@ fn etb_trigger_resolves_through_the_existing_stack_corridor() {
     service
         .cast_spell(
             &mut game,
-            CastSpellCommand::new(PlayerId::new("player-1"), creature_id.clone()),
+            CastSpellCommand::new(PlayerId::new("player-1"), creature_id),
         )
         .unwrap();
     resolve_current_stack(&service, &mut game);

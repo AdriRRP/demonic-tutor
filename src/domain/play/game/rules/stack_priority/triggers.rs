@@ -5,9 +5,7 @@ use crate::domain::play::{
     errors::{DomainError, GameError},
     events::TriggeredAbilityPutOnStack,
     game::{
-        model::{
-            StackCardRef, StackObject, StackObjectKind, StackZone, TriggeredAbilityOnStack,
-        },
+        model::{StackCardRef, StackObject, StackObjectKind, StackZone, TriggeredAbilityOnStack},
         Player,
     },
     ids::{GameId, PlayerCardHandle},
@@ -57,7 +55,7 @@ fn enqueue_trigger_from_handle(
     )))
 }
 
-pub(crate) fn enqueue_trigger_for_card_handle(
+pub fn enqueue_trigger_for_card_handle(
     game_id: &GameId,
     players: &[Player],
     controller_index: usize,
@@ -77,7 +75,7 @@ pub(crate) fn enqueue_trigger_for_card_handle(
     .collect())
 }
 
-pub(crate) fn enqueue_battlefield_step_triggers(
+pub fn enqueue_battlefield_step_triggers(
     game_id: &GameId,
     players: &[Player],
     controller_index: usize,

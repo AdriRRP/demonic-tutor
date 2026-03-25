@@ -295,8 +295,9 @@ pub fn dies_life_gain_creature_card(
     toughness: u32,
     amount: u32,
 ) -> LibraryCard {
-    creature_card(name, mana_cost, power, toughness)
-        .with_triggered_ability(TriggeredAbilityProfile::dies_gain_life_to_controller(amount))
+    creature_card(name, mana_cost, power, toughness).with_triggered_ability(
+        TriggeredAbilityProfile::dies_gain_life_to_controller(amount),
+    )
 }
 
 pub fn upkeep_life_gain_artifact_card(name: &str, mana_cost: u32, amount: u32) -> LibraryCard {

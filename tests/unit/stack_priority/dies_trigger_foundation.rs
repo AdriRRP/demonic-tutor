@@ -5,8 +5,8 @@
 
 use {
     crate::support::{
-        advance_to_first_main_satisfying_cleanup, dies_life_gain_creature_card,
-        filled_library, player, setup_two_player_game, targeted_destroy_creature_instant_card,
+        advance_to_first_main_satisfying_cleanup, dies_life_gain_creature_card, filled_library,
+        player, setup_two_player_game, targeted_destroy_creature_instant_card,
         targeted_exile_creature_instant_card,
     },
     demonictutor::{

@@ -36,7 +36,10 @@ fn resolve_current_stack(
 fn entering_end_step_enqueues_supported_end_step_triggers_before_cleanup() {
     let (service, mut game) = setup_two_player_game(
         "game-end-step-trigger",
-        filled_library(vec![end_step_life_gain_artifact_card("twilight-idol", 0, 1)], 10),
+        filled_library(
+            vec![end_step_life_gain_artifact_card("twilight-idol", 0, 1)],
+            10,
+        ),
         filled_library(Vec::new(), 10),
     );
     advance_to_first_main_satisfying_cleanup(&service, &mut game);
@@ -60,10 +63,16 @@ fn entering_end_step_enqueues_supported_end_step_triggers_before_cleanup() {
         demonictutor::Phase::SecondMain,
     );
     service
-        .pass_priority(&mut game, PassPriorityCommand::new(PlayerId::new("player-1")))
+        .pass_priority(
+            &mut game,
+            PassPriorityCommand::new(PlayerId::new("player-1")),
+        )
         .unwrap();
     service
-        .pass_priority(&mut game, PassPriorityCommand::new(PlayerId::new("player-2")))
+        .pass_priority(
+            &mut game,
+            PassPriorityCommand::new(PlayerId::new("player-2")),
+        )
         .unwrap();
     let outcome = service
         .advance_turn(&mut game, AdvanceTurnCommand::new())
@@ -90,7 +99,10 @@ fn entering_end_step_enqueues_supported_end_step_triggers_before_cleanup() {
 fn end_step_trigger_resolves_before_cleanup_only_follow_up() {
     let (service, mut game) = setup_two_player_game(
         "game-end-step-trigger-resolve",
-        filled_library(vec![end_step_life_gain_artifact_card("twilight-idol", 0, 1)], 10),
+        filled_library(
+            vec![end_step_life_gain_artifact_card("twilight-idol", 0, 1)],
+            10,
+        ),
         filled_library(Vec::new(), 10),
     );
     advance_to_first_main_satisfying_cleanup(&service, &mut game);
@@ -114,10 +126,16 @@ fn end_step_trigger_resolves_before_cleanup_only_follow_up() {
         demonictutor::Phase::SecondMain,
     );
     service
-        .pass_priority(&mut game, PassPriorityCommand::new(PlayerId::new("player-1")))
+        .pass_priority(
+            &mut game,
+            PassPriorityCommand::new(PlayerId::new("player-1")),
+        )
         .unwrap();
     service
-        .pass_priority(&mut game, PassPriorityCommand::new(PlayerId::new("player-2")))
+        .pass_priority(
+            &mut game,
+            PassPriorityCommand::new(PlayerId::new("player-2")),
+        )
         .unwrap();
     service
         .advance_turn(&mut game, AdvanceTurnCommand::new())

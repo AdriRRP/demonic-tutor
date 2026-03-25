@@ -36,7 +36,10 @@ fn resolve_current_stack(
 fn entering_upkeep_enqueues_supported_upkeep_triggers_before_normal_play() {
     let (service, mut game) = setup_two_player_game(
         "game-upkeep-trigger",
-        filled_library(vec![upkeep_life_gain_artifact_card("sun-dial-lite", 0, 1)], 10),
+        filled_library(
+            vec![upkeep_life_gain_artifact_card("sun-dial-lite", 0, 1)],
+            10,
+        ),
         filled_library(Vec::new(), 10),
     );
     advance_to_first_main_satisfying_cleanup(&service, &mut game);
@@ -53,7 +56,12 @@ fn entering_upkeep_enqueues_supported_upkeep_triggers_before_normal_play() {
         .unwrap();
     resolve_current_stack(&service, &mut game);
 
-    advance_to_player_phase_satisfying_cleanup(&service, &mut game, "player-1", demonictutor::Phase::Untap);
+    advance_to_player_phase_satisfying_cleanup(
+        &service,
+        &mut game,
+        "player-1",
+        demonictutor::Phase::Untap,
+    );
     let outcome = service
         .advance_turn(&mut game, AdvanceTurnCommand::new())
         .unwrap();
@@ -83,7 +91,10 @@ fn entering_upkeep_enqueues_supported_upkeep_triggers_before_normal_play() {
 fn upkeep_trigger_resolves_through_stack_and_does_not_duplicate_within_same_upkeep() {
     let (service, mut game) = setup_two_player_game(
         "game-upkeep-trigger-resolve",
-        filled_library(vec![upkeep_life_gain_artifact_card("sun-dial-lite", 0, 1)], 10),
+        filled_library(
+            vec![upkeep_life_gain_artifact_card("sun-dial-lite", 0, 1)],
+            10,
+        ),
         filled_library(Vec::new(), 10),
     );
     advance_to_first_main_satisfying_cleanup(&service, &mut game);

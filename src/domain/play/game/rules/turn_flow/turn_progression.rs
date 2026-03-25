@@ -105,6 +105,40 @@ fn build_events(
     )
 }
 
+fn enqueue_phase_entry_triggers(
+    game_id: &GameId,
+    players: &[Player],
+    controller_index: usize,
+    phase: Phase,
+    stack: &mut StackZone,
+) -> Result<Vec<TriggeredAbilityPutOnStack>, DomainError> {
+    let Some(expected_event) = (match phase {
+        Phase::Upkeep => Some(crate::domain::play::cards::TriggeredAbilityEvent::BeginningOfUpkeep),
+        Phase::EndStep => {
+            Some(crate::domain::play::cards::TriggeredAbilityEvent::BeginningOfEndStep)
+        }
+        _ => None,
+    }) else {
+        return Ok(Vec::new());
+    };
+
+    crate::domain::play::game::rules::stack_priority::triggers::enqueue_battlefield_step_triggers(
+        game_id,
+        players,
+        controller_index,
+        expected_event,
+        stack,
+    )
+}
+
+fn set_priority_for_phase(priority: &mut Option<PriorityState>, phase: Phase, player: &PlayerId) {
+    *priority = if opens_priority_window(phase) {
+        Some(PriorityState::opened(player.clone()))
+    } else {
+        None
+    };
+}
+
 const fn opens_priority_window(phase: Phase) -> bool {
     matches!(
         phase,
@@ -175,22 +209,9 @@ pub fn advance_turn(
         })?;
         *phase = to_phase;
         to_phase_behavior.on_enter(players, *active_player_index)?;
-        *priority = if opens_priority_window(to_phase) {
-            Some(PriorityState::opened(active_player.clone()))
-        } else {
-            None
-        };
-        let triggered_abilities_put_on_stack = if matches!(to_phase, Phase::Upkeep) {
-            crate::domain::play::game::rules::stack_priority::triggers::enqueue_battlefield_step_triggers(
-                game_id,
-                players,
-                *active_player_index,
-                crate::domain::play::cards::TriggeredAbilityEvent::BeginningOfUpkeep,
-                stack,
-            )?
-        } else {
-            Vec::new()
-        };
+        set_priority_for_phase(priority, to_phase, active_player);
+        let triggered_abilities_put_on_stack =
+            enqueue_phase_entry_triggers(game_id, players, *active_player_index, to_phase, stack)?;
 
         let (turn_progressed, card_drawn) = build_events(
             game_id,
@@ -227,26 +248,9 @@ pub fn advance_turn(
 
     *phase = to_phase;
     to_phase_behavior.on_enter(players, *active_player_index)?;
-    *priority = if opens_priority_window(to_phase) {
-        Some(PriorityState::opened(active_player.clone()))
-    } else {
-        None
-    };
-    let triggered_abilities_put_on_stack = if matches!(to_phase, Phase::Upkeep | Phase::EndStep) {
-        crate::domain::play::game::rules::stack_priority::triggers::enqueue_battlefield_step_triggers(
-            game_id,
-            players,
-            *active_player_index,
-            if matches!(to_phase, Phase::Upkeep) {
-                crate::domain::play::cards::TriggeredAbilityEvent::BeginningOfUpkeep
-            } else {
-                crate::domain::play::cards::TriggeredAbilityEvent::BeginningOfEndStep
-            },
-            stack,
-        )?
-    } else {
-        Vec::new()
-    };
+    set_priority_for_phase(priority, to_phase, active_player);
+    let triggered_abilities_put_on_stack =
+        enqueue_phase_entry_triggers(game_id, players, *active_player_index, to_phase, stack)?;
 
     let (turn_progressed, card_drawn) = build_events(
         game_id,

@@ -8,7 +8,7 @@ mod discard_for_cleanup;
 mod draw_card;
 #[path = "end_step_trigger_foundation.rs"]
 mod end_step_trigger_foundation;
-#[path = "upkeep_trigger_foundation.rs"]
-mod upkeep_trigger_foundation;
 #[path = "turn_number.rs"]
 mod turn_number;
+#[path = "upkeep_trigger_foundation.rs"]
+mod upkeep_trigger_foundation;
