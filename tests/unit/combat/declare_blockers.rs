@@ -163,7 +163,7 @@ fn declare_blockers_fails_when_the_same_blocker_is_assigned_more_than_once() {
 }
 
 #[test]
-fn declare_blockers_fails_when_multiple_blockers_target_the_same_attacker() {
+fn declare_blockers_allows_multiple_blockers_against_the_same_attacker_in_declared_order() {
     let (service, mut game) = setup_two_player_game(
         "game-1",
         filled_library(
@@ -210,25 +210,31 @@ fn declare_blockers_fails_when_multiple_blockers_target_the_same_attacker() {
         .unwrap();
     close_empty_priority_window(&service, &mut game);
 
-    let error = service
+    let event = service
         .declare_blockers(
             &mut game,
             DeclareBlockersCommand::new(
                 PlayerId::new("player-2"),
                 vec![
-                    (left_blocker_id, attacker_id.clone()),
-                    (right_blocker_id, attacker_id.clone()),
+                    (left_blocker_id.clone(), attacker_id.clone()),
+                    (right_blocker_id.clone(), attacker_id.clone()),
                 ],
             ),
         )
-        .unwrap_err();
+        .expect("multiple blockers should now be supported");
 
     assert_eq!(
-        error,
-        DomainError::Game(GameError::MultipleBlockersPerAttackerNotSupported(
-            attacker_id
-        ))
+        event.assignments,
+        vec![
+            (left_blocker_id.clone(), attacker_id.clone()),
+            (right_blocker_id.clone(), attacker_id.clone()),
+        ]
     );
+
+    let attacker = game.players()[0]
+        .battlefield_card(&attacker_id)
+        .expect("attacker should remain on battlefield");
+    assert_eq!(attacker.blocked_by().len(), 2);
 }
 
 #[test]

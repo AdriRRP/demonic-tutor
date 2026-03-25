@@ -23,6 +23,7 @@ struct CreatureRuntime {
     temporary_toughness: u32,
     flags: u8,
     blocking_target: Option<PlayerCardHandle>,
+    blocked_by: Vec<PlayerCardHandle>,
     keywords: KeywordAbilitySet,
 }
 
@@ -67,6 +68,7 @@ impl CreatureRuntime {
             temporary_toughness: 0,
             flags: CREATURE_FLAG_SUMMONING_SICKNESS,
             blocking_target: None,
+            blocked_by: Vec::new(),
             keywords: KeywordAbilitySet::empty(),
         }
     }
@@ -80,6 +82,7 @@ impl CreatureRuntime {
             temporary_toughness: 0,
             flags: CREATURE_FLAG_SUMMONING_SICKNESS,
             blocking_target: None,
+            blocked_by: Vec::new(),
             keywords,
         }
     }
@@ -100,20 +103,22 @@ impl CreatureRuntime {
         self.flags &= !CREATURE_FLAG_SUMMONING_SICKNESS;
     }
 
-    const fn set_attacking(&mut self, attacking: bool) {
+    fn set_attacking(&mut self, attacking: bool) {
         if attacking {
             self.flags |= CREATURE_FLAG_ATTACKING;
         } else {
             self.flags &= !CREATURE_FLAG_ATTACKING;
+            self.blocked_by.clear();
         }
     }
 
-    const fn set_blocking(&mut self, blocking: bool) {
+    fn set_blocking(&mut self, blocking: bool) {
         if blocking {
             self.flags |= CREATURE_FLAG_BLOCKING;
         } else {
             self.flags &= !CREATURE_FLAG_BLOCKING;
             self.blocking_target = None;
+            self.blocked_by.clear();
         }
     }
 }
@@ -612,19 +617,19 @@ impl CardInstance {
         true
     }
 
-    pub const fn remove_summoning_sickness(&mut self) {
+    pub fn remove_summoning_sickness(&mut self) {
         if let CardRuntimeKind::Creature(creature) = &mut self.runtime.kind {
             creature.remove_summoning_sickness();
         }
     }
 
-    pub const fn set_attacking(&mut self, attacking: bool) {
+    pub fn set_attacking(&mut self, attacking: bool) {
         if let CardRuntimeKind::Creature(creature) = &mut self.runtime.kind {
             creature.set_attacking(attacking);
         }
     }
 
-    pub const fn set_blocking(&mut self, blocking: bool) {
+    pub fn set_blocking(&mut self, blocking: bool) {
         if let CardRuntimeKind::Creature(creature) = &mut self.runtime.kind {
             creature.set_blocking(blocking);
         }
@@ -638,10 +643,26 @@ impl CardInstance {
         }
     }
 
-    pub const fn assign_blocking_target(&mut self, attacker_handle: PlayerCardHandle) {
+    pub fn assign_blocking_target(&mut self, attacker_handle: PlayerCardHandle) {
         if let CardRuntimeKind::Creature(creature) = &mut self.runtime.kind {
             creature.set_blocking(true);
             creature.blocking_target = Some(attacker_handle);
+        }
+    }
+
+    pub fn add_blocker(&mut self, blocker_handle: PlayerCardHandle) {
+        if let CardRuntimeKind::Creature(creature) = &mut self.runtime.kind {
+            if !creature.blocked_by.contains(&blocker_handle) {
+                creature.blocked_by.push(blocker_handle);
+            }
+        }
+    }
+
+    #[must_use]
+    pub fn blocked_by(&self) -> &[PlayerCardHandle] {
+        match &self.runtime.kind {
+            CardRuntimeKind::Creature(creature) => creature.blocked_by.as_slice(),
+            CardRuntimeKind::NonCreature => &[],
         }
     }
 

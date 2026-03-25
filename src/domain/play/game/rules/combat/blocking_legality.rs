@@ -33,19 +33,12 @@ pub fn declare_blockers(
         .collect::<HashMap<_, _>>();
     let mut valid_blockers: Vec<(CardInstanceId, CardInstanceId)> = Vec::new();
     let mut seen_blockers = HashSet::new();
-    let mut seen_attackers = HashSet::new();
 
     for (blocker_id, attacker_id) in &cmd.blocker_assignments {
         if !seen_blockers.insert(blocker_id.clone()) {
             return Err(DomainError::Game(GameError::DuplicateBlockerAssignment(
                 blocker_id.clone(),
             )));
-        }
-
-        if !seen_attackers.insert(attacker_id.clone()) {
-            return Err(DomainError::Game(
-                GameError::MultipleBlockersPerAttackerNotSupported(attacker_id.clone()),
-            ));
         }
 
         let Some(attacker_requires_aerial_blocking) = declared_attackers.get(attacker_id) else {
@@ -63,43 +56,108 @@ pub fn declare_blockers(
                     card: attacker_id.clone(),
                 })
             })?;
-
-        let card = players[defending_player_idx]
-            .battlefield_card_mut(blocker_id)
-            .ok_or_else(|| {
-                DomainError::Card(CardError::NotOnBattlefield {
-                    player: cmd.player_id.clone(),
-                    card: blocker_id.clone(),
-                })
-            })?;
-
-        if !matches!(card.card_type(), CardType::Creature) {
-            return Err(DomainError::Card(CardError::NotACreature(
-                blocker_id.clone(),
-            )));
-        }
-
-        if card.is_tapped() {
-            return Err(DomainError::Card(CardError::AlreadyTapped {
+        let blocker_handle = players[defending_player_idx]
+            .battlefield_handle(blocker_id)
+            .ok_or_else(|| DomainError::Card(CardError::NotOnBattlefield {
                 player: cmd.player_id.clone(),
                 card: blocker_id.clone(),
-            }));
-        }
+            }))?;
 
-        if !capabilities::can_block_attacker_with_aerial_requirement(
-            card,
-            *attacker_requires_aerial_blocking,
-        ) {
-            return Err(DomainError::Card(
-                CardError::CannotBlockFlyingWithoutFlyingOrReach {
+        if attacker_player_idx < defending_player_idx {
+            let (left, right) = players.split_at_mut(defending_player_idx);
+            let attacker_player = &mut left[attacker_player_idx];
+            let defending_player = &mut right[0];
+            let card = defending_player
+                .battlefield_card_mut(blocker_id)
+                .ok_or_else(|| DomainError::Card(CardError::NotOnBattlefield {
                     player: cmd.player_id.clone(),
-                    blocker: blocker_id.clone(),
-                    attacker: attacker_id.clone(),
-                },
-            ));
-        }
+                    card: blocker_id.clone(),
+                }))?;
 
-        card.assign_blocking_target(attacker_handle);
+            if !matches!(card.card_type(), CardType::Creature) {
+                return Err(DomainError::Card(CardError::NotACreature(
+                    blocker_id.clone(),
+                )));
+            }
+
+            if card.is_tapped() {
+                return Err(DomainError::Card(CardError::AlreadyTapped {
+                    player: cmd.player_id.clone(),
+                    card: blocker_id.clone(),
+                }));
+            }
+
+            if !capabilities::can_block_attacker_with_aerial_requirement(
+                card,
+                *attacker_requires_aerial_blocking,
+            ) {
+                return Err(DomainError::Card(
+                    CardError::CannotBlockFlyingWithoutFlyingOrReach {
+                        player: cmd.player_id.clone(),
+                        blocker: blocker_id.clone(),
+                        attacker: attacker_id.clone(),
+                    },
+                ));
+            }
+
+            card.assign_blocking_target(attacker_handle);
+            attacker_player
+                .card_mut_by_handle(attacker_handle)
+                .ok_or_else(|| {
+                    DomainError::Game(GameError::InternalInvariantViolation(
+                        "declared blocker points to an attacker handle missing from battlefield"
+                            .to_string(),
+                    ))
+                })?
+                .add_blocker(blocker_handle);
+        } else {
+            let (left, right) = players.split_at_mut(attacker_player_idx);
+            let defending_player = &mut left[defending_player_idx];
+            let attacker_player = &mut right[0];
+            let card = defending_player
+                .battlefield_card_mut(blocker_id)
+                .ok_or_else(|| DomainError::Card(CardError::NotOnBattlefield {
+                    player: cmd.player_id.clone(),
+                    card: blocker_id.clone(),
+                }))?;
+
+            if !matches!(card.card_type(), CardType::Creature) {
+                return Err(DomainError::Card(CardError::NotACreature(
+                    blocker_id.clone(),
+                )));
+            }
+
+            if card.is_tapped() {
+                return Err(DomainError::Card(CardError::AlreadyTapped {
+                    player: cmd.player_id.clone(),
+                    card: blocker_id.clone(),
+                }));
+            }
+
+            if !capabilities::can_block_attacker_with_aerial_requirement(
+                card,
+                *attacker_requires_aerial_blocking,
+            ) {
+                return Err(DomainError::Card(
+                    CardError::CannotBlockFlyingWithoutFlyingOrReach {
+                        player: cmd.player_id.clone(),
+                        blocker: blocker_id.clone(),
+                        attacker: attacker_id.clone(),
+                    },
+                ));
+            }
+
+            card.assign_blocking_target(attacker_handle);
+            attacker_player
+                .card_mut_by_handle(attacker_handle)
+                .ok_or_else(|| {
+                    DomainError::Game(GameError::InternalInvariantViolation(
+                        "declared blocker points to an attacker handle missing from battlefield"
+                            .to_string(),
+                    ))
+                })?
+                .add_blocker(blocker_handle);
+        }
         valid_blockers.push((blocker_id.clone(), attacker_id.clone()));
     }
 

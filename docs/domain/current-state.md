@@ -39,7 +39,7 @@ Implemented capabilities include:
 - summoning sickness for creatures (removed for the active player's battlefield at turn start)
 - declaring attackers in `DeclareAttackers`
 - declaring blockers in `DeclareBlockers`
-- blocking currently supports at most one blocker per attacking creature
+- blocking now supports multiple blockers per attacking creature in declared order
 - opening priority windows across `Upkeep`, `Draw`, `FirstMain`, `BeginningOfCombat`, `EndOfCombat`, `SecondMain`, and `EndStep`
 - opening a priority window when entering `BeginningOfCombat`
 - opening priority windows after attackers and blockers are declared
@@ -88,7 +88,7 @@ The domain currently includes:
 - creature cards with power and toughness
 - creature spells entering the battlefield through `CastSpell`
 - creature damage tracking during combat
-- single-blocker combat assignments for each attacking creature
+- ordered blocker groups per attacking creature
 - player life changes from combat damage
 - automatic destruction of creatures with lethal marked damage
 - automatic destruction of creatures with 0 toughness after creature-spell resolution
@@ -237,7 +237,7 @@ These matrices compress the stable supported subset without implying broader Mag
   - `CombatDamage`
   - `EndOfCombat`
 - supported invariants:
-  - at most one blocker per attacker
+  - one blocker still blocks at most one attacker in the current subset
   - combat damage reopens priority into `EndOfCombat` if the game remains active
   - shared SBA review covers `0 toughness`, lethal marked damage, and `0 life`
 - supported combat keywords:

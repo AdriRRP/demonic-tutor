@@ -14,7 +14,6 @@ Highest-return interactive spell families that unlock much more realistic gamepl
 
 Combat upgrades with large gameplay payoff and good rules coverage:
 
-- `multiple-blockers-per-attacker.md`
 - `combat-damage-assignment-order.md`
 - `deathtouch-foundation.md`
 - `double-strike-foundation.md`
