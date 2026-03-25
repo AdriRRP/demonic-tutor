@@ -3,13 +3,14 @@
 #![allow(clippy::expect_used)]
 
 use crate::support::{
-    advance_to_player_first_main_satisfying_cleanup, close_empty_priority_window, create_service,
-    forest_card, player, player_deck, player_library,
+    advance_to_player_first_main_satisfying_cleanup,
+    choose_one_target_player_gain_or_lose_life_instant_card, close_empty_priority_window,
+    create_service, forest_card, player, player_deck, player_library,
     target_player_discards_chosen_card_sorcery_card, targeted_opponent_damage_instant_card,
 };
 use demonictutor::{
     choice_requests, CardDefinitionId, DealOpeningHandsCommand, DrawCardsEffectCommand, Game,
-    GameId, Phase, PlayerId, PublicChoiceRequest, StartGameCommand,
+    GameId, Phase, PlayerId, PublicChoiceRequest, PublicModalSpellChoice, StartGameCommand,
 };
 
 fn first_main_game_with_choice_cards() -> Game {
@@ -19,6 +20,12 @@ fn first_main_game_with_choice_cards() -> Game {
             "p1",
             vec![
                 targeted_opponent_damage_instant_card("p1-bolt-opponent", 0, 2),
+                choose_one_target_player_gain_or_lose_life_instant_card(
+                    "p1-choose-one-life",
+                    0,
+                    3,
+                    2,
+                ),
                 target_player_discards_chosen_card_sorcery_card("p1-discard-choice", 0),
                 forest_card("p1-forest-a"),
                 forest_card("p1-forest-b"),
@@ -82,6 +89,29 @@ fn choice_requests_surface_target_candidates_for_supported_targeted_spells() {
                     demonictutor::PublicChoiceCandidate::Player(target_player)
                         if target_player.as_str() == "p2"
                 ))
+    )));
+}
+
+#[test]
+fn choice_requests_surface_modal_modes_for_supported_choose_one_spells() {
+    let game = first_main_game_with_choice_cards();
+    let modal_id = player(&game, "p1")
+        .hand_card_by_definition(&CardDefinitionId::new("p1-choose-one-life"))
+        .expect("modal spell should be in hand")
+        .id()
+        .clone();
+
+    let requests = choice_requests(&game);
+
+    assert!(requests.iter().any(|request| matches!(
+        request,
+        PublicChoiceRequest::SpellModalChoice { player_id, source_card_id, modes }
+            if player_id.as_str() == "p1"
+                && *source_card_id == modal_id
+                && modes == &vec![
+                    PublicModalSpellChoice::TargetPlayerGainLife,
+                    PublicModalSpellChoice::TargetPlayerLoseLife,
+                ]
     )));
 }
 

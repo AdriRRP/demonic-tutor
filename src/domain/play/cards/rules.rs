@@ -843,6 +843,7 @@ pub enum SpellResolutionProfile {
     DealDamage { damage: u32 },
     GainLife { amount: u32 },
     LoseLife { amount: u32 },
+    ChooseOneTargetPlayerGainOrLoseLife { gain_amount: u32, lose_amount: u32 },
     CreateVanillaCreatureToken { power: u32, toughness: u32 },
     PutPlusOnePlusOneCounterOnTargetCreature,
     ReturnTargetCreatureCardFromGraveyardToHand,
@@ -904,6 +905,20 @@ impl SupportedSpellRules {
         Self {
             targeting: SpellTargetingProfile::ExactlyOne(SingleTargetRule::any_player()),
             resolution: SpellResolutionProfile::LoseLife { amount },
+        }
+    }
+
+    #[must_use]
+    pub const fn choose_one_target_player_gain_or_lose_life(
+        gain_amount: u32,
+        lose_amount: u32,
+    ) -> Self {
+        Self {
+            targeting: SpellTargetingProfile::ExactlyOne(SingleTargetRule::any_player()),
+            resolution: SpellResolutionProfile::ChooseOneTargetPlayerGainOrLoseLife {
+                gain_amount,
+                lose_amount,
+            },
         }
     }
 
@@ -1138,5 +1153,18 @@ impl SupportedSpellRules {
             self.resolution,
             SpellResolutionProfile::TargetPlayerDiscardsChosenCard
         )
+    }
+
+    #[must_use]
+    pub const fn requires_explicit_modal_choice(self) -> bool {
+        matches!(
+            self.resolution,
+            SpellResolutionProfile::ChooseOneTargetPlayerGainOrLoseLife { .. }
+        )
+    }
+
+    #[must_use]
+    pub const fn requires_choice(self) -> bool {
+        self.requires_explicit_hand_card_choice() || self.requires_explicit_modal_choice()
     }
 }

@@ -5,11 +5,12 @@
 use {
     crate::support::{
         advance_to_first_main_satisfying_cleanup, advance_to_player_first_main_satisfying_cleanup,
-        advance_turn_raw, artifact_card, close_empty_priority_window,
-        counter_target_spell_instant_card, creature_card, creature_card_with_keyword,
-        destroy_target_artifact_or_enchantment_instant_card, enchantment_card, filled_library,
-        land_card, resolve_top_stack_with_passes, return_target_permanent_to_hand_instant_card,
-        setup_two_player_game, target_player_discards_chosen_card_sorcery_card,
+        advance_turn_raw, artifact_card, choose_one_target_player_gain_or_lose_life_instant_card,
+        close_empty_priority_window, counter_target_spell_instant_card, creature_card,
+        creature_card_with_keyword, destroy_target_artifact_or_enchantment_instant_card,
+        enchantment_card, filled_library, land_card, resolve_top_stack_with_passes,
+        return_target_permanent_to_hand_instant_card, setup_two_player_game,
+        target_player_discards_chosen_card_sorcery_card,
         targeted_attacking_creature_damage_instant_card,
         targeted_controlled_creature_damage_instant_card, targeted_damage_instant_card,
         targeted_destroy_creature_instant_card, targeted_exile_creature_instant_card,
@@ -20,8 +21,8 @@ use {
     },
     demonictutor::{
         CardDefinitionId, CardInstanceId, CastSpellCommand, DeclareAttackersCommand, DiscardKind,
-        DomainError, GameEndReason, GameError, KeywordAbility, LibraryCard, PlayerId,
-        ResolveCombatDamageCommand, SpellCastOutcome, SpellChoice, SpellTarget,
+        DomainError, GameEndReason, GameError, KeywordAbility, LibraryCard, ModalSpellMode,
+        PlayerId, ResolveCombatDamageCommand, SpellCastOutcome, SpellChoice, SpellTarget,
     },
 };
 
@@ -117,6 +118,112 @@ fn targeted_instant_rejects_unknown_player_target_when_cast() {
         Err(DomainError::Game(GameError::InvalidPlayerTarget(player_id)))
             if player_id == PlayerId::new("missing-player")
     ));
+}
+
+#[test]
+fn modal_choose_one_spell_requires_a_selected_mode_when_cast() {
+    let (service, mut game) = setup_two_player_game(
+        "game-modal-choice-missing",
+        filled_library(
+            vec![choose_one_target_player_gain_or_lose_life_instant_card(
+                "choice-life",
+                0,
+                3,
+                2,
+            )],
+            10,
+        ),
+        filled_library(vec![land_card("mountain")], 10),
+    );
+
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
+
+    let result = service.cast_spell(
+        &mut game,
+        CastSpellCommand::new(
+            PlayerId::new("player-1"),
+            CardInstanceId::new("game-modal-choice-missing-player-1-0"),
+        )
+        .with_target(SpellTarget::Player(PlayerId::new("player-1"))),
+    );
+
+    assert!(matches!(
+        result,
+        Err(DomainError::Game(GameError::MissingSpellChoice(card_id)))
+            if card_id == CardInstanceId::new("game-modal-choice-missing-player-1-0")
+    ));
+}
+
+#[test]
+fn modal_choose_one_spell_can_gain_life_to_the_target_player() {
+    let (service, mut game) = setup_two_player_game(
+        "game-modal-choice-gain",
+        filled_library(
+            vec![choose_one_target_player_gain_or_lose_life_instant_card(
+                "choice-life",
+                0,
+                3,
+                2,
+            )],
+            10,
+        ),
+        filled_library(vec![land_card("mountain")], 10),
+    );
+
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
+
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(
+                PlayerId::new("player-1"),
+                CardInstanceId::new("game-modal-choice-gain-player-1-0"),
+            )
+            .with_target(SpellTarget::Player(PlayerId::new("player-1")))
+            .with_choice(SpellChoice::ModalMode(ModalSpellMode::TargetPlayerGainLife)),
+        )
+        .unwrap();
+
+    let _ = resolve_current_stack(&service, &mut game);
+
+    assert_eq!(game.players()[0].life(), 23);
+    assert_eq!(game.players()[1].life(), 20);
+}
+
+#[test]
+fn modal_choose_one_spell_can_make_the_target_player_lose_life() {
+    let (service, mut game) = setup_two_player_game(
+        "game-modal-choice-lose",
+        filled_library(
+            vec![choose_one_target_player_gain_or_lose_life_instant_card(
+                "choice-life",
+                0,
+                3,
+                2,
+            )],
+            10,
+        ),
+        filled_library(vec![land_card("mountain")], 10),
+    );
+
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
+
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(
+                PlayerId::new("player-1"),
+                CardInstanceId::new("game-modal-choice-lose-player-1-0"),
+            )
+            .with_target(SpellTarget::Player(PlayerId::new("player-2")))
+            .with_choice(SpellChoice::ModalMode(ModalSpellMode::TargetPlayerLoseLife)),
+        )
+        .unwrap();
+
+    let _ = resolve_current_stack(&service, &mut game);
+
+    assert_eq!(game.players()[0].life(), 20);
+    assert_eq!(game.players()[1].life(), 18);
 }
 
 #[test]

@@ -10,6 +10,6 @@ pub use public_game::{
     choice_requests, game_view, legal_actions, PublicActivatableCard, PublicBattlefieldCardView,
     PublicCardView, PublicCastableCard, PublicChoiceCandidate, PublicChoiceRequest,
     PublicCommandRejection, PublicCommandResult, PublicCommandStatus, PublicGameCommand,
-    PublicGameView, PublicLegalAction, PublicPlayerView, PublicPriorityView, PublicStackObjectView,
-    PublicStackTargetView,
+    PublicGameView, PublicLegalAction, PublicModalSpellChoice, PublicPlayerView,
+    PublicPriorityView, PublicStackObjectView, PublicStackTargetView,
 };

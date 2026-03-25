@@ -8,8 +8,8 @@ pub use application::{
     choice_requests, game_view, legal_actions, PublicActivatableCard, PublicBattlefieldCardView,
     PublicCardView, PublicCastableCard, PublicChoiceCandidate, PublicChoiceRequest,
     PublicCommandRejection, PublicCommandResult, PublicCommandStatus, PublicGameCommand,
-    PublicGameView, PublicLegalAction, PublicPlayerView, PublicPriorityView, PublicStackObjectView,
-    PublicStackTargetView,
+    PublicGameView, PublicLegalAction, PublicModalSpellChoice, PublicPlayerView,
+    PublicPriorityView, PublicStackObjectView, PublicStackTargetView,
 };
 pub use application::{EventBus, EventStore, GameService};
 
@@ -28,8 +28,9 @@ pub use domain::play::{
         ActivateAbilityCommand, AdjustPlayerLifeEffectCommand, AdvanceTurnCommand,
         CastSpellCommand, DealOpeningHandsCommand, DeclareAttackersCommand, DeclareBlockersCommand,
         DiscardForCleanupCommand, DrawCardsEffectCommand, ExileCardCommand, LibraryCard,
-        LibraryCreature, MulliganCommand, PassPriorityCommand, PlayLandCommand, PlayerDeck,
-        PlayerLibrary, ResolveCombatDamageCommand, SpellChoice, StartGameCommand, TapLandCommand,
+        LibraryCreature, ModalSpellMode, MulliganCommand, PassPriorityCommand, PlayLandCommand,
+        PlayerDeck, PlayerLibrary, ResolveCombatDamageCommand, SpellChoice, StartGameCommand,
+        TapLandCommand,
     },
     errors::{CardError, DomainError, GameError, PhaseError, PlayerError},
     events::{

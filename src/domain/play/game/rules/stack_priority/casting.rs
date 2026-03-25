@@ -266,28 +266,36 @@ fn validate_spell_choice(
     target: Option<&SpellTarget>,
     choice: Option<&SpellChoice>,
 ) -> Result<(), DomainError> {
-    if !supported_spell_rules.requires_explicit_hand_card_choice() {
+    if supported_spell_rules.requires_explicit_hand_card_choice() {
+        let Some(SpellChoice::HandCard(chosen_card_id)) = choice else {
+            return Err(DomainError::Game(GameError::MissingSpellChoice(
+                card_id.clone(),
+            )));
+        };
+
+        let Some(SpellTarget::Player(target_player_id)) = target else {
+            return Err(DomainError::Game(GameError::InternalInvariantViolation(
+                "discard spell choice requires a player target".to_string(),
+            )));
+        };
+
+        let target_player_index = helpers::find_player_index(players, target_player_id)?;
+        let target_player = &players[target_player_index];
+        if target_player.hand_card(chosen_card_id).is_none() {
+            return Err(DomainError::Game(GameError::InvalidHandCardChoice(
+                chosen_card_id.clone(),
+            )));
+        }
+
         return Ok(());
     }
 
-    let Some(SpellChoice::HandCard(chosen_card_id)) = choice else {
-        return Err(DomainError::Game(GameError::MissingSpellChoice(
-            card_id.clone(),
-        )));
-    };
-
-    let Some(SpellTarget::Player(target_player_id)) = target else {
-        return Err(DomainError::Game(GameError::InternalInvariantViolation(
-            "discard spell choice requires a player target".to_string(),
-        )));
-    };
-
-    let target_player_index = helpers::find_player_index(players, target_player_id)?;
-    let target_player = &players[target_player_index];
-    if target_player.hand_card(chosen_card_id).is_none() {
-        return Err(DomainError::Game(GameError::InvalidHandCardChoice(
-            chosen_card_id.clone(),
-        )));
+    if supported_spell_rules.requires_explicit_modal_choice() {
+        let Some(SpellChoice::ModalMode(_)) = choice else {
+            return Err(DomainError::Game(GameError::MissingSpellChoice(
+                card_id.clone(),
+            )));
+        };
     }
 
     Ok(())
@@ -299,35 +307,46 @@ fn prepare_stack_choice(
     target: Option<&SpellTarget>,
     choice: Option<&SpellChoice>,
 ) -> Result<Option<StackSpellChoice>, DomainError> {
-    if !supported_spell_rules.requires_explicit_hand_card_choice() {
-        return Ok(None);
+    if supported_spell_rules.requires_explicit_hand_card_choice() {
+        let Some(SpellChoice::HandCard(chosen_card_id)) = choice else {
+            return Err(DomainError::Game(GameError::InternalInvariantViolation(
+                "missing hand-card spell choice during stack insertion".to_string(),
+            )));
+        };
+
+        let Some(SpellTarget::Player(target_player_id)) = target else {
+            return Err(DomainError::Game(GameError::InternalInvariantViolation(
+                "discard spell choice requires a player target during stack insertion".to_string(),
+            )));
+        };
+
+        let target_player_index = helpers::find_player_index(players, target_player_id)?;
+        let handle = players[target_player_index]
+            .resolve_public_card_handle(chosen_card_id)
+            .ok_or_else(|| {
+                DomainError::Game(GameError::InternalInvariantViolation(format!(
+                    "chosen discard card {chosen_card_id} disappeared before stack insertion"
+                )))
+            })?;
+
+        return Ok(Some(StackSpellChoice::HandCard(StackCardRef::new(
+            target_player_index,
+            handle,
+        ))));
     }
 
-    let Some(SpellChoice::HandCard(chosen_card_id)) = choice else {
-        return Err(DomainError::Game(GameError::InternalInvariantViolation(
-            "missing hand-card spell choice during stack insertion".to_string(),
-        )));
-    };
+    if supported_spell_rules.requires_explicit_modal_choice() {
+        let Some(SpellChoice::ModalMode(mode)) = choice else {
+            return Err(DomainError::Game(GameError::InternalInvariantViolation(
+                format!(
+                "missing modal spell choice during stack insertion for {supported_spell_rules:?}"
+            ),
+            )));
+        };
+        return Ok(Some(StackSpellChoice::ModalMode(*mode)));
+    }
 
-    let Some(SpellTarget::Player(target_player_id)) = target else {
-        return Err(DomainError::Game(GameError::InternalInvariantViolation(
-            "discard spell choice requires a player target during stack insertion".to_string(),
-        )));
-    };
-
-    let target_player_index = helpers::find_player_index(players, target_player_id)?;
-    let handle = players[target_player_index]
-        .resolve_public_card_handle(chosen_card_id)
-        .ok_or_else(|| {
-            DomainError::Game(GameError::InternalInvariantViolation(format!(
-                "chosen discard card {chosen_card_id} disappeared before stack insertion"
-            )))
-        })?;
-
-    Ok(Some(StackSpellChoice::HandCard(StackCardRef::new(
-        target_player_index,
-        handle,
-    ))))
+    Ok(None)
 }
 
 /// Puts a spell card from hand onto the stack and opens a priority window.

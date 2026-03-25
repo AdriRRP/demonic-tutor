@@ -10,6 +10,7 @@ use {
     },
     crate::domain::play::{
         cards::{CardInstance, SpellResolutionProfile, SupportedSpellRules},
+        commands::ModalSpellMode,
         errors::{DomainError, GameError},
         events::{CardDiscarded, CardExiled, CreatureDied, DiscardKind, GameEnded, LifeChanged},
         game::{rules::zones, SpellTarget},
@@ -191,7 +192,9 @@ fn discard_chosen_hand_card(
     target_player_index: usize,
     choice: crate::domain::play::game::model::StackSpellChoice,
 ) -> Option<(CardDiscarded, CardInstanceId)> {
-    let crate::domain::play::game::model::StackSpellChoice::HandCard(card_ref) = choice;
+    let crate::domain::play::game::model::StackSpellChoice::HandCard(card_ref) = choice else {
+        return None;
+    };
     (card_ref.owner_index() == target_player_index).then_some(())?;
     let player = players.get_mut(target_player_index)?;
     player.move_hand_handle_to_graveyard(card_ref.handle())?;
@@ -1013,6 +1016,30 @@ fn resolve_target_player_discards_chosen_card_effect(
     )
 }
 
+fn resolve_choose_one_target_player_life_effect(
+    context: &mut ResolutionContext<'_>,
+    gain_amount: u32,
+    lose_amount: u32,
+) -> Result<SpellResolutionSideEffects, DomainError> {
+    let Some(crate::domain::play::game::model::StackSpellChoice::ModalMode(mode)) = context.choice
+    else {
+        return Err(DomainError::Game(GameError::InternalInvariantViolation(
+            "modal choose-one spell resolved without a selected mode".to_string(),
+        )));
+    };
+
+    let life_delta = match mode {
+        ModalSpellMode::TargetPlayerGainLife => gain_amount.cast_signed(),
+        ModalSpellMode::TargetPlayerLoseLife => -(lose_amount).cast_signed(),
+    };
+
+    resolve_targeted_player_life_effect(
+        context,
+        life_delta,
+        "modal choose-one spell resolved without a player target",
+    )
+}
+
 pub(super) fn apply_supported_spell_rules(
     mut context: ResolutionContext<'_>,
 ) -> Result<SpellResolutionSideEffects, DomainError> {
@@ -1033,6 +1060,10 @@ pub(super) fn apply_supported_spell_rules(
             -(amount).cast_signed(),
             "lose-life spell resolved without a targeting profile",
         ),
+        SpellResolutionProfile::ChooseOneTargetPlayerGainOrLoseLife {
+            gain_amount,
+            lose_amount,
+        } => resolve_choose_one_target_player_life_effect(&mut context, gain_amount, lose_amount),
         SpellResolutionProfile::CreateVanillaCreatureToken { power, toughness } => {
             resolve_create_vanilla_creature_token_effect(&mut context, power, toughness)
         }

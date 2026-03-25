@@ -6,12 +6,10 @@ Goal:
 
 Slice count:
 
-- `4`
+- `3`
 
 Slices:
 
-- `support-modal-choose-one-spells`
-  - support explicit "choose one" card profiles with one selected mode on cast
 - `support-optional-may-triggers-and-abilities`
   - support the first explicit "you may" resolution corridor
 - `support-scry-on-explicit-card-profiles`

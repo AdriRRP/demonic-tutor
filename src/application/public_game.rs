@@ -19,7 +19,7 @@ use crate::{
         commands::{
             ActivateAbilityCommand, AdjustPlayerLifeEffectCommand, AdvanceTurnCommand,
             CastSpellCommand, DeclareAttackersCommand, DeclareBlockersCommand,
-            DiscardForCleanupCommand, DrawCardsEffectCommand, ExileCardCommand,
+            DiscardForCleanupCommand, DrawCardsEffectCommand, ExileCardCommand, ModalSpellMode,
             PassPriorityCommand, PlayLandCommand, ResolveCombatDamageCommand, TapLandCommand,
         },
         errors::{DomainError, GameError},
@@ -210,6 +210,11 @@ pub enum PublicChoiceRequest {
         source_card_id: CardInstanceId,
         hand_card_ids: Vec<CardInstanceId>,
     },
+    SpellModalChoice {
+        player_id: PlayerId,
+        source_card_id: CardInstanceId,
+        modes: Vec<PublicModalSpellChoice>,
+    },
     AbilityTarget {
         player_id: PlayerId,
         source_card_id: CardInstanceId,
@@ -219,6 +224,12 @@ pub enum PublicChoiceRequest {
         player_id: PlayerId,
         hand_card_ids: Vec<CardInstanceId>,
     },
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PublicModalSpellChoice {
+    TargetPlayerGainLife,
+    TargetPlayerLoseLife,
 }
 
 #[derive(Debug, Clone)]
@@ -416,11 +427,11 @@ pub fn choice_requests(game: &Game) -> Vec<PublicChoiceRequest> {
                             });
                         }
                         if castable.requires_choice {
-                            requests.push(PublicChoiceRequest::SpellChoice {
-                                player_id: player_id.clone(),
-                                source_card_id: castable.card_id,
-                                hand_card_ids: opponent_hand_choice_candidates(game, &player_id),
-                            });
+                            if let Some(request) =
+                                spell_choice_request(game, &player_id, &castable.card_id)
+                            {
+                                requests.push(request);
+                            }
                         }
                     }
                 }
@@ -767,10 +778,55 @@ fn castable_card(
             definition_id: card.definition_id().clone(),
             card_type: *card.card_type(),
             requires_target: rules.targeting().requires_target(),
-            requires_choice: rules.requires_explicit_hand_card_choice(),
+            requires_choice: rules.requires_choice(),
         })
     } else {
         None
+    }
+}
+
+fn spell_choice_request(
+    game: &Game,
+    player_id: &PlayerId,
+    source_card_id: &CardInstanceId,
+) -> Option<PublicChoiceRequest> {
+    let player = game
+        .players()
+        .iter()
+        .find(|player| player.id() == player_id)?;
+    let card = player
+        .hand_card(source_card_id)
+        .or_else(|| player.graveyard_card(source_card_id))?;
+    let rules = card.supported_spell_rules();
+
+    if rules.requires_explicit_hand_card_choice() {
+        return Some(PublicChoiceRequest::SpellChoice {
+            player_id: player_id.clone(),
+            source_card_id: source_card_id.clone(),
+            hand_card_ids: opponent_hand_choice_candidates(game, player_id),
+        });
+    }
+
+    if rules.requires_explicit_modal_choice() {
+        return Some(PublicChoiceRequest::SpellModalChoice {
+            player_id: player_id.clone(),
+            source_card_id: source_card_id.clone(),
+            modes: vec![
+                PublicModalSpellChoice::TargetPlayerGainLife,
+                PublicModalSpellChoice::TargetPlayerLoseLife,
+            ],
+        });
+    }
+
+    None
+}
+
+impl From<ModalSpellMode> for PublicModalSpellChoice {
+    fn from(value: ModalSpellMode) -> Self {
+        match value {
+            ModalSpellMode::TargetPlayerGainLife => Self::TargetPlayerGainLife,
+            ModalSpellMode::TargetPlayerLoseLife => Self::TargetPlayerLoseLife,
+        }
     }
 }
 

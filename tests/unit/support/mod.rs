@@ -115,6 +115,21 @@ pub fn targeted_lose_life_instant_card(name: &str, mana_cost: u32, amount: u32) 
         .with_supported_spell_rules(SupportedSpellRules::lose_life_from_player(amount))
 }
 
+pub fn choose_one_target_player_gain_or_lose_life_instant_card(
+    name: &str,
+    mana_cost: u32,
+    gain_amount: u32,
+    lose_amount: u32,
+) -> LibraryCard {
+    LibraryCard::new(CardDefinitionId::new(name), CardType::Instant, mana_cost)
+        .with_supported_spell_rules(
+            SupportedSpellRules::choose_one_target_player_gain_or_lose_life(
+                gain_amount,
+                lose_amount,
+            ),
+        )
+}
+
 pub fn create_vanilla_creature_token_sorcery_card(
     name: &str,
     mana_cost: u32,

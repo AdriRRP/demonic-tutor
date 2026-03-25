@@ -19,7 +19,7 @@ Implemented capabilities include:
 - starting a two-player game
 - projecting a stable public game snapshot for clients, including phase, priority, stack, battlefield, graveyard, exile, and hand counts
 - surfacing a public legal-action menu derived from the current supported actor and game state
-- surfacing public choice requests for target selection, explicit hand-card choice, and cleanup discard
+- surfacing public choice requests for target selection, explicit hand-card choice, bounded modal spell choice, and cleanup discard
 - returning a deterministic public command envelope with emitted events, updated snapshot, legal actions, and visible choice requests
 - dealing opening hands
 - mulligan support (London Mulligan - simplified)
@@ -143,6 +143,7 @@ The domain currently includes:
 - the current spell-effect subset also supports chosen-card discard from a targeted player's hand through an explicit target-plus-choice command corridor
 - the current temporary pump subset is also exercised in combat by casting a pump spell after blockers to change the same turn's combat outcome
 - the current player-target spell subset now also supports explicit `gain life` and explicit `lose life` as distinct effects from damage while reusing the shared life-change corridor
+- the current player-target spell subset now also supports the first explicit `choose one` corridor with a selected mode stored on stack and resolved deterministically
 - supported targeted instant damage to a player emits `LifeChanged` on resolution
 - supported targeted instant damage to a creature marks damage and then relies on shared SBA review for lethal destruction
 - supported indestructible creatures survive the current SBA lethal-damage review while still dying to zero toughness

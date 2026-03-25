@@ -5,9 +5,16 @@ use crate::domain::play::{
     ids::{CardInstanceId, PlayerId},
 };
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ModalSpellMode {
+    TargetPlayerGainLife,
+    TargetPlayerLoseLife,
+}
+
 #[derive(Debug, Clone)]
 pub enum SpellChoice {
     HandCard(CardInstanceId),
+    ModalMode(ModalSpellMode),
 }
 
 #[derive(Debug, Clone)]

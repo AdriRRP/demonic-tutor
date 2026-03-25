@@ -5,6 +5,7 @@ use crate::domain::play::{
         ActivatedAbilityEffect, ActivatedAbilityProfile, CardType, SpellPayload, SpellTargetKind,
         SupportedSpellRules, TriggeredAbilityEffect, TriggeredAbilityProfile,
     },
+    commands::ModalSpellMode,
     ids::{CardInstanceId, PlayerCardHandle},
 };
 
@@ -46,6 +47,7 @@ pub enum StackTargetRef {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum StackSpellChoice {
     HandCard(StackCardRef),
+    ModalMode(ModalSpellMode),
 }
 
 impl StackTargetRef {
