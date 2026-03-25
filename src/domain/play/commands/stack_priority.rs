@@ -59,6 +59,22 @@ impl ResolveOptionalEffectCommand {
 }
 
 #[derive(Debug, Clone)]
+pub struct ResolvePendingHandChoiceCommand {
+    pub player_id: PlayerId,
+    pub chosen_card_id: CardInstanceId,
+}
+
+impl ResolvePendingHandChoiceCommand {
+    #[must_use]
+    pub const fn new(player_id: PlayerId, chosen_card_id: CardInstanceId) -> Self {
+        Self {
+            player_id,
+            chosen_card_id,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct CastSpellCommand {
     pub player_id: PlayerId,
     pub card_id: CardInstanceId,

@@ -130,6 +130,16 @@ pub fn choose_one_target_player_gain_or_lose_life_instant_card(
         )
 }
 
+pub fn loot_sorcery_card(name: &str, mana_cost: u32, draw_count: u32) -> LibraryCard {
+    LibraryCard::new(CardDefinitionId::new(name), CardType::Sorcery, mana_cost)
+        .with_supported_spell_rules(SupportedSpellRules::loot_draw_then_discard(draw_count))
+}
+
+pub fn rummage_sorcery_card(name: &str, mana_cost: u32, draw_count: u32) -> LibraryCard {
+    LibraryCard::new(CardDefinitionId::new(name), CardType::Sorcery, mana_cost)
+        .with_supported_spell_rules(SupportedSpellRules::rummage_discard_then_draw(draw_count))
+}
+
 pub fn create_vanilla_creature_token_sorcery_card(
     name: &str,
     mana_cost: u32,

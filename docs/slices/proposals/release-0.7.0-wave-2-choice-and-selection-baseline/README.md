@@ -6,14 +6,12 @@ Goal:
 
 Slice count:
 
-- `2`
+- `1`
 
 Slices:
 
 - `support-scry-on-explicit-card-profiles`
   - support looking at top cards and choosing keep-on-top versus bottom ordering in a bounded subset
-- `support-loot-and-rummage-effects`
-  - support draw-then-discard and discard-then-draw as explicit, prompt-driven effects
 
 Why this wave has high return:
 

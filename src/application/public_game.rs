@@ -8,6 +8,7 @@ use crate::{
             stack::{
                 domain_events_for_activate_ability, domain_events_for_cast_spell,
                 domain_events_for_pass_priority, domain_events_for_resolve_optional_effect,
+                domain_events_for_resolve_pending_hand_choice,
             },
             turn_flow::{domain_events_for_advance_turn, domain_events_for_draw_cards_effect},
             GameService,
@@ -21,7 +22,7 @@ use crate::{
             CastSpellCommand, DeclareAttackersCommand, DeclareBlockersCommand,
             DiscardForCleanupCommand, DrawCardsEffectCommand, ExileCardCommand, ModalSpellMode,
             PassPriorityCommand, PlayLandCommand, ResolveCombatDamageCommand,
-            ResolveOptionalEffectCommand, TapLandCommand,
+            ResolveOptionalEffectCommand, ResolvePendingHandChoiceCommand, TapLandCommand,
         },
         errors::{DomainError, GameError},
         events::DomainEvent,
@@ -152,6 +153,9 @@ pub struct PublicBlockerOption {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PublicLegalAction {
+    ResolvePendingHandChoice {
+        player_id: PlayerId,
+    },
     ResolveOptionalEffect {
         player_id: PlayerId,
     },
@@ -204,6 +208,11 @@ pub enum PublicChoiceCandidate {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PublicChoiceRequest {
+    PendingHandChoice {
+        player_id: PlayerId,
+        source_card_id: CardInstanceId,
+        hand_card_ids: Vec<CardInstanceId>,
+    },
     OptionalEffectDecision {
         player_id: PlayerId,
         source_card_id: CardInstanceId,
@@ -263,6 +272,7 @@ pub enum PublicGameCommand {
     AdjustPlayerLifeEffect(AdjustPlayerLifeEffectCommand),
     ExileCard(ExileCardCommand),
     ResolveOptionalEffect(ResolveOptionalEffectCommand),
+    ResolvePendingHandChoice(ResolvePendingHandChoiceCommand),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -322,6 +332,14 @@ pub fn game_view(game: &Game) -> PublicGameView {
 pub fn legal_actions(game: &Game) -> Vec<PublicLegalAction> {
     if game.is_over() {
         return Vec::new();
+    }
+
+    if let Some(pending_hand_choice_effect) = game.pending_hand_choice_effect() {
+        return vec![PublicLegalAction::ResolvePendingHandChoice {
+            player_id: game.players()[pending_hand_choice_effect.controller_index()]
+                .id()
+                .clone(),
+        }];
     }
 
     if let Some(pending_optional_effect) = game.pending_optional_effect() {
@@ -427,6 +445,10 @@ pub fn legal_actions(game: &Game) -> Vec<PublicLegalAction> {
 pub fn choice_requests(game: &Game) -> Vec<PublicChoiceRequest> {
     if game.is_over() {
         return Vec::new();
+    }
+
+    if let Some(request) = pending_hand_choice_request(game) {
+        return vec![request];
     }
 
     if let Some(request) = pending_optional_effect_request(game) {
@@ -556,6 +578,9 @@ where
             PublicGameCommand::ResolveOptionalEffect(cmd) => self
                 .resolve_optional_effect(game, cmd)
                 .map(|outcome| domain_events_for_resolve_optional_effect(&outcome)),
+            PublicGameCommand::ResolvePendingHandChoice(cmd) => self
+                .resolve_pending_hand_choice(game, cmd)
+                .map(|outcome| domain_events_for_resolve_pending_hand_choice(&outcome)),
         };
 
         let status = match &result {
@@ -864,6 +889,21 @@ fn pending_optional_effect_request(game: &Game) -> Option<PublicChoiceRequest> {
             .clone(),
         source_card_id: stack_object.source_card_id(),
         options: vec![PublicBinaryChoice::Yes, PublicBinaryChoice::No],
+    })
+}
+
+fn pending_hand_choice_request(game: &Game) -> Option<PublicChoiceRequest> {
+    let pending_hand_choice = game.pending_hand_choice_effect()?;
+    let stack_object = game
+        .stack()
+        .object(pending_hand_choice.stack_object_number())?;
+
+    Some(PublicChoiceRequest::PendingHandChoice {
+        player_id: game.players()[pending_hand_choice.controller_index()]
+            .id()
+            .clone(),
+        source_card_id: stack_object.source_card_id(),
+        hand_card_ids: game.players()[pending_hand_choice.controller_index()].hand_card_ids(),
     })
 }
 

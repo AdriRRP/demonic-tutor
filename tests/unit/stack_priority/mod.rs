@@ -102,6 +102,8 @@ mod dies_trigger_foundation;
 mod enter_the_battlefield_trigger_foundation;
 #[path = "graveyard_recursion.rs"]
 mod graveyard_recursion;
+#[path = "loot_and_rummage.rs"]
+mod loot_and_rummage;
 #[path = "nonlethal_blocking_target_damage.rs"]
 mod nonlethal_blocking_target_damage;
 #[path = "nonlethal_controlled_attacking_target_damage.rs"]

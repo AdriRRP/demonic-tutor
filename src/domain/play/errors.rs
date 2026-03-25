@@ -54,6 +54,11 @@ pub enum GameError {
         current: PlayerId,
         requested: PlayerId,
     },
+    NoPendingHandChoice,
+    NotPendingHandChoiceController {
+        current: PlayerId,
+        requested: PlayerId,
+    },
     NotEnoughCardsInLibrary {
         player: PlayerId,
         available: usize,
@@ -220,6 +225,15 @@ impl std::fmt::Display for GameError {
                 write!(
                     f,
                     "not {requested}'s optional effect choice, current controller is {current}"
+                )
+            }
+            Self::NoPendingHandChoice => {
+                write!(f, "no pending hand-choice effect is currently waiting for a selection")
+            }
+            Self::NotPendingHandChoiceController { current, requested } => {
+                write!(
+                    f,
+                    "not {requested}'s pending hand choice, current controller is {current}"
                 )
             }
             Self::NotEnoughCardsInLibrary {

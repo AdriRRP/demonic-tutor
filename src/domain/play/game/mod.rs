@@ -29,7 +29,7 @@ pub use rules::{
     resource_actions::AdjustPlayerLifeEffectOutcome,
     stack_priority::{
         ActivateAbilityOutcome, CastSpellOutcome, PassPriorityOutcome,
-        ResolveOptionalEffectOutcome, StackPriorityContext,
+        ResolveOptionalEffectOutcome, ResolvePendingHandChoiceOutcome, StackPriorityContext,
     },
     turn_flow::TurnProgressionContext,
     turn_flow::{AdvanceTurnOutcome, DrawCardsEffectOutcome},
@@ -62,6 +62,49 @@ impl PendingOptionalEffect {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PendingHandChoiceKind {
+    Loot { draw_count: u32 },
+    Rummage { draw_count: u32 },
+}
+
+#[derive(Debug, Clone)]
+pub struct PendingHandChoiceEffect {
+    controller_index: usize,
+    stack_object_number: u32,
+    kind: PendingHandChoiceKind,
+}
+
+impl PendingHandChoiceEffect {
+    #[must_use]
+    pub const fn new(
+        controller_index: usize,
+        stack_object_number: u32,
+        kind: PendingHandChoiceKind,
+    ) -> Self {
+        Self {
+            controller_index,
+            stack_object_number,
+            kind,
+        }
+    }
+
+    #[must_use]
+    pub const fn controller_index(&self) -> usize {
+        self.controller_index
+    }
+
+    #[must_use]
+    pub const fn stack_object_number(&self) -> u32 {
+        self.stack_object_number
+    }
+
+    #[must_use]
+    pub const fn kind(&self) -> PendingHandChoiceKind {
+        self.kind
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Game {
     id: GameId,
@@ -74,6 +117,7 @@ pub struct Game {
     stack: StackZone,
     priority: Option<PriorityState>,
     pending_optional_effect: Option<PendingOptionalEffect>,
+    pending_hand_choice_effect: Option<PendingHandChoiceEffect>,
     terminal_state: TerminalState,
 }
 
@@ -107,6 +151,7 @@ impl Game {
             stack: StackZone::empty(),
             priority: None,
             pending_optional_effect: None,
+            pending_hand_choice_effect: None,
             terminal_state,
         })
     }
@@ -149,6 +194,11 @@ impl Game {
     #[must_use]
     pub const fn pending_optional_effect(&self) -> Option<&PendingOptionalEffect> {
         self.pending_optional_effect.as_ref()
+    }
+
+    #[must_use]
+    pub const fn pending_hand_choice_effect(&self) -> Option<&PendingHandChoiceEffect> {
+        self.pending_hand_choice_effect.as_ref()
     }
 
     #[must_use]

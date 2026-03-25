@@ -34,6 +34,24 @@ const fn stack_object_requires_optional_choice(
     }
 }
 
+const fn stack_object_pending_hand_choice_kind(
+    stack_object: &crate::domain::play::game::StackObject,
+) -> Option<crate::domain::play::game::PendingHandChoiceKind> {
+    let crate::domain::play::game::StackObjectKind::Spell(spell) = stack_object.kind() else {
+        return None;
+    };
+
+    match spell.supported_spell_rules().resolution() {
+        crate::domain::play::cards::SpellResolutionProfile::LootDrawThenDiscard { draw_count } => {
+            Some(crate::domain::play::game::PendingHandChoiceKind::Loot { draw_count })
+        }
+        crate::domain::play::cards::SpellResolutionProfile::RummageDiscardThenDraw {
+            draw_count,
+        } => Some(crate::domain::play::game::PendingHandChoiceKind::Rummage { draw_count }),
+        _ => None,
+    }
+}
+
 /// Passes priority in the current priority window, and may resolve the top
 /// object on the stack when both players pass consecutively.
 ///
@@ -53,6 +71,7 @@ pub fn pass_priority(
         stack,
         priority,
         pending_optional_effect,
+        pending_hand_choice_effect,
         terminal_state,
         ..
     } = ctx;
@@ -108,6 +127,57 @@ pub fn pass_priority(
                 stack_object.controller_index(),
                 stack_object.number(),
             ));
+            return Ok(PassPriorityOutcome {
+                priority_passed,
+                triggered_abilities_put_on_stack: Vec::new(),
+                stack_top_resolved: None,
+                spell_cast: None,
+                card_exiled: None,
+                card_discarded: None,
+                life_changed: None,
+                creatures_died: Vec::new(),
+                moved_cards: Vec::new(),
+                game_ended: None,
+                priority_still_open: false,
+            });
+        }
+
+        if let Some(kind) = stack_object_pending_hand_choice_kind(stack_object) {
+            if let crate::domain::play::game::PendingHandChoiceKind::Loot { draw_count } = kind {
+                let controller_index = stack_object.controller_index();
+                for _ in 0..draw_count {
+                    if players[controller_index].draw_one_into_hand().is_none() {
+                        let game_ended = crate::domain::play::game::rules::game_effects::end_game_for_empty_library_draw(
+                            game_id,
+                            players,
+                            terminal_state,
+                            controller_index,
+                        )?;
+                        *priority = None;
+                        return Ok(PassPriorityOutcome {
+                            priority_passed,
+                            triggered_abilities_put_on_stack: Vec::new(),
+                            stack_top_resolved: None,
+                            spell_cast: None,
+                            card_exiled: None,
+                            card_discarded: None,
+                            life_changed: None,
+                            creatures_died: Vec::new(),
+                            moved_cards: Vec::new(),
+                            game_ended: Some(game_ended),
+                            priority_still_open: false,
+                        });
+                    }
+                }
+            }
+
+            *priority = None;
+            *pending_hand_choice_effect =
+                Some(crate::domain::play::game::PendingHandChoiceEffect::new(
+                    stack_object.controller_index(),
+                    stack_object.number(),
+                    kind,
+                ));
             return Ok(PassPriorityOutcome {
                 priority_passed,
                 triggered_abilities_put_on_stack: Vec::new(),

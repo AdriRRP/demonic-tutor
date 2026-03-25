@@ -5,14 +5,14 @@
 use crate::support::{
     advance_to_player_first_main_satisfying_cleanup,
     choose_one_target_player_gain_or_lose_life_instant_card, close_empty_priority_window,
-    create_service, etb_may_life_gain_creature_card, forest_card, player, player_deck,
-    player_library, target_player_discards_chosen_card_sorcery_card,
+    create_service, etb_may_life_gain_creature_card, forest_card, loot_sorcery_card, player,
+    player_deck, player_library, target_player_discards_chosen_card_sorcery_card,
     targeted_opponent_damage_instant_card,
 };
 use demonictutor::{
     choice_requests, CardDefinitionId, CardInstanceId, CastSpellCommand, DealOpeningHandsCommand,
     DrawCardsEffectCommand, Game, GameId, PassPriorityCommand, Phase, PlayerId, PublicBinaryChoice,
-    PublicChoiceRequest, PublicModalSpellChoice, StartGameCommand,
+    PublicChoiceRequest, PublicGameCommand, PublicModalSpellChoice, StartGameCommand,
 };
 
 fn first_main_game_with_choice_cards() -> Game {
@@ -256,5 +256,83 @@ fn choice_requests_surface_pending_optional_effect_decisions() {
             if player_id.as_str() == "player-1"
                 && *source_card_id == CardInstanceId::new("game-optional-choice-request-player-1-0")
                 && options == &vec![PublicBinaryChoice::Yes, PublicBinaryChoice::No]
+    )));
+}
+
+#[test]
+fn choice_requests_surface_pending_hand_choice_for_loot_resolution() {
+    let service = create_service();
+    let libraries = vec![
+        player_library(
+            "p1",
+            vec![
+                loot_sorcery_card("p1-loot", 0, 1),
+                forest_card("p1-a"),
+                forest_card("p1-b"),
+                forest_card("p1-c"),
+                forest_card("p1-d"),
+                forest_card("p1-e"),
+                forest_card("p1-f"),
+                forest_card("p1-draw"),
+                forest_card("p1-pad-a"),
+                forest_card("p1-pad-b"),
+            ],
+        ),
+        player_library(
+            "p2",
+            vec![
+                forest_card("p2-a"),
+                forest_card("p2-b"),
+                forest_card("p2-c"),
+                forest_card("p2-d"),
+                forest_card("p2-e"),
+                forest_card("p2-f"),
+                forest_card("p2-g"),
+                forest_card("p2-h"),
+                forest_card("p2-i"),
+                forest_card("p2-j"),
+            ],
+        ),
+    ];
+    let decks = vec![player_deck("p1", "d1"), player_deck("p2", "d2")];
+
+    let (mut game, _) = service
+        .start_game(StartGameCommand::new(
+            GameId::new("game-pending-hand-choice"),
+            decks,
+        ))
+        .expect("game should start");
+    service
+        .deal_opening_hands(&mut game, &DealOpeningHandsCommand::new(libraries))
+        .expect("opening hands should be dealt");
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "p1");
+
+    let loot_id = player(&game, "p1")
+        .hand_card_by_definition(&CardDefinitionId::new("p1-loot"))
+        .expect("loot spell should be in hand")
+        .id()
+        .clone();
+
+    service.execute_public_command(
+        &mut game,
+        PublicGameCommand::CastSpell(CastSpellCommand::new(PlayerId::new("p1"), loot_id.clone())),
+    );
+    service.execute_public_command(
+        &mut game,
+        PublicGameCommand::PassPriority(PassPriorityCommand::new(PlayerId::new("p1"))),
+    );
+    service.execute_public_command(
+        &mut game,
+        PublicGameCommand::PassPriority(PassPriorityCommand::new(PlayerId::new("p2"))),
+    );
+
+    let requests = choice_requests(&game);
+
+    assert!(requests.iter().any(|request| matches!(
+        request,
+        PublicChoiceRequest::PendingHandChoice { player_id, source_card_id, hand_card_ids }
+            if player_id.as_str() == "p1"
+                && *source_card_id == loot_id
+                && !hand_card_ids.is_empty()
     )));
 }

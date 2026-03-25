@@ -30,7 +30,7 @@ pub use domain::play::{
         DiscardForCleanupCommand, DrawCardsEffectCommand, ExileCardCommand, LibraryCard,
         LibraryCreature, ModalSpellMode, MulliganCommand, PassPriorityCommand, PlayLandCommand,
         PlayerDeck, PlayerLibrary, ResolveCombatDamageCommand, ResolveOptionalEffectCommand,
-        SpellChoice, StartGameCommand, TapLandCommand,
+        ResolvePendingHandChoiceCommand, SpellChoice, StartGameCommand, TapLandCommand,
     },
     errors::{CardError, DomainError, GameError, PhaseError, PlayerError},
     events::{
@@ -43,8 +43,9 @@ pub use domain::play::{
     game::{
         ActivateAbilityOutcome, ActivatedAbilityOnStack, AdjustPlayerLifeEffectOutcome,
         AdvanceTurnOutcome, CastSpellOutcome, DrawCardsEffectOutcome, Game, PassPriorityOutcome,
-        PendingOptionalEffect, PriorityState, ResolveOptionalEffectOutcome, SpellOnStack,
-        SpellTarget, StackObject, StackObjectKind, StackZone, TriggeredAbilityOnStack,
+        PendingHandChoiceEffect, PendingHandChoiceKind, PendingOptionalEffect, PriorityState,
+        ResolveOptionalEffectOutcome, ResolvePendingHandChoiceOutcome, SpellOnStack, SpellTarget,
+        StackObject, StackObjectKind, StackZone, TriggeredAbilityOnStack,
     },
     ids::{CardDefinitionId, CardInstanceId, DeckId, GameId, PlayerId, StackObjectId},
     phase::Phase,

@@ -7,13 +7,13 @@ use {
         domain::play::{
             commands::{
                 ActivateAbilityCommand, CastSpellCommand, PassPriorityCommand,
-                ResolveOptionalEffectCommand,
+                ResolveOptionalEffectCommand, ResolvePendingHandChoiceCommand,
             },
             errors::DomainError,
             events::DomainEvent,
             game::{
                 ActivateAbilityOutcome, CastSpellOutcome, Game, PassPriorityOutcome,
-                ResolveOptionalEffectOutcome,
+                ResolveOptionalEffectOutcome, ResolvePendingHandChoiceOutcome,
             },
         },
     },
@@ -51,6 +51,17 @@ pub fn domain_events_for_resolve_optional_effect(
     domain_events.push_optional(outcome.card_exiled.clone());
     domain_events.push_optional(outcome.life_changed.clone());
     domain_events.extend(outcome.creatures_died.iter().cloned());
+    domain_events.push_optional(outcome.game_ended.clone());
+    domain_events.into_vec()
+}
+
+pub fn domain_events_for_resolve_pending_hand_choice(
+    outcome: &ResolvePendingHandChoiceOutcome,
+) -> Vec<DomainEvent> {
+    let mut domain_events = DomainEvents::default();
+    domain_events.push_optional(outcome.stack_top_resolved.clone());
+    domain_events.push_optional(outcome.spell_cast.clone());
+    domain_events.push_optional(outcome.card_discarded.clone());
     domain_events.push_optional(outcome.game_ended.clone());
     domain_events.into_vec()
 }
@@ -123,6 +134,23 @@ where
     ) -> Result<ResolveOptionalEffectOutcome, DomainError> {
         let outcome = game.resolve_optional_effect(cmd)?;
         let domain_events = domain_events_for_resolve_optional_effect(&outcome);
+        self.persist_and_publish_events(game.id().as_str(), &domain_events)?;
+
+        Ok(outcome)
+    }
+
+    /// Resolves a pending hand-choice effect.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the command is invalid.
+    pub fn resolve_pending_hand_choice(
+        &self,
+        game: &mut Game,
+        cmd: ResolvePendingHandChoiceCommand,
+    ) -> Result<ResolvePendingHandChoiceOutcome, DomainError> {
+        let outcome = game.resolve_pending_hand_choice(cmd)?;
+        let domain_events = domain_events_for_resolve_pending_hand_choice(&outcome);
         self.persist_and_publish_events(game.id().as_str(), &domain_events)?;
 
         Ok(outcome)
