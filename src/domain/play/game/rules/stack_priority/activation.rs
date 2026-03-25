@@ -18,6 +18,96 @@ use {
     },
 };
 
+struct PreparedActivationSource {
+    handle: StackCardRef,
+    source_card_core: u64,
+    public_source_card_id: CardInstanceId,
+    ability: crate::domain::play::cards::ActivatedAbilityProfile,
+}
+
+fn prepare_activation_source(
+    players: &[crate::domain::play::game::Player],
+    player_index: usize,
+    player_id: &crate::domain::play::ids::PlayerId,
+    source_card_id: &CardInstanceId,
+) -> Result<PreparedActivationSource, DomainError> {
+    let handle = players[player_index]
+        .battlefield_handle(source_card_id)
+        .ok_or_else(|| {
+            DomainError::Card(CardError::NotOnBattlefield {
+                player: player_id.clone(),
+                card: source_card_id.clone(),
+            })
+        })?;
+    let card = players[player_index]
+        .card_by_handle(handle)
+        .ok_or_else(|| {
+            DomainError::Card(CardError::NotOnBattlefield {
+                player: player_id.clone(),
+                card: source_card_id.clone(),
+            })
+        })?;
+
+    Ok(PreparedActivationSource {
+        handle: StackCardRef::new(player_index, handle),
+        source_card_core: source_card_id.core_u64(),
+        public_source_card_id: source_card_id.clone(),
+        ability: card.activated_ability().ok_or_else(|| {
+            DomainError::Card(CardError::NoActivatedAbility(source_card_id.clone()))
+        })?,
+    })
+}
+
+fn pay_activation_costs(
+    players: &mut [crate::domain::play::game::Player],
+    player_index: usize,
+    player_id: crate::domain::play::ids::PlayerId,
+    source_card_id: CardInstanceId,
+    source_handle: StackCardRef,
+    ability: crate::domain::play::cards::ActivatedAbilityProfile,
+) -> Result<(), DomainError> {
+    let available_mana = players[player_index].mana();
+    let mana_cost = ability.mana_cost();
+    if ability.mana_value() > 0 && !players[player_index].mana_pool().clone().spend(mana_cost) {
+        return Err(DomainError::Game(GameError::InsufficientMana {
+            player: player_id,
+            required: ability.mana_value(),
+            available: available_mana,
+        }));
+    }
+
+    if ability.requires_tap() {
+        if players[player_index]
+            .card_by_handle(source_handle.handle())
+            .is_some_and(crate::domain::play::cards::CardInstance::is_tapped)
+        {
+            return Err(DomainError::Card(CardError::AlreadyTapped {
+                player: player_id,
+                card: source_card_id,
+            }));
+        }
+        let card = players[player_index]
+            .card_mut_by_handle(source_handle.handle())
+            .ok_or_else(|| {
+                DomainError::Card(CardError::NotOnBattlefield {
+                    player: player_id.clone(),
+                    card: source_card_id.clone(),
+                })
+            })?;
+        card.tap();
+    }
+
+    if ability.mana_value() > 0 {
+        let spent = players[player_index].spend_mana_cost(mana_cost);
+        debug_assert!(
+            spent,
+            "validated activation mana cost should remain payable"
+        );
+    }
+
+    Ok(())
+}
+
 fn prepare_ability_target(
     players: &[crate::domain::play::game::Player],
     card_locations: &crate::domain::play::game::AggregateCardLocationIndex,
@@ -147,67 +237,33 @@ pub fn activate_ability(
 
     invariants::require_priority_holder(priority.as_ref(), &player_id)?;
     let player_index = helpers::find_player_index(players, &player_id)?;
-    let source_card_handle = players[player_index]
-        .battlefield_handle(&source_card_id)
-        .ok_or_else(|| {
-            DomainError::Card(CardError::NotOnBattlefield {
-                player: player_id.clone(),
-                card: source_card_id.clone(),
-            })
-        })?;
-    let (ability, already_tapped) = {
-        let card = players[player_index]
-            .card_by_handle(source_card_handle)
-            .ok_or_else(|| {
-                DomainError::Card(CardError::NotOnBattlefield {
-                    player: player_id.clone(),
-                    card: source_card_id.clone(),
-                })
-            })?;
-        (
-            card.activated_ability().ok_or_else(|| {
-                DomainError::Card(CardError::NoActivatedAbility(source_card_id.clone()))
-            })?,
-            card.is_tapped(),
-        )
-    };
+    let prepared = prepare_activation_source(players, player_index, &player_id, &source_card_id)?;
     validate_activation_target(
         players,
         card_locations,
         stack,
         player_index,
         &source_card_id,
-        ability.targeting(),
+        prepared.ability.targeting(),
         target.as_ref(),
     )?;
-
-    if ability.requires_tap() {
-        if already_tapped {
-            return Err(DomainError::Card(CardError::AlreadyTapped {
-                player: player_id,
-                card: source_card_id,
-            }));
-        }
-        let card = players[player_index]
-            .card_mut_by_handle(source_card_handle)
-            .ok_or_else(|| {
-                DomainError::Card(CardError::NotOnBattlefield {
-                    player: player_id.clone(),
-                    card: source_card_id.clone(),
-                })
-            })?;
-        card.tap();
-    }
-
     let prepared_target = prepare_ability_target(players, card_locations, target.as_ref())?;
+    pay_activation_costs(
+        players,
+        player_index,
+        player_id.clone(),
+        source_card_id,
+        prepared.handle,
+        prepared.ability,
+    )?;
     let stack_object_number = stack.next_object_number();
     stack.push(StackObject::new(
         stack_object_number,
         player_index,
         StackObjectKind::ActivatedAbility(ActivatedAbilityOnStack::new(
-            StackCardRef::new(player_index, source_card_handle),
-            source_card_id.core_u64(),
-            ability,
+            prepared.handle,
+            prepared.source_card_core,
+            prepared.ability,
             prepared_target,
         )),
     ));
@@ -218,8 +274,8 @@ pub fn activate_ability(
         activated_ability_put_on_stack: ActivatedAbilityPutOnStack::new(
             game_id.clone(),
             player_id,
-            source_card_id,
-            ability.effect(),
+            prepared.public_source_card_id,
+            prepared.ability.effect(),
             crate::domain::play::ids::StackObjectId::for_stack_object(game_id, stack_object_number),
         ),
     })

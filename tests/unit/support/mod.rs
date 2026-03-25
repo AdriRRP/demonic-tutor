@@ -282,6 +282,18 @@ pub fn targeted_life_gain_artifact_card(name: &str, mana_cost: u32, amount: u32)
     )
 }
 
+pub fn mana_costed_life_gain_artifact_card(
+    name: &str,
+    mana_cost: u32,
+    activation_cost: u32,
+    amount: u32,
+) -> LibraryCard {
+    artifact_card(name, mana_cost).with_activated_ability(
+        ActivatedAbilityProfile::tap_to_gain_life_to_controller(amount)
+            .with_mana_cost(ManaCost::generic(activation_cost)),
+    )
+}
+
 pub fn etb_life_gain_creature_card(
     name: &str,
     mana_cost: u32,

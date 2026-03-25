@@ -236,6 +236,15 @@ It is not a literal restatement of the rules text.
 
 ---
 
+## Support Mana-Costed Activated Abilities
+
+- 117
+- 601.2f
+- 602
+- 605
+
+---
+
 ## Spell Target Foundation
 
 - 114

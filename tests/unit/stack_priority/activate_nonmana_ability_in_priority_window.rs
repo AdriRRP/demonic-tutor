@@ -5,12 +5,13 @@
 
 use {
     crate::support::{
-        advance_to_first_main_satisfying_cleanup, filled_library, instant_card,
-        life_gain_artifact_card, player, setup_two_player_game, targeted_life_gain_artifact_card,
+        advance_to_first_main_satisfying_cleanup, filled_library, forest_card, instant_card,
+        life_gain_artifact_card, mana_costed_life_gain_artifact_card, player,
+        setup_two_player_game, targeted_life_gain_artifact_card,
     },
     demonictutor::{
         ActivateAbilityCommand, CardError, CardInstanceId, CastSpellCommand, DomainError,
-        PassPriorityCommand, PlayerId, SpellTarget,
+        PassPriorityCommand, PlayLandCommand, PlayerId, SpellTarget, TapLandCommand,
     },
 };
 
@@ -380,6 +381,149 @@ fn tapped_source_cannot_activate_again() {
         err,
         DomainError::Card(CardError::AlreadyTapped { .. })
     ));
+}
+
+#[test]
+fn mana_costed_activated_ability_spends_mana_before_entering_the_stack() {
+    let (service, mut game) = setup_two_player_game(
+        "game-activate-ability-mana-cost",
+        filled_library(
+            vec![
+                mana_costed_life_gain_artifact_card("sun-dial", 0, 1, 2),
+                forest_card("activation-forest"),
+            ],
+            10,
+        ),
+        filled_library(Vec::new(), 10),
+    );
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
+    let artifact_id = player(&game, "player-1")
+        .hand_card_by_definition(&demonictutor::CardDefinitionId::new("sun-dial"))
+        .unwrap()
+        .id()
+        .clone();
+    let land_id = player(&game, "player-1")
+        .hand_card_by_definition(&demonictutor::CardDefinitionId::new("activation-forest"))
+        .unwrap()
+        .id()
+        .clone();
+    service
+        .play_land(
+            &mut game,
+            PlayLandCommand::new(PlayerId::new("player-1"), land_id.clone()),
+        )
+        .unwrap();
+    service
+        .tap_land(
+            &mut game,
+            TapLandCommand::new(PlayerId::new("player-1"), land_id),
+        )
+        .unwrap();
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), artifact_id.clone()),
+        )
+        .unwrap();
+    service
+        .pass_priority(
+            &mut game,
+            PassPriorityCommand::new(PlayerId::new("player-1")),
+        )
+        .unwrap();
+    service
+        .pass_priority(
+            &mut game,
+            PassPriorityCommand::new(PlayerId::new("player-2")),
+        )
+        .unwrap();
+
+    service
+        .activate_ability(
+            &mut game,
+            ActivateAbilityCommand::new(PlayerId::new("player-1"), artifact_id.clone()),
+        )
+        .unwrap();
+
+    assert_eq!(player(&game, "player-1").mana(), 0);
+    assert!(player(&game, "player-1")
+        .battlefield_card(&artifact_id)
+        .unwrap()
+        .is_tapped());
+}
+
+#[test]
+fn mana_costed_activated_ability_rejects_unpayable_costs_without_tapping() {
+    let (service, mut game) = setup_two_player_game(
+        "game-activate-ability-mana-fail",
+        filled_library(
+            vec![
+                mana_costed_life_gain_artifact_card("sun-dial", 0, 2, 2),
+                forest_card("activation-forest"),
+            ],
+            10,
+        ),
+        filled_library(Vec::new(), 10),
+    );
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
+    let artifact_id = player(&game, "player-1")
+        .hand_card_by_definition(&demonictutor::CardDefinitionId::new("sun-dial"))
+        .unwrap()
+        .id()
+        .clone();
+    let land_id = player(&game, "player-1")
+        .hand_card_by_definition(&demonictutor::CardDefinitionId::new("activation-forest"))
+        .unwrap()
+        .id()
+        .clone();
+    service
+        .play_land(
+            &mut game,
+            PlayLandCommand::new(PlayerId::new("player-1"), land_id.clone()),
+        )
+        .unwrap();
+    service
+        .tap_land(
+            &mut game,
+            TapLandCommand::new(PlayerId::new("player-1"), land_id),
+        )
+        .unwrap();
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), artifact_id.clone()),
+        )
+        .unwrap();
+    service
+        .pass_priority(
+            &mut game,
+            PassPriorityCommand::new(PlayerId::new("player-1")),
+        )
+        .unwrap();
+    service
+        .pass_priority(
+            &mut game,
+            PassPriorityCommand::new(PlayerId::new("player-2")),
+        )
+        .unwrap();
+
+    let err = service
+        .activate_ability(
+            &mut game,
+            ActivateAbilityCommand::new(PlayerId::new("player-1"), artifact_id.clone()),
+        )
+        .unwrap_err();
+
+    assert!(matches!(
+        err,
+        DomainError::Game(demonictutor::GameError::InsufficientMana { .. })
+    ));
+    assert_eq!(player(&game, "player-1").mana(), 1);
+    assert!(!player(&game, "player-1")
+        .battlefield_card(&artifact_id)
+        .unwrap()
+        .is_tapped());
+    assert_eq!(game.stack().len(), 0);
 }
 
 #[test]

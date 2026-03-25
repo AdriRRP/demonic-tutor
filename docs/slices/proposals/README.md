@@ -14,7 +14,6 @@ Highest-return interactive spell families that unlock much more realistic gamepl
 
 Broader activated-ability support so more permanents become meaningfully playable:
 
-- `support-mana-costed-activated-abilities.md`
 - `support-sacrifice-as-activation-cost.md`
 - `planeswalker-loyalty-ability-foundation.md`
 

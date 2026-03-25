@@ -114,6 +114,7 @@ pub enum TriggeredAbilityEffect {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ActivatedAbilityProfile {
     requires_tap: bool,
+    mana_cost: ManaCost,
     targeting: SpellTargetingProfile,
     effect: ActivatedAbilityEffect,
 }
@@ -123,6 +124,7 @@ impl ActivatedAbilityProfile {
     pub const fn tap_to_gain_life_to_controller(amount: u32) -> Self {
         Self {
             requires_tap: true,
+            mana_cost: ManaCost::generic(0),
             targeting: SpellTargetingProfile::None,
             effect: ActivatedAbilityEffect::GainLifeToController(amount),
         }
@@ -132,6 +134,7 @@ impl ActivatedAbilityProfile {
     pub const fn tap_to_gain_life_to_target_player(amount: u32) -> Self {
         Self {
             requires_tap: true,
+            mana_cost: ManaCost::generic(0),
             targeting: SpellTargetingProfile::ExactlyOne(SingleTargetRule::any_player()),
             effect: ActivatedAbilityEffect::GainLifeToTargetPlayer(amount),
         }
@@ -143,6 +146,16 @@ impl ActivatedAbilityProfile {
     }
 
     #[must_use]
+    pub const fn mana_cost(self) -> ManaCost {
+        self.mana_cost
+    }
+
+    #[must_use]
+    pub fn mana_value(self) -> u32 {
+        self.mana_cost.total()
+    }
+
+    #[must_use]
     pub const fn targeting(self) -> SpellTargetingProfile {
         self.targeting
     }
@@ -150,6 +163,12 @@ impl ActivatedAbilityProfile {
     #[must_use]
     pub const fn effect(self) -> ActivatedAbilityEffect {
         self.effect
+    }
+
+    #[must_use]
+    pub const fn with_mana_cost(mut self, mana_cost: ManaCost) -> Self {
+        self.mana_cost = mana_cost;
+        self
     }
 }
 
