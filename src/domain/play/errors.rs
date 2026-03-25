@@ -29,8 +29,16 @@ pub enum GameError {
         required: u32,
         available: u32,
     },
+    InsufficientLoyalty {
+        card: CardInstanceId,
+        required: u32,
+        available: u32,
+    },
     PriorityWindowOpen {
         current_holder: PlayerId,
+    },
+    ActivatedAbilityTimingNotAllowed {
+        card: CardInstanceId,
     },
     CastingTimingNotAllowed {
         card: CardInstanceId,
@@ -174,10 +182,21 @@ impl std::fmt::Display for GameError {
                 "player {} has insufficient mana: required {required}, available {available}",
                 player.as_str()
             ),
+            Self::InsufficientLoyalty {
+                card,
+                required,
+                available,
+            } => write!(
+                f,
+                "card {card} has insufficient loyalty: required {required}, available {available}"
+            ),
             Self::PriorityWindowOpen { current_holder } => write!(
                 f,
                 "a priority window is currently open and waiting on {current_holder}"
             ),
+            Self::ActivatedAbilityTimingNotAllowed { card } => {
+                write!(f, "activated ability timing is not allowed for {card}")
+            }
             Self::CastingTimingNotAllowed { card, permission } => {
                 write_casting_permission_error(f, card, *permission)
             }

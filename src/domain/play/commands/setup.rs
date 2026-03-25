@@ -114,6 +114,12 @@ impl LibraryCard {
     }
 
     #[must_use]
+    pub fn with_initial_loyalty(mut self, initial_loyalty: u32) -> Self {
+        self.definition = self.definition.with_initial_loyalty(initial_loyalty);
+        self
+    }
+
+    #[must_use]
     pub const fn creature(
         definition_id: CardDefinitionId,
         mana_cost: u32,

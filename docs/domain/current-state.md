@@ -30,6 +30,7 @@ Implemented capabilities include:
 - activating the current supported non-mana tap-ability subset through the stack in open priority windows
 - activating the current supported mana-costed non-mana ability subset when the controller can pay the explicit activation cost
 - activating the current supported sacrifice-cost ability subset when the source can be sacrificed as part of the activation cost
+- activating the first explicit planeswalker loyalty ability subset in the active player's main phase
 - casting spells that require mana
 - casting creature spells that enter the battlefield with power and toughness
 - resolving instants and sorceries to graveyard
@@ -79,6 +80,7 @@ The domain currently includes:
 - the current supported non-mana tap-ability corridor using the same priority and stack model as other stack interactions, including no-target `Tap: you gain life` and targeted `Tap: target player gains life`
 - the current supported non-mana activation subset also includes explicit mana costs paid atomically before stack insertion
 - the current supported non-mana activation subset also includes explicit `sacrifice this source` costs paid before the ability resolves
+- the current supported planeswalker subset now includes explicit initial loyalty plus profile-based loyalty abilities whose loyalty change is paid on activation
 - minimal colored mana support for `Forest -> Green`, `Mountain -> Red`, `Plains -> White`, `Island -> Blue`, `Swamp -> Black`, single-color instant costs, a first mixed `generic + colored` spell cost corridor, repeated same-color costs such as `GG`, colored mana satisfying generic requirements after colored symbols are reserved, and explicit rejection when a required colored symbol is missing
 - spell casting with mana cost
 - transient mana pools cleared when the game advances to the next phase or turn

@@ -121,6 +121,7 @@ pub struct ActivatedAbilityProfile {
     requires_tap: bool,
     mana_cost: ManaCost,
     sacrifice_cost: Option<ActivatedAbilitySacrificeCost>,
+    loyalty_change: i32,
     targeting: SpellTargetingProfile,
     effect: ActivatedAbilityEffect,
 }
@@ -132,6 +133,7 @@ impl ActivatedAbilityProfile {
             requires_tap: true,
             mana_cost: ManaCost::generic(0),
             sacrifice_cost: None,
+            loyalty_change: 0,
             targeting: SpellTargetingProfile::None,
             effect: ActivatedAbilityEffect::GainLifeToController(amount),
         }
@@ -143,6 +145,7 @@ impl ActivatedAbilityProfile {
             requires_tap: true,
             mana_cost: ManaCost::generic(0),
             sacrifice_cost: None,
+            loyalty_change: 0,
             targeting: SpellTargetingProfile::ExactlyOne(SingleTargetRule::any_player()),
             effect: ActivatedAbilityEffect::GainLifeToTargetPlayer(amount),
         }
@@ -154,6 +157,19 @@ impl ActivatedAbilityProfile {
             requires_tap: true,
             mana_cost: ManaCost::generic(0),
             sacrifice_cost: Some(ActivatedAbilitySacrificeCost::Source),
+            loyalty_change: 0,
+            targeting: SpellTargetingProfile::None,
+            effect: ActivatedAbilityEffect::GainLifeToController(amount),
+        }
+    }
+
+    #[must_use]
+    pub const fn loyalty_gain_life_to_controller(loyalty_change: i32, amount: u32) -> Self {
+        Self {
+            requires_tap: false,
+            mana_cost: ManaCost::generic(0),
+            sacrifice_cost: None,
+            loyalty_change,
             targeting: SpellTargetingProfile::None,
             effect: ActivatedAbilityEffect::GainLifeToController(amount),
         }
@@ -177,6 +193,11 @@ impl ActivatedAbilityProfile {
     #[must_use]
     pub fn mana_value(self) -> u32 {
         self.mana_cost.total()
+    }
+
+    #[must_use]
+    pub const fn loyalty_change(self) -> i32 {
+        self.loyalty_change
     }
 
     #[must_use]

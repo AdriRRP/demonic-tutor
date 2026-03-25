@@ -38,6 +38,7 @@ pub struct CreatureSpellPayload {
 pub struct PermanentSpellPayload {
     activated_ability: Option<ActivatedAbilityProfile>,
     triggered_ability: Option<TriggeredAbilityProfile>,
+    initial_loyalty: Option<u32>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -125,6 +126,7 @@ struct CardFace {
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct CardRuntime {
     tapped: bool,
+    loyalty: u32,
     kind: CardRuntimeKind,
 }
 
@@ -160,6 +162,7 @@ impl CardInstance {
         definition: CardDefinition,
         _card_type: CardType,
     ) -> Self {
+        let loyalty = definition.initial_loyalty().unwrap_or(0);
         Self {
             id,
             face: CardFace {
@@ -167,6 +170,7 @@ impl CardInstance {
             },
             runtime: CardRuntime {
                 tapped: false,
+                loyalty,
                 kind: CardRuntimeKind::NonCreature,
             },
         }
@@ -205,6 +209,7 @@ impl CardInstance {
             },
             runtime: CardRuntime {
                 tapped: false,
+                loyalty: 0,
                 kind: CardRuntimeKind::Creature(CreatureRuntime::new(power, toughness)),
             },
         }
@@ -225,6 +230,7 @@ impl CardInstance {
             },
             runtime: CardRuntime {
                 tapped: false,
+                loyalty: 0,
                 kind: CardRuntimeKind::Creature(CreatureRuntime::new_with_keywords(
                     power, toughness, keywords,
                 )),
@@ -245,6 +251,7 @@ impl CardInstance {
                         kind: SpellPayloadKind::Artifact(PermanentSpellPayload {
                             activated_ability: definition.activated_ability(),
                             triggered_ability: definition.triggered_ability(),
+                            initial_loyalty: definition.initial_loyalty(),
                         }),
                     },
                     CardType::Enchantment => SpellPayload {
@@ -253,6 +260,7 @@ impl CardInstance {
                         kind: SpellPayloadKind::Enchantment(PermanentSpellPayload {
                             activated_ability: definition.activated_ability(),
                             triggered_ability: definition.triggered_ability(),
+                            initial_loyalty: definition.initial_loyalty(),
                         }),
                     },
                     CardType::Planeswalker => SpellPayload {
@@ -261,6 +269,7 @@ impl CardInstance {
                         kind: SpellPayloadKind::Planeswalker(PermanentSpellPayload {
                             activated_ability: definition.activated_ability(),
                             triggered_ability: definition.triggered_ability(),
+                            initial_loyalty: definition.initial_loyalty(),
                         }),
                     },
                     CardType::Land => SpellPayload {
@@ -269,6 +278,7 @@ impl CardInstance {
                         kind: SpellPayloadKind::Land(PermanentSpellPayload {
                             activated_ability: definition.activated_ability(),
                             triggered_ability: definition.triggered_ability(),
+                            initial_loyalty: definition.initial_loyalty(),
                         }),
                     },
                     CardType::Instant => SpellPayload {
@@ -296,6 +306,7 @@ impl CardInstance {
                             kind: SpellPayloadKind::Land(PermanentSpellPayload {
                                 activated_ability: definition.activated_ability(),
                                 triggered_ability: definition.triggered_ability(),
+                                initial_loyalty: definition.initial_loyalty(),
                             }),
                         }
                     }
@@ -347,6 +358,7 @@ impl SpellPayload {
             },
             runtime: CardRuntime {
                 tapped: false,
+                loyalty: 0,
                 kind: CardRuntimeKind::NonCreature,
             },
         }
@@ -365,6 +377,9 @@ impl SpellPayload {
         if let Some(triggered_ability) = payload.triggered_ability {
             definition = definition.with_triggered_ability(triggered_ability);
         }
+        if let Some(initial_loyalty) = payload.initial_loyalty {
+            definition = definition.with_initial_loyalty(initial_loyalty);
+        }
         CardInstance {
             id,
             face: CardFace {
@@ -372,6 +387,7 @@ impl SpellPayload {
             },
             runtime: CardRuntime {
                 tapped: false,
+                loyalty: payload.initial_loyalty.unwrap_or(0),
                 kind: CardRuntimeKind::NonCreature,
             },
         }
@@ -451,6 +467,7 @@ impl SpellPayload {
                 },
                 runtime: CardRuntime {
                     tapped: false,
+                    loyalty: 0,
                     kind: CardRuntimeKind::Creature(CreatureRuntime::new_with_keywords(
                         payload.power,
                         payload.toughness,
@@ -476,6 +493,11 @@ impl CardInstance {
     #[must_use]
     pub const fn is_tapped(&self) -> bool {
         self.runtime.tapped
+    }
+
+    #[must_use]
+    pub fn loyalty(&self) -> Option<u32> {
+        matches!(self.card_type(), CardType::Planeswalker).then_some(self.runtime.loyalty)
     }
 
     #[must_use]
@@ -572,6 +594,22 @@ impl CardInstance {
 
     pub const fn untap(&mut self) {
         self.runtime.tapped = false;
+    }
+
+    pub fn adjust_loyalty(&mut self, delta: i32) -> bool {
+        if !matches!(self.card_type(), CardType::Planeswalker) {
+            return false;
+        }
+        if delta.is_negative() {
+            let amount = delta.unsigned_abs();
+            if self.runtime.loyalty < amount {
+                return false;
+            }
+            self.runtime.loyalty -= amount;
+        } else {
+            self.runtime.loyalty = self.runtime.loyalty.saturating_add(delta as u32);
+        }
+        true
     }
 
     pub const fn remove_summoning_sickness(&mut self) {

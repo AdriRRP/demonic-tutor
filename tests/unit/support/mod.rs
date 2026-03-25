@@ -352,6 +352,25 @@ pub fn planeswalker_card(name: &str, mana_cost: u32) -> LibraryCard {
     )
 }
 
+pub fn loyalty_planeswalker_card(
+    name: &str,
+    mana_cost: u32,
+    loyalty: u32,
+    loyalty_change: i32,
+    amount: u32,
+) -> LibraryCard {
+    LibraryCard::new(
+        CardDefinitionId::new(name),
+        CardType::Planeswalker,
+        mana_cost,
+    )
+    .with_initial_loyalty(loyalty)
+    .with_activated_ability(ActivatedAbilityProfile::loyalty_gain_life_to_controller(
+        loyalty_change,
+        amount,
+    ))
+}
+
 pub fn vanilla_creature(name: &str) -> LibraryCard {
     LibraryCard::creature(CardDefinitionId::new(name), 0, 2, 2)
 }

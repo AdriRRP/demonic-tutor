@@ -18,6 +18,7 @@ pub struct CardDefinition {
     activated_mana_ability: Option<ActivatedManaAbilityProfile>,
     activated_ability: Option<ActivatedAbilityProfile>,
     triggered_ability: Option<TriggeredAbilityProfile>,
+    initial_loyalty: Option<u32>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -30,6 +31,7 @@ pub struct CardDefinitionParts {
     pub activated_mana_ability: Option<ActivatedManaAbilityProfile>,
     pub activated_ability: Option<ActivatedAbilityProfile>,
     pub triggered_ability: Option<TriggeredAbilityProfile>,
+    pub initial_loyalty: Option<u32>,
 }
 
 impl CardDefinition {
@@ -52,6 +54,7 @@ impl CardDefinition {
             },
             activated_ability: None,
             triggered_ability: None,
+            initial_loyalty: None,
         }
     }
 
@@ -69,6 +72,7 @@ impl CardDefinition {
             )),
             activated_ability: None,
             triggered_ability: None,
+            initial_loyalty: None,
         }
     }
 
@@ -114,6 +118,12 @@ impl CardDefinition {
     }
 
     #[must_use]
+    pub const fn with_initial_loyalty(mut self, initial_loyalty: u32) -> Self {
+        self.initial_loyalty = Some(initial_loyalty);
+        self
+    }
+
+    #[must_use]
     pub fn from_parts(parts: CardDefinitionParts) -> Self {
         Self {
             id: parts.id,
@@ -124,6 +134,7 @@ impl CardDefinition {
             activated_mana_ability: parts.activated_mana_ability,
             activated_ability: parts.activated_ability,
             triggered_ability: parts.triggered_ability,
+            initial_loyalty: parts.initial_loyalty,
         }
     }
 
@@ -170,5 +181,10 @@ impl CardDefinition {
     #[must_use]
     pub const fn triggered_ability(&self) -> Option<TriggeredAbilityProfile> {
         self.triggered_ability
+    }
+
+    #[must_use]
+    pub const fn initial_loyalty(&self) -> Option<u32> {
+        self.initial_loyalty
     }
 }

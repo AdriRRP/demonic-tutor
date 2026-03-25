@@ -6,8 +6,9 @@
 use {
     crate::support::{
         advance_to_first_main_satisfying_cleanup, filled_library, forest_card, instant_card,
-        life_gain_artifact_card, mana_costed_life_gain_artifact_card, player,
-        sacrifice_life_gain_artifact_card, setup_two_player_game, targeted_life_gain_artifact_card,
+        life_gain_artifact_card, loyalty_planeswalker_card, mana_costed_life_gain_artifact_card,
+        player, sacrifice_life_gain_artifact_card, setup_two_player_game,
+        targeted_life_gain_artifact_card,
     },
     demonictutor::{
         ActivateAbilityCommand, CardError, CardInstanceId, CastSpellCommand, DomainError,
@@ -641,6 +642,175 @@ fn sacrificed_source_is_already_gone_before_the_ability_resolves() {
         .graveyard_card(&artifact_id)
         .is_some());
     assert!(resolve.stack_top_resolved.is_some());
+}
+
+#[test]
+fn loyalty_plus_ability_uses_the_stack_and_adds_loyalty_on_activation() {
+    let (service, mut game) = setup_two_player_game(
+        "game-loyalty-plus",
+        filled_library(
+            vec![loyalty_planeswalker_card("ajani-lite", 0, 3, 1, 2)],
+            10,
+        ),
+        filled_library(Vec::new(), 10),
+    );
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
+    let walker_id = player(&game, "player-1")
+        .hand_card_by_definition(&demonictutor::CardDefinitionId::new("ajani-lite"))
+        .unwrap()
+        .id()
+        .clone();
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), walker_id.clone()),
+        )
+        .unwrap();
+    service
+        .pass_priority(
+            &mut game,
+            PassPriorityCommand::new(PlayerId::new("player-1")),
+        )
+        .unwrap();
+    service
+        .pass_priority(
+            &mut game,
+            PassPriorityCommand::new(PlayerId::new("player-2")),
+        )
+        .unwrap();
+
+    service
+        .activate_ability(
+            &mut game,
+            ActivateAbilityCommand::new(PlayerId::new("player-1"), walker_id.clone()),
+        )
+        .unwrap();
+
+    assert_eq!(
+        player(&game, "player-1")
+            .battlefield_card(&walker_id)
+            .unwrap()
+            .loyalty(),
+        Some(4)
+    );
+    let _ = service
+        .pass_priority(
+            &mut game,
+            PassPriorityCommand::new(PlayerId::new("player-1")),
+        )
+        .unwrap();
+    let resolve = service
+        .pass_priority(
+            &mut game,
+            PassPriorityCommand::new(PlayerId::new("player-2")),
+        )
+        .unwrap();
+    assert_eq!(player(&game, "player-1").life(), 22);
+    assert!(resolve.stack_top_resolved.is_some());
+}
+
+#[test]
+fn loyalty_minus_ability_requires_enough_loyalty() {
+    let (service, mut game) = setup_two_player_game(
+        "game-loyalty-minus",
+        filled_library(
+            vec![loyalty_planeswalker_card("liliana-lite", 0, 2, -1, 2)],
+            10,
+        ),
+        filled_library(Vec::new(), 10),
+    );
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
+    let walker_id = player(&game, "player-1")
+        .hand_card_by_definition(&demonictutor::CardDefinitionId::new("liliana-lite"))
+        .unwrap()
+        .id()
+        .clone();
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), walker_id.clone()),
+        )
+        .unwrap();
+    service
+        .pass_priority(
+            &mut game,
+            PassPriorityCommand::new(PlayerId::new("player-1")),
+        )
+        .unwrap();
+    service
+        .pass_priority(
+            &mut game,
+            PassPriorityCommand::new(PlayerId::new("player-2")),
+        )
+        .unwrap();
+
+    service
+        .activate_ability(
+            &mut game,
+            ActivateAbilityCommand::new(PlayerId::new("player-1"), walker_id.clone()),
+        )
+        .unwrap();
+    assert_eq!(
+        player(&game, "player-1")
+            .battlefield_card(&walker_id)
+            .unwrap()
+            .loyalty(),
+        Some(1)
+    );
+}
+
+#[test]
+fn loyalty_minus_ability_rejects_insufficient_loyalty() {
+    let (service, mut game) = setup_two_player_game(
+        "game-loyalty-minus-fail",
+        filled_library(
+            vec![loyalty_planeswalker_card("liliana-lite", 0, 0, -1, 2)],
+            10,
+        ),
+        filled_library(Vec::new(), 10),
+    );
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
+    let walker_id = player(&game, "player-1")
+        .hand_card_by_definition(&demonictutor::CardDefinitionId::new("liliana-lite"))
+        .unwrap()
+        .id()
+        .clone();
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), walker_id.clone()),
+        )
+        .unwrap();
+    service
+        .pass_priority(
+            &mut game,
+            PassPriorityCommand::new(PlayerId::new("player-1")),
+        )
+        .unwrap();
+    service
+        .pass_priority(
+            &mut game,
+            PassPriorityCommand::new(PlayerId::new("player-2")),
+        )
+        .unwrap();
+
+    let err = service
+        .activate_ability(
+            &mut game,
+            ActivateAbilityCommand::new(PlayerId::new("player-1"), walker_id.clone()),
+        )
+        .unwrap_err();
+    assert!(matches!(
+        err,
+        DomainError::Game(demonictutor::GameError::InsufficientLoyalty { .. })
+    ));
+    assert_eq!(
+        player(&game, "player-1")
+            .battlefield_card(&walker_id)
+            .unwrap()
+            .loyalty(),
+        Some(0)
+    );
 }
 
 #[test]

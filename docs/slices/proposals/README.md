@@ -10,12 +10,6 @@ The next release plan is organized as **functional waves** aimed at making the e
 
 Highest-return interactive spell families that unlock much more realistic gameplay:
 
-### `release-0.6.0-wave-3-activated-ability-usability`
-
-Broader activated-ability support so more permanents become meaningfully playable:
-
-- `planeswalker-loyalty-ability-foundation.md`
-
 ### `release-0.6.0-wave-4-combat-rules-usability`
 
 Combat upgrades with large gameplay payoff and good rules coverage:

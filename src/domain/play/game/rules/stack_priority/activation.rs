@@ -24,6 +24,8 @@ struct PreparedActivationSource {
     source_card_core: u64,
     public_source_card_id: CardInstanceId,
     ability: crate::domain::play::cards::ActivatedAbilityProfile,
+    card_type: CardType,
+    loyalty: Option<u32>,
 }
 
 fn prepare_activation_source(
@@ -56,7 +58,33 @@ fn prepare_activation_source(
         ability: card.activated_ability().ok_or_else(|| {
             DomainError::Card(CardError::NoActivatedAbility(source_card_id.clone()))
         })?,
+        card_type: *card.card_type(),
+        loyalty: card.loyalty(),
     })
+}
+
+fn validate_loyalty_timing(
+    source_card_id: &CardInstanceId,
+    player_id: &crate::domain::play::ids::PlayerId,
+    active_player: &crate::domain::play::ids::PlayerId,
+    phase: &crate::domain::play::phase::Phase,
+    stack: &crate::domain::play::game::model::StackZone,
+) -> Result<(), DomainError> {
+    if player_id != active_player
+        || !matches!(
+            phase,
+            crate::domain::play::phase::Phase::FirstMain
+                | crate::domain::play::phase::Phase::SecondMain
+        )
+        || !stack.is_empty()
+    {
+        return Err(DomainError::Game(
+            GameError::ActivatedAbilityTimingNotAllowed {
+                card: source_card_id.clone(),
+            },
+        ));
+    }
+    Ok(())
 }
 
 fn pay_activation_costs(
@@ -66,10 +94,22 @@ fn pay_activation_costs(
     player_id: crate::domain::play::ids::PlayerId,
     source_card_id: CardInstanceId,
     source_handle: StackCardRef,
+    source_loyalty: Option<u32>,
     ability: crate::domain::play::cards::ActivatedAbilityProfile,
 ) -> Result<(Vec<CreatureDied>, Vec<CardInstanceId>), DomainError> {
     let mut creatures_died = Vec::new();
     let mut moved_cards = Vec::new();
+    if ability.loyalty_change().is_negative() {
+        let available = source_loyalty.unwrap_or(0);
+        let required = ability.loyalty_change().unsigned_abs();
+        if available < required {
+            return Err(DomainError::Game(GameError::InsufficientLoyalty {
+                card: source_card_id.clone(),
+                required,
+                available,
+            }));
+        }
+    }
     let available_mana = players[player_index].mana();
     let mana_cost = ability.mana_cost();
     if ability.mana_value() > 0 && !players[player_index].mana_pool().clone().spend(mana_cost) {
@@ -107,6 +147,19 @@ fn pay_activation_costs(
             spent,
             "validated activation mana cost should remain payable"
         );
+    }
+
+    if ability.loyalty_change() != 0 {
+        let card = players[player_index]
+            .card_mut_by_handle(source_handle.handle())
+            .ok_or_else(|| {
+                DomainError::Card(CardError::NotOnBattlefield {
+                    player: player_id.clone(),
+                    card: source_card_id.clone(),
+                })
+            })?;
+        let changed = card.adjust_loyalty(ability.loyalty_change());
+        debug_assert!(changed, "validated loyalty change should remain payable");
     }
 
     if matches!(
@@ -259,6 +312,8 @@ pub fn activate_ability(
         game_id,
         players,
         card_locations,
+        active_player,
+        phase,
         stack,
         priority,
         ..
@@ -282,6 +337,17 @@ pub fn activate_ability(
         prepared.ability.targeting(),
         target.as_ref(),
     )?;
+    if prepared.ability.loyalty_change() != 0 {
+        if prepared.card_type != CardType::Planeswalker {
+            return Err(DomainError::Game(
+                GameError::ActivatedAbilityTimingNotAllowed {
+                    card: source_card_id.clone(),
+                },
+            ));
+        }
+        let _ = prepared.loyalty;
+        validate_loyalty_timing(&source_card_id, &player_id, active_player, phase, stack)?;
+    }
     let prepared_target = prepare_ability_target(players, card_locations, target.as_ref())?;
     let (creatures_died, moved_cards) = pay_activation_costs(
         players,
@@ -290,6 +356,7 @@ pub fn activate_ability(
         player_id.clone(),
         source_card_id,
         prepared.handle,
+        prepared.loyalty,
         prepared.ability,
     )?;
     let stack_object_number = stack.next_object_number();

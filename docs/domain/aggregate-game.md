@@ -221,6 +221,7 @@ The current model includes:
 - automatic destruction of creatures with 0 toughness through the shared review of supported state-based actions
 - minimal stack-aware spell casting and spell resolution
 - the stack may currently hold supported spells plus the current supported non-mana activated ability object family
+- supported planeswalkers may now carry initial loyalty and explicit loyalty-ability profiles in the same aggregate-owned activation corridor
 - the stack and supported activated abilities prefer internal owner/handle references while public ids are materialized only for outward-facing events, errors, and inspection
 - explicit supported spell-effect profiles carried by card-face data rather than inferred from card-definition strings during resolution
 - explicit legal-target rules for the currently supported targeted-spell subset, currently covering players and creatures

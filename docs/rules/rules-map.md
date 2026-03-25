@@ -252,6 +252,13 @@ It is not a literal restatement of the rules text.
 
 ---
 
+## Planeswalker Loyalty Ability Foundation
+
+- 306
+- 606
+
+---
+
 ## Spell Target Foundation
 
 - 114
