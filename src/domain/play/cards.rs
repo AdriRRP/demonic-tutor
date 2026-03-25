@@ -11,6 +11,7 @@ pub use rules::{
     ActivatedAbilityEffect, ActivatedAbilityProfile, ActivatedManaAbilityProfile, CardType,
     CastingPermissionProfile, CastingRule, CreatureTargetRule, GraveyardCardTargetRule, ManaColor,
     ManaCost, PlayerTargetRule, SingleTargetRule, SpellResolutionProfile, SpellTargetKind,
-    SpellTargetingProfile, SupportedSpellRules,
+    SpellTargetingProfile, SupportedSpellRules, TriggeredAbilityEffect,
+    TriggeredAbilityEvent, TriggeredAbilityProfile,
 };
 pub use runtime::{CardInstance, SpellPayload};

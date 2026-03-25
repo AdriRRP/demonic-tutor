@@ -98,6 +98,19 @@ pub enum ActivatedAbilityEffect {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TriggeredAbilityEvent {
+    EntersBattlefield,
+    Dies,
+    BeginningOfUpkeep,
+    BeginningOfEndStep,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TriggeredAbilityEffect {
+    GainLifeToController(u32),
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ActivatedAbilityProfile {
     requires_tap: bool,
     effect: ActivatedAbilityEffect,
@@ -119,6 +132,56 @@ impl ActivatedAbilityProfile {
 
     #[must_use]
     pub const fn effect(self) -> ActivatedAbilityEffect {
+        self.effect
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct TriggeredAbilityProfile {
+    event: TriggeredAbilityEvent,
+    effect: TriggeredAbilityEffect,
+}
+
+impl TriggeredAbilityProfile {
+    #[must_use]
+    pub const fn enters_battlefield_gain_life_to_controller(amount: u32) -> Self {
+        Self {
+            event: TriggeredAbilityEvent::EntersBattlefield,
+            effect: TriggeredAbilityEffect::GainLifeToController(amount),
+        }
+    }
+
+    #[must_use]
+    pub const fn dies_gain_life_to_controller(amount: u32) -> Self {
+        Self {
+            event: TriggeredAbilityEvent::Dies,
+            effect: TriggeredAbilityEffect::GainLifeToController(amount),
+        }
+    }
+
+    #[must_use]
+    pub const fn beginning_of_upkeep_gain_life_to_controller(amount: u32) -> Self {
+        Self {
+            event: TriggeredAbilityEvent::BeginningOfUpkeep,
+            effect: TriggeredAbilityEffect::GainLifeToController(amount),
+        }
+    }
+
+    #[must_use]
+    pub const fn beginning_of_end_step_gain_life_to_controller(amount: u32) -> Self {
+        Self {
+            event: TriggeredAbilityEvent::BeginningOfEndStep,
+            effect: TriggeredAbilityEffect::GainLifeToController(amount),
+        }
+    }
+
+    #[must_use]
+    pub const fn event(self) -> TriggeredAbilityEvent {
+        self.event
+    }
+
+    #[must_use]
+    pub const fn effect(self) -> TriggeredAbilityEffect {
         self.effect
     }
 }

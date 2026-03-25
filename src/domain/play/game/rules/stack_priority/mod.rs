@@ -5,6 +5,7 @@ mod casting;
 mod passing;
 mod resolution;
 mod spell_effects;
+pub(crate) mod triggers;
 
 use super::super::{
     model::{AggregateCardLocationIndex, PriorityState},
@@ -14,6 +15,7 @@ use crate::domain::play::{
     events::{
         ActivatedAbilityPutOnStack, CardDiscarded, CardExiled, CreatureDied, GameEnded,
         LifeChanged, PriorityPassed, SpellCast, SpellPutOnStack, StackTopResolved,
+        TriggeredAbilityPutOnStack,
     },
     ids::{CardInstanceId, GameId, PlayerId},
     phase::Phase,
@@ -47,6 +49,7 @@ pub struct ActivateAbilityOutcome {
 #[derive(Debug, Clone)]
 pub struct PassPriorityOutcome {
     pub priority_passed: PriorityPassed,
+    pub triggered_abilities_put_on_stack: Vec<TriggeredAbilityPutOnStack>,
     pub stack_top_resolved: Option<StackTopResolved>,
     pub spell_cast: Option<SpellCast>,
     pub card_exiled: Option<CardExiled>,

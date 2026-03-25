@@ -1,7 +1,7 @@
 //! Supports stack priority resolution extract.
 
 use crate::domain::play::{
-    cards::{ActivatedAbilityProfile, SpellPayload},
+    cards::{ActivatedAbilityProfile, SpellPayload, TriggeredAbilityProfile},
     errors::{DomainError, GameError},
     game::model::{StackCardRef, StackObject, StackObjectKind, StackSpellChoice, StackTargetRef},
 };
@@ -47,6 +47,13 @@ pub(super) struct ResolvedActivatedAbility {
     pub ability: ActivatedAbilityProfile,
 }
 
+pub(super) struct ResolvedTriggeredAbility {
+    pub stack_object_number: u32,
+    pub source_card_ref: StackCardRef,
+    pub controller_index: usize,
+    pub ability: TriggeredAbilityProfile,
+}
+
 pub(super) fn extract_resolved_activated_ability(
     stack_object: StackObject,
 ) -> Result<ResolvedActivatedAbility, DomainError> {
@@ -59,6 +66,25 @@ pub(super) fn extract_resolved_activated_ability(
     };
 
     Ok(ResolvedActivatedAbility {
+        stack_object_number,
+        source_card_ref: ability.source_card_ref(),
+        controller_index,
+        ability: ability.ability(),
+    })
+}
+
+pub(super) fn extract_resolved_triggered_ability(
+    stack_object: StackObject,
+) -> Result<ResolvedTriggeredAbility, DomainError> {
+    let stack_object_number = stack_object.number();
+    let controller_index = stack_object.controller_index();
+    let StackObjectKind::TriggeredAbility(ability) = stack_object.into_kind() else {
+        return Err(DomainError::Game(GameError::InternalInvariantViolation(
+            "triggered-ability extraction requires a triggered ability object".to_string(),
+        )));
+    };
+
+    Ok(ResolvedTriggeredAbility {
         stack_object_number,
         source_card_ref: ability.source_card_ref(),
         controller_index,

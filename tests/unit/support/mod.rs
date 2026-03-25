@@ -5,7 +5,7 @@
 //! Unit coverage for unit support.
 
 use {
-    demonictutor::{ActivatedAbilityProfile, CastingRule},
+    demonictutor::{ActivatedAbilityProfile, CastingRule, TriggeredAbilityProfile},
     demonictutor::{
         AdvanceTurnCommand, AdvanceTurnOutcome, CardDefinitionId, CardType, CastSpellCommand,
         DealOpeningHandsCommand, DeckId, DeclareAttackersCommand, DiscardForCleanupCommand, Game,
@@ -273,6 +273,41 @@ pub fn artifact_card(name: &str, mana_cost: u32) -> LibraryCard {
 pub fn life_gain_artifact_card(name: &str, mana_cost: u32, amount: u32) -> LibraryCard {
     artifact_card(name, mana_cost).with_activated_ability(
         ActivatedAbilityProfile::tap_to_gain_life_to_controller(amount),
+    )
+}
+
+pub fn etb_life_gain_creature_card(
+    name: &str,
+    mana_cost: u32,
+    power: u32,
+    toughness: u32,
+    amount: u32,
+) -> LibraryCard {
+    creature_card(name, mana_cost, power, toughness).with_triggered_ability(
+        TriggeredAbilityProfile::enters_battlefield_gain_life_to_controller(amount),
+    )
+}
+
+pub fn dies_life_gain_creature_card(
+    name: &str,
+    mana_cost: u32,
+    power: u32,
+    toughness: u32,
+    amount: u32,
+) -> LibraryCard {
+    creature_card(name, mana_cost, power, toughness)
+        .with_triggered_ability(TriggeredAbilityProfile::dies_gain_life_to_controller(amount))
+}
+
+pub fn upkeep_life_gain_artifact_card(name: &str, mana_cost: u32, amount: u32) -> LibraryCard {
+    artifact_card(name, mana_cost).with_triggered_ability(
+        TriggeredAbilityProfile::beginning_of_upkeep_gain_life_to_controller(amount),
+    )
+}
+
+pub fn end_step_life_gain_artifact_card(name: &str, mana_cost: u32, amount: u32) -> LibraryCard {
+    artifact_card(name, mana_cost).with_triggered_ability(
+        TriggeredAbilityProfile::beginning_of_end_step_gain_life_to_controller(amount),
     )
 }
 

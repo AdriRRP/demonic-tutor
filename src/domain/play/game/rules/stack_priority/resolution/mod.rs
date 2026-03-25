@@ -11,14 +11,15 @@ use self::{
     events::build_resolution_events,
     extract::{
         extract_resolved_activated_ability, extract_resolved_spell_object,
-        ResolvedActivatedAbility, ResolvedSpellObject,
+        extract_resolved_triggered_ability, ResolvedActivatedAbility, ResolvedSpellObject,
+        ResolvedTriggeredAbility,
     },
 };
 use crate::domain::play::{
-    cards::ActivatedAbilityEffect,
+    cards::{ActivatedAbilityEffect, TriggeredAbilityEffect, TriggeredAbilityEvent},
     events::{
         CardDiscarded, CardExiled, CreatureDied, GameEnded, LifeChanged, SpellCast,
-        StackTopResolved,
+        SpellCastOutcome, StackTopResolved, TriggeredAbilityPutOnStack,
     },
     game::{
         model::{StackCardRef, StackObject, StackObjectKind, StackTargetRef, StackZone},
@@ -29,6 +30,7 @@ use crate::domain::play::{
 
 type ResolvedSpellOutcome = (
     StackTopResolved,
+    Vec<TriggeredAbilityPutOnStack>,
     Option<SpellCast>,
     Option<CardExiled>,
     Option<CardDiscarded>,
@@ -37,6 +39,36 @@ type ResolvedSpellOutcome = (
     Vec<crate::domain::play::ids::CardInstanceId>,
     Option<GameEnded>,
 );
+
+fn enqueue_dies_triggers(
+    game_id: &GameId,
+    players: &[Player],
+    stack: &mut StackZone,
+    creatures_died: &[CreatureDied],
+) -> Result<Vec<TriggeredAbilityPutOnStack>, crate::domain::play::errors::DomainError> {
+    let mut events = Vec::new();
+
+    for creature_died in creatures_died {
+        let owner_index = crate::domain::play::game::helpers::find_player_index(
+            players,
+            &creature_died.player_id,
+        )?;
+        let Some(handle) = players[owner_index].resolve_public_card_handle(&creature_died.card_id)
+        else {
+            continue;
+        };
+        events.extend(super::triggers::enqueue_trigger_for_card_handle(
+            game_id,
+            players,
+            owner_index,
+            handle,
+            TriggeredAbilityEvent::Dies,
+            stack,
+        )?);
+    }
+
+    Ok(events)
+}
 
 fn materialize_spell_target(
     game_id: &GameId,
@@ -150,6 +182,28 @@ fn resolve_spell_from_stack(
     let outcome =
         move_resolved_spell_to_its_destination(players, controller_index, card_type, payload)?;
     let controller_id = players[controller_index].id().clone();
+    let mut triggered_abilities_put_on_stack = Vec::new();
+
+    if matches!(outcome, SpellCastOutcome::EnteredBattlefield) {
+        let entered_handle = players[controller_index]
+            .battlefield_handle(&source_card_id)
+            .ok_or_else(|| {
+                crate::domain::play::errors::DomainError::Game(
+                    crate::domain::play::errors::GameError::InternalInvariantViolation(
+                        "resolved permanent should exist on battlefield before ETB triggers"
+                            .to_string(),
+                    ),
+                )
+            })?;
+        triggered_abilities_put_on_stack.extend(super::triggers::enqueue_trigger_for_card_handle(
+            game_id,
+            players,
+            controller_index,
+            entered_handle,
+            TriggeredAbilityEvent::EntersBattlefield,
+            stack,
+        )?);
+    }
 
     let (stack_top_resolved, spell_cast) = build_resolution_events(
         game_id,
@@ -172,9 +226,16 @@ fn resolve_spell_from_stack(
             target.as_ref(),
             choice,
         ))?;
+    triggered_abilities_put_on_stack.extend(enqueue_dies_triggers(
+        game_id,
+        players,
+        stack,
+        &creatures_died,
+    )?);
 
     Ok((
         stack_top_resolved,
+        triggered_abilities_put_on_stack,
         Some(spell_cast),
         card_exiled,
         card_discarded,
@@ -233,6 +294,66 @@ fn resolve_activated_ability_from_stack(
 
     Ok((
         stack_top_resolved,
+        Vec::new(),
+        None,
+        None,
+        None,
+        life_changed,
+        creatures_died,
+        Vec::new(),
+        game_ended,
+    ))
+}
+
+fn resolve_triggered_ability_from_stack(
+    game_id: &GameId,
+    players: &mut [Player],
+    terminal_state: &mut TerminalState,
+    stack_object: StackObject,
+) -> Result<ResolvedSpellOutcome, crate::domain::play::errors::DomainError> {
+    let ResolvedTriggeredAbility {
+        stack_object_number,
+        source_card_ref,
+        controller_index,
+        ability,
+    } = extract_resolved_triggered_ability(stack_object)?;
+    let controller_id = players[controller_index].id().clone();
+    let source_card_id = materialize_stack_card_id(
+        players,
+        source_card_ref,
+        "missing triggered ability source handle",
+    )?;
+
+    let stack_top_resolved = StackTopResolved::new(
+        game_id.clone(),
+        controller_id,
+        crate::domain::play::ids::StackObjectId::for_stack_object(game_id, stack_object_number),
+        source_card_id,
+    );
+
+    let life_changed = match ability.effect() {
+        TriggeredAbilityEffect::GainLifeToController(amount) => {
+            Some(super::super::game_effects::adjust_player_life_by_index(
+                game_id,
+                players,
+                controller_index,
+                amount.cast_signed(),
+            )?)
+        }
+    };
+
+    let super::super::state_based_actions::StateBasedActionsResult {
+        creatures_died,
+        game_ended,
+    } = super::super::state_based_actions::check_state_based_actions(
+        game_id,
+        players,
+        terminal_state,
+    )?;
+
+    Ok((
+        stack_top_resolved,
+        Vec::new(),
         None,
         None,
         None,
@@ -262,6 +383,9 @@ pub(super) fn resolve_stack_object(
         ),
         StackObjectKind::ActivatedAbility(_) => {
             resolve_activated_ability_from_stack(game_id, players, terminal_state, stack_object)
+        }
+        StackObjectKind::TriggeredAbility(_) => {
+            resolve_triggered_ability_from_stack(game_id, players, terminal_state, stack_object)
         }
     }
 }

@@ -4,6 +4,7 @@ use {
     super::{
         ActivatedAbilityProfile, ActivatedManaAbilityProfile, CardDefinition, CardType,
         CastingPermissionProfile, KeywordAbility, KeywordAbilitySet, ManaCost, SupportedSpellRules,
+        TriggeredAbilityProfile,
     },
     crate::domain::play::ids::{CardDefinitionId, CardInstanceId, PlayerCardHandle},
     std::sync::Arc,
@@ -30,11 +31,13 @@ pub struct CreatureSpellPayload {
     power: u32,
     toughness: u32,
     keywords: KeywordAbilitySet,
+    triggered_ability: Option<TriggeredAbilityProfile>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PermanentSpellPayload {
     activated_ability: Option<ActivatedAbilityProfile>,
+    triggered_ability: Option<TriggeredAbilityProfile>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -241,6 +244,7 @@ impl CardInstance {
                         definition_id,
                         kind: SpellPayloadKind::Artifact(PermanentSpellPayload {
                             activated_ability: definition.activated_ability(),
+                            triggered_ability: definition.triggered_ability(),
                         }),
                     },
                     CardType::Enchantment => SpellPayload {
@@ -248,6 +252,7 @@ impl CardInstance {
                         definition_id,
                         kind: SpellPayloadKind::Enchantment(PermanentSpellPayload {
                             activated_ability: definition.activated_ability(),
+                            triggered_ability: definition.triggered_ability(),
                         }),
                     },
                     CardType::Planeswalker => SpellPayload {
@@ -255,6 +260,7 @@ impl CardInstance {
                         definition_id,
                         kind: SpellPayloadKind::Planeswalker(PermanentSpellPayload {
                             activated_ability: definition.activated_ability(),
+                            triggered_ability: definition.triggered_ability(),
                         }),
                     },
                     CardType::Land => SpellPayload {
@@ -262,6 +268,7 @@ impl CardInstance {
                         definition_id,
                         kind: SpellPayloadKind::Land(PermanentSpellPayload {
                             activated_ability: definition.activated_ability(),
+                            triggered_ability: definition.triggered_ability(),
                         }),
                     },
                     CardType::Instant => SpellPayload {
@@ -288,6 +295,7 @@ impl CardInstance {
                             definition_id,
                             kind: SpellPayloadKind::Land(PermanentSpellPayload {
                                 activated_ability: definition.activated_ability(),
+                                triggered_ability: definition.triggered_ability(),
                             }),
                         }
                     }
@@ -300,6 +308,7 @@ impl CardInstance {
                     power: creature.power,
                     toughness: creature.toughness,
                     keywords: creature.keywords,
+                    triggered_ability: self.face.definition.triggered_ability(),
                 }),
             },
         }
@@ -352,6 +361,9 @@ impl SpellPayload {
         let mut definition = CardDefinition::for_card_type(definition_id, 0, &card_type);
         if let Some(activated_ability) = payload.activated_ability {
             definition = definition.with_activated_ability(activated_ability);
+        }
+        if let Some(triggered_ability) = payload.triggered_ability {
+            definition = definition.with_triggered_ability(triggered_ability);
         }
         CardInstance {
             id,
@@ -428,11 +440,14 @@ impl SpellPayload {
             SpellPayloadKind::Creature(payload) => CardInstance {
                 id,
                 face: CardFace {
-                    definition: Arc::new(CardDefinition::for_card_type(
-                        definition_id,
-                        0,
-                        &CardType::Creature,
-                    )),
+                    definition: Arc::new({
+                        let mut definition =
+                            CardDefinition::for_card_type(definition_id, 0, &CardType::Creature);
+                        if let Some(triggered_ability) = payload.triggered_ability {
+                            definition = definition.with_triggered_ability(triggered_ability);
+                        }
+                        definition
+                    }),
                 },
                 runtime: CardRuntime {
                     tapped: false,
@@ -486,6 +501,11 @@ impl CardInstance {
     #[must_use]
     pub fn activated_ability(&self) -> Option<ActivatedAbilityProfile> {
         self.face.definition.activated_ability()
+    }
+
+    #[must_use]
+    pub fn triggered_ability(&self) -> Option<TriggeredAbilityProfile> {
+        self.face.definition.triggered_ability()
     }
 
     #[must_use]

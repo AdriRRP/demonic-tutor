@@ -3,7 +3,7 @@
 use crate::domain::play::{
     cards::{
         ActivatedAbilityProfile, CardDefinition, CardInstance, CardType, CastingRule,
-        KeywordAbilitySet, ManaColor, ManaCost, SupportedSpellRules,
+        KeywordAbilitySet, ManaColor, ManaCost, SupportedSpellRules, TriggeredAbilityProfile,
     },
     ids::{CardDefinitionId, CardInstanceId, DeckId, PlayerId},
 };
@@ -104,6 +104,12 @@ impl LibraryCard {
     #[must_use]
     pub fn with_activated_ability(mut self, activated_ability: ActivatedAbilityProfile) -> Self {
         self.definition = self.definition.with_activated_ability(activated_ability);
+        self
+    }
+
+    #[must_use]
+    pub fn with_triggered_ability(mut self, triggered_ability: TriggeredAbilityProfile) -> Self {
+        self.definition = self.definition.with_triggered_ability(triggered_ability);
         self
     }
 

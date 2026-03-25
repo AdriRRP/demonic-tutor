@@ -3,7 +3,7 @@
 use {
     super::{
         ActivatedAbilityProfile, ActivatedManaAbilityProfile, CardType, CastingPermissionProfile,
-        CastingRule, ManaColor, ManaCost, SupportedSpellRules,
+        CastingRule, ManaColor, ManaCost, SupportedSpellRules, TriggeredAbilityProfile,
     },
     crate::domain::play::ids::CardDefinitionId,
 };
@@ -17,6 +17,7 @@ pub struct CardDefinition {
     supported_spell_rules: SupportedSpellRules,
     activated_mana_ability: Option<ActivatedManaAbilityProfile>,
     activated_ability: Option<ActivatedAbilityProfile>,
+    triggered_ability: Option<TriggeredAbilityProfile>,
 }
 
 impl CardDefinition {
@@ -38,6 +39,7 @@ impl CardDefinition {
                 | CardType::Planeswalker => None,
             },
             activated_ability: None,
+            triggered_ability: None,
         }
     }
 
@@ -54,6 +56,7 @@ impl CardDefinition {
                 1,
             )),
             activated_ability: None,
+            triggered_ability: None,
         }
     }
 
@@ -90,6 +93,15 @@ impl CardDefinition {
     }
 
     #[must_use]
+    pub const fn with_triggered_ability(
+        mut self,
+        triggered_ability: TriggeredAbilityProfile,
+    ) -> Self {
+        self.triggered_ability = Some(triggered_ability);
+        self
+    }
+
+    #[must_use]
     pub const fn from_parts(
         id: CardDefinitionId,
         card_type: CardType,
@@ -98,6 +110,7 @@ impl CardDefinition {
         supported_spell_rules: SupportedSpellRules,
         activated_mana_ability: Option<ActivatedManaAbilityProfile>,
         activated_ability: Option<ActivatedAbilityProfile>,
+        triggered_ability: Option<TriggeredAbilityProfile>,
     ) -> Self {
         Self {
             id,
@@ -107,6 +120,7 @@ impl CardDefinition {
             supported_spell_rules,
             activated_mana_ability,
             activated_ability,
+            triggered_ability,
         }
     }
 
@@ -148,5 +162,10 @@ impl CardDefinition {
     #[must_use]
     pub const fn activated_ability(&self) -> Option<ActivatedAbilityProfile> {
         self.activated_ability
+    }
+
+    #[must_use]
+    pub const fn triggered_ability(&self) -> Option<TriggeredAbilityProfile> {
+        self.triggered_ability
     }
 }

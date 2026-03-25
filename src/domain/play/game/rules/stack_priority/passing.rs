@@ -58,6 +58,7 @@ pub fn pass_priority(
         *priority = Some(PriorityState::after_first_pass(next_holder));
         return Ok(PassPriorityOutcome {
             priority_passed,
+            triggered_abilities_put_on_stack: Vec::new(),
             stack_top_resolved: None,
             spell_cast: None,
             card_exiled: None,
@@ -74,6 +75,7 @@ pub fn pass_priority(
         *priority = None;
         return Ok(PassPriorityOutcome {
             priority_passed,
+            triggered_abilities_put_on_stack: Vec::new(),
             stack_top_resolved: None,
             spell_cast: None,
             card_exiled: None,
@@ -93,6 +95,7 @@ pub fn pass_priority(
     })?;
     let (
         stack_top_resolved,
+        triggered_abilities_put_on_stack,
         spell_cast,
         card_exiled,
         card_discarded,
@@ -117,6 +120,7 @@ pub fn pass_priority(
 
     Ok(PassPriorityOutcome {
         priority_passed,
+        triggered_abilities_put_on_stack,
         stack_top_resolved: Some(stack_top_resolved),
         spell_cast,
         card_exiled,

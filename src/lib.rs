@@ -14,6 +14,7 @@ pub use domain::play::{
         CardType, CastingPermissionProfile, CastingRule, CreatureTargetRule, KeywordAbility,
         KeywordAbilitySet, ManaColor, ManaCost, PlayerTargetRule, SingleTargetRule,
         SpellResolutionProfile, SpellTargetKind, SpellTargetingProfile, SupportedSpellRules,
+        TriggeredAbilityEffect, TriggeredAbilityEvent, TriggeredAbilityProfile,
     },
     commands::{
         ActivateAbilityCommand, AdjustPlayerLifeEffectCommand, AdvanceTurnCommand,
@@ -28,12 +29,13 @@ pub use domain::play::{
         CardExiled, CombatDamageResolved, CreatureDied, DamageEvent, DiscardKind, DomainEvent,
         DrawKind, GameEndReason, GameEnded, GameStarted, LandPlayed, LandTapped, LifeChanged,
         ManaAdded, MulliganTaken, OpeningHandDealt, PriorityPassed, SpellCast, SpellCastOutcome,
-        SpellPutOnStack, StackTopResolved, TurnProgressed,
+        SpellPutOnStack, StackTopResolved, TriggeredAbilityPutOnStack, TurnProgressed,
     },
     game::{
         ActivateAbilityOutcome, ActivatedAbilityOnStack, AdjustPlayerLifeEffectOutcome,
         AdvanceTurnOutcome, CastSpellOutcome, DrawCardsEffectOutcome, Game, PassPriorityOutcome,
         PriorityState, SpellOnStack, SpellTarget, StackObject, StackObjectKind, StackZone,
+        TriggeredAbilityOnStack,
     },
     ids::{CardDefinitionId, CardInstanceId, DeckId, GameId, PlayerId, StackObjectId},
     phase::Phase,

@@ -1,7 +1,7 @@
 //! Supports play events stack priority.
 
 use crate::domain::play::{
-    cards::{ActivatedAbilityEffect, CardType},
+    cards::{ActivatedAbilityEffect, CardType, TriggeredAbilityEffect, TriggeredAbilityEvent},
     game::SpellTarget,
     ids::{CardInstanceId, GameId, PlayerId, StackObjectId},
 };
@@ -28,6 +28,37 @@ impl ActivatedAbilityPutOnStack {
             game_id,
             player_id,
             source_card_id,
+            effect,
+            stack_object_id,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct TriggeredAbilityPutOnStack {
+    pub game_id: GameId,
+    pub player_id: PlayerId,
+    pub source_card_id: CardInstanceId,
+    pub trigger: TriggeredAbilityEvent,
+    pub effect: TriggeredAbilityEffect,
+    pub stack_object_id: StackObjectId,
+}
+
+impl TriggeredAbilityPutOnStack {
+    #[must_use]
+    pub const fn new(
+        game_id: GameId,
+        player_id: PlayerId,
+        source_card_id: CardInstanceId,
+        trigger: TriggeredAbilityEvent,
+        effect: TriggeredAbilityEffect,
+        stack_object_id: StackObjectId,
+    ) -> Self {
+        Self {
+            game_id,
+            player_id,
+            source_card_id,
+            trigger,
             effect,
             stack_object_id,
         }

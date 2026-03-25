@@ -22,7 +22,7 @@ pub use model::Player;
 pub use model::{
     ActivatedAbilityOnStack, AggregateCardLocationIndex, PlayerCardZone, PrepareHandSpellCastError,
     PreparedHandSpellCast, PriorityState, SpellOnStack, StackObject, StackObjectKind, StackZone,
-    TerminalState,
+    TerminalState, TriggeredAbilityOnStack,
 };
 pub use rules::{
     combat::ResolveCombatDamageOutcome,

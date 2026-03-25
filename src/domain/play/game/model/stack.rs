@@ -3,7 +3,7 @@
 use crate::domain::play::{
     cards::{
         ActivatedAbilityEffect, ActivatedAbilityProfile, CardType, SpellPayload, SpellTargetKind,
-        SupportedSpellRules,
+        SupportedSpellRules, TriggeredAbilityEffect, TriggeredAbilityProfile,
     },
     ids::{CardInstanceId, PlayerCardHandle},
 };
@@ -162,6 +162,7 @@ impl StackObject {
         match &self.kind {
             StackObjectKind::Spell(spell) => spell.source_card_id().clone(),
             StackObjectKind::ActivatedAbility(ability) => ability.source_card_id(),
+            StackObjectKind::TriggeredAbility(ability) => ability.source_card_id(),
         }
     }
 
@@ -180,6 +181,7 @@ impl StackObject {
 pub enum StackObjectKind {
     Spell(SpellOnStack),
     ActivatedAbility(ActivatedAbilityOnStack),
+    TriggeredAbility(TriggeredAbilityOnStack),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -195,6 +197,13 @@ pub struct ActivatedAbilityOnStack {
     source_card_ref: StackCardRef,
     source_card_core: u64,
     ability: ActivatedAbilityProfile,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TriggeredAbilityOnStack {
+    source_card_ref: StackCardRef,
+    source_card_core: u64,
+    ability: TriggeredAbilityProfile,
 }
 
 impl ActivatedAbilityOnStack {
@@ -230,6 +239,43 @@ impl ActivatedAbilityOnStack {
 
     #[must_use]
     pub const fn effect(&self) -> ActivatedAbilityEffect {
+        self.ability.effect()
+    }
+}
+
+impl TriggeredAbilityOnStack {
+    #[must_use]
+    pub const fn new(
+        source_card_ref: StackCardRef,
+        source_card_core: u64,
+        ability: TriggeredAbilityProfile,
+    ) -> Self {
+        Self {
+            source_card_ref,
+            source_card_core,
+            ability,
+        }
+    }
+
+    #[must_use]
+    pub const fn source_card_ref(&self) -> StackCardRef {
+        self.source_card_ref
+    }
+
+    #[must_use]
+    pub fn source_card_id(&self) -> CardInstanceId {
+        CardInstanceId::from_core_u64(self.source_card_core).unwrap_or_else(|| {
+            CardInstanceId::new(format!("missing-card-core-{}", self.source_card_core))
+        })
+    }
+
+    #[must_use]
+    pub const fn ability(&self) -> TriggeredAbilityProfile {
+        self.ability
+    }
+
+    #[must_use]
+    pub const fn effect(&self) -> TriggeredAbilityEffect {
         self.ability.effect()
     }
 }

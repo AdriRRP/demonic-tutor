@@ -25,6 +25,7 @@ pub(super) fn domain_events_for_cast_spell(outcome: &CastSpellOutcome) -> Vec<Do
 
 pub(super) fn domain_events_for_pass_priority(outcome: &PassPriorityOutcome) -> Vec<DomainEvent> {
     let mut domain_events = DomainEvents::with(outcome.priority_passed.clone());
+    domain_events.extend(outcome.triggered_abilities_put_on_stack.iter().cloned());
     domain_events.push_optional(outcome.stack_top_resolved.clone());
     domain_events.push_optional(outcome.spell_cast.clone());
     domain_events.push_optional(outcome.card_exiled.clone());

@@ -14,6 +14,6 @@ pub use player::{
 pub use priority::PriorityState;
 pub use stack::{
     ActivatedAbilityOnStack, SpellOnStack, StackCardRef, StackObject, StackObjectKind,
-    StackSpellChoice, StackTargetRef, StackZone,
+    StackSpellChoice, StackTargetRef, StackZone, TriggeredAbilityOnStack,
 };
 pub use terminal_state::TerminalState;
