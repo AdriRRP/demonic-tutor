@@ -14,6 +14,7 @@ struct IndexedOrderedZone {
     slot_to_visible: HashMap<usize, usize>,
     free_slots: Vec<usize>,
     visible_tree: Vec<usize>,
+    visible_live_until: usize,
     head: Option<usize>,
     tail: Option<usize>,
     len: usize,
@@ -40,6 +41,7 @@ impl Default for IndexedOrderedZone {
             slot_to_visible: HashMap::new(),
             free_slots: Vec::new(),
             visible_tree: vec![0],
+            visible_live_until: 0,
             head: None,
             tail: None,
             len: 0,
@@ -69,6 +71,39 @@ impl IndexedOrderedZone {
         let covered_prefix = self.visible_tree_prefix_sum(one_based_index - 1);
         let previous_prefix = self.visible_tree_prefix_sum(one_based_index - lowbit);
         self.visible_tree[one_based_index] = covered_prefix - previous_prefix + 1;
+    }
+
+    fn compact_visible_storage(&mut self) {
+        let mut next_visible_slots = Vec::with_capacity(self.len);
+        let mut next_slot_to_visible = HashMap::with_capacity(self.len);
+        let mut current = self.head;
+
+        while let Some(slot_index) = current {
+            let Some(slot) = self.slots.get(slot_index).and_then(Option::as_ref) else {
+                break;
+            };
+            next_slot_to_visible.insert(slot_index, next_visible_slots.len());
+            next_visible_slots.push(Some(slot_index));
+            current = slot.next;
+        }
+
+        self.visible_slots = next_visible_slots;
+        self.slot_to_visible = next_slot_to_visible;
+        self.visible_tree = vec![0];
+        for _ in 0..self.visible_slots.len() {
+            self.visible_tree_push_present();
+        }
+        self.visible_live_until = self.visible_slots.len();
+    }
+
+    fn trim_visible_tail(&mut self) {
+        while self.visible_live_until != 0
+            && self.visible_slots[self.visible_live_until - 1].is_none()
+        {
+            self.visible_slots.pop();
+            self.visible_tree.pop();
+            self.visible_live_until -= 1;
+        }
     }
 
     fn visible_tree_add(&mut self, index: usize, delta: isize) {
@@ -145,6 +180,7 @@ impl IndexedOrderedZone {
         self.slot_to_visible.insert(slot_index, visible_index);
         self.visible_slots.push(Some(slot_index));
         self.visible_tree_push_present();
+        self.visible_live_until = self.visible_slots.len();
         self.len += 1;
     }
 
@@ -181,6 +217,7 @@ impl IndexedOrderedZone {
         self.slot_to_visible.clear();
         self.free_slots.clear();
         self.visible_tree = vec![0];
+        self.visible_live_until = 0;
         self.head = None;
         self.tail = None;
         self.len = 0;
@@ -210,6 +247,11 @@ impl IndexedOrderedZone {
 
         self.visible_slots[visible_index] = None;
         self.visible_tree_add(visible_index, -1);
+        if visible_index + 1 == self.visible_live_until {
+            self.trim_visible_tail();
+        } else if self.visible_slots.len() > self.len.saturating_mul(2).saturating_add(8) {
+            self.compact_visible_storage();
+        }
         self.free_slots.push(slot_index);
         self.len -= 1;
         Some(slot.handle)

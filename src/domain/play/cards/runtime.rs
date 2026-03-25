@@ -27,8 +27,6 @@ struct CreatureRuntime {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CreatureSpellPayload {
-    id: CardInstanceId,
-    definition_id: CardDefinitionId,
     power: u32,
     toughness: u32,
     keywords: KeywordAbilitySet,
@@ -36,16 +34,23 @@ pub struct CreatureSpellPayload {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PermanentSpellPayload {
-    id: CardInstanceId,
-    definition_id: CardDefinitionId,
     activated_ability: Option<ActivatedAbilityProfile>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct EffectSpellPayload {
-    id: CardInstanceId,
-    definition_id: CardDefinitionId,
     supported_spell_rules: SupportedSpellRules,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum SpellPayloadKind {
+    Instant(EffectSpellPayload),
+    Sorcery(EffectSpellPayload),
+    Artifact(PermanentSpellPayload),
+    Enchantment(PermanentSpellPayload),
+    Planeswalker(PermanentSpellPayload),
+    Land(PermanentSpellPayload),
+    Creature(CreatureSpellPayload),
 }
 
 impl CreatureRuntime {
@@ -134,17 +139,18 @@ pub struct CardInstance {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum SpellPayload {
-    Instant(EffectSpellPayload),
-    Sorcery(EffectSpellPayload),
-    Artifact(PermanentSpellPayload),
-    Enchantment(PermanentSpellPayload),
-    Planeswalker(PermanentSpellPayload),
-    Land(PermanentSpellPayload),
-    Creature(CreatureSpellPayload),
+pub struct SpellPayload {
+    id: CardInstanceId,
+    definition_id: CardDefinitionId,
+    kind: SpellPayloadKind,
 }
 
 impl CardInstance {
+    #[must_use]
+    pub const fn id(&self) -> &CardInstanceId {
+        &self.id
+    }
+
     #[must_use]
     pub(crate) fn from_definition(
         id: CardInstanceId,
@@ -225,68 +231,223 @@ impl CardInstance {
 
     #[must_use]
     pub fn into_spell_payload(self) -> SpellPayload {
+        let definition_id = self.face.definition.id().clone();
         match &self.runtime.kind {
             CardRuntimeKind::NonCreature => {
                 let definition = self.face.definition.as_ref();
                 match definition.card_type() {
-                    CardType::Artifact => SpellPayload::Artifact(PermanentSpellPayload {
+                    CardType::Artifact => SpellPayload {
                         id: self.id,
-                        definition_id: definition.id().clone(),
-                        activated_ability: definition.activated_ability(),
-                    }),
-                    CardType::Enchantment => SpellPayload::Enchantment(PermanentSpellPayload {
+                        definition_id,
+                        kind: SpellPayloadKind::Artifact(PermanentSpellPayload {
+                            activated_ability: definition.activated_ability(),
+                        }),
+                    },
+                    CardType::Enchantment => SpellPayload {
                         id: self.id,
-                        definition_id: definition.id().clone(),
-                        activated_ability: definition.activated_ability(),
-                    }),
-                    CardType::Planeswalker => SpellPayload::Planeswalker(PermanentSpellPayload {
+                        definition_id,
+                        kind: SpellPayloadKind::Enchantment(PermanentSpellPayload {
+                            activated_ability: definition.activated_ability(),
+                        }),
+                    },
+                    CardType::Planeswalker => SpellPayload {
                         id: self.id,
-                        definition_id: definition.id().clone(),
-                        activated_ability: definition.activated_ability(),
-                    }),
-                    CardType::Land => SpellPayload::Land(PermanentSpellPayload {
+                        definition_id,
+                        kind: SpellPayloadKind::Planeswalker(PermanentSpellPayload {
+                            activated_ability: definition.activated_ability(),
+                        }),
+                    },
+                    CardType::Land => SpellPayload {
                         id: self.id,
-                        definition_id: definition.id().clone(),
-                        activated_ability: definition.activated_ability(),
-                    }),
-                    CardType::Instant => SpellPayload::Instant(EffectSpellPayload {
+                        definition_id,
+                        kind: SpellPayloadKind::Land(PermanentSpellPayload {
+                            activated_ability: definition.activated_ability(),
+                        }),
+                    },
+                    CardType::Instant => SpellPayload {
                         id: self.id,
-                        definition_id: definition.id().clone(),
-                        supported_spell_rules: definition.supported_spell_rules(),
-                    }),
-                    CardType::Sorcery => SpellPayload::Sorcery(EffectSpellPayload {
+                        definition_id,
+                        kind: SpellPayloadKind::Instant(EffectSpellPayload {
+                            supported_spell_rules: definition.supported_spell_rules(),
+                        }),
+                    },
+                    CardType::Sorcery => SpellPayload {
                         id: self.id,
-                        definition_id: definition.id().clone(),
-                        supported_spell_rules: definition.supported_spell_rules(),
-                    }),
+                        definition_id,
+                        kind: SpellPayloadKind::Sorcery(EffectSpellPayload {
+                            supported_spell_rules: definition.supported_spell_rules(),
+                        }),
+                    },
                     CardType::Creature => {
                         debug_assert!(
                             false,
                             "non-creature spell payloads should never be built from creature definitions"
                         );
-                        SpellPayload::Land(PermanentSpellPayload {
+                        SpellPayload {
                             id: self.id,
-                            definition_id: definition.id().clone(),
-                            activated_ability: definition.activated_ability(),
-                        })
+                            definition_id,
+                            kind: SpellPayloadKind::Land(PermanentSpellPayload {
+                                activated_ability: definition.activated_ability(),
+                            }),
+                        }
                     }
                 }
             }
-            CardRuntimeKind::Creature(creature) => SpellPayload::Creature(CreatureSpellPayload {
+            CardRuntimeKind::Creature(creature) => SpellPayload {
                 id: self.id,
-                definition_id: self.face.definition.id().clone(),
-                power: creature.power,
-                toughness: creature.toughness,
-                keywords: creature.keywords,
-            }),
+                definition_id,
+                kind: SpellPayloadKind::Creature(CreatureSpellPayload {
+                    power: creature.power,
+                    toughness: creature.toughness,
+                    keywords: creature.keywords,
+                }),
+            },
         }
     }
+}
 
+impl SpellPayload {
     #[must_use]
     pub const fn id(&self) -> &CardInstanceId {
         &self.id
     }
 
+    #[must_use]
+    pub const fn definition_id(&self) -> &CardDefinitionId {
+        &self.definition_id
+    }
+
+    #[must_use]
+    pub const fn kind(&self) -> &SpellPayloadKind {
+        &self.kind
+    }
+
+    fn effect_into_card_instance(
+        id: CardInstanceId,
+        definition_id: CardDefinitionId,
+        payload: &EffectSpellPayload,
+        card_type: CardType,
+    ) -> CardInstance {
+        CardInstance {
+            id,
+            face: CardFace {
+                definition: Arc::new(
+                    CardDefinition::for_card_type(definition_id, 0, &card_type)
+                        .with_supported_spell_rules(payload.supported_spell_rules),
+                ),
+            },
+            runtime: CardRuntime {
+                tapped: false,
+                kind: CardRuntimeKind::NonCreature,
+            },
+        }
+    }
+
+    fn permanent_into_card_instance(
+        id: CardInstanceId,
+        definition_id: CardDefinitionId,
+        payload: &PermanentSpellPayload,
+        card_type: CardType,
+    ) -> CardInstance {
+        let mut definition = CardDefinition::for_card_type(definition_id, 0, &card_type);
+        if let Some(activated_ability) = payload.activated_ability {
+            definition = definition.with_activated_ability(activated_ability);
+        }
+        CardInstance {
+            id,
+            face: CardFace {
+                definition: Arc::new(definition),
+            },
+            runtime: CardRuntime {
+                tapped: false,
+                kind: CardRuntimeKind::NonCreature,
+            },
+        }
+    }
+
+    #[must_use]
+    pub const fn card_type(&self) -> &CardType {
+        match self.kind() {
+            SpellPayloadKind::Instant(_) => &CardType::Instant,
+            SpellPayloadKind::Sorcery(_) => &CardType::Sorcery,
+            SpellPayloadKind::Artifact(_) => &CardType::Artifact,
+            SpellPayloadKind::Enchantment(_) => &CardType::Enchantment,
+            SpellPayloadKind::Planeswalker(_) => &CardType::Planeswalker,
+            SpellPayloadKind::Land(_) => &CardType::Land,
+            SpellPayloadKind::Creature(_) => &CardType::Creature,
+        }
+    }
+
+    #[must_use]
+    pub const fn supported_spell_rules(&self) -> SupportedSpellRules {
+        match self.kind() {
+            SpellPayloadKind::Instant(payload) | SpellPayloadKind::Sorcery(payload) => {
+                payload.supported_spell_rules
+            }
+            SpellPayloadKind::Artifact(_)
+            | SpellPayloadKind::Enchantment(_)
+            | SpellPayloadKind::Planeswalker(_)
+            | SpellPayloadKind::Land(_)
+            | SpellPayloadKind::Creature(_) => SupportedSpellRules::none(),
+        }
+    }
+
+    #[must_use]
+    pub fn into_card_instance(self) -> CardInstance {
+        let Self {
+            id,
+            definition_id,
+            kind,
+        } = self;
+
+        match kind {
+            SpellPayloadKind::Instant(payload) => {
+                Self::effect_into_card_instance(id, definition_id, &payload, CardType::Instant)
+            }
+            SpellPayloadKind::Sorcery(payload) => {
+                Self::effect_into_card_instance(id, definition_id, &payload, CardType::Sorcery)
+            }
+            SpellPayloadKind::Artifact(payload) => {
+                Self::permanent_into_card_instance(id, definition_id, &payload, CardType::Artifact)
+            }
+            SpellPayloadKind::Enchantment(payload) => Self::permanent_into_card_instance(
+                id,
+                definition_id,
+                &payload,
+                CardType::Enchantment,
+            ),
+            SpellPayloadKind::Planeswalker(payload) => Self::permanent_into_card_instance(
+                id,
+                definition_id,
+                &payload,
+                CardType::Planeswalker,
+            ),
+            SpellPayloadKind::Land(payload) => {
+                Self::permanent_into_card_instance(id, definition_id, &payload, CardType::Land)
+            }
+            SpellPayloadKind::Creature(payload) => CardInstance {
+                id,
+                face: CardFace {
+                    definition: Arc::new(CardDefinition::for_card_type(
+                        definition_id,
+                        0,
+                        &CardType::Creature,
+                    )),
+                },
+                runtime: CardRuntime {
+                    tapped: false,
+                    kind: CardRuntimeKind::Creature(CreatureRuntime::new_with_keywords(
+                        payload.power,
+                        payload.toughness,
+                        payload.keywords,
+                    )),
+                },
+            },
+        }
+    }
+}
+
+impl CardInstance {
     #[must_use]
     pub fn definition_id(&self) -> &CardDefinitionId {
         self.face.definition.id()
@@ -527,124 +688,13 @@ impl CardInstance {
     }
 }
 
-impl SpellPayload {
-    fn effect_into_card_instance(payload: EffectSpellPayload, card_type: CardType) -> CardInstance {
-        CardInstance {
-            id: payload.id,
-            face: CardFace {
-                definition: Arc::new(
-                    CardDefinition::for_card_type(payload.definition_id, 0, &card_type)
-                        .with_supported_spell_rules(payload.supported_spell_rules),
-                ),
-            },
-            runtime: CardRuntime {
-                tapped: false,
-                kind: CardRuntimeKind::NonCreature,
-            },
-        }
-    }
-
-    fn permanent_into_card_instance(
-        payload: PermanentSpellPayload,
-        card_type: CardType,
-    ) -> CardInstance {
-        let mut definition = CardDefinition::for_card_type(payload.definition_id, 0, &card_type);
-        if let Some(activated_ability) = payload.activated_ability {
-            definition = definition.with_activated_ability(activated_ability);
-        }
-        CardInstance {
-            id: payload.id,
-            face: CardFace {
-                definition: Arc::new(definition),
-            },
-            runtime: CardRuntime {
-                tapped: false,
-                kind: CardRuntimeKind::NonCreature,
-            },
-        }
-    }
-
-    #[must_use]
-    pub const fn id(&self) -> &CardInstanceId {
-        match self {
-            Self::Instant(payload) | Self::Sorcery(payload) => &payload.id,
-            Self::Artifact(payload)
-            | Self::Enchantment(payload)
-            | Self::Planeswalker(payload)
-            | Self::Land(payload) => &payload.id,
-            Self::Creature(payload) => &payload.id,
-        }
-    }
-
-    #[must_use]
-    pub const fn card_type(&self) -> &CardType {
-        match self {
-            Self::Instant(_) => &CardType::Instant,
-            Self::Sorcery(_) => &CardType::Sorcery,
-            Self::Artifact(_) => &CardType::Artifact,
-            Self::Enchantment(_) => &CardType::Enchantment,
-            Self::Planeswalker(_) => &CardType::Planeswalker,
-            Self::Land(_) => &CardType::Land,
-            Self::Creature(_) => &CardType::Creature,
-        }
-    }
-
-    #[must_use]
-    pub const fn supported_spell_rules(&self) -> SupportedSpellRules {
-        match self {
-            Self::Instant(payload) | Self::Sorcery(payload) => payload.supported_spell_rules,
-            Self::Artifact(_)
-            | Self::Enchantment(_)
-            | Self::Planeswalker(_)
-            | Self::Land(_)
-            | Self::Creature(_) => SupportedSpellRules::none(),
-        }
-    }
-
-    #[must_use]
-    pub fn into_card_instance(self) -> CardInstance {
-        match self {
-            Self::Instant(payload) => Self::effect_into_card_instance(payload, CardType::Instant),
-            Self::Sorcery(payload) => Self::effect_into_card_instance(payload, CardType::Sorcery),
-            Self::Artifact(payload) => {
-                Self::permanent_into_card_instance(payload, CardType::Artifact)
-            }
-            Self::Enchantment(payload) => {
-                Self::permanent_into_card_instance(payload, CardType::Enchantment)
-            }
-            Self::Planeswalker(payload) => {
-                Self::permanent_into_card_instance(payload, CardType::Planeswalker)
-            }
-            Self::Land(payload) => Self::permanent_into_card_instance(payload, CardType::Land),
-            Self::Creature(payload) => CardInstance {
-                id: payload.id,
-                face: CardFace {
-                    definition: Arc::new(CardDefinition::for_card_type(
-                        payload.definition_id,
-                        0,
-                        &CardType::Creature,
-                    )),
-                },
-                runtime: CardRuntime {
-                    tapped: false,
-                    kind: CardRuntimeKind::Creature(CreatureRuntime::new_with_keywords(
-                        payload.power,
-                        payload.toughness,
-                        payload.keywords,
-                    )),
-                },
-            },
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     //! Supports runtime payload regression tests.
 
     use super::{
         ActivatedAbilityProfile, CardDefinition, CardDefinitionId, CardInstance, CardInstanceId,
-        CardType, KeywordAbility, KeywordAbilitySet, SpellPayload, SupportedSpellRules,
+        CardType, KeywordAbility, KeywordAbilitySet, SpellPayloadKind, SupportedSpellRules,
     };
 
     #[test]
@@ -661,13 +711,11 @@ mod tests {
         );
 
         assert!(matches!(
-            card.clone().into_spell_payload(),
-            SpellPayload::Artifact(_)
+            card.clone().into_spell_payload().kind(),
+            SpellPayloadKind::Artifact(_)
         ));
-        let SpellPayload::Artifact(payload) = card.into_spell_payload() else {
-            return;
-        };
-        let resolved = SpellPayload::Artifact(payload).into_card_instance();
+        let payload = card.into_spell_payload();
+        let resolved = payload.into_card_instance();
 
         assert_eq!(resolved.card_type(), &CardType::Artifact);
         assert_eq!(
@@ -695,13 +743,11 @@ mod tests {
         );
 
         assert!(matches!(
-            card.clone().into_spell_payload(),
-            SpellPayload::Instant(_)
+            card.clone().into_spell_payload().kind(),
+            SpellPayloadKind::Instant(_)
         ));
-        let SpellPayload::Instant(payload) = card.into_spell_payload() else {
-            return;
-        };
-        let resolved = SpellPayload::Instant(payload).into_card_instance();
+        let payload = card.into_spell_payload();
+        let resolved = payload.into_card_instance();
 
         assert_eq!(resolved.card_type(), &CardType::Instant);
         assert_eq!(
@@ -730,13 +776,11 @@ mod tests {
         );
 
         assert!(matches!(
-            card.clone().into_spell_payload(),
-            SpellPayload::Creature(_)
+            card.clone().into_spell_payload().kind(),
+            SpellPayloadKind::Creature(_)
         ));
-        let SpellPayload::Creature(payload) = card.into_spell_payload() else {
-            return;
-        };
-        let resolved = SpellPayload::Creature(payload).into_card_instance();
+        let payload = card.into_spell_payload();
+        let resolved = payload.into_card_instance();
 
         assert_eq!(resolved.card_type(), &CardType::Creature);
         assert_eq!(resolved.creature_stats(), Some((2, 2)));

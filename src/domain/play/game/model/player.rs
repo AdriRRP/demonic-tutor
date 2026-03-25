@@ -163,19 +163,23 @@ struct PlayerOwnedCard {
 struct PlayerCardArena {
     cards: Vec<Option<PlayerOwnedCard>>,
     free_slots: Vec<usize>,
+    public_index: std::collections::HashMap<CardInstanceId, PlayerCardHandle>,
 }
 
 impl PlayerCardArena {
     fn insert(&mut self, card: CardInstance, zone: PlayerCardZone) -> PlayerCardHandle {
+        let card_id = card.id().clone();
         let owned_card = PlayerOwnedCard { card, zone };
-        if let Some(index) = self.free_slots.pop() {
+        let handle = if let Some(index) = self.free_slots.pop() {
             self.cards[index] = Some(owned_card);
             PlayerCardHandle::new(index)
         } else {
             let handle = PlayerCardHandle::new(self.cards.len());
             self.cards.push(Some(owned_card));
             handle
-        }
+        };
+        self.public_index.insert(card_id, handle);
+        handle
     }
 
     fn get_by_handle(&self, handle: PlayerCardHandle) -> Option<&CardInstance> {
@@ -193,17 +197,15 @@ impl PlayerCardArena {
     }
 
     fn find_handle(&self, card_id: &CardInstanceId) -> Option<PlayerCardHandle> {
-        self.cards.iter().enumerate().find_map(|(index, slot)| {
-            let owned = slot.as_ref()?;
-            (owned.card.id() == card_id).then_some(PlayerCardHandle::new(index))
-        })
+        self.public_index.get(card_id).copied()
     }
 
     fn begin_remove_by_handle(&mut self, handle: PlayerCardHandle) -> Option<PlayerOwnedCard> {
         self.cards.get_mut(handle.index())?.take()
     }
 
-    fn commit_removed(&mut self, handle: PlayerCardHandle) {
+    fn commit_removed(&mut self, handle: PlayerCardHandle, card_id: &CardInstanceId) {
+        self.public_index.remove(card_id);
         self.free_slots.push(handle.index());
     }
 
@@ -231,7 +233,8 @@ impl PlayerCardArena {
 
     fn remove_by_handle(&mut self, handle: PlayerCardHandle) -> Option<CardInstance> {
         let owned = self.begin_remove_by_handle(handle)?;
-        self.commit_removed(handle);
+        let card_id = owned.card.id().clone();
+        self.commit_removed(handle, &card_id);
         Some(owned.card)
     }
 }
@@ -846,7 +849,7 @@ impl Player {
             let _ = self.cards.rollback_remove(handle, owned);
             return Err(PrepareHandSpellCastError::MissingCard);
         }
-        self.cards.commit_removed(handle);
+        self.cards.commit_removed(handle, owned.card.id());
         let payload = owned.card.into_spell_payload();
         self.mana = next_mana;
 

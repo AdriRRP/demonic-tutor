@@ -154,6 +154,11 @@ The player runtime is now handle-first at its core.
 
 `CardInstanceId` still exists for commands, events, tests, and compatibility queries, but those lookups are treated as boundary concerns rather than as the canonical identity path inside `Player`.
 
+The important nuance is:
+
+- the arena is still keyed semantically by handle
+- the public id lookup is now a projection kept for boundary translation, not the ownership model
+
 ---
 
 # Abstraction 3: Handles
@@ -267,6 +272,8 @@ Earlier versions had two different pathologies:
 
 The current structure removes both problems from the common path while keeping semantics honest.
 
+It also trims or rebuilds the visible-position support structure when sparse history grows too much, so the zone does not keep paying forever for long-dead positions.
+
 ## Current Limit
 
 This is a strong practical structure for the current subset, but it is still a bespoke ordered-zone carrier, not a general-purpose sequence library.
@@ -357,7 +364,12 @@ That package says:
 - what target or controller matters
 - what data must survive until resolution
 
-In the current shape, the enum variant itself now carries more meaning.
+In the current shape, the payload has:
+
+- one shared identity header
+- one smaller runtime kind
+
+That means the enum variant itself now carries more meaning, while repeated fields like card id and definition id do not have to be copied inside every variant body.
 
 So instead of "payload plus repeated card type field", the runtime prefers families like:
 
@@ -388,6 +400,8 @@ The same idea now also applies to supported activated abilities:
 
 - inside the stack, the source is tracked by internal owner/handle reference
 - when the engine emits events or builds user-facing errors, it materializes the readable public card id
+
+That keeps the hot stack model more compact and leaves public source ids at the boundary where they are actually needed.
 
 ---
 

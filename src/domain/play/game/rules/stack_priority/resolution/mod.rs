@@ -110,7 +110,6 @@ fn resolve_spell_from_stack(
 ) -> Result<ResolvedSpellOutcome, crate::domain::play::errors::DomainError> {
     let ResolvedSpellObject {
         stack_object_number,
-        source_card_id,
         controller_index,
         payload,
         mana_cost_paid,
@@ -121,6 +120,7 @@ fn resolve_spell_from_stack(
         .transpose()?;
     let card_type = *payload.card_type();
     let supported_spell_rules = payload.supported_spell_rules();
+    let source_card_id = payload.id().clone();
 
     let outcome =
         move_resolved_spell_to_its_destination(players, controller_index, card_type, payload)?;

@@ -4,12 +4,10 @@ use crate::domain::play::{
     cards::{ActivatedAbilityProfile, SpellPayload},
     errors::{DomainError, GameError},
     game::model::{StackCardRef, StackObject, StackObjectKind, StackTargetRef},
-    ids::CardInstanceId,
 };
 
 pub(super) struct ResolvedSpellObject {
     pub stack_object_number: u32,
-    pub source_card_id: CardInstanceId,
     pub controller_index: usize,
     pub payload: SpellPayload,
     pub mana_cost_paid: u32,
@@ -26,14 +24,12 @@ pub(super) fn extract_resolved_spell_object(
             "spell extraction requires a spell stack object".to_string(),
         )));
     };
-    let source_card_id = spell.source_card_id().clone();
     let mana_cost_paid = spell.mana_cost_paid();
     let target = spell.target().copied();
     let payload = spell.into_payload();
 
     Ok(ResolvedSpellObject {
         stack_object_number,
-        source_card_id,
         controller_index,
         payload,
         mana_cost_paid,
