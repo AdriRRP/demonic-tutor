@@ -49,13 +49,13 @@ That means:
 ```mermaid
 flowchart TD
     A["Commands and tests use public ids"] --> B["Game aggregate"]
-    B --> C["Player-owned card arena"]
+    B --> C["Player card arena"]
     B --> D["Player zones"]
-    B --> E["Stack zone"]
-    B --> F["Aggregate location index"]
-    C --> G["Mutable card runtime"]
-    E --> H["Compact in-flight spell payloads"]
-    B --> I["Events materialize readable public ids"]
+    B --> E["Stack"]
+    B --> F["Location index"]
+    C --> G["Card runtime"]
+    E --> H["Spell payloads"]
+    B --> I["Events with public ids"]
 ```
 
 Read it like this:
@@ -470,14 +470,14 @@ Keeping it on handles longer reduces unnecessary public-id churn.
 
 ```mermaid
 flowchart LR
-    A["Public command with PlayerId / CardInstanceId"] --> B["Game aggregate"]
-    B --> C["Resolve owner_index + handle"]
-    C --> D["Player arena owns full CardInstance runtime"]
+    A["Public command with ids"] --> B["Game aggregate"]
+    B --> C["Resolve owner index and handle"]
+    C --> D["Player arena owns card runtime"]
     C --> E["Zones store handles in visible order"]
-    B --> F["Location index caches owner + zone + handle"]
-    B --> G["Stack stores in-flight spell payloads and internal targets"]
-    G --> H["Resolution and combat operate on compact refs"]
-    H --> I["Events materialize readable public ids"]
+    B --> F["Location index stores owner zone and handle"]
+    B --> G["Stack stores spell payloads and internal targets"]
+    G --> H["Resolution and combat use compact refs"]
+    H --> I["Events materialize public ids"]
 ```
 
 The important idea is not any single box.

@@ -47,6 +47,7 @@ At the current stage of the system, the aggregate conceptually maintains:
 - turn number
 - participating players
 - stack zone state
+- aggregate card location index
 - optional priority state
 - optional terminal game outcome (`winner`, `loser`, `end reason`)
 
@@ -70,6 +71,7 @@ Responsibilities:
 
 - hold runtime-owned gameplay state and player identity
 - manage personal card zones
+- own the canonical runtime storage for that player's card instances
 - track life total
 - track per-turn state
 - expose state required for gameplay operations
@@ -86,7 +88,7 @@ Represents a player's draw pile.
 
 Current implementation:
 
-- ordered collection of `CardInstanceId` backed by a player-owned card store
+- ordered collection backed by player-owned runtime storage and internal card handles
 
 Responsibilities:
 
@@ -131,7 +133,7 @@ Responsibilities:
 
 Current implementation:
 
-- collection of `CardInstanceId` backed by a player-owned card store
+- collection of player-owned card handles backed by a player-owned card arena
 
 The battlefield currently models only a minimal subset of permanent state.
 The runtime does not currently promise stable battlefield ordering.
@@ -185,6 +187,7 @@ The current runtime model separates:
 - mutable gameplay state (`tapped`, combat flags, creature runtime state)
 
 Immutable card-face metadata is currently shared across instances rather than copied by value per zone entry.
+Internal runtime identity now prefers numeric-core ids, owner indices, and player-owned card handles, while readable public ids are materialized at the aggregate boundary.
 
 Fields include:
 
@@ -218,6 +221,7 @@ The current model includes:
 - automatic destruction of creatures with 0 toughness through the shared review of supported state-based actions
 - minimal stack-aware spell casting and spell resolution
 - the stack may currently hold supported spells plus the first supported non-mana activated ability object family
+- the stack and supported activated abilities prefer internal owner/handle references while public ids are materialized only for outward-facing events, errors, and inspection
 - explicit supported spell-effect profiles carried by card-face data rather than inferred from card-definition strings during resolution
 - explicit legal-target rules for the currently supported targeted-spell subset, currently covering players and creatures
 - spell-target and spell-resolution metadata can be projected into dedicated stack-borne spell snapshots instead of reusing full permanent runtime

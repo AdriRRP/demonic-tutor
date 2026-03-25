@@ -9,12 +9,12 @@ The goal is to establish clear domain boundaries and prevent responsibility leak
 ```mermaid
 flowchart LR
 
-Deck["Deck Input Contract"]
-Play["Play Context"]
-ReadSide["Projections / Analytics Read Side"]
+Deck["Deck Input"]
+Play["Play"]
+ReadSide["Analytics Read Side"]
 
-Deck -->|setup data translated at boundary| Play
-Play -->|domain events| ReadSide
+Deck -->|"Boundary setup translation"| Play
+Play -->|"Domain events"| ReadSide
 ```
 
 ---

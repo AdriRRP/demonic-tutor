@@ -70,6 +70,8 @@ The domain currently includes:
 - shared immutable card definitions referenced by runtime card instances
 - basic zones (library, hand, battlefield, graveyard, exile)
 - player-owned zone carriers keyed by card id, with ordered library/hand/graveyard/exile views and intentionally unordered battlefield removal semantics
+- runtime identity inside the aggregate now prefers numeric-core ids, player indices, and player-owned card handles over public string ids
+- public `CardInstanceId` and `PlayerId` values are now treated primarily as readable boundary identities for commands, events, and tests
 - mana production from lands
 - explicit activated mana-ability profiles for the currently supported mana-producing permanents
 - the first supported non-mana activated ability corridor (`Tap: you gain 1 life`) using the same priority and stack model as other stack interactions
@@ -129,6 +131,9 @@ The domain currently includes:
 - supported spell targeting, casting rules, and resolution are currently carried as explicit card-face profiles rather than inferred from card-definition strings during casting or resolution
 - card definitions are currently created through card-type-aware constructors so supported spell cards receive casting semantics when the face is built
 - stack-borne spells now carry explicit spell snapshots and resolution metadata instead of reusing the full moved card runtime
+- supported activated abilities on the stack now also prefer internal source references, materializing public card ids only when leaving the runtime core
+- the aggregate card-location index is maintained transactionally for supported moves instead of refreshed from whole-player snapshots during normal gameplay
+- ordered visible zones now combine reusable slots, visible indexing, and sparse-position compaction so position lookup and ordered removal both avoid the earlier linear hot-path costs
 - resolving the top stack object after two consecutive passes
 - the explicit combat corridor progresses through `BeginningOfCombat`, `DeclareAttackers`, `DeclareBlockers`, `CombatDamage`, and `EndOfCombat`
 - empty combat windows close forward coherently from `BeginningOfCombat` into `DeclareAttackers`, from `DeclareAttackers` into `DeclareBlockers`, from `DeclareBlockers` into `CombatDamage`, and from `EndOfCombat` into `SecondMain`
