@@ -150,9 +150,9 @@ The arena keeps ownership explicit and movements cheaper.
 
 ## Current Tradeoff
 
-The player model still keeps a public-id-to-handle map for command-facing lookups.
+The player runtime is now handle-first at its core.
 
-That is acceptable today, but it is one of the few remaining places where public ids still enter the core earlier than ideal.
+`CardInstanceId` still exists for commands, events, tests, and compatibility queries, but those lookups are treated as boundary concerns rather than as the canonical identity path inside `Player`.
 
 ---
 

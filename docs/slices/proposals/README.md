@@ -10,8 +10,7 @@ Definitive closure wave for the remaining runtime-architecture debt after the `v
 
 Open slices:
 
-1. `make-player-handle-boundary-only-card-identity`
-2. `thin-stack-payloads-to-runtime-essential-state`
-3. `move-stack-source-and-ability-references-to-internal-refs`
-4. `make-aggregate-location-index-purely-transactional`
-5. `remove-linear-visible-zone-reindex-on-ordered-removal`
+1. `thin-stack-payloads-to-runtime-essential-state`
+2. `move-stack-source-and-ability-references-to-internal-refs`
+3. `make-aggregate-location-index-purely-transactional`
+4. `remove-linear-visible-zone-reindex-on-ordered-removal`
