@@ -3,10 +3,11 @@
 use {
     super::{ActivateAbilityOutcome, StackPriorityContext},
     crate::domain::play::{
-        cards::SpellTargetingProfile,
+        cards::{ActivatedAbilitySacrificeCost, CardType, SpellTargetingProfile},
         commands::ActivateAbilityCommand,
         errors::{CardError, DomainError, GameError},
         events::ActivatedAbilityPutOnStack,
+        events::CreatureDied,
         game::{
             helpers, invariants,
             model::{
@@ -60,12 +61,15 @@ fn prepare_activation_source(
 
 fn pay_activation_costs(
     players: &mut [crate::domain::play::game::Player],
+    game_id: &crate::domain::play::ids::GameId,
     player_index: usize,
     player_id: crate::domain::play::ids::PlayerId,
     source_card_id: CardInstanceId,
     source_handle: StackCardRef,
     ability: crate::domain::play::cards::ActivatedAbilityProfile,
-) -> Result<(), DomainError> {
+) -> Result<(Vec<CreatureDied>, Vec<CardInstanceId>), DomainError> {
+    let mut creatures_died = Vec::new();
+    let mut moved_cards = Vec::new();
     let available_mana = players[player_index].mana();
     let mana_cost = ability.mana_cost();
     if ability.mana_value() > 0 && !players[player_index].mana_pool().clone().spend(mana_cost) {
@@ -105,7 +109,38 @@ fn pay_activation_costs(
         );
     }
 
-    Ok(())
+    if matches!(
+        ability.sacrifice_cost(),
+        Some(ActivatedAbilitySacrificeCost::Source)
+    ) {
+        let source_type = players[player_index]
+            .card_by_handle(source_handle.handle())
+            .map(|card| *card.card_type())
+            .ok_or_else(|| {
+                DomainError::Card(CardError::NotOnBattlefield {
+                    player: player_id.clone(),
+                    card: source_card_id.clone(),
+                })
+            })?;
+        players[player_index]
+            .move_battlefield_handle_to_graveyard(source_handle.handle())
+            .ok_or_else(|| {
+                DomainError::Card(CardError::NotOnBattlefield {
+                    player: player_id.clone(),
+                    card: source_card_id.clone(),
+                })
+            })?;
+        moved_cards.push(source_card_id.clone());
+        if matches!(source_type, CardType::Creature) {
+            creatures_died.push(CreatureDied::new(
+                game_id.clone(),
+                player_id,
+                source_card_id,
+            ));
+        }
+    }
+
+    Ok((creatures_died, moved_cards))
 }
 
 fn prepare_ability_target(
@@ -248,8 +283,9 @@ pub fn activate_ability(
         target.as_ref(),
     )?;
     let prepared_target = prepare_ability_target(players, card_locations, target.as_ref())?;
-    pay_activation_costs(
+    let (creatures_died, moved_cards) = pay_activation_costs(
         players,
+        game_id,
         player_index,
         player_id.clone(),
         source_card_id,
@@ -278,5 +314,7 @@ pub fn activate_ability(
             prepared.ability.effect(),
             crate::domain::play::ids::StackObjectId::for_stack_object(game_id, stack_object_number),
         ),
+        creatures_died,
+        moved_cards,
     })
 }

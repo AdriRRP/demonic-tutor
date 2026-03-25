@@ -16,7 +16,9 @@ use {
 pub(super) fn domain_events_for_activate_ability(
     outcome: &ActivateAbilityOutcome,
 ) -> Vec<DomainEvent> {
-    vec![outcome.activated_ability_put_on_stack.clone().into()]
+    let mut domain_events = DomainEvents::with(outcome.activated_ability_put_on_stack.clone());
+    domain_events.extend(outcome.creatures_died.iter().cloned());
+    domain_events.into_vec()
 }
 
 pub(super) fn domain_events_for_cast_spell(outcome: &CastSpellOutcome) -> Vec<DomainEvent> {

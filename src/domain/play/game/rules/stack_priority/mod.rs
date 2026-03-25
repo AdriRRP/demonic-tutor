@@ -44,6 +44,8 @@ pub struct CastSpellOutcome {
 #[derive(Debug, Clone)]
 pub struct ActivateAbilityOutcome {
     pub activated_ability_put_on_stack: ActivatedAbilityPutOnStack,
+    pub creatures_died: Vec<CreatureDied>,
+    pub moved_cards: Vec<CardInstanceId>,
 }
 
 #[derive(Debug, Clone)]

@@ -245,6 +245,13 @@ It is not a literal restatement of the rules text.
 
 ---
 
+## Support Sacrifice As Activation Cost
+
+- 602
+- 701.17
+
+---
+
 ## Spell Target Foundation
 
 - 114

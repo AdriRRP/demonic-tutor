@@ -7,7 +7,7 @@ use {
     crate::support::{
         advance_to_first_main_satisfying_cleanup, filled_library, forest_card, instant_card,
         life_gain_artifact_card, mana_costed_life_gain_artifact_card, player,
-        setup_two_player_game, targeted_life_gain_artifact_card,
+        sacrifice_life_gain_artifact_card, setup_two_player_game, targeted_life_gain_artifact_card,
     },
     demonictutor::{
         ActivateAbilityCommand, CardError, CardInstanceId, CastSpellCommand, DomainError,
@@ -524,6 +524,123 @@ fn mana_costed_activated_ability_rejects_unpayable_costs_without_tapping() {
         .unwrap()
         .is_tapped());
     assert_eq!(game.stack().len(), 0);
+}
+
+#[test]
+fn sacrificing_the_source_happens_as_an_activation_cost() {
+    let (service, mut game) = setup_two_player_game(
+        "game-activate-ability-sacrifice-source",
+        filled_library(
+            vec![sacrifice_life_gain_artifact_card("star-shard", 0, 2)],
+            10,
+        ),
+        filled_library(Vec::new(), 10),
+    );
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
+    let artifact_id = player(&game, "player-1")
+        .hand_card_by_definition(&demonictutor::CardDefinitionId::new("star-shard"))
+        .unwrap()
+        .id()
+        .clone();
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), artifact_id.clone()),
+        )
+        .unwrap();
+    service
+        .pass_priority(
+            &mut game,
+            PassPriorityCommand::new(PlayerId::new("player-1")),
+        )
+        .unwrap();
+    service
+        .pass_priority(
+            &mut game,
+            PassPriorityCommand::new(PlayerId::new("player-2")),
+        )
+        .unwrap();
+
+    let outcome = service
+        .activate_ability(
+            &mut game,
+            ActivateAbilityCommand::new(PlayerId::new("player-1"), artifact_id.clone()),
+        )
+        .unwrap();
+
+    assert_eq!(game.stack().len(), 1);
+    assert!(player(&game, "player-1")
+        .battlefield_card(&artifact_id)
+        .is_none());
+    assert!(player(&game, "player-1")
+        .graveyard_card(&artifact_id)
+        .is_some());
+    assert!(outcome.creatures_died.is_empty());
+}
+
+#[test]
+fn sacrificed_source_is_already_gone_before_the_ability_resolves() {
+    let (service, mut game) = setup_two_player_game(
+        "game-activate-ability-sacrifice-resolve",
+        filled_library(
+            vec![sacrifice_life_gain_artifact_card("star-shard", 0, 2)],
+            10,
+        ),
+        filled_library(Vec::new(), 10),
+    );
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
+    let artifact_id = player(&game, "player-1")
+        .hand_card_by_definition(&demonictutor::CardDefinitionId::new("star-shard"))
+        .unwrap()
+        .id()
+        .clone();
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), artifact_id.clone()),
+        )
+        .unwrap();
+    service
+        .pass_priority(
+            &mut game,
+            PassPriorityCommand::new(PlayerId::new("player-1")),
+        )
+        .unwrap();
+    service
+        .pass_priority(
+            &mut game,
+            PassPriorityCommand::new(PlayerId::new("player-2")),
+        )
+        .unwrap();
+    service
+        .activate_ability(
+            &mut game,
+            ActivateAbilityCommand::new(PlayerId::new("player-1"), artifact_id.clone()),
+        )
+        .unwrap();
+
+    assert!(player(&game, "player-1")
+        .battlefield_card(&artifact_id)
+        .is_none());
+
+    let _ = service
+        .pass_priority(
+            &mut game,
+            PassPriorityCommand::new(PlayerId::new("player-1")),
+        )
+        .unwrap();
+    let resolve = service
+        .pass_priority(
+            &mut game,
+            PassPriorityCommand::new(PlayerId::new("player-2")),
+        )
+        .unwrap();
+
+    assert_eq!(player(&game, "player-1").life(), 22);
+    assert!(player(&game, "player-1")
+        .graveyard_card(&artifact_id)
+        .is_some());
+    assert!(resolve.stack_top_resolved.is_some());
 }
 
 #[test]

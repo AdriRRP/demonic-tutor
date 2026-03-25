@@ -99,6 +99,11 @@ pub enum ActivatedAbilityEffect {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ActivatedAbilitySacrificeCost {
+    Source,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TriggeredAbilityEvent {
     EntersBattlefield,
     Dies,
@@ -115,6 +120,7 @@ pub enum TriggeredAbilityEffect {
 pub struct ActivatedAbilityProfile {
     requires_tap: bool,
     mana_cost: ManaCost,
+    sacrifice_cost: Option<ActivatedAbilitySacrificeCost>,
     targeting: SpellTargetingProfile,
     effect: ActivatedAbilityEffect,
 }
@@ -125,6 +131,7 @@ impl ActivatedAbilityProfile {
         Self {
             requires_tap: true,
             mana_cost: ManaCost::generic(0),
+            sacrifice_cost: None,
             targeting: SpellTargetingProfile::None,
             effect: ActivatedAbilityEffect::GainLifeToController(amount),
         }
@@ -135,8 +142,20 @@ impl ActivatedAbilityProfile {
         Self {
             requires_tap: true,
             mana_cost: ManaCost::generic(0),
+            sacrifice_cost: None,
             targeting: SpellTargetingProfile::ExactlyOne(SingleTargetRule::any_player()),
             effect: ActivatedAbilityEffect::GainLifeToTargetPlayer(amount),
+        }
+    }
+
+    #[must_use]
+    pub const fn tap_sacrifice_source_to_gain_life_to_controller(amount: u32) -> Self {
+        Self {
+            requires_tap: true,
+            mana_cost: ManaCost::generic(0),
+            sacrifice_cost: Some(ActivatedAbilitySacrificeCost::Source),
+            targeting: SpellTargetingProfile::None,
+            effect: ActivatedAbilityEffect::GainLifeToController(amount),
         }
     }
 
@@ -148,6 +167,11 @@ impl ActivatedAbilityProfile {
     #[must_use]
     pub const fn mana_cost(self) -> ManaCost {
         self.mana_cost
+    }
+
+    #[must_use]
+    pub const fn sacrifice_cost(self) -> Option<ActivatedAbilitySacrificeCost> {
+        self.sacrifice_cost
     }
 
     #[must_use]
@@ -168,6 +192,15 @@ impl ActivatedAbilityProfile {
     #[must_use]
     pub const fn with_mana_cost(mut self, mana_cost: ManaCost) -> Self {
         self.mana_cost = mana_cost;
+        self
+    }
+
+    #[must_use]
+    pub const fn with_sacrifice_cost(
+        mut self,
+        sacrifice_cost: ActivatedAbilitySacrificeCost,
+    ) -> Self {
+        self.sacrifice_cost = Some(sacrifice_cost);
         self
     }
 }

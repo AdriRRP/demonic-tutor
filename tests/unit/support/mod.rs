@@ -294,6 +294,12 @@ pub fn mana_costed_life_gain_artifact_card(
     )
 }
 
+pub fn sacrifice_life_gain_artifact_card(name: &str, mana_cost: u32, amount: u32) -> LibraryCard {
+    artifact_card(name, mana_cost).with_activated_ability(
+        ActivatedAbilityProfile::tap_sacrifice_source_to_gain_life_to_controller(amount),
+    )
+}
+
 pub fn etb_life_gain_creature_card(
     name: &str,
     mana_cost: u32,

@@ -22,7 +22,7 @@ impl Game {
     ) -> Result<ActivateAbilityOutcome, DomainError> {
         invariants::require_game_active(self.is_over())?;
         let active_player = self.active_player().clone();
-        rules::stack_priority::activate_ability(
+        let result = rules::stack_priority::activate_ability(
             StackPriorityContext {
                 game_id: &self.id,
                 players: &mut self.players,
@@ -34,7 +34,15 @@ impl Game {
                 terminal_state: &mut self.terminal_state,
             },
             cmd,
-        )
+        );
+        if let Ok(outcome) = &result {
+            for moved_card in &outcome.moved_cards {
+                let _ = self
+                    .card_locations
+                    .set_zone(moved_card, super::model::PlayerCardZone::Graveyard);
+            }
+        }
+        result
     }
 
     /// Casts a spell.
