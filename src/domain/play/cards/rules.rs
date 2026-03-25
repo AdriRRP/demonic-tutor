@@ -493,13 +493,15 @@ pub enum SpellTargetKind {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GraveyardCardTargetRule {
     AnyCardInAGraveyard,
+    CardInActorsGraveyard,
 }
 
 impl GraveyardCardTargetRule {
     #[must_use]
-    pub const fn allows(self) -> bool {
+    pub const fn allows(self, target_is_in_actors_graveyard: bool) -> bool {
         match self {
             Self::AnyCardInAGraveyard => true,
+            Self::CardInActorsGraveyard => target_is_in_actors_graveyard,
         }
     }
 }
@@ -664,6 +666,11 @@ impl SingleTargetRule {
     }
 
     #[must_use]
+    pub const fn card_in_actors_graveyard() -> Self {
+        Self::GraveyardCard(GraveyardCardTargetRule::CardInActorsGraveyard)
+    }
+
+    #[must_use]
     pub const fn any_spell_on_the_stack() -> Self {
         Self::StackSpell
     }
@@ -782,9 +789,12 @@ impl SingleTargetRule {
     }
 
     #[must_use]
-    pub const fn allows_graveyard_card_target(self) -> Option<bool> {
+    pub const fn allows_graveyard_card_target(
+        self,
+        target_is_in_actors_graveyard: bool,
+    ) -> Option<bool> {
         match self {
-            Self::GraveyardCard(rule) => Some(rule.allows()),
+            Self::GraveyardCard(rule) => Some(rule.allows(target_is_in_actors_graveyard)),
             Self::Player(_)
             | Self::Creature(_)
             | Self::Permanent(_)
@@ -929,7 +939,7 @@ impl SupportedSpellRules {
     pub const fn reanimate_target_creature_card() -> Self {
         Self {
             targeting: SpellTargetingProfile::ExactlyOne(
-                SingleTargetRule::any_card_in_a_graveyard(),
+                SingleTargetRule::card_in_actors_graveyard(),
             ),
             resolution: SpellResolutionProfile::ReanimateTargetCreatureCard,
         }

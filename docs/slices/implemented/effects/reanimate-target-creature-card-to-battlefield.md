@@ -6,7 +6,7 @@ The engine now supports one explicit graveyard-to-battlefield corridor for creat
 
 ## Supported Behavior
 
-- targets one creature card in a graveyard
+- targets one creature card in the caster's own graveyard
 - moves it onto the battlefield under the resolving spell controller
 - reuses normal creature runtime initialization
 - fires supported ETB triggers through the existing trigger stack corridor

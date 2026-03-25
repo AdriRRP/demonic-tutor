@@ -149,20 +149,3 @@ pub(super) fn battlefield_card_mut<'a>(
         .get_mut(location.owner_index())?
         .card_mut_by_handle(location.handle())
 }
-
-pub(super) fn graveyard_card_exists(
-    players: &[Player],
-    card_locations: &AggregateCardLocationIndex,
-    card_id: &CardInstanceId,
-) -> bool {
-    let Some(location) = card_locations.location(card_id) else {
-        return false;
-    };
-    if location.zone() != PlayerCardZone::Graveyard {
-        return false;
-    }
-    players
-        .get(location.owner_index())
-        .and_then(|player| player.card_by_handle(location.handle()))
-        .is_some()
-}

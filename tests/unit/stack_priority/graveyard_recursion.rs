@@ -185,7 +185,7 @@ fn supported_spell_can_reanimate_target_creature_card_and_fire_etb() {
 }
 
 #[test]
-fn supported_reanimation_puts_an_opponents_graveyard_creature_onto_the_casters_battlefield() {
+fn supported_reanimation_rejects_targeting_a_creature_card_in_an_opponents_graveyard() {
     let (service, mut game) = setup_two_player_game(
         "game-reanimate-opponents-creature",
         filled_library(
@@ -237,22 +237,21 @@ fn supported_reanimation_puts_an_opponents_graveyard_creature_onto_the_casters_b
         .unwrap()
         .id()
         .clone();
-    cast_with_target_and_resolve(
-        &service,
+    let Err(error) = service.cast_spell(
         &mut game,
-        "player-1",
-        reanimate_id,
-        SpellTarget::GraveyardCard(rival_bear_id.clone()),
-    );
+        CastSpellCommand::new(PlayerId::new("player-1"), reanimate_id)
+            .with_target(SpellTarget::GraveyardCard(rival_bear_id.clone())),
+    ) else {
+        panic!("reanimation should reject cards in an opponent graveyard");
+    };
 
-    assert!(player(&game, "player-1")
-        .battlefield_card(&rival_bear_id)
-        .is_some());
-    assert!(player(&game, "player-2")
-        .battlefield_card(&rival_bear_id)
-        .is_none());
+    let message = format!("{error:?}");
+    assert!(message.contains("IllegalSpellTarget"));
     assert!(player(&game, "player-2")
         .graveyard_card(&rival_bear_id)
+        .is_some());
+    assert!(player(&game, "player-1")
+        .battlefield_card(&rival_bear_id)
         .is_none());
 }
 

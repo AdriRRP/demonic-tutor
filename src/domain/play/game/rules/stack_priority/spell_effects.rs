@@ -94,7 +94,9 @@ enum ResolvedTarget {
     Permanent {
         card_type: crate::domain::play::cards::CardType,
     },
-    GraveyardCard,
+    GraveyardCard {
+        is_in_actors_graveyard: bool,
+    },
     StackSpell,
 }
 
@@ -158,11 +160,16 @@ fn resolve_target(
             })
         }
         SpellTarget::GraveyardCard(card_id) => {
-            if !helpers::graveyard_card_exists(players, card_locations, card_id) {
+            let Some(location) = card_locations.location(card_id) else {
+                return Err(SpellTargetLegality::MissingGraveyardCard(card_id.clone()));
+            };
+            if location.zone() != crate::domain::play::game::PlayerCardZone::Graveyard {
                 return Err(SpellTargetLegality::MissingGraveyardCard(card_id.clone()));
             }
 
-            Ok(ResolvedTarget::GraveyardCard)
+            Ok(ResolvedTarget::GraveyardCard {
+                is_in_actors_graveyard: location.owner_index() == actor_index,
+            })
         }
         SpellTarget::StackObject(stack_object_id) => {
             let Some(object_number) = stack_object_id.object_number() else {
@@ -212,13 +219,16 @@ const fn evaluate_resolved_target_rule(
             Some(false) => SpellTargetLegality::IllegalTargetRule,
             None => SpellTargetLegality::IllegalTargetKind,
         },
-        (SpellTargetingProfile::ExactlyOne(rule), ResolvedTarget::GraveyardCard) => {
-            match rule.allows_graveyard_card_target() {
-                Some(true) => SpellTargetLegality::Legal,
-                Some(false) => SpellTargetLegality::IllegalTargetRule,
-                None => SpellTargetLegality::IllegalTargetKind,
-            }
-        }
+        (
+            SpellTargetingProfile::ExactlyOne(rule),
+            ResolvedTarget::GraveyardCard {
+                is_in_actors_graveyard,
+            },
+        ) => match rule.allows_graveyard_card_target(*is_in_actors_graveyard) {
+            Some(true) => SpellTargetLegality::Legal,
+            Some(false) => SpellTargetLegality::IllegalTargetRule,
+            None => SpellTargetLegality::IllegalTargetKind,
+        },
         (SpellTargetingProfile::ExactlyOne(rule), ResolvedTarget::Permanent { card_type }) => {
             match rule.allows_permanent_target(*card_type) {
                 Some(true) => SpellTargetLegality::Legal,
