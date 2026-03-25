@@ -355,6 +355,14 @@ impl Player {
         to: PlayerCardZone,
     ) -> Option<()> {
         self.cards.zone_by_handle(handle)?;
+        if from == PlayerCardZone::Battlefield
+            && to != PlayerCardZone::Battlefield
+            && self.cards.get_by_handle(handle)?.is_token()
+        {
+            self.remove_handle_from_zone(handle, from)?;
+            self.cards.remove_by_handle(handle)?;
+            return Some(());
+        }
         self.remove_handle_from_zone(handle, from)?;
         self.add_handle_to_zone(handle, to)?;
         if self.cards.set_zone(handle, to).is_none() {
