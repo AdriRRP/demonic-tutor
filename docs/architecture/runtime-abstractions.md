@@ -240,6 +240,7 @@ The current shape combines:
 - reusable slots
 - linked order
 - an explicit visible index for fast positional lookup
+- sparse visible-position bookkeeping that avoids suffix-wide rewrites on ordered removal
 
 ## Explain It Like I Am New Here
 
@@ -250,6 +251,7 @@ There are really two problems in an ordered zone:
 
 The linked slots solve stable order updates.
 The visible-slot index solves fast `handle_at(N)`.
+Sparse visible bookkeeping means removing one card does not force the runtime to renumber every later card.
 
 So the structure behaves like:
 
@@ -263,7 +265,7 @@ Earlier versions had two different pathologies:
 - suffix rewrites on remove
 - linear scans for visible index lookup
 
-The current structure reduces both problems while keeping semantics honest.
+The current structure removes both problems from the common path while keeping semantics honest.
 
 ## Current Limit
 

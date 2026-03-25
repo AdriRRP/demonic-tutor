@@ -4,20 +4,22 @@
 
 ## Status
 
-Proposed
+Implemented
 
 ## Goal
 
 Refine ordered zone storage so removing a visible card no longer rewrites the entire visible suffix while preserving deterministic hand, graveyard, and exile order.
 
-## Why This Slice Exists Now
+## What Changed
 
-The current zone storage already fixed the expensive positional lookup, but ordered removals still pay linear visible reindexing after each deletion. That means the cost moved rather than disappeared. Closing this debt would make ordered zone mutation finally match the rest of the runtime’s compact, handle-first direction.
+- ordered visible zones now keep sparse visible-position entries instead of compacting the visible suffix on every remove
+- visible-position lookup uses an index structure that can skip removed positions without rescanning the linked order chain
+- ordered removals now clear the removed visible position in place instead of rewriting every later visible index
 
 ## Supported Behavior
 
-- hand, graveyard, and exile continue preserving visible order
-- visible-position lookup stays efficient
+- hand, graveyard, and exile preserve visible order
+- visible-position lookup remains efficient
 - ordered removal avoids suffix-wide visible-index rewrites in the common path
 
 ## Invariants / Legality Rules
@@ -45,12 +47,13 @@ This belongs to the gameplay domain because visible zone order is aggregate-owne
 
 - `docs/domain/aggregate-game.md`
 - `docs/architecture/runtime-abstractions.md`
-- this slice document
+- `docs/slices/proposals/README.md`
+- this implemented slice document
 
 ## Test Impact
 
 - ordered-zone regressions covering repeated removals and insertions
-- focused performance-shape regressions proving visible order stays stable without suffix-wide maintenance
+- focused storage regressions proving visible order stays stable without suffix-wide maintenance
 
 ## Rules Reference
 

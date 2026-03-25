@@ -6,13 +6,14 @@ use {
     std::collections::{HashMap, VecDeque},
 };
 
-#[derive(Debug, Clone, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 struct IndexedOrderedZone {
     slots: Vec<Option<OrderedHandleSlot>>,
     handle_to_slot: HashMap<PlayerCardHandle, usize>,
-    visible_slots: Vec<usize>,
+    visible_slots: Vec<Option<usize>>,
     slot_to_visible: HashMap<usize, usize>,
     free_slots: Vec<usize>,
+    visible_tree: Vec<usize>,
     head: Option<usize>,
     tail: Option<usize>,
     len: usize,
@@ -30,7 +31,85 @@ struct IndexedOrderedZoneIter<'a> {
     current: Option<usize>,
 }
 
+impl Default for IndexedOrderedZone {
+    fn default() -> Self {
+        Self {
+            slots: Vec::new(),
+            handle_to_slot: HashMap::new(),
+            visible_slots: Vec::new(),
+            slot_to_visible: HashMap::new(),
+            free_slots: Vec::new(),
+            visible_tree: vec![0],
+            head: None,
+            tail: None,
+            len: 0,
+        }
+    }
+}
+
 impl IndexedOrderedZone {
+    fn visible_tree_prefix_sum(&self, end_exclusive: usize) -> usize {
+        let mut tree_index = end_exclusive;
+        let mut sum = 0usize;
+
+        while tree_index != 0 {
+            sum += self.visible_tree[tree_index];
+            let lowbit = tree_index & tree_index.wrapping_neg();
+            tree_index -= lowbit;
+        }
+
+        sum
+    }
+
+    fn visible_tree_push_present(&mut self) {
+        let one_based_index = self.visible_tree.len();
+        self.visible_tree.push(0);
+
+        let lowbit = one_based_index & one_based_index.wrapping_neg();
+        let covered_prefix = self.visible_tree_prefix_sum(one_based_index - 1);
+        let previous_prefix = self.visible_tree_prefix_sum(one_based_index - lowbit);
+        self.visible_tree[one_based_index] = covered_prefix - previous_prefix + 1;
+    }
+
+    fn visible_tree_add(&mut self, index: usize, delta: isize) {
+        let mut tree_index = index + 1;
+        while tree_index < self.visible_tree.len() {
+            if delta.is_positive() {
+                self.visible_tree[tree_index] += delta.unsigned_abs();
+            } else {
+                self.visible_tree[tree_index] -= delta.unsigned_abs();
+            }
+            let lowbit = tree_index & tree_index.wrapping_neg();
+            tree_index += lowbit;
+        }
+    }
+
+    fn visible_index_at(&self, visible_position: usize) -> Option<usize> {
+        if visible_position >= self.len {
+            return None;
+        }
+
+        let mut bit = 1usize;
+        while bit < self.visible_tree.len() {
+            bit <<= 1;
+        }
+        bit >>= 1;
+
+        let mut tree_index = 0usize;
+        let mut remaining = visible_position + 1;
+
+        while bit != 0 {
+            let next = tree_index + bit;
+            if next < self.visible_tree.len() && self.visible_tree[next] < remaining {
+                tree_index = next;
+                remaining -= self.visible_tree[next];
+            }
+            bit >>= 1;
+        }
+
+        Some(tree_index)
+    }
+
     fn receive_many(&mut self, handles: Vec<PlayerCardHandle>) {
         for handle in handles {
             self.push(handle);
@@ -62,9 +141,10 @@ impl IndexedOrderedZone {
         self.slots[slot_index] = Some(slot);
         self.tail = Some(slot_index);
         self.handle_to_slot.insert(handle, slot_index);
-        self.slot_to_visible
-            .insert(slot_index, self.visible_slots.len());
-        self.visible_slots.push(slot_index);
+        let visible_index = self.visible_slots.len();
+        self.slot_to_visible.insert(slot_index, visible_index);
+        self.visible_slots.push(Some(slot_index));
+        self.visible_tree_push_present();
         self.len += 1;
     }
 
@@ -88,7 +168,8 @@ impl IndexedOrderedZone {
     }
 
     fn handle_at(&self, index: usize) -> Option<PlayerCardHandle> {
-        let slot_index = *self.visible_slots.get(index)?;
+        let visible_index = self.visible_index_at(index)?;
+        let slot_index = self.visible_slots.get(visible_index).copied().flatten()?;
         self.slots.get(slot_index)?.as_ref().map(|slot| slot.handle)
     }
 
@@ -99,6 +180,7 @@ impl IndexedOrderedZone {
         self.visible_slots.clear();
         self.slot_to_visible.clear();
         self.free_slots.clear();
+        self.visible_tree = vec![0];
         self.head = None;
         self.tail = None;
         self.len = 0;
@@ -126,16 +208,8 @@ impl IndexedOrderedZone {
             self.tail = slot.prev;
         }
 
-        self.visible_slots.remove(visible_index);
-        for (index, slot_index) in self
-            .visible_slots
-            .iter()
-            .copied()
-            .enumerate()
-            .skip(visible_index)
-        {
-            self.slot_to_visible.insert(slot_index, index);
-        }
+        self.visible_slots[visible_index] = None;
+        self.visible_tree_add(visible_index, -1);
         self.free_slots.push(slot_index);
         self.len -= 1;
         Some(slot.handle)

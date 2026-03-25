@@ -113,7 +113,7 @@ Responsibilities:
 
 Current implementation:
 
-- ordered collection of `CardInstanceId` backed by a player-owned card store
+- ordered visible view over player-owned card handles backed by indexed ordered-zone storage
 
 The current runtime preserves the order in which cards appear in hand.
 Rules and tests should prefer semantic player and zone queries over direct dependence on the hand's backing storage.
@@ -149,7 +149,7 @@ Responsibilities:
 
 Current implementation:
 
-- ordered collection of `CardInstanceId` backed by a player-owned card store
+- ordered visible view over player-owned card handles backed by indexed ordered-zone storage
 
 The current runtime preserves graveyard insertion order.
 Rules and tests should prefer semantic player and zone queries over direct dependence on graveyard storage details.
@@ -167,7 +167,7 @@ Responsibilities:
 
 Current implementation:
 
-- ordered collection of `CardInstanceId` backed by a player-owned card store
+- ordered visible view over player-owned card handles backed by indexed ordered-zone storage
 
 The current runtime preserves exile insertion order.
 Rules and tests should prefer semantic player and zone queries over direct dependence on exile storage details.

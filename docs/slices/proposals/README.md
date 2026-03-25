@@ -10,4 +10,4 @@ Definitive closure wave for the remaining runtime-architecture debt after the `v
 
 Open slices:
 
-1. `remove-linear-visible-zone-reindex-on-ordered-removal`
+- none
