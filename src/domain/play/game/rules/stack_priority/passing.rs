@@ -23,12 +23,24 @@ fn other_player_id(players: &[Player], player_id: &PlayerId) -> Result<PlayerId,
         })
 }
 
+const fn stack_object_requires_optional_choice(
+    stack_object: &crate::domain::play::game::StackObject,
+) -> bool {
+    match stack_object.kind() {
+        crate::domain::play::game::StackObjectKind::TriggeredAbility(ability) => {
+            ability.ability().requires_optional_choice()
+        }
+        _ => false,
+    }
+}
+
 /// Passes priority in the current priority window, and may resolve the top
 /// object on the stack when both players pass consecutively.
 ///
 /// # Errors
 /// Returns an error if there is no open priority window, if the caller does
 /// not currently hold priority, or if resolving the top stack object fails.
+#[allow(clippy::too_many_lines)]
 pub fn pass_priority(
     ctx: StackPriorityContext<'_>,
     cmd: PassPriorityCommand,
@@ -40,6 +52,7 @@ pub fn pass_priority(
         active_player,
         stack,
         priority,
+        pending_optional_effect,
         terminal_state,
         ..
     } = ctx;
@@ -86,6 +99,29 @@ pub fn pass_priority(
             game_ended: None,
             priority_still_open: false,
         });
+    }
+
+    if let Some(stack_object) = stack.top() {
+        if stack_object_requires_optional_choice(stack_object) {
+            *priority = None;
+            *pending_optional_effect = Some(crate::domain::play::game::PendingOptionalEffect::new(
+                stack_object.controller_index(),
+                stack_object.number(),
+            ));
+            return Ok(PassPriorityOutcome {
+                priority_passed,
+                triggered_abilities_put_on_stack: Vec::new(),
+                stack_top_resolved: None,
+                spell_cast: None,
+                card_exiled: None,
+                card_discarded: None,
+                life_changed: None,
+                creatures_died: Vec::new(),
+                moved_cards: Vec::new(),
+                game_ended: None,
+                priority_still_open: false,
+            });
+        }
     }
 
     let stack_object = stack.pop().ok_or_else(|| {

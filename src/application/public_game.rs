@@ -7,7 +7,7 @@ use crate::{
             resource_actions::domain_events_for_adjust_player_life_effect,
             stack::{
                 domain_events_for_activate_ability, domain_events_for_cast_spell,
-                domain_events_for_pass_priority,
+                domain_events_for_pass_priority, domain_events_for_resolve_optional_effect,
             },
             turn_flow::{domain_events_for_advance_turn, domain_events_for_draw_cards_effect},
             GameService,
@@ -20,7 +20,8 @@ use crate::{
             ActivateAbilityCommand, AdjustPlayerLifeEffectCommand, AdvanceTurnCommand,
             CastSpellCommand, DeclareAttackersCommand, DeclareBlockersCommand,
             DiscardForCleanupCommand, DrawCardsEffectCommand, ExileCardCommand, ModalSpellMode,
-            PassPriorityCommand, PlayLandCommand, ResolveCombatDamageCommand, TapLandCommand,
+            PassPriorityCommand, PlayLandCommand, ResolveCombatDamageCommand,
+            ResolveOptionalEffectCommand, TapLandCommand,
         },
         errors::{DomainError, GameError},
         events::DomainEvent,
@@ -151,6 +152,9 @@ pub struct PublicBlockerOption {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PublicLegalAction {
+    ResolveOptionalEffect {
+        player_id: PlayerId,
+    },
     PassPriority {
         player_id: PlayerId,
     },
@@ -200,6 +204,11 @@ pub enum PublicChoiceCandidate {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PublicChoiceRequest {
+    OptionalEffectDecision {
+        player_id: PlayerId,
+        source_card_id: CardInstanceId,
+        options: Vec<PublicBinaryChoice>,
+    },
     SpellTarget {
         player_id: PlayerId,
         source_card_id: CardInstanceId,
@@ -232,6 +241,12 @@ pub enum PublicModalSpellChoice {
     TargetPlayerLoseLife,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PublicBinaryChoice {
+    Yes,
+    No,
+}
+
 #[derive(Debug, Clone)]
 pub enum PublicGameCommand {
     PlayLand(PlayLandCommand),
@@ -247,6 +262,7 @@ pub enum PublicGameCommand {
     DiscardForCleanup(DiscardForCleanupCommand),
     AdjustPlayerLifeEffect(AdjustPlayerLifeEffectCommand),
     ExileCard(ExileCardCommand),
+    ResolveOptionalEffect(ResolveOptionalEffectCommand),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -306,6 +322,14 @@ pub fn game_view(game: &Game) -> PublicGameView {
 pub fn legal_actions(game: &Game) -> Vec<PublicLegalAction> {
     if game.is_over() {
         return Vec::new();
+    }
+
+    if let Some(pending_optional_effect) = game.pending_optional_effect() {
+        return vec![PublicLegalAction::ResolveOptionalEffect {
+            player_id: game.players()[pending_optional_effect.controller_index()]
+                .id()
+                .clone(),
+        }];
     }
 
     let mut actions = Vec::new();
@@ -403,6 +427,10 @@ pub fn legal_actions(game: &Game) -> Vec<PublicLegalAction> {
 pub fn choice_requests(game: &Game) -> Vec<PublicChoiceRequest> {
     if game.is_over() {
         return Vec::new();
+    }
+
+    if let Some(request) = pending_optional_effect_request(game) {
+        return vec![request];
     }
 
     let mut requests = Vec::new();
@@ -525,6 +553,9 @@ where
             PublicGameCommand::ExileCard(cmd) => {
                 self.exile_card(game, &cmd).map(|event| vec![event.into()])
             }
+            PublicGameCommand::ResolveOptionalEffect(cmd) => self
+                .resolve_optional_effect(game, cmd)
+                .map(|outcome| domain_events_for_resolve_optional_effect(&outcome)),
         };
 
         let status = match &result {
@@ -819,6 +850,21 @@ fn spell_choice_request(
     }
 
     None
+}
+
+fn pending_optional_effect_request(game: &Game) -> Option<PublicChoiceRequest> {
+    let pending_optional_effect = game.pending_optional_effect()?;
+    let stack_object = game
+        .stack()
+        .object(pending_optional_effect.stack_object_number())?;
+
+    Some(PublicChoiceRequest::OptionalEffectDecision {
+        player_id: game.players()[pending_optional_effect.controller_index()]
+            .id()
+            .clone(),
+        source_card_id: stack_object.source_card_id(),
+        options: vec![PublicBinaryChoice::Yes, PublicBinaryChoice::No],
+    })
 }
 
 impl From<ModalSpellMode> for PublicModalSpellChoice {

@@ -49,6 +49,11 @@ pub enum GameError {
         current: PlayerId,
         requested: PlayerId,
     },
+    NoPendingOptionalEffect,
+    NotOptionalEffectController {
+        current: PlayerId,
+        requested: PlayerId,
+    },
     NotEnoughCardsInLibrary {
         player: PlayerId,
         available: usize,
@@ -207,6 +212,15 @@ impl std::fmt::Display for GameError {
             Self::NoPriorityWindow => write!(f, "no priority window is currently open"),
             Self::NotPriorityHolder { current, requested } => {
                 write!(f, "not {requested}'s priority, current holder is {current}")
+            }
+            Self::NoPendingOptionalEffect => {
+                write!(f, "no optional effect choice is currently pending")
+            }
+            Self::NotOptionalEffectController { current, requested } => {
+                write!(
+                    f,
+                    "not {requested}'s optional effect choice, current controller is {current}"
+                )
             }
             Self::NotEnoughCardsInLibrary {
                 player,

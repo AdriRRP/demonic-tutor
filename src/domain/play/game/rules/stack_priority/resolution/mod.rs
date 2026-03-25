@@ -378,7 +378,8 @@ fn resolve_triggered_ability_from_stack(
     );
 
     let life_changed = match ability.effect() {
-        TriggeredAbilityEffect::GainLifeToController(amount) => {
+        TriggeredAbilityEffect::GainLifeToController(amount)
+        | TriggeredAbilityEffect::MayGainLifeToController(amount) => {
             Some(super::super::game_effects::adjust_player_life_by_index(
                 game_id,
                 players,

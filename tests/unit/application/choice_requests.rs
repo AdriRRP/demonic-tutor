@@ -5,12 +5,14 @@
 use crate::support::{
     advance_to_player_first_main_satisfying_cleanup,
     choose_one_target_player_gain_or_lose_life_instant_card, close_empty_priority_window,
-    create_service, forest_card, player, player_deck, player_library,
-    target_player_discards_chosen_card_sorcery_card, targeted_opponent_damage_instant_card,
+    create_service, etb_may_life_gain_creature_card, forest_card, player, player_deck,
+    player_library, target_player_discards_chosen_card_sorcery_card,
+    targeted_opponent_damage_instant_card,
 };
 use demonictutor::{
-    choice_requests, CardDefinitionId, DealOpeningHandsCommand, DrawCardsEffectCommand, Game,
-    GameId, Phase, PlayerId, PublicChoiceRequest, PublicModalSpellChoice, StartGameCommand,
+    choice_requests, CardDefinitionId, CardInstanceId, CastSpellCommand, DealOpeningHandsCommand,
+    DrawCardsEffectCommand, Game, GameId, PassPriorityCommand, Phase, PlayerId, PublicBinaryChoice,
+    PublicChoiceRequest, PublicModalSpellChoice, StartGameCommand,
 };
 
 fn first_main_game_with_choice_cards() -> Game {
@@ -202,5 +204,57 @@ fn choice_requests_surface_cleanup_discard_as_pending_choice() {
         request,
         PublicChoiceRequest::CleanupDiscard { player_id, hand_card_ids }
             if player_id.as_str() == "p1" && !hand_card_ids.is_empty()
+    )));
+}
+
+#[test]
+fn choice_requests_surface_pending_optional_effect_decisions() {
+    let (service, mut game) = crate::support::setup_two_player_game(
+        "game-optional-choice-request",
+        crate::support::filled_library(
+            vec![etb_may_life_gain_creature_card("kindly-cleric", 0, 1, 1, 2)],
+            10,
+        ),
+        crate::support::filled_library(Vec::new(), 10),
+    );
+    crate::support::advance_to_first_main_satisfying_cleanup(&service, &mut game);
+    let creature_id = player(&game, "player-1")
+        .hand_card_by_definition(&CardDefinitionId::new("kindly-cleric"))
+        .expect("creature should be in hand")
+        .id()
+        .clone();
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), creature_id),
+        )
+        .expect("creature should be castable");
+    for _ in 0..2 {
+        let first_holder = game
+            .priority()
+            .expect("priority should be open before first pass")
+            .current_holder()
+            .clone();
+        service
+            .pass_priority(&mut game, PassPriorityCommand::new(first_holder))
+            .expect("first pass should succeed");
+        let second_holder = game
+            .priority()
+            .expect("priority should pass to the other player")
+            .current_holder()
+            .clone();
+        service
+            .pass_priority(&mut game, PassPriorityCommand::new(second_holder))
+            .expect("second pass should progress toward optional decision");
+    }
+
+    let requests = choice_requests(&game);
+
+    assert!(requests.iter().any(|request| matches!(
+        request,
+        PublicChoiceRequest::OptionalEffectDecision { player_id, source_card_id, options }
+            if player_id.as_str() == "player-1"
+                && *source_card_id == CardInstanceId::new("game-optional-choice-request-player-1-0")
+                && options == &vec![PublicBinaryChoice::Yes, PublicBinaryChoice::No]
     )));
 }

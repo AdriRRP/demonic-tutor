@@ -13,7 +13,8 @@ pub use lifecycle::{DealOpeningHandsCommand, MulliganCommand, StartGameCommand};
 pub use resource_actions::{AdjustPlayerLifeEffectCommand, PlayLandCommand, TapLandCommand};
 pub use setup::{LibraryCard, LibraryCreature, PlayerDeck, PlayerLibrary};
 pub use stack_priority::{
-    ActivateAbilityCommand, CastSpellCommand, ModalSpellMode, PassPriorityCommand, SpellChoice,
+    ActivateAbilityCommand, CastSpellCommand, ModalSpellMode, PassPriorityCommand,
+    ResolveOptionalEffectCommand, SpellChoice,
 };
 pub use turn_flow::{AdvanceTurnCommand, DiscardForCleanupCommand, DrawCardsEffectCommand};
 pub use zones::ExileCardCommand;

@@ -115,6 +115,7 @@ pub enum TriggeredAbilityEvent {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TriggeredAbilityEffect {
     GainLifeToController(u32),
+    MayGainLifeToController(u32),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -291,6 +292,14 @@ impl TriggeredAbilityProfile {
     }
 
     #[must_use]
+    pub const fn enters_battlefield_may_gain_life_to_controller(amount: u32) -> Self {
+        Self {
+            event: TriggeredAbilityEvent::EntersBattlefield,
+            effect: TriggeredAbilityEffect::MayGainLifeToController(amount),
+        }
+    }
+
+    #[must_use]
     pub const fn event(self) -> TriggeredAbilityEvent {
         self.event
     }
@@ -298,6 +307,14 @@ impl TriggeredAbilityProfile {
     #[must_use]
     pub const fn effect(self) -> TriggeredAbilityEffect {
         self.effect
+    }
+
+    #[must_use]
+    pub const fn requires_optional_choice(self) -> bool {
+        matches!(
+            self.effect,
+            TriggeredAbilityEffect::MayGainLifeToController(_)
+        )
     }
 }
 

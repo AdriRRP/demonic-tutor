@@ -2,6 +2,7 @@
 
 mod activation;
 mod casting;
+mod optional_effect;
 mod passing;
 mod resolution;
 mod spell_effects;
@@ -23,6 +24,7 @@ use crate::domain::play::{
 
 pub use activation::activate_ability;
 pub use casting::cast_spell;
+pub use optional_effect::resolve_optional_effect;
 pub use passing::pass_priority;
 
 pub struct StackPriorityContext<'a> {
@@ -33,6 +35,7 @@ pub struct StackPriorityContext<'a> {
     pub phase: &'a Phase,
     pub stack: &'a mut super::super::model::StackZone,
     pub priority: &'a mut Option<PriorityState>,
+    pub pending_optional_effect: &'a mut Option<super::super::PendingOptionalEffect>,
     pub terminal_state: &'a mut TerminalState,
 }
 
@@ -53,6 +56,20 @@ pub struct PassPriorityOutcome {
     pub priority_passed: PriorityPassed,
     pub triggered_abilities_put_on_stack: Vec<TriggeredAbilityPutOnStack>,
     pub stack_top_resolved: Option<StackTopResolved>,
+    pub spell_cast: Option<SpellCast>,
+    pub card_exiled: Option<CardExiled>,
+    pub card_discarded: Option<CardDiscarded>,
+    pub life_changed: Option<LifeChanged>,
+    pub creatures_died: Vec<CreatureDied>,
+    pub moved_cards: Vec<CardInstanceId>,
+    pub game_ended: Option<GameEnded>,
+    pub priority_still_open: bool,
+}
+
+#[derive(Debug, Clone)]
+pub struct ResolveOptionalEffectOutcome {
+    pub stack_top_resolved: Option<StackTopResolved>,
+    pub triggered_abilities_put_on_stack: Vec<TriggeredAbilityPutOnStack>,
     pub spell_cast: Option<SpellCast>,
     pub card_exiled: Option<CardExiled>,
     pub card_discarded: Option<CardDiscarded>,

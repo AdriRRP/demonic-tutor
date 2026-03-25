@@ -30,6 +30,35 @@ impl PassPriorityCommand {
 }
 
 #[derive(Debug, Clone)]
+pub struct ResolveOptionalEffectCommand {
+    pub player_id: PlayerId,
+    pub accept: bool,
+}
+
+impl ResolveOptionalEffectCommand {
+    #[must_use]
+    pub const fn new(player_id: PlayerId, accept: bool) -> Self {
+        Self { player_id, accept }
+    }
+
+    #[must_use]
+    pub const fn accept(player_id: PlayerId) -> Self {
+        Self {
+            player_id,
+            accept: true,
+        }
+    }
+
+    #[must_use]
+    pub const fn decline(player_id: PlayerId) -> Self {
+        Self {
+            player_id,
+            accept: false,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct CastSpellCommand {
     pub player_id: PlayerId,
     pub card_id: CardInstanceId,

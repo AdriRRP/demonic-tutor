@@ -28,12 +28,39 @@ pub use rules::{
     combat::ResolveCombatDamageOutcome,
     resource_actions::AdjustPlayerLifeEffectOutcome,
     stack_priority::{
-        ActivateAbilityOutcome, CastSpellOutcome, PassPriorityOutcome, StackPriorityContext,
+        ActivateAbilityOutcome, CastSpellOutcome, PassPriorityOutcome,
+        ResolveOptionalEffectOutcome, StackPriorityContext,
     },
     turn_flow::TurnProgressionContext,
     turn_flow::{AdvanceTurnOutcome, DrawCardsEffectOutcome},
 };
 pub use targets::SpellTarget;
+
+#[derive(Debug, Clone)]
+pub struct PendingOptionalEffect {
+    controller_index: usize,
+    stack_object_number: u32,
+}
+
+impl PendingOptionalEffect {
+    #[must_use]
+    pub const fn new(controller_index: usize, stack_object_number: u32) -> Self {
+        Self {
+            controller_index,
+            stack_object_number,
+        }
+    }
+
+    #[must_use]
+    pub const fn controller_index(&self) -> usize {
+        self.controller_index
+    }
+
+    #[must_use]
+    pub const fn stack_object_number(&self) -> u32 {
+        self.stack_object_number
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct Game {
@@ -46,6 +73,7 @@ pub struct Game {
     card_locations: AggregateCardLocationIndex,
     stack: StackZone,
     priority: Option<PriorityState>,
+    pending_optional_effect: Option<PendingOptionalEffect>,
     terminal_state: TerminalState,
 }
 
@@ -78,6 +106,7 @@ impl Game {
             card_locations,
             stack: StackZone::empty(),
             priority: None,
+            pending_optional_effect: None,
             terminal_state,
         })
     }
@@ -115,6 +144,11 @@ impl Game {
     #[must_use]
     pub const fn priority(&self) -> Option<&PriorityState> {
         self.priority.as_ref()
+    }
+
+    #[must_use]
+    pub const fn pending_optional_effect(&self) -> Option<&PendingOptionalEffect> {
+        self.pending_optional_effect.as_ref()
     }
 
     #[must_use]

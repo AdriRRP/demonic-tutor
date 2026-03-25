@@ -6,9 +6,9 @@ pub mod infrastructure;
 
 pub use application::{
     choice_requests, game_view, legal_actions, PublicActivatableCard, PublicBattlefieldCardView,
-    PublicCardView, PublicCastableCard, PublicChoiceCandidate, PublicChoiceRequest,
-    PublicCommandRejection, PublicCommandResult, PublicCommandStatus, PublicGameCommand,
-    PublicGameView, PublicLegalAction, PublicModalSpellChoice, PublicPlayerView,
+    PublicBinaryChoice, PublicCardView, PublicCastableCard, PublicChoiceCandidate,
+    PublicChoiceRequest, PublicCommandRejection, PublicCommandResult, PublicCommandStatus,
+    PublicGameCommand, PublicGameView, PublicLegalAction, PublicModalSpellChoice, PublicPlayerView,
     PublicPriorityView, PublicStackObjectView, PublicStackTargetView,
 };
 pub use application::{EventBus, EventStore, GameService};
@@ -29,8 +29,8 @@ pub use domain::play::{
         CastSpellCommand, DealOpeningHandsCommand, DeclareAttackersCommand, DeclareBlockersCommand,
         DiscardForCleanupCommand, DrawCardsEffectCommand, ExileCardCommand, LibraryCard,
         LibraryCreature, ModalSpellMode, MulliganCommand, PassPriorityCommand, PlayLandCommand,
-        PlayerDeck, PlayerLibrary, ResolveCombatDamageCommand, SpellChoice, StartGameCommand,
-        TapLandCommand,
+        PlayerDeck, PlayerLibrary, ResolveCombatDamageCommand, ResolveOptionalEffectCommand,
+        SpellChoice, StartGameCommand, TapLandCommand,
     },
     errors::{CardError, DomainError, GameError, PhaseError, PlayerError},
     events::{
@@ -43,8 +43,8 @@ pub use domain::play::{
     game::{
         ActivateAbilityOutcome, ActivatedAbilityOnStack, AdjustPlayerLifeEffectOutcome,
         AdvanceTurnOutcome, CastSpellOutcome, DrawCardsEffectOutcome, Game, PassPriorityOutcome,
-        PriorityState, SpellOnStack, SpellTarget, StackObject, StackObjectKind, StackZone,
-        TriggeredAbilityOnStack,
+        PendingOptionalEffect, PriorityState, ResolveOptionalEffectOutcome, SpellOnStack,
+        SpellTarget, StackObject, StackObjectKind, StackZone, TriggeredAbilityOnStack,
     },
     ids::{CardDefinitionId, CardInstanceId, DeckId, GameId, PlayerId, StackObjectId},
     phase::Phase,

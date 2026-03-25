@@ -6,12 +6,10 @@ Goal:
 
 Slice count:
 
-- `3`
+- `2`
 
 Slices:
 
-- `support-optional-may-triggers-and-abilities`
-  - support the first explicit "you may" resolution corridor
 - `support-scry-on-explicit-card-profiles`
   - support looking at top cards and choosing keep-on-top versus bottom ordering in a bounded subset
 - `support-loot-and-rummage-effects`

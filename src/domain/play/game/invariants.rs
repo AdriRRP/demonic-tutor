@@ -91,15 +91,17 @@ pub(super) fn require_no_priority_with_pending_stack(
     priority: Option<&PriorityState>,
     stack_is_empty: bool,
 ) -> Result<(), DomainError> {
-    let Some(priority) = priority else {
-        return Ok(());
-    };
-
     if stack_is_empty {
         return Ok(());
     }
 
-    Err(DomainError::Game(GameError::PriorityWindowOpen {
-        current_holder: priority.current_holder().clone(),
-    }))
+    if let Some(priority) = priority {
+        return Err(DomainError::Game(GameError::PriorityWindowOpen {
+            current_holder: priority.current_holder().clone(),
+        }));
+    }
+
+    Err(DomainError::Game(GameError::InternalInvariantViolation(
+        "stack cannot remain pending without an open priority window".to_string(),
+    )))
 }

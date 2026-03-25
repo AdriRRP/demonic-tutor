@@ -387,6 +387,18 @@ pub fn etb_life_gain_creature_card(
     )
 }
 
+pub fn etb_may_life_gain_creature_card(
+    name: &str,
+    mana_cost: u32,
+    power: u32,
+    toughness: u32,
+    amount: u32,
+) -> LibraryCard {
+    creature_card(name, mana_cost, power, toughness).with_triggered_ability(
+        TriggeredAbilityProfile::enters_battlefield_may_gain_life_to_controller(amount),
+    )
+}
+
 pub fn dies_life_gain_creature_card(
     name: &str,
     mana_cost: u32,

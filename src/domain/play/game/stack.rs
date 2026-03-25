@@ -3,10 +3,13 @@
 use {
     super::{
         invariants, rules, ActivateAbilityOutcome, CastSpellOutcome, Game, PassPriorityOutcome,
-        StackPriorityContext,
+        ResolveOptionalEffectOutcome, StackPriorityContext,
     },
     crate::domain::play::{
-        commands::{ActivateAbilityCommand, CastSpellCommand, PassPriorityCommand},
+        commands::{
+            ActivateAbilityCommand, CastSpellCommand, PassPriorityCommand,
+            ResolveOptionalEffectCommand,
+        },
         errors::DomainError,
     },
 };
@@ -31,6 +34,7 @@ impl Game {
                 phase: &self.phase,
                 stack: &mut self.stack,
                 priority: &mut self.priority,
+                pending_optional_effect: &mut self.pending_optional_effect,
                 terminal_state: &mut self.terminal_state,
             },
             cmd,
@@ -61,6 +65,7 @@ impl Game {
                 phase: &self.phase,
                 stack: &mut self.stack,
                 priority: &mut self.priority,
+                pending_optional_effect: &mut self.pending_optional_effect,
                 terminal_state: &mut self.terminal_state,
             },
             cmd,
@@ -91,6 +96,7 @@ impl Game {
                 phase: &self.phase,
                 stack: &mut self.stack,
                 priority: &mut self.priority,
+                pending_optional_effect: &mut self.pending_optional_effect,
                 terminal_state: &mut self.terminal_state,
             },
             cmd,
@@ -101,6 +107,53 @@ impl Game {
                     super::helpers::find_player_index(&self.players, &spell_cast.player_id)?;
                 self.sync_card_location_from_player(owner_index, &spell_cast.card_id);
             }
+            if let Some(card_exiled) = &outcome.card_exiled {
+                let owner_index =
+                    super::helpers::find_player_index(&self.players, &card_exiled.player_id)?;
+                self.sync_card_location_from_player(owner_index, &card_exiled.card_id);
+            }
+            if let Some(card_discarded) = &outcome.card_discarded {
+                let owner_index =
+                    super::helpers::find_player_index(&self.players, &card_discarded.player_id)?;
+                self.sync_card_location_from_player(owner_index, &card_discarded.card_id);
+            }
+            for creature_died in &outcome.creatures_died {
+                let owner_index =
+                    super::helpers::find_player_index(&self.players, &creature_died.player_id)?;
+                self.sync_card_location_from_player(owner_index, &creature_died.card_id);
+            }
+            for card_id in &outcome.moved_cards {
+                self.sync_card_location_from_any_player(card_id);
+            }
+        }
+        result
+    }
+
+    /// Resolves a pending optional effect choice.
+    ///
+    /// # Errors
+    /// See [`rules::stack_priority::resolve_optional_effect`].
+    pub fn resolve_optional_effect(
+        &mut self,
+        cmd: ResolveOptionalEffectCommand,
+    ) -> Result<ResolveOptionalEffectOutcome, DomainError> {
+        invariants::require_game_active(self.is_over())?;
+        let active_player = self.active_player().clone();
+        let result = rules::stack_priority::resolve_optional_effect(
+            StackPriorityContext {
+                game_id: &self.id,
+                players: &mut self.players,
+                card_locations: &self.card_locations,
+                active_player: &active_player,
+                phase: &self.phase,
+                stack: &mut self.stack,
+                priority: &mut self.priority,
+                pending_optional_effect: &mut self.pending_optional_effect,
+                terminal_state: &mut self.terminal_state,
+            },
+            cmd,
+        );
+        if let Ok(outcome) = &result {
             if let Some(card_exiled) = &outcome.card_exiled {
                 let owner_index =
                     super::helpers::find_player_index(&self.players, &card_exiled.player_id)?;

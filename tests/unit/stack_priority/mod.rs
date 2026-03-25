@@ -162,5 +162,8 @@ mod stack_foundation;
 mod target_blocking_creature_spell_foundation;
 #[path = "targeted_spells.rs"]
 mod targeted_spells;
+
+#[path = "optional_may_triggers.rs"]
+mod optional_may_triggers;
 #[path = "token_cleanup.rs"]
 mod token_cleanup;
