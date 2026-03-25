@@ -136,6 +136,7 @@ struct CardRuntime {
     tapped: bool,
     loyalty: u32,
     loyalty_ability_activated_this_turn: bool,
+    is_token: bool,
     kind: CardRuntimeKind,
 }
 
@@ -181,6 +182,7 @@ impl CardInstance {
                 tapped: false,
                 loyalty,
                 loyalty_ability_activated_this_turn: false,
+                is_token: false,
                 kind: CardRuntimeKind::NonCreature,
             },
         }
@@ -221,6 +223,7 @@ impl CardInstance {
                 tapped: false,
                 loyalty: 0,
                 loyalty_ability_activated_this_turn: false,
+                is_token: false,
                 kind: CardRuntimeKind::Creature(CreatureRuntime::new(power, toughness)),
             },
         }
@@ -243,9 +246,36 @@ impl CardInstance {
                 tapped: false,
                 loyalty: 0,
                 loyalty_ability_activated_this_turn: false,
+                is_token: false,
                 kind: CardRuntimeKind::Creature(CreatureRuntime::new_with_keywords(
                     power, toughness, keywords,
                 )),
+            },
+        }
+    }
+
+    #[must_use]
+    pub fn new_vanilla_creature_token(
+        id: CardInstanceId,
+        definition_id: CardDefinitionId,
+        power: u32,
+        toughness: u32,
+    ) -> Self {
+        Self {
+            id,
+            face: CardFace {
+                definition: Arc::new(CardDefinition::for_card_type(
+                    definition_id,
+                    0,
+                    &CardType::Creature,
+                )),
+            },
+            runtime: CardRuntime {
+                tapped: false,
+                loyalty: 0,
+                loyalty_ability_activated_this_turn: false,
+                is_token: true,
+                kind: CardRuntimeKind::Creature(CreatureRuntime::new(power, toughness)),
             },
         }
     }
@@ -372,6 +402,7 @@ impl SpellPayload {
                 tapped: false,
                 loyalty: 0,
                 loyalty_ability_activated_this_turn: false,
+                is_token: false,
                 kind: CardRuntimeKind::NonCreature,
             },
         }
@@ -402,6 +433,7 @@ impl SpellPayload {
                 tapped: false,
                 loyalty: payload.initial_loyalty.unwrap_or(0),
                 loyalty_ability_activated_this_turn: false,
+                is_token: false,
                 kind: CardRuntimeKind::NonCreature,
             },
         }
@@ -483,6 +515,7 @@ impl SpellPayload {
                     tapped: false,
                     loyalty: 0,
                     loyalty_ability_activated_this_turn: false,
+                    is_token: false,
                     kind: CardRuntimeKind::Creature(CreatureRuntime::new_with_keywords(
                         payload.power,
                         payload.toughness,
@@ -519,6 +552,11 @@ impl CardInstance {
     pub fn loyalty_ability_activated_this_turn(&self) -> bool {
         matches!(self.card_type(), CardType::Planeswalker)
             && self.runtime.loyalty_ability_activated_this_turn
+    }
+
+    #[must_use]
+    pub const fn is_token(&self) -> bool {
+        self.runtime.is_token
     }
 
     #[must_use]

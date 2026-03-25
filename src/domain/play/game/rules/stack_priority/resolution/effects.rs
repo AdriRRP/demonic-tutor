@@ -9,11 +9,11 @@ use {
         evaluate_target_legality, SpellTargetLegality, TargetLegalityContext,
     },
     crate::domain::play::{
-        cards::{SpellResolutionProfile, SupportedSpellRules},
+        cards::{CardInstance, SpellResolutionProfile, SupportedSpellRules},
         errors::{DomainError, GameError},
         events::{CardDiscarded, CardExiled, CreatureDied, DiscardKind, GameEnded, LifeChanged},
         game::{rules::zones, SpellTarget},
-        ids::{CardInstanceId, GameId},
+        ids::{CardDefinitionId, CardInstanceId, GameId},
     },
 };
 
@@ -279,6 +279,34 @@ fn review_state_based_actions_after_effect(
         moved_cards,
         game_ended,
     ))
+}
+
+fn resolve_create_vanilla_creature_token_effect(
+    context: &mut ResolutionContext<'_>,
+    power: u32,
+    toughness: u32,
+) -> Result<SpellResolutionSideEffects, DomainError> {
+    let token_number = context.stack.next_object_number();
+    let token_id = CardInstanceId::new(format!(
+        "{}-token-{}",
+        context.game_id, token_number
+    ));
+    let definition_id = CardDefinitionId::new(format!("token-{power}-{toughness}"));
+    let token = CardInstance::new_vanilla_creature_token(token_id.clone(), definition_id, power, toughness);
+    context.players[context.controller_index].receive_battlefield_card(token);
+
+    review_state_based_actions_after_effect(
+        context.game_id,
+        context.players,
+        context.terminal_state,
+        EffectOutcomeSeed {
+            card_exiled: None,
+            card_discarded: None,
+            life_changed: None,
+            creatures_died: Vec::new(),
+            moved_cards: vec![token_id],
+        },
+    )
 }
 
 fn resolve_exile_target_creature_effect(
@@ -800,6 +828,9 @@ pub(super) fn apply_supported_spell_rules(
             -(amount).cast_signed(),
             "lose-life spell resolved without a targeting profile",
         ),
+        SpellResolutionProfile::CreateVanillaCreatureToken { power, toughness } => {
+            resolve_create_vanilla_creature_token_effect(&mut context, power, toughness)
+        }
         SpellResolutionProfile::CounterTargetSpell => {
             resolve_counter_target_spell_effect(&mut context)
         }

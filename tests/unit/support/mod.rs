@@ -115,6 +115,18 @@ pub fn targeted_lose_life_instant_card(name: &str, mana_cost: u32, amount: u32) 
         .with_supported_spell_rules(SupportedSpellRules::lose_life_from_player(amount))
 }
 
+pub fn create_vanilla_creature_token_sorcery_card(
+    name: &str,
+    mana_cost: u32,
+    power: u32,
+    toughness: u32,
+) -> LibraryCard {
+    LibraryCard::new(CardDefinitionId::new(name), CardType::Sorcery, mana_cost)
+        .with_supported_spell_rules(SupportedSpellRules::create_vanilla_creature_token(
+            power, toughness,
+        ))
+}
+
 pub fn targeted_opponent_damage_instant_card(
     name: &str,
     mana_cost: u32,

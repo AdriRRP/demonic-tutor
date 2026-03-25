@@ -802,6 +802,7 @@ pub enum SpellResolutionProfile {
     DealDamage { damage: u32 },
     GainLife { amount: u32 },
     LoseLife { amount: u32 },
+    CreateVanillaCreatureToken { power: u32, toughness: u32 },
     CounterTargetSpell,
     ReturnTargetPermanentToHand,
     DestroyTargetArtifactOrEnchantment,
@@ -858,6 +859,14 @@ impl SupportedSpellRules {
         Self {
             targeting: SpellTargetingProfile::ExactlyOne(SingleTargetRule::any_player()),
             resolution: SpellResolutionProfile::LoseLife { amount },
+        }
+    }
+
+    #[must_use]
+    pub const fn create_vanilla_creature_token(power: u32, toughness: u32) -> Self {
+        Self {
+            targeting: SpellTargetingProfile::None,
+            resolution: SpellResolutionProfile::CreateVanillaCreatureToken { power, toughness },
         }
     }
 
