@@ -12,6 +12,7 @@ use {
     std::collections::{HashMap, HashSet},
 };
 
+#[allow(clippy::too_many_lines)]
 pub fn declare_blockers(
     game_id: &GameId,
     players: &mut [Player],
@@ -58,10 +59,12 @@ pub fn declare_blockers(
             })?;
         let blocker_handle = players[defending_player_idx]
             .battlefield_handle(blocker_id)
-            .ok_or_else(|| DomainError::Card(CardError::NotOnBattlefield {
-                player: cmd.player_id.clone(),
-                card: blocker_id.clone(),
-            }))?;
+            .ok_or_else(|| {
+                DomainError::Card(CardError::NotOnBattlefield {
+                    player: cmd.player_id.clone(),
+                    card: blocker_id.clone(),
+                })
+            })?;
 
         if attacker_player_idx < defending_player_idx {
             let (left, right) = players.split_at_mut(defending_player_idx);
@@ -69,10 +72,12 @@ pub fn declare_blockers(
             let defending_player = &mut right[0];
             let card = defending_player
                 .battlefield_card_mut(blocker_id)
-                .ok_or_else(|| DomainError::Card(CardError::NotOnBattlefield {
-                    player: cmd.player_id.clone(),
-                    card: blocker_id.clone(),
-                }))?;
+                .ok_or_else(|| {
+                    DomainError::Card(CardError::NotOnBattlefield {
+                        player: cmd.player_id.clone(),
+                        card: blocker_id.clone(),
+                    })
+                })?;
 
             if !matches!(card.card_type(), CardType::Creature) {
                 return Err(DomainError::Card(CardError::NotACreature(
@@ -116,10 +121,12 @@ pub fn declare_blockers(
             let attacker_player = &mut right[0];
             let card = defending_player
                 .battlefield_card_mut(blocker_id)
-                .ok_or_else(|| DomainError::Card(CardError::NotOnBattlefield {
-                    player: cmd.player_id.clone(),
-                    card: blocker_id.clone(),
-                }))?;
+                .ok_or_else(|| {
+                    DomainError::Card(CardError::NotOnBattlefield {
+                        player: cmd.player_id.clone(),
+                        card: blocker_id.clone(),
+                    })
+                })?;
 
             if !matches!(card.card_type(), CardType::Creature) {
                 return Err(DomainError::Card(CardError::NotACreature(

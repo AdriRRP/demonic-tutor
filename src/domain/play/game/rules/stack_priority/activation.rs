@@ -67,7 +67,7 @@ fn validate_loyalty_timing(
     source_card_id: &CardInstanceId,
     player_id: &crate::domain::play::ids::PlayerId,
     active_player: &crate::domain::play::ids::PlayerId,
-    phase: &crate::domain::play::phase::Phase,
+    phase: crate::domain::play::phase::Phase,
     stack: &crate::domain::play::game::model::StackZone,
 ) -> Result<(), DomainError> {
     if player_id != active_player
@@ -87,6 +87,7 @@ fn validate_loyalty_timing(
     Ok(())
 }
 
+#[allow(clippy::too_many_arguments)]
 fn pay_activation_costs(
     players: &mut [crate::domain::play::game::Player],
     game_id: &crate::domain::play::ids::GameId,
@@ -104,7 +105,7 @@ fn pay_activation_costs(
         let required = ability.loyalty_change().unsigned_abs();
         if available < required {
             return Err(DomainError::Game(GameError::InsufficientLoyalty {
-                card: source_card_id.clone(),
+                card: source_card_id,
                 required,
                 available,
             }));
@@ -341,12 +342,12 @@ pub fn activate_ability(
         if prepared.card_type != CardType::Planeswalker {
             return Err(DomainError::Game(
                 GameError::ActivatedAbilityTimingNotAllowed {
-                    card: source_card_id.clone(),
+                    card: source_card_id,
                 },
             ));
         }
         let _ = prepared.loyalty;
-        validate_loyalty_timing(&source_card_id, &player_id, active_player, phase, stack)?;
+        validate_loyalty_timing(&source_card_id, &player_id, active_player, *phase, stack)?;
     }
     let prepared_target = prepare_ability_target(players, card_locations, target.as_ref())?;
     let (creatures_died, moved_cards) = pay_activation_costs(

@@ -615,12 +615,12 @@ impl CardInstance {
             }
             self.runtime.loyalty -= amount;
         } else {
-            self.runtime.loyalty = self.runtime.loyalty.saturating_add(delta as u32);
+            self.runtime.loyalty = self.runtime.loyalty.saturating_add(delta.cast_unsigned());
         }
         true
     }
 
-    pub fn remove_summoning_sickness(&mut self) {
+    pub const fn remove_summoning_sickness(&mut self) {
         if let CardRuntimeKind::Creature(creature) = &mut self.runtime.kind {
             creature.remove_summoning_sickness();
         }
@@ -662,7 +662,7 @@ impl CardInstance {
     }
 
     #[must_use]
-    pub fn blocked_by(&self) -> &[PlayerCardHandle] {
+    pub const fn blocked_by(&self) -> &[PlayerCardHandle] {
         match &self.runtime.kind {
             CardRuntimeKind::Creature(creature) => creature.blocked_by.as_slice(),
             CardRuntimeKind::NonCreature => &[],

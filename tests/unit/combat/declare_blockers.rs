@@ -226,8 +226,8 @@ fn declare_blockers_allows_multiple_blockers_against_the_same_attacker_in_declar
     assert_eq!(
         event.assignments,
         vec![
-            (left_blocker_id.clone(), attacker_id.clone()),
-            (right_blocker_id.clone(), attacker_id.clone()),
+            (left_blocker_id, attacker_id.clone()),
+            (right_blocker_id, attacker_id.clone()),
         ]
     );
 

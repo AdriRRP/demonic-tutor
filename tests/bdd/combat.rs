@@ -126,18 +126,14 @@ fn the_game_emits_combat_damage_resolved(world: &mut GameplayWorld) {
     assert!(world.last_combat_damage.is_some());
 }
 
-#[then("the action is rejected because multiple blockers per attacker are not yet supported")]
-fn the_action_is_rejected_because_multiple_blockers_per_attacker_are_not_yet_supported(
-    world: &mut GameplayWorld,
-) {
-    let error = world
-        .last_error
-        .as_ref()
-        .expect("multiple blockers should be rejected");
+#[then("the declaration is accepted with both blockers")]
+fn the_declaration_is_accepted_with_both_blockers(world: &mut GameplayWorld) {
     assert!(
-        error.contains("cannot be assigned more than one blocker"),
-        "unexpected error: {error}"
+        world.last_error.is_none(),
+        "multiple blockers should be accepted, got {:?}",
+        world.last_error
     );
+    assert_eq!(world.blocker_assignments.len(), 2);
 }
 
 #[given("Alice attacks with an unblocked creature")]

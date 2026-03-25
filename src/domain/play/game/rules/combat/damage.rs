@@ -130,7 +130,14 @@ fn resolve_damage_step(
             "combat attacker participant points to a missing battlefield card",
         )?;
         let ordered_blockers = blockers_for_attacker(blockers, attacker);
-        if !ordered_blockers.is_empty() {
+        if ordered_blockers.is_empty() {
+            player_damage += attacker.power();
+            damage_events.push(DamageEvent {
+                source: attacker_id,
+                target: DamageTarget::Player(defender_player_id.clone()),
+                damage_amount: attacker.power(),
+            });
+        } else {
             let mut remaining_damage = attacker.power();
             for (index, blocker) in ordered_blockers.iter().enumerate() {
                 let blocker_id = resolve_combat_card_id(
@@ -170,13 +177,6 @@ fn resolve_damage_step(
                     damage_amount: remaining_damage,
                 });
             }
-        } else {
-            player_damage += attacker.power();
-            damage_events.push(DamageEvent {
-                source: attacker_id,
-                target: DamageTarget::Player(defender_player_id.clone()),
-                damage_amount: attacker.power(),
-            });
         }
     }
 
@@ -292,6 +292,7 @@ impl ResolveCombatDamageOutcome {
     }
 }
 
+#[allow(clippy::too_many_lines)]
 pub fn resolve_combat_damage(
     game_id: &GameId,
     players: &mut [Player],

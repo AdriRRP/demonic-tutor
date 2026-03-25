@@ -14,10 +14,7 @@ use {
 fn attacker_assigns_damage_to_multiple_blockers_in_declared_order() {
     let (service, mut game) = support::setup_two_player_game(
         "game-damage-order",
-        support::filled_library(
-            vec![support::creature_card("attacker", 0, 4, 4)],
-            20,
-        ),
+        support::filled_library(vec![support::creature_card("attacker", 0, 4, 4)], 20),
         support::filled_library(
             vec![
                 support::creature_card("small-blocker", 0, 2, 2),
@@ -87,7 +84,7 @@ fn attacker_assigns_damage_to_multiple_blockers_in_declared_order() {
                 PlayerId::new("player-2"),
                 vec![
                     (small_blocker_id.clone(), attacker_id.clone()),
-                    (large_blocker_id.clone(), attacker_id.clone()),
+                    (large_blocker_id.clone(), attacker_id),
                 ],
             ),
         )
@@ -106,16 +103,14 @@ fn attacker_assigns_damage_to_multiple_blockers_in_declared_order() {
         .battlefield_card(&large_blocker_id)
         .expect("second blocker should survive");
     assert_eq!(surviving_large_blocker.damage(), 2);
-    assert!(
-        outcome
-            .combat_damage_resolved
-            .damage_events
-            .iter()
-            .any(|event| {
-                matches!(&event.target, DamageTarget::Creature(card_id) if card_id == &small_blocker_id)
-                    && event.damage_amount == 2
-            })
-    );
+    assert!(outcome
+        .combat_damage_resolved
+        .damage_events
+        .iter()
+        .any(|event| {
+            matches!(&event.target, DamageTarget::Creature(card_id) if card_id == &small_blocker_id)
+                && event.damage_amount == 2
+        }));
 }
 
 #[test]
@@ -200,8 +195,8 @@ fn trample_uses_declared_blocker_order_before_assigning_excess_to_player() {
             DeclareBlockersCommand::new(
                 PlayerId::new("player-2"),
                 vec![
-                    (left_blocker_id.clone(), attacker_id.clone()),
-                    (right_blocker_id.clone(), attacker_id.clone()),
+                    (left_blocker_id, attacker_id.clone()),
+                    (right_blocker_id, attacker_id),
                 ],
             ),
         )

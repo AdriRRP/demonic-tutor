@@ -1,8 +1,6 @@
 //! Supports combat damage application.
 
-use crate::domain::play::{
-    game::{helpers, model::Player, AggregateCardLocationIndex},
-};
+use crate::domain::play::game::{helpers, model::Player, AggregateCardLocationIndex};
 
 use super::CreatureDamageAssignment;
 

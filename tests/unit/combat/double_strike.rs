@@ -50,7 +50,7 @@ fn unblocked_double_strike_attacker_deals_damage_in_both_passes() {
     service
         .declare_attackers(
             &mut game,
-            DeclareAttackersCommand::new(PlayerId::new("player-1"), vec![attacker_id.clone()]),
+            DeclareAttackersCommand::new(PlayerId::new("player-1"), vec![attacker_id]),
         )
         .expect("declare attackers should succeed");
     support::close_empty_priority_window(&service, &mut game);
@@ -152,7 +152,7 @@ fn double_strike_creature_removed_in_first_pass_does_not_deal_second_pass_damage
             &mut game,
             DeclareBlockersCommand::new(
                 PlayerId::new("player-2"),
-                vec![(blocker_id.clone(), attacker_id.clone())],
+                vec![(blocker_id, attacker_id.clone())],
             ),
         )
         .expect("declare blockers should succeed");

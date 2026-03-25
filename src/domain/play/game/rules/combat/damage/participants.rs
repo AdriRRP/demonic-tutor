@@ -32,6 +32,7 @@ impl CombatCardRef {
     }
 }
 
+#[allow(clippy::struct_excessive_bools)]
 #[derive(Debug, Clone)]
 pub(super) struct AttackerParticipant {
     card_ref: CombatCardRef,
@@ -223,6 +224,8 @@ pub(super) fn collect_blockers(
 
 #[cfg(test)]
 mod tests {
+    #![allow(clippy::expect_used, clippy::similar_names)]
+
     use {
         super::{collect_attackers, collect_blockers},
         crate::domain::play::{
@@ -331,7 +334,8 @@ mod tests {
             .expect("attacker should be on battlefield")
             .add_blocker(blocker_b_handle);
 
-        let attackers = collect_attackers(&attacker_player, 0, 1).expect("attackers should collect");
+        let attackers =
+            collect_attackers(&attacker_player, 0, 1).expect("attackers should collect");
         assert_eq!(attackers.len(), 1);
         assert_eq!(attackers[0].blocked_by_refs()[0].owner_index(), 1);
         assert_eq!(attackers[0].blocked_by_refs()[0].handle(), blocker_a_handle);
