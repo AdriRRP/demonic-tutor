@@ -22,6 +22,7 @@ use crate::domain::play::{
     },
     ids::{CardInstanceId, GameId},
 };
+use std::collections::HashMap;
 
 struct CreatureDamageAssignment {
     target: CardInstanceId,
@@ -29,10 +30,15 @@ struct CreatureDamageAssignment {
     source_has_deathtouch: bool,
 }
 
-type DamageResolution = (Vec<DamageEvent>, Vec<CreatureDamageAssignment>, u32);
+type DamageResolution = (
+    Vec<DamageEvent>,
+    Vec<CreatureDamageAssignment>,
+    u32,
+    HashMap<usize, u32>,
+);
 type DamageStepOutcome = (
     Vec<DamageEvent>,
-    Option<LifeChanged>,
+    Vec<LifeChanged>,
     Vec<CreatureDied>,
     Option<GameEnded>,
 );
@@ -97,15 +103,147 @@ fn blockers_for_attacker<'a>(
         .collect()
 }
 
-fn merge_life_changed(aggregate: &mut Option<LifeChanged>, step_life_changed: Option<LifeChanged>) {
-    let Some(step_life_changed) = step_life_changed else {
-        return;
-    };
+fn merge_life_changed(aggregate: &mut Vec<LifeChanged>, mut step_life_changed: Vec<LifeChanged>) {
+    aggregate.append(&mut step_life_changed);
+}
 
-    match aggregate {
-        Some(existing) => existing.to_life = step_life_changed.to_life,
-        None => *aggregate = Some(step_life_changed),
+fn record_lifelink_damage(
+    lifelink_damage_by_controller: &mut HashMap<usize, u32>,
+    controller_index: usize,
+    damage: u32,
+) {
+    if damage > 0 {
+        *lifelink_damage_by_controller
+            .entry(controller_index)
+            .or_insert(0) += damage;
     }
+}
+
+fn resolve_attacker_damage(
+    players: &[Player],
+    attacker: &AttackerParticipant,
+    blockers: &[BlockerParticipant],
+    defender_player_id: &crate::domain::play::ids::PlayerId,
+    damage_events: &mut Vec<DamageEvent>,
+    damage_received: &mut Vec<CreatureDamageAssignment>,
+    lifelink_damage_by_controller: &mut HashMap<usize, u32>,
+) -> Result<u32, DomainError> {
+    let attacker_id = resolve_combat_card_id(
+        players,
+        attacker.card_ref(),
+        "combat attacker participant points to a missing battlefield card",
+    )?;
+    let ordered_blockers = blockers_for_attacker(blockers, attacker);
+    if ordered_blockers.is_empty() {
+        if attacker.was_blocked() {
+            return Ok(0);
+        }
+
+        if attacker.has_lifelink() {
+            record_lifelink_damage(
+                lifelink_damage_by_controller,
+                attacker.card_ref().owner_index(),
+                attacker.power(),
+            );
+        }
+        damage_events.push(DamageEvent {
+            source: attacker_id,
+            target: DamageTarget::Player(defender_player_id.clone()),
+            damage_amount: attacker.power(),
+        });
+        return Ok(attacker.power());
+    }
+
+    let mut remaining_damage = attacker.power();
+    for (index, blocker) in ordered_blockers.iter().enumerate() {
+        let blocker_id = resolve_combat_card_id(
+            players,
+            blocker.card_ref(),
+            "combat blocker participant points to a missing battlefield card",
+        )?;
+        let is_last = index + 1 == ordered_blockers.len();
+        let lethal_to_blocker = if attacker.has_deathtouch() {
+            u32::from(blocker.lethal_damage_threshold() > 0)
+        } else {
+            blocker.lethal_damage_threshold()
+        };
+        let blocker_damage = if attacker.has_trample() {
+            remaining_damage.min(lethal_to_blocker)
+        } else if is_last {
+            remaining_damage
+        } else {
+            remaining_damage.min(lethal_to_blocker)
+        };
+
+        add_damage(
+            damage_received,
+            &blocker_id,
+            blocker_damage,
+            attacker.has_deathtouch(),
+        );
+        if attacker.has_lifelink() {
+            record_lifelink_damage(
+                lifelink_damage_by_controller,
+                attacker.card_ref().owner_index(),
+                blocker_damage,
+            );
+        }
+        damage_events.push(DamageEvent {
+            source: attacker_id.clone(),
+            target: DamageTarget::Creature(blocker_id),
+            damage_amount: blocker_damage,
+        });
+        remaining_damage = remaining_damage.saturating_sub(blocker_damage);
+    }
+
+    if attacker.has_trample() && remaining_damage > 0 {
+        damage_events.push(DamageEvent {
+            source: attacker_id,
+            target: DamageTarget::Player(defender_player_id.clone()),
+            damage_amount: remaining_damage,
+        });
+        return Ok(remaining_damage);
+    }
+
+    Ok(0)
+}
+
+fn resolve_blocker_damage(
+    players: &[Player],
+    blocker: &BlockerParticipant,
+    damage_events: &mut Vec<DamageEvent>,
+    damage_received: &mut Vec<CreatureDamageAssignment>,
+    lifelink_damage_by_controller: &mut HashMap<usize, u32>,
+) -> Result<(), DomainError> {
+    let blocker_id = resolve_combat_card_id(
+        players,
+        blocker.card_ref(),
+        "combat blocker participant points to a missing battlefield card",
+    )?;
+    let blocked_attacker_id = resolve_combat_card_id(
+        players,
+        blocker.blocked_attacker_ref(),
+        "combat blocker participant points to a missing blocked attacker",
+    )?;
+    add_damage(
+        damage_received,
+        &blocked_attacker_id,
+        blocker.power(),
+        blocker.has_deathtouch(),
+    );
+    if blocker.has_lifelink() {
+        record_lifelink_damage(
+            lifelink_damage_by_controller,
+            blocker.card_ref().owner_index(),
+            blocker.power(),
+        );
+    }
+    damage_events.push(DamageEvent {
+        source: blocker_id,
+        target: DamageTarget::Creature(blocked_attacker_id),
+        damage_amount: blocker.power(),
+    });
+    Ok(())
 }
 
 fn resolve_damage_step(
@@ -119,101 +257,42 @@ fn resolve_damage_step(
     let mut damage_events: Vec<DamageEvent> = Vec::new();
     let mut damage_received: Vec<CreatureDamageAssignment> = Vec::new();
     let mut player_damage = 0;
+    let mut lifelink_damage_by_controller = HashMap::new();
 
     for attacker in attackers
         .iter()
         .filter(|attacker| attackers_deal_damage(attacker))
     {
-        let attacker_id = resolve_combat_card_id(
+        player_damage += resolve_attacker_damage(
             players,
-            attacker.card_ref(),
-            "combat attacker participant points to a missing battlefield card",
+            attacker,
+            blockers,
+            defender_player_id,
+            &mut damage_events,
+            &mut damage_received,
+            &mut lifelink_damage_by_controller,
         )?;
-        let ordered_blockers = blockers_for_attacker(blockers, attacker);
-        if ordered_blockers.is_empty() {
-            if !attacker.was_blocked() {
-                player_damage += attacker.power();
-                damage_events.push(DamageEvent {
-                    source: attacker_id,
-                    target: DamageTarget::Player(defender_player_id.clone()),
-                    damage_amount: attacker.power(),
-                });
-            }
-        } else {
-            let mut remaining_damage = attacker.power();
-            for (index, blocker) in ordered_blockers.iter().enumerate() {
-                let blocker_id = resolve_combat_card_id(
-                    players,
-                    blocker.card_ref(),
-                    "combat blocker participant points to a missing battlefield card",
-                )?;
-                let is_last = index + 1 == ordered_blockers.len();
-                let lethal_to_blocker = if attacker.has_deathtouch() {
-                    u32::from(blocker.lethal_damage_threshold() > 0)
-                } else {
-                    blocker.lethal_damage_threshold()
-                };
-                let blocker_damage = if attacker.has_trample() {
-                    remaining_damage.min(lethal_to_blocker)
-                } else if is_last {
-                    remaining_damage
-                } else {
-                    remaining_damage.min(lethal_to_blocker)
-                };
-
-                add_damage(
-                    &mut damage_received,
-                    &blocker_id,
-                    blocker_damage,
-                    attacker.has_deathtouch(),
-                );
-                damage_events.push(DamageEvent {
-                    source: attacker_id.clone(),
-                    target: DamageTarget::Creature(blocker_id),
-                    damage_amount: blocker_damage,
-                });
-                remaining_damage = remaining_damage.saturating_sub(blocker_damage);
-            }
-
-            if attacker.has_trample() && remaining_damage > 0 {
-                player_damage += remaining_damage;
-                damage_events.push(DamageEvent {
-                    source: attacker_id.clone(),
-                    target: DamageTarget::Player(defender_player_id.clone()),
-                    damage_amount: remaining_damage,
-                });
-            }
-        }
     }
 
     for blocker in blockers
         .iter()
         .filter(|blocker| blockers_deal_damage(blocker))
     {
-        let blocker_id = resolve_combat_card_id(
+        resolve_blocker_damage(
             players,
-            blocker.card_ref(),
-            "combat blocker participant points to a missing battlefield card",
-        )?;
-        let blocked_attacker_id = resolve_combat_card_id(
-            players,
-            blocker.blocked_attacker_ref(),
-            "combat blocker participant points to a missing blocked attacker",
-        )?;
-        add_damage(
+            blocker,
+            &mut damage_events,
             &mut damage_received,
-            &blocked_attacker_id,
-            blocker.power(),
-            blocker.has_deathtouch(),
-        );
-        damage_events.push(DamageEvent {
-            source: blocker_id,
-            target: DamageTarget::Creature(blocked_attacker_id),
-            damage_amount: blocker.power(),
-        });
+            &mut lifelink_damage_by_controller,
+        )?;
     }
 
-    Ok((damage_events, damage_received, player_damage))
+    Ok((
+        damage_events,
+        damage_received,
+        player_damage,
+        lifelink_damage_by_controller,
+    ))
 }
 
 fn apply_player_combat_damage(
@@ -221,9 +300,9 @@ fn apply_player_combat_damage(
     players: &mut [Player],
     defender_player_id: &crate::domain::play::ids::PlayerId,
     player_damage: u32,
-) -> Result<Option<LifeChanged>, DomainError> {
+) -> Result<Vec<LifeChanged>, DomainError> {
     if player_damage == 0 {
-        return Ok(None);
+        return Ok(Vec::new());
     }
 
     let life_delta = i32::try_from(player_damage).map_err(|_| {
@@ -231,12 +310,39 @@ fn apply_player_combat_damage(
             "combat damage should fit within i32 life adjustments".to_string(),
         ))
     })?;
-    Ok(Some(game_effects::adjust_player_life(
+    Ok(vec![game_effects::adjust_player_life(
         game_id,
         players,
         defender_player_id,
         -life_delta,
-    )?))
+    )?])
+}
+
+fn apply_lifelink_gains(
+    game_id: &GameId,
+    players: &mut [Player],
+    lifelink_damage_by_controller: HashMap<usize, u32>,
+) -> Result<Vec<LifeChanged>, DomainError> {
+    let mut events = Vec::new();
+
+    for (controller_index, gained_life) in lifelink_damage_by_controller {
+        if gained_life == 0 {
+            continue;
+        }
+        let life_delta = i32::try_from(gained_life).map_err(|_| {
+            DomainError::Game(GameError::InternalInvariantViolation(
+                "lifelink life gain should fit within i32 life adjustments".to_string(),
+            ))
+        })?;
+        events.push(game_effects::adjust_player_life_by_index(
+            game_id,
+            players,
+            controller_index,
+            life_delta,
+        )?);
+    }
+
+    Ok(events)
 }
 
 fn resolve_combat_damage_step(
@@ -246,21 +352,27 @@ fn resolve_combat_damage_step(
     attackers_deal_damage: impl Fn(&AttackerParticipant) -> bool,
     blockers_deal_damage: impl Fn(&BlockerParticipant) -> bool,
 ) -> Result<DamageStepOutcome, DomainError> {
-    let (damage_events, damage_received, player_damage) = resolve_damage_step(
-        ctx.players,
-        attackers,
-        blockers,
-        ctx.defender_player_id,
-        attackers_deal_damage,
-        blockers_deal_damage,
-    )?;
+    let (damage_events, damage_received, player_damage, lifelink_damage_by_controller) =
+        resolve_damage_step(
+            ctx.players,
+            attackers,
+            blockers,
+            ctx.defender_player_id,
+            attackers_deal_damage,
+            blockers_deal_damage,
+        )?;
     apply_damage(ctx.players, ctx.card_locations, &damage_received);
-    let life_changed = apply_player_combat_damage(
+    let mut life_changed = apply_player_combat_damage(
         ctx.game_id,
         ctx.players,
         ctx.defender_player_id,
         player_damage,
     )?;
+    life_changed.extend(apply_lifelink_gains(
+        ctx.game_id,
+        ctx.players,
+        lifelink_damage_by_controller,
+    )?);
     let StateBasedActionsResult {
         creatures_died,
         game_ended,
@@ -276,7 +388,7 @@ fn resolve_combat_damage_step(
 #[derive(Debug, Clone)]
 pub struct ResolveCombatDamageOutcome {
     pub combat_damage_resolved: CombatDamageResolved,
-    pub life_changed: Option<LifeChanged>,
+    pub life_changed: Vec<LifeChanged>,
     pub creatures_died: Vec<CreatureDied>,
     pub game_ended: Option<GameEnded>,
 }
@@ -285,7 +397,7 @@ impl ResolveCombatDamageOutcome {
     #[must_use]
     pub const fn new(
         combat_damage_resolved: CombatDamageResolved,
-        life_changed: Option<LifeChanged>,
+        life_changed: Vec<LifeChanged>,
         creatures_died: Vec<CreatureDied>,
         game_ended: Option<GameEnded>,
     ) -> Self {
@@ -331,7 +443,7 @@ pub fn resolve_combat_damage(
             .any(|blocker| blocker.has_first_strike() || blocker.has_double_strike());
 
     let mut damage_events: Vec<DamageEvent> = Vec::new();
-    let mut life_changed: Option<LifeChanged> = None;
+    let mut life_changed: Vec<LifeChanged> = Vec::new();
     let mut creatures_died: Vec<CreatureDied> = Vec::new();
     let mut game_ended: Option<GameEnded> = None;
 

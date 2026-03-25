@@ -12,6 +12,12 @@ use {
     std::collections::{HashMap, HashSet},
 };
 
+#[derive(Debug, Clone, Copy)]
+struct AttackerBlockingRequirements {
+    requires_aerial_blocking: bool,
+    has_menace: bool,
+}
+
 #[allow(clippy::too_many_lines)]
 pub fn declare_blockers(
     game_id: &GameId,
@@ -28,10 +34,31 @@ pub fn declare_blockers(
         .map(|card| {
             (
                 card.id().clone(),
-                capabilities::attacker_requires_aerial_blocking_capability(card),
+                AttackerBlockingRequirements {
+                    requires_aerial_blocking:
+                        capabilities::attacker_requires_aerial_blocking_capability(card),
+                    has_menace: card.has_menace(),
+                },
             )
         })
         .collect::<HashMap<_, _>>();
+    let mut blocker_count_by_attacker = HashMap::new();
+    for (_, attacker_id) in &cmd.blocker_assignments {
+        *blocker_count_by_attacker
+            .entry(attacker_id.clone())
+            .or_insert(0usize) += 1;
+    }
+    for (attacker_id, requirements) in &declared_attackers {
+        if requirements.has_menace && blocker_count_by_attacker.get(attacker_id).copied() == Some(1)
+        {
+            return Err(DomainError::Card(
+                CardError::CannotBlockMenaceWithSingleBlocker {
+                    player: cmd.player_id,
+                    attacker: attacker_id.clone(),
+                },
+            ));
+        }
+    }
     let mut valid_blockers: Vec<(CardInstanceId, CardInstanceId)> = Vec::new();
     let mut seen_blockers = HashSet::new();
 
@@ -42,7 +69,7 @@ pub fn declare_blockers(
             )));
         }
 
-        let Some(attacker_requires_aerial_blocking) = declared_attackers.get(attacker_id) else {
+        let Some(attacker_requirements) = declared_attackers.get(attacker_id) else {
             return Err(DomainError::Card(CardError::NotAttacking(
                 attacker_id.clone(),
             )));
@@ -94,7 +121,7 @@ pub fn declare_blockers(
 
             if !capabilities::can_block_attacker_with_aerial_requirement(
                 card,
-                *attacker_requires_aerial_blocking,
+                attacker_requirements.requires_aerial_blocking,
             ) {
                 return Err(DomainError::Card(
                     CardError::CannotBlockFlyingWithoutFlyingOrReach {
@@ -143,7 +170,7 @@ pub fn declare_blockers(
 
             if !capabilities::can_block_attacker_with_aerial_requirement(
                 card,
-                *attacker_requires_aerial_blocking,
+                attacker_requirements.requires_aerial_blocking,
             ) {
                 return Err(DomainError::Card(
                     CardError::CannotBlockFlyingWithoutFlyingOrReach {

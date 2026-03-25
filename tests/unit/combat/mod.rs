@@ -16,6 +16,8 @@ mod double_strike;
 mod first_strike;
 #[path = "haste.rs"]
 mod haste;
+#[path = "lifelink.rs"]
+mod lifelink;
 #[path = "permanent_type.rs"]
 mod permanent_type;
 #[path = "trample.rs"]

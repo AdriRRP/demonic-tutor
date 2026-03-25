@@ -205,3 +205,74 @@ fn test_non_flying_blocking_legality() {
         "non-flying should block non-flying: {result:?}"
     );
 }
+
+#[test]
+fn menace_requires_at_least_two_blockers() {
+    let bob = PlayerId::new("player-2");
+
+    let (service, mut game) = support::setup_two_player_game(
+        "test-menace",
+        support::filled_library(
+            vec![support::creature_card_with_keyword(
+                "menace-attacker",
+                0,
+                3,
+                3,
+                demonictutor::KeywordAbility::Menace,
+            )],
+            40,
+        ),
+        support::filled_library(
+            vec![
+                support::creature_card("blocker-a", 0, 2, 2),
+                support::creature_card("blocker-b", 0, 2, 2),
+            ],
+            40,
+        ),
+    );
+
+    support::advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
+    let attacker_id = game.players()[0]
+        .hand_card_at(0)
+        .expect("attacker should exist in hand")
+        .id()
+        .clone();
+    cast_spell_and_resolve_for_player(&service, &mut game, "player-1", attacker_id.clone());
+
+    support::advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-2");
+    let blocker_a = game.players()[1]
+        .hand_card_at(0)
+        .expect("first blocker should exist in hand")
+        .id()
+        .clone();
+    let blocker_b = game.players()[1]
+        .hand_card_at(1)
+        .expect("second blocker should exist in hand")
+        .id()
+        .clone();
+    cast_spell_and_resolve_for_player(&service, &mut game, "player-2", blocker_a.clone());
+    cast_spell_and_resolve_for_player(&service, &mut game, "player-2", blocker_b.clone());
+
+    advance_to_combat_after_battlefield_setup(&service, &mut game, attacker_id.clone());
+
+    let one_blocker = service.declare_blockers(
+        &mut game,
+        DeclareBlockersCommand::new(bob.clone(), vec![(blocker_a.clone(), attacker_id.clone())]),
+    );
+    assert!(matches!(
+        &one_blocker,
+        Err(error) if error.to_string().contains("menace")
+    ));
+
+    let two_blockers = service.declare_blockers(
+        &mut game,
+        DeclareBlockersCommand::new(
+            bob,
+            vec![(blocker_a, attacker_id.clone()), (blocker_b, attacker_id)],
+        ),
+    );
+    assert!(
+        two_blockers.is_ok(),
+        "two blockers should satisfy menace: {two_blockers:?}"
+    );
+}

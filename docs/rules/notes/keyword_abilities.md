@@ -34,13 +34,19 @@ This is a repository-owned interpretation note, not a copy of the Comprehensive 
 - When a defender declares blockers, the game validates that each blocker can legally block its assigned attacker
 - A blocker can block a flying attacker if and only if the blocker has Flying or Reach
 - A blocker can block a non-flying attacker without restriction from keywords
+- A creature with `Menace` cannot be blocked by exactly one creature in the current combat model
+
+### Lifelink
+
+- a creature with `Lifelink` causes its controller to gain life equal to combat damage it deals in the supported subset
+- this currently applies to damage dealt to players and to creatures during combat
+- life gain is resolved in the same combat-damage corridor before SBA review completes
 
 ## Out of Scope
 
 - Trample (excess damage to defending player)
 - First Strike (damage in first combat damage step)
 - Double Strike (damage in both steps)
-- Lifelink (gain life equal to damage)
 - Deathtouch (any damage is lethal)
 - Vigilance (attack without tapping)
 - Haste (no summoning sickness)

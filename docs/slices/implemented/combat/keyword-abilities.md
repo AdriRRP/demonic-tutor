@@ -16,7 +16,7 @@ This slice is the logical next step after the combat foundation because:
 2. the single-blocker-per-attacker limit is already modeled
 3. flying is the most common keyword ability and fundamentally changes combat
 4. the domain model can represent a small closed set of supported keyword abilities without introducing a generic rules engine
-5. future combat slices (trample, first strike, double strike) will follow the same pattern
+5. future combat slices (trample, first strike, double strike, menace, lifelink) will follow the same pattern
 
 ---
 
@@ -56,7 +56,8 @@ This slice is the logical next step after the combat foundation because:
 - Trample (CR 702.2) — excess damage to defending player
 - First Strike (CR 702.7) — damage in first combat damage step
 - Double Strike (CR 702.4) — damage in both steps
-- Lifelink (CR 702.2) — gain life equal to damage dealt
+- Lifelink (CR 702.2) — moved to later dedicated slice
+- Menace — moved to later dedicated slice
 - Deathtouch (CR 702.2) — any damage is lethal
 - Vigilance (CR 702.2) — attack without tapping
 - Haste — no summoning sickness

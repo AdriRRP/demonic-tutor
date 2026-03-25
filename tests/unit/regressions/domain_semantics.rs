@@ -419,7 +419,7 @@ fn unblocked_combat_damage_ends_the_game_when_it_reduces_a_player_to_zero_life()
         .unwrap();
 
     assert_eq!(
-        outcome.life_changed.as_ref().map(|event| event.to_life),
+        outcome.life_changed.last().map(|event| event.to_life),
         Some(0)
     );
     assert_eq!(

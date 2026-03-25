@@ -20,7 +20,7 @@ impl GameplayWorld {
             .expect("resolving combat damage should succeed");
 
         self.last_combat_damage = Some(outcome.combat_damage_resolved);
-        self.last_life_changed = outcome.life_changed;
+        self.last_life_changed = outcome.life_changed.last().cloned();
         self.last_creature_died = outcome.creatures_died;
         self.last_game_ended = outcome.game_ended;
     }

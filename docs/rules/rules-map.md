@@ -123,6 +123,18 @@ It is not a literal restatement of the rules text.
 
 ---
 
+## Menace Blocking Foundation
+
+- 702.111
+
+---
+
+## Lifelink Combat Damage Foundation
+
+- 702.15
+
+---
+
 ## Double Strike Foundation
 
 - 702.4

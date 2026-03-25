@@ -813,6 +813,26 @@ impl CardInstance {
     }
 
     #[must_use]
+    pub const fn has_lifelink(&self) -> bool {
+        self.has_keyword(KeywordAbility::Lifelink)
+    }
+
+    #[must_use]
+    pub const fn has_menace(&self) -> bool {
+        self.has_keyword(KeywordAbility::Menace)
+    }
+
+    #[must_use]
+    pub const fn has_hexproof(&self) -> bool {
+        self.has_keyword(KeywordAbility::Hexproof)
+    }
+
+    #[must_use]
+    pub const fn has_indestructible(&self) -> bool {
+        self.has_keyword(KeywordAbility::Indestructible)
+    }
+
+    #[must_use]
     pub const fn keyword_abilities(&self) -> Option<KeywordAbilitySet> {
         match &self.runtime.kind {
             CardRuntimeKind::Creature(creature) => Some(creature.keywords),

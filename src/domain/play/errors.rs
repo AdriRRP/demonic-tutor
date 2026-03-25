@@ -115,6 +115,10 @@ pub enum CardError {
         blocker: CardInstanceId,
         attacker: CardInstanceId,
     },
+    CannotBlockMenaceWithSingleBlocker {
+        player: PlayerId,
+        attacker: CardInstanceId,
+    },
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -358,6 +362,15 @@ impl std::fmt::Display for CardError {
                 write!(
                     f,
                     "creature {blocker} cannot block flying creature {attacker} without flying or reach"
+                )
+            }
+            Self::CannotBlockMenaceWithSingleBlocker {
+                player: _,
+                attacker,
+            } => {
+                write!(
+                    f,
+                    "creature {attacker} with menace cannot be blocked by exactly one creature"
                 )
             }
         }

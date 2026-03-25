@@ -1,6 +1,7 @@
 //! Supports combat damage participants.
 
 use crate::domain::play::{
+    cards::{KeywordAbility, KeywordAbilitySet},
     errors::{DomainError, GameError},
     game::model::Player,
     ids::PlayerCardHandle,
@@ -32,16 +33,45 @@ impl CombatCardRef {
     }
 }
 
-#[allow(clippy::struct_excessive_bools)]
+#[derive(Debug, Clone)]
+struct CombatKeywordProfile {
+    keywords: KeywordAbilitySet,
+}
+
+impl CombatKeywordProfile {
+    #[must_use]
+    const fn new(keywords: KeywordAbilitySet) -> Self {
+        Self { keywords }
+    }
+
+    #[must_use]
+    const fn has_first_strike(&self) -> bool {
+        self.keywords.contains(KeywordAbility::FirstStrike)
+    }
+
+    #[must_use]
+    const fn has_deathtouch(&self) -> bool {
+        self.keywords.contains(KeywordAbility::Deathtouch)
+    }
+
+    #[must_use]
+    const fn has_double_strike(&self) -> bool {
+        self.keywords.contains(KeywordAbility::DoubleStrike)
+    }
+
+    #[must_use]
+    const fn has_lifelink(&self) -> bool {
+        self.keywords.contains(KeywordAbility::Lifelink)
+    }
+}
+
 #[derive(Debug, Clone)]
 pub(super) struct AttackerParticipant {
     card_ref: CombatCardRef,
     blocked_by_refs: Vec<CombatCardRef>,
     power: u32,
     has_trample: bool,
-    has_first_strike: bool,
-    has_deathtouch: bool,
-    has_double_strike: bool,
+    keywords: CombatKeywordProfile,
 }
 
 impl AttackerParticipant {
@@ -72,17 +102,22 @@ impl AttackerParticipant {
 
     #[must_use]
     pub const fn has_first_strike(&self) -> bool {
-        self.has_first_strike
+        self.keywords.has_first_strike()
     }
 
     #[must_use]
     pub const fn has_deathtouch(&self) -> bool {
-        self.has_deathtouch
+        self.keywords.has_deathtouch()
     }
 
     #[must_use]
     pub const fn has_double_strike(&self) -> bool {
-        self.has_double_strike
+        self.keywords.has_double_strike()
+    }
+
+    #[must_use]
+    pub const fn has_lifelink(&self) -> bool {
+        self.keywords.has_lifelink()
     }
 }
 
@@ -93,9 +128,7 @@ pub(super) struct BlockerParticipant {
     power: u32,
     toughness: u32,
     marked_damage: u32,
-    has_first_strike: bool,
-    has_deathtouch: bool,
-    has_double_strike: bool,
+    keywords: CombatKeywordProfile,
 }
 
 impl BlockerParticipant {
@@ -121,17 +154,22 @@ impl BlockerParticipant {
 
     #[must_use]
     pub const fn has_first_strike(&self) -> bool {
-        self.has_first_strike
+        self.keywords.has_first_strike()
     }
 
     #[must_use]
     pub const fn has_deathtouch(&self) -> bool {
-        self.has_deathtouch
+        self.keywords.has_deathtouch()
     }
 
     #[must_use]
     pub const fn has_double_strike(&self) -> bool {
-        self.has_double_strike
+        self.keywords.has_double_strike()
+    }
+
+    #[must_use]
+    pub const fn has_lifelink(&self) -> bool {
+        self.keywords.has_lifelink()
     }
 }
 
@@ -168,9 +206,10 @@ pub(super) fn collect_attackers(
                 blocked_by_refs,
                 power,
                 has_trample: card.has_trample(),
-                has_first_strike: card.has_first_strike(),
-                has_deathtouch: card.has_deathtouch(),
-                has_double_strike: card.has_double_strike(),
+                keywords: CombatKeywordProfile::new(
+                    card.keyword_abilities()
+                        .unwrap_or_else(KeywordAbilitySet::empty),
+                ),
             })
         })
         .collect()
@@ -219,9 +258,10 @@ pub(super) fn collect_blockers(
                 power,
                 toughness,
                 marked_damage: card.damage(),
-                has_first_strike: card.has_first_strike(),
-                has_deathtouch: card.has_deathtouch(),
-                has_double_strike: card.has_double_strike(),
+                keywords: CombatKeywordProfile::new(
+                    card.keyword_abilities()
+                        .unwrap_or_else(KeywordAbilitySet::empty),
+                ),
             })
         })
         .collect()
