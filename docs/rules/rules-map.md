@@ -215,6 +215,14 @@ It is not a literal restatement of the rules text.
 
 ---
 
+## Reanimate Under Spell Controller
+
+- 108.4
+- 400.7
+- 608.2c
+
+---
+
 ## Lose On Empty Draw
 
 - 121.4

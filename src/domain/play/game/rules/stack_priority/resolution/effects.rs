@@ -144,13 +144,20 @@ fn return_creature_card_from_graveyard_to_hand(
 fn reanimate_creature_card_to_battlefield(
     players: &mut [Player],
     card_locations: &AggregateCardLocationIndex,
+    controller_index: usize,
     target_id: &CardInstanceId,
 ) -> Option<CardInstanceId> {
     let location = card_locations.location(target_id)?;
     (location.zone() == crate::domain::play::game::PlayerCardZone::Graveyard).then_some(())?;
     let card = players[location.owner_index()].card_by_handle(location.handle())?;
     card.card_type().is_creature().then_some(())?;
-    players[location.owner_index()].move_graveyard_handle_to_battlefield(location.handle())?;
+    if location.owner_index() == controller_index {
+        players[location.owner_index()].move_graveyard_handle_to_battlefield(location.handle())?;
+        return Some(target_id.clone());
+    }
+
+    let moved_card = players[location.owner_index()].remove_graveyard_card(target_id)?;
+    players[controller_index].receive_battlefield_card(moved_card);
     Some(target_id.clone())
 }
 
@@ -376,6 +383,7 @@ fn resolve_reanimate_target_creature_effect(
         SpellTarget::GraveyardCard(card_id) => reanimate_creature_card_to_battlefield(
             context.players,
             context.card_locations,
+            context.controller_index,
             &card_id,
         )
         .into_iter()

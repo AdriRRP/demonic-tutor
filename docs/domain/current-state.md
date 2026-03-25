@@ -131,6 +131,7 @@ The domain currently includes:
 - the current targeted-spell subset now also supports explicit combat-relative target restrictions such as `attacking creature`, `blocking creature`, `attacking creature you control`, `blocking creature you control`, `blocking creature an opponent controls`, and `attacking creature an opponent controls`
 - the current combat-relative targeted-spell subset is currently exercised in the post-attackers and post-blockers windows, including lethal and nonlethal damage against attacking, blocking, controlled-attacking, controlled-blocking, opponent-controlled attacking, and opponent-controlled blocking creatures
 - the current spell-effect subset also supports first direct `destroy target creature`, `exile target creature`, `exile target card from graveyard`, and minimal `+N/+N until end of turn` corridors outside combat in `FirstMain`
+- the current graveyard-recursion subset supports returning a target creature card to hand and reanimating a target creature card from any graveyard onto the resolving spell controller's battlefield
 - the current targeted-spell subset now rejects opposing targets with supported creature `Hexproof` during cast validation and resolution revalidation
 - the current `destroy target creature` subset now leaves supported indestructible creatures on the battlefield
 - the current spell-effect subset also supports chosen-card discard from a targeted player's hand through an explicit target-plus-choice command corridor
