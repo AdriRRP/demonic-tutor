@@ -3,6 +3,8 @@
 #[path = "unit/support/mod.rs"]
 mod support;
 
+#[path = "unit/application/mod.rs"]
+mod application;
 #[path = "unit/combat/mod.rs"]
 mod combat;
 #[path = "unit/infrastructure/mod.rs"]

@@ -15,7 +15,7 @@ use {
     },
 };
 
-pub(super) fn domain_events_for_adjust_player_life_effect(
+pub fn domain_events_for_adjust_player_life_effect(
     outcome: &AdjustPlayerLifeEffectOutcome,
 ) -> Vec<DomainEvent> {
     let mut domain_events = DomainEvents::with(outcome.life_changed.clone());

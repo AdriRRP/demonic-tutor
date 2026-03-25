@@ -13,7 +13,7 @@ use {
     },
 };
 
-pub(super) fn domain_events_for_advance_turn(outcome: &AdvanceTurnOutcome) -> Vec<DomainEvent> {
+pub fn domain_events_for_advance_turn(outcome: &AdvanceTurnOutcome) -> Vec<DomainEvent> {
     match outcome {
         AdvanceTurnOutcome::Progressed {
             turn_progressed,
@@ -29,9 +29,7 @@ pub(super) fn domain_events_for_advance_turn(outcome: &AdvanceTurnOutcome) -> Ve
     }
 }
 
-pub(super) fn domain_events_for_draw_cards_effect(
-    outcome: &DrawCardsEffectOutcome,
-) -> Vec<DomainEvent> {
+pub fn domain_events_for_draw_cards_effect(outcome: &DrawCardsEffectOutcome) -> Vec<DomainEvent> {
     let mut domain_events = DomainEvents::default();
     domain_events.extend(outcome.cards_drawn.iter().cloned());
     domain_events.push_optional(outcome.game_ended.clone());

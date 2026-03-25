@@ -4,6 +4,13 @@ pub mod application;
 pub mod domain;
 pub mod infrastructure;
 
+pub use application::{
+    choice_requests, game_view, legal_actions, PublicActivatableCard, PublicBattlefieldCardView,
+    PublicCardView, PublicCastableCard, PublicChoiceCandidate, PublicChoiceRequest,
+    PublicCommandRejection, PublicCommandResult, PublicCommandStatus, PublicGameCommand,
+    PublicGameView, PublicLegalAction, PublicPlayerView, PublicPriorityView, PublicStackObjectView,
+    PublicStackTargetView,
+};
 pub use application::{EventBus, EventStore, GameService};
 
 pub use infrastructure::{GameLogProjection, InMemoryEventBus, InMemoryEventStore};

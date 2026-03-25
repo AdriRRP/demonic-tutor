@@ -35,7 +35,7 @@ pub use rules::{
 };
 pub use targets::SpellTarget;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Game {
     id: GameId,
     player_ids: Vec<PlayerId>,

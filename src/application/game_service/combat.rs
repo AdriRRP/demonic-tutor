@@ -15,7 +15,7 @@ use {
     },
 };
 
-pub(super) fn domain_events_for_resolve_combat_damage(
+pub fn domain_events_for_resolve_combat_damage(
     outcome: &ResolveCombatDamageOutcome,
 ) -> Vec<DomainEvent> {
     let mut domain_events = DomainEvents::with(outcome.combat_damage_resolved.clone());

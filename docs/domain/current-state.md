@@ -17,6 +17,10 @@ The current implementation supports a minimal playable flow for deck playtesting
 Implemented capabilities include:
 
 - starting a two-player game
+- projecting a stable public game snapshot for clients, including phase, priority, stack, battlefield, graveyard, exile, and hand counts
+- surfacing a public legal-action menu derived from the current supported actor and game state
+- surfacing public choice requests for target selection, explicit hand-card choice, and cleanup discard
+- returning a deterministic public command envelope with emitted events, updated snapshot, legal actions, and visible choice requests
 - dealing opening hands
 - mulligan support (London Mulligan - simplified)
 - drawing cards (auto-draw when entering `Draw`)

@@ -1,11 +1,11 @@
 //! Supports application game service.
 
-mod combat;
+pub(crate) mod combat;
 mod common;
 mod lifecycle;
-mod resource_actions;
-mod stack;
-mod turn_flow;
+pub(crate) mod resource_actions;
+pub(crate) mod stack;
+pub(crate) mod turn_flow;
 
 use crate::{
     application::{EventBus, EventStore},
