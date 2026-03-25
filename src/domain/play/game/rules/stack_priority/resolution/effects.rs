@@ -287,12 +287,10 @@ fn resolve_create_vanilla_creature_token_effect(
     toughness: u32,
 ) -> Result<SpellResolutionSideEffects, DomainError> {
     let token_number = context.stack.next_object_number();
-    let token_id = CardInstanceId::new(format!(
-        "{}-token-{}",
-        context.game_id, token_number
-    ));
+    let token_id = CardInstanceId::new(format!("{}-token-{}", context.game_id, token_number));
     let definition_id = CardDefinitionId::new(format!("token-{power}-{toughness}"));
-    let token = CardInstance::new_vanilla_creature_token(token_id.clone(), definition_id, power, toughness);
+    let token =
+        CardInstance::new_vanilla_creature_token(token_id.clone(), definition_id, power, toughness);
     context.players[context.controller_index].receive_battlefield_card(token);
 
     review_state_based_actions_after_effect(

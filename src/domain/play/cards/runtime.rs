@@ -615,13 +615,11 @@ impl CardInstance {
     #[must_use]
     pub const fn toughness(&self) -> Option<u32> {
         match &self.runtime.kind {
-            CardRuntimeKind::Creature(creature) => {
-                Some(
-                    creature.toughness
-                        + creature.plus_one_plus_one_counters
-                        + creature.temporary_toughness,
-                )
-            }
+            CardRuntimeKind::Creature(creature) => Some(
+                creature.toughness
+                    + creature.plus_one_plus_one_counters
+                    + creature.temporary_toughness,
+            ),
             CardRuntimeKind::NonCreature => None,
         }
     }

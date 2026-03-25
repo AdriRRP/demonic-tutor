@@ -129,7 +129,9 @@ pub fn create_vanilla_creature_token_sorcery_card(
 
 pub fn put_counter_on_target_creature_sorcery_card(name: &str, mana_cost: u32) -> LibraryCard {
     LibraryCard::new(CardDefinitionId::new(name), CardType::Sorcery, mana_cost)
-        .with_supported_spell_rules(SupportedSpellRules::put_plus_one_plus_one_counter_on_target_creature())
+        .with_supported_spell_rules(
+            SupportedSpellRules::put_plus_one_plus_one_counter_on_target_creature(),
+        )
 }
 
 pub fn self_growing_creature_card(

@@ -287,7 +287,9 @@ fn resolve_activated_ability_from_stack(
             )?)
         }
         (ActivatedAbilityEffect::PutPlusOnePlusOneCounterOnSource, _) => {
-            if let Some(card) = players[controller_index].card_mut_by_handle(source_card_ref.handle()) {
+            if let Some(card) =
+                players[controller_index].card_mut_by_handle(source_card_ref.handle())
+            {
                 card.add_plus_one_plus_one_counters(1);
             }
             None

@@ -1,6 +1,9 @@
+#![allow(clippy::expect_used)]
+#![allow(clippy::panic)]
+
 use crate::support::{
-    advance_to_first_main_satisfying_cleanup, cast_spell_and_resolve, create_vanilla_creature_token_sorcery_card,
-    filled_library, player, setup_two_player_game,
+    advance_to_first_main_satisfying_cleanup, cast_spell_and_resolve,
+    create_vanilla_creature_token_sorcery_card, filled_library, player, setup_two_player_game,
 };
 
 #[test]
@@ -9,14 +12,14 @@ fn resolving_supported_token_spell_creates_one_vanilla_creature_on_battlefield()
         "game-token-resolution",
         filled_library(
             vec![
-            create_vanilla_creature_token_sorcery_card("raise-one", 0, 1, 1),
-            create_vanilla_creature_token_sorcery_card("raise-one", 0, 1, 1),
-            create_vanilla_creature_token_sorcery_card("raise-one", 0, 1, 1),
-            create_vanilla_creature_token_sorcery_card("raise-one", 0, 1, 1),
-            create_vanilla_creature_token_sorcery_card("raise-one", 0, 1, 1),
-            create_vanilla_creature_token_sorcery_card("raise-one", 0, 1, 1),
-            create_vanilla_creature_token_sorcery_card("raise-one", 0, 1, 1),
-        ],
+                create_vanilla_creature_token_sorcery_card("raise-one", 0, 1, 1),
+                create_vanilla_creature_token_sorcery_card("raise-one", 0, 1, 1),
+                create_vanilla_creature_token_sorcery_card("raise-one", 0, 1, 1),
+                create_vanilla_creature_token_sorcery_card("raise-one", 0, 1, 1),
+                create_vanilla_creature_token_sorcery_card("raise-one", 0, 1, 1),
+                create_vanilla_creature_token_sorcery_card("raise-one", 0, 1, 1),
+                create_vanilla_creature_token_sorcery_card("raise-one", 0, 1, 1),
+            ],
             10,
         ),
         filled_library(Vec::new(), 10),

@@ -4,9 +4,9 @@
 use {
     crate::support::{
         advance_to_first_main_satisfying_cleanup, cast_spell_and_resolve,
-        create_vanilla_creature_token_sorcery_card, targeted_destroy_creature_instant_card,
-        filled_library, player, return_target_permanent_to_hand_instant_card,
-        setup_two_player_game,
+        create_vanilla_creature_token_sorcery_card, filled_library, player,
+        return_target_permanent_to_hand_instant_card, setup_two_player_game,
+        targeted_destroy_creature_instant_card,
     },
     demonictutor::{CastSpellCommand, PassPriorityCommand, PlayerId, SpellTarget},
 };
@@ -51,10 +51,16 @@ fn token_that_dies_does_not_persist_in_graveyard() {
         )
         .unwrap();
     service
-        .pass_priority(&mut game, PassPriorityCommand::new(PlayerId::new("player-1")))
+        .pass_priority(
+            &mut game,
+            PassPriorityCommand::new(PlayerId::new("player-1")),
+        )
         .unwrap();
     service
-        .pass_priority(&mut game, PassPriorityCommand::new(PlayerId::new("player-2")))
+        .pass_priority(
+            &mut game,
+            PassPriorityCommand::new(PlayerId::new("player-2")),
+        )
         .unwrap();
 
     let owner = player(&game, "player-1");
@@ -103,10 +109,16 @@ fn token_that_is_bounced_does_not_persist_in_hand() {
         )
         .unwrap();
     service
-        .pass_priority(&mut game, PassPriorityCommand::new(PlayerId::new("player-1")))
+        .pass_priority(
+            &mut game,
+            PassPriorityCommand::new(PlayerId::new("player-1")),
+        )
         .unwrap();
     service
-        .pass_priority(&mut game, PassPriorityCommand::new(PlayerId::new("player-2")))
+        .pass_priority(
+            &mut game,
+            PassPriorityCommand::new(PlayerId::new("player-2")),
+        )
         .unwrap();
 
     let owner = player(&game, "player-1");

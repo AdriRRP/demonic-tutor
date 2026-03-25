@@ -7,7 +7,9 @@ use {
         put_counter_on_target_creature_sorcery_card, self_growing_creature_card,
         setup_two_player_game, vanilla_creature,
     },
-    demonictutor::{ActivateAbilityCommand, CastSpellCommand, PassPriorityCommand, PlayerId, SpellTarget},
+    demonictutor::{
+        ActivateAbilityCommand, CastSpellCommand, PassPriorityCommand, PlayerId, SpellTarget,
+    },
 };
 
 #[test]
@@ -45,10 +47,16 @@ fn supported_spell_can_put_a_plus_one_counter_on_target_creature() {
         )
         .unwrap();
     service
-        .pass_priority(&mut game, PassPriorityCommand::new(PlayerId::new("player-1")))
+        .pass_priority(
+            &mut game,
+            PassPriorityCommand::new(PlayerId::new("player-1")),
+        )
         .unwrap();
     service
-        .pass_priority(&mut game, PassPriorityCommand::new(PlayerId::new("player-2")))
+        .pass_priority(
+            &mut game,
+            PassPriorityCommand::new(PlayerId::new("player-2")),
+        )
         .unwrap();
 
     assert_eq!(
@@ -81,10 +89,16 @@ fn supported_ability_can_put_a_plus_one_counter_on_its_source_creature() {
         )
         .unwrap();
     service
-        .pass_priority(&mut game, PassPriorityCommand::new(PlayerId::new("player-1")))
+        .pass_priority(
+            &mut game,
+            PassPriorityCommand::new(PlayerId::new("player-1")),
+        )
         .unwrap();
     service
-        .pass_priority(&mut game, PassPriorityCommand::new(PlayerId::new("player-2")))
+        .pass_priority(
+            &mut game,
+            PassPriorityCommand::new(PlayerId::new("player-2")),
+        )
         .unwrap();
 
     service
@@ -94,10 +108,16 @@ fn supported_ability_can_put_a_plus_one_counter_on_its_source_creature() {
         )
         .unwrap();
     service
-        .pass_priority(&mut game, PassPriorityCommand::new(PlayerId::new("player-1")))
+        .pass_priority(
+            &mut game,
+            PassPriorityCommand::new(PlayerId::new("player-1")),
+        )
         .unwrap();
     service
-        .pass_priority(&mut game, PassPriorityCommand::new(PlayerId::new("player-2")))
+        .pass_priority(
+            &mut game,
+            PassPriorityCommand::new(PlayerId::new("player-2")),
+        )
         .unwrap();
 
     assert_eq!(
