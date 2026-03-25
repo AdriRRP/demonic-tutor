@@ -321,6 +321,18 @@ The real owners are still:
 
 The location index is a fast map over that owned state.
 
+In the current shape, normal gameplay no longer maintains that index by refreshing a whole player snapshot.
+
+Instead, the aggregate updates it transactionally when a supported card move is already known:
+
+- draw
+- discard
+- exile
+- spell resolution outcomes
+- creature death
+
+That keeps the index closer to a live structure and further away from "rebuild after the fact".
+
 ---
 
 # Abstraction 7: Stack Objects Carry Compact Runtime Payloads

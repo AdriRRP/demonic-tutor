@@ -4,26 +4,29 @@
 
 ## Status
 
-Proposed
+Implemented
 
 ## Goal
 
-Turn the aggregate card-location index into a purely transactional structure updated directly by zone transitions, so player-wide refreshes become fallback-only instead of routine maintenance.
+Turn the aggregate card-location index into a purely transactional structure updated directly by known card moves, so player-wide refreshes disappear from normal runtime maintenance.
 
-## Why This Slice Exists Now
+## What Changed
 
-The location index already improved from full rebuilds to player-level refreshes, but that still treats it like a snapshot that gets regenerated after change. The next coherent step is to make each semantically known movement update the index directly so the aggregate keeps a live location model at all times.
+- `AggregateCardLocationIndex` is now built directly from initial player state instead of exposing player-refresh maintenance as part of normal flow
+- `Game` no longer refreshes card locations before and after `advance_turn`
+- turn progression now updates the aggregate location index only when an actual turn-step draw moves a known card
+- explicit draw, discard, exile, stack resolution, and combat-death corridors continue updating the index through point synchronization
 
 ## Supported Behavior
 
 - card location lookups continue working for battlefield, graveyard, exile, stack, and targeting corridors
-- transitions that move a known card update the location index immediately
-- fallback rebuild or refresh paths remain exceptional safety tools rather than normal maintenance
+- known card transitions update the location index immediately
+- turn progression preserves correct indexed locations without player-wide refreshes
 
 ## Invariants / Legality Rules
 
 - every live indexed card still resolves to one owner and one runtime location
-- location updates stay aligned with zone transitions
+- location updates stay aligned with supported card transitions
 - missing or unsupported cards are not implied to have indexed locations
 
 ## Out of Scope
@@ -39,7 +42,7 @@ The location index already improved from full rebuilds to player-level refreshes
 
 ### Entity / Value Object Impact
 - aggregate card-location index
-- player zone transition helpers
+- turn-flow synchronization
 
 ## Ownership Check
 
@@ -47,14 +50,14 @@ This belongs to the `Game` aggregate because card location is aggregate-owned tr
 
 ## Documentation Impact
 
-- `docs/domain/aggregate-game.md`
 - `docs/architecture/runtime-abstractions.md`
-- this slice document
+- `docs/slices/proposals/README.md`
+- this implemented slice document
 
 ## Test Impact
 
-- transition-focused regressions proving the index stays aligned through supported card moves
-- safety regressions proving fallback refresh remains unnecessary in normal paths
+- focused turn-progression and draw-effect regressions remain green
+- full repo validation proves location lookups still stay aligned through supported card moves
 
 ## Rules Reference
 

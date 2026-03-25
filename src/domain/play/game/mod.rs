@@ -142,18 +142,6 @@ impl Game {
         self.terminal_state.end_reason()
     }
 
-    fn refresh_card_locations_for_player(&mut self, owner_index: usize) {
-        if let Some(player) = self.players.get(owner_index) {
-            self.card_locations.refresh_player(owner_index, player);
-        }
-    }
-
-    fn refresh_card_locations(&mut self) {
-        for owner_index in 0..self.players.len() {
-            self.refresh_card_locations_for_player(owner_index);
-        }
-    }
-
     fn sync_card_location_from_player(&mut self, owner_index: usize, card_id: &CardInstanceId) {
         let Some(player) = self.players.get(owner_index) else {
             return;

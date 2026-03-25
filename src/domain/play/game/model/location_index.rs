@@ -56,40 +56,17 @@ impl AggregateCardLocationIndex {
     #[must_use]
     pub fn from_players(players: &[Player]) -> Self {
         let mut index = Self::default();
-        index.refresh(players);
-        index
-    }
-
-    pub fn refresh(&mut self, players: &[Player]) {
         for (owner_index, player) in players.iter().enumerate() {
-            self.refresh_player(owner_index, player);
+            index.ensure_owner_slot(owner_index);
+            for (card_id, handle, zone) in player.owned_card_locations() {
+                index.card_ids_by_owner[owner_index].insert(card_id.clone());
+                index.by_card_id.insert(
+                    card_id.clone(),
+                    AggregateCardLocation::new(owner_index, handle, zone),
+                );
+            }
         }
-    }
-
-    pub fn refresh_player(&mut self, owner_index: usize, player: &Player) {
-        self.ensure_owner_slot(owner_index);
-
-        let owner_cards = &mut self.card_ids_by_owner[owner_index];
-        for card_id in owner_cards.drain() {
-            self.by_card_id.remove(&card_id);
-        }
-
-        for (card_id, handle, zone) in player.owned_card_locations() {
-            owner_cards.insert(card_id.clone());
-            self.by_card_id.insert(
-                card_id.clone(),
-                AggregateCardLocation::new(owner_index, handle, zone),
-            );
-        }
-    }
-
-    pub fn clear_owner(&mut self, owner_index: usize) {
-        self.ensure_owner_slot(owner_index);
-
-        let owner_cards = &mut self.card_ids_by_owner[owner_index];
-        for card_id in owner_cards.drain() {
-            self.by_card_id.remove(&card_id);
-        }
+        index
     }
 
     pub fn upsert(

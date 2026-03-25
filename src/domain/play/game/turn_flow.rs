@@ -21,7 +21,6 @@ impl Game {
         cmd: AdvanceTurnCommand,
     ) -> Result<rules::turn_flow::AdvanceTurnOutcome, DomainError> {
         invariants::require_no_open_priority_window(self.priority())?;
-        self.refresh_card_locations();
         let result = rules::turn_flow::advance_turn(
             TurnProgressionContext {
                 game_id: &self.id,
@@ -36,7 +35,13 @@ impl Game {
             },
             cmd,
         );
-        self.refresh_card_locations();
+        if let Ok(rules::turn_flow::AdvanceTurnOutcome::Progressed {
+            card_drawn: Some(card_drawn),
+            ..
+        }) = &result
+        {
+            self.sync_card_location_from_player(self.active_player_index, &card_drawn.card_id);
+        }
         result
     }
 
