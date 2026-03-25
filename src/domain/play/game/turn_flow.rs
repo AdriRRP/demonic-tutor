@@ -29,6 +29,7 @@ impl Game {
                 player_ids: &self.player_ids,
                 active_player_index: &mut self.active_player_index,
                 phase: &mut self.phase,
+                stack: &mut self.stack,
                 priority: &mut self.priority,
                 turn_number: &mut self.turn_number,
                 terminal_state: &mut self.terminal_state,

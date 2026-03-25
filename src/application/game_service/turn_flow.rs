@@ -18,9 +18,11 @@ pub(super) fn domain_events_for_advance_turn(outcome: &AdvanceTurnOutcome) -> Ve
         AdvanceTurnOutcome::Progressed {
             turn_progressed,
             card_drawn,
+            triggered_abilities_put_on_stack,
         } => {
             let mut domain_events = DomainEvents::with(turn_progressed.clone());
             domain_events.push_optional(card_drawn.clone());
+            domain_events.extend(triggered_abilities_put_on_stack.iter().cloned());
             domain_events.into_vec()
         }
         AdvanceTurnOutcome::GameEnded(game_ended) => vec![game_ended.clone().into()],

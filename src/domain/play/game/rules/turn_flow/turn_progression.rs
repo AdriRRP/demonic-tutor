@@ -10,10 +10,10 @@ use {
     crate::domain::play::{
         commands::AdvanceTurnCommand,
         errors::{DomainError, GameError},
-        events::{CardDrawn, DrawKind, GameEnded, TurnProgressed},
+        events::{CardDrawn, DrawKind, GameEnded, TriggeredAbilityPutOnStack, TurnProgressed},
         game::{
             invariants,
-            model::{AggregateCardLocationIndex, Player},
+            model::{AggregateCardLocationIndex, Player, StackZone},
             PriorityState, TerminalState,
         },
         ids::{GameId, PlayerId},
@@ -26,6 +26,7 @@ pub enum AdvanceTurnOutcome {
     Progressed {
         turn_progressed: TurnProgressed,
         card_drawn: Option<CardDrawn>,
+        triggered_abilities_put_on_stack: Vec<TriggeredAbilityPutOnStack>,
     },
     GameEnded(GameEnded),
 }
@@ -37,6 +38,7 @@ pub struct TurnProgressionContext<'a> {
     pub player_ids: &'a [PlayerId],
     pub active_player_index: &'a mut usize,
     pub phase: &'a mut Phase,
+    pub stack: &'a mut StackZone,
     pub priority: &'a mut Option<PriorityState>,
     pub turn_number: &'a mut u32,
     pub terminal_state: &'a mut TerminalState,
@@ -131,6 +133,7 @@ pub fn advance_turn(
         player_ids,
         active_player_index,
         phase,
+        stack,
         priority,
         turn_number,
         terminal_state,
@@ -177,6 +180,17 @@ pub fn advance_turn(
         } else {
             None
         };
+        let triggered_abilities_put_on_stack = if matches!(to_phase, Phase::Upkeep) {
+            crate::domain::play::game::rules::stack_priority::triggers::enqueue_battlefield_step_triggers(
+                game_id,
+                players,
+                *active_player_index,
+                crate::domain::play::cards::TriggeredAbilityEvent::BeginningOfUpkeep,
+                stack,
+            )?
+        } else {
+            Vec::new()
+        };
 
         let (turn_progressed, card_drawn) = build_events(
             game_id,
@@ -191,6 +205,7 @@ pub fn advance_turn(
         return Ok(AdvanceTurnOutcome::Progressed {
             turn_progressed,
             card_drawn,
+            triggered_abilities_put_on_stack,
         });
     }
 
@@ -217,6 +232,21 @@ pub fn advance_turn(
     } else {
         None
     };
+    let triggered_abilities_put_on_stack = if matches!(to_phase, Phase::Upkeep | Phase::EndStep) {
+        crate::domain::play::game::rules::stack_priority::triggers::enqueue_battlefield_step_triggers(
+            game_id,
+            players,
+            *active_player_index,
+            if matches!(to_phase, Phase::Upkeep) {
+                crate::domain::play::cards::TriggeredAbilityEvent::BeginningOfUpkeep
+            } else {
+                crate::domain::play::cards::TriggeredAbilityEvent::BeginningOfEndStep
+            },
+            stack,
+        )?
+    } else {
+        Vec::new()
+    };
 
     let (turn_progressed, card_drawn) = build_events(
         game_id,
@@ -231,5 +261,6 @@ pub fn advance_turn(
     Ok(AdvanceTurnOutcome::Progressed {
         turn_progressed,
         card_drawn,
+        triggered_abilities_put_on_stack,
     })
 }

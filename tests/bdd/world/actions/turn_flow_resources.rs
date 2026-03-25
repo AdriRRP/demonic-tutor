@@ -46,6 +46,7 @@ impl GameplayWorld {
             AdvanceTurnOutcome::Progressed {
                 turn_progressed,
                 card_drawn,
+                ..
             } => {
                 self.last_turn_progressed = Some(turn_progressed);
                 self.last_card_drawn = card_drawn;
@@ -93,6 +94,7 @@ impl GameplayWorld {
                 AdvanceTurnOutcome::Progressed {
                     turn_progressed,
                     card_drawn,
+                    ..
                 } => {
                     self.last_turn_progressed = Some(turn_progressed);
                     self.last_card_drawn = card_drawn;
