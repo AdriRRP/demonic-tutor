@@ -2,7 +2,10 @@
 
 use super::{helpers, invariants, rules, Game, SpellTarget};
 use crate::domain::play::{
-    cards::KeywordAbility,
+    cards::{
+        CreatureTargetRule, GraveyardCardTargetRule, KeywordAbility, PlayerTargetRule,
+        SingleTargetRule, SpellTargetingProfile,
+    },
     game::rules::stack_priority::spell_effects::{
         evaluate_target_legality, supported_spell_rules, SpellTargetLegality, TargetLegalityContext,
     },
@@ -38,36 +41,9 @@ impl LegalBlockerOption {
 fn legal_targets_for_rule(
     game: &Game,
     actor_index: usize,
-    targeting: crate::domain::play::cards::SpellTargetingProfile,
+    targeting: SpellTargetingProfile,
 ) -> Vec<SpellTarget> {
-    let mut candidates = Vec::new();
-
-    for player in game.players() {
-        candidates.push(SpellTarget::Player(player.id().clone()));
-    }
-
-    for player in game.players() {
-        for card in player.battlefield_cards() {
-            candidates.push(SpellTarget::Creature(card.id().clone()));
-            candidates.push(SpellTarget::Permanent(card.id().clone()));
-        }
-        for card in player
-            .graveyard()
-            .iter()
-            .filter_map(|handle| player.card_by_handle(*handle))
-        {
-            candidates.push(SpellTarget::GraveyardCard(card.id().clone()));
-        }
-    }
-
-    for object in game.stack().objects() {
-        candidates.push(SpellTarget::StackObject(StackObjectId::for_stack_object(
-            game.id(),
-            object.number(),
-        )));
-    }
-
-    candidates
+    candidate_targets_for_rule(game, actor_index, targeting)
         .into_iter()
         .filter(|candidate| {
             evaluate_target_legality(
@@ -80,6 +56,115 @@ fn legal_targets_for_rule(
                 targeting,
                 Some(candidate),
             ) == SpellTargetLegality::Legal
+        })
+        .collect()
+}
+
+fn candidate_targets_for_rule(
+    game: &Game,
+    actor_index: usize,
+    targeting: SpellTargetingProfile,
+) -> Vec<SpellTarget> {
+    match targeting {
+        SpellTargetingProfile::None => Vec::new(),
+        SpellTargetingProfile::ExactlyOne(rule) => {
+            candidate_targets_for_single_rule(game, actor_index, rule)
+        }
+    }
+}
+
+fn candidate_targets_for_single_rule(
+    game: &Game,
+    actor_index: usize,
+    rule: SingleTargetRule,
+) -> Vec<SpellTarget> {
+    match rule {
+        SingleTargetRule::Player(rule) => candidate_player_targets(game, actor_index, rule),
+        SingleTargetRule::Creature(rule) => candidate_creature_targets(game, actor_index, rule),
+        SingleTargetRule::Permanent(rule) => game
+            .players()
+            .iter()
+            .flat_map(|player| {
+                player
+                    .battlefield_cards()
+                    .filter(move |card| rule.allows(*card.card_type()))
+                    .map(|card| SpellTarget::Permanent(card.id().clone()))
+            })
+            .collect(),
+        SingleTargetRule::GraveyardCard(rule) => {
+            candidate_graveyard_card_targets(game, actor_index, rule)
+        }
+        SingleTargetRule::StackSpell => candidate_stack_spell_targets(game),
+        SingleTargetRule::PlayerOrCreature { player, creature } => {
+            let mut candidates = candidate_player_targets(game, actor_index, player);
+            candidates.extend(candidate_creature_targets(game, actor_index, creature));
+            candidates
+        }
+    }
+}
+
+fn candidate_player_targets(
+    game: &Game,
+    actor_index: usize,
+    rule: PlayerTargetRule,
+) -> Vec<SpellTarget> {
+    game.players()
+        .iter()
+        .enumerate()
+        .filter(|(target_index, _)| rule.allows(*target_index == actor_index))
+        .map(|(_, player)| SpellTarget::Player(player.id().clone()))
+        .collect()
+}
+
+fn candidate_creature_targets(
+    game: &Game,
+    actor_index: usize,
+    rule: CreatureTargetRule,
+) -> Vec<SpellTarget> {
+    game.players()
+        .iter()
+        .enumerate()
+        .flat_map(|(player_index, player)| {
+            player
+                .battlefield_cards()
+                .filter(move |card| {
+                    card.card_type().is_creature()
+                        && rule.allows(
+                            player_index == actor_index,
+                            card.is_attacking(),
+                            card.is_blocking(),
+                        )
+                })
+                .map(|card| SpellTarget::Creature(card.id().clone()))
+        })
+        .collect()
+}
+
+fn candidate_graveyard_card_targets(
+    game: &Game,
+    actor_index: usize,
+    rule: GraveyardCardTargetRule,
+) -> Vec<SpellTarget> {
+    game.players()
+        .iter()
+        .enumerate()
+        .filter(move |(player_index, _)| rule.allows(*player_index == actor_index))
+        .flat_map(|(_, player)| {
+            player
+                .graveyard()
+                .iter()
+                .filter_map(|handle| player.card_by_handle(*handle))
+                .map(|card| SpellTarget::GraveyardCard(card.id().clone()))
+        })
+        .collect()
+}
+
+fn candidate_stack_spell_targets(game: &Game) -> Vec<SpellTarget> {
+    game.stack()
+        .objects()
+        .iter()
+        .map(|object| {
+            SpellTarget::StackObject(StackObjectId::for_stack_object(game.id(), object.number()))
         })
         .collect()
 }
