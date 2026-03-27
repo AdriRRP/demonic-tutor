@@ -2,7 +2,7 @@
 
 #![allow(clippy::expect_used)]
 
-use super::zone_ops::return_permanent_to_owners_hand;
+use super::stack_and_hand::return_permanent_to_owners_hand;
 use crate::domain::play::{
     cards::{CardInstance, CardType},
     game::{AggregateCardLocationIndex, Player},

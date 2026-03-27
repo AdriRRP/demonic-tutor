@@ -1,4 +1,4 @@
-//! Supports token, mill, and other compact spell-resolution effects.
+//! Supports compact token-creation spell-resolution effects.
 
 use super::shared::{
     review_state_based_actions_after_effect, EffectOutcomeSeed, ResolutionContext,
@@ -9,34 +9,6 @@ use crate::domain::play::{
     errors::{DomainError, GameError},
     ids::{CardDefinitionId, CardInstanceId},
 };
-
-pub(super) fn resolve_mill_effect(
-    context: &mut ResolutionContext<'_>,
-    amount: u32,
-) -> Result<SpellResolutionSideEffects, DomainError> {
-    let target_player_index = match context.target {
-        Some(crate::domain::play::game::SpellTarget::Player(player_id)) => {
-            crate::domain::play::game::helpers::find_player_index(context.players, player_id)?
-        }
-        None | Some(_) => context.controller_index,
-    };
-    let moved_cards = context.players[target_player_index]
-        .mill_cards_to_graveyard(amount as usize)
-        .unwrap_or_default();
-
-    review_state_based_actions_after_effect(
-        context.game_id,
-        context.players,
-        context.terminal_state,
-        EffectOutcomeSeed {
-            card_exiled: None,
-            card_discarded: None,
-            life_changed: None,
-            creatures_died: Vec::new(),
-            moved_cards,
-        },
-    )
-}
 
 pub(super) fn resolve_create_vanilla_creature_token_effect(
     context: &mut ResolutionContext<'_>,

@@ -1,27 +1,36 @@
 //! Supports stack priority resolution effects.
 
-mod battlefield;
+mod graveyard_and_library;
+mod life_and_damage;
 mod misc;
+mod modifiers;
+mod removal;
 pub(super) mod shared;
+mod stack_and_hand;
 #[cfg(test)]
 mod tests;
-mod zone_ops;
 
 use self::{
-    battlefield::{
-        resolve_choose_one_target_player_life_effect, resolve_damage_effect,
-        resolve_destroy_target_artifact_or_enchantment_effect,
-        resolve_destroy_target_creature_effect, resolve_exile_target_creature_effect,
-        resolve_pump_target_creature_effect, resolve_put_counter_on_target_creature_effect,
-        resolve_targeted_player_life_effect,
-    },
-    misc::{resolve_create_vanilla_creature_token_effect, resolve_mill_effect},
-    shared::{review_state_based_actions, SpellResolutionSideEffects},
-    zone_ops::{
-        resolve_counter_target_spell_effect, resolve_exile_target_graveyard_card_effect,
+    graveyard_and_library::{
+        resolve_exile_target_graveyard_card_effect, resolve_mill_effect,
         resolve_reanimate_target_creature_effect,
         resolve_return_target_creature_from_graveyard_effect,
-        resolve_return_target_permanent_to_hand_effect,
+    },
+    life_and_damage::{
+        resolve_choose_one_target_player_life_effect, resolve_damage_effect,
+        resolve_targeted_player_life_effect,
+    },
+    misc::resolve_create_vanilla_creature_token_effect,
+    modifiers::{
+        resolve_pump_target_creature_effect, resolve_put_counter_on_target_creature_effect,
+    },
+    removal::{
+        resolve_destroy_target_artifact_or_enchantment_effect,
+        resolve_destroy_target_creature_effect, resolve_exile_target_creature_effect,
+    },
+    shared::{review_state_based_actions, SpellResolutionSideEffects},
+    stack_and_hand::{
+        resolve_counter_target_spell_effect, resolve_return_target_permanent_to_hand_effect,
         resolve_target_player_discards_chosen_card_effect,
     },
 };
