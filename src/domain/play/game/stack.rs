@@ -4,13 +4,13 @@ use {
     super::{
         invariants, rules, ActivateAbilityOutcome, CastSpellOutcome, Game, PassPriorityOutcome,
         ResolveOptionalEffectOutcome, ResolvePendingHandChoiceOutcome, ResolvePendingScryOutcome,
-        StackPriorityContext,
+        ResolvePendingSurveilOutcome, StackPriorityContext,
     },
     crate::domain::play::{
         commands::{
             ActivateAbilityCommand, CastSpellCommand, PassPriorityCommand,
             ResolveOptionalEffectCommand, ResolvePendingHandChoiceCommand,
-            ResolvePendingScryCommand,
+            ResolvePendingScryCommand, ResolvePendingSurveilCommand,
         },
         errors::DomainError,
     },
@@ -249,6 +249,54 @@ impl Game {
                 let owner_index =
                     super::helpers::find_player_index(&self.players, &spell_cast.player_id)?;
                 self.sync_card_location_from_player(owner_index, &spell_cast.card_id);
+            }
+        }
+        result
+    }
+
+    /// Resolves a pending surveil decision.
+    ///
+    /// # Errors
+    /// See [`rules::stack_priority::resolve_pending_surveil`].
+    pub fn resolve_pending_surveil(
+        &mut self,
+        cmd: ResolvePendingSurveilCommand,
+    ) -> Result<ResolvePendingSurveilOutcome, DomainError> {
+        invariants::require_game_active(self.is_over())?;
+        let active_player = self.active_player().clone();
+        let result = rules::stack_priority::resolve_pending_surveil(
+            StackPriorityContext {
+                game_id: &self.id,
+                players: &mut self.players,
+                card_locations: &self.card_locations,
+                active_player: &active_player,
+                phase: &self.phase,
+                stack: &mut self.stack,
+                priority: &mut self.priority,
+                pending_decision: &mut self.pending_decision,
+                terminal_state: &mut self.terminal_state,
+            },
+            cmd,
+        );
+        if let Ok(outcome) = &result {
+            if let Some(spell_cast) = &outcome.spell_cast {
+                let owner_index =
+                    super::helpers::find_player_index(&self.players, &spell_cast.player_id)?;
+                self.sync_card_location_from_player(owner_index, &spell_cast.card_id);
+            }
+            for moved_card in &outcome.moved_cards {
+                let owner_index = self
+                    .players
+                    .iter()
+                    .position(|player| player.owns_card(moved_card))
+                    .ok_or_else(|| {
+                        DomainError::Game(
+                            crate::domain::play::errors::GameError::InternalInvariantViolation(
+                                format!("missing owner for surveilled card {moved_card}"),
+                            ),
+                        )
+                    })?;
+                self.sync_card_location_from_player(owner_index, moved_card);
             }
         }
         result

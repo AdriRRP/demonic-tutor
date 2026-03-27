@@ -101,6 +101,32 @@ impl ResolvePendingScryCommand {
 }
 
 #[derive(Debug, Clone)]
+pub struct ResolvePendingSurveilCommand {
+    pub player_id: PlayerId,
+    pub move_to_graveyard: bool,
+}
+
+impl ResolvePendingSurveilCommand {
+    #[must_use]
+    pub const fn new(player_id: PlayerId, move_to_graveyard: bool) -> Self {
+        Self {
+            player_id,
+            move_to_graveyard,
+        }
+    }
+
+    #[must_use]
+    pub const fn keep_on_top(player_id: PlayerId) -> Self {
+        Self::new(player_id, false)
+    }
+
+    #[must_use]
+    pub const fn move_to_graveyard(player_id: PlayerId) -> Self {
+        Self::new(player_id, true)
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct CastSpellCommand {
     pub player_id: PlayerId,
     pub card_id: CardInstanceId,

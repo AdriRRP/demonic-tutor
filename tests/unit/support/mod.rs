@@ -148,6 +148,11 @@ pub fn scry_sorcery_card(name: &str, mana_cost: u32, amount: u32) -> LibraryCard
         .with_supported_spell_rules(SupportedSpellRules::scry(amount))
 }
 
+pub fn surveil_sorcery_card(name: &str, mana_cost: u32, amount: u32) -> LibraryCard {
+    LibraryCard::new(CardDefinitionId::new(name), CardType::Sorcery, mana_cost)
+        .with_supported_spell_rules(SupportedSpellRules::surveil(amount))
+}
+
 pub fn create_vanilla_creature_token_sorcery_card(
     name: &str,
     mana_cost: u32,

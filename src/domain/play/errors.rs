@@ -64,6 +64,11 @@ pub enum GameError {
         current: PlayerId,
         requested: PlayerId,
     },
+    NoPendingSurveil,
+    NotPendingSurveilController {
+        current: PlayerId,
+        requested: PlayerId,
+    },
     NotEnoughCardsInLibrary {
         player: PlayerId,
         available: usize,
@@ -254,6 +259,13 @@ impl std::fmt::Display for GameError {
                 write!(
                     f,
                     "not {requested}'s pending scry decision, current controller is {current}"
+                )
+            }
+            Self::NoPendingSurveil => write!(f, "no pending surveil effect is currently waiting"),
+            Self::NotPendingSurveilController { current, requested } => {
+                write!(
+                    f,
+                    "not {requested}'s pending surveil decision, current controller is {current}"
                 )
             }
             Self::NotEnoughCardsInLibrary {

@@ -7,7 +7,7 @@ use crate::support::{
     choose_one_target_player_gain_or_lose_life_instant_card, close_empty_priority_window,
     create_service, creature_card_with_keyword, etb_may_life_gain_creature_card, filled_library,
     forest_card, loot_sorcery_card, player, player_deck, player_library,
-    resolve_top_stack_with_passes, scry_sorcery_card, setup_two_player_game,
+    resolve_top_stack_with_passes, scry_sorcery_card, setup_two_player_game, surveil_sorcery_card,
     target_player_discards_chosen_card_sorcery_card, targeted_damage_instant_card,
     targeted_opponent_damage_instant_card,
 };
@@ -15,7 +15,7 @@ use demonictutor::{
     choice_requests, CardDefinitionId, CardInstanceId, CastSpellCommand, DealOpeningHandsCommand,
     DrawCardsEffectCommand, Game, GameId, KeywordAbility, PassPriorityCommand, Phase, PlayerId,
     PublicBinaryChoice, PublicChoiceCandidate, PublicChoiceRequest, PublicGameCommand,
-    PublicModalSpellChoice, PublicScryChoice, StartGameCommand,
+    PublicModalSpellChoice, PublicScryChoice, PublicSurveilChoice, StartGameCommand,
 };
 
 fn first_main_game_with_choice_cards() -> Game {
@@ -471,5 +471,90 @@ fn choice_requests_surface_pending_scry_for_supported_scry_spell() {
                 && *source_card_id == scry_id
                 && looked_at_card_ids.len() == 1
                 && options == &vec![PublicScryChoice::KeepOnTop, PublicScryChoice::MoveToBottom]
+    )));
+}
+
+#[test]
+fn choice_requests_surface_pending_surveil_for_supported_surveil_spell() {
+    let service = create_service();
+    let libraries = vec![
+        player_library(
+            "p1",
+            vec![
+                surveil_sorcery_card("p1-surveil", 0, 1),
+                forest_card("p1-a"),
+                forest_card("p1-b"),
+                forest_card("p1-c"),
+                forest_card("p1-d"),
+                forest_card("p1-e"),
+                forest_card("p1-f"),
+                forest_card("p1-top-card"),
+                forest_card("p1-next-card"),
+                forest_card("p1-pad"),
+            ],
+        ),
+        player_library(
+            "p2",
+            vec![
+                forest_card("p2-a"),
+                forest_card("p2-b"),
+                forest_card("p2-c"),
+                forest_card("p2-d"),
+                forest_card("p2-e"),
+                forest_card("p2-f"),
+                forest_card("p2-g"),
+                forest_card("p2-h"),
+                forest_card("p2-i"),
+                forest_card("p2-j"),
+            ],
+        ),
+    ];
+    let decks = vec![player_deck("p1", "d1"), player_deck("p2", "d2")];
+
+    let (mut game, _) = service
+        .start_game(StartGameCommand::new(
+            GameId::new("game-pending-surveil"),
+            decks,
+        ))
+        .expect("game should start");
+    service
+        .deal_opening_hands(&mut game, &DealOpeningHandsCommand::new(libraries))
+        .expect("opening hands should be dealt");
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "p1");
+
+    let surveil_id = player(&game, "p1")
+        .hand_card_by_definition(&CardDefinitionId::new("p1-surveil"))
+        .expect("surveil spell should be in hand")
+        .id()
+        .clone();
+
+    service.execute_public_command(
+        &mut game,
+        PublicGameCommand::CastSpell(CastSpellCommand::new(
+            PlayerId::new("p1"),
+            surveil_id.clone(),
+        )),
+    );
+    service.execute_public_command(
+        &mut game,
+        PublicGameCommand::PassPriority(PassPriorityCommand::new(PlayerId::new("p1"))),
+    );
+    service.execute_public_command(
+        &mut game,
+        PublicGameCommand::PassPriority(PassPriorityCommand::new(PlayerId::new("p2"))),
+    );
+
+    let requests = choice_requests(&game);
+
+    assert!(requests.iter().any(|request| matches!(
+        request,
+        PublicChoiceRequest::PendingSurveil { player_id, source_card_id, looked_at_card_ids, options }
+            if player_id.as_str() == "p1"
+                && *source_card_id == surveil_id
+                && looked_at_card_ids.len() == 1
+                && options == &vec![
+                    PublicSurveilChoice::KeepOnTop,
+                    PublicSurveilChoice::MoveToGraveyard,
+                ]
     )));
 }

@@ -12,5 +12,5 @@ pub use public_game::{
     PublicChoiceCandidate, PublicChoiceRequest, PublicCommandApplication, PublicCommandRejection,
     PublicCommandResult, PublicCommandStatus, PublicGameCommand, PublicGameView, PublicLegalAction,
     PublicModalSpellChoice, PublicPlayerView, PublicPriorityView, PublicScryChoice,
-    PublicStackObjectView, PublicStackTargetView,
+    PublicStackObjectView, PublicStackTargetView, PublicSurveilChoice,
 };

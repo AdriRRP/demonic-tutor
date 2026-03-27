@@ -161,6 +161,7 @@ The domain currently includes:
 - aggregate location lookups and compact battlefield refs now name the current player-arena index explicitly instead of calling that carrier position an owner index
 - the current spell-effect subset now also supports explicit `loot` and `rummage`, surfaced as pending hand-card choice prompts during resolution
 - the current library-manipulation subset now also supports explicit `scry 1`, surfaced as a controller-scoped pending top-card choice during resolution
+- the current library-and-graveyard value subset now also supports explicit `surveil 1`, surfaced as a controller-scoped pending top-card choice that can keep the card on top or move it to graveyard during resolution
 - the current attachment subset now supports `Enchant creature` Auras that target while cast, enter attached if the target stays legal on resolution, and are put into graveyard by SBA if they become unattached
 - the current attachment subset now also supports one explicit attached `+N/+N` Aura bonus profile while the Aura remains attached
 - the current attachment subset now also supports one explicit pacifism-style Aura profile that prevents the enchanted creature from attacking and blocking while attached

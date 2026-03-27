@@ -8,6 +8,7 @@ mod passing;
 mod resolution;
 mod scry_effect;
 pub(crate) mod spell_effects;
+mod surveil_effect;
 pub(crate) mod triggers;
 
 use super::super::{
@@ -32,6 +33,7 @@ pub use hand_choice_effect::resolve_pending_hand_choice;
 pub use optional_effect::resolve_optional_effect;
 pub use passing::pass_priority;
 pub use scry_effect::resolve_pending_scry;
+pub use surveil_effect::resolve_pending_surveil;
 
 pub struct StackPriorityContext<'a> {
     pub game_id: &'a GameId,
@@ -98,6 +100,15 @@ pub struct ResolvePendingHandChoiceOutcome {
 
 #[derive(Debug, Clone)]
 pub struct ResolvePendingScryOutcome {
+    pub stack_top_resolved: Option<StackTopResolved>,
+    pub spell_cast: Option<SpellCast>,
+    pub moved_cards: Vec<CardInstanceId>,
+    pub game_ended: Option<GameEnded>,
+    pub priority_still_open: bool,
+}
+
+#[derive(Debug, Clone)]
+pub struct ResolvePendingSurveilOutcome {
     pub stack_top_resolved: Option<StackTopResolved>,
     pub spell_cast: Option<SpellCast>,
     pub moved_cards: Vec<CardInstanceId>,

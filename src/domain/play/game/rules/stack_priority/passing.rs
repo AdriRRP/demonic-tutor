@@ -65,6 +65,19 @@ const fn stack_object_pending_scry_amount(
     }
 }
 
+const fn stack_object_pending_surveil_amount(
+    stack_object: &crate::domain::play::game::StackObject,
+) -> Option<u32> {
+    let crate::domain::play::game::StackObjectKind::Spell(spell) = stack_object.kind() else {
+        return None;
+    };
+
+    match spell.supported_spell_rules().resolution() {
+        crate::domain::play::cards::SpellResolutionProfile::Surveil { amount } => Some(amount),
+        _ => None,
+    }
+}
+
 /// Passes priority in the current priority window, and may resolve the top
 /// object on the stack when both players pass consecutively.
 ///
@@ -209,6 +222,31 @@ pub fn pass_priority(
             if amount == 1 && players[controller_index].library_size() != 0 {
                 *priority = None;
                 *pending_decision = Some(PendingDecision::scry(
+                    controller_index,
+                    stack_object.number(),
+                    amount,
+                ));
+                return Ok(PassPriorityOutcome {
+                    priority_passed,
+                    triggered_abilities_put_on_stack: Vec::new(),
+                    stack_top_resolved: None,
+                    spell_cast: None,
+                    card_exiled: None,
+                    card_discarded: None,
+                    life_changed: None,
+                    creatures_died: Vec::new(),
+                    moved_cards: Vec::new(),
+                    game_ended: None,
+                    priority_still_open: false,
+                });
+            }
+        }
+
+        if let Some(amount) = stack_object_pending_surveil_amount(stack_object) {
+            let controller_index = stack_object.controller_index();
+            if amount == 1 && players[controller_index].library_size() != 0 {
+                *priority = None;
+                *pending_decision = Some(PendingDecision::surveil(
                     controller_index,
                     stack_object.number(),
                     amount,

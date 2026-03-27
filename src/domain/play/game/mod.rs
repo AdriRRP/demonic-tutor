@@ -32,7 +32,7 @@ pub use rules::{
     stack_priority::{
         ActivateAbilityOutcome, CastSpellOutcome, PassPriorityOutcome,
         ResolveOptionalEffectOutcome, ResolvePendingHandChoiceOutcome, ResolvePendingScryOutcome,
-        StackPriorityContext,
+        ResolvePendingSurveilOutcome, StackPriorityContext,
     },
     turn_flow::TurnProgressionContext,
     turn_flow::{AdvanceTurnOutcome, DrawCardsEffectOutcome},
@@ -57,6 +57,11 @@ pub enum PendingDecision {
         kind: PendingHandChoiceKind,
     },
     Scry {
+        controller_index: usize,
+        stack_object_number: u32,
+        amount: u32,
+    },
+    Surveil {
         controller_index: usize,
         stack_object_number: u32,
         amount: u32,
@@ -95,6 +100,15 @@ impl PendingDecision {
     }
 
     #[must_use]
+    pub const fn surveil(controller_index: usize, stack_object_number: u32, amount: u32) -> Self {
+        Self::Surveil {
+            controller_index,
+            stack_object_number,
+            amount,
+        }
+    }
+
+    #[must_use]
     pub const fn controller_index(&self) -> usize {
         match self {
             Self::OptionalEffect {
@@ -104,6 +118,9 @@ impl PendingDecision {
                 controller_index, ..
             }
             | Self::Scry {
+                controller_index, ..
+            }
+            | Self::Surveil {
                 controller_index, ..
             } => *controller_index,
         }
@@ -121,6 +138,10 @@ impl PendingDecision {
                 ..
             }
             | Self::Scry {
+                stack_object_number,
+                ..
+            }
+            | Self::Surveil {
                 stack_object_number,
                 ..
             } => *stack_object_number,

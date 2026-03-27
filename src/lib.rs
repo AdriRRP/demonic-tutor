@@ -10,7 +10,7 @@ pub use application::{
     PublicChoiceCandidate, PublicChoiceRequest, PublicCommandApplication, PublicCommandRejection,
     PublicCommandResult, PublicCommandStatus, PublicGameCommand, PublicGameView, PublicLegalAction,
     PublicModalSpellChoice, PublicPlayerView, PublicPriorityView, PublicScryChoice,
-    PublicStackObjectView, PublicStackTargetView,
+    PublicStackObjectView, PublicStackTargetView, PublicSurveilChoice,
 };
 pub use application::{EventBus, EventStore, GameService};
 
@@ -32,8 +32,8 @@ pub use domain::play::{
         DiscardForCleanupCommand, DrawCardsEffectCommand, ExileCardCommand, LibraryCard,
         LibraryCreature, ModalSpellMode, MulliganCommand, PassPriorityCommand, PlayLandCommand,
         PlayerDeck, PlayerLibrary, ResolveCombatDamageCommand, ResolveOptionalEffectCommand,
-        ResolvePendingHandChoiceCommand, ResolvePendingScryCommand, SpellChoice, StartGameCommand,
-        TapLandCommand,
+        ResolvePendingHandChoiceCommand, ResolvePendingScryCommand, ResolvePendingSurveilCommand,
+        SpellChoice, StartGameCommand, TapLandCommand,
     },
     errors::{CardError, DomainError, GameError, PhaseError, PlayerError},
     events::{
@@ -47,8 +47,9 @@ pub use domain::play::{
         ActivateAbilityOutcome, ActivatedAbilityOnStack, AdjustPlayerLifeEffectOutcome,
         AdvanceTurnOutcome, CastSpellOutcome, DrawCardsEffectOutcome, Game, PassPriorityOutcome,
         PendingDecision, PendingHandChoiceKind, PriorityState, ResolveOptionalEffectOutcome,
-        ResolvePendingHandChoiceOutcome, ResolvePendingScryOutcome, SpellOnStack, SpellTarget,
-        StackObject, StackObjectKind, StackZone, TriggeredAbilityOnStack,
+        ResolvePendingHandChoiceOutcome, ResolvePendingScryOutcome, ResolvePendingSurveilOutcome,
+        SpellOnStack, SpellTarget, StackObject, StackObjectKind, StackZone,
+        TriggeredAbilityOnStack,
     },
     ids::{CardDefinitionId, CardInstanceId, DeckId, GameId, PlayerId, StackObjectId},
     phase::Phase,

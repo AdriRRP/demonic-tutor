@@ -48,6 +48,9 @@ pub enum SpellResolutionProfile {
     Scry {
         amount: u32,
     },
+    Surveil {
+        amount: u32,
+    },
     LootDrawThenDiscard {
         draw_count: u32,
     },
@@ -166,6 +169,14 @@ impl SupportedSpellRules {
         Self {
             targeting: SpellTargetingProfile::None,
             resolution: SpellResolutionProfile::Scry { amount },
+        }
+    }
+
+    #[must_use]
+    pub const fn surveil(amount: u32) -> Self {
+        Self {
+            targeting: SpellTargetingProfile::None,
+            resolution: SpellResolutionProfile::Surveil { amount },
         }
     }
 

@@ -15,6 +15,7 @@ use super::{
     PublicCombatStateView, PublicCommandApplication, PublicCommandResult, PublicGameView,
     PublicLegalAction, PublicModalSpellChoice, PublicPermanentStateView, PublicPlayerView,
     PublicPriorityView, PublicScryChoice, PublicStackObjectView, PublicStackTargetView,
+    PublicSurveilChoice,
 };
 
 #[derive(Debug, Default)]
@@ -67,6 +68,10 @@ fn pending_action_and_request(game: &Game) -> Option<PublicSurfaceState> {
             crate::domain::play::game::PendingDecision::Scry { .. } => (
                 PublicLegalAction::ResolvePendingScry { player_id },
                 pending_scry_request(game),
+            ),
+            crate::domain::play::game::PendingDecision::Surveil { .. } => (
+                PublicLegalAction::ResolvePendingSurveil { player_id },
+                pending_surveil_request(game),
             ),
             crate::domain::play::game::PendingDecision::HandChoice { .. } => (
                 PublicLegalAction::ResolvePendingHandChoice { player_id },
@@ -619,6 +624,29 @@ fn pending_scry_request(game: &Game) -> Option<PublicChoiceRequest> {
         source_card_id: stack_object.source_card_id(),
         looked_at_card_ids: vec![top_card_id],
         options: vec![PublicScryChoice::KeepOnTop, PublicScryChoice::MoveToBottom],
+    })
+}
+
+fn pending_surveil_request(game: &Game) -> Option<PublicChoiceRequest> {
+    let crate::domain::play::game::PendingDecision::Surveil {
+        controller_index,
+        stack_object_number,
+        ..
+    } = game.pending_decision()?
+    else {
+        return None;
+    };
+    let stack_object = game.stack().object(*stack_object_number)?;
+    let top_card_id = game.players()[*controller_index].top_library_card_id()?;
+
+    Some(PublicChoiceRequest::PendingSurveil {
+        player_id: game.players()[*controller_index].id().clone(),
+        source_card_id: stack_object.source_card_id(),
+        looked_at_card_ids: vec![top_card_id],
+        options: vec![
+            PublicSurveilChoice::KeepOnTop,
+            PublicSurveilChoice::MoveToGraveyard,
+        ],
     })
 }
 

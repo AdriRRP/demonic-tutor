@@ -8,7 +8,7 @@ use crate::domain::play::{
         DiscardForCleanupCommand, DrawCardsEffectCommand, ExileCardCommand, ModalSpellMode,
         PassPriorityCommand, PlayLandCommand, ResolveCombatDamageCommand,
         ResolveOptionalEffectCommand, ResolvePendingHandChoiceCommand, ResolvePendingScryCommand,
-        TapLandCommand,
+        ResolvePendingSurveilCommand, TapLandCommand,
     },
     events::{DomainEvent, GameEndReason},
     ids::{CardDefinitionId, CardInstanceId, GameId, PlayerId, StackObjectId},
@@ -140,6 +140,9 @@ pub enum PublicLegalAction {
     ResolvePendingScry {
         player_id: PlayerId,
     },
+    ResolvePendingSurveil {
+        player_id: PlayerId,
+    },
     ResolvePendingHandChoice {
         player_id: PlayerId,
     },
@@ -201,6 +204,12 @@ pub enum PublicChoiceRequest {
         looked_at_card_ids: Vec<CardInstanceId>,
         options: Vec<PublicScryChoice>,
     },
+    PendingSurveil {
+        player_id: PlayerId,
+        source_card_id: CardInstanceId,
+        looked_at_card_ids: Vec<CardInstanceId>,
+        options: Vec<PublicSurveilChoice>,
+    },
     PendingHandChoice {
         player_id: PlayerId,
         source_card_id: CardInstanceId,
@@ -255,6 +264,12 @@ pub enum PublicScryChoice {
     MoveToBottom,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PublicSurveilChoice {
+    KeepOnTop,
+    MoveToGraveyard,
+}
+
 #[derive(Debug, Clone)]
 pub enum PublicGameCommand {
     PlayLand(PlayLandCommand),
@@ -273,6 +288,7 @@ pub enum PublicGameCommand {
     ResolveOptionalEffect(ResolveOptionalEffectCommand),
     ResolvePendingHandChoice(ResolvePendingHandChoiceCommand),
     ResolvePendingScry(ResolvePendingScryCommand),
+    ResolvePendingSurveil(ResolvePendingSurveilCommand),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

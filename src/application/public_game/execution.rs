@@ -9,7 +9,7 @@ use crate::{
                 domain_events_for_activate_ability, domain_events_for_cast_spell,
                 domain_events_for_pass_priority, domain_events_for_resolve_optional_effect,
                 domain_events_for_resolve_pending_hand_choice,
-                domain_events_for_resolve_pending_scry,
+                domain_events_for_resolve_pending_scry, domain_events_for_resolve_pending_surveil,
             },
             turn_flow::{domain_events_for_advance_turn, domain_events_for_draw_cards_effect},
             GameService,
@@ -83,6 +83,9 @@ where
             PublicGameCommand::ResolvePendingScry(cmd) => self
                 .resolve_pending_scry(game, cmd)
                 .map(|outcome| domain_events_for_resolve_pending_scry(&outcome)),
+            PublicGameCommand::ResolvePendingSurveil(cmd) => self
+                .resolve_pending_surveil(game, cmd)
+                .map(|outcome| domain_events_for_resolve_pending_surveil(&outcome)),
         };
 
         let status = match &result {
