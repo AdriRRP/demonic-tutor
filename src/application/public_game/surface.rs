@@ -6,16 +6,14 @@ use super::{
     domain_events_for_draw_cards_effect, domain_events_for_pass_priority,
     domain_events_for_resolve_combat_damage, domain_events_for_resolve_optional_effect,
     domain_events_for_resolve_pending_hand_choice, domain_events_for_resolve_pending_scry,
-    ActivateAbilityCommand, CardInstance, CardInstanceId, CardType, CastSpellCommand,
-    DeclareAttackersCommand, DomainError, DomainEvent, EventBus, EventStore, Game, GameError,
-    GameService, KeywordAbility, ModalSpellMode, Phase, PlayLandCommand, Player, PlayerId,
-    PublicActivatableCard, PublicBattlefieldCardView, PublicBinaryChoice, PublicBlockerOption,
-    PublicCardView, PublicCastableCard, PublicChoiceCandidate, PublicChoiceRequest,
-    PublicCombatStateView, PublicCommandRejection, PublicCommandResult, PublicCommandStatus,
-    PublicGameCommand, PublicGameView, PublicLegalAction, PublicModalSpellChoice,
-    PublicPermanentStateView, PublicPlayerView, PublicPriorityView, PublicScryChoice,
-    PublicStackObjectView, PublicStackTargetView, SpellTargetingProfile, StackObjectId,
-    StackObjectKind, TapLandCommand,
+    CardInstance, CardInstanceId, CardType, DomainError, DomainEvent, EventBus, EventStore, Game,
+    GameService, KeywordAbility, ModalSpellMode, Phase, Player, PlayerId, PublicActivatableCard,
+    PublicBattlefieldCardView, PublicBinaryChoice, PublicBlockerOption, PublicCardView,
+    PublicCastableCard, PublicChoiceCandidate, PublicChoiceRequest, PublicCombatStateView,
+    PublicCommandRejection, PublicCommandResult, PublicCommandStatus, PublicGameCommand,
+    PublicGameView, PublicLegalAction, PublicModalSpellChoice, PublicPermanentStateView,
+    PublicPlayerView, PublicPriorityView, PublicScryChoice, PublicStackObjectView,
+    PublicStackTargetView, SpellTargetingProfile, StackObjectId, StackObjectKind,
 };
 #[must_use]
 pub fn game_view(game: &Game) -> PublicGameView {
@@ -52,27 +50,20 @@ pub fn game_view(game: &Game) -> PublicGameView {
 
 #[must_use]
 fn pending_legal_action(game: &Game) -> Option<PublicLegalAction> {
-    if let Some(pending_scry_effect) = game.pending_scry_effect() {
-        return Some(PublicLegalAction::ResolvePendingScry {
-            player_id: game.players()[pending_scry_effect.controller_index()]
-                .id()
-                .clone(),
-        });
-    }
-
-    if let Some(pending_hand_choice_effect) = game.pending_hand_choice_effect() {
-        return Some(PublicLegalAction::ResolvePendingHandChoice {
-            player_id: game.players()[pending_hand_choice_effect.controller_index()]
-                .id()
-                .clone(),
-        });
-    }
-
-    if let Some(pending_optional_effect) = game.pending_optional_effect() {
-        return Some(PublicLegalAction::ResolveOptionalEffect {
-            player_id: game.players()[pending_optional_effect.controller_index()]
-                .id()
-                .clone(),
+    if let Some(pending_decision) = game.pending_decision() {
+        let player_id = game.players()[pending_decision.controller_index()]
+            .id()
+            .clone();
+        return Some(match pending_decision {
+            crate::domain::play::game::PendingDecision::Scry { .. } => {
+                PublicLegalAction::ResolvePendingScry { player_id }
+            }
+            crate::domain::play::game::PendingDecision::HandChoice { .. } => {
+                PublicLegalAction::ResolvePendingHandChoice { player_id }
+            }
+            crate::domain::play::game::PendingDecision::OptionalEffect { .. } => {
+                PublicLegalAction::ResolveOptionalEffect { player_id }
+            }
         });
     }
 
@@ -507,12 +498,7 @@ fn playable_land_ids(game: &Game, player_id: &PlayerId) -> Vec<CardInstanceId> {
     player
         .hand_card_ids()
         .into_iter()
-        .filter(|card_id| {
-            let mut probe = game.clone();
-            probe
-                .play_land(PlayLandCommand::new(player_id.clone(), card_id.clone()))
-                .is_ok()
-        })
+        .filter(|card_id| game.can_play_land(player_id, card_id))
         .collect()
 }
 
@@ -527,12 +513,7 @@ fn tappable_mana_source_ids(game: &Game, player_id: &PlayerId) -> Vec<CardInstan
 
     player
         .battlefield_card_ids()
-        .filter(|card_id| {
-            let mut probe = game.clone();
-            probe
-                .tap_land(TapLandCommand::new(player_id.clone(), (*card_id).clone()))
-                .is_ok()
-        })
+        .filter(|card_id| game.can_tap_mana_source(player_id, card_id))
         .cloned()
         .collect()
 }
@@ -573,16 +554,7 @@ fn castable_card(
     let card = player
         .hand_card(card_id)
         .or_else(|| player.graveyard_card(card_id))?;
-    let mut probe = game.clone();
-    let result = probe.cast_spell(CastSpellCommand::new(player_id.clone(), card_id.clone()));
-    if result.is_ok()
-        || matches!(
-            result,
-            Err(DomainError::Game(
-                GameError::MissingSpellTarget(_) | GameError::MissingSpellChoice(_),
-            ))
-        )
-    {
+    if game.castable_card(player_id, card_id) {
         let rules = card.supported_spell_rules();
         Some(PublicCastableCard {
             card_id: card.id().clone(),
@@ -633,42 +605,54 @@ fn spell_choice_request(
 }
 
 fn pending_optional_effect_request(game: &Game) -> Option<PublicChoiceRequest> {
-    let pending_optional_effect = game.pending_optional_effect()?;
-    let stack_object = game
-        .stack()
-        .object(pending_optional_effect.stack_object_number())?;
+    let crate::domain::play::game::PendingDecision::OptionalEffect {
+        controller_index,
+        stack_object_number,
+    } = game.pending_decision()?
+    else {
+        return None;
+    };
+    let stack_object = game.stack().object(*stack_object_number)?;
 
     Some(PublicChoiceRequest::OptionalEffectDecision {
-        player_id: game.players()[pending_optional_effect.controller_index()]
-            .id()
-            .clone(),
+        player_id: game.players()[*controller_index].id().clone(),
         source_card_id: stack_object.source_card_id(),
         options: vec![PublicBinaryChoice::Yes, PublicBinaryChoice::No],
     })
 }
 
 fn pending_hand_choice_request(game: &Game) -> Option<PublicChoiceRequest> {
-    let pending_hand_choice = game.pending_hand_choice_effect()?;
-    let stack_object = game
-        .stack()
-        .object(pending_hand_choice.stack_object_number())?;
+    let crate::domain::play::game::PendingDecision::HandChoice {
+        controller_index,
+        stack_object_number,
+        ..
+    } = game.pending_decision()?
+    else {
+        return None;
+    };
+    let stack_object = game.stack().object(*stack_object_number)?;
 
     Some(PublicChoiceRequest::PendingHandChoice {
-        player_id: game.players()[pending_hand_choice.controller_index()]
-            .id()
-            .clone(),
+        player_id: game.players()[*controller_index].id().clone(),
         source_card_id: stack_object.source_card_id(),
-        hand_card_ids: game.players()[pending_hand_choice.controller_index()].hand_card_ids(),
+        hand_card_ids: game.players()[*controller_index].hand_card_ids(),
     })
 }
 
 fn pending_scry_request(game: &Game) -> Option<PublicChoiceRequest> {
-    let pending_scry = game.pending_scry_effect()?;
-    let stack_object = game.stack().object(pending_scry.stack_object_number())?;
-    let top_card_id = game.players()[pending_scry.controller_index()].top_library_card_id()?;
+    let crate::domain::play::game::PendingDecision::Scry {
+        controller_index,
+        stack_object_number,
+        ..
+    } = game.pending_decision()?
+    else {
+        return None;
+    };
+    let stack_object = game.stack().object(*stack_object_number)?;
+    let top_card_id = game.players()[*controller_index].top_library_card_id()?;
 
     Some(PublicChoiceRequest::PendingScry {
-        player_id: game.players()[pending_scry.controller_index()].id().clone(),
+        player_id: game.players()[*controller_index].id().clone(),
         source_card_id: stack_object.source_card_id(),
         looked_at_card_ids: vec![top_card_id],
         options: vec![PublicScryChoice::KeepOnTop, PublicScryChoice::MoveToBottom],
@@ -710,17 +694,7 @@ fn activatable_card(
         .find(|player| player.id() == player_id)?;
     let card = player.battlefield_card(card_id)?;
     let ability = card.activated_ability()?;
-    let mut probe = game.clone();
-    let result = probe.activate_ability(ActivateAbilityCommand::new(
-        player_id.clone(),
-        card_id.clone(),
-    ));
-    if result.is_ok()
-        || matches!(
-            result,
-            Err(DomainError::Game(GameError::MissingSpellTarget(_)))
-        )
-    {
+    if game.activatable_card(player_id, card_id) {
         Some(PublicActivatableCard {
             card_id: card.id().clone(),
             definition_id: card.definition_id().clone(),
@@ -742,15 +716,7 @@ fn attack_candidate_ids(game: &Game, player_id: &PlayerId) -> Vec<CardInstanceId
 
     player
         .battlefield_card_ids()
-        .filter(|card_id| {
-            let mut probe = game.clone();
-            probe
-                .declare_attackers(DeclareAttackersCommand::new(
-                    player_id.clone(),
-                    vec![(*card_id).clone()],
-                ))
-                .is_ok()
-        })
+        .filter(|card_id| game.can_attack_with(player_id, card_id))
         .cloned()
         .collect()
 }

@@ -26,7 +26,7 @@ use crate::{
             ResolveOptionalEffectCommand, ResolvePendingHandChoiceCommand,
             ResolvePendingScryCommand, TapLandCommand,
         },
-        errors::{DomainError, GameError},
+        errors::DomainError,
         events::DomainEvent,
         game::{Game, Player, StackObjectKind},
         ids::{CardDefinitionId, CardInstanceId, PlayerId, StackObjectId},

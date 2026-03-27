@@ -5,7 +5,7 @@ use {
     crate::domain::play::{
         commands::ResolveOptionalEffectCommand,
         errors::{DomainError, GameError},
-        game::{model::PriorityState, PendingOptionalEffect},
+        game::{model::PriorityState, PendingDecision},
     },
 };
 
@@ -38,7 +38,7 @@ pub fn resolve_optional_effect(
         active_player,
         stack,
         priority,
-        pending_optional_effect,
+        pending_decision,
         terminal_state,
         ..
     } = ctx;
@@ -51,16 +51,23 @@ pub fn resolve_optional_effect(
         )));
     }
 
-    let PendingOptionalEffect {
-        controller_index,
-        stack_object_number,
-    } = pending_optional_effect
+    let (controller_index, stack_object_number) = match pending_decision
         .take()
-        .ok_or(DomainError::Game(GameError::NoPendingOptionalEffect))?;
+        .ok_or(DomainError::Game(GameError::NoPendingOptionalEffect))?
+    {
+        PendingDecision::OptionalEffect {
+            controller_index,
+            stack_object_number,
+        } => (controller_index, stack_object_number),
+        other => {
+            *pending_decision = Some(other);
+            return Err(DomainError::Game(GameError::NoPendingOptionalEffect));
+        }
+    };
 
     let current_controller = players[controller_index].id().clone();
     if current_controller != player_id {
-        *pending_optional_effect = Some(PendingOptionalEffect::new(
+        *pending_decision = Some(PendingDecision::optional_effect(
             controller_index,
             stack_object_number,
         ));

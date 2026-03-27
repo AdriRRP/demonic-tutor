@@ -1,7 +1,7 @@
 //! Supports game rules zones.
 
 use {
-    super::super::model::Player,
+    super::super::model::{AggregateCardLocationIndex, Player},
     crate::domain::play::{
         errors::{CardError, DomainError, GameError},
         events::{CardExiled, ZoneType},
@@ -37,6 +37,7 @@ fn owner_index_for_battlefield_handle(
 
 fn remove_attached_aura_effects_for_battlefield_handle(
     players: &mut [Player],
+    card_locations: Option<&AggregateCardLocationIndex>,
     controller_index: usize,
     handle: PlayerCardHandle,
 ) {
@@ -52,6 +53,25 @@ fn remove_attached_aura_effects_for_battlefield_handle(
 
     if attached_stat_boost.is_none() && attached_combat_restriction.is_none() {
         return;
+    }
+
+    if let Some(locations) = card_locations {
+        if let Some(target_location) = locations.location(&attached_to) {
+            if let Some(target) =
+                players[target_location.owner_index()].card_mut_by_handle(target_location.handle())
+            {
+                if let Some(attached_stat_boost) = attached_stat_boost {
+                    target.remove_attached_stat_bonus(
+                        attached_stat_boost.power(),
+                        attached_stat_boost.toughness(),
+                    );
+                }
+                if attached_combat_restriction.is_some() {
+                    target.remove_attached_cant_attack_or_block();
+                }
+                return;
+            }
+        }
     }
 
     let Some(target) = players
@@ -74,11 +94,17 @@ fn remove_attached_aura_effects_for_battlefield_handle(
 
 pub(crate) fn move_battlefield_handle_to_owner_graveyard_by_index(
     players: &mut [Player],
+    card_locations: Option<&AggregateCardLocationIndex>,
     controller_index: usize,
     handle: PlayerCardHandle,
 ) -> Result<(PlayerId, CardInstanceId), DomainError> {
     let owner_index = owner_index_for_battlefield_handle(players, controller_index, handle)?;
-    remove_attached_aura_effects_for_battlefield_handle(players, controller_index, handle);
+    remove_attached_aura_effects_for_battlefield_handle(
+        players,
+        card_locations,
+        controller_index,
+        handle,
+    );
     let card_id = players[controller_index]
         .card_by_handle(handle)
         .map(|card| card.id().clone())
@@ -126,11 +152,17 @@ pub(crate) fn move_battlefield_handle_to_owner_graveyard_by_index(
 
 pub(crate) fn move_battlefield_handle_to_owner_hand_by_index(
     players: &mut [Player],
+    card_locations: Option<&AggregateCardLocationIndex>,
     controller_index: usize,
     handle: PlayerCardHandle,
 ) -> Result<(PlayerId, CardInstanceId), DomainError> {
     let owner_index = owner_index_for_battlefield_handle(players, controller_index, handle)?;
-    remove_attached_aura_effects_for_battlefield_handle(players, controller_index, handle);
+    remove_attached_aura_effects_for_battlefield_handle(
+        players,
+        card_locations,
+        controller_index,
+        handle,
+    );
     let card_id = players[controller_index]
         .card_by_handle(handle)
         .map(|card| card.id().clone())
@@ -278,7 +310,7 @@ pub fn exile_card_from_battlefield_handle_by_index(
     handle: PlayerCardHandle,
 ) -> Result<CardExiled, DomainError> {
     let owner_index = owner_index_for_battlefield_handle(players, player_index, handle)?;
-    remove_attached_aura_effects_for_battlefield_handle(players, player_index, handle);
+    remove_attached_aura_effects_for_battlefield_handle(players, None, player_index, handle);
     let card_id = players[player_index]
         .card_by_handle(handle)
         .map(|card| card.id().clone())

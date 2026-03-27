@@ -92,6 +92,7 @@ fn validate_loyalty_timing(
 fn pay_activation_costs(
     players: &mut [crate::domain::play::game::Player],
     game_id: &crate::domain::play::ids::GameId,
+    card_locations: &crate::domain::play::game::AggregateCardLocationIndex,
     player_index: usize,
     player_id: crate::domain::play::ids::PlayerId,
     source_card_id: CardInstanceId,
@@ -184,6 +185,7 @@ fn pay_activation_costs(
             })?;
         let (owner_id, _) = zones::move_battlefield_handle_to_owner_graveyard_by_index(
             players,
+            Some(card_locations),
             player_index,
             source_handle.handle(),
         )?;
@@ -297,6 +299,91 @@ fn validate_activation_target(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
+#[allow(clippy::redundant_pub_crate)]
+pub(crate) fn is_activatable_candidate(
+    players: &[crate::domain::play::game::Player],
+    card_locations: &crate::domain::play::game::AggregateCardLocationIndex,
+    active_player: &crate::domain::play::ids::PlayerId,
+    phase: crate::domain::play::phase::Phase,
+    stack: &crate::domain::play::game::model::StackZone,
+    priority: Option<&PriorityState>,
+    player_id: &crate::domain::play::ids::PlayerId,
+    source_card_id: &CardInstanceId,
+) -> bool {
+    if invariants::require_priority_holder(priority, player_id).is_err() {
+        return false;
+    }
+    let Ok(player_index) = helpers::find_player_index(players, player_id) else {
+        return false;
+    };
+    let Ok(prepared) = prepare_activation_source(players, player_index, player_id, source_card_id)
+    else {
+        return false;
+    };
+
+    if prepared.ability.requires_tap()
+        && players[player_index]
+            .card_by_handle(prepared.handle.handle())
+            .is_some_and(crate::domain::play::cards::CardInstance::is_tapped)
+    {
+        return false;
+    }
+    if prepared.ability.mana_value() > 0
+        && !players[player_index]
+            .mana_pool()
+            .clone()
+            .spend(prepared.ability.mana_cost())
+    {
+        return false;
+    }
+    if prepared.ability.loyalty_change() != 0 {
+        if prepared.card_type != CardType::Planeswalker {
+            return false;
+        }
+        if validate_loyalty_timing(source_card_id, player_id, active_player, phase, stack).is_err()
+        {
+            return false;
+        }
+        if prepared.ability.loyalty_change().is_negative()
+            && prepared.loyalty.unwrap_or(0) < prepared.ability.loyalty_change().unsigned_abs()
+        {
+            return false;
+        }
+        if players[player_index]
+            .card_by_handle(prepared.handle.handle())
+            .is_some_and(
+                crate::domain::play::cards::CardInstance::loyalty_ability_activated_this_turn,
+            )
+        {
+            return false;
+        }
+    }
+
+    validate_activation_target(
+        players,
+        card_locations,
+        stack,
+        player_index,
+        source_card_id,
+        prepared.ability.targeting(),
+        None,
+    )
+    .is_ok()
+        || matches!(
+            validate_activation_target(
+                players,
+                card_locations,
+                stack,
+                player_index,
+                source_card_id,
+                prepared.ability.targeting(),
+                None,
+            ),
+            Err(DomainError::Game(GameError::MissingSpellTarget(_)))
+        )
+}
+
 /// Puts a supported non-mana activated ability from the battlefield onto the stack.
 ///
 /// # Errors
@@ -364,6 +451,7 @@ pub fn activate_ability(
     let (creatures_died, moved_cards) = pay_activation_costs(
         players,
         game_id,
+        card_locations,
         player_index,
         player_id.clone(),
         source_card_id,

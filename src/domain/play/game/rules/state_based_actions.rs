@@ -70,6 +70,7 @@ fn end_game_for_zero_life(
 fn review_supported_creature_state_based_actions(
     game_id: &GameId,
     players: &mut [Player],
+    card_locations: Option<&super::super::AggregateCardLocationIndex>,
 ) -> StateBasedActionCheckResult {
     let mut creatures_died = Vec::new();
 
@@ -90,6 +91,7 @@ fn review_supported_creature_state_based_actions(
             if let Ok((owner_id, card_id)) =
                 zones::move_battlefield_handle_to_owner_graveyard_by_index(
                     players,
+                    card_locations,
                     player_index,
                     handle,
                 )
@@ -106,7 +108,10 @@ fn review_supported_creature_state_based_actions(
     }
 }
 
-fn review_attached_aura_state_based_actions(players: &mut [Player]) -> StateBasedActionCheckResult {
+fn review_attached_aura_state_based_actions(
+    players: &mut [Player],
+    card_locations: Option<&super::super::AggregateCardLocationIndex>,
+) -> StateBasedActionCheckResult {
     let mut moved_to_graveyard = false;
 
     for player_index in 0..players.len() {
@@ -131,6 +136,7 @@ fn review_attached_aura_state_based_actions(players: &mut [Player]) -> StateBase
         for handle in doomed_handles {
             if zones::move_battlefield_handle_to_owner_graveyard_by_index(
                 players,
+                card_locations,
                 player_index,
                 handle,
             )
@@ -162,6 +168,7 @@ fn review_attached_aura_state_based_actions(players: &mut [Player]) -> StateBase
 pub fn check_state_based_actions(
     game_id: &GameId,
     players: &mut [Player],
+    card_locations: Option<&super::super::AggregateCardLocationIndex>,
     terminal_state: &mut TerminalState,
 ) -> Result<StateBasedActionsResult, crate::domain::play::errors::DomainError> {
     let mut total_creatures_died = Vec::new();
@@ -170,13 +177,15 @@ pub fn check_state_based_actions(
     loop {
         let mut changes = false;
 
-        let creature_result = review_supported_creature_state_based_actions(game_id, players);
+        let creature_result =
+            review_supported_creature_state_based_actions(game_id, players, card_locations);
         if creature_result.changed() {
             changes = true;
         }
         total_creatures_died.extend(creature_result.creatures_died);
 
-        let attached_aura_result = review_attached_aura_state_based_actions(players);
+        let attached_aura_result =
+            review_attached_aura_state_based_actions(players, card_locations);
         if attached_aura_result.changed() {
             changes = true;
         }
@@ -242,7 +251,7 @@ mod tests {
         assert!(players[0].receive_battlefield_card(card).is_some());
 
         let result =
-            check_state_based_actions(&game_id, &mut players, &mut terminal_state).unwrap();
+            check_state_based_actions(&game_id, &mut players, None, &mut terminal_state).unwrap();
 
         assert_eq!(result.creatures_died.len(), 1);
         assert_eq!(result.creatures_died[0].player_id, PlayerId::new("p2"));

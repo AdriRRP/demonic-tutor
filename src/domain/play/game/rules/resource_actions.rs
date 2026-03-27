@@ -23,6 +23,70 @@ pub struct AdjustPlayerLifeEffectOutcome {
     pub game_ended: Option<GameEnded>,
 }
 
+pub(crate) fn is_playable_land_candidate(
+    players: &[Player],
+    active_player_index: usize,
+    phase: Phase,
+    player_index: usize,
+    player_id: &crate::domain::play::ids::PlayerId,
+    card_id: &crate::domain::play::ids::CardInstanceId,
+) -> bool {
+    if invariants::require_active_player_index(players, active_player_index, player_id).is_err() {
+        return false;
+    }
+    if !matches!(phase, Phase::FirstMain | Phase::SecondMain) {
+        return false;
+    }
+
+    let Some(player) = players.get(player_index) else {
+        return false;
+    };
+    if player.lands_played_this_turn() > 0 {
+        return false;
+    }
+
+    player
+        .hand_card(card_id)
+        .is_some_and(|card| card.card_type().is_land())
+}
+
+pub(crate) fn is_tappable_mana_source_candidate(
+    players: &[Player],
+    active_player_index: usize,
+    phase: Phase,
+    priority: Option<&crate::domain::play::game::PriorityState>,
+    player_id: &crate::domain::play::ids::PlayerId,
+    card_id: &crate::domain::play::ids::CardInstanceId,
+) -> bool {
+    if priority.is_none()
+        && invariants::require_active_player_index(players, active_player_index, player_id).is_err()
+    {
+        return false;
+    }
+    if priority.is_none() && !matches!(phase, Phase::FirstMain | Phase::SecondMain) {
+        return false;
+    }
+
+    let player_index = if priority.is_none() {
+        active_player_index
+    } else {
+        let Ok(index) = helpers::find_player_index(players, player_id) else {
+            return false;
+        };
+        index
+    };
+    let Some(player) = players.get(player_index) else {
+        return false;
+    };
+    let Some(card) = player.battlefield_card(card_id) else {
+        return false;
+    };
+
+    !card.is_tapped()
+        && matches!(card.card_type(), CardType::Land)
+        && card.activated_mana_ability().is_some()
+}
+
 impl AdjustPlayerLifeEffectOutcome {
     #[must_use]
     pub const fn new(
@@ -180,7 +244,7 @@ pub fn adjust_player_life_effect(
     let StateBasedActionsResult {
         creatures_died,
         game_ended,
-    } = state_based_actions::check_state_based_actions(game_id, players, terminal_state)?;
+    } = state_based_actions::check_state_based_actions(game_id, players, None, terminal_state)?;
 
     Ok(AdjustPlayerLifeEffectOutcome::new(
         life_changed,

@@ -19,6 +19,7 @@ Implemented capabilities include:
 - starting a two-player game
 - projecting a stable public game snapshot for clients, including phase, priority, stack, battlefield, graveyard, exile, and hand counts
 - surfacing a public legal-action menu derived from the current supported actor and game state
+- deriving that public legal-action menu from read-only aggregate legality queries instead of speculative command probes
 - surfacing public choice requests for target selection, explicit hand-card choice, bounded modal spell choice, binary optional-effect decisions, and cleanup discard
 - returning a deterministic public command envelope with emitted events, updated snapshot, legal actions, and visible choice requests
 - projecting the attached creature id for the current supported Aura subset in the public battlefield snapshot
@@ -138,6 +139,7 @@ The domain currently includes:
 - the current spell-effect subset also supports first direct `destroy target creature`, `exile target creature`, `exile target card from graveyard`, and minimal `+N/+N until end of turn` corridors outside combat in `FirstMain`
 - the current graveyard-recursion subset supports returning a target creature card to hand from any graveyard and reanimating a target creature card from the caster's own graveyard onto the resolving spell controller's battlefield
 - cards now preserve persistent owner identity even if they temporarily live on another player's battlefield, so death, bounce, and exile still route them back to the owner's zones
+- supported Aura detach cleanup now uses explicit aggregate location lookup on the main zone-move corridors when that shared index is available
 - the current mill subset mills up to `N` cards, stopping early if the target library runs out
 - the current targeted-spell subset now rejects opposing targets with supported creature `Hexproof` during cast validation and resolution revalidation
 - the current `destroy target creature` subset now leaves supported indestructible creatures on the battlefield
@@ -146,6 +148,7 @@ The domain currently includes:
 - the current player-target spell subset now also supports explicit `gain life` and explicit `lose life` as distinct effects from damage while reusing the shared life-change corridor
 - the current player-target spell subset now also supports the first explicit `choose one` corridor with a selected mode stored on stack and resolved deterministically
 - the current trigger subset now also supports the first explicit `you may` corridor with a pending yes/no choice surfaced at resolution time
+- pending stack-time player choices are now modeled through one closed aggregate concept instead of parallel pending fields
 - the current spell-effect subset now also supports explicit `loot` and `rummage`, surfaced as pending hand-card choice prompts during resolution
 - the current library-manipulation subset now also supports explicit `scry 1`, surfaced as a controller-scoped pending top-card choice during resolution
 - the current attachment subset now supports `Enchant creature` Auras that target while cast, enter attached if the target stays legal on resolution, and are put into graveyard by SBA if they become unattached
@@ -158,6 +161,7 @@ The domain currently includes:
 - supported targeted instants currently do not apply their effect if their only legal creature target is gone on resolution
 - legal-target evaluation for the current targeted-spell subset is shared between cast-time validation and resolution-time revalidation, using explicit cast and resolution contexts
 - supported spell targeting, casting rules, and resolution are currently carried as explicit card-face profiles rather than inferred from card-definition strings during casting or resolution
+- spell targeting and spell-resolution profiles now live in a focused submodule instead of continuing to grow one central rules hotspot
 - card definitions are currently created through card-type-aware constructors so supported spell cards receive casting semantics when the face is built
 - stack-borne spells now carry explicit spell snapshots and resolution metadata instead of reusing the full moved card runtime
 - supported activated abilities on the stack now also prefer internal source references, materializing public card ids only when leaving the runtime core
@@ -166,6 +170,7 @@ The domain currently includes:
 - resolving the top stack object after two consecutive passes
 - the explicit combat corridor progresses through `BeginningOfCombat`, `DeclareAttackers`, `DeclareBlockers`, `CombatDamage`, and `EndOfCombat`
 - multi-blocked attackers now use declared blocker order when assigning combat damage in the supported subset
+- combat damage now uses temporary keyed accumulation and blocker lookup instead of repeated linear scans through already collected participants
 - attackers that were blocked remain blocked for the later supported combat-damage pass even if no blocker survives into that pass
 - empty combat windows close forward coherently from `BeginningOfCombat` into `DeclareAttackers`, from `DeclareAttackers` into `DeclareBlockers`, from `DeclareBlockers` into `CombatDamage`, and from `EndOfCombat` into `SecondMain`
 - combat actions reopen priority after attackers and blockers are declared, and combat damage resolution moves the game into `EndOfCombat` with a reopened priority window while the game remains active

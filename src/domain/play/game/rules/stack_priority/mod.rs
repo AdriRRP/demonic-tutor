@@ -25,7 +25,9 @@ use crate::domain::play::{
 };
 
 pub use activation::activate_ability;
+pub(crate) use activation::is_activatable_candidate;
 pub use casting::cast_spell;
+pub(crate) use casting::is_castable_candidate;
 pub use hand_choice_effect::resolve_pending_hand_choice;
 pub use optional_effect::resolve_optional_effect;
 pub use passing::pass_priority;
@@ -39,9 +41,7 @@ pub struct StackPriorityContext<'a> {
     pub phase: &'a Phase,
     pub stack: &'a mut super::super::model::StackZone,
     pub priority: &'a mut Option<PriorityState>,
-    pub pending_optional_effect: &'a mut Option<super::super::PendingOptionalEffect>,
-    pub pending_hand_choice_effect: &'a mut Option<super::super::PendingHandChoiceEffect>,
-    pub pending_scry_effect: &'a mut Option<super::super::PendingScryEffect>,
+    pub pending_decision: &'a mut Option<super::super::PendingDecision>,
     pub terminal_state: &'a mut TerminalState,
 }
 

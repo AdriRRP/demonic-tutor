@@ -9,7 +9,7 @@ use crate::domain::play::{
     },
     game::{
         model::{PlayerCardZone, StackObjectKind},
-        PendingHandChoiceEffect, PendingHandChoiceKind, PriorityState,
+        PendingDecision, PendingHandChoiceKind, PriorityState,
     },
     ids::PlayerCardHandle,
 };
@@ -17,12 +17,12 @@ use crate::domain::play::{
 use super::{ResolvePendingHandChoiceOutcome, StackPriorityContext};
 
 const fn restore_pending_hand_choice(
-    pending_hand_choice_effect: &mut Option<PendingHandChoiceEffect>,
+    pending_decision: &mut Option<PendingDecision>,
     controller_index: usize,
     stack_object_number: u32,
     kind: PendingHandChoiceKind,
 ) {
-    *pending_hand_choice_effect = Some(PendingHandChoiceEffect::new(
+    *pending_decision = Some(PendingDecision::hand_choice(
         controller_index,
         stack_object_number,
         kind,
@@ -126,7 +126,7 @@ fn move_spell_to_resolution_destination(
 
 fn validate_pending_hand_choice(
     players: &[crate::domain::play::game::Player],
-    pending_hand_choice_effect: &mut Option<PendingHandChoiceEffect>,
+    pending_decision: &mut Option<PendingDecision>,
     controller_index: usize,
     stack_object_number: u32,
     kind: PendingHandChoiceKind,
@@ -136,7 +136,7 @@ fn validate_pending_hand_choice(
     let current_controller = players[controller_index].id().clone();
     if current_controller != *player_id {
         restore_pending_hand_choice(
-            pending_hand_choice_effect,
+            pending_decision,
             controller_index,
             stack_object_number,
             kind,
@@ -151,7 +151,7 @@ fn validate_pending_hand_choice(
 
     let Some(handle) = players[controller_index].resolve_public_card_handle(chosen_card_id) else {
         restore_pending_hand_choice(
-            pending_hand_choice_effect,
+            pending_decision,
             controller_index,
             stack_object_number,
             kind,
@@ -163,7 +163,7 @@ fn validate_pending_hand_choice(
 
     if players[controller_index].card_zone(chosen_card_id) != Some(PlayerCardZone::Hand) {
         restore_pending_hand_choice(
-            pending_hand_choice_effect,
+            pending_decision,
             controller_index,
             stack_object_number,
             kind,
@@ -181,6 +181,7 @@ fn validate_pending_hand_choice(
 /// # Errors
 /// Returns an error if no hand-choice effect is pending, if the caller is not
 /// its controller, or if the selected card is not currently in that player's hand.
+#[allow(clippy::too_many_lines)]
 pub fn resolve_pending_hand_choice(
     ctx: StackPriorityContext<'_>,
     cmd: ResolvePendingHandChoiceCommand,
@@ -191,8 +192,7 @@ pub fn resolve_pending_hand_choice(
         active_player,
         stack,
         priority,
-        pending_optional_effect: _,
-        pending_hand_choice_effect,
+        pending_decision,
         terminal_state,
         ..
     } = ctx;
@@ -208,17 +208,24 @@ pub fn resolve_pending_hand_choice(
         )));
     }
 
-    let PendingHandChoiceEffect {
-        controller_index,
-        stack_object_number,
-        kind,
-    } = pending_hand_choice_effect
+    let (controller_index, stack_object_number, kind) = match pending_decision
         .take()
-        .ok_or(DomainError::Game(GameError::NoPendingHandChoice))?;
+        .ok_or(DomainError::Game(GameError::NoPendingHandChoice))?
+    {
+        PendingDecision::HandChoice {
+            controller_index,
+            stack_object_number,
+            kind,
+        } => (controller_index, stack_object_number, kind),
+        other => {
+            *pending_decision = Some(other);
+            return Err(DomainError::Game(GameError::NoPendingHandChoice));
+        }
+    };
 
     let handle = validate_pending_hand_choice(
         players,
-        pending_hand_choice_effect,
+        pending_decision,
         controller_index,
         stack_object_number,
         kind,

@@ -483,6 +483,7 @@ fn resolve_spell_from_stack(
 fn resolve_activated_ability_from_stack(
     game_id: &GameId,
     players: &mut [Player],
+    card_locations: &AggregateCardLocationIndex,
     terminal_state: &mut TerminalState,
     stack_object: StackObject,
 ) -> Result<ResolvedSpellOutcome, crate::domain::play::errors::DomainError> {
@@ -546,6 +547,7 @@ fn resolve_activated_ability_from_stack(
     } = super::super::state_based_actions::check_state_based_actions(
         game_id,
         players,
+        Some(card_locations),
         terminal_state,
     )?;
 
@@ -565,6 +567,7 @@ fn resolve_activated_ability_from_stack(
 fn resolve_triggered_ability_from_stack(
     game_id: &GameId,
     players: &mut [Player],
+    card_locations: &AggregateCardLocationIndex,
     terminal_state: &mut TerminalState,
     stack_object: StackObject,
 ) -> Result<ResolvedSpellOutcome, crate::domain::play::errors::DomainError> {
@@ -606,6 +609,7 @@ fn resolve_triggered_ability_from_stack(
     } = super::super::state_based_actions::check_state_based_actions(
         game_id,
         players,
+        Some(card_locations),
         terminal_state,
     )?;
 
@@ -639,11 +643,19 @@ pub(super) fn resolve_stack_object(
             stack,
             stack_object,
         ),
-        StackObjectKind::ActivatedAbility(_) => {
-            resolve_activated_ability_from_stack(game_id, players, terminal_state, stack_object)
-        }
-        StackObjectKind::TriggeredAbility(_) => {
-            resolve_triggered_ability_from_stack(game_id, players, terminal_state, stack_object)
-        }
+        StackObjectKind::ActivatedAbility(_) => resolve_activated_ability_from_stack(
+            game_id,
+            players,
+            card_locations,
+            terminal_state,
+            stack_object,
+        ),
+        StackObjectKind::TriggeredAbility(_) => resolve_triggered_ability_from_stack(
+            game_id,
+            players,
+            card_locations,
+            terminal_state,
+            stack_object,
+        ),
     }
 }

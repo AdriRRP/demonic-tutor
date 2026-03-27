@@ -4,7 +4,7 @@ use crate::domain::play::{
     commands::ResolvePendingScryCommand,
     errors::{DomainError, GameError},
     events::{SpellCast, SpellCastOutcome, StackTopResolved},
-    game::{model::StackObjectKind, PendingScryEffect, PriorityState},
+    game::{model::StackObjectKind, PendingDecision, PriorityState},
 };
 
 use super::{ResolvePendingScryOutcome, StackPriorityContext};
@@ -52,7 +52,7 @@ pub fn resolve_pending_scry(
         active_player,
         stack,
         priority,
-        pending_scry_effect,
+        pending_decision,
         ..
     } = ctx;
 
@@ -67,17 +67,24 @@ pub fn resolve_pending_scry(
         move_to_bottom,
     } = cmd;
 
-    let PendingScryEffect {
-        controller_index,
-        stack_object_number,
-        amount,
-    } = pending_scry_effect
+    let (controller_index, stack_object_number, amount) = match pending_decision
         .take()
-        .ok_or(DomainError::Game(GameError::NoPendingScry))?;
+        .ok_or(DomainError::Game(GameError::NoPendingScry))?
+    {
+        PendingDecision::Scry {
+            controller_index,
+            stack_object_number,
+            amount,
+        } => (controller_index, stack_object_number, amount),
+        other => {
+            *pending_decision = Some(other);
+            return Err(DomainError::Game(GameError::NoPendingScry));
+        }
+    };
 
     let current_controller = players[controller_index].id().clone();
     if current_controller != player_id {
-        *pending_scry_effect = Some(PendingScryEffect::new(
+        *pending_decision = Some(PendingDecision::scry(
             controller_index,
             stack_object_number,
             amount,

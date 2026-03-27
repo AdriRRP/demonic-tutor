@@ -6,7 +6,7 @@ use {
         commands::PassPriorityCommand,
         errors::{DomainError, GameError},
         events::PriorityPassed,
-        game::{invariants, model::PriorityState, Player},
+        game::{invariants, model::PriorityState, PendingDecision, Player},
         ids::PlayerId,
     },
 };
@@ -83,9 +83,7 @@ pub fn pass_priority(
         active_player,
         stack,
         priority,
-        pending_optional_effect,
-        pending_hand_choice_effect,
-        pending_scry_effect,
+        pending_decision,
         terminal_state,
         ..
     } = ctx;
@@ -137,7 +135,7 @@ pub fn pass_priority(
     if let Some(stack_object) = stack.top() {
         if stack_object_requires_optional_choice(stack_object) {
             *priority = None;
-            *pending_optional_effect = Some(crate::domain::play::game::PendingOptionalEffect::new(
+            *pending_decision = Some(PendingDecision::optional_effect(
                 stack_object.controller_index(),
                 stack_object.number(),
             ));
@@ -186,12 +184,11 @@ pub fn pass_priority(
             }
 
             *priority = None;
-            *pending_hand_choice_effect =
-                Some(crate::domain::play::game::PendingHandChoiceEffect::new(
-                    stack_object.controller_index(),
-                    stack_object.number(),
-                    kind,
-                ));
+            *pending_decision = Some(PendingDecision::hand_choice(
+                stack_object.controller_index(),
+                stack_object.number(),
+                kind,
+            ));
             return Ok(PassPriorityOutcome {
                 priority_passed,
                 triggered_abilities_put_on_stack: Vec::new(),
@@ -211,7 +208,7 @@ pub fn pass_priority(
             let controller_index = stack_object.controller_index();
             if amount == 1 && players[controller_index].library_size() != 0 {
                 *priority = None;
-                *pending_scry_effect = Some(crate::domain::play::game::PendingScryEffect::new(
+                *pending_decision = Some(PendingDecision::scry(
                     controller_index,
                     stack_object.number(),
                     amount,

@@ -84,7 +84,10 @@ fn scry_spell_opens_pending_scry_request() {
 
     cast_and_pass_to_pending_scry(&service, &mut game);
 
-    assert!(game.pending_scry_effect().is_some());
+    assert!(matches!(
+        game.pending_decision(),
+        Some(demonictutor::PendingDecision::Scry { .. })
+    ));
     assert!(game.priority().is_none());
     assert_eq!(player(&game, "p1").library_size(), 2);
     assert_eq!(

@@ -9,7 +9,10 @@ use {
         CastSpellOutcome, StackPriorityContext,
     },
     crate::domain::play::{
-        cards::{CardType, CastingPermissionProfile, CastingRule, SupportedSpellRules},
+        cards::{
+            CardType, CastingPermissionProfile, CastingRule, SpellTargetingProfile,
+            SupportedSpellRules,
+        },
         commands::{CastSpellCommand, SpellChoice},
         errors::{CardError, DomainError, GameError, PhaseError},
         events::SpellPutOnStack,
@@ -347,6 +350,88 @@ fn prepare_stack_choice(
     }
 
     Ok(None)
+}
+
+#[allow(clippy::too_many_arguments)]
+#[allow(clippy::redundant_pub_crate)]
+pub(crate) fn is_castable_candidate(
+    players: &[crate::domain::play::game::Player],
+    card_locations: &crate::domain::play::game::AggregateCardLocationIndex,
+    active_player: &PlayerId,
+    phase: Phase,
+    stack: &StackZone,
+    priority: Option<&PriorityState>,
+    player_id: &PlayerId,
+    card_id: &CardInstanceId,
+) -> bool {
+    let Ok(player_idx) = helpers::find_player_index(players, player_id) else {
+        return false;
+    };
+    let Ok(metadata) = read_spell_metadata(&players[player_idx], player_id, card_id) else {
+        return false;
+    };
+    if metadata.card_type.is_land() {
+        return false;
+    }
+    let Some(casting_permission) = metadata.casting_permission else {
+        return false;
+    };
+    if require_cast_timing(
+        active_player,
+        phase,
+        stack,
+        priority,
+        player_id,
+        card_id,
+        casting_permission,
+    )
+    .is_err()
+    {
+        return false;
+    }
+    if matches!(metadata.card_type, CardType::Creature) && !metadata.has_creature_stats {
+        return false;
+    }
+    if !players[player_idx]
+        .mana_pool()
+        .clone()
+        .spend(metadata.mana_cost_profile)
+    {
+        return false;
+    }
+
+    let supported_spell_rules = metadata.supported_spell_rules;
+    let missing_target_is_allowed = matches!(
+        supported_spell_rules.targeting(),
+        SpellTargetingProfile::ExactlyOne(_)
+    );
+    let missing_choice_is_allowed = supported_spell_rules.requires_choice();
+
+    validate_spell_target(
+        players,
+        card_locations,
+        stack,
+        player_idx,
+        card_id,
+        supported_spell_rules,
+        None,
+    )
+    .is_ok()
+        || missing_target_is_allowed
+            && matches!(
+                validate_spell_target(
+                    players,
+                    card_locations,
+                    stack,
+                    player_idx,
+                    card_id,
+                    supported_spell_rules,
+                    None,
+                ),
+                Err(DomainError::Game(GameError::MissingSpellTarget(_)))
+            )
+            && (validate_spell_choice(players, supported_spell_rules, card_id, None, None).is_ok()
+                || missing_choice_is_allowed)
 }
 
 /// Puts a spell card from hand onto the stack and opens a priority window.

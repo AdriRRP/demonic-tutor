@@ -67,18 +67,18 @@ fn resolve_combat_card_id(
 }
 
 fn add_damage(
+    damage_index_by_target: &mut HashMap<CardInstanceId, usize>,
     damage_received: &mut Vec<CreatureDamageAssignment>,
     target: &CardInstanceId,
     damage: u32,
     source_has_deathtouch: bool,
 ) {
-    if let Some(existing) = damage_received
-        .iter_mut()
-        .find(|assignment| assignment.target == *target)
-    {
+    if let Some(existing_index) = damage_index_by_target.get(target).copied() {
+        let existing = &mut damage_received[existing_index];
         existing.damage += damage;
         existing.source_has_deathtouch |= source_has_deathtouch && damage > 0;
     } else {
+        damage_index_by_target.insert(target.clone(), damage_received.len());
         damage_received.push(CreatureDamageAssignment {
             target: target.clone(),
             damage,
@@ -88,17 +88,19 @@ fn add_damage(
 }
 
 fn blockers_for_attacker<'a>(
-    blockers: &'a [BlockerParticipant],
+    blockers_by_ref: &HashMap<
+        (usize, crate::domain::play::ids::PlayerCardHandle),
+        &'a BlockerParticipant,
+    >,
     attacker: &AttackerParticipant,
 ) -> Vec<&'a BlockerParticipant> {
     attacker
         .blocked_by_refs()
         .iter()
         .filter_map(|blocker_ref| {
-            blockers.iter().find(|blocker| {
-                blocker.card_ref().owner_index() == blocker_ref.owner_index()
-                    && blocker.card_ref().handle() == blocker_ref.handle()
-            })
+            blockers_by_ref
+                .get(&(blocker_ref.owner_index(), blocker_ref.handle()))
+                .copied()
         })
         .collect()
 }
@@ -119,12 +121,17 @@ fn record_lifelink_damage(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn resolve_attacker_damage(
     players: &[Player],
     attacker: &AttackerParticipant,
-    blockers: &[BlockerParticipant],
+    blockers_by_ref: &HashMap<
+        (usize, crate::domain::play::ids::PlayerCardHandle),
+        &BlockerParticipant,
+    >,
     defender_player_id: &crate::domain::play::ids::PlayerId,
     damage_events: &mut Vec<DamageEvent>,
+    damage_index_by_target: &mut HashMap<CardInstanceId, usize>,
     damage_received: &mut Vec<CreatureDamageAssignment>,
     lifelink_damage_by_controller: &mut HashMap<usize, u32>,
 ) -> Result<u32, DomainError> {
@@ -133,7 +140,7 @@ fn resolve_attacker_damage(
         attacker.card_ref(),
         "combat attacker participant points to a missing battlefield card",
     )?;
-    let ordered_blockers = blockers_for_attacker(blockers, attacker);
+    let ordered_blockers = blockers_for_attacker(blockers_by_ref, attacker);
     if ordered_blockers.is_empty() {
         if attacker.was_blocked() {
             return Ok(0);
@@ -176,6 +183,7 @@ fn resolve_attacker_damage(
         };
 
         add_damage(
+            damage_index_by_target,
             damage_received,
             &blocker_id,
             blocker_damage,
@@ -212,6 +220,7 @@ fn resolve_blocker_damage(
     players: &[Player],
     blocker: &BlockerParticipant,
     damage_events: &mut Vec<DamageEvent>,
+    damage_index_by_target: &mut HashMap<CardInstanceId, usize>,
     damage_received: &mut Vec<CreatureDamageAssignment>,
     lifelink_damage_by_controller: &mut HashMap<usize, u32>,
 ) -> Result<(), DomainError> {
@@ -226,6 +235,7 @@ fn resolve_blocker_damage(
         "combat blocker participant points to a missing blocked attacker",
     )?;
     add_damage(
+        damage_index_by_target,
         damage_received,
         &blocked_attacker_id,
         blocker.power(),
@@ -256,8 +266,21 @@ fn resolve_damage_step(
 ) -> Result<DamageResolution, DomainError> {
     let mut damage_events: Vec<DamageEvent> = Vec::new();
     let mut damage_received: Vec<CreatureDamageAssignment> = Vec::new();
+    let mut damage_index_by_target = HashMap::new();
     let mut player_damage = 0;
     let mut lifelink_damage_by_controller = HashMap::new();
+    let blockers_by_ref = blockers
+        .iter()
+        .map(|blocker| {
+            (
+                (
+                    blocker.card_ref().owner_index(),
+                    blocker.card_ref().handle(),
+                ),
+                blocker,
+            )
+        })
+        .collect::<HashMap<_, _>>();
 
     for attacker in attackers
         .iter()
@@ -266,9 +289,10 @@ fn resolve_damage_step(
         player_damage += resolve_attacker_damage(
             players,
             attacker,
-            blockers,
+            &blockers_by_ref,
             defender_player_id,
             &mut damage_events,
+            &mut damage_index_by_target,
             &mut damage_received,
             &mut lifelink_damage_by_controller,
         )?;
@@ -282,6 +306,7 @@ fn resolve_damage_step(
             players,
             blocker,
             &mut damage_events,
+            &mut damage_index_by_target,
             &mut damage_received,
             &mut lifelink_damage_by_controller,
         )?;
@@ -379,6 +404,7 @@ fn resolve_combat_damage_step(
     } = state_based_actions::check_state_based_actions(
         ctx.game_id,
         ctx.players,
+        Some(ctx.card_locations),
         ctx.terminal_state,
     )?;
 

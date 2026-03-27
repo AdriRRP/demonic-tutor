@@ -11,6 +11,34 @@ use {
     },
 };
 
+#[allow(clippy::redundant_pub_crate)]
+pub(crate) fn can_attack_with_candidate(
+    players: &[Player],
+    active_player_index: usize,
+    phase: crate::domain::play::phase::Phase,
+    player_id: &crate::domain::play::ids::PlayerId,
+    attacker_id: &CardInstanceId,
+) -> bool {
+    if super::progression::require_attackers_step(phase).is_err() {
+        return false;
+    }
+    let Ok(player_idx) = helpers::find_player_index(players, player_id) else {
+        return false;
+    };
+    if player_idx != active_player_index {
+        return false;
+    }
+
+    let Some(card) = players[player_idx].battlefield_card(attacker_id) else {
+        return false;
+    };
+
+    matches!(card.card_type(), CardType::Creature)
+        && !card.is_tapped()
+        && (!card.has_summoning_sickness() || card.has_haste())
+        && !card.cannot_attack()
+}
+
 pub fn declare_attackers(
     game_id: &GameId,
     players: &mut [Player],

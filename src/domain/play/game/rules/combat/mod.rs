@@ -20,6 +20,7 @@ use crate::domain::play::{
 };
 
 pub use damage::ResolveCombatDamageOutcome;
+pub(crate) use declaring::can_attack_with_candidate;
 
 /// Declares attackers for the active player in combat.
 ///

@@ -45,10 +45,9 @@ pub use domain::play::{
     game::{
         ActivateAbilityOutcome, ActivatedAbilityOnStack, AdjustPlayerLifeEffectOutcome,
         AdvanceTurnOutcome, CastSpellOutcome, DrawCardsEffectOutcome, Game, PassPriorityOutcome,
-        PendingHandChoiceEffect, PendingHandChoiceKind, PendingOptionalEffect, PendingScryEffect,
-        PriorityState, ResolveOptionalEffectOutcome, ResolvePendingHandChoiceOutcome,
-        ResolvePendingScryOutcome, SpellOnStack, SpellTarget, StackObject, StackObjectKind,
-        StackZone, TriggeredAbilityOnStack,
+        PendingDecision, PendingHandChoiceKind, PriorityState, ResolveOptionalEffectOutcome,
+        ResolvePendingHandChoiceOutcome, ResolvePendingScryOutcome, SpellOnStack, SpellTarget,
+        StackObject, StackObjectKind, StackZone, TriggeredAbilityOnStack,
     },
     ids::{CardDefinitionId, CardInstanceId, DeckId, GameId, PlayerId, StackObjectId},
     phase::Phase,

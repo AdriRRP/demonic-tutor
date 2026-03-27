@@ -95,7 +95,10 @@ fn loot_spell_draws_then_prompts_for_discard() {
     pass_both_players(&service, &mut game);
 
     assert!(game.priority().is_none());
-    assert!(game.pending_hand_choice_effect().is_some());
+    assert!(matches!(
+        game.pending_decision(),
+        Some(demonictutor::PendingDecision::HandChoice { .. })
+    ));
     assert!(player(&game, "p1").hand_size() >= 7);
     assert!(player(&game, "p1")
         .hand_card_by_definition(&CardDefinitionId::new("p1-draw-a"))
@@ -134,7 +137,7 @@ fn loot_spell_discards_the_selected_card_after_the_draw() {
         )
         .expect("pending loot choice should resolve");
 
-    assert!(game.pending_hand_choice_effect().is_none());
+    assert!(game.pending_decision().is_none());
     assert!(game.stack().is_empty());
     assert!(game.priority().is_some());
     assert_eq!(

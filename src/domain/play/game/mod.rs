@@ -5,6 +5,7 @@ mod helpers;
 mod invariants;
 mod lifecycle;
 pub mod model;
+mod queries;
 mod resource_actions;
 pub mod rules;
 mod stack;
@@ -37,32 +38,6 @@ pub use rules::{
 };
 pub use targets::SpellTarget;
 
-#[derive(Debug, Clone)]
-pub struct PendingOptionalEffect {
-    controller_index: usize,
-    stack_object_number: u32,
-}
-
-impl PendingOptionalEffect {
-    #[must_use]
-    pub const fn new(controller_index: usize, stack_object_number: u32) -> Self {
-        Self {
-            controller_index,
-            stack_object_number,
-        }
-    }
-
-    #[must_use]
-    pub const fn controller_index(&self) -> usize {
-        self.controller_index
-    }
-
-    #[must_use]
-    pub const fn stack_object_number(&self) -> u32 {
-        self.stack_object_number
-    }
-}
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PendingHandChoiceKind {
     Loot { draw_count: u32 },
@@ -70,20 +45,39 @@ pub enum PendingHandChoiceKind {
 }
 
 #[derive(Debug, Clone)]
-pub struct PendingHandChoiceEffect {
-    controller_index: usize,
-    stack_object_number: u32,
-    kind: PendingHandChoiceKind,
+pub enum PendingDecision {
+    OptionalEffect {
+        controller_index: usize,
+        stack_object_number: u32,
+    },
+    HandChoice {
+        controller_index: usize,
+        stack_object_number: u32,
+        kind: PendingHandChoiceKind,
+    },
+    Scry {
+        controller_index: usize,
+        stack_object_number: u32,
+        amount: u32,
+    },
 }
 
-impl PendingHandChoiceEffect {
+impl PendingDecision {
     #[must_use]
-    pub const fn new(
+    pub const fn optional_effect(controller_index: usize, stack_object_number: u32) -> Self {
+        Self::OptionalEffect {
+            controller_index,
+            stack_object_number,
+        }
+    }
+
+    #[must_use]
+    pub const fn hand_choice(
         controller_index: usize,
         stack_object_number: u32,
         kind: PendingHandChoiceKind,
     ) -> Self {
-        Self {
+        Self::HandChoice {
             controller_index,
             stack_object_number,
             kind,
@@ -91,32 +85,8 @@ impl PendingHandChoiceEffect {
     }
 
     #[must_use]
-    pub const fn controller_index(&self) -> usize {
-        self.controller_index
-    }
-
-    #[must_use]
-    pub const fn stack_object_number(&self) -> u32 {
-        self.stack_object_number
-    }
-
-    #[must_use]
-    pub const fn kind(&self) -> PendingHandChoiceKind {
-        self.kind
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct PendingScryEffect {
-    controller_index: usize,
-    stack_object_number: u32,
-    amount: u32,
-}
-
-impl PendingScryEffect {
-    #[must_use]
-    pub const fn new(controller_index: usize, stack_object_number: u32, amount: u32) -> Self {
-        Self {
+    pub const fn scry(controller_index: usize, stack_object_number: u32, amount: u32) -> Self {
+        Self::Scry {
             controller_index,
             stack_object_number,
             amount,
@@ -125,17 +95,35 @@ impl PendingScryEffect {
 
     #[must_use]
     pub const fn controller_index(&self) -> usize {
-        self.controller_index
+        match self {
+            Self::OptionalEffect {
+                controller_index, ..
+            }
+            | Self::HandChoice {
+                controller_index, ..
+            }
+            | Self::Scry {
+                controller_index, ..
+            } => *controller_index,
+        }
     }
 
     #[must_use]
     pub const fn stack_object_number(&self) -> u32 {
-        self.stack_object_number
-    }
-
-    #[must_use]
-    pub const fn amount(&self) -> u32 {
-        self.amount
+        match self {
+            Self::OptionalEffect {
+                stack_object_number,
+                ..
+            }
+            | Self::HandChoice {
+                stack_object_number,
+                ..
+            }
+            | Self::Scry {
+                stack_object_number,
+                ..
+            } => *stack_object_number,
+        }
     }
 }
 
@@ -150,9 +138,7 @@ pub struct Game {
     card_locations: AggregateCardLocationIndex,
     stack: StackZone,
     priority: Option<PriorityState>,
-    pending_optional_effect: Option<PendingOptionalEffect>,
-    pending_hand_choice_effect: Option<PendingHandChoiceEffect>,
-    pending_scry_effect: Option<PendingScryEffect>,
+    pending_decision: Option<PendingDecision>,
     terminal_state: TerminalState,
 }
 
@@ -185,9 +171,7 @@ impl Game {
             card_locations,
             stack: StackZone::empty(),
             priority: None,
-            pending_optional_effect: None,
-            pending_hand_choice_effect: None,
-            pending_scry_effect: None,
+            pending_decision: None,
             terminal_state,
         })
     }
@@ -228,18 +212,8 @@ impl Game {
     }
 
     #[must_use]
-    pub const fn pending_optional_effect(&self) -> Option<&PendingOptionalEffect> {
-        self.pending_optional_effect.as_ref()
-    }
-
-    #[must_use]
-    pub const fn pending_hand_choice_effect(&self) -> Option<&PendingHandChoiceEffect> {
-        self.pending_hand_choice_effect.as_ref()
-    }
-
-    #[must_use]
-    pub const fn pending_scry_effect(&self) -> Option<&PendingScryEffect> {
-        self.pending_scry_effect.as_ref()
+    pub const fn pending_decision(&self) -> Option<&PendingDecision> {
+        self.pending_decision.as_ref()
     }
 
     #[must_use]

@@ -57,7 +57,10 @@ fn may_trigger_surfaces_a_pending_optional_choice_at_resolution_time() {
 
     assert_eq!(game.stack().len(), 1);
     assert!(game.priority().is_none());
-    assert!(game.pending_optional_effect().is_some());
+    assert!(matches!(
+        game.pending_decision(),
+        Some(demonictutor::PendingDecision::OptionalEffect { .. })
+    ));
 }
 
 #[test]
@@ -95,7 +98,7 @@ fn may_trigger_does_nothing_when_controller_answers_no() {
     assert_eq!(game.stack().len(), 0);
     assert_eq!(game.players()[0].life(), 20);
     assert!(game.priority().is_some());
-    assert!(game.pending_optional_effect().is_none());
+    assert!(game.pending_decision().is_none());
 }
 
 #[test]
@@ -168,6 +171,9 @@ fn only_the_optional_effect_controller_can_answer_the_pending_choice() {
         Err(DomainError::Game(GameError::NotOptionalEffectController { current, requested }))
             if current == PlayerId::new("player-1") && requested == PlayerId::new("player-2")
     ));
-    assert!(game.pending_optional_effect().is_some());
+    assert!(matches!(
+        game.pending_decision(),
+        Some(demonictutor::PendingDecision::OptionalEffect { .. })
+    ));
     assert_eq!(game.stack().len(), 1);
 }
