@@ -136,6 +136,37 @@ impl CardInstance {
         }
     }
 
+    #[must_use]
+    pub fn new_keyworded_creature_token(
+        id: CardInstanceId,
+        definition_id: CardDefinitionId,
+        power: u32,
+        toughness: u32,
+        keywords: KeywordAbilitySet,
+    ) -> Self {
+        Self {
+            id,
+            owner_id: None,
+            face: CardFace {
+                definition: Arc::new(CardDefinition::for_card_type(
+                    definition_id,
+                    0,
+                    &CardType::Creature,
+                )),
+            },
+            runtime: CardRuntime {
+                tapped: false,
+                loyalty: 0,
+                loyalty_ability_activated_this_turn: false,
+                is_token: true,
+                attached_to: None,
+                kind: CardRuntimeKind::Creature(CreatureRuntime::new_with_keywords(
+                    power, toughness, keywords,
+                )),
+            },
+        }
+    }
+
     pub(crate) fn ensure_owner(&mut self, owner_id: &PlayerId) {
         if self.owner_id.is_none() {
             self.owner_id = Some(owner_id.clone());

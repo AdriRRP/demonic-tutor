@@ -160,6 +160,21 @@ pub fn create_vanilla_creature_token_sorcery_card(
         ))
 }
 
+pub fn create_keyworded_creature_token_sorcery_card(
+    name: &str,
+    mana_cost: u32,
+    power: u32,
+    toughness: u32,
+    keyword: KeywordAbility,
+) -> LibraryCard {
+    LibraryCard::new(CardDefinitionId::new(name), CardType::Sorcery, mana_cost)
+        .with_supported_spell_rules(SupportedSpellRules::create_keyworded_creature_token(
+            power,
+            toughness,
+            KeywordAbilitySet::only(keyword),
+        ))
+}
+
 pub fn put_counter_on_target_creature_sorcery_card(name: &str, mana_cost: u32) -> LibraryCard {
     LibraryCard::new(CardDefinitionId::new(name), CardType::Sorcery, mana_cost)
         .with_supported_spell_rules(

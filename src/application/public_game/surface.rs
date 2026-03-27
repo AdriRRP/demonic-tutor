@@ -371,7 +371,7 @@ fn battlefield_card_view(card: &CardInstance) -> PublicBattlefieldCardView {
 }
 
 fn keyword_list(card: &CardInstance) -> Vec<KeywordAbility> {
-    const ORDER: [KeywordAbility; 12] = [
+    const ORDER: [KeywordAbility; 13] = [
         KeywordAbility::Flying,
         KeywordAbility::Reach,
         KeywordAbility::Haste,
@@ -384,6 +384,7 @@ fn keyword_list(card: &CardInstance) -> Vec<KeywordAbility> {
         KeywordAbility::Menace,
         KeywordAbility::Hexproof,
         KeywordAbility::Indestructible,
+        KeywordAbility::Defender,
     ];
 
     let Some(keywords) = card.keyword_abilities() else {

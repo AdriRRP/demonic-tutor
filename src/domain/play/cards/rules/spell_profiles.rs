@@ -1,5 +1,7 @@
 //! Supports focused spell targeting and resolution profiles.
 
+use crate::domain::play::cards::KeywordAbilitySet;
+
 use super::{SingleTargetRule, SpellTargetKind};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -30,18 +32,43 @@ pub enum SpellResolutionProfile {
     TapTargetCreature,
     UntapTargetCreature,
     CannotBlockTargetCreatureThisTurn,
-    DealDamage { damage: u32 },
-    GainLife { amount: u32 },
-    LoseLife { amount: u32 },
-    ChooseOneTargetPlayerGainOrLoseLife { gain_amount: u32, lose_amount: u32 },
-    Scry { amount: u32 },
-    LootDrawThenDiscard { draw_count: u32 },
-    RummageDiscardThenDraw { draw_count: u32 },
-    CreateVanillaCreatureToken { power: u32, toughness: u32 },
+    DealDamage {
+        damage: u32,
+    },
+    GainLife {
+        amount: u32,
+    },
+    LoseLife {
+        amount: u32,
+    },
+    ChooseOneTargetPlayerGainOrLoseLife {
+        gain_amount: u32,
+        lose_amount: u32,
+    },
+    Scry {
+        amount: u32,
+    },
+    LootDrawThenDiscard {
+        draw_count: u32,
+    },
+    RummageDiscardThenDraw {
+        draw_count: u32,
+    },
+    CreateVanillaCreatureToken {
+        power: u32,
+        toughness: u32,
+    },
+    CreateKeywordedCreatureToken {
+        power: u32,
+        toughness: u32,
+        keywords: KeywordAbilitySet,
+    },
     PutPlusOnePlusOneCounterOnTargetCreature,
     ReturnTargetCreatureCardFromGraveyardToHand,
     ReanimateTargetCreatureCard,
-    MillCards { amount: u32 },
+    MillCards {
+        amount: u32,
+    },
     CounterTargetSpell,
     ReturnTargetPermanentToHand,
     DestroyTargetArtifactOrEnchantment,
@@ -49,7 +76,10 @@ pub enum SpellResolutionProfile {
     DestroyTargetCreature,
     ExileTargetCreature,
     ExileTargetCardFromGraveyard,
-    PumpTargetCreatureUntilEndOfTurn { power: u32, toughness: u32 },
+    PumpTargetCreatureUntilEndOfTurn {
+        power: u32,
+        toughness: u32,
+    },
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -154,6 +184,22 @@ impl SupportedSpellRules {
         Self {
             targeting: SpellTargetingProfile::None,
             resolution: SpellResolutionProfile::CreateVanillaCreatureToken { power, toughness },
+        }
+    }
+
+    #[must_use]
+    pub const fn create_keyworded_creature_token(
+        power: u32,
+        toughness: u32,
+        keywords: KeywordAbilitySet,
+    ) -> Self {
+        Self {
+            targeting: SpellTargetingProfile::None,
+            resolution: SpellResolutionProfile::CreateKeywordedCreatureToken {
+                power,
+                toughness,
+                keywords,
+            },
         }
     }
 

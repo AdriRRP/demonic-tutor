@@ -10,14 +10,16 @@ Slice count:
 
 Slices:
 
-- `support-keyworded-creature-token-creation`
-  - support tokens that enter with explicit supported keywords such as flying or vigilance
-- `support-multiple-token-creation-from-one-effect`
-  - support effects that create more than one token at resolution
-- `support-distribute-plus-one-plus-one-counters`
-  - support placing counters across one or more chosen creatures in a bounded targeting subset
-- `support-attack-and-combat-damage-triggers`
-  - support first explicit attack triggers and combat-damage-to-player triggers
+- implemented:
+  - `support-keyworded-creature-token-creation`
+    - support tokens that enter with explicit supported keywords such as flying or vigilance
+- pending:
+  - `support-multiple-token-creation-from-one-effect`
+    - support effects that create more than one token at resolution
+  - `support-distribute-plus-one-plus-one-counters`
+    - support placing counters across one or more chosen creatures in a bounded targeting subset
+  - `support-attack-and-combat-damage-triggers`
+    - support first explicit attack triggers and combat-damage-to-player triggers
 
 Why this wave has high return:
 

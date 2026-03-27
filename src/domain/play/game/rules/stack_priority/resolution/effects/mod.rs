@@ -20,7 +20,10 @@ use self::{
         resolve_choose_one_target_player_life_effect, resolve_damage_effect,
         resolve_targeted_player_life_effect,
     },
-    misc::resolve_create_vanilla_creature_token_effect,
+    misc::{
+        resolve_create_keyworded_creature_token_effect,
+        resolve_create_vanilla_creature_token_effect,
+    },
     modifiers::{
         resolve_cannot_block_target_creature_effect, resolve_pump_target_creature_effect,
         resolve_put_counter_on_target_creature_effect, resolve_tap_target_creature_effect,
@@ -75,6 +78,13 @@ pub(super) fn apply_supported_spell_rules(
         } => resolve_choose_one_target_player_life_effect(&mut context, gain_amount, lose_amount),
         SpellResolutionProfile::CreateVanillaCreatureToken { power, toughness } => {
             resolve_create_vanilla_creature_token_effect(&mut context, power, toughness)
+        }
+        SpellResolutionProfile::CreateKeywordedCreatureToken {
+            power,
+            toughness,
+            keywords,
+        } => {
+            resolve_create_keyworded_creature_token_effect(&mut context, power, toughness, keywords)
         }
         SpellResolutionProfile::PutPlusOnePlusOneCounterOnTargetCreature => {
             resolve_put_counter_on_target_creature_effect(&mut context)
