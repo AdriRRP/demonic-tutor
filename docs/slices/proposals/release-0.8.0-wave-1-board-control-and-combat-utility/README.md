@@ -13,9 +13,9 @@ Slices:
 - implemented:
   - `support-tap-target-creature-effects`
     - first explicit spell corridor that taps a target creature on the battlefield
-- pending:
   - `support-untap-target-creature-effects`
-    - support explicit spells that untap a target creature for combat and activation play patterns
+    - first explicit spell corridor that untaps a target creature on the battlefield
+- pending:
   - `support-cannot-block-this-turn-effects`
     - support temporary combat restriction effects applied during the turn
   - `support-defender-and-static-cannot-attack-restrictions`

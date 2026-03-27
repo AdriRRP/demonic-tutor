@@ -18,7 +18,7 @@ use {
         targeted_exile_graveyard_card_instant_card, targeted_gain_life_instant_card,
         targeted_lose_life_instant_card, targeted_opponent_damage_instant_card,
         targeted_opponents_creature_damage_instant_card, targeted_player_damage_instant_card,
-        targeted_pump_creature_instant_card,
+        targeted_pump_creature_instant_card, untap_target_creature_instant_card,
     },
     demonictutor::{
         CardDefinitionId, CardInstanceId, CastSpellCommand, DeclareAttackersCommand, DiscardKind,
@@ -679,6 +679,141 @@ fn tap_target_creature_spell_does_not_apply_if_target_is_gone_on_resolution() {
     assert!(game.players()[0].battlefield_card(&creature_id).is_none());
     assert!(game.players()[0].graveyard_card(&creature_id).is_some());
     assert!(game.players()[0].graveyard_card(&tap_spell_id).is_some());
+}
+
+#[test]
+fn untap_target_creature_spell_untaps_the_target_creature_on_resolution() {
+    let (service, mut game) = setup_two_player_game(
+        "game-untap-target-creature",
+        filled_library(
+            vec![
+                creature_card("silvercoat", 0, 2, 2),
+                tap_target_creature_instant_card("frost-breath-lite", 0),
+                untap_target_creature_instant_card("battlefield-reprieve", 0),
+            ],
+            10,
+        ),
+        filled_library(vec![land_card("mountain")], 10),
+    );
+
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
+
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(
+                PlayerId::new("player-1"),
+                CardInstanceId::new("game-untap-target-creature-player-1-0"),
+            ),
+        )
+        .unwrap();
+    let _ = resolve_current_stack(&service, &mut game);
+
+    let creature_id = game.players()[0]
+        .battlefield_card_by_definition(&CardDefinitionId::new("silvercoat"))
+        .map(|card| card.id().clone());
+    assert!(creature_id.is_some(), "creature should be on battlefield");
+    let Some(creature_id) = creature_id else {
+        return;
+    };
+    let tap_spell_id = game.players()[0]
+        .hand_card_by_definition(&CardDefinitionId::new("frost-breath-lite"))
+        .map(|card| card.id().clone());
+    assert!(tap_spell_id.is_some(), "tap spell should be in hand");
+    let Some(tap_spell_id) = tap_spell_id else {
+        return;
+    };
+    let untap_spell_id = game.players()[0]
+        .hand_card_by_definition(&CardDefinitionId::new("battlefield-reprieve"))
+        .map(|card| card.id().clone());
+    assert!(untap_spell_id.is_some(), "untap spell should be in hand");
+    let Some(untap_spell_id) = untap_spell_id else {
+        return;
+    };
+
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), tap_spell_id)
+                .with_target(SpellTarget::Creature(creature_id.clone())),
+        )
+        .unwrap();
+    let _ = resolve_current_stack(&service, &mut game);
+
+    assert!(game.players()[0]
+        .battlefield_card(&creature_id)
+        .is_some_and(demonictutor::CardInstance::is_tapped));
+
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), untap_spell_id)
+                .with_target(SpellTarget::Creature(creature_id.clone())),
+        )
+        .unwrap();
+
+    let _ = resolve_current_stack(&service, &mut game);
+
+    assert!(!game.players()[0]
+        .battlefield_card(&creature_id)
+        .is_some_and(demonictutor::CardInstance::is_tapped));
+}
+
+#[test]
+fn untap_target_creature_spell_is_a_no_op_for_an_untapped_target() {
+    let (service, mut game) = setup_two_player_game(
+        "game-untap-target-creature-no-op",
+        filled_library(
+            vec![
+                creature_card("silvercoat", 0, 2, 2),
+                untap_target_creature_instant_card("battlefield-reprieve", 0),
+            ],
+            10,
+        ),
+        filled_library(vec![land_card("mountain")], 10),
+    );
+
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
+
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(
+                PlayerId::new("player-1"),
+                CardInstanceId::new("game-untap-target-creature-no-op-player-1-0"),
+            ),
+        )
+        .unwrap();
+    let _ = resolve_current_stack(&service, &mut game);
+
+    let creature_id = game.players()[0]
+        .battlefield_card_by_definition(&CardDefinitionId::new("silvercoat"))
+        .map(|card| card.id().clone());
+    assert!(creature_id.is_some(), "creature should be on battlefield");
+    let Some(creature_id) = creature_id else {
+        return;
+    };
+    let untap_spell_id = game.players()[0]
+        .hand_card_by_definition(&CardDefinitionId::new("battlefield-reprieve"))
+        .map(|card| card.id().clone());
+    assert!(untap_spell_id.is_some(), "untap spell should be in hand");
+    let Some(untap_spell_id) = untap_spell_id else {
+        return;
+    };
+
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), untap_spell_id)
+                .with_target(SpellTarget::Creature(creature_id.clone())),
+        )
+        .unwrap();
+
+    let _ = resolve_current_stack(&service, &mut game);
+
+    assert!(!game.players()[0]
+        .battlefield_card(&creature_id)
+        .is_some_and(demonictutor::CardInstance::is_tapped));
 }
 
 #[test]

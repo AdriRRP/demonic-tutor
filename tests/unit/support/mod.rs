@@ -172,6 +172,11 @@ pub fn tap_target_creature_instant_card(name: &str, mana_cost: u32) -> LibraryCa
         .with_supported_spell_rules(SupportedSpellRules::tap_target_creature())
 }
 
+pub fn untap_target_creature_instant_card(name: &str, mana_cost: u32) -> LibraryCard {
+    LibraryCard::new(CardDefinitionId::new(name), CardType::Instant, mana_cost)
+        .with_supported_spell_rules(SupportedSpellRules::untap_target_creature())
+}
+
 pub fn self_growing_creature_card(
     name: &str,
     mana_cost: u32,

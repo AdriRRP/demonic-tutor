@@ -28,6 +28,7 @@ pub enum SpellResolutionProfile {
     None,
     AttachToTargetCreature,
     TapTargetCreature,
+    UntapTargetCreature,
     DealDamage { damage: u32 },
     GainLife { amount: u32 },
     LoseLife { amount: u32 },
@@ -172,6 +173,16 @@ impl SupportedSpellRules {
                 SingleTargetRule::any_creature_on_battlefield(),
             ),
             resolution: SpellResolutionProfile::TapTargetCreature,
+        }
+    }
+
+    #[must_use]
+    pub const fn untap_target_creature() -> Self {
+        Self {
+            targeting: SpellTargetingProfile::ExactlyOne(
+                SingleTargetRule::any_creature_on_battlefield(),
+            ),
+            resolution: SpellResolutionProfile::UntapTargetCreature,
         }
     }
 

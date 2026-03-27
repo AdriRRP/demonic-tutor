@@ -23,7 +23,7 @@ use self::{
     misc::resolve_create_vanilla_creature_token_effect,
     modifiers::{
         resolve_pump_target_creature_effect, resolve_put_counter_on_target_creature_effect,
-        resolve_tap_target_creature_effect,
+        resolve_tap_target_creature_effect, resolve_untap_target_creature_effect,
     },
     removal::{
         resolve_destroy_target_artifact_or_enchantment_effect,
@@ -80,6 +80,9 @@ pub(super) fn apply_supported_spell_rules(
         }
         SpellResolutionProfile::TapTargetCreature => {
             resolve_tap_target_creature_effect(&mut context)
+        }
+        SpellResolutionProfile::UntapTargetCreature => {
+            resolve_untap_target_creature_effect(&mut context)
         }
         SpellResolutionProfile::ReturnTargetCreatureCardFromGraveyardToHand => {
             resolve_return_target_creature_from_graveyard_effect(&mut context)
