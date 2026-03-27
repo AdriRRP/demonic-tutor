@@ -204,28 +204,40 @@ fn move_resolved_spell_to_destination(
 
 fn apply_attached_aura_effects(
     players: &mut [Player],
+    card_locations: &AggregateCardLocationIndex,
     controller_index: usize,
     aura_id: &crate::domain::play::ids::CardInstanceId,
-) {
+) -> Result<(), crate::domain::play::errors::DomainError> {
     let Some(card) = players[controller_index].battlefield_card(aura_id) else {
-        return;
+        return Ok(());
     };
     let Some(target_id) = card.attached_to().cloned() else {
-        return;
+        return Ok(());
     };
     let attached_stat_boost = card.attached_stat_boost();
     let attached_combat_restriction = card.attached_combat_restriction();
 
     if attached_stat_boost.is_none() && attached_combat_restriction.is_none() {
-        return;
+        return Ok(());
     }
 
-    let Some(target) = players
-        .iter_mut()
-        .find_map(|player| player.battlefield_card_mut(&target_id))
-    else {
-        return;
-    };
+    let target_location = card_locations.location(&target_id).ok_or_else(|| {
+        crate::domain::play::errors::DomainError::Game(
+            crate::domain::play::errors::GameError::InternalInvariantViolation(format!(
+                "missing attached aura target {target_id} during aura resolution"
+            )),
+        )
+    })?;
+    let target = players[target_location.player_index()]
+        .card_mut_by_handle(target_location.handle())
+        .ok_or_else(|| {
+            crate::domain::play::errors::DomainError::Game(
+                crate::domain::play::errors::GameError::InternalInvariantViolation(format!(
+                    "missing attached aura target handle {} during aura resolution",
+                    target_location.handle().index()
+                )),
+            )
+        })?;
 
     if let Some(attached_stat_boost) = attached_stat_boost {
         target
@@ -234,6 +246,8 @@ fn apply_attached_aura_effects(
     if attached_combat_restriction.is_some() {
         target.add_attached_cant_attack_or_block();
     }
+
+    Ok(())
 }
 
 fn move_resolved_aura_to_its_destination(
@@ -273,7 +287,7 @@ fn move_resolved_aura_to_its_destination(
                         ),
                     )
                 })?;
-            apply_attached_aura_effects(players, controller_index, &aura_id);
+            apply_attached_aura_effects(players, card_locations, controller_index, &aura_id)?;
             Ok(SpellCastOutcome::EnteredBattlefield)
         }
         (super::spell_effects::SpellTargetLegality::Legal, Some(_)) => {

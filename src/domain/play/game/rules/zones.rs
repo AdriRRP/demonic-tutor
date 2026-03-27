@@ -37,49 +37,37 @@ fn owner_index_for_battlefield_handle(
 
 fn remove_attached_aura_effects_for_battlefield_handle(
     players: &mut [Player],
-    card_locations: Option<&AggregateCardLocationIndex>,
+    card_locations: &AggregateCardLocationIndex,
     controller_index: usize,
     handle: PlayerCardHandle,
-) {
+) -> Result<(), DomainError> {
     let Some(card) = players[controller_index].card_by_handle(handle) else {
-        return;
+        return Ok(());
     };
     let Some(attached_to) = card.attached_to().cloned() else {
-        return;
+        return Ok(());
     };
 
     let attached_stat_boost = card.attached_stat_boost();
     let attached_combat_restriction = card.attached_combat_restriction();
 
     if attached_stat_boost.is_none() && attached_combat_restriction.is_none() {
-        return;
+        return Ok(());
     }
 
-    if let Some(locations) = card_locations {
-        if let Some(target_location) = locations.location(&attached_to) {
-            if let Some(target) =
-                players[target_location.player_index()].card_mut_by_handle(target_location.handle())
-            {
-                if let Some(attached_stat_boost) = attached_stat_boost {
-                    target.remove_attached_stat_bonus(
-                        attached_stat_boost.power(),
-                        attached_stat_boost.toughness(),
-                    );
-                }
-                if attached_combat_restriction.is_some() {
-                    target.remove_attached_cant_attack_or_block();
-                }
-                return;
-            }
-        }
-    }
-
-    let Some(target) = players
-        .iter_mut()
-        .find_map(|player| player.battlefield_card_mut(&attached_to))
-    else {
-        return;
-    };
+    let target_location = card_locations.location(&attached_to).ok_or_else(|| {
+        DomainError::Game(GameError::InternalInvariantViolation(format!(
+            "missing attached aura target {attached_to} during battlefield detach"
+        )))
+    })?;
+    let target = players[target_location.player_index()]
+        .card_mut_by_handle(target_location.handle())
+        .ok_or_else(|| {
+            DomainError::Game(GameError::InternalInvariantViolation(format!(
+                "missing attached aura target handle {} during battlefield detach",
+                target_location.handle().index()
+            )))
+        })?;
 
     if let Some(attached_stat_boost) = attached_stat_boost {
         target.remove_attached_stat_bonus(
@@ -90,6 +78,35 @@ fn remove_attached_aura_effects_for_battlefield_handle(
     if attached_combat_restriction.is_some() {
         target.remove_attached_cant_attack_or_block();
     }
+
+    Ok(())
+}
+
+fn detach_aura_effects(
+    players: &mut [Player],
+    card_locations: Option<&AggregateCardLocationIndex>,
+    controller_index: usize,
+    handle: PlayerCardHandle,
+) -> Result<(), DomainError> {
+    let rebuilt_locations = card_locations
+        .is_none()
+        .then(|| AggregateCardLocationIndex::from_players(players));
+    let locations = match (card_locations, rebuilt_locations.as_ref()) {
+        (Some(locations), _) => locations,
+        (None, Some(rebuilt_locations)) => rebuilt_locations,
+        (None, None) => {
+            return Err(DomainError::Game(GameError::InternalInvariantViolation(
+                "aura detach requires either the current location index or a rebuilt index".into(),
+            )))
+        }
+    };
+
+    remove_attached_aura_effects_for_battlefield_handle(
+        players,
+        locations,
+        controller_index,
+        handle,
+    )
 }
 
 pub(crate) fn move_battlefield_handle_to_owner_graveyard_by_index(
@@ -99,12 +116,7 @@ pub(crate) fn move_battlefield_handle_to_owner_graveyard_by_index(
     handle: PlayerCardHandle,
 ) -> Result<(PlayerId, CardInstanceId), DomainError> {
     let owner_index = owner_index_for_battlefield_handle(players, controller_index, handle)?;
-    remove_attached_aura_effects_for_battlefield_handle(
-        players,
-        card_locations,
-        controller_index,
-        handle,
-    );
+    detach_aura_effects(players, card_locations, controller_index, handle)?;
     let card_id = players[controller_index]
         .card_by_handle(handle)
         .map(|card| card.id().clone())
@@ -157,12 +169,7 @@ pub(crate) fn move_battlefield_handle_to_owner_hand_by_index(
     handle: PlayerCardHandle,
 ) -> Result<(PlayerId, CardInstanceId), DomainError> {
     let owner_index = owner_index_for_battlefield_handle(players, controller_index, handle)?;
-    remove_attached_aura_effects_for_battlefield_handle(
-        players,
-        card_locations,
-        controller_index,
-        handle,
-    );
+    detach_aura_effects(players, card_locations, controller_index, handle)?;
     let card_id = players[controller_index]
         .card_by_handle(handle)
         .map(|card| card.id().clone())
@@ -306,11 +313,17 @@ pub fn exile_card_from_battlefield_by_index(
 pub fn exile_card_from_battlefield_handle_by_index(
     game_id: &GameId,
     players: &mut [Player],
+    card_locations: &AggregateCardLocationIndex,
     player_index: usize,
     handle: PlayerCardHandle,
 ) -> Result<CardExiled, DomainError> {
     let owner_index = owner_index_for_battlefield_handle(players, player_index, handle)?;
-    remove_attached_aura_effects_for_battlefield_handle(players, None, player_index, handle);
+    remove_attached_aura_effects_for_battlefield_handle(
+        players,
+        card_locations,
+        player_index,
+        handle,
+    )?;
     let card_id = players[player_index]
         .card_by_handle(handle)
         .map(|card| card.id().clone())
@@ -480,8 +493,15 @@ mod tests {
             .battlefield_handle(&card_id)
             .expect("controller battlefield should contain the foreign-owned card");
 
-        let event = exile_card_from_battlefield_handle_by_index(&game_id, &mut players, 0, handle)
-            .expect("battlefield exile should succeed");
+        let card_locations = AggregateCardLocationIndex::from_players(&players);
+        let event = exile_card_from_battlefield_handle_by_index(
+            &game_id,
+            &mut players,
+            &card_locations,
+            0,
+            handle,
+        )
+        .expect("battlefield exile should succeed");
 
         assert_eq!(event.player_id, PlayerId::new("p2"));
         assert!(players[0].battlefield_card(&card_id).is_none());

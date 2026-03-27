@@ -125,6 +125,7 @@ impl Game {
                 rules::zones::exile_card_from_battlefield_handle_by_index(
                     &self.id,
                     &mut self.players,
+                    &self.card_locations,
                     location.player_index(),
                     location.handle(),
                 )

@@ -23,11 +23,12 @@ struct PublicSurfaceState {
 
 #[must_use]
 pub fn game_view(game: &Game) -> PublicGameView {
+    let active_player_id = game.active_player().clone();
     let players = game
         .players()
         .iter()
         .enumerate()
-        .map(|(index, player)| player_view(game, index, player))
+        .map(|(index, player)| player_view(player, index, &active_player_id))
         .collect();
     let stack = game
         .stack()
@@ -38,7 +39,7 @@ pub fn game_view(game: &Game) -> PublicGameView {
 
     PublicGameView {
         game_id: game.id().clone(),
-        active_player_id: game.active_player().clone(),
+        active_player_id,
         phase: *game.phase(),
         turn_number: game.turn_number(),
         priority: game.priority().map(|priority| PublicPriorityView {
@@ -266,15 +267,10 @@ pub fn public_command_result(
     }
 }
 
-fn player_view(game: &Game, index: usize, player: &Player) -> PublicPlayerView {
+fn player_view(player: &Player, _index: usize, active_player_id: &PlayerId) -> PublicPlayerView {
     PublicPlayerView {
         player_id: player.id().clone(),
-        is_active: index
-            == game
-                .players()
-                .iter()
-                .position(|candidate| candidate.id() == game.active_player())
-                .unwrap_or_default(),
+        is_active: player.id() == active_player_id,
         life: player.life(),
         mana_total: player.mana(),
         hand_count: player.hand_size(),

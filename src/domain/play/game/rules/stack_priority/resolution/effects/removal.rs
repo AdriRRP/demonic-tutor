@@ -65,6 +65,7 @@ fn exile_creature_from_battlefield(
     zones::exile_card_from_battlefield_handle_by_index(
         game_id,
         players,
+        card_locations,
         location.player_index(),
         location.handle(),
     )
