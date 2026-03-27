@@ -235,6 +235,16 @@ pub fn reanimate_target_creature_card_sorcery_card(name: &str, mana_cost: u32) -
         .with_supported_spell_rules(SupportedSpellRules::reanimate_target_creature_card())
 }
 
+pub fn return_target_instant_or_sorcery_card_from_graveyard_to_hand_sorcery_card(
+    name: &str,
+    mana_cost: u32,
+) -> LibraryCard {
+    LibraryCard::new(CardDefinitionId::new(name), CardType::Sorcery, mana_cost)
+        .with_supported_spell_rules(
+            SupportedSpellRules::return_target_instant_or_sorcery_card_from_graveyard_to_hand(),
+        )
+}
+
 pub fn mill_target_player_sorcery_card(name: &str, mana_cost: u32, amount: u32) -> LibraryCard {
     LibraryCard::new(CardDefinitionId::new(name), CardType::Sorcery, mana_cost)
         .with_supported_spell_rules(SupportedSpellRules::mill_target_player(amount))

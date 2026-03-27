@@ -24,6 +24,24 @@ fn return_creature_card_from_graveyard_to_hand(
     Some(target_id.clone())
 }
 
+fn return_instant_or_sorcery_card_from_graveyard_to_hand(
+    players: &mut [crate::domain::play::game::Player],
+    card_locations: &crate::domain::play::game::AggregateCardLocationIndex,
+    target_id: &CardInstanceId,
+) -> Option<CardInstanceId> {
+    let location = card_locations.location(target_id)?;
+    (location.zone() == crate::domain::play::game::PlayerCardZone::Graveyard).then_some(())?;
+    let card = players[location.player_index()].card_by_handle(location.handle())?;
+    matches!(
+        card.card_type(),
+        crate::domain::play::cards::CardType::Instant
+            | crate::domain::play::cards::CardType::Sorcery
+    )
+    .then_some(())?;
+    players[location.player_index()].move_graveyard_handle_to_hand(location.handle())?;
+    Some(target_id.clone())
+}
+
 fn reanimate_creature_card_to_battlefield(
     players: &mut [crate::domain::play::game::Player],
     card_locations: &crate::domain::play::game::AggregateCardLocationIndex,
@@ -135,6 +153,53 @@ pub(super) fn resolve_reanimate_target_creature_effect(
         )
         .into_iter()
         .collect(),
+        _ => Vec::new(),
+    };
+
+    review_state_based_actions_after_effect(
+        context.game_id,
+        context.players,
+        context.terminal_state,
+        EffectOutcomeSeed {
+            card_exiled: None,
+            card_discarded: None,
+            life_changed: None,
+            creatures_died: Vec::new(),
+            moved_cards,
+        },
+    )
+}
+
+pub(super) fn resolve_return_target_instant_or_sorcery_from_graveyard_effect(
+    context: &mut ResolutionContext<'_>,
+) -> Result<SpellResolutionSideEffects, DomainError> {
+    let Some(target) = resolve_target_legality_for_effect(
+        context.players,
+        context.card_locations,
+        context.stack,
+        context.controller_index,
+        context.supported_spell_rules,
+        context.target,
+        "graveyard spell recursion resolved without a targeting profile",
+    )?
+    else {
+        return review_state_based_actions(
+            context.game_id,
+            context.players,
+            context.terminal_state,
+        );
+    };
+
+    let moved_cards = match target {
+        SpellTarget::GraveyardCard(card_id) => {
+            return_instant_or_sorcery_card_from_graveyard_to_hand(
+                context.players,
+                context.card_locations,
+                &card_id,
+            )
+            .into_iter()
+            .collect()
+        }
         _ => Vec::new(),
     };
 

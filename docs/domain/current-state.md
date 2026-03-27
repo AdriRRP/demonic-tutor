@@ -144,6 +144,7 @@ The domain currently includes:
 - the current combat-relative targeted-spell subset is currently exercised in the post-attackers and post-blockers windows, including lethal and nonlethal damage against attacking, blocking, controlled-attacking, controlled-blocking, opponent-controlled attacking, and opponent-controlled blocking creatures
 - the current spell-effect subset also supports first direct `destroy target creature`, `exile target creature`, `exile target card from graveyard`, and minimal `+N/+N until end of turn` corridors outside combat in `FirstMain`
 - the current graveyard-recursion subset supports returning a target creature card to hand from any graveyard and reanimating a target creature card from the caster's own graveyard onto the resolving spell controller's battlefield
+- the current graveyard-recursion subset also supports returning a target instant or sorcery card from a graveyard to its owner's hand
 - cards now preserve persistent owner identity even if they temporarily live on another player's battlefield, so death, bounce, and exile still route them back to the owner's zones
 - supported Aura detach cleanup now uses explicit aggregate location lookup on the main zone-move corridors when that shared index is available
 - the current mill subset mills up to `N` cards, stopping early if the target library runs out

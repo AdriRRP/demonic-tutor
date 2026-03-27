@@ -70,6 +70,7 @@ pub enum SpellResolutionProfile {
     },
     PutPlusOnePlusOneCounterOnTargetCreature,
     ReturnTargetCreatureCardFromGraveyardToHand,
+    ReturnTargetInstantOrSorceryCardFromGraveyardToHand,
     ReanimateTargetCreatureCard,
     MillCards {
         amount: u32,
@@ -271,6 +272,16 @@ impl SupportedSpellRules {
                 SingleTargetRule::any_card_in_a_graveyard(),
             ),
             resolution: SpellResolutionProfile::ReturnTargetCreatureCardFromGraveyardToHand,
+        }
+    }
+
+    #[must_use]
+    pub const fn return_target_instant_or_sorcery_card_from_graveyard_to_hand() -> Self {
+        Self {
+            targeting: SpellTargetingProfile::ExactlyOne(
+                SingleTargetRule::any_card_in_a_graveyard(),
+            ),
+            resolution: SpellResolutionProfile::ReturnTargetInstantOrSorceryCardFromGraveyardToHand,
         }
     }
 

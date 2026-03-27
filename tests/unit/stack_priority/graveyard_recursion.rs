@@ -7,8 +7,10 @@ use {
         cast_spell_and_resolve, creature_card, etb_life_gain_creature_card, filled_library,
         graveyard_cast_instant_card, mill_self_sorcery_card, mill_target_player_sorcery_card,
         player, reanimate_target_creature_card_sorcery_card,
-        return_target_creature_card_from_graveyard_to_hand_sorcery_card, setup_two_player_game,
-        target_player_discards_chosen_card_sorcery_card, targeted_destroy_creature_instant_card,
+        return_target_creature_card_from_graveyard_to_hand_sorcery_card,
+        return_target_instant_or_sorcery_card_from_graveyard_to_hand_sorcery_card,
+        setup_two_player_game, target_player_discards_chosen_card_sorcery_card,
+        targeted_destroy_creature_instant_card,
     },
     demonictutor::{CastSpellCommand, PassPriorityCommand, PlayerId, SpellChoice, SpellTarget},
 };
@@ -87,6 +89,55 @@ fn supported_spell_can_return_target_creature_card_from_graveyard_to_hand() {
     let owner = player(&game, "player-1");
     assert!(owner.hand_card(&bear_id).is_some());
     assert!(owner.graveyard_card(&bear_id).is_none());
+}
+
+#[test]
+fn supported_spell_can_return_target_instant_card_from_graveyard_to_hand() {
+    let (service, mut game) = setup_two_player_game(
+        "game-return-instant-from-graveyard",
+        filled_library(
+            vec![
+                graveyard_cast_instant_card("echo-bolt", 0, 2),
+                return_target_instant_or_sorcery_card_from_graveyard_to_hand_sorcery_card(
+                    "raise-spark",
+                    0,
+                ),
+            ],
+            10,
+        ),
+        filled_library(Vec::new(), 10),
+    );
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
+
+    let bolt_id = player(&game, "player-1")
+        .hand_card_by_definition(&demonictutor::CardDefinitionId::new("echo-bolt"))
+        .unwrap()
+        .id()
+        .clone();
+    cast_with_target_and_resolve(
+        &service,
+        &mut game,
+        "player-1",
+        bolt_id.clone(),
+        SpellTarget::Player(PlayerId::new("player-2")),
+    );
+
+    let recursion_id = player(&game, "player-1")
+        .hand_card_by_definition(&demonictutor::CardDefinitionId::new("raise-spark"))
+        .unwrap()
+        .id()
+        .clone();
+    cast_with_target_and_resolve(
+        &service,
+        &mut game,
+        "player-1",
+        recursion_id,
+        SpellTarget::GraveyardCard(bolt_id.clone()),
+    );
+
+    let owner = player(&game, "player-1");
+    assert!(owner.hand_card(&bolt_id).is_some());
+    assert!(owner.graveyard_card(&bolt_id).is_none());
 }
 
 #[test]

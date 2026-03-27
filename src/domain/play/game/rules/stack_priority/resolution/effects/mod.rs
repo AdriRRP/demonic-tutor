@@ -15,6 +15,7 @@ use self::{
         resolve_exile_target_graveyard_card_effect, resolve_mill_effect,
         resolve_reanimate_target_creature_effect,
         resolve_return_target_creature_from_graveyard_effect,
+        resolve_return_target_instant_or_sorcery_from_graveyard_effect,
     },
     life_and_damage::{
         resolve_choose_one_target_player_life_effect, resolve_damage_effect,
@@ -111,6 +112,9 @@ pub(super) fn apply_supported_spell_rules(
         }
         SpellResolutionProfile::ReturnTargetCreatureCardFromGraveyardToHand => {
             resolve_return_target_creature_from_graveyard_effect(&mut context)
+        }
+        SpellResolutionProfile::ReturnTargetInstantOrSorceryCardFromGraveyardToHand => {
+            resolve_return_target_instant_or_sorcery_from_graveyard_effect(&mut context)
         }
         SpellResolutionProfile::ReanimateTargetCreatureCard => {
             resolve_reanimate_target_creature_effect(&mut context)
