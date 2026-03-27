@@ -11,7 +11,7 @@ use {
         destroy_target_artifact_or_enchantment_instant_card, enchantment_card, filled_library,
         land_card, resolve_top_stack_with_passes, return_target_permanent_to_hand_instant_card,
         setup_two_player_game, stat_boost_creature_aura_enchantment_card,
-        target_player_discards_chosen_card_sorcery_card,
+        tap_target_creature_instant_card, target_player_discards_chosen_card_sorcery_card,
         targeted_attacking_creature_damage_instant_card,
         targeted_controlled_creature_damage_instant_card, targeted_damage_instant_card,
         targeted_destroy_creature_instant_card, targeted_exile_creature_instant_card,
@@ -545,6 +545,140 @@ fn modal_choose_one_spell_can_make_the_target_player_lose_life() {
 
     assert_eq!(game.players()[0].life(), 20);
     assert_eq!(game.players()[1].life(), 18);
+}
+
+#[test]
+fn tap_target_creature_spell_taps_the_target_creature_on_resolution() {
+    let (service, mut game) = setup_two_player_game(
+        "game-tap-target-creature",
+        filled_library(
+            vec![
+                creature_card("silvercoat", 0, 2, 2),
+                tap_target_creature_instant_card("frost-breath-lite", 0),
+            ],
+            10,
+        ),
+        filled_library(vec![land_card("mountain")], 10),
+    );
+
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
+
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(
+                PlayerId::new("player-1"),
+                CardInstanceId::new("game-tap-target-creature-player-1-0"),
+            ),
+        )
+        .unwrap();
+    let _ = resolve_current_stack(&service, &mut game);
+
+    let creature_id = game.players()[0]
+        .battlefield_card_by_definition(&CardDefinitionId::new("silvercoat"))
+        .map(|card| card.id().clone());
+    assert!(creature_id.is_some(), "creature should be on battlefield");
+    let Some(creature_id) = creature_id else {
+        return;
+    };
+    let tap_spell_id = game.players()[0]
+        .hand_card_by_definition(&CardDefinitionId::new("frost-breath-lite"))
+        .map(|card| card.id().clone());
+    assert!(tap_spell_id.is_some(), "tap spell should be in hand");
+    let Some(tap_spell_id) = tap_spell_id else {
+        return;
+    };
+
+    assert!(!game.players()[0]
+        .battlefield_card(&creature_id)
+        .is_some_and(demonictutor::CardInstance::is_tapped));
+
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), tap_spell_id)
+                .with_target(SpellTarget::Creature(creature_id.clone())),
+        )
+        .unwrap();
+
+    let _ = resolve_current_stack(&service, &mut game);
+
+    assert!(game.players()[0]
+        .battlefield_card(&creature_id)
+        .is_some_and(demonictutor::CardInstance::is_tapped));
+}
+
+#[test]
+fn tap_target_creature_spell_does_not_apply_if_target_is_gone_on_resolution() {
+    let (service, mut game) = setup_two_player_game(
+        "game-tap-target-creature-fizzles",
+        filled_library(
+            vec![
+                creature_card("silvercoat", 0, 2, 2),
+                tap_target_creature_instant_card("frost-breath-lite", 0),
+            ],
+            10,
+        ),
+        filled_library(
+            vec![targeted_destroy_creature_instant_card("murder-lite", 0)],
+            10,
+        ),
+    );
+
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
+
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(
+                PlayerId::new("player-1"),
+                CardInstanceId::new("game-tap-target-creature-fizzles-player-1-0"),
+            ),
+        )
+        .unwrap();
+    let _ = resolve_current_stack(&service, &mut game);
+
+    let creature_id = game.players()[0]
+        .battlefield_card_by_definition(&CardDefinitionId::new("silvercoat"))
+        .map(|card| card.id().clone());
+    assert!(creature_id.is_some(), "creature should be on battlefield");
+    let Some(creature_id) = creature_id else {
+        return;
+    };
+    let tap_spell_id = game.players()[0]
+        .hand_card_by_definition(&CardDefinitionId::new("frost-breath-lite"))
+        .map(|card| card.id().clone());
+    assert!(tap_spell_id.is_some(), "tap spell should be in hand");
+    let Some(tap_spell_id) = tap_spell_id else {
+        return;
+    };
+
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), tap_spell_id.clone())
+                .with_target(SpellTarget::Creature(creature_id.clone())),
+        )
+        .unwrap();
+    let _ = pass_priority_once(&service, &mut game);
+
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(
+                PlayerId::new("player-2"),
+                CardInstanceId::new("game-tap-target-creature-fizzles-player-2-0"),
+            )
+            .with_target(SpellTarget::Creature(creature_id.clone())),
+        )
+        .unwrap();
+
+    let _ = resolve_current_stack(&service, &mut game);
+    let _ = resolve_current_stack(&service, &mut game);
+
+    assert!(game.players()[0].battlefield_card(&creature_id).is_none());
+    assert!(game.players()[0].graveyard_card(&creature_id).is_some());
+    assert!(game.players()[0].graveyard_card(&tap_spell_id).is_some());
 }
 
 #[test]

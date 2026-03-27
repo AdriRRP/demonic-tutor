@@ -10,8 +10,9 @@ Slice count:
 
 Slices:
 
-- `support-tap-target-creature-effects`
-  - support spells and abilities that tap a creature without producing mana
+- implemented:
+  - `support-tap-target-creature-effects`
+    - first explicit spell corridor that taps a target creature on the battlefield
 - `support-untap-target-creature-effects`
   - support spells and abilities that untap a creature for combat and activation play patterns
 - `support-cannot-block-this-turn-effects`

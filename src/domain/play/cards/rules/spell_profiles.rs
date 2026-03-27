@@ -27,6 +27,7 @@ impl SpellTargetingProfile {
 pub enum SpellResolutionProfile {
     None,
     AttachToTargetCreature,
+    TapTargetCreature,
     DealDamage { damage: u32 },
     GainLife { amount: u32 },
     LoseLife { amount: u32 },
@@ -161,6 +162,16 @@ impl SupportedSpellRules {
                 SingleTargetRule::any_creature_on_battlefield(),
             ),
             resolution: SpellResolutionProfile::PutPlusOnePlusOneCounterOnTargetCreature,
+        }
+    }
+
+    #[must_use]
+    pub const fn tap_target_creature() -> Self {
+        Self {
+            targeting: SpellTargetingProfile::ExactlyOne(
+                SingleTargetRule::any_creature_on_battlefield(),
+            ),
+            resolution: SpellResolutionProfile::TapTargetCreature,
         }
     }
 

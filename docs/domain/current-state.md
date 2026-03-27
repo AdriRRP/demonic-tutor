@@ -62,6 +62,7 @@ Implemented capabilities include:
 - discarding down to the maximum hand size before the turn can advance out of `EndStep`
 - tracking player life totals
 - resolving explicit targeted life effects
+- resolving the first explicit `tap target creature` spell subset through the shared targeting and stack corridor
 - advancing turns
 - full phase progression using State pattern (Setup, Untap, Upkeep, Draw, FirstMain, BeginningOfCombat, DeclareAttackers, DeclareBlockers, CombatDamage, EndOfCombat, SecondMain, EndStep)
 - keyword abilities: Flying and Reach affect combat blocking legality, Haste bypasses summoning-sickness attack restriction, Vigilance avoids tapping on attack, Menace requires at least two blockers, Trample assigns excess damage after forward lethal assignment through declared blockers, First strike splits combat damage into an earlier and later supported pass, Double strike deals damage in both supported combat-damage passes, Lifelink gains life equal to combat damage dealt in the supported subset, Hexproof rejects opposing targeted spells against the supported creature subset, Indestructible survives the current lethal-damage and destroy corridors, and Deathtouch makes nonzero combat damage lethal for the current SBA subset
@@ -145,6 +146,7 @@ The domain currently includes:
 - the current targeted-spell subset now rejects opposing targets with supported creature `Hexproof` during cast validation and resolution revalidation
 - the current `destroy target creature` subset now leaves supported indestructible creatures on the battlefield
 - the current spell-effect subset also supports chosen-card discard from a targeted player's hand through an explicit target-plus-choice command corridor
+- the current spell-effect subset now also supports the first explicit `tap target creature` resolution profile against creatures on the battlefield
 - the current temporary pump subset is also exercised in combat by casting a pump spell after blockers to change the same turn's combat outcome
 - the current player-target spell subset now also supports explicit `gain life` and explicit `lose life` as distinct effects from damage while reusing the shared life-change corridor
 - the current player-target spell subset now also supports the first explicit `choose one` corridor with a selected mode stored on stack and resolved deterministically
