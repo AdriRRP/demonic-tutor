@@ -4,13 +4,14 @@
 
 use crate::support::{
     advance_to_player_first_main_satisfying_cleanup, advance_to_player_phase_satisfying_cleanup,
-    advance_turn_raw, close_empty_priority_window, create_service, creature_card, filled_library,
-    forest_card, instant_card, pacifism_creature_aura_enchantment_card, player, player_deck,
-    player_library, resolve_top_stack_with_passes, setup_two_player_game,
+    advance_turn_raw, close_empty_priority_window, create_service, creature_card,
+    creature_card_with_keyword, filled_library, forest_card, instant_card,
+    pacifism_creature_aura_enchantment_card, player, player_deck, player_library,
+    resolve_top_stack_with_passes, setup_two_player_game,
 };
 use demonictutor::{
     legal_actions, CardDefinitionId, CastSpellCommand, DealOpeningHandsCommand,
-    DeclareAttackersCommand, DrawCardsEffectCommand, Game, GameId, Phase, PlayerId,
+    DeclareAttackersCommand, DrawCardsEffectCommand, Game, GameId, KeywordAbility, Phase, PlayerId,
     PublicLegalAction, SpellTarget, StartGameCommand,
 };
 
@@ -216,6 +217,79 @@ fn legal_actions_do_not_offer_pacified_creature_as_blocker_option() {
             DeclareAttackersCommand::new(PlayerId::new("player-1"), vec![attacker_id]),
         )
         .expect("attacker should be declared");
+    close_empty_priority_window(&service, &mut game);
+
+    let actions = legal_actions(&game);
+
+    assert!(actions.iter().any(|action| matches!(
+        action,
+        PublicLegalAction::DeclareBlockers { player_id, blocker_options, .. }
+            if player_id.as_str() == "player-2"
+                && blocker_options.iter().all(|option| option.blocker_id != blocker_id)
+    )));
+}
+
+#[test]
+fn legal_actions_do_not_offer_single_blocker_option_against_menace() {
+    let (service, mut game) = setup_two_player_game(
+        "game-legal-actions-menace-block",
+        filled_library(
+            vec![creature_card_with_keyword(
+                "menacer",
+                0,
+                2,
+                2,
+                KeywordAbility::Menace,
+            )],
+            10,
+        ),
+        filled_library(vec![creature_card("lone-blocker", 0, 2, 2)], 10),
+    );
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
+    let attacker_id = player(&game, "player-1")
+        .hand_card_by_definition(&CardDefinitionId::new("menacer"))
+        .expect("menace attacker should be in hand")
+        .id()
+        .clone();
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), attacker_id),
+        )
+        .expect("menace attacker should be castable");
+    resolve_top_stack_with_passes(&service, &mut game);
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-2");
+    let blocker_id = player(&game, "player-2")
+        .hand_card_by_definition(&CardDefinitionId::new("lone-blocker"))
+        .expect("lone blocker should be in hand")
+        .id()
+        .clone();
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-2"), blocker_id.clone()),
+        )
+        .expect("lone blocker should be castable");
+    resolve_top_stack_with_passes(&service, &mut game);
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
+    advance_turn_raw(&service, &mut game);
+    close_empty_priority_window(&service, &mut game);
+    advance_turn_raw(&service, &mut game);
+
+    let menacing_attacker_id = player(&game, "player-1")
+        .battlefield_card_by_definition(&CardDefinitionId::new("menacer"))
+        .expect("menace attacker should be on battlefield")
+        .id()
+        .clone();
+    service
+        .declare_attackers(
+            &mut game,
+            DeclareAttackersCommand::new(PlayerId::new("player-1"), vec![menacing_attacker_id]),
+        )
+        .expect("menace attacker should be declared");
     close_empty_priority_window(&service, &mut game);
 
     let actions = legal_actions(&game);

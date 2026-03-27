@@ -2,6 +2,7 @@
 
 use super::{helpers, invariants, rules, Game, SpellTarget};
 use crate::domain::play::{
+    cards::KeywordAbility,
     game::rules::stack_priority::spell_effects::{
         evaluate_target_legality, supported_spell_rules, SpellTargetLegality, TargetLegalityContext,
     },
@@ -270,20 +271,50 @@ impl Game {
             .filter(|card| card.is_attacking())
             .map(|card| card.id().clone())
             .collect();
+        let legal_blockers_by_attacker: std::collections::HashMap<_, Vec<CardInstanceId>> =
+            attacker_ids
+                .iter()
+                .map(|attacker_id| {
+                    let blocker_ids = defending_player
+                        .battlefield_card_ids()
+                        .filter(|blocker_id| {
+                            rules::combat::can_block_attacker_candidate(
+                                &self.players,
+                                self.active_player_index,
+                                player_id,
+                                blocker_id,
+                                attacker_id,
+                            )
+                        })
+                        .cloned()
+                        .collect::<Vec<_>>();
+                    (attacker_id.clone(), blocker_ids)
+                })
+                .collect();
+        let public_attacker_ids: Vec<_> = attacker_ids
+            .into_iter()
+            .filter(|attacker_id| {
+                let attacker = self.players[self.active_player_index]
+                    .battlefield_card(attacker_id)
+                    .and_then(crate::domain::play::cards::CardInstance::keyword_abilities);
+                let blocker_count = legal_blockers_by_attacker
+                    .get(attacker_id)
+                    .map_or(0, Vec::len);
+                !attacker.is_some_and(|keywords| {
+                    keywords.contains(KeywordAbility::Menace) && blocker_count < 2
+                })
+            })
+            .collect();
 
         defending_player
             .battlefield_card_ids()
             .filter_map(|blocker_id| {
-                let attacker_ids: Vec<_> = attacker_ids
+                let attacker_ids: Vec<_> = public_attacker_ids
                     .iter()
                     .filter(|attacker_id| {
-                        rules::combat::can_block_attacker_candidate(
-                            &self.players,
-                            self.active_player_index,
-                            player_id,
-                            blocker_id,
-                            attacker_id,
-                        )
+                        legal_blockers_by_attacker
+                            .get(*attacker_id)
+                            .is_some_and(|blockers| blockers.contains(blocker_id))
                     })
                     .cloned()
                     .collect();
