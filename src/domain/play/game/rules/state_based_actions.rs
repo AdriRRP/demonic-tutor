@@ -11,13 +11,14 @@ use {
 #[derive(Debug, Clone)]
 struct StateBasedActionCheckResult {
     creatures_died: Vec<CreatureDied>,
+    moved_to_graveyard: bool,
     game_ended: Option<GameEnded>,
 }
 
 impl StateBasedActionCheckResult {
     #[must_use]
     const fn changed(&self) -> bool {
-        !self.creatures_died.is_empty() || self.game_ended.is_some()
+        !self.creatures_died.is_empty() || self.moved_to_graveyard || self.game_ended.is_some()
     }
 }
 
@@ -100,6 +101,49 @@ fn review_supported_creature_state_based_actions(
 
     StateBasedActionCheckResult {
         creatures_died,
+        moved_to_graveyard: false,
+        game_ended: None,
+    }
+}
+
+fn review_attached_aura_state_based_actions(players: &mut [Player]) -> StateBasedActionCheckResult {
+    let mut moved_to_graveyard = false;
+
+    for player_index in 0..players.len() {
+        let doomed_handles = players[player_index]
+            .battlefield_handles()
+            .filter(|handle| {
+                players[player_index]
+                    .battlefield_card_by_handle(*handle)
+                    .is_some_and(|card| {
+                        matches!(
+                            card.attachment_profile(),
+                            Some(crate::domain::play::cards::AttachmentProfile::EnchantCreature)
+                        ) && !players.iter().any(|player| {
+                            card.attached_to().is_some_and(|target_id| {
+                                player.battlefield_card(target_id).is_some()
+                            })
+                        })
+                    })
+            })
+            .collect::<Vec<_>>();
+
+        for handle in doomed_handles {
+            if zones::move_battlefield_handle_to_owner_graveyard_by_index(
+                players,
+                player_index,
+                handle,
+            )
+            .is_ok()
+            {
+                moved_to_graveyard = true;
+            }
+        }
+    }
+
+    StateBasedActionCheckResult {
+        creatures_died: Vec::new(),
+        moved_to_graveyard,
         game_ended: None,
     }
 }
@@ -132,12 +176,18 @@ pub fn check_state_based_actions(
         }
         total_creatures_died.extend(creature_result.creatures_died);
 
+        let attached_aura_result = review_attached_aura_state_based_actions(players);
+        if attached_aura_result.changed() {
+            changes = true;
+        }
+
         if terminal_state.is_over() {
             break;
         }
 
         let zero_life_result = StateBasedActionCheckResult {
             creatures_died: Vec::new(),
+            moved_to_graveyard: false,
             game_ended: end_game_for_zero_life(game_id, players, terminal_state)?,
         };
         if zero_life_result.changed() {

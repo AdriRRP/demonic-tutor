@@ -21,6 +21,7 @@ Implemented capabilities include:
 - surfacing a public legal-action menu derived from the current supported actor and game state
 - surfacing public choice requests for target selection, explicit hand-card choice, bounded modal spell choice, binary optional-effect decisions, and cleanup discard
 - returning a deterministic public command envelope with emitted events, updated snapshot, legal actions, and visible choice requests
+- projecting the attached creature id for the current supported Aura subset in the public battlefield snapshot
 - dealing opening hands
 - mulligan support (London Mulligan - simplified)
 - drawing cards (auto-draw when entering `Draw`)
@@ -147,6 +148,7 @@ The domain currently includes:
 - the current trigger subset now also supports the first explicit `you may` corridor with a pending yes/no choice surfaced at resolution time
 - the current spell-effect subset now also supports explicit `loot` and `rummage`, surfaced as pending hand-card choice prompts during resolution
 - the current library-manipulation subset now also supports explicit `scry 1`, surfaced as a controller-scoped pending top-card choice during resolution
+- the current attachment subset now supports `Enchant creature` Auras that target while cast, enter attached if the target stays legal on resolution, and are put into graveyard by SBA if they become unattached
 - supported targeted instant damage to a player emits `LifeChanged` on resolution
 - supported targeted instant damage to a creature marks damage and then relies on shared SBA review for lethal destruction
 - supported indestructible creatures survive the current SBA lethal-damage review while still dying to zero toughness
@@ -225,6 +227,7 @@ These matrices compress the stable supported subset without implying broader Mag
 - stack objects:
   - spells
   - supported non-mana activated tap abilities with explicit profile-based targeting when modeled
+  - the first supported Aura corridor carried by an `Enchantment` spell plus explicit creature attachment semantics
 
 ## Targeting
 

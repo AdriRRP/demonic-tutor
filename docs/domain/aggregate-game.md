@@ -184,7 +184,7 @@ The current runtime model separates:
 
 - immutable card-face data (`definition id`, `type`, `mana cost`, optional spell-casting permissions`)
 - immutable supported targeting and resolution profiles for the card's currently modeled behavior
-- mutable gameplay state (`tapped`, combat flags, creature runtime state)
+- mutable gameplay state (`tapped`, combat flags, creature runtime state, optional attached target id`)
 
 Immutable card-face metadata is currently shared across instances rather than copied by value per zone entry.
 Internal runtime identity now prefers numeric-core ids, owner indices, and player-owned card handles, while readable public ids are materialized at the aggregate boundary.
@@ -206,6 +206,7 @@ Fields include:
 - ordered blockers assigned against the attacker (for attacking creatures)
 - combat-damage assignment following that ordered blocker group in the supported subset
 - damage marked on the creature
+- attached target card id for the current supported attachment subset
 
 Responsibilities:
 

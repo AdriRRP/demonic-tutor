@@ -362,6 +362,9 @@ impl Player {
         to: PlayerCardZone,
     ) -> Option<()> {
         self.cards.zone_by_handle(handle)?;
+        if from == PlayerCardZone::Battlefield && to != PlayerCardZone::Battlefield {
+            self.cards.get_mut_by_handle(handle)?.clear_attachment();
+        }
         if from == PlayerCardZone::Battlefield
             && to != PlayerCardZone::Battlefield
             && self.cards.get_by_handle(handle)?.is_token()

@@ -119,6 +119,11 @@ pub enum TriggeredAbilityEffect {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum AttachmentProfile {
+    EnchantCreature,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ActivatedAbilityProfile {
     requires_tap: bool,
     mana_cost: ManaCost,
@@ -857,6 +862,7 @@ impl SpellTargetingProfile {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SpellResolutionProfile {
     None,
+    AttachToTargetCreature,
     DealDamage { damage: u32 },
     GainLife { amount: u32 },
     LoseLife { amount: u32 },
@@ -901,6 +907,16 @@ impl SupportedSpellRules {
                 SingleTargetRule::any_player_or_creature_on_battlefield(),
             ),
             resolution: SpellResolutionProfile::DealDamage { damage },
+        }
+    }
+
+    #[must_use]
+    pub const fn attach_to_target_creature() -> Self {
+        Self {
+            targeting: SpellTargetingProfile::ExactlyOne(
+                SingleTargetRule::any_creature_on_battlefield(),
+            ),
+            resolution: SpellResolutionProfile::AttachToTargetCreature,
         }
     }
 

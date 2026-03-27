@@ -2,8 +2,9 @@
 
 use crate::domain::play::{
     cards::{
-        ActivatedAbilityProfile, CardDefinition, CardInstance, CardType, CastingRule,
-        KeywordAbilitySet, ManaColor, ManaCost, SupportedSpellRules, TriggeredAbilityProfile,
+        ActivatedAbilityProfile, AttachmentProfile, CardDefinition, CardInstance, CardType,
+        CastingRule, KeywordAbilitySet, ManaColor, ManaCost, SupportedSpellRules,
+        TriggeredAbilityProfile,
     },
     ids::{CardDefinitionId, CardInstanceId, DeckId, PlayerId},
 };
@@ -116,6 +117,12 @@ impl LibraryCard {
     #[must_use]
     pub fn with_initial_loyalty(mut self, initial_loyalty: u32) -> Self {
         self.definition = self.definition.with_initial_loyalty(initial_loyalty);
+        self
+    }
+
+    #[must_use]
+    pub fn with_attachment_profile(mut self, attachment_profile: AttachmentProfile) -> Self {
+        self.definition = self.definition.with_attachment_profile(attachment_profile);
         self
     }
 

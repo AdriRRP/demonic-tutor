@@ -16,14 +16,17 @@ use self::{
     },
 };
 use crate::domain::play::{
-    cards::{ActivatedAbilityEffect, TriggeredAbilityEffect, TriggeredAbilityEvent},
+    cards::{
+        ActivatedAbilityEffect, CardType, SpellPayload, SpellResolutionProfile,
+        TriggeredAbilityEffect, TriggeredAbilityEvent,
+    },
     events::{
         CardDiscarded, CardExiled, CreatureDied, GameEnded, LifeChanged, SpellCast,
         SpellCastOutcome, StackTopResolved, TriggeredAbilityPutOnStack,
     },
     game::{
         model::{StackCardRef, StackObject, StackObjectKind, StackTargetRef, StackZone},
-        Player, SpellTarget, TerminalState,
+        AggregateCardLocationIndex, Player, SpellTarget, TerminalState,
     },
     ids::GameId,
 };
@@ -39,6 +42,16 @@ type ResolvedSpellOutcome = (
     Vec<crate::domain::play::ids::CardInstanceId>,
     Option<GameEnded>,
 );
+
+struct SpellDestinationContext<'a> {
+    players: &'a mut [Player],
+    card_locations: &'a AggregateCardLocationIndex,
+    stack: &'a StackZone,
+    controller_index: usize,
+    card_type: CardType,
+    supported_spell_rules: crate::domain::play::cards::SupportedSpellRules,
+    target: Option<&'a SpellTarget>,
+}
 
 fn enqueue_dies_triggers(
     game_id: &GameId,
@@ -156,6 +169,181 @@ fn materialize_stack_card_id(
         .clone())
 }
 
+fn move_resolved_spell_to_destination(
+    context: &mut SpellDestinationContext<'_>,
+    payload: SpellPayload,
+) -> Result<SpellCastOutcome, crate::domain::play::errors::DomainError> {
+    if matches!(
+        (
+            context.card_type,
+            context.supported_spell_rules.resolution()
+        ),
+        (
+            CardType::Enchantment,
+            SpellResolutionProfile::AttachToTargetCreature
+        )
+    ) {
+        return move_resolved_aura_to_its_destination(
+            context.players,
+            context.card_locations,
+            context.stack,
+            context.controller_index,
+            context.supported_spell_rules,
+            context.target,
+            payload,
+        );
+    }
+
+    move_resolved_spell_to_its_destination(
+        context.players,
+        context.controller_index,
+        context.card_type,
+        payload,
+    )
+}
+
+fn move_resolved_aura_to_its_destination(
+    players: &mut [Player],
+    card_locations: &AggregateCardLocationIndex,
+    stack: &StackZone,
+    controller_index: usize,
+    supported_spell_rules: crate::domain::play::cards::SupportedSpellRules,
+    target: Option<&SpellTarget>,
+    payload: SpellPayload,
+) -> Result<SpellCastOutcome, crate::domain::play::errors::DomainError> {
+    let legality = super::spell_effects::evaluate_target_legality(
+        super::spell_effects::TargetLegalityContext::Resolution {
+            players,
+            card_locations,
+            stack,
+            actor_index: controller_index,
+        },
+        supported_spell_rules.targeting(),
+        target,
+    );
+
+    match (legality, target) {
+        (
+            super::spell_effects::SpellTargetLegality::Legal,
+            Some(SpellTarget::Creature(target_id)),
+        ) => {
+            let mut permanent = payload.into_card_instance();
+            permanent.attach_to(target_id.clone());
+            players[controller_index].receive_battlefield_card(permanent);
+            Ok(SpellCastOutcome::EnteredBattlefield)
+        }
+        (super::spell_effects::SpellTargetLegality::Legal, Some(_)) => {
+            Err(crate::domain::play::errors::DomainError::Game(
+                crate::domain::play::errors::GameError::InternalInvariantViolation(
+                    "aura spell resolved with a non-creature target".to_string(),
+                ),
+            ))
+        }
+        (
+            super::spell_effects::SpellTargetLegality::IllegalTargetKind
+            | super::spell_effects::SpellTargetLegality::IllegalTargetRule
+            | super::spell_effects::SpellTargetLegality::MissingPlayer(_)
+            | super::spell_effects::SpellTargetLegality::MissingCreature(_)
+            | super::spell_effects::SpellTargetLegality::MissingPermanent(_)
+            | super::spell_effects::SpellTargetLegality::MissingGraveyardCard(_)
+            | super::spell_effects::SpellTargetLegality::MissingStackSpell(_),
+            _,
+        ) => {
+            players[controller_index].receive_graveyard_card(payload.into_card_instance());
+            Ok(SpellCastOutcome::ResolvedToGraveyard)
+        }
+        (super::spell_effects::SpellTargetLegality::MissingRequiredTarget, _) => {
+            Err(crate::domain::play::errors::DomainError::Game(
+                crate::domain::play::errors::GameError::InternalInvariantViolation(
+                    "aura spell resolved without a required target".to_string(),
+                ),
+            ))
+        }
+        (super::spell_effects::SpellTargetLegality::NoTargetRequired, _) => {
+            Err(crate::domain::play::errors::DomainError::Game(
+                crate::domain::play::errors::GameError::InternalInvariantViolation(
+                    "aura spell resolved without a targeting profile".to_string(),
+                ),
+            ))
+        }
+        (super::spell_effects::SpellTargetLegality::Legal, None) => {
+            Err(crate::domain::play::errors::DomainError::Game(
+                crate::domain::play::errors::GameError::InternalInvariantViolation(
+                    "aura spell resolved without a materialized target".to_string(),
+                ),
+            ))
+        }
+    }
+}
+
+fn enqueue_spell_etb_triggers(
+    game_id: &GameId,
+    players: &[Player],
+    stack: &mut StackZone,
+    controller_index: usize,
+    outcome: &SpellCastOutcome,
+    source_card_id: &crate::domain::play::ids::CardInstanceId,
+) -> Result<Vec<TriggeredAbilityPutOnStack>, crate::domain::play::errors::DomainError> {
+    if !matches!(outcome, SpellCastOutcome::EnteredBattlefield) {
+        return Ok(Vec::new());
+    }
+
+    let entered_handle = players[controller_index]
+        .battlefield_handle(source_card_id)
+        .ok_or_else(|| {
+            crate::domain::play::errors::DomainError::Game(
+                crate::domain::play::errors::GameError::InternalInvariantViolation(
+                    "resolved permanent should exist on battlefield before ETB triggers"
+                        .to_string(),
+                ),
+            )
+        })?;
+
+    super::triggers::enqueue_trigger_for_card_handle(
+        game_id,
+        players,
+        controller_index,
+        entered_handle,
+        TriggeredAbilityEvent::EntersBattlefield,
+        stack,
+    )
+}
+
+fn enqueue_entered_battlefield_triggers_for_moved_cards(
+    game_id: &GameId,
+    players: &[Player],
+    stack: &mut StackZone,
+    moved_cards: &[crate::domain::play::ids::CardInstanceId],
+) -> Result<Vec<TriggeredAbilityPutOnStack>, crate::domain::play::errors::DomainError> {
+    let mut events = Vec::new();
+
+    for card_id in moved_cards {
+        let Some((owner_index, handle)) =
+            players
+                .iter()
+                .enumerate()
+                .find_map(|(owner_index, player)| {
+                    let handle = player.resolve_public_card_handle(card_id)?;
+                    (player.card_zone(card_id)
+                        == Some(crate::domain::play::game::PlayerCardZone::Battlefield))
+                    .then_some((owner_index, handle))
+                })
+        else {
+            continue;
+        };
+        events.extend(super::triggers::enqueue_trigger_for_card_handle(
+            game_id,
+            players,
+            owner_index,
+            handle,
+            TriggeredAbilityEvent::EntersBattlefield,
+            stack,
+        )?);
+    }
+
+    Ok(events)
+}
+
 fn resolve_spell_from_stack(
     game_id: &GameId,
     players: &mut [Player],
@@ -179,31 +367,27 @@ fn resolve_spell_from_stack(
     let supported_spell_rules = payload.supported_spell_rules();
     let source_card_id = payload.id().clone();
 
-    let outcome =
-        move_resolved_spell_to_its_destination(players, controller_index, card_type, payload)?;
-    let controller_id = players[controller_index].id().clone();
-    let mut triggered_abilities_put_on_stack = Vec::new();
-
-    if matches!(outcome, SpellCastOutcome::EnteredBattlefield) {
-        let entered_handle = players[controller_index]
-            .battlefield_handle(&source_card_id)
-            .ok_or_else(|| {
-                crate::domain::play::errors::DomainError::Game(
-                    crate::domain::play::errors::GameError::InternalInvariantViolation(
-                        "resolved permanent should exist on battlefield before ETB triggers"
-                            .to_string(),
-                    ),
-                )
-            })?;
-        triggered_abilities_put_on_stack.extend(super::triggers::enqueue_trigger_for_card_handle(
-            game_id,
+    let outcome = move_resolved_spell_to_destination(
+        &mut SpellDestinationContext {
             players,
-            controller_index,
-            entered_handle,
-            TriggeredAbilityEvent::EntersBattlefield,
+            card_locations,
             stack,
-        )?);
-    }
+            controller_index,
+            card_type,
+            supported_spell_rules,
+            target: target.as_ref(),
+        },
+        payload,
+    )?;
+    let controller_id = players[controller_index].id().clone();
+    let mut triggered_abilities_put_on_stack = enqueue_spell_etb_triggers(
+        game_id,
+        players,
+        stack,
+        controller_index,
+        &outcome,
+        &source_card_id,
+    )?;
 
     let (stack_top_resolved, spell_cast) = build_resolution_events(
         game_id,
@@ -226,29 +410,12 @@ fn resolve_spell_from_stack(
             target.as_ref(),
             choice,
         ))?;
-    for card_id in &moved_cards {
-        let Some((owner_index, handle)) =
-            players
-                .iter()
-                .enumerate()
-                .find_map(|(owner_index, player)| {
-                    let handle = player.resolve_public_card_handle(card_id)?;
-                    (player.card_zone(card_id)
-                        == Some(crate::domain::play::game::PlayerCardZone::Battlefield))
-                    .then_some((owner_index, handle))
-                })
-        else {
-            continue;
-        };
-        triggered_abilities_put_on_stack.extend(super::triggers::enqueue_trigger_for_card_handle(
-            game_id,
-            players,
-            owner_index,
-            handle,
-            TriggeredAbilityEvent::EntersBattlefield,
-            stack,
-        )?);
-    }
+    triggered_abilities_put_on_stack.extend(enqueue_entered_battlefield_triggers_for_moved_cards(
+        game_id,
+        players,
+        stack,
+        &moved_cards,
+    )?);
     triggered_abilities_put_on_stack.extend(enqueue_dies_triggers(
         game_id,
         players,

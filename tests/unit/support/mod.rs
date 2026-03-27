@@ -5,7 +5,9 @@
 //! Unit coverage for unit support.
 
 use {
-    demonictutor::{ActivatedAbilityProfile, CastingRule, TriggeredAbilityProfile},
+    demonictutor::{
+        ActivatedAbilityProfile, AttachmentProfile, CastingRule, TriggeredAbilityProfile,
+    },
     demonictutor::{
         AdvanceTurnCommand, AdvanceTurnOutcome, CardDefinitionId, CardType, CastSpellCommand,
         DealOpeningHandsCommand, DeckId, DeclareAttackersCommand, DiscardForCleanupCommand, Game,
@@ -444,6 +446,16 @@ pub fn enchantment_card(name: &str, mana_cost: u32) -> LibraryCard {
         CardType::Enchantment,
         mana_cost,
     )
+}
+
+pub fn creature_aura_enchantment_card(name: &str, mana_cost: u32) -> LibraryCard {
+    LibraryCard::new(
+        CardDefinitionId::new(name),
+        CardType::Enchantment,
+        mana_cost,
+    )
+    .with_supported_spell_rules(SupportedSpellRules::attach_to_target_creature())
+    .with_attachment_profile(AttachmentProfile::EnchantCreature)
 }
 
 pub fn planeswalker_card(name: &str, mana_cost: u32) -> LibraryCard {

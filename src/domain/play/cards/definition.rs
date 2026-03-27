@@ -2,8 +2,9 @@
 
 use {
     super::{
-        ActivatedAbilityProfile, ActivatedManaAbilityProfile, CardType, CastingPermissionProfile,
-        CastingRule, ManaColor, ManaCost, SupportedSpellRules, TriggeredAbilityProfile,
+        ActivatedAbilityProfile, ActivatedManaAbilityProfile, AttachmentProfile, CardType,
+        CastingPermissionProfile, CastingRule, ManaColor, ManaCost, SupportedSpellRules,
+        TriggeredAbilityProfile,
     },
     crate::domain::play::ids::CardDefinitionId,
 };
@@ -19,6 +20,7 @@ pub struct CardDefinition {
     activated_ability: Option<ActivatedAbilityProfile>,
     triggered_ability: Option<TriggeredAbilityProfile>,
     initial_loyalty: Option<u32>,
+    attachment_profile: Option<AttachmentProfile>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -32,6 +34,7 @@ pub struct CardDefinitionParts {
     pub activated_ability: Option<ActivatedAbilityProfile>,
     pub triggered_ability: Option<TriggeredAbilityProfile>,
     pub initial_loyalty: Option<u32>,
+    pub attachment_profile: Option<AttachmentProfile>,
 }
 
 impl CardDefinition {
@@ -55,6 +58,7 @@ impl CardDefinition {
             activated_ability: None,
             triggered_ability: None,
             initial_loyalty: None,
+            attachment_profile: None,
         }
     }
 
@@ -73,6 +77,7 @@ impl CardDefinition {
             activated_ability: None,
             triggered_ability: None,
             initial_loyalty: None,
+            attachment_profile: None,
         }
     }
 
@@ -124,6 +129,12 @@ impl CardDefinition {
     }
 
     #[must_use]
+    pub const fn with_attachment_profile(mut self, attachment_profile: AttachmentProfile) -> Self {
+        self.attachment_profile = Some(attachment_profile);
+        self
+    }
+
+    #[must_use]
     pub fn from_parts(parts: CardDefinitionParts) -> Self {
         Self {
             id: parts.id,
@@ -135,6 +146,7 @@ impl CardDefinition {
             activated_ability: parts.activated_ability,
             triggered_ability: parts.triggered_ability,
             initial_loyalty: parts.initial_loyalty,
+            attachment_profile: parts.attachment_profile,
         }
     }
 
@@ -186,5 +198,10 @@ impl CardDefinition {
     #[must_use]
     pub const fn initial_loyalty(&self) -> Option<u32> {
         self.initial_loyalty
+    }
+
+    #[must_use]
+    pub const fn attachment_profile(&self) -> Option<AttachmentProfile> {
+        self.attachment_profile
     }
 }

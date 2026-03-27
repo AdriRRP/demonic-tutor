@@ -6,11 +6,11 @@ use {
     crate::support::{
         advance_to_first_main_satisfying_cleanup, advance_to_player_first_main_satisfying_cleanup,
         advance_turn_raw, artifact_card, choose_one_target_player_gain_or_lose_life_instant_card,
-        close_empty_priority_window, counter_target_spell_instant_card, creature_card,
-        creature_card_with_keyword, destroy_target_artifact_or_enchantment_instant_card,
-        enchantment_card, filled_library, land_card, resolve_top_stack_with_passes,
-        return_target_permanent_to_hand_instant_card, setup_two_player_game,
-        target_player_discards_chosen_card_sorcery_card,
+        close_empty_priority_window, counter_target_spell_instant_card,
+        creature_aura_enchantment_card, creature_card, creature_card_with_keyword,
+        destroy_target_artifact_or_enchantment_instant_card, enchantment_card, filled_library,
+        land_card, resolve_top_stack_with_passes, return_target_permanent_to_hand_instant_card,
+        setup_two_player_game, target_player_discards_chosen_card_sorcery_card,
         targeted_attacking_creature_damage_instant_card,
         targeted_controlled_creature_damage_instant_card, targeted_damage_instant_card,
         targeted_destroy_creature_instant_card, targeted_exile_creature_instant_card,
@@ -118,6 +118,176 @@ fn targeted_instant_rejects_unknown_player_target_when_cast() {
         Err(DomainError::Game(GameError::InvalidPlayerTarget(player_id)))
             if player_id == PlayerId::new("missing-player")
     ));
+}
+
+#[test]
+fn creature_aura_requires_a_target_when_cast() {
+    let (service, mut game) = setup_two_player_game(
+        "game-aura-target-missing",
+        filled_library(vec![creature_aura_enchantment_card("holy-strength", 0)], 10),
+        filled_library(vec![land_card("mountain")], 10),
+    );
+
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
+
+    let result = service.cast_spell(
+        &mut game,
+        CastSpellCommand::new(
+            PlayerId::new("player-1"),
+            CardInstanceId::new("game-aura-target-missing-player-1-0"),
+        ),
+    );
+
+    assert!(matches!(
+        result,
+        Err(DomainError::Game(GameError::MissingSpellTarget(card_id)))
+            if card_id == CardInstanceId::new("game-aura-target-missing-player-1-0")
+    ));
+}
+
+#[test]
+fn creature_aura_goes_to_graveyard_if_target_is_missing_on_resolution() {
+    let (service, mut game) = setup_two_player_game(
+        "game-aura-fizzles",
+        filled_library(
+            vec![
+                creature_card("silvercoat", 0, 2, 2),
+                creature_aura_enchantment_card("holy-strength", 0),
+            ],
+            10,
+        ),
+        filled_library(
+            vec![targeted_destroy_creature_instant_card("murder-lite", 0)],
+            10,
+        ),
+    );
+
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
+
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(
+                PlayerId::new("player-1"),
+                CardInstanceId::new("game-aura-fizzles-player-1-0"),
+            ),
+        )
+        .unwrap();
+    let _ = resolve_current_stack(&service, &mut game);
+
+    let creature =
+        game.players()[0].battlefield_card_by_definition(&CardDefinitionId::new("silvercoat"));
+    assert!(creature.is_some(), "creature should be on battlefield");
+    let creature_id = creature.map(|card| card.id().clone());
+    let Some(creature_id) = creature_id else {
+        return;
+    };
+    let aura = game.players()[0].hand_card_by_definition(&CardDefinitionId::new("holy-strength"));
+    assert!(aura.is_some(), "aura should be in hand");
+    let aura_id = aura.map(|card| card.id().clone());
+    let Some(aura_id) = aura_id else {
+        return;
+    };
+
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), aura_id.clone())
+                .with_target(SpellTarget::Creature(creature_id.clone())),
+        )
+        .unwrap();
+    let _ = pass_priority_once(&service, &mut game);
+
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(
+                PlayerId::new("player-2"),
+                CardInstanceId::new("game-aura-fizzles-player-2-0"),
+            )
+            .with_target(SpellTarget::Creature(creature_id)),
+        )
+        .unwrap();
+
+    let _ = resolve_current_stack(&service, &mut game);
+    let _ = resolve_current_stack(&service, &mut game);
+
+    assert!(game.players()[0].battlefield_card(&aura_id).is_none());
+    assert!(game.players()[0].graveyard_card(&aura_id).is_some());
+}
+
+#[test]
+fn creature_aura_is_put_into_graveyard_when_enchanted_creature_dies() {
+    let (service, mut game) = setup_two_player_game(
+        "game-aura-detaches",
+        filled_library(
+            vec![
+                creature_card("silvercoat", 0, 2, 2),
+                creature_aura_enchantment_card("holy-strength", 0),
+            ],
+            10,
+        ),
+        filled_library(
+            vec![targeted_destroy_creature_instant_card("murder-lite", 0)],
+            10,
+        ),
+    );
+
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
+
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(
+                PlayerId::new("player-1"),
+                CardInstanceId::new("game-aura-detaches-player-1-0"),
+            ),
+        )
+        .unwrap();
+    let _ = resolve_current_stack(&service, &mut game);
+
+    let creature =
+        game.players()[0].battlefield_card_by_definition(&CardDefinitionId::new("silvercoat"));
+    assert!(creature.is_some(), "creature should be on battlefield");
+    let creature_id = creature.map(|card| card.id().clone());
+    let Some(creature_id) = creature_id else {
+        return;
+    };
+    let aura = game.players()[0].hand_card_by_definition(&CardDefinitionId::new("holy-strength"));
+    assert!(aura.is_some(), "aura should be in hand");
+    let aura_id = aura.map(|card| card.id().clone());
+    let Some(aura_id) = aura_id else {
+        return;
+    };
+
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), aura_id.clone())
+                .with_target(SpellTarget::Creature(creature_id.clone())),
+        )
+        .unwrap();
+    let _ = resolve_current_stack(&service, &mut game);
+
+    assert!(game.players()[0].battlefield_card(&aura_id).is_some());
+    let _ = pass_priority_once(&service, &mut game);
+
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(
+                PlayerId::new("player-2"),
+                CardInstanceId::new("game-aura-detaches-player-2-0"),
+            )
+            .with_target(SpellTarget::Creature(creature_id.clone())),
+        )
+        .unwrap();
+    let _ = resolve_current_stack(&service, &mut game);
+
+    assert!(game.players()[0].battlefield_card(&creature_id).is_none());
+    assert!(game.players()[0].battlefield_card(&aura_id).is_none());
+    assert!(game.players()[0].graveyard_card(&creature_id).is_some());
+    assert!(game.players()[0].graveyard_card(&aura_id).is_some());
 }
 
 #[test]

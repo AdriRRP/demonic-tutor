@@ -2,9 +2,9 @@
 
 use {
     super::{
-        ActivatedAbilityProfile, ActivatedManaAbilityProfile, CardDefinition, CardType,
-        CastingPermissionProfile, CastingRule, KeywordAbility, KeywordAbilitySet, ManaCost,
-        SupportedSpellRules, TriggeredAbilityProfile,
+        ActivatedAbilityProfile, ActivatedManaAbilityProfile, AttachmentProfile, CardDefinition,
+        CardType, CastingPermissionProfile, CastingRule, KeywordAbility, KeywordAbilitySet,
+        ManaCost, SupportedSpellRules, TriggeredAbilityProfile,
     },
     crate::domain::play::ids::{CardDefinitionId, CardInstanceId, PlayerCardHandle, PlayerId},
     std::sync::Arc,
@@ -40,9 +40,11 @@ pub struct CreatureSpellPayload {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PermanentSpellPayload {
+    supported_spell_rules: SupportedSpellRules,
     activated_ability: Option<ActivatedAbilityProfile>,
     triggered_ability: Option<TriggeredAbilityProfile>,
     initial_loyalty: Option<u32>,
+    attachment_profile: Option<AttachmentProfile>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -142,6 +144,7 @@ struct CardRuntime {
     loyalty: u32,
     loyalty_ability_activated_this_turn: bool,
     is_token: bool,
+    attached_to: Option<CardInstanceId>,
     kind: CardRuntimeKind,
 }
 
@@ -191,6 +194,7 @@ impl CardInstance {
                 loyalty,
                 loyalty_ability_activated_this_turn: false,
                 is_token: false,
+                attached_to: None,
                 kind: CardRuntimeKind::NonCreature,
             },
         }
@@ -233,6 +237,7 @@ impl CardInstance {
                 loyalty: 0,
                 loyalty_ability_activated_this_turn: false,
                 is_token: false,
+                attached_to: None,
                 kind: CardRuntimeKind::Creature(CreatureRuntime::new(power, toughness)),
             },
         }
@@ -257,6 +262,7 @@ impl CardInstance {
                 loyalty: 0,
                 loyalty_ability_activated_this_turn: false,
                 is_token: false,
+                attached_to: None,
                 kind: CardRuntimeKind::Creature(CreatureRuntime::new_with_keywords(
                     power, toughness, keywords,
                 )),
@@ -286,8 +292,26 @@ impl CardInstance {
                 loyalty: 0,
                 loyalty_ability_activated_this_turn: false,
                 is_token: true,
+                attached_to: None,
                 kind: CardRuntimeKind::Creature(CreatureRuntime::new(power, toughness)),
             },
+        }
+    }
+
+    const fn permanent_payload(definition: &CardDefinition) -> PermanentSpellPayload {
+        PermanentSpellPayload {
+            supported_spell_rules: definition.supported_spell_rules(),
+            activated_ability: definition.activated_ability(),
+            triggered_ability: definition.triggered_ability(),
+            initial_loyalty: definition.initial_loyalty(),
+            attachment_profile: definition.attachment_profile(),
+        }
+    }
+
+    const fn effect_payload(definition: &CardDefinition) -> EffectSpellPayload {
+        EffectSpellPayload {
+            casting_permission: definition.casting_permission(),
+            supported_spell_rules: definition.supported_spell_rules(),
         }
     }
 
@@ -303,59 +327,37 @@ impl CardInstance {
                         id: self.id,
                         owner_id,
                         definition_id,
-                        kind: SpellPayloadKind::Artifact(PermanentSpellPayload {
-                            activated_ability: definition.activated_ability(),
-                            triggered_ability: definition.triggered_ability(),
-                            initial_loyalty: definition.initial_loyalty(),
-                        }),
+                        kind: SpellPayloadKind::Artifact(Self::permanent_payload(definition)),
                     },
                     CardType::Enchantment => SpellPayload {
                         id: self.id,
                         owner_id,
                         definition_id,
-                        kind: SpellPayloadKind::Enchantment(PermanentSpellPayload {
-                            activated_ability: definition.activated_ability(),
-                            triggered_ability: definition.triggered_ability(),
-                            initial_loyalty: definition.initial_loyalty(),
-                        }),
+                        kind: SpellPayloadKind::Enchantment(Self::permanent_payload(definition)),
                     },
                     CardType::Planeswalker => SpellPayload {
                         id: self.id,
                         owner_id,
                         definition_id,
-                        kind: SpellPayloadKind::Planeswalker(PermanentSpellPayload {
-                            activated_ability: definition.activated_ability(),
-                            triggered_ability: definition.triggered_ability(),
-                            initial_loyalty: definition.initial_loyalty(),
-                        }),
+                        kind: SpellPayloadKind::Planeswalker(Self::permanent_payload(definition)),
                     },
                     CardType::Land => SpellPayload {
                         id: self.id,
                         owner_id,
                         definition_id,
-                        kind: SpellPayloadKind::Land(PermanentSpellPayload {
-                            activated_ability: definition.activated_ability(),
-                            triggered_ability: definition.triggered_ability(),
-                            initial_loyalty: definition.initial_loyalty(),
-                        }),
+                        kind: SpellPayloadKind::Land(Self::permanent_payload(definition)),
                     },
                     CardType::Instant => SpellPayload {
                         id: self.id,
                         owner_id,
                         definition_id,
-                        kind: SpellPayloadKind::Instant(EffectSpellPayload {
-                            casting_permission: definition.casting_permission(),
-                            supported_spell_rules: definition.supported_spell_rules(),
-                        }),
+                        kind: SpellPayloadKind::Instant(Self::effect_payload(definition)),
                     },
                     CardType::Sorcery => SpellPayload {
                         id: self.id,
                         owner_id,
                         definition_id,
-                        kind: SpellPayloadKind::Sorcery(EffectSpellPayload {
-                            casting_permission: definition.casting_permission(),
-                            supported_spell_rules: definition.supported_spell_rules(),
-                        }),
+                        kind: SpellPayloadKind::Sorcery(Self::effect_payload(definition)),
                     },
                     CardType::Creature => {
                         debug_assert!(
@@ -366,11 +368,7 @@ impl CardInstance {
                             id: self.id,
                             owner_id,
                             definition_id,
-                            kind: SpellPayloadKind::Land(PermanentSpellPayload {
-                                activated_ability: definition.activated_ability(),
-                                triggered_ability: definition.triggered_ability(),
-                                initial_loyalty: definition.initial_loyalty(),
-                            }),
+                            kind: SpellPayloadKind::Land(Self::permanent_payload(definition)),
                         }
                     }
                 }
@@ -441,6 +439,7 @@ impl SpellPayload {
                 loyalty: 0,
                 loyalty_ability_activated_this_turn: false,
                 is_token: false,
+                attached_to: None,
                 kind: CardRuntimeKind::NonCreature,
             },
         }
@@ -454,6 +453,7 @@ impl SpellPayload {
         card_type: CardType,
     ) -> CardInstance {
         let mut definition = CardDefinition::for_card_type(definition_id, 0, &card_type);
+        definition = definition.with_supported_spell_rules(payload.supported_spell_rules);
         if let Some(activated_ability) = payload.activated_ability {
             definition = definition.with_activated_ability(activated_ability);
         }
@@ -462,6 +462,9 @@ impl SpellPayload {
         }
         if let Some(initial_loyalty) = payload.initial_loyalty {
             definition = definition.with_initial_loyalty(initial_loyalty);
+        }
+        if let Some(attachment_profile) = payload.attachment_profile {
+            definition = definition.with_attachment_profile(attachment_profile);
         }
         CardInstance {
             id,
@@ -474,6 +477,7 @@ impl SpellPayload {
                 loyalty: payload.initial_loyalty.unwrap_or(0),
                 loyalty_ability_activated_this_turn: false,
                 is_token: false,
+                attached_to: None,
                 kind: CardRuntimeKind::NonCreature,
             },
         }
@@ -498,11 +502,11 @@ impl SpellPayload {
             SpellPayloadKind::Instant(payload) | SpellPayloadKind::Sorcery(payload) => {
                 payload.supported_spell_rules
             }
-            SpellPayloadKind::Artifact(_)
-            | SpellPayloadKind::Enchantment(_)
-            | SpellPayloadKind::Planeswalker(_)
-            | SpellPayloadKind::Land(_)
-            | SpellPayloadKind::Creature(_) => SupportedSpellRules::none(),
+            SpellPayloadKind::Artifact(payload)
+            | SpellPayloadKind::Enchantment(payload)
+            | SpellPayloadKind::Planeswalker(payload)
+            | SpellPayloadKind::Land(payload) => payload.supported_spell_rules,
+            SpellPayloadKind::Creature(_) => SupportedSpellRules::none(),
         }
     }
 
@@ -579,6 +583,7 @@ impl SpellPayload {
                     loyalty: 0,
                     loyalty_ability_activated_this_turn: false,
                     is_token: false,
+                    attached_to: None,
                     kind: CardRuntimeKind::Creature(CreatureRuntime::new_with_keywords(
                         payload.power,
                         payload.toughness,
@@ -661,6 +666,16 @@ impl CardInstance {
     #[must_use]
     pub fn triggered_ability(&self) -> Option<TriggeredAbilityProfile> {
         self.face.definition.triggered_ability()
+    }
+
+    #[must_use]
+    pub fn attachment_profile(&self) -> Option<AttachmentProfile> {
+        self.face.definition.attachment_profile()
+    }
+
+    #[must_use]
+    pub const fn attached_to(&self) -> Option<&CardInstanceId> {
+        self.runtime.attached_to.as_ref()
     }
 
     #[must_use]
@@ -766,6 +781,14 @@ impl CardInstance {
         if matches!(self.card_type(), CardType::Planeswalker) {
             self.runtime.loyalty_ability_activated_this_turn = false;
         }
+    }
+
+    pub fn attach_to(&mut self, target_id: CardInstanceId) {
+        self.runtime.attached_to = Some(target_id);
+    }
+
+    pub fn clear_attachment(&mut self) {
+        self.runtime.attached_to = None;
     }
 
     pub const fn remove_summoning_sickness(&mut self) {
