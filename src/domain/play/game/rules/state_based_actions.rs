@@ -88,7 +88,7 @@ fn review_supported_creature_state_based_actions(
     game_id: &GameId,
     players: &mut [Player],
     card_locations: &AggregateCardLocationIndex,
-) -> StateBasedActionCheckResult {
+) -> Result<StateBasedActionCheckResult, crate::domain::play::errors::DomainError> {
     let mut creatures_died = Vec::new();
 
     for player_index in 0..players.len() {
@@ -105,30 +105,27 @@ fn review_supported_creature_state_based_actions(
             .collect::<Vec<_>>();
 
         for handle in doomed_handles {
-            if let Ok((owner_id, card_id)) =
-                zones::move_battlefield_handle_to_owner_graveyard_by_index(
-                    players,
-                    card_locations,
-                    player_index,
-                    handle,
-                )
-            {
-                creatures_died.push(CreatureDied::new(game_id.clone(), owner_id, card_id));
-            }
+            let (owner_id, card_id) = zones::move_battlefield_handle_to_owner_graveyard_by_index(
+                players,
+                card_locations,
+                player_index,
+                handle,
+            )?;
+            creatures_died.push(CreatureDied::new(game_id.clone(), owner_id, card_id));
         }
     }
 
-    StateBasedActionCheckResult {
+    Ok(StateBasedActionCheckResult {
         creatures_died,
         moved_to_graveyard: false,
         game_ended: None,
-    }
+    })
 }
 
 fn review_attached_aura_state_based_actions(
     players: &mut [Player],
     card_locations: &AggregateCardLocationIndex,
-) -> StateBasedActionCheckResult {
+) -> Result<StateBasedActionCheckResult, crate::domain::play::errors::DomainError> {
     let mut moved_to_graveyard = false;
 
     for player_index in 0..players.len() {
@@ -152,24 +149,21 @@ fn review_attached_aura_state_based_actions(
             .collect::<Vec<_>>();
 
         for handle in doomed_handles {
-            if zones::move_battlefield_handle_to_owner_graveyard_by_index(
+            zones::move_battlefield_handle_to_owner_graveyard_by_index(
                 players,
                 card_locations,
                 player_index,
                 handle,
-            )
-            .is_ok()
-            {
-                moved_to_graveyard = true;
-            }
+            )?;
+            moved_to_graveyard = true;
         }
     }
 
-    StateBasedActionCheckResult {
+    Ok(StateBasedActionCheckResult {
         creatures_died: Vec::new(),
         moved_to_graveyard,
         game_ended: None,
-    }
+    })
 }
 
 /// Resolves the currently supported state-based actions after a relevant gameplay action.
@@ -195,19 +189,17 @@ pub fn check_state_based_actions(
     loop {
         let mut changes = false;
 
-        let creature_locations = current_locations(players, card_locations);
+        let current_locations = current_locations(players, card_locations);
 
         let creature_result =
-            review_supported_creature_state_based_actions(game_id, players, &creature_locations);
+            review_supported_creature_state_based_actions(game_id, players, &current_locations)?;
         if creature_result.changed() {
             changes = true;
         }
         total_creatures_died.extend(creature_result.creatures_died);
 
-        let aura_locations = current_locations(players, card_locations);
-
         let attached_aura_result =
-            review_attached_aura_state_based_actions(players, &aura_locations);
+            review_attached_aura_state_based_actions(players, &current_locations)?;
         if attached_aura_result.changed() {
             changes = true;
         }

@@ -1,5 +1,7 @@
 //! Projects the aggregate into the public gameplay read contract.
 
+use std::collections::HashMap;
+
 use crate::domain::play::{
     cards::{CardInstance, KeywordAbility},
     game::{Game, Player, StackObjectKind},
@@ -89,6 +91,10 @@ fn priority_surface_state(game: &Game, player_id: &PlayerId) -> PublicSurfaceSta
     let mana_source_ids = tappable_mana_source_ids(game, player_id);
     let castable_cards = castable_cards(game, player_id);
     let activatable_cards = activatable_cards(game, player_id);
+    let spell_target_candidates_by_card =
+        spell_target_candidate_cache(game, player_id, &castable_cards);
+    let ability_target_candidates_by_card =
+        ability_target_candidate_cache(game, player_id, &activatable_cards);
 
     let mut actions = Vec::new();
     actions.push(PublicLegalAction::PassPriority {
@@ -129,7 +135,10 @@ fn priority_surface_state(game: &Game, player_id: &PlayerId) -> PublicSurfaceSta
             choice_requests.push(PublicChoiceRequest::SpellTarget {
                 player_id: player_id.clone(),
                 source_card_id: castable.card_id.clone(),
-                candidates: spell_target_candidates(game, player_id, &castable.card_id),
+                candidates: spell_target_candidates_by_card
+                    .get(&castable.card_id)
+                    .cloned()
+                    .unwrap_or_default(),
             });
         }
         if castable.requires_choice {
@@ -145,7 +154,10 @@ fn priority_surface_state(game: &Game, player_id: &PlayerId) -> PublicSurfaceSta
             choice_requests.push(PublicChoiceRequest::AbilityTarget {
                 player_id: player_id.clone(),
                 source_card_id: source_card_id.clone(),
-                candidates: ability_target_candidates(game, player_id, &source_card_id),
+                candidates: ability_target_candidates_by_card
+                    .get(&source_card_id)
+                    .cloned()
+                    .unwrap_or_default(),
             });
         }
     }
@@ -154,6 +166,40 @@ fn priority_surface_state(game: &Game, player_id: &PlayerId) -> PublicSurfaceSta
         legal_actions: actions,
         choice_requests,
     }
+}
+
+fn spell_target_candidate_cache(
+    game: &Game,
+    actor_id: &PlayerId,
+    castable_cards: &[PublicCastableCard],
+) -> HashMap<CardInstanceId, Vec<PublicChoiceCandidate>> {
+    castable_cards
+        .iter()
+        .filter(|card| card.requires_target)
+        .map(|card| {
+            (
+                card.card_id.clone(),
+                spell_target_candidates(game, actor_id, &card.card_id),
+            )
+        })
+        .collect()
+}
+
+fn ability_target_candidate_cache(
+    game: &Game,
+    actor_id: &PlayerId,
+    activatable_cards: &[PublicActivatableCard],
+) -> HashMap<CardInstanceId, Vec<PublicChoiceCandidate>> {
+    activatable_cards
+        .iter()
+        .filter(|card| card.requires_target)
+        .map(|card| {
+            (
+                card.card_id.clone(),
+                ability_target_candidates(game, actor_id, &card.card_id),
+            )
+        })
+        .collect()
 }
 
 fn phase_surface_state(game: &Game) -> PublicSurfaceState {
