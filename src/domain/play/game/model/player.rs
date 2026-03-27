@@ -382,8 +382,8 @@ impl Player {
                 .collect::<Vec<_>>();
             for creature_handle in creature_handles {
                 self.cards
-                    .get_mut_by_handle(creature_handle)?
-                    .add_attached_stat_bonus(1, 1);
+                    .get_mut_by_handle(creature_handle)
+                    .map(|card| card.add_controller_static_stat_bonus(1, 1))?;
             }
         }
 
@@ -393,7 +393,6 @@ impl Player {
                 .battlefield
                 .iter()
                 .copied()
-                .filter(|current_handle| *current_handle != handle)
                 .filter(|current_handle| {
                     self.cards.get_by_handle(*current_handle).is_some_and(|card| {
                         matches!(
@@ -408,9 +407,9 @@ impl Player {
             )
             .ok()?;
             if anthem_count > 0 {
-                self.cards
-                    .get_mut_by_handle(handle)?
-                    .add_attached_stat_bonus(anthem_count, anthem_count);
+                self.cards.get_mut_by_handle(handle).map(|card| {
+                    card.add_controller_static_stat_bonus(anthem_count, anthem_count);
+                })?;
             }
         }
 
@@ -443,8 +442,8 @@ impl Player {
             .collect::<Vec<_>>();
         for creature_handle in creature_handles {
             self.cards
-                .get_mut_by_handle(creature_handle)?
-                .remove_attached_stat_bonus(1, 1);
+                .get_mut_by_handle(creature_handle)
+                .map(|card| card.remove_controller_static_stat_bonus(1, 1))?;
         }
         Some(())
     }
@@ -963,11 +962,19 @@ impl Player {
         self.library.receive(handles);
     }
 
-    pub fn receive_battlefield_card(&mut self, mut card: CardInstance) {
+    pub fn receive_battlefield_card(&mut self, mut card: CardInstance) -> Option<()> {
         card.ensure_owner(&self.id);
         let handle = self.cards.insert(card, PlayerCardZone::Battlefield);
         self.battlefield.add(handle);
-        let _ = self.apply_battlefield_static_effects_for_entering_handle(handle);
+        if self
+            .apply_battlefield_static_effects_for_entering_handle(handle)
+            .is_none()
+        {
+            let _ = self.battlefield.remove(handle);
+            let _ = self.cards.remove_by_handle(handle);
+            return None;
+        }
+        Some(())
     }
 
     pub fn receive_graveyard_card(&mut self, mut card: CardInstance) {
@@ -1201,12 +1208,14 @@ mod tests {
         let player_id = PlayerId::new("player-a");
         let card_id = CardInstanceId::new("card-a");
         let mut player = Player::new(player_id);
-        player.receive_battlefield_card(CardInstance::new(
-            card_id.clone(),
-            CardDefinitionId::new("definition-a"),
-            crate::domain::play::cards::CardType::Creature,
-            2,
-        ));
+        assert!(player
+            .receive_battlefield_card(CardInstance::new(
+                card_id.clone(),
+                CardDefinitionId::new("definition-a"),
+                crate::domain::play::cards::CardType::Creature,
+                2,
+            ))
+            .is_some());
 
         let handle = player.handle_in_zone(&card_id, PlayerCardZone::Battlefield);
         assert!(handle.is_some());

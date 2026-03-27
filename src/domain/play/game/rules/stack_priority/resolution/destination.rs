@@ -24,7 +24,13 @@ pub(super) fn move_resolved_spell_to_its_destination(
         | CardType::Enchantment
         | CardType::Artifact
         | CardType::Planeswalker => {
-            player.receive_battlefield_card(payload.into_card_instance());
+            player
+                .receive_battlefield_card(payload.into_card_instance())
+                .ok_or_else(|| {
+                    DomainError::Game(GameError::InternalInvariantViolation(
+                        "failed to move resolved permanent spell to the battlefield".to_string(),
+                    ))
+                })?;
             Ok(SpellCastOutcome::EnteredBattlefield)
         }
         CardType::Instant | CardType::Sorcery => {

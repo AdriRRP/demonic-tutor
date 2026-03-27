@@ -166,7 +166,7 @@ fn reanimate_creature_card_to_battlefield(
     }
 
     let moved_card = players[location.owner_index()].remove_graveyard_card(target_id)?;
-    players[controller_index].receive_battlefield_card(moved_card);
+    players[controller_index].receive_battlefield_card(moved_card)?;
     Some(target_id.clone())
 }
 
@@ -459,7 +459,13 @@ fn resolve_create_vanilla_creature_token_effect(
     let definition_id = CardDefinitionId::new(format!("token-{power}-{toughness}"));
     let token =
         CardInstance::new_vanilla_creature_token(token_id.clone(), definition_id, power, toughness);
-    context.players[context.controller_index].receive_battlefield_card(token);
+    context.players[context.controller_index]
+        .receive_battlefield_card(token)
+        .ok_or_else(|| {
+            DomainError::Game(GameError::InternalInvariantViolation(
+                "failed to place created token onto the battlefield".to_string(),
+            ))
+        })?;
 
     review_state_based_actions_after_effect(
         context.game_id,
@@ -1150,7 +1156,7 @@ mod tests {
         let card = players[1]
             .remove_graveyard_card(&card_id)
             .expect("owner graveyard should contain the card");
-        players[0].receive_battlefield_card(card);
+        assert!(players[0].receive_battlefield_card(card).is_some());
         let card_locations = AggregateCardLocationIndex::from_players(&players);
 
         let moved = return_permanent_to_owners_hand(&mut players, &card_locations, &card_id);

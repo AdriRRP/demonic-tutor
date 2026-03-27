@@ -4,7 +4,10 @@
 
 use {
     crate::support,
-    demonictutor::{CardDefinitionId, CastSpellCommand, PassPriorityCommand, PlayerId},
+    demonictutor::{
+        CardDefinitionId, CastSpellCommand, ControllerStaticEffectProfile, PassPriorityCommand,
+        PlayerId,
+    },
 };
 
 fn cast_and_resolve(
@@ -182,5 +185,36 @@ fn controller_anthem_bonus_is_removed_when_the_anthem_leaves_battlefield() {
             .battlefield_card(&creature_id)
             .and_then(demonictutor::CardInstance::creature_stats),
         Some((2, 2))
+    );
+}
+
+#[test]
+fn creature_anthem_applies_to_itself_when_it_enters() {
+    let (service, mut game) = support::setup_two_player_game(
+        "game-creature-anthem-self",
+        support::filled_library(
+            vec![
+                support::creature_card("anthem-bear", 0, 2, 2).with_controller_static_effect(
+                    ControllerStaticEffectProfile::CreaturesYouControlPlusOnePlusOne,
+                ),
+            ],
+            10,
+        ),
+        support::filled_library(Vec::new(), 10),
+    );
+    support::advance_to_first_main_satisfying_cleanup(&service, &mut game);
+
+    let creature_id = game.players()[0]
+        .hand_card_by_definition(&CardDefinitionId::new("anthem-bear"))
+        .expect("anthem creature should be in hand")
+        .id()
+        .clone();
+    cast_and_resolve(&service, &mut game, "player-1", creature_id.clone());
+
+    assert_eq!(
+        game.players()[0]
+            .battlefield_card(&creature_id)
+            .and_then(demonictutor::CardInstance::creature_stats),
+        Some((3, 3))
     );
 }

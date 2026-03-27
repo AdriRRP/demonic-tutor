@@ -296,7 +296,7 @@ mod tests {
         );
         attacker.remove_summoning_sickness();
         attacker.set_attacking(true);
-        attacker_player.receive_battlefield_card(attacker);
+        assert!(attacker_player.receive_battlefield_card(attacker).is_some());
 
         let attacker_handle = attacker_player.battlefield_handle(&attacker_id);
         assert!(attacker_handle.is_some());
@@ -313,7 +313,7 @@ mod tests {
         );
         blocker.remove_summoning_sickness();
         blocker.assign_blocking_target(attacker_handle);
-        blocker_player.receive_battlefield_card(blocker);
+        assert!(blocker_player.receive_battlefield_card(blocker).is_some());
 
         let blockers = collect_blockers(&blocker_player, 1, &attacker_player, 0);
         assert!(blockers.is_ok());
@@ -344,7 +344,7 @@ mod tests {
         );
         attacker.remove_summoning_sickness();
         attacker.set_attacking(true);
-        attacker_player.receive_battlefield_card(attacker);
+        assert!(attacker_player.receive_battlefield_card(attacker).is_some());
 
         let blocker_a = CardInstance::new_creature(
             blocker_a_id.clone(),
@@ -353,7 +353,7 @@ mod tests {
             2,
             2,
         );
-        blocker_player.receive_battlefield_card(blocker_a);
+        assert!(blocker_player.receive_battlefield_card(blocker_a).is_some());
         let blocker_b = CardInstance::new_creature(
             blocker_b_id.clone(),
             CardDefinitionId::new("blocker-b-definition"),
@@ -361,7 +361,7 @@ mod tests {
             2,
             2,
         );
-        blocker_player.receive_battlefield_card(blocker_b);
+        assert!(blocker_player.receive_battlefield_card(blocker_b).is_some());
 
         let blocker_a_handle = blocker_player
             .battlefield_handle(&blocker_a_id)

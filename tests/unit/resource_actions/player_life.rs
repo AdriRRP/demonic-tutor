@@ -230,7 +230,7 @@ fn adjust_life_reviews_pending_state_based_actions_for_existing_lethal_damage() 
         2,
     );
     doomed_creature.add_damage(2);
-    alice.receive_battlefield_card(doomed_creature);
+    assert!(alice.receive_battlefield_card(doomed_creature).is_some());
 
     let bob = Player::new(PlayerId::new("player-2"));
     let active_player = PlayerId::new("player-1");

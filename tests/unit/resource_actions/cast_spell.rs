@@ -965,13 +965,15 @@ fn resolving_a_spell_reviews_pending_state_based_actions_for_existing_zero_tough
     let service = crate::support::create_service();
 
     let mut alice = Player::new(PlayerId::new("player-1"));
-    alice.receive_battlefield_card(CardInstance::new_creature(
-        CardInstanceId::new("doomed-creature"),
-        CardDefinitionId::new("doomed-creature"),
-        0,
-        1,
-        0,
-    ));
+    assert!(alice
+        .receive_battlefield_card(CardInstance::new_creature(
+            CardInstanceId::new("doomed-creature"),
+            CardDefinitionId::new("doomed-creature"),
+            0,
+            1,
+            0,
+        ))
+        .is_some());
     alice.receive_hand_cards(vec![CardInstance::new(
         CardInstanceId::new("supporting-spell"),
         CardDefinitionId::new("supporting-spell"),

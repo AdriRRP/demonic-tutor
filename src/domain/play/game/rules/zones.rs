@@ -443,7 +443,7 @@ mod tests {
         let card = players[1]
             .remove_graveyard_card(&card_id)
             .expect("owner graveyard should contain the card");
-        players[0].receive_battlefield_card(card);
+        assert!(players[0].receive_battlefield_card(card).is_some());
         let handle = players[0]
             .battlefield_handle(&card_id)
             .expect("controller battlefield should contain the foreign-owned card");

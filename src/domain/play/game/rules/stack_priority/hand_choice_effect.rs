@@ -105,7 +105,13 @@ fn move_spell_to_resolution_destination(
         | CardType::Artifact
         | CardType::Planeswalker => {
             let card_id = payload.id().clone();
-            player.receive_battlefield_card(payload.into_card_instance());
+            player
+                .receive_battlefield_card(payload.into_card_instance())
+                .ok_or_else(|| {
+                    DomainError::Game(GameError::InternalInvariantViolation(
+                        "failed to move resolved permanent spell to the battlefield".to_string(),
+                    ))
+                })?;
             Ok((SpellCastOutcome::EnteredBattlefield, vec![card_id]))
         }
         CardType::Instant | CardType::Sorcery => {

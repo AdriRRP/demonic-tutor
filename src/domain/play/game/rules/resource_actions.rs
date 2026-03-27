@@ -9,7 +9,7 @@ use {
     crate::domain::play::{
         cards::CardType,
         commands::{AdjustPlayerLifeEffectCommand, PlayLandCommand, TapLandCommand},
-        errors::{CardError, DomainError, PhaseError},
+        errors::{CardError, DomainError, GameError, PhaseError},
         events::{CreatureDied, GameEnded, LandPlayed, LandTapped, LifeChanged, ManaAdded},
         ids::GameId,
         phase::Phase,
@@ -71,7 +71,11 @@ pub fn play_land(
     }
 
     let card = helpers::remove_card_from_hand(player, &cmd.player_id, &card_id)?;
-    player.receive_battlefield_card(card);
+    player.receive_battlefield_card(card).ok_or_else(|| {
+        DomainError::Game(GameError::InternalInvariantViolation(
+            "failed to move played land to the battlefield".to_string(),
+        ))
+    })?;
     player.record_land_played();
 
     Ok(LandPlayed::new(game_id.clone(), cmd.player_id, card_id))

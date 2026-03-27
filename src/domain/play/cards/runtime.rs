@@ -26,6 +26,8 @@ struct CreatureRuntime {
     temporary_toughness: u32,
     attached_power_bonus: u32,
     attached_toughness_bonus: u32,
+    controller_static_power_bonus: u32,
+    controller_static_toughness_bonus: u32,
     attached_cant_attack_count: u32,
     attached_cant_block_count: u32,
     flags: u8,
@@ -41,6 +43,7 @@ pub struct CreatureSpellPayload {
     keywords: KeywordAbilitySet,
     activated_ability: Option<ActivatedAbilityProfile>,
     triggered_ability: Option<TriggeredAbilityProfile>,
+    controller_static_effect: Option<ControllerStaticEffectProfile>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -84,6 +87,8 @@ impl CreatureRuntime {
             temporary_toughness: 0,
             attached_power_bonus: 0,
             attached_toughness_bonus: 0,
+            controller_static_power_bonus: 0,
+            controller_static_toughness_bonus: 0,
             attached_cant_attack_count: 0,
             attached_cant_block_count: 0,
             flags: CREATURE_FLAG_SUMMONING_SICKNESS,
@@ -104,6 +109,8 @@ impl CreatureRuntime {
             temporary_toughness: 0,
             attached_power_bonus: 0,
             attached_toughness_bonus: 0,
+            controller_static_power_bonus: 0,
+            controller_static_toughness_bonus: 0,
             attached_cant_attack_count: 0,
             attached_cant_block_count: 0,
             flags: CREATURE_FLAG_SUMMONING_SICKNESS,
@@ -402,6 +409,7 @@ impl CardInstance {
                     keywords: creature.keywords,
                     activated_ability: self.face.definition.activated_ability(),
                     triggered_ability: self.face.definition.triggered_ability(),
+                    controller_static_effect: self.face.definition.controller_static_effect(),
                 }),
             },
         }
@@ -603,6 +611,10 @@ impl SpellPayload {
                         if let Some(triggered_ability) = payload.triggered_ability {
                             definition = definition.with_triggered_ability(triggered_ability);
                         }
+                        if let Some(controller_static_effect) = payload.controller_static_effect {
+                            definition =
+                                definition.with_controller_static_effect(controller_static_effect);
+                        }
                         definition
                     }),
                 },
@@ -733,7 +745,8 @@ impl CardInstance {
                 creature.power
                     + creature.plus_one_plus_one_counters
                     + creature.temporary_power
-                    + creature.attached_power_bonus,
+                    + creature.attached_power_bonus
+                    + creature.controller_static_power_bonus,
             ),
             CardRuntimeKind::NonCreature => None,
         }
@@ -746,7 +759,8 @@ impl CardInstance {
                 creature.toughness
                     + creature.plus_one_plus_one_counters
                     + creature.temporary_toughness
-                    + creature.attached_toughness_bonus,
+                    + creature.attached_toughness_bonus
+                    + creature.controller_static_toughness_bonus,
             ),
             CardRuntimeKind::NonCreature => None,
         }
@@ -759,11 +773,13 @@ impl CardInstance {
                 creature.power
                     + creature.plus_one_plus_one_counters
                     + creature.temporary_power
-                    + creature.attached_power_bonus,
+                    + creature.attached_power_bonus
+                    + creature.controller_static_power_bonus,
                 creature.toughness
                     + creature.plus_one_plus_one_counters
                     + creature.temporary_toughness
-                    + creature.attached_toughness_bonus,
+                    + creature.attached_toughness_bonus
+                    + creature.controller_static_toughness_bonus,
             )),
             CardRuntimeKind::NonCreature => None,
         }
@@ -908,6 +924,7 @@ impl CardInstance {
                         + creature.plus_one_plus_one_counters
                         + creature.temporary_toughness
                         + creature.attached_toughness_bonus
+                        + creature.controller_static_toughness_bonus
                     || (creature.deathtouch_damage && creature.damage > 0)
             }
             CardRuntimeKind::NonCreature => false,
@@ -922,6 +939,7 @@ impl CardInstance {
                     + creature.plus_one_plus_one_counters
                     + creature.temporary_toughness
                     + creature.attached_toughness_bonus
+                    + creature.controller_static_toughness_bonus
                     == 0
             }
             CardRuntimeKind::NonCreature => false,
@@ -977,6 +995,26 @@ impl CardInstance {
             creature.attached_power_bonus = creature.attached_power_bonus.saturating_sub(power);
             creature.attached_toughness_bonus =
                 creature.attached_toughness_bonus.saturating_sub(toughness);
+        }
+    }
+
+    pub const fn add_controller_static_stat_bonus(&mut self, power: u32, toughness: u32) {
+        if let CardRuntimeKind::Creature(creature) = &mut self.runtime.kind {
+            creature.controller_static_power_bonus =
+                creature.controller_static_power_bonus.saturating_add(power);
+            creature.controller_static_toughness_bonus = creature
+                .controller_static_toughness_bonus
+                .saturating_add(toughness);
+        }
+    }
+
+    pub const fn remove_controller_static_stat_bonus(&mut self, power: u32, toughness: u32) {
+        if let CardRuntimeKind::Creature(creature) = &mut self.runtime.kind {
+            creature.controller_static_power_bonus =
+                creature.controller_static_power_bonus.saturating_sub(power);
+            creature.controller_static_toughness_bonus = creature
+                .controller_static_toughness_bonus
+                .saturating_sub(toughness);
         }
     }
 

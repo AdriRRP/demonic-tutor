@@ -239,7 +239,7 @@ mod tests {
             .remove_graveyard_card(&card_id)
             .expect("owner graveyard should contain the card");
         card.add_damage(2);
-        players[0].receive_battlefield_card(card);
+        assert!(players[0].receive_battlefield_card(card).is_some());
 
         let result =
             check_state_based_actions(&game_id, &mut players, &mut terminal_state).unwrap();

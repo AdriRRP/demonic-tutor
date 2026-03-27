@@ -264,7 +264,15 @@ fn move_resolved_aura_to_its_destination(
             let mut permanent = payload.into_card_instance();
             permanent.attach_to(target_id.clone());
             let aura_id = permanent.id().clone();
-            players[controller_index].receive_battlefield_card(permanent);
+            players[controller_index]
+                .receive_battlefield_card(permanent)
+                .ok_or_else(|| {
+                    crate::domain::play::errors::DomainError::Game(
+                        crate::domain::play::errors::GameError::InternalInvariantViolation(
+                            "failed to place resolved aura on the battlefield".to_string(),
+                        ),
+                    )
+                })?;
             apply_attached_aura_effects(players, controller_index, &aura_id);
             Ok(SpellCastOutcome::EnteredBattlefield)
         }
