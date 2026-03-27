@@ -21,7 +21,7 @@ pub(super) fn return_permanent_to_owners_hand(
     (location.zone() == crate::domain::play::game::PlayerCardZone::Battlefield).then_some(())?;
     zones::move_battlefield_handle_to_owner_hand_by_index(
         players,
-        Some(card_locations),
+        card_locations,
         location.player_index(),
         location.handle(),
     )

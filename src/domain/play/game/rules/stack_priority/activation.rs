@@ -185,7 +185,7 @@ fn pay_activation_costs(
             })?;
         let (owner_id, _) = zones::move_battlefield_handle_to_owner_graveyard_by_index(
             players,
-            Some(card_locations),
+            card_locations,
             player_index,
             source_handle.handle(),
         )?;

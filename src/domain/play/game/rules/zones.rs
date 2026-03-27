@@ -84,26 +84,13 @@ fn remove_attached_aura_effects_for_battlefield_handle(
 
 fn detach_aura_effects(
     players: &mut [Player],
-    card_locations: Option<&AggregateCardLocationIndex>,
+    card_locations: &AggregateCardLocationIndex,
     controller_index: usize,
     handle: PlayerCardHandle,
 ) -> Result<(), DomainError> {
-    let rebuilt_locations = card_locations
-        .is_none()
-        .then(|| AggregateCardLocationIndex::from_players(players));
-    let locations = match (card_locations, rebuilt_locations.as_ref()) {
-        (Some(locations), _) => locations,
-        (None, Some(rebuilt_locations)) => rebuilt_locations,
-        (None, None) => {
-            return Err(DomainError::Game(GameError::InternalInvariantViolation(
-                "aura detach requires either the current location index or a rebuilt index".into(),
-            )))
-        }
-    };
-
     remove_attached_aura_effects_for_battlefield_handle(
         players,
-        locations,
+        card_locations,
         controller_index,
         handle,
     )
@@ -111,7 +98,7 @@ fn detach_aura_effects(
 
 pub(crate) fn move_battlefield_handle_to_owner_graveyard_by_index(
     players: &mut [Player],
-    card_locations: Option<&AggregateCardLocationIndex>,
+    card_locations: &AggregateCardLocationIndex,
     controller_index: usize,
     handle: PlayerCardHandle,
 ) -> Result<(PlayerId, CardInstanceId), DomainError> {
@@ -164,7 +151,7 @@ pub(crate) fn move_battlefield_handle_to_owner_graveyard_by_index(
 
 pub(crate) fn move_battlefield_handle_to_owner_hand_by_index(
     players: &mut [Player],
-    card_locations: Option<&AggregateCardLocationIndex>,
+    card_locations: &AggregateCardLocationIndex,
     controller_index: usize,
     handle: PlayerCardHandle,
 ) -> Result<(PlayerId, CardInstanceId), DomainError> {

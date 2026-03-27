@@ -1,7 +1,14 @@
 //! Supports game rules state based actions.
 
+use std::borrow::Cow;
+
 use {
-    super::super::{helpers, model::Player, rules::zones, TerminalState},
+    super::super::{
+        helpers,
+        model::{AggregateCardLocationIndex, Player},
+        rules::zones,
+        TerminalState,
+    },
     crate::domain::play::{
         events::{CreatureDied, GameEndReason, GameEnded},
         ids::GameId,
@@ -20,6 +27,16 @@ impl StateBasedActionCheckResult {
     const fn changed(&self) -> bool {
         !self.creatures_died.is_empty() || self.moved_to_graveyard || self.game_ended.is_some()
     }
+}
+
+fn current_locations<'a>(
+    players: &[Player],
+    card_locations: Option<&'a AggregateCardLocationIndex>,
+) -> Cow<'a, AggregateCardLocationIndex> {
+    card_locations.map_or_else(
+        || Cow::Owned(AggregateCardLocationIndex::from_players(players)),
+        Cow::Borrowed,
+    )
 }
 
 #[derive(Debug, Clone)]
@@ -70,7 +87,7 @@ fn end_game_for_zero_life(
 fn review_supported_creature_state_based_actions(
     game_id: &GameId,
     players: &mut [Player],
-    card_locations: Option<&super::super::AggregateCardLocationIndex>,
+    card_locations: &AggregateCardLocationIndex,
 ) -> StateBasedActionCheckResult {
     let mut creatures_died = Vec::new();
 
@@ -110,7 +127,7 @@ fn review_supported_creature_state_based_actions(
 
 fn review_attached_aura_state_based_actions(
     players: &mut [Player],
-    card_locations: Option<&super::super::AggregateCardLocationIndex>,
+    card_locations: &AggregateCardLocationIndex,
 ) -> StateBasedActionCheckResult {
     let mut moved_to_graveyard = false;
 
@@ -124,9 +141,10 @@ fn review_attached_aura_state_based_actions(
                         matches!(
                             card.attachment_profile(),
                             Some(crate::domain::play::cards::AttachmentProfile::EnchantCreature)
-                        ) && !players.iter().any(|player| {
-                            card.attached_to().is_some_and(|target_id| {
-                                player.battlefield_card(target_id).is_some()
+                        ) && !card.attached_to().is_some_and(|target_id| {
+                            card_locations.location(target_id).is_some_and(|location| {
+                                location.zone()
+                                    == crate::domain::play::game::PlayerCardZone::Battlefield
                             })
                         })
                     })
@@ -168,7 +186,7 @@ fn review_attached_aura_state_based_actions(
 pub fn check_state_based_actions(
     game_id: &GameId,
     players: &mut [Player],
-    card_locations: Option<&super::super::AggregateCardLocationIndex>,
+    card_locations: Option<&AggregateCardLocationIndex>,
     terminal_state: &mut TerminalState,
 ) -> Result<StateBasedActionsResult, crate::domain::play::errors::DomainError> {
     let mut total_creatures_died = Vec::new();
@@ -177,15 +195,19 @@ pub fn check_state_based_actions(
     loop {
         let mut changes = false;
 
+        let creature_locations = current_locations(players, card_locations);
+
         let creature_result =
-            review_supported_creature_state_based_actions(game_id, players, card_locations);
+            review_supported_creature_state_based_actions(game_id, players, &creature_locations);
         if creature_result.changed() {
             changes = true;
         }
         total_creatures_died.extend(creature_result.creatures_died);
 
+        let aura_locations = current_locations(players, card_locations);
+
         let attached_aura_result =
-            review_attached_aura_state_based_actions(players, card_locations);
+            review_attached_aura_state_based_actions(players, &aura_locations);
         if attached_aura_result.changed() {
             changes = true;
         }

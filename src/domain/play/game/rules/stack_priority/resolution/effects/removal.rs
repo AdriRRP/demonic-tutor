@@ -25,7 +25,7 @@ fn destroy_creature(
     let handle = card_locations.location(target_id)?.handle();
     let (owner_id, _) = zones::move_battlefield_handle_to_owner_graveyard_by_index(
         players,
-        Some(card_locations),
+        card_locations,
         target.player_index(),
         handle,
     )
@@ -46,7 +46,7 @@ fn destroy_noncreature_permanent(
     (location.zone() == crate::domain::play::game::PlayerCardZone::Battlefield).then_some(())?;
     zones::move_battlefield_handle_to_owner_graveyard_by_index(
         players,
-        Some(card_locations),
+        card_locations,
         location.player_index(),
         location.handle(),
     )
