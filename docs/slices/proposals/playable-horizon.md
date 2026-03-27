@@ -36,6 +36,13 @@ At that point the project should have:
 - explicit prompt/choice projections
 - enough common card patterns that the UI is not designed around a toy subset
 
+This gate is now considered reached on `main`.
+
+That means the next planning horizon is no longer "what must exist before any UI work starts", but rather:
+
+- what should land before the UI has a richer limited-like card pool to exercise
+- what should still remain explicit and rejected while the first client is being built
+
 ### Limited-Set Playable Gate
 
 The first honest "limited set playable" milestone should be `0.9.0`.

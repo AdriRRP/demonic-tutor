@@ -13,12 +13,13 @@ Slices:
 - implemented:
   - `support-tap-target-creature-effects`
     - first explicit spell corridor that taps a target creature on the battlefield
-- `support-untap-target-creature-effects`
-  - support spells and abilities that untap a creature for combat and activation play patterns
-- `support-cannot-block-this-turn-effects`
-  - support temporary combat restriction effects applied during the turn
-- `support-defender-and-static-cannot-attack-restrictions`
-  - support creatures and a bounded static subset that cannot attack under the modeled rules
+- pending:
+  - `support-untap-target-creature-effects`
+    - support explicit spells that untap a target creature for combat and activation play patterns
+  - `support-cannot-block-this-turn-effects`
+    - support temporary combat restriction effects applied during the turn
+  - `support-defender-and-static-cannot-attack-restrictions`
+    - support creatures and a bounded static subset that cannot attack under the modeled rules
 
 Why this wave has high return:
 
