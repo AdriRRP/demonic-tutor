@@ -355,6 +355,100 @@ impl Player {
         Some(())
     }
 
+    fn apply_battlefield_static_effects_for_entering_handle(
+        &mut self,
+        handle: PlayerCardHandle,
+    ) -> Option<()> {
+        let entering_card = self.cards.get_by_handle(handle)?;
+        let entering_is_creature = entering_card.creature_stats().is_some();
+        let entering_is_anthem = matches!(
+            entering_card.controller_static_effect(),
+            Some(
+                crate::domain::play::cards::ControllerStaticEffectProfile::CreaturesYouControlPlusOnePlusOne
+            )
+        );
+
+        if entering_is_anthem {
+            let creature_handles = self
+                .battlefield
+                .iter()
+                .copied()
+                .filter(|current_handle| *current_handle != handle)
+                .filter(|current_handle| {
+                    self.cards
+                        .get_by_handle(*current_handle)
+                        .is_some_and(|card| card.creature_stats().is_some())
+                })
+                .collect::<Vec<_>>();
+            for creature_handle in creature_handles {
+                self.cards
+                    .get_mut_by_handle(creature_handle)?
+                    .add_attached_stat_bonus(1, 1);
+            }
+        }
+
+        if entering_is_creature {
+            let anthem_count = u32::try_from(
+                self
+                .battlefield
+                .iter()
+                .copied()
+                .filter(|current_handle| *current_handle != handle)
+                .filter(|current_handle| {
+                    self.cards.get_by_handle(*current_handle).is_some_and(|card| {
+                        matches!(
+                            card.controller_static_effect(),
+                            Some(
+                                crate::domain::play::cards::ControllerStaticEffectProfile::CreaturesYouControlPlusOnePlusOne
+                            )
+                        )
+                    })
+                })
+                .count(),
+            )
+            .ok()?;
+            if anthem_count > 0 {
+                self.cards
+                    .get_mut_by_handle(handle)?
+                    .add_attached_stat_bonus(anthem_count, anthem_count);
+            }
+        }
+
+        Some(())
+    }
+
+    fn remove_battlefield_static_effects_for_departing_handle(
+        &mut self,
+        handle: PlayerCardHandle,
+    ) -> Option<()> {
+        if !matches!(
+            self.cards.get_by_handle(handle)?.controller_static_effect(),
+            Some(
+                crate::domain::play::cards::ControllerStaticEffectProfile::CreaturesYouControlPlusOnePlusOne
+            )
+        ) {
+            return Some(());
+        }
+
+        let creature_handles = self
+            .battlefield
+            .iter()
+            .copied()
+            .filter(|current_handle| *current_handle != handle)
+            .filter(|current_handle| {
+                self.cards
+                    .get_by_handle(*current_handle)
+                    .is_some_and(|card| card.creature_stats().is_some())
+            })
+            .collect::<Vec<_>>();
+        for creature_handle in creature_handles {
+            self.cards
+                .get_mut_by_handle(creature_handle)?
+                .remove_attached_stat_bonus(1, 1);
+        }
+        Some(())
+    }
+
     fn move_handle_between_zones(
         &mut self,
         handle: PlayerCardHandle,
@@ -363,6 +457,7 @@ impl Player {
     ) -> Option<()> {
         self.cards.zone_by_handle(handle)?;
         if from == PlayerCardZone::Battlefield && to != PlayerCardZone::Battlefield {
+            self.remove_battlefield_static_effects_for_departing_handle(handle)?;
             self.cards.get_mut_by_handle(handle)?.clear_attachment();
         }
         if from == PlayerCardZone::Battlefield
@@ -379,6 +474,9 @@ impl Player {
             let _ = self.remove_handle_from_zone(handle, to);
             let _ = self.add_handle_to_zone(handle, from);
             return None;
+        }
+        if to == PlayerCardZone::Battlefield {
+            self.apply_battlefield_static_effects_for_entering_handle(handle)?;
         }
         Some(())
     }
@@ -869,6 +967,7 @@ impl Player {
         card.ensure_owner(&self.id);
         let handle = self.cards.insert(card, PlayerCardZone::Battlefield);
         self.battlefield.add(handle);
+        let _ = self.apply_battlefield_static_effects_for_entering_handle(handle);
     }
 
     pub fn receive_graveyard_card(&mut self, mut card: CardInstance) {

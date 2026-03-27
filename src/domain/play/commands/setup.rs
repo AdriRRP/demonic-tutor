@@ -3,8 +3,9 @@
 use crate::domain::play::{
     cards::{
         ActivatedAbilityProfile, AttachedCombatRestrictionProfile, AttachedStatBoostProfile,
-        AttachmentProfile, CardDefinition, CardInstance, CardType, CastingRule, KeywordAbilitySet,
-        ManaColor, ManaCost, SupportedSpellRules, TriggeredAbilityProfile,
+        AttachmentProfile, CardDefinition, CardInstance, CardType, CastingRule,
+        ControllerStaticEffectProfile, KeywordAbilitySet, ManaColor, ManaCost, SupportedSpellRules,
+        TriggeredAbilityProfile,
     },
     ids::{CardDefinitionId, CardInstanceId, DeckId, PlayerId},
 };
@@ -145,6 +146,17 @@ impl LibraryCard {
         self.definition = self
             .definition
             .with_attached_combat_restriction(attached_combat_restriction);
+        self
+    }
+
+    #[must_use]
+    pub fn with_controller_static_effect(
+        mut self,
+        controller_static_effect: ControllerStaticEffectProfile,
+    ) -> Self {
+        self.definition = self
+            .definition
+            .with_controller_static_effect(controller_static_effect);
         self
     }
 

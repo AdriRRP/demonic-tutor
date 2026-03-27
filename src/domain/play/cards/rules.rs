@@ -134,6 +134,11 @@ pub enum AttachedCombatRestrictionProfile {
     CantAttackOrBlock,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ControllerStaticEffectProfile {
+    CreaturesYouControlPlusOnePlusOne,
+}
+
 impl AttachedStatBoostProfile {
     #[must_use]
     pub const fn plus(power: u32, toughness: u32) -> Self {

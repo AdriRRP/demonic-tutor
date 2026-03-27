@@ -7,7 +7,7 @@
 use {
     demonictutor::{
         ActivatedAbilityProfile, AttachedCombatRestrictionProfile, AttachedStatBoostProfile,
-        AttachmentProfile, CastingRule, TriggeredAbilityProfile,
+        AttachmentProfile, CastingRule, ControllerStaticEffectProfile, TriggeredAbilityProfile,
     },
     demonictutor::{
         AdvanceTurnCommand, AdvanceTurnOutcome, CardDefinitionId, CardType, CastSpellCommand,
@@ -472,6 +472,12 @@ pub fn stat_boost_creature_aura_enchantment_card(
 pub fn pacifism_creature_aura_enchantment_card(name: &str, mana_cost: u32) -> LibraryCard {
     creature_aura_enchantment_card(name, mana_cost)
         .with_attached_combat_restriction(AttachedCombatRestrictionProfile::CantAttackOrBlock)
+}
+
+pub fn anthem_enchantment_card(name: &str, mana_cost: u32) -> LibraryCard {
+    enchantment_card(name, mana_cost).with_controller_static_effect(
+        ControllerStaticEffectProfile::CreaturesYouControlPlusOnePlusOne,
+    )
 }
 
 pub fn planeswalker_card(name: &str, mana_cost: u32) -> LibraryCard {

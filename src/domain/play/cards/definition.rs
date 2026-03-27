@@ -4,7 +4,8 @@ use {
     super::{
         ActivatedAbilityProfile, ActivatedManaAbilityProfile, AttachedCombatRestrictionProfile,
         AttachedStatBoostProfile, AttachmentProfile, CardType, CastingPermissionProfile,
-        CastingRule, ManaColor, ManaCost, SupportedSpellRules, TriggeredAbilityProfile,
+        CastingRule, ControllerStaticEffectProfile, ManaColor, ManaCost, SupportedSpellRules,
+        TriggeredAbilityProfile,
     },
     crate::domain::play::ids::CardDefinitionId,
 };
@@ -23,6 +24,7 @@ pub struct CardDefinition {
     attachment_profile: Option<AttachmentProfile>,
     attached_stat_boost: Option<AttachedStatBoostProfile>,
     attached_combat_restriction: Option<AttachedCombatRestrictionProfile>,
+    controller_static_effect: Option<ControllerStaticEffectProfile>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -39,6 +41,7 @@ pub struct CardDefinitionParts {
     pub attachment_profile: Option<AttachmentProfile>,
     pub attached_stat_boost: Option<AttachedStatBoostProfile>,
     pub attached_combat_restriction: Option<AttachedCombatRestrictionProfile>,
+    pub controller_static_effect: Option<ControllerStaticEffectProfile>,
 }
 
 impl CardDefinition {
@@ -65,6 +68,7 @@ impl CardDefinition {
             attachment_profile: None,
             attached_stat_boost: None,
             attached_combat_restriction: None,
+            controller_static_effect: None,
         }
     }
 
@@ -86,6 +90,7 @@ impl CardDefinition {
             attachment_profile: None,
             attached_stat_boost: None,
             attached_combat_restriction: None,
+            controller_static_effect: None,
         }
     }
 
@@ -161,6 +166,15 @@ impl CardDefinition {
     }
 
     #[must_use]
+    pub const fn with_controller_static_effect(
+        mut self,
+        controller_static_effect: ControllerStaticEffectProfile,
+    ) -> Self {
+        self.controller_static_effect = Some(controller_static_effect);
+        self
+    }
+
+    #[must_use]
     pub fn from_parts(parts: CardDefinitionParts) -> Self {
         Self {
             id: parts.id,
@@ -175,6 +189,7 @@ impl CardDefinition {
             attachment_profile: parts.attachment_profile,
             attached_stat_boost: parts.attached_stat_boost,
             attached_combat_restriction: parts.attached_combat_restriction,
+            controller_static_effect: parts.controller_static_effect,
         }
     }
 
@@ -241,5 +256,10 @@ impl CardDefinition {
     #[must_use]
     pub const fn attached_combat_restriction(&self) -> Option<AttachedCombatRestrictionProfile> {
         self.attached_combat_restriction
+    }
+
+    #[must_use]
+    pub const fn controller_static_effect(&self) -> Option<ControllerStaticEffectProfile> {
+        self.controller_static_effect
     }
 }

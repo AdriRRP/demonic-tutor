@@ -4,8 +4,8 @@ use {
     super::{
         ActivatedAbilityProfile, ActivatedManaAbilityProfile, AttachedCombatRestrictionProfile,
         AttachedStatBoostProfile, AttachmentProfile, CardDefinition, CardType,
-        CastingPermissionProfile, CastingRule, KeywordAbility, KeywordAbilitySet, ManaCost,
-        SupportedSpellRules, TriggeredAbilityProfile,
+        CastingPermissionProfile, CastingRule, ControllerStaticEffectProfile, KeywordAbility,
+        KeywordAbilitySet, ManaCost, SupportedSpellRules, TriggeredAbilityProfile,
     },
     crate::domain::play::ids::{CardDefinitionId, CardInstanceId, PlayerCardHandle, PlayerId},
     std::sync::Arc,
@@ -52,6 +52,7 @@ pub struct PermanentSpellPayload {
     attachment_profile: Option<AttachmentProfile>,
     attached_stat_boost: Option<AttachedStatBoostProfile>,
     attached_combat_restriction: Option<AttachedCombatRestrictionProfile>,
+    controller_static_effect: Option<ControllerStaticEffectProfile>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -322,6 +323,7 @@ impl CardInstance {
             attachment_profile: definition.attachment_profile(),
             attached_stat_boost: definition.attached_stat_boost(),
             attached_combat_restriction: definition.attached_combat_restriction(),
+            controller_static_effect: definition.controller_static_effect(),
         }
     }
 
@@ -488,6 +490,9 @@ impl SpellPayload {
         }
         if let Some(attached_combat_restriction) = payload.attached_combat_restriction {
             definition = definition.with_attached_combat_restriction(attached_combat_restriction);
+        }
+        if let Some(controller_static_effect) = payload.controller_static_effect {
+            definition = definition.with_controller_static_effect(controller_static_effect);
         }
         CardInstance {
             id,
@@ -704,6 +709,11 @@ impl CardInstance {
     #[must_use]
     pub fn attached_combat_restriction(&self) -> Option<AttachedCombatRestrictionProfile> {
         self.face.definition.attached_combat_restriction()
+    }
+
+    #[must_use]
+    pub fn controller_static_effect(&self) -> Option<ControllerStaticEffectProfile> {
+        self.face.definition.controller_static_effect()
     }
 
     #[must_use]

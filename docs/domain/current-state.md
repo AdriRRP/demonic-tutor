@@ -151,6 +151,7 @@ The domain currently includes:
 - the current attachment subset now supports `Enchant creature` Auras that target while cast, enter attached if the target stays legal on resolution, and are put into graveyard by SBA if they become unattached
 - the current attachment subset now also supports one explicit attached `+N/+N` Aura bonus profile while the Aura remains attached
 - the current attachment subset now also supports one explicit pacifism-style Aura profile that prevents the enchanted creature from attacking and blocking while attached
+- the current non-attachment static subset now also supports one explicit controller-scoped anthem profile that gives controlled creatures `+1/+1` while the permanent remains on the battlefield
 - supported targeted instant damage to a player emits `LifeChanged` on resolution
 - supported targeted instant damage to a creature marks damage and then relies on shared SBA review for lethal destruction
 - supported indestructible creatures survive the current SBA lethal-damage review while still dying to zero toughness

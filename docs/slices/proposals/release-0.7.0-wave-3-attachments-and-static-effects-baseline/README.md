@@ -6,12 +6,9 @@ Goal:
 
 Slice count:
 
-- `1`
+- `0`
 
 Slices:
-
-- `support-controller-anthem-plus-one-plus-one`
-  - support a first static battlefield effect that boosts creatures controlled by one player
 
 Why this wave has high return:
 
@@ -19,10 +16,9 @@ Why this wave has high return:
 
 See:
 
-- [support-controller-anthem-plus-one-plus-one.md](/Users/adrianramos/Repos/demonictutor/docs/slices/proposals/release-0.7.0-wave-3-attachments-and-static-effects-baseline/support-controller-anthem-plus-one-plus-one.md)
-
 Implemented:
 
 - [support-creature-aura-casting-and-attachment.md](/Users/adrianramos/Repos/demonictutor/docs/slices/implemented/attachments/support-creature-aura-casting-and-attachment.md)
 - [support-stat-boost-auras.md](/Users/adrianramos/Repos/demonictutor/docs/slices/implemented/attachments/support-stat-boost-auras.md)
 - [support-pacifism-style-auras.md](/Users/adrianramos/Repos/demonictutor/docs/slices/implemented/attachments/support-pacifism-style-auras.md)
+- [support-controller-anthem-plus-one-plus-one.md](/Users/adrianramos/Repos/demonictutor/docs/slices/implemented/attachments/support-controller-anthem-plus-one-plus-one.md)

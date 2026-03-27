@@ -6,6 +6,8 @@ mod aura_restrictions;
 mod blocking_legality;
 #[path = "combat_subphases.rs"]
 mod combat_subphases;
+#[path = "controller_anthem.rs"]
+mod controller_anthem;
 #[path = "damage_assignment_order.rs"]
 mod damage_assignment_order;
 #[path = "deathtouch.rs"]
