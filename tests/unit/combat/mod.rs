@@ -1,5 +1,7 @@
 //! Unit coverage for unit combat.
 
+#[path = "aura_restrictions.rs"]
+mod aura_restrictions;
 #[path = "blocking_legality.rs"]
 mod blocking_legality;
 #[path = "combat_subphases.rs"]

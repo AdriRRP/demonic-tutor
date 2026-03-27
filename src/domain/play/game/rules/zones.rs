@@ -35,26 +35,40 @@ fn owner_index_for_battlefield_handle(
         .ok_or_else(|| DomainError::Game(GameError::PlayerNotFound(owner_id.clone())))
 }
 
-fn remove_attached_aura_bonus_for_battlefield_handle(
+fn remove_attached_aura_effects_for_battlefield_handle(
     players: &mut [Player],
     controller_index: usize,
     handle: PlayerCardHandle,
 ) {
-    let Some((attached_to, attached_stat_boost)) = players[controller_index]
-        .card_by_handle(handle)
-        .and_then(|card| card.attached_to().cloned().zip(card.attached_stat_boost()))
+    let Some(card) = players[controller_index].card_by_handle(handle) else {
+        return;
+    };
+    let Some(attached_to) = card.attached_to().cloned() else {
+        return;
+    };
+
+    let attached_stat_boost = card.attached_stat_boost();
+    let attached_combat_restriction = card.attached_combat_restriction();
+
+    if attached_stat_boost.is_none() && attached_combat_restriction.is_none() {
+        return;
+    }
+
+    let Some(target) = players
+        .iter_mut()
+        .find_map(|player| player.battlefield_card_mut(&attached_to))
     else {
         return;
     };
 
-    if let Some(target) = players
-        .iter_mut()
-        .find_map(|player| player.battlefield_card_mut(&attached_to))
-    {
+    if let Some(attached_stat_boost) = attached_stat_boost {
         target.remove_attached_stat_bonus(
             attached_stat_boost.power(),
             attached_stat_boost.toughness(),
         );
+    }
+    if attached_combat_restriction.is_some() {
+        target.remove_attached_cant_attack_or_block();
     }
 }
 
@@ -64,7 +78,7 @@ pub(crate) fn move_battlefield_handle_to_owner_graveyard_by_index(
     handle: PlayerCardHandle,
 ) -> Result<(PlayerId, CardInstanceId), DomainError> {
     let owner_index = owner_index_for_battlefield_handle(players, controller_index, handle)?;
-    remove_attached_aura_bonus_for_battlefield_handle(players, controller_index, handle);
+    remove_attached_aura_effects_for_battlefield_handle(players, controller_index, handle);
     let card_id = players[controller_index]
         .card_by_handle(handle)
         .map(|card| card.id().clone())
@@ -116,7 +130,7 @@ pub(crate) fn move_battlefield_handle_to_owner_hand_by_index(
     handle: PlayerCardHandle,
 ) -> Result<(PlayerId, CardInstanceId), DomainError> {
     let owner_index = owner_index_for_battlefield_handle(players, controller_index, handle)?;
-    remove_attached_aura_bonus_for_battlefield_handle(players, controller_index, handle);
+    remove_attached_aura_effects_for_battlefield_handle(players, controller_index, handle);
     let card_id = players[controller_index]
         .card_by_handle(handle)
         .map(|card| card.id().clone())
@@ -264,7 +278,7 @@ pub fn exile_card_from_battlefield_handle_by_index(
     handle: PlayerCardHandle,
 ) -> Result<CardExiled, DomainError> {
     let owner_index = owner_index_for_battlefield_handle(players, player_index, handle)?;
-    remove_attached_aura_bonus_for_battlefield_handle(players, player_index, handle);
+    remove_attached_aura_effects_for_battlefield_handle(players, player_index, handle);
     let card_id = players[player_index]
         .card_by_handle(handle)
         .map(|card| card.id().clone())

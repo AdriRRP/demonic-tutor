@@ -18,11 +18,12 @@ pub use infrastructure::{GameLogProjection, InMemoryEventBus, InMemoryEventStore
 pub use domain::play::{
     cards::{
         ActivatedAbilityEffect, ActivatedAbilityProfile, ActivatedAbilitySacrificeCost,
-        ActivatedManaAbilityProfile, AttachedStatBoostProfile, AttachmentProfile, CardInstance,
-        CardType, CastingPermissionProfile, CastingRule, CreatureTargetRule, KeywordAbility,
-        KeywordAbilitySet, ManaColor, ManaCost, PlayerTargetRule, SingleTargetRule,
-        SpellResolutionProfile, SpellTargetKind, SpellTargetingProfile, SupportedSpellRules,
-        TriggeredAbilityEffect, TriggeredAbilityEvent, TriggeredAbilityProfile,
+        ActivatedManaAbilityProfile, AttachedCombatRestrictionProfile, AttachedStatBoostProfile,
+        AttachmentProfile, CardInstance, CardType, CastingPermissionProfile, CastingRule,
+        CreatureTargetRule, KeywordAbility, KeywordAbilitySet, ManaColor, ManaCost,
+        PlayerTargetRule, SingleTargetRule, SpellResolutionProfile, SpellTargetKind,
+        SpellTargetingProfile, SupportedSpellRules, TriggeredAbilityEffect, TriggeredAbilityEvent,
+        TriggeredAbilityProfile,
     },
     commands::{
         ActivateAbilityCommand, AdjustPlayerLifeEffectCommand, AdvanceTurnCommand,

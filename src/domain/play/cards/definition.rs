@@ -2,9 +2,9 @@
 
 use {
     super::{
-        ActivatedAbilityProfile, ActivatedManaAbilityProfile, AttachedStatBoostProfile,
-        AttachmentProfile, CardType, CastingPermissionProfile, CastingRule, ManaColor, ManaCost,
-        SupportedSpellRules, TriggeredAbilityProfile,
+        ActivatedAbilityProfile, ActivatedManaAbilityProfile, AttachedCombatRestrictionProfile,
+        AttachedStatBoostProfile, AttachmentProfile, CardType, CastingPermissionProfile,
+        CastingRule, ManaColor, ManaCost, SupportedSpellRules, TriggeredAbilityProfile,
     },
     crate::domain::play::ids::CardDefinitionId,
 };
@@ -22,6 +22,7 @@ pub struct CardDefinition {
     initial_loyalty: Option<u32>,
     attachment_profile: Option<AttachmentProfile>,
     attached_stat_boost: Option<AttachedStatBoostProfile>,
+    attached_combat_restriction: Option<AttachedCombatRestrictionProfile>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -37,6 +38,7 @@ pub struct CardDefinitionParts {
     pub initial_loyalty: Option<u32>,
     pub attachment_profile: Option<AttachmentProfile>,
     pub attached_stat_boost: Option<AttachedStatBoostProfile>,
+    pub attached_combat_restriction: Option<AttachedCombatRestrictionProfile>,
 }
 
 impl CardDefinition {
@@ -62,6 +64,7 @@ impl CardDefinition {
             initial_loyalty: None,
             attachment_profile: None,
             attached_stat_boost: None,
+            attached_combat_restriction: None,
         }
     }
 
@@ -82,6 +85,7 @@ impl CardDefinition {
             initial_loyalty: None,
             attachment_profile: None,
             attached_stat_boost: None,
+            attached_combat_restriction: None,
         }
     }
 
@@ -148,6 +152,15 @@ impl CardDefinition {
     }
 
     #[must_use]
+    pub const fn with_attached_combat_restriction(
+        mut self,
+        attached_combat_restriction: AttachedCombatRestrictionProfile,
+    ) -> Self {
+        self.attached_combat_restriction = Some(attached_combat_restriction);
+        self
+    }
+
+    #[must_use]
     pub fn from_parts(parts: CardDefinitionParts) -> Self {
         Self {
             id: parts.id,
@@ -161,6 +174,7 @@ impl CardDefinition {
             initial_loyalty: parts.initial_loyalty,
             attachment_profile: parts.attachment_profile,
             attached_stat_boost: parts.attached_stat_boost,
+            attached_combat_restriction: parts.attached_combat_restriction,
         }
     }
 
@@ -222,5 +236,10 @@ impl CardDefinition {
     #[must_use]
     pub const fn attached_stat_boost(&self) -> Option<AttachedStatBoostProfile> {
         self.attached_stat_boost
+    }
+
+    #[must_use]
+    pub const fn attached_combat_restriction(&self) -> Option<AttachedCombatRestrictionProfile> {
+        self.attached_combat_restriction
     }
 }

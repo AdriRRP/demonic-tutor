@@ -129,6 +129,11 @@ pub struct AttachedStatBoostProfile {
     toughness: u32,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum AttachedCombatRestrictionProfile {
+    CantAttackOrBlock,
+}
+
 impl AttachedStatBoostProfile {
     #[must_use]
     pub const fn plus(power: u32, toughness: u32) -> Self {

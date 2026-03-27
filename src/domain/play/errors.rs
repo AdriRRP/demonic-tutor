@@ -120,11 +120,19 @@ pub enum CardError {
         player: PlayerId,
         card: CardInstanceId,
     },
+    CannotAttack {
+        player: PlayerId,
+        card: CardInstanceId,
+    },
     NotControlledBy {
         player: PlayerId,
         card: CardInstanceId,
     },
     NotAttacking(CardInstanceId),
+    CannotBlock {
+        player: PlayerId,
+        card: CardInstanceId,
+    },
     CannotBlockFlyingWithoutFlyingOrReach {
         player: PlayerId,
         blocker: CardInstanceId,
@@ -387,6 +395,9 @@ impl std::fmt::Display for CardError {
                     "creature {card} has summoning sickness and cannot attack"
                 )
             }
+            Self::CannotAttack { player: _, card } => {
+                write!(f, "creature {card} cannot attack in the current state")
+            }
             Self::NotControlledBy { player: _, card } => {
                 write!(
                     f,
@@ -394,6 +405,9 @@ impl std::fmt::Display for CardError {
                 )
             }
             Self::NotAttacking(card) => write!(f, "creature {card} is not an attacking creature"),
+            Self::CannotBlock { player: _, card } => {
+                write!(f, "creature {card} cannot block in the current state")
+            }
             Self::CannotBlockFlyingWithoutFlyingOrReach {
                 player: _,
                 blocker,

@@ -202,31 +202,38 @@ fn move_resolved_spell_to_destination(
     )
 }
 
-fn apply_attached_aura_bonus(
+fn apply_attached_aura_effects(
     players: &mut [Player],
     controller_index: usize,
     aura_id: &crate::domain::play::ids::CardInstanceId,
-) -> Result<(), crate::domain::play::errors::DomainError> {
-    let Some((target_id, attached_stat_boost)) = players[controller_index]
-        .battlefield_card(aura_id)
-        .and_then(|card| card.attached_to().cloned().zip(card.attached_stat_boost()))
-    else {
-        return Ok(());
+) {
+    let Some(card) = players[controller_index].battlefield_card(aura_id) else {
+        return;
     };
+    let Some(target_id) = card.attached_to().cloned() else {
+        return;
+    };
+    let attached_stat_boost = card.attached_stat_boost();
+    let attached_combat_restriction = card.attached_combat_restriction();
+
+    if attached_stat_boost.is_none() && attached_combat_restriction.is_none() {
+        return;
+    }
 
     let Some(target) = players
         .iter_mut()
         .find_map(|player| player.battlefield_card_mut(&target_id))
     else {
-        return Err(crate::domain::play::errors::DomainError::Game(
-            crate::domain::play::errors::GameError::InternalInvariantViolation(
-                "attached aura target should exist on battlefield while resolving".to_string(),
-            ),
-        ));
+        return;
     };
 
-    target.add_attached_stat_bonus(attached_stat_boost.power(), attached_stat_boost.toughness());
-    Ok(())
+    if let Some(attached_stat_boost) = attached_stat_boost {
+        target
+            .add_attached_stat_bonus(attached_stat_boost.power(), attached_stat_boost.toughness());
+    }
+    if attached_combat_restriction.is_some() {
+        target.add_attached_cant_attack_or_block();
+    }
 }
 
 fn move_resolved_aura_to_its_destination(
@@ -258,7 +265,7 @@ fn move_resolved_aura_to_its_destination(
             permanent.attach_to(target_id.clone());
             let aura_id = permanent.id().clone();
             players[controller_index].receive_battlefield_card(permanent);
-            apply_attached_aura_bonus(players, controller_index, &aura_id)?;
+            apply_attached_aura_effects(players, controller_index, &aura_id);
             Ok(SpellCastOutcome::EnteredBattlefield)
         }
         (super::spell_effects::SpellTargetLegality::Legal, Some(_)) => {

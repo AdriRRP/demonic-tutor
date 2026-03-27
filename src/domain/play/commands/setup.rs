@@ -2,9 +2,9 @@
 
 use crate::domain::play::{
     cards::{
-        ActivatedAbilityProfile, AttachedStatBoostProfile, AttachmentProfile, CardDefinition,
-        CardInstance, CardType, CastingRule, KeywordAbilitySet, ManaColor, ManaCost,
-        SupportedSpellRules, TriggeredAbilityProfile,
+        ActivatedAbilityProfile, AttachedCombatRestrictionProfile, AttachedStatBoostProfile,
+        AttachmentProfile, CardDefinition, CardInstance, CardType, CastingRule, KeywordAbilitySet,
+        ManaColor, ManaCost, SupportedSpellRules, TriggeredAbilityProfile,
     },
     ids::{CardDefinitionId, CardInstanceId, DeckId, PlayerId},
 };
@@ -134,6 +134,17 @@ impl LibraryCard {
         self.definition = self
             .definition
             .with_attached_stat_boost(attached_stat_boost);
+        self
+    }
+
+    #[must_use]
+    pub fn with_attached_combat_restriction(
+        mut self,
+        attached_combat_restriction: AttachedCombatRestrictionProfile,
+    ) -> Self {
+        self.definition = self
+            .definition
+            .with_attached_combat_restriction(attached_combat_restriction);
         self
     }
 

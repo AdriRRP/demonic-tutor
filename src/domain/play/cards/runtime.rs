@@ -2,9 +2,10 @@
 
 use {
     super::{
-        ActivatedAbilityProfile, ActivatedManaAbilityProfile, AttachedStatBoostProfile,
-        AttachmentProfile, CardDefinition, CardType, CastingPermissionProfile, CastingRule,
-        KeywordAbility, KeywordAbilitySet, ManaCost, SupportedSpellRules, TriggeredAbilityProfile,
+        ActivatedAbilityProfile, ActivatedManaAbilityProfile, AttachedCombatRestrictionProfile,
+        AttachedStatBoostProfile, AttachmentProfile, CardDefinition, CardType,
+        CastingPermissionProfile, CastingRule, KeywordAbility, KeywordAbilitySet, ManaCost,
+        SupportedSpellRules, TriggeredAbilityProfile,
     },
     crate::domain::play::ids::{CardDefinitionId, CardInstanceId, PlayerCardHandle, PlayerId},
     std::sync::Arc,
@@ -25,6 +26,8 @@ struct CreatureRuntime {
     temporary_toughness: u32,
     attached_power_bonus: u32,
     attached_toughness_bonus: u32,
+    attached_cant_attack_count: u32,
+    attached_cant_block_count: u32,
     flags: u8,
     blocking_target: Option<PlayerCardHandle>,
     blocked_by: Vec<PlayerCardHandle>,
@@ -48,6 +51,7 @@ pub struct PermanentSpellPayload {
     initial_loyalty: Option<u32>,
     attachment_profile: Option<AttachmentProfile>,
     attached_stat_boost: Option<AttachedStatBoostProfile>,
+    attached_combat_restriction: Option<AttachedCombatRestrictionProfile>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -79,6 +83,8 @@ impl CreatureRuntime {
             temporary_toughness: 0,
             attached_power_bonus: 0,
             attached_toughness_bonus: 0,
+            attached_cant_attack_count: 0,
+            attached_cant_block_count: 0,
             flags: CREATURE_FLAG_SUMMONING_SICKNESS,
             blocking_target: None,
             blocked_by: Vec::new(),
@@ -97,6 +103,8 @@ impl CreatureRuntime {
             temporary_toughness: 0,
             attached_power_bonus: 0,
             attached_toughness_bonus: 0,
+            attached_cant_attack_count: 0,
+            attached_cant_block_count: 0,
             flags: CREATURE_FLAG_SUMMONING_SICKNESS,
             blocking_target: None,
             blocked_by: Vec::new(),
@@ -313,6 +321,7 @@ impl CardInstance {
             initial_loyalty: definition.initial_loyalty(),
             attachment_profile: definition.attachment_profile(),
             attached_stat_boost: definition.attached_stat_boost(),
+            attached_combat_restriction: definition.attached_combat_restriction(),
         }
     }
 
@@ -476,6 +485,9 @@ impl SpellPayload {
         }
         if let Some(attached_stat_boost) = payload.attached_stat_boost {
             definition = definition.with_attached_stat_boost(attached_stat_boost);
+        }
+        if let Some(attached_combat_restriction) = payload.attached_combat_restriction {
+            definition = definition.with_attached_combat_restriction(attached_combat_restriction);
         }
         CardInstance {
             id,
@@ -687,6 +699,11 @@ impl CardInstance {
     #[must_use]
     pub fn attached_stat_boost(&self) -> Option<AttachedStatBoostProfile> {
         self.face.definition.attached_stat_boost()
+    }
+
+    #[must_use]
+    pub fn attached_combat_restriction(&self) -> Option<AttachedCombatRestrictionProfile> {
+        self.face.definition.attached_combat_restriction()
     }
 
     #[must_use]
@@ -950,6 +967,40 @@ impl CardInstance {
             creature.attached_power_bonus = creature.attached_power_bonus.saturating_sub(power);
             creature.attached_toughness_bonus =
                 creature.attached_toughness_bonus.saturating_sub(toughness);
+        }
+    }
+
+    pub const fn add_attached_cant_attack_or_block(&mut self) {
+        if let CardRuntimeKind::Creature(creature) = &mut self.runtime.kind {
+            creature.attached_cant_attack_count =
+                creature.attached_cant_attack_count.saturating_add(1);
+            creature.attached_cant_block_count =
+                creature.attached_cant_block_count.saturating_add(1);
+        }
+    }
+
+    pub const fn remove_attached_cant_attack_or_block(&mut self) {
+        if let CardRuntimeKind::Creature(creature) = &mut self.runtime.kind {
+            creature.attached_cant_attack_count =
+                creature.attached_cant_attack_count.saturating_sub(1);
+            creature.attached_cant_block_count =
+                creature.attached_cant_block_count.saturating_sub(1);
+        }
+    }
+
+    #[must_use]
+    pub const fn cannot_attack(&self) -> bool {
+        match &self.runtime.kind {
+            CardRuntimeKind::Creature(creature) => creature.attached_cant_attack_count > 0,
+            CardRuntimeKind::NonCreature => false,
+        }
+    }
+
+    #[must_use]
+    pub const fn cannot_block(&self) -> bool {
+        match &self.runtime.kind {
+            CardRuntimeKind::Creature(creature) => creature.attached_cant_block_count > 0,
+            CardRuntimeKind::NonCreature => false,
         }
     }
 

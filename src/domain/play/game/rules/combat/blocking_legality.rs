@@ -119,6 +119,13 @@ pub fn declare_blockers(
                 }));
             }
 
+            if card.cannot_block() {
+                return Err(DomainError::Card(CardError::CannotBlock {
+                    player: cmd.player_id.clone(),
+                    card: blocker_id.clone(),
+                }));
+            }
+
             if !capabilities::can_block_attacker_with_aerial_requirement(
                 card,
                 attacker_requirements.requires_aerial_blocking,
@@ -163,6 +170,13 @@ pub fn declare_blockers(
 
             if card.is_tapped() {
                 return Err(DomainError::Card(CardError::AlreadyTapped {
+                    player: cmd.player_id.clone(),
+                    card: blocker_id.clone(),
+                }));
+            }
+
+            if card.cannot_block() {
+                return Err(DomainError::Card(CardError::CannotBlock {
                     player: cmd.player_id.clone(),
                     card: blocker_id.clone(),
                 }));

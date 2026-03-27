@@ -48,6 +48,13 @@ pub fn declare_attackers(
             }));
         }
 
+        if card.cannot_attack() {
+            return Err(DomainError::Card(CardError::CannotAttack {
+                player: cmd.player_id.clone(),
+                card: attacker_id.clone(),
+            }));
+        }
+
         card.set_attacking(true);
         if !card.has_vigilance() {
             card.tap();
