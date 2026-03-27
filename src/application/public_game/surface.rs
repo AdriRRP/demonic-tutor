@@ -15,6 +15,13 @@ use super::{
     PublicPlayerView, PublicPriorityView, PublicScryChoice, PublicStackObjectView,
     PublicStackTargetView, StackObjectId, StackObjectKind,
 };
+
+#[derive(Debug, Default)]
+struct PublicSurfaceState {
+    legal_actions: Vec<PublicLegalAction>,
+    choice_requests: Vec<PublicChoiceRequest>,
+}
+
 #[must_use]
 pub fn game_view(game: &Game) -> PublicGameView {
     let players = game
@@ -49,34 +56,45 @@ pub fn game_view(game: &Game) -> PublicGameView {
 }
 
 #[must_use]
-fn pending_legal_action(game: &Game) -> Option<PublicLegalAction> {
+fn pending_action_and_request(game: &Game) -> Option<PublicSurfaceState> {
     if let Some(pending_decision) = game.pending_decision() {
         let player_id = game.players()[pending_decision.controller_index()]
             .id()
             .clone();
-        return Some(match pending_decision {
-            crate::domain::play::game::PendingDecision::Scry { .. } => {
-                PublicLegalAction::ResolvePendingScry { player_id }
-            }
-            crate::domain::play::game::PendingDecision::HandChoice { .. } => {
-                PublicLegalAction::ResolvePendingHandChoice { player_id }
-            }
-            crate::domain::play::game::PendingDecision::OptionalEffect { .. } => {
-                PublicLegalAction::ResolveOptionalEffect { player_id }
-            }
+        let (action, request) = match pending_decision {
+            crate::domain::play::game::PendingDecision::Scry { .. } => (
+                PublicLegalAction::ResolvePendingScry { player_id },
+                pending_scry_request(game),
+            ),
+            crate::domain::play::game::PendingDecision::HandChoice { .. } => (
+                PublicLegalAction::ResolvePendingHandChoice { player_id },
+                pending_hand_choice_request(game),
+            ),
+            crate::domain::play::game::PendingDecision::OptionalEffect { .. } => (
+                PublicLegalAction::ResolveOptionalEffect { player_id },
+                pending_optional_effect_request(game),
+            ),
+        };
+        return Some(PublicSurfaceState {
+            legal_actions: vec![action],
+            choice_requests: request.into_iter().collect(),
         });
     }
 
     None
 }
 
-fn priority_legal_actions(game: &Game, player_id: &PlayerId) -> Vec<PublicLegalAction> {
+fn priority_surface_state(game: &Game, player_id: &PlayerId) -> PublicSurfaceState {
+    let playable_land_ids = playable_land_ids(game, player_id);
+    let mana_source_ids = tappable_mana_source_ids(game, player_id);
+    let castable_cards = castable_cards(game, player_id);
+    let activatable_cards = activatable_cards(game, player_id);
+
     let mut actions = Vec::new();
     actions.push(PublicLegalAction::PassPriority {
         player_id: player_id.clone(),
     });
 
-    let playable_land_ids = playable_land_ids(game, player_id);
     if !playable_land_ids.is_empty() {
         actions.push(PublicLegalAction::PlayLand {
             player_id: player_id.clone(),
@@ -84,7 +102,6 @@ fn priority_legal_actions(game: &Game, player_id: &PlayerId) -> Vec<PublicLegalA
         });
     }
 
-    let mana_source_ids = tappable_mana_source_ids(game, player_id);
     if !mana_source_ids.is_empty() {
         actions.push(PublicLegalAction::TapManaSource {
             player_id: player_id.clone(),
@@ -92,27 +109,56 @@ fn priority_legal_actions(game: &Game, player_id: &PlayerId) -> Vec<PublicLegalA
         });
     }
 
-    let castable_cards = castable_cards(game, player_id);
     if !castable_cards.is_empty() {
         actions.push(PublicLegalAction::CastSpell {
             player_id: player_id.clone(),
-            castable_cards,
+            castable_cards: castable_cards.clone(),
         });
     }
 
-    let activatable_cards = activatable_cards(game, player_id);
     if !activatable_cards.is_empty() {
         actions.push(PublicLegalAction::ActivateAbility {
             player_id: player_id.clone(),
-            activatable_cards,
+            activatable_cards: activatable_cards.clone(),
         });
     }
 
-    actions
+    let mut choice_requests = Vec::new();
+    for castable in &castable_cards {
+        if castable.requires_target {
+            choice_requests.push(PublicChoiceRequest::SpellTarget {
+                player_id: player_id.clone(),
+                source_card_id: castable.card_id.clone(),
+                candidates: spell_target_candidates(game, player_id, &castable.card_id),
+            });
+        }
+        if castable.requires_choice {
+            if let Some(request) = spell_choice_request(game, player_id, &castable.card_id) {
+                choice_requests.push(request);
+            }
+        }
+    }
+
+    for activatable in &activatable_cards {
+        if activatable.requires_target {
+            let source_card_id = activatable.card_id.clone();
+            choice_requests.push(PublicChoiceRequest::AbilityTarget {
+                player_id: player_id.clone(),
+                source_card_id: source_card_id.clone(),
+                candidates: ability_target_candidates(game, player_id, &source_card_id),
+            });
+        }
+    }
+
+    PublicSurfaceState {
+        legal_actions: actions,
+        choice_requests,
+    }
 }
 
-fn phase_legal_actions(game: &Game) -> Vec<PublicLegalAction> {
+fn phase_surface_state(game: &Game) -> PublicSurfaceState {
     let mut actions = Vec::new();
+    let mut choice_requests = Vec::new();
 
     match game.phase() {
         Phase::DeclareAttackers => {
@@ -146,12 +192,19 @@ fn phase_legal_actions(game: &Game) -> Vec<PublicLegalAction> {
         }
         Phase::EndStep => {
             let Some(player) = active_player(game) else {
-                return actions;
+                return PublicSurfaceState {
+                    legal_actions: actions,
+                    choice_requests,
+                };
             };
             if player.hand_size() > 7 {
                 actions.push(PublicLegalAction::DiscardForCleanup {
                     player_id: player.id().clone(),
                     card_ids: player.hand_card_ids(),
+                });
+                choice_requests.push(PublicChoiceRequest::CleanupDiscard {
+                    player_id: player.id().clone(),
+                    hand_card_ids: player.hand_card_ids(),
                 });
             } else {
                 actions.push(PublicLegalAction::AdvanceTurn {
@@ -166,111 +219,36 @@ fn phase_legal_actions(game: &Game) -> Vec<PublicLegalAction> {
         }
     }
 
-    actions
+    PublicSurfaceState {
+        legal_actions: actions,
+        choice_requests,
+    }
+}
+
+fn public_surface_state(game: &Game) -> PublicSurfaceState {
+    if game.is_over() {
+        return PublicSurfaceState::default();
+    }
+
+    if let Some(state) = pending_action_and_request(game) {
+        return state;
+    }
+
+    if let Some(priority) = game.priority() {
+        return priority_surface_state(game, priority.current_holder());
+    }
+
+    phase_surface_state(game)
 }
 
 #[must_use]
 pub fn legal_actions(game: &Game) -> Vec<PublicLegalAction> {
-    if game.is_over() {
-        return Vec::new();
-    }
-
-    if let Some(action) = pending_legal_action(game) {
-        return vec![action];
-    }
-
-    if let Some(priority) = game.priority() {
-        return priority_legal_actions(game, priority.current_holder());
-    }
-
-    phase_legal_actions(game)
+    public_surface_state(game).legal_actions
 }
 
 #[must_use]
 pub fn choice_requests(game: &Game) -> Vec<PublicChoiceRequest> {
-    if game.is_over() {
-        return Vec::new();
-    }
-
-    if let Some(request) = pending_scry_request(game) {
-        return vec![request];
-    }
-
-    if let Some(request) = pending_hand_choice_request(game) {
-        return vec![request];
-    }
-
-    if let Some(request) = pending_optional_effect_request(game) {
-        return vec![request];
-    }
-
-    let mut requests = Vec::new();
-
-    if game.priority().is_some() {
-        for action in legal_actions(game) {
-            match action {
-                PublicLegalAction::CastSpell {
-                    player_id,
-                    castable_cards,
-                } => {
-                    for castable in castable_cards {
-                        if castable.requires_target {
-                            requests.push(PublicChoiceRequest::SpellTarget {
-                                player_id: player_id.clone(),
-                                source_card_id: castable.card_id.clone(),
-                                candidates: spell_target_candidates(
-                                    game,
-                                    &player_id,
-                                    &castable.card_id,
-                                ),
-                            });
-                        }
-                        if castable.requires_choice {
-                            if let Some(request) =
-                                spell_choice_request(game, &player_id, &castable.card_id)
-                            {
-                                requests.push(request);
-                            }
-                        }
-                    }
-                }
-                PublicLegalAction::ActivateAbility {
-                    player_id,
-                    activatable_cards,
-                } => {
-                    for activatable in activatable_cards {
-                        if activatable.requires_target {
-                            let source_card_id = activatable.card_id.clone();
-                            requests.push(PublicChoiceRequest::AbilityTarget {
-                                player_id: player_id.clone(),
-                                source_card_id: source_card_id.clone(),
-                                candidates: ability_target_candidates(
-                                    game,
-                                    &player_id,
-                                    &source_card_id,
-                                ),
-                            });
-                        }
-                    }
-                }
-                _ => {}
-            }
-        }
-    }
-
-    if matches!(game.phase(), Phase::EndStep) {
-        let Some(player) = active_player(game) else {
-            return requests;
-        };
-        if player.hand_size() > 7 {
-            requests.push(PublicChoiceRequest::CleanupDiscard {
-                player_id: player.id().clone(),
-                hand_card_ids: player.hand_card_ids(),
-            });
-        }
-    }
-
-    requests
+    public_surface_state(game).choice_requests
 }
 
 impl<E, B> GameService<E, B>
