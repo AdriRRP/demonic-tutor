@@ -15,6 +15,7 @@ pub enum KeywordAbility {
     Menace = 1 << 9,
     Hexproof = 1 << 10,
     Indestructible = 1 << 11,
+    Defender = 1 << 12,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]

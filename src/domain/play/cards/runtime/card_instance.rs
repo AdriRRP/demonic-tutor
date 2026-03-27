@@ -539,7 +539,10 @@ impl CardInstance {
     #[must_use]
     pub const fn cannot_attack(&self) -> bool {
         match &self.runtime.kind {
-            CardRuntimeKind::Creature(creature) => creature.attached_cant_attack_count > 0,
+            CardRuntimeKind::Creature(creature) => {
+                creature.attached_cant_attack_count > 0
+                    || creature.keywords.contains(KeywordAbility::Defender)
+            }
             CardRuntimeKind::NonCreature => false,
         }
     }
@@ -635,6 +638,11 @@ impl CardInstance {
     #[must_use]
     pub const fn has_indestructible(&self) -> bool {
         self.has_keyword(KeywordAbility::Indestructible)
+    }
+
+    #[must_use]
+    pub const fn has_defender(&self) -> bool {
+        self.has_keyword(KeywordAbility::Defender)
     }
 
     #[must_use]

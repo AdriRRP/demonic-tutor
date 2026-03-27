@@ -17,9 +17,9 @@ Slices:
     - first explicit spell corridor that untaps a target creature on the battlefield
   - `support-cannot-block-this-turn-effects`
     - first temporary combat restriction effect applied to one target creature until turn end
-- pending:
   - `support-defender-and-static-cannot-attack-restrictions`
-    - support creatures and a bounded static subset that cannot attack under the modeled rules
+    - first bounded static attack restriction subset centered on defender-like creatures
+- pending:
 
 Why this wave has high return:
 
