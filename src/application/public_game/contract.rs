@@ -287,6 +287,12 @@ pub enum PublicCommandStatus {
 }
 
 #[derive(Debug, Clone)]
+pub struct PublicCommandApplication {
+    pub status: PublicCommandStatus,
+    pub emitted_events: Vec<DomainEvent>,
+}
+
+#[derive(Debug, Clone)]
 pub struct PublicCommandResult {
     pub status: PublicCommandStatus,
     pub emitted_events: Vec<DomainEvent>,

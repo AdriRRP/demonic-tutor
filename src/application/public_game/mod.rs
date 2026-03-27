@@ -5,4 +5,4 @@ mod execution;
 mod surface;
 
 pub use contract::*;
-pub use surface::{choice_requests, game_view, legal_actions};
+pub use surface::{choice_requests, game_view, legal_actions, public_command_result};

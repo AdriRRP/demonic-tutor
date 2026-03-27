@@ -10,9 +10,9 @@ use crate::domain::play::{
 use super::{
     PublicActivatableCard, PublicBattlefieldCardView, PublicBinaryChoice, PublicBlockerOption,
     PublicCardView, PublicCastableCard, PublicChoiceCandidate, PublicChoiceRequest,
-    PublicCombatStateView, PublicGameView, PublicLegalAction, PublicModalSpellChoice,
-    PublicPermanentStateView, PublicPlayerView, PublicPriorityView, PublicScryChoice,
-    PublicStackObjectView, PublicStackTargetView,
+    PublicCombatStateView, PublicCommandApplication, PublicCommandResult, PublicGameView,
+    PublicLegalAction, PublicModalSpellChoice, PublicPermanentStateView, PublicPlayerView,
+    PublicPriorityView, PublicScryChoice, PublicStackObjectView, PublicStackTargetView,
 };
 
 #[derive(Debug, Default)]
@@ -248,6 +248,22 @@ pub fn legal_actions(game: &Game) -> Vec<PublicLegalAction> {
 #[must_use]
 pub fn choice_requests(game: &Game) -> Vec<PublicChoiceRequest> {
     public_surface_state(game).choice_requests
+}
+
+#[must_use]
+pub fn public_command_result(
+    game: &Game,
+    application: PublicCommandApplication,
+) -> PublicCommandResult {
+    let surface = public_surface_state(game);
+
+    PublicCommandResult {
+        status: application.status,
+        emitted_events: application.emitted_events,
+        game: game_view(game),
+        legal_actions: surface.legal_actions,
+        choice_requests: surface.choice_requests,
+    }
 }
 
 fn player_view(game: &Game, index: usize, player: &Player) -> PublicPlayerView {

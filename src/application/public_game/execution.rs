@@ -20,8 +20,7 @@ use crate::{
 };
 
 use super::{
-    choice_requests, game_view, legal_actions, PublicCommandRejection, PublicCommandResult,
-    PublicCommandStatus, PublicGameCommand,
+    PublicCommandApplication, PublicCommandRejection, PublicCommandStatus, PublicGameCommand,
 };
 
 impl<E, B> GameService<E, B>
@@ -34,7 +33,7 @@ where
         &self,
         game: &mut Game,
         command: PublicGameCommand,
-    ) -> PublicCommandResult {
+    ) -> PublicCommandApplication {
         let result: Result<Vec<DomainEvent>, DomainError> = match command {
             PublicGameCommand::PlayLand(cmd) => {
                 self.play_land(game, cmd).map(|event| vec![event.into()])
@@ -94,12 +93,9 @@ where
         };
         let emitted_events = result.unwrap_or_default();
 
-        PublicCommandResult {
+        PublicCommandApplication {
             status,
             emitted_events,
-            game: game_view(game),
-            legal_actions: legal_actions(game),
-            choice_requests: choice_requests(game),
         }
     }
 }

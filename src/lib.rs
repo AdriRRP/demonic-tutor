@@ -5,11 +5,12 @@ pub mod domain;
 pub mod infrastructure;
 
 pub use application::{
-    choice_requests, game_view, legal_actions, PublicActivatableCard, PublicBattlefieldCardView,
-    PublicBinaryChoice, PublicCardView, PublicCastableCard, PublicChoiceCandidate,
-    PublicChoiceRequest, PublicCommandRejection, PublicCommandResult, PublicCommandStatus,
-    PublicGameCommand, PublicGameView, PublicLegalAction, PublicModalSpellChoice, PublicPlayerView,
-    PublicPriorityView, PublicScryChoice, PublicStackObjectView, PublicStackTargetView,
+    choice_requests, game_view, legal_actions, public_command_result, PublicActivatableCard,
+    PublicBattlefieldCardView, PublicBinaryChoice, PublicCardView, PublicCastableCard,
+    PublicChoiceCandidate, PublicChoiceRequest, PublicCommandApplication, PublicCommandRejection,
+    PublicCommandResult, PublicCommandStatus, PublicGameCommand, PublicGameView, PublicLegalAction,
+    PublicModalSpellChoice, PublicPlayerView, PublicPriorityView, PublicScryChoice,
+    PublicStackObjectView, PublicStackTargetView,
 };
 pub use application::{EventBus, EventStore, GameService};
 

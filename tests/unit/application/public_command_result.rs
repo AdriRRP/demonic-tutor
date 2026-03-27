@@ -7,8 +7,8 @@ use crate::support::{
     forest_card, player_deck, player_library,
 };
 use demonictutor::{
-    DealOpeningHandsCommand, GameId, PlayLandCommand, PlayerId, PublicCommandStatus,
-    PublicGameCommand, StartGameCommand,
+    public_command_result, DealOpeningHandsCommand, GameId, PlayLandCommand, PlayerId,
+    PublicCommandStatus, PublicGameCommand, StartGameCommand,
 };
 
 fn game_in_first_main() -> (crate::support::TestService, demonictutor::Game) {
@@ -65,10 +65,11 @@ fn execute_public_command_returns_applied_status_events_and_next_snapshot() {
     let (service, mut game) = game_in_first_main();
     let land_id = first_hand_card_id(&game, "p1");
 
-    let result = service.execute_public_command(
+    let application = service.execute_public_command(
         &mut game,
         PublicGameCommand::PlayLand(PlayLandCommand::new(PlayerId::new("p1"), land_id.clone())),
     );
+    let result = public_command_result(&game, application);
 
     assert!(matches!(result.status, PublicCommandStatus::Applied));
     assert!(!result.emitted_events.is_empty());
@@ -86,10 +87,11 @@ fn execute_public_command_returns_rejected_status_and_preserves_follow_up_contra
     let (service, mut game) = game_in_first_main();
     let land_id = first_hand_card_id(&game, "p1");
 
-    let result = service.execute_public_command(
+    let application = service.execute_public_command(
         &mut game,
         PublicGameCommand::PlayLand(PlayLandCommand::new(PlayerId::new("p2"), land_id)),
     );
+    let result = public_command_result(&game, application);
 
     match result.status {
         PublicCommandStatus::Rejected(rejection) => {
