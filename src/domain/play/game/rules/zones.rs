@@ -58,7 +58,7 @@ fn remove_attached_aura_effects_for_battlefield_handle(
     if let Some(locations) = card_locations {
         if let Some(target_location) = locations.location(&attached_to) {
             if let Some(target) =
-                players[target_location.owner_index()].card_mut_by_handle(target_location.handle())
+                players[target_location.player_index()].card_mut_by_handle(target_location.handle())
             {
                 if let Some(attached_stat_boost) = attached_stat_boost {
                     target.remove_attached_stat_bonus(

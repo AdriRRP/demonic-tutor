@@ -215,3 +215,48 @@ pub fn declare_blockers(
         valid_blockers,
     ))
 }
+
+#[must_use]
+pub fn can_block_attacker_candidate(
+    players: &[Player],
+    active_player_index: usize,
+    defending_player_id: &crate::domain::play::ids::PlayerId,
+    blocker_id: &CardInstanceId,
+    attacker_id: &CardInstanceId,
+) -> bool {
+    let Ok(defending_player_idx) =
+        progression::find_defending_player_index(players, active_player_index)
+    else {
+        return false;
+    };
+    if players
+        .get(defending_player_idx)
+        .is_none_or(|player| player.id() != defending_player_id)
+    {
+        return false;
+    }
+
+    let attacker_player = &players[active_player_index];
+    let Some(attacker) = attacker_player.battlefield_card(attacker_id) else {
+        return false;
+    };
+    if !attacker.is_attacking() || !matches!(attacker.card_type(), CardType::Creature) {
+        return false;
+    }
+
+    let defending_player = &players[defending_player_idx];
+    let Some(blocker) = defending_player.battlefield_card(blocker_id) else {
+        return false;
+    };
+    if !matches!(blocker.card_type(), CardType::Creature) {
+        return false;
+    }
+    if blocker.is_tapped() || blocker.cannot_block() {
+        return false;
+    }
+
+    capabilities::can_block_attacker_with_aerial_requirement(
+        blocker,
+        capabilities::attacker_requires_aerial_blocking_capability(attacker),
+    )
+}

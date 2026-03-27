@@ -12,7 +12,7 @@ Keep combat damage participants on internal card references until the last outwa
 
 ## What Changed
 
-- combat damage participants now carry internal `owner_index + handle` references instead of public card ids
+- combat damage participants now carry internal `player_index + handle` references instead of public card ids
 - blocker-to-attacker linkage is preserved through those internal references during participant collection
 - public `CardInstanceId` values are materialized only when building `DamageEvent` records or applying marked damage
 

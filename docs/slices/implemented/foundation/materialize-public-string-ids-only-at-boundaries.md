@@ -19,7 +19,7 @@ Push another internal corridor away from public string ids by using player index
 ## Implementation Notes
 
 - zone rules now expose index-based exile helpers for internal callers
-- stack-resolution effects use `owner_index` directly and only materialize `PlayerId` when building the resulting event or error
+- stack-resolution effects use `player_index` directly and only materialize `PlayerId` when building the resulting event or error
 
 ## Tests
 

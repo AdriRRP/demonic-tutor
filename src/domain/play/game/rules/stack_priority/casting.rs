@@ -162,7 +162,7 @@ fn prepare_stack_target(
                 )))
             })?;
             Ok(Some(StackTargetRef::Creature(StackCardRef::new(
-                location.owner_index(),
+                location.player_index(),
                 location.handle(),
             ))))
         }
@@ -173,7 +173,7 @@ fn prepare_stack_target(
                 )))
             })?;
             Ok(Some(StackTargetRef::Permanent(StackCardRef::new(
-                location.owner_index(),
+                location.player_index(),
                 location.handle(),
             ))))
         }
@@ -184,7 +184,7 @@ fn prepare_stack_target(
                 )))
             })?;
             Ok(Some(StackTargetRef::GraveyardCard(StackCardRef::new(
-                location.owner_index(),
+                location.player_index(),
                 location.handle(),
             ))))
         }

@@ -10,14 +10,14 @@ use {
 };
 
 pub(super) struct BattlefieldCardLocation<'a> {
-    owner_index: usize,
+    player_index: usize,
     card: &'a CardInstance,
 }
 
 impl<'a> BattlefieldCardLocation<'a> {
     #[must_use]
-    pub const fn owner_index(&self) -> usize {
-        self.owner_index
+    pub const fn player_index(&self) -> usize {
+        self.player_index
     }
 
     #[must_use]
@@ -132,10 +132,10 @@ pub(super) fn battlefield_card_location<'a>(
 ) -> Option<BattlefieldCardLocation<'a>> {
     let location = card_locations.location(card_id)?;
     (location.zone() == PlayerCardZone::Battlefield).then_some(())?;
-    let owner_index = location.owner_index();
-    let player = players.get(owner_index)?;
+    let player_index = location.player_index();
+    let player = players.get(player_index)?;
     let card = player.card_by_handle(location.handle())?;
-    Some(BattlefieldCardLocation { owner_index, card })
+    Some(BattlefieldCardLocation { player_index, card })
 }
 
 pub(super) fn battlefield_card_mut<'a>(
@@ -146,6 +146,6 @@ pub(super) fn battlefield_card_mut<'a>(
     let location = card_locations.location(card_id)?;
     (location.zone() == PlayerCardZone::Battlefield).then_some(())?;
     players
-        .get_mut(location.owner_index())?
+        .get_mut(location.player_index())?
         .card_mut_by_handle(location.handle())
 }

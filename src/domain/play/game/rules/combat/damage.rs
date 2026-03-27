@@ -56,7 +56,7 @@ fn resolve_combat_card_id(
     card_ref: &CombatCardRef,
     missing_message: &str,
 ) -> Result<CardInstanceId, DomainError> {
-    players[card_ref.owner_index()]
+    players[card_ref.player_index()]
         .card_by_handle(card_ref.handle())
         .map(|card| card.id().clone())
         .ok_or_else(|| {
@@ -99,7 +99,7 @@ fn blockers_for_attacker<'a>(
         .iter()
         .filter_map(|blocker_ref| {
             blockers_by_ref
-                .get(&(blocker_ref.owner_index(), blocker_ref.handle()))
+                .get(&(blocker_ref.player_index(), blocker_ref.handle()))
                 .copied()
         })
         .collect()
@@ -149,7 +149,7 @@ fn resolve_attacker_damage(
         if attacker.has_lifelink() {
             record_lifelink_damage(
                 lifelink_damage_by_controller,
-                attacker.card_ref().owner_index(),
+                attacker.card_ref().player_index(),
                 attacker.power(),
             );
         }
@@ -192,7 +192,7 @@ fn resolve_attacker_damage(
         if attacker.has_lifelink() {
             record_lifelink_damage(
                 lifelink_damage_by_controller,
-                attacker.card_ref().owner_index(),
+                attacker.card_ref().player_index(),
                 blocker_damage,
             );
         }
@@ -244,7 +244,7 @@ fn resolve_blocker_damage(
     if blocker.has_lifelink() {
         record_lifelink_damage(
             lifelink_damage_by_controller,
-            blocker.card_ref().owner_index(),
+            blocker.card_ref().player_index(),
             blocker.power(),
         );
     }
@@ -274,7 +274,7 @@ fn resolve_damage_step(
         .map(|blocker| {
             (
                 (
-                    blocker.card_ref().owner_index(),
+                    blocker.card_ref().player_index(),
                     blocker.card_ref().handle(),
                 ),
                 blocker,

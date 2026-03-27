@@ -4,12 +4,14 @@
 
 use crate::support::{
     advance_to_player_first_main_satisfying_cleanup, advance_to_player_phase_satisfying_cleanup,
-    close_empty_priority_window, create_service, creature_card, forest_card, instant_card, player,
-    player_deck, player_library,
+    advance_turn_raw, close_empty_priority_window, create_service, creature_card, filled_library,
+    forest_card, instant_card, pacifism_creature_aura_enchantment_card, player, player_deck,
+    player_library, resolve_top_stack_with_passes, setup_two_player_game,
 };
 use demonictutor::{
-    legal_actions, DealOpeningHandsCommand, DrawCardsEffectCommand, Game, GameId, Phase, PlayerId,
-    PublicLegalAction, StartGameCommand,
+    legal_actions, CardDefinitionId, CastSpellCommand, DealOpeningHandsCommand,
+    DeclareAttackersCommand, DrawCardsEffectCommand, Game, GameId, Phase, PlayerId,
+    PublicLegalAction, SpellTarget, StartGameCommand,
 };
 
 fn game_with_first_main_priority() -> Game {
@@ -145,5 +147,83 @@ fn legal_actions_surface_cleanup_discard_when_hand_is_too_large() {
         action,
         PublicLegalAction::DiscardForCleanup { player_id, card_ids }
             if player_id.as_str() == "p1" && card_ids.len() == expected_hand_size
+    )));
+}
+
+#[test]
+fn legal_actions_do_not_offer_pacified_creature_as_blocker_option() {
+    let (service, mut game) = setup_two_player_game(
+        "game-legal-actions-pacifism-block",
+        filled_library(vec![creature_card("attacker", 0, 2, 2)], 10),
+        filled_library(
+            vec![
+                creature_card("blocker", 0, 2, 2),
+                pacifism_creature_aura_enchantment_card("pacifism-lite", 0),
+            ],
+            10,
+        ),
+    );
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
+    let attacker_id = player(&game, "player-1")
+        .hand_card_by_definition(&CardDefinitionId::new("attacker"))
+        .expect("attacker should be in hand")
+        .id()
+        .clone();
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), attacker_id.clone()),
+        )
+        .expect("attacker should be castable");
+    resolve_top_stack_with_passes(&service, &mut game);
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-2");
+    let blocker_id = player(&game, "player-2")
+        .hand_card_by_definition(&CardDefinitionId::new("blocker"))
+        .expect("blocker should be in hand")
+        .id()
+        .clone();
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-2"), blocker_id.clone()),
+        )
+        .expect("blocker should be castable");
+    resolve_top_stack_with_passes(&service, &mut game);
+
+    let aura_id = player(&game, "player-2")
+        .hand_card_by_definition(&CardDefinitionId::new("pacifism-lite"))
+        .expect("aura should be in hand")
+        .id()
+        .clone();
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-2"), aura_id)
+                .with_target(SpellTarget::Creature(blocker_id.clone())),
+        )
+        .expect("aura should be castable");
+    resolve_top_stack_with_passes(&service, &mut game);
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
+    advance_turn_raw(&service, &mut game);
+    close_empty_priority_window(&service, &mut game);
+    advance_turn_raw(&service, &mut game);
+    service
+        .declare_attackers(
+            &mut game,
+            DeclareAttackersCommand::new(PlayerId::new("player-1"), vec![attacker_id]),
+        )
+        .expect("attacker should be declared");
+    close_empty_priority_window(&service, &mut game);
+
+    let actions = legal_actions(&game);
+
+    assert!(actions.iter().any(|action| matches!(
+        action,
+        PublicLegalAction::DeclareBlockers { player_id, blocker_options, .. }
+            if player_id.as_str() == "player-2"
+                && blocker_options.iter().all(|option| option.blocker_id != blocker_id)
     )));
 }

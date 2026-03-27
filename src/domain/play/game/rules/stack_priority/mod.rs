@@ -7,7 +7,7 @@ mod optional_effect;
 mod passing;
 mod resolution;
 mod scry_effect;
-mod spell_effects;
+pub(crate) mod spell_effects;
 pub(crate) mod triggers;
 
 use super::super::{

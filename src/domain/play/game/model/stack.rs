@@ -11,22 +11,22 @@ use crate::domain::play::{
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct StackCardRef {
-    owner_index: usize,
+    player_index: usize,
     handle: PlayerCardHandle,
 }
 
 impl StackCardRef {
     #[must_use]
-    pub const fn new(owner_index: usize, handle: PlayerCardHandle) -> Self {
+    pub const fn new(player_index: usize, handle: PlayerCardHandle) -> Self {
         Self {
-            owner_index,
+            player_index,
             handle,
         }
     }
 
     #[must_use]
-    pub const fn owner_index(self) -> usize {
-        self.owner_index
+    pub const fn player_index(self) -> usize {
+        self.player_index
     }
 
     #[must_use]

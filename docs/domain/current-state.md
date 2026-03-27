@@ -20,6 +20,7 @@ Implemented capabilities include:
 - projecting a stable public game snapshot for clients, including phase, priority, stack, battlefield, graveyard, exile, and hand counts
 - surfacing a public legal-action menu derived from the current supported actor and game state
 - deriving that public legal-action menu from read-only aggregate legality queries instead of speculative command probes
+- deriving current supported target-selection candidates and blocker options from canonical aggregate legality queries instead of application-local rule approximations
 - surfacing public choice requests for target selection, explicit hand-card choice, bounded modal spell choice, binary optional-effect decisions, and cleanup discard
 - returning a deterministic public command envelope with emitted events, updated snapshot, legal actions, and visible choice requests
 - projecting the attached creature id for the current supported Aura subset in the public battlefield snapshot
@@ -149,6 +150,7 @@ The domain currently includes:
 - the current player-target spell subset now also supports the first explicit `choose one` corridor with a selected mode stored on stack and resolved deterministically
 - the current trigger subset now also supports the first explicit `you may` corridor with a pending yes/no choice surfaced at resolution time
 - pending stack-time player choices are now modeled through one closed aggregate concept instead of parallel pending fields
+- aggregate location lookups and compact battlefield refs now name the current player-arena index explicitly instead of calling that carrier position an owner index
 - the current spell-effect subset now also supports explicit `loot` and `rummage`, surfaced as pending hand-card choice prompts during resolution
 - the current library-manipulation subset now also supports explicit `scry 1`, surfaced as a controller-scoped pending top-card choice during resolution
 - the current attachment subset now supports `Enchant creature` Auras that target while cast, enter attached if the target stays legal on resolution, and are put into graveyard by SBA if they become unattached
@@ -162,6 +164,7 @@ The domain currently includes:
 - legal-target evaluation for the current targeted-spell subset is shared between cast-time validation and resolution-time revalidation, using explicit cast and resolution contexts
 - supported spell targeting, casting rules, and resolution are currently carried as explicit card-face profiles rather than inferred from card-definition strings during casting or resolution
 - spell targeting and spell-resolution profiles now live in a focused submodule instead of continuing to grow one central rules hotspot
+- spell resolution effects now also live in focused internal submodules instead of continuing to grow one monolithic resolver file
 - card definitions are currently created through card-type-aware constructors so supported spell cards receive casting semantics when the face is built
 - stack-borne spells now carry explicit spell snapshots and resolution metadata instead of reusing the full moved card runtime
 - supported activated abilities on the stack now also prefer internal source references, materializing public card ids only when leaving the runtime core

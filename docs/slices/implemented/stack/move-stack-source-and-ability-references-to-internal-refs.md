@@ -13,7 +13,7 @@ Replace remaining public-id-based activated-ability stack source references with
 ## What Changed
 
 - activated abilities now enter the stack with a canonical `StackCardRef`
-- activation resolves the public `source_card_id` once at the boundary and then works through `owner_index + handle`
+- activation resolves the public `source_card_id` once at the boundary and then works through `player_index + handle`
 - resolution materializes the readable `CardInstanceId` from the internal stack reference only when building outward-facing events
 - stack inspection compatibility remains available through the public source-id accessor
 

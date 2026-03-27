@@ -5,15 +5,17 @@
 use crate::support::{
     advance_to_player_first_main_satisfying_cleanup,
     choose_one_target_player_gain_or_lose_life_instant_card, close_empty_priority_window,
-    create_service, etb_may_life_gain_creature_card, forest_card, loot_sorcery_card, player,
-    player_deck, player_library, scry_sorcery_card,
-    target_player_discards_chosen_card_sorcery_card, targeted_opponent_damage_instant_card,
+    create_service, creature_card_with_keyword, etb_may_life_gain_creature_card, filled_library,
+    forest_card, loot_sorcery_card, player, player_deck, player_library,
+    resolve_top_stack_with_passes, scry_sorcery_card, setup_two_player_game,
+    target_player_discards_chosen_card_sorcery_card, targeted_damage_instant_card,
+    targeted_opponent_damage_instant_card,
 };
 use demonictutor::{
     choice_requests, CardDefinitionId, CardInstanceId, CastSpellCommand, DealOpeningHandsCommand,
-    DrawCardsEffectCommand, Game, GameId, PassPriorityCommand, Phase, PlayerId, PublicBinaryChoice,
-    PublicChoiceRequest, PublicGameCommand, PublicModalSpellChoice, PublicScryChoice,
-    StartGameCommand,
+    DrawCardsEffectCommand, Game, GameId, KeywordAbility, PassPriorityCommand, Phase, PlayerId,
+    PublicBinaryChoice, PublicChoiceCandidate, PublicChoiceRequest, PublicGameCommand,
+    PublicModalSpellChoice, PublicScryChoice, StartGameCommand,
 };
 
 fn first_main_game_with_choice_cards() -> Game {
@@ -92,6 +94,61 @@ fn choice_requests_surface_target_candidates_for_supported_targeted_spells() {
                     demonictutor::PublicChoiceCandidate::Player(target_player)
                         if target_player.as_str() == "p2"
                 ))
+    )));
+}
+
+#[test]
+fn choice_requests_do_not_surface_illegal_hexproof_targets() {
+    let (service, mut game) = setup_two_player_game(
+        "game-choice-hexproof-filter",
+        filled_library(
+            vec![
+                forest_card("p1-buffer"),
+                targeted_damage_instant_card("bolt", 0, 2),
+            ],
+            10,
+        ),
+        filled_library(
+            vec![creature_card_with_keyword(
+                "glade-veil",
+                0,
+                2,
+                2,
+                KeywordAbility::Hexproof,
+            )],
+            10,
+        ),
+    );
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-2");
+    let creature_id = player(&game, "player-2")
+        .hand_card_by_definition(&CardDefinitionId::new("glade-veil"))
+        .expect("hexproof creature should be in hand")
+        .id()
+        .clone();
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-2"), creature_id.clone()),
+        )
+        .expect("hexproof creature should be castable");
+    resolve_top_stack_with_passes(&service, &mut game);
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
+    let spell_id = player(&game, "player-1")
+        .hand_card_by_definition(&CardDefinitionId::new("bolt"))
+        .expect("bolt should be in hand")
+        .id()
+        .clone();
+
+    let requests = choice_requests(&game);
+
+    assert!(requests.iter().any(|request| matches!(
+        request,
+        PublicChoiceRequest::SpellTarget { player_id, source_card_id, candidates }
+            if player_id.as_str() == "player-1"
+                && *source_card_id == spell_id
+                && !candidates.iter().any(|candidate| candidate == &PublicChoiceCandidate::Card(creature_id.clone()))
     )));
 }
 

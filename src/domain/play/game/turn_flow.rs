@@ -118,21 +118,21 @@ impl Game {
                     crate::domain::play::game::PlayerCardZone::Graveyard
                 };
                 location.zone() == expected_zone
-                    && self.players[location.owner_index()].id() == &cmd.player_id
+                    && self.players[location.player_index()].id() == &cmd.player_id
             });
         let result = if let Some(location) = indexed_location {
             if cmd.from_battlefield {
                 rules::zones::exile_card_from_battlefield_handle_by_index(
                     &self.id,
                     &mut self.players,
-                    location.owner_index(),
+                    location.player_index(),
                     location.handle(),
                 )
             } else {
                 rules::zones::exile_card_from_graveyard_handle_by_index(
                     &self.id,
                     &mut self.players,
-                    location.owner_index(),
+                    location.player_index(),
                     location.handle(),
                 )
             }

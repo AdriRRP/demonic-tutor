@@ -17,7 +17,7 @@ use crate::{
         EventBus, EventStore,
     },
     domain::play::{
-        cards::{CardInstance, CardType, KeywordAbility, SpellTargetingProfile},
+        cards::{CardInstance, CardType, KeywordAbility},
         commands::{
             ActivateAbilityCommand, AdjustPlayerLifeEffectCommand, AdvanceTurnCommand,
             CastSpellCommand, DeclareAttackersCommand, DeclareBlockersCommand,

@@ -8,24 +8,24 @@ use {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct AggregateCardLocation {
-    owner_index: usize,
+    player_index: usize,
     handle: PlayerCardHandle,
     zone: PlayerCardZone,
 }
 
 impl AggregateCardLocation {
     #[must_use]
-    pub const fn new(owner_index: usize, handle: PlayerCardHandle, zone: PlayerCardZone) -> Self {
+    pub const fn new(player_index: usize, handle: PlayerCardHandle, zone: PlayerCardZone) -> Self {
         Self {
-            owner_index,
+            player_index,
             handle,
             zone,
         }
     }
 
     #[must_use]
-    pub const fn owner_index(self) -> usize {
-        self.owner_index
+    pub const fn player_index(self) -> usize {
+        self.player_index
     }
 
     #[must_use]
@@ -48,11 +48,11 @@ impl AggregateCardLocationIndex {
     #[must_use]
     pub fn from_players(players: &[Player]) -> Self {
         let mut index = Self::default();
-        for (owner_index, player) in players.iter().enumerate() {
+        for (player_index, player) in players.iter().enumerate() {
             for (card_id, handle, zone) in player.owned_card_locations() {
                 index.by_card_id.insert(
                     card_id.clone(),
-                    AggregateCardLocation::new(owner_index, handle, zone),
+                    AggregateCardLocation::new(player_index, handle, zone),
                 );
             }
         }
@@ -62,13 +62,13 @@ impl AggregateCardLocationIndex {
     pub fn upsert(
         &mut self,
         card_id: CardInstanceId,
-        owner_index: usize,
+        player_index: usize,
         handle: PlayerCardHandle,
         zone: PlayerCardZone,
     ) {
         self.by_card_id.insert(
             card_id,
-            AggregateCardLocation::new(owner_index, handle, zone),
+            AggregateCardLocation::new(player_index, handle, zone),
         );
     }
 

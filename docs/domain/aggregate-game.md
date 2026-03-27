@@ -187,7 +187,7 @@ The current runtime model separates:
 - mutable gameplay state (`tapped`, combat flags, creature runtime state, optional attached target id`)
 
 Immutable card-face metadata is currently shared across instances rather than copied by value per zone entry.
-Internal runtime identity now prefers numeric-core ids, owner indices, and player-owned card handles, while readable public ids are materialized at the aggregate boundary.
+Internal runtime identity now prefers numeric-core ids, player indices, and player-owned card handles, while readable public ids are materialized at the aggregate boundary.
 Card instances also retain persistent owner identity even when the supported runtime temporarily places them on another player's battlefield to represent current control.
 
 Fields include:

@@ -104,7 +104,7 @@ fn materialize_spell_target(
         )),
         StackTargetRef::Creature(card_ref) => Ok(SpellTarget::Creature(
             players
-                .get(card_ref.owner_index())
+                .get(card_ref.player_index())
                 .and_then(|player| player.card_by_handle(card_ref.handle()))
                 .ok_or_else(|| {
                     crate::domain::play::errors::DomainError::Game(
@@ -118,7 +118,7 @@ fn materialize_spell_target(
         )),
         StackTargetRef::Permanent(card_ref) => Ok(SpellTarget::Permanent(
             players
-                .get(card_ref.owner_index())
+                .get(card_ref.player_index())
                 .and_then(|player| player.card_by_handle(card_ref.handle()))
                 .ok_or_else(|| {
                     crate::domain::play::errors::DomainError::Game(
@@ -132,7 +132,7 @@ fn materialize_spell_target(
         )),
         StackTargetRef::GraveyardCard(card_ref) => Ok(SpellTarget::GraveyardCard(
             players
-                .get(card_ref.owner_index())
+                .get(card_ref.player_index())
                 .and_then(|player| player.card_by_handle(card_ref.handle()))
                 .ok_or_else(|| {
                     crate::domain::play::errors::DomainError::Game(
@@ -156,7 +156,7 @@ fn materialize_stack_card_id(
     missing_message: &str,
 ) -> Result<crate::domain::play::ids::CardInstanceId, crate::domain::play::errors::DomainError> {
     Ok(players
-        .get(card_ref.owner_index())
+        .get(card_ref.player_index())
         .and_then(|player| player.card_by_handle(card_ref.handle()))
         .ok_or_else(|| {
             crate::domain::play::errors::DomainError::Game(

@@ -18,7 +18,7 @@ Push public id materialization farther toward aggregate edges so hot internal pa
 
 ## Implementation Notes
 
-- target-location helpers now prefer `owner_index` over carrying cloned `PlayerId`
+- target-location helpers now prefer `player_index` over carrying cloned `PlayerId`
 - resolution paths materialize `PlayerId` only when emitting or crossing outward-facing boundaries
 - this is an incremental step toward compact edge-only public ids, not the final replacement of public string ids inside the whole engine
 

@@ -19,6 +19,7 @@ use crate::domain::play::{
     phase::Phase,
 };
 
+pub(crate) use blocking_legality::can_block_attacker_candidate;
 pub use damage::ResolveCombatDamageOutcome;
 pub(crate) use declaring::can_attack_with_candidate;
 

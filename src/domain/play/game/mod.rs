@@ -25,6 +25,7 @@ pub use model::{
     PreparedHandSpellCast, PriorityState, SpellOnStack, StackObject, StackObjectKind, StackZone,
     TerminalState, TriggeredAbilityOnStack,
 };
+pub use queries::LegalBlockerOption;
 pub use rules::{
     combat::ResolveCombatDamageOutcome,
     resource_actions::AdjustPlayerLifeEffectOutcome,

@@ -9,22 +9,22 @@ use crate::domain::play::{
 
 #[derive(Debug, Clone)]
 pub(super) struct CombatCardRef {
-    owner_index: usize,
+    player_index: usize,
     handle: PlayerCardHandle,
 }
 
 impl CombatCardRef {
     #[must_use]
-    pub const fn new(owner_index: usize, handle: PlayerCardHandle) -> Self {
+    pub const fn new(player_index: usize, handle: PlayerCardHandle) -> Self {
         Self {
-            owner_index,
+            player_index,
             handle,
         }
     }
 
     #[must_use]
-    pub const fn owner_index(&self) -> usize {
-        self.owner_index
+    pub const fn player_index(&self) -> usize {
+        self.player_index
     }
 
     #[must_use]
@@ -322,8 +322,8 @@ mod tests {
         };
 
         assert_eq!(blockers.len(), 1);
-        assert_eq!(blockers[0].card_ref().owner_index(), 1);
-        assert_eq!(blockers[0].blocked_attacker_ref().owner_index(), 0);
+        assert_eq!(blockers[0].card_ref().player_index(), 1);
+        assert_eq!(blockers[0].blocked_attacker_ref().player_index(), 0);
         assert_eq!(blockers[0].blocked_attacker_ref().handle(), attacker_handle);
     }
 
@@ -382,7 +382,7 @@ mod tests {
         let attackers =
             collect_attackers(&attacker_player, 0, 1).expect("attackers should collect");
         assert_eq!(attackers.len(), 1);
-        assert_eq!(attackers[0].blocked_by_refs()[0].owner_index(), 1);
+        assert_eq!(attackers[0].blocked_by_refs()[0].player_index(), 1);
         assert_eq!(attackers[0].blocked_by_refs()[0].handle(), blocker_a_handle);
         assert_eq!(attackers[0].blocked_by_refs()[1].handle(), blocker_b_handle);
         assert!(attackers[0].was_blocked());

@@ -132,13 +132,14 @@ fn resolve_target(
             else {
                 return Err(SpellTargetLegality::MissingCreature(card_id.clone()));
             };
-            if target_creature.owner_index() != actor_index && target_creature.card().has_hexproof()
+            if target_creature.player_index() != actor_index
+                && target_creature.card().has_hexproof()
             {
                 return Err(SpellTargetLegality::IllegalTargetRule);
             }
 
             Ok(ResolvedTarget::Creature {
-                is_actor: target_creature.owner_index() == actor_index,
+                is_actor: target_creature.player_index() == actor_index,
                 is_attacking: target_creature.card().is_attacking(),
                 is_blocking: target_creature.card().is_blocking(),
             })
@@ -149,7 +150,7 @@ fn resolve_target(
             else {
                 return Err(SpellTargetLegality::MissingPermanent(card_id.clone()));
             };
-            if target_permanent.owner_index() != actor_index
+            if target_permanent.player_index() != actor_index
                 && target_permanent.card().has_hexproof()
             {
                 return Err(SpellTargetLegality::IllegalTargetRule);
@@ -168,7 +169,7 @@ fn resolve_target(
             }
 
             Ok(ResolvedTarget::GraveyardCard {
-                is_in_actors_graveyard: location.owner_index() == actor_index,
+                is_in_actors_graveyard: location.player_index() == actor_index,
             })
         }
         SpellTarget::StackObject(stack_object_id) => {

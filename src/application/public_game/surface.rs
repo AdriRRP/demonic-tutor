@@ -6,14 +6,14 @@ use super::{
     domain_events_for_draw_cards_effect, domain_events_for_pass_priority,
     domain_events_for_resolve_combat_damage, domain_events_for_resolve_optional_effect,
     domain_events_for_resolve_pending_hand_choice, domain_events_for_resolve_pending_scry,
-    CardInstance, CardInstanceId, CardType, DomainError, DomainEvent, EventBus, EventStore, Game,
+    CardInstance, CardInstanceId, DomainError, DomainEvent, EventBus, EventStore, Game,
     GameService, KeywordAbility, ModalSpellMode, Phase, Player, PlayerId, PublicActivatableCard,
     PublicBattlefieldCardView, PublicBinaryChoice, PublicBlockerOption, PublicCardView,
     PublicCastableCard, PublicChoiceCandidate, PublicChoiceRequest, PublicCombatStateView,
     PublicCommandRejection, PublicCommandResult, PublicCommandStatus, PublicGameCommand,
     PublicGameView, PublicLegalAction, PublicModalSpellChoice, PublicPermanentStateView,
     PublicPlayerView, PublicPriorityView, PublicScryChoice, PublicStackObjectView,
-    PublicStackTargetView, SpellTargetingProfile, StackObjectId, StackObjectKind,
+    PublicStackTargetView, StackObjectId, StackObjectKind,
 };
 #[must_use]
 pub fn game_view(game: &Game) -> PublicGameView {
@@ -128,8 +128,15 @@ fn phase_legal_actions(game: &Game) -> Vec<PublicLegalAction> {
             let attacker_ids = attacking_creature_ids(game, game.active_player());
             actions.push(PublicLegalAction::DeclareBlockers {
                 player_id: player_id.clone(),
-                attacker_ids: attacker_ids.clone(),
-                blocker_options: blocker_options(game, &player_id, &attacker_ids),
+                attacker_ids,
+                blocker_options: game
+                    .blocker_options(&player_id)
+                    .into_iter()
+                    .map(|option| PublicBlockerOption {
+                        blocker_id: option.blocker_id().clone(),
+                        attacker_ids: option.attacker_ids().to_vec(),
+                    })
+                    .collect(),
             });
         }
         Phase::CombatDamage => {
@@ -477,7 +484,7 @@ fn stack_target_view(
         crate::domain::play::game::model::StackTargetRef::Creature(card_ref)
         | crate::domain::play::game::model::StackTargetRef::Permanent(card_ref)
         | crate::domain::play::game::model::StackTargetRef::GraveyardCard(card_ref) => {
-            let card = game.players()[card_ref.owner_index()].card_by_handle(card_ref.handle())?;
+            let card = game.players()[card_ref.player_index()].card_by_handle(card_ref.handle())?;
             Some(PublicStackTargetView::Card(card.id().clone()))
         }
         crate::domain::play::game::model::StackTargetRef::StackSpell(number) => Some(
@@ -735,83 +742,15 @@ fn attacking_creature_ids(game: &Game, player_id: &PlayerId) -> Vec<CardInstance
         .unwrap_or_default()
 }
 
-fn blocker_options(
-    game: &Game,
-    player_id: &PlayerId,
-    attacker_ids: &[CardInstanceId],
-) -> Vec<PublicBlockerOption> {
-    let Some(player) = game
-        .players()
-        .iter()
-        .find(|player| player.id() == player_id)
-    else {
-        return Vec::new();
-    };
-
-    player
-        .battlefield_card_ids()
-        .map(|blocker_id| PublicBlockerOption {
-            attacker_ids: attacker_ids
-                .iter()
-                .filter(|attacker_id| {
-                    blocker_can_target_attacker(game, player_id, blocker_id, attacker_id)
-                })
-                .cloned()
-                .collect(),
-            blocker_id: blocker_id.clone(),
-        })
-        .filter(|option| !option.attacker_ids.is_empty())
-        .collect()
-}
-
-fn blocker_can_target_attacker(
-    game: &Game,
-    player_id: &PlayerId,
-    blocker_id: &CardInstanceId,
-    attacker_id: &CardInstanceId,
-) -> bool {
-    let Some(defending_player) = game
-        .players()
-        .iter()
-        .find(|player| player.id() == player_id)
-    else {
-        return false;
-    };
-    let Some(blocker) = defending_player.battlefield_card(blocker_id) else {
-        return false;
-    };
-    let Some(attacker_owner) = game
-        .players()
-        .iter()
-        .find(|player| player.id() == game.active_player())
-    else {
-        return false;
-    };
-    let Some(attacker) = attacker_owner.battlefield_card(attacker_id) else {
-        return false;
-    };
-
-    matches!(blocker.card_type(), CardType::Creature)
-        && !blocker.is_tapped()
-        && matches!(attacker.card_type(), CardType::Creature)
-        && (!attacker.has_flying() || blocker.has_flying() || blocker.has_reach())
-}
-
 fn spell_target_candidates(
     game: &Game,
     actor_id: &PlayerId,
     card_id: &CardInstanceId,
 ) -> Vec<PublicChoiceCandidate> {
-    let Some(player) = game.players().iter().find(|player| player.id() == actor_id) else {
-        return Vec::new();
-    };
-    let Some(card) = player
-        .hand_card(card_id)
-        .or_else(|| player.graveyard_card(card_id))
-    else {
-        return Vec::new();
-    };
-    target_candidates_for_rule(game, actor_id, card.supported_spell_rules().targeting())
+    game.spell_target_candidates(actor_id, card_id)
+        .into_iter()
+        .map(public_choice_candidate)
+        .collect()
 }
 
 fn ability_target_candidates(
@@ -819,89 +758,10 @@ fn ability_target_candidates(
     actor_id: &PlayerId,
     source_card_id: &CardInstanceId,
 ) -> Vec<PublicChoiceCandidate> {
-    let Some(player) = game.players().iter().find(|player| player.id() == actor_id) else {
-        return Vec::new();
-    };
-    let Some(card) = player.battlefield_card(source_card_id) else {
-        return Vec::new();
-    };
-    let Some(ability) = card.activated_ability() else {
-        return Vec::new();
-    };
-    target_candidates_for_rule(game, actor_id, ability.targeting())
-}
-
-fn target_candidates_for_rule(
-    game: &Game,
-    actor_id: &PlayerId,
-    targeting: SpellTargetingProfile,
-) -> Vec<PublicChoiceCandidate> {
-    let SpellTargetingProfile::ExactlyOne(rule) = targeting else {
-        return Vec::new();
-    };
-
-    let mut candidates = Vec::new();
-    for player in game.players() {
-        if rule
-            .allows_player_target(player.id() == actor_id)
-            .unwrap_or(false)
-        {
-            candidates.push(PublicChoiceCandidate::Player(player.id().clone()));
-        }
-    }
-
-    for (owner_index, player) in game.players().iter().enumerate() {
-        let controlled_by_actor = player.id() == actor_id;
-        for card in player.battlefield_cards() {
-            if rule
-                .allows_creature_target(
-                    controlled_by_actor,
-                    card.is_attacking(),
-                    card.is_blocking(),
-                )
-                .unwrap_or(false)
-            {
-                candidates.push(PublicChoiceCandidate::Card(card.id().clone()));
-                continue;
-            }
-            if rule
-                .allows_permanent_target(*card.card_type())
-                .unwrap_or(false)
-            {
-                let _ = owner_index;
-                candidates.push(PublicChoiceCandidate::Card(card.id().clone()));
-            }
-        }
-        for card in player
-            .graveyard()
-            .iter()
-            .filter_map(|handle| player.card_by_handle(*handle))
-        {
-            if rule
-                .allows_graveyard_card_target(player.id() == actor_id)
-                .unwrap_or(false)
-            {
-                candidates.push(PublicChoiceCandidate::Card(card.id().clone()));
-            }
-        }
-    }
-
-    if rule.allows_stack_spell_target().unwrap_or(false) {
-        candidates.extend(
-            game.stack()
-                .objects()
-                .iter()
-                .filter(|object| matches!(object.kind(), StackObjectKind::Spell(_)))
-                .map(|object| {
-                    PublicChoiceCandidate::StackSpell(StackObjectId::for_stack_object(
-                        game.id(),
-                        object.number(),
-                    ))
-                }),
-        );
-    }
-
-    candidates
+    game.ability_target_candidates(actor_id, source_card_id)
+        .into_iter()
+        .map(public_choice_candidate)
+        .collect()
 }
 
 fn opponent_hand_choice_candidates(game: &Game, actor_id: &PlayerId) -> Vec<CardInstanceId> {
@@ -923,4 +783,22 @@ fn defending_player_id(game: &Game) -> Option<PlayerId> {
         .iter()
         .find(|player| player.id() != game.active_player())
         .map(|player| player.id().clone())
+}
+
+fn public_choice_candidate(
+    target: crate::domain::play::game::SpellTarget,
+) -> PublicChoiceCandidate {
+    match target {
+        crate::domain::play::game::SpellTarget::Player(player_id) => {
+            PublicChoiceCandidate::Player(player_id)
+        }
+        crate::domain::play::game::SpellTarget::Creature(card_id)
+        | crate::domain::play::game::SpellTarget::Permanent(card_id)
+        | crate::domain::play::game::SpellTarget::GraveyardCard(card_id) => {
+            PublicChoiceCandidate::Card(card_id)
+        }
+        crate::domain::play::game::SpellTarget::StackObject(stack_object_id) => {
+            PublicChoiceCandidate::StackSpell(stack_object_id)
+        }
+    }
 }

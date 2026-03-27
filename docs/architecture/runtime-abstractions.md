@@ -173,11 +173,11 @@ If `CardInstanceId` is the card's public passport number, the handle is the seat
 
 The handle is not globally meaningful by itself.
 
-It only makes sense together with its owner.
+It only makes sense together with its player arena.
 
 That is why many optimized paths use:
 
-- `owner_index`
+- `player_index`
 - `PlayerCardHandle`
 
 instead of cloning a public `CardInstanceId`.
@@ -290,7 +290,7 @@ That is intentional.
 
 It maps a public card id to:
 
-- owner index
+- player index
 - zone
 - handle
 
@@ -483,10 +483,10 @@ Keeping it on handles longer reduces unnecessary public-id churn.
 ```mermaid
 flowchart LR
     A["Public command with ids"] --> B["Game aggregate"]
-    B --> C["Resolve owner index and handle"]
+    B --> C["Resolve player index and handle"]
     C --> D["Player arena owns card runtime"]
     C --> E["Zones store handles in visible order"]
-    B --> F["Location index stores owner zone and handle"]
+    B --> F["Location index stores player zone and handle"]
     B --> G["Stack stores spell payloads and internal targets"]
     G --> H["Resolution and combat use compact refs"]
     H --> I["Events materialize public ids"]
