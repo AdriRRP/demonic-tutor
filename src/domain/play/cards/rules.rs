@@ -124,6 +124,29 @@ pub enum AttachmentProfile {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct AttachedStatBoostProfile {
+    power: u32,
+    toughness: u32,
+}
+
+impl AttachedStatBoostProfile {
+    #[must_use]
+    pub const fn plus(power: u32, toughness: u32) -> Self {
+        Self { power, toughness }
+    }
+
+    #[must_use]
+    pub const fn power(self) -> u32 {
+        self.power
+    }
+
+    #[must_use]
+    pub const fn toughness(self) -> u32 {
+        self.toughness
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ActivatedAbilityProfile {
     requires_tap: bool,
     mana_cost: ManaCost,

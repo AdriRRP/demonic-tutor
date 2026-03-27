@@ -2,9 +2,9 @@
 
 use crate::domain::play::{
     cards::{
-        ActivatedAbilityProfile, AttachmentProfile, CardDefinition, CardInstance, CardType,
-        CastingRule, KeywordAbilitySet, ManaColor, ManaCost, SupportedSpellRules,
-        TriggeredAbilityProfile,
+        ActivatedAbilityProfile, AttachedStatBoostProfile, AttachmentProfile, CardDefinition,
+        CardInstance, CardType, CastingRule, KeywordAbilitySet, ManaColor, ManaCost,
+        SupportedSpellRules, TriggeredAbilityProfile,
     },
     ids::{CardDefinitionId, CardInstanceId, DeckId, PlayerId},
 };
@@ -123,6 +123,17 @@ impl LibraryCard {
     #[must_use]
     pub fn with_attachment_profile(mut self, attachment_profile: AttachmentProfile) -> Self {
         self.definition = self.definition.with_attachment_profile(attachment_profile);
+        self
+    }
+
+    #[must_use]
+    pub fn with_attached_stat_boost(
+        mut self,
+        attached_stat_boost: AttachedStatBoostProfile,
+    ) -> Self {
+        self.definition = self
+            .definition
+            .with_attached_stat_boost(attached_stat_boost);
         self
     }
 

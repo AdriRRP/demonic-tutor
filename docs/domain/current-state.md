@@ -149,6 +149,7 @@ The domain currently includes:
 - the current spell-effect subset now also supports explicit `loot` and `rummage`, surfaced as pending hand-card choice prompts during resolution
 - the current library-manipulation subset now also supports explicit `scry 1`, surfaced as a controller-scoped pending top-card choice during resolution
 - the current attachment subset now supports `Enchant creature` Auras that target while cast, enter attached if the target stays legal on resolution, and are put into graveyard by SBA if they become unattached
+- the current attachment subset now also supports one explicit attached `+N/+N` Aura bonus profile while the Aura remains attached
 - supported targeted instant damage to a player emits `LifeChanged` on resolution
 - supported targeted instant damage to a creature marks damage and then relies on shared SBA review for lethal destruction
 - supported indestructible creatures survive the current SBA lethal-damage review while still dying to zero toughness

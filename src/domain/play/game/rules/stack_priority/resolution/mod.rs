@@ -202,6 +202,33 @@ fn move_resolved_spell_to_destination(
     )
 }
 
+fn apply_attached_aura_bonus(
+    players: &mut [Player],
+    controller_index: usize,
+    aura_id: &crate::domain::play::ids::CardInstanceId,
+) -> Result<(), crate::domain::play::errors::DomainError> {
+    let Some((target_id, attached_stat_boost)) = players[controller_index]
+        .battlefield_card(aura_id)
+        .and_then(|card| card.attached_to().cloned().zip(card.attached_stat_boost()))
+    else {
+        return Ok(());
+    };
+
+    let Some(target) = players
+        .iter_mut()
+        .find_map(|player| player.battlefield_card_mut(&target_id))
+    else {
+        return Err(crate::domain::play::errors::DomainError::Game(
+            crate::domain::play::errors::GameError::InternalInvariantViolation(
+                "attached aura target should exist on battlefield while resolving".to_string(),
+            ),
+        ));
+    };
+
+    target.add_attached_stat_bonus(attached_stat_boost.power(), attached_stat_boost.toughness());
+    Ok(())
+}
+
 fn move_resolved_aura_to_its_destination(
     players: &mut [Player],
     card_locations: &AggregateCardLocationIndex,
@@ -229,7 +256,9 @@ fn move_resolved_aura_to_its_destination(
         ) => {
             let mut permanent = payload.into_card_instance();
             permanent.attach_to(target_id.clone());
+            let aura_id = permanent.id().clone();
             players[controller_index].receive_battlefield_card(permanent);
+            apply_attached_aura_bonus(players, controller_index, &aura_id)?;
             Ok(SpellCastOutcome::EnteredBattlefield)
         }
         (super::spell_effects::SpellTargetLegality::Legal, Some(_)) => {

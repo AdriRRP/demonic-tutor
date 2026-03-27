@@ -6,7 +6,8 @@
 
 use {
     demonictutor::{
-        ActivatedAbilityProfile, AttachmentProfile, CastingRule, TriggeredAbilityProfile,
+        ActivatedAbilityProfile, AttachedStatBoostProfile, AttachmentProfile, CastingRule,
+        TriggeredAbilityProfile,
     },
     demonictutor::{
         AdvanceTurnCommand, AdvanceTurnOutcome, CardDefinitionId, CardType, CastSpellCommand,
@@ -456,6 +457,16 @@ pub fn creature_aura_enchantment_card(name: &str, mana_cost: u32) -> LibraryCard
     )
     .with_supported_spell_rules(SupportedSpellRules::attach_to_target_creature())
     .with_attachment_profile(AttachmentProfile::EnchantCreature)
+}
+
+pub fn stat_boost_creature_aura_enchantment_card(
+    name: &str,
+    mana_cost: u32,
+    power: u32,
+    toughness: u32,
+) -> LibraryCard {
+    creature_aura_enchantment_card(name, mana_cost)
+        .with_attached_stat_boost(AttachedStatBoostProfile::plus(power, toughness))
 }
 
 pub fn planeswalker_card(name: &str, mana_cost: u32) -> LibraryCard {

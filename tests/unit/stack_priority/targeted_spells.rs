@@ -10,7 +10,8 @@ use {
         creature_aura_enchantment_card, creature_card, creature_card_with_keyword,
         destroy_target_artifact_or_enchantment_instant_card, enchantment_card, filled_library,
         land_card, resolve_top_stack_with_passes, return_target_permanent_to_hand_instant_card,
-        setup_two_player_game, target_player_discards_chosen_card_sorcery_card,
+        setup_two_player_game, stat_boost_creature_aura_enchantment_card,
+        target_player_discards_chosen_card_sorcery_card,
         targeted_attacking_creature_damage_instant_card,
         targeted_controlled_creature_damage_instant_card, targeted_damage_instant_card,
         targeted_destroy_creature_instant_card, targeted_exile_creature_instant_card,
@@ -288,6 +289,156 @@ fn creature_aura_is_put_into_graveyard_when_enchanted_creature_dies() {
     assert!(game.players()[0].battlefield_card(&aura_id).is_none());
     assert!(game.players()[0].graveyard_card(&creature_id).is_some());
     assert!(game.players()[0].graveyard_card(&aura_id).is_some());
+}
+
+#[test]
+fn stat_boost_aura_increases_enchanted_creature_stats_while_attached() {
+    let (service, mut game) = setup_two_player_game(
+        "game-aura-boosts",
+        filled_library(
+            vec![
+                creature_card("silvercoat", 0, 2, 2),
+                stat_boost_creature_aura_enchantment_card("holy-strength", 0, 2, 2),
+            ],
+            10,
+        ),
+        filled_library(vec![land_card("mountain")], 10),
+    );
+
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
+
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(
+                PlayerId::new("player-1"),
+                CardInstanceId::new("game-aura-boosts-player-1-0"),
+            ),
+        )
+        .unwrap();
+    let _ = resolve_current_stack(&service, &mut game);
+
+    let creature_id = game.players()[0]
+        .battlefield_card_by_definition(&CardDefinitionId::new("silvercoat"))
+        .map(|card| card.id().clone());
+    assert!(creature_id.is_some(), "creature should be on battlefield");
+    let Some(creature_id) = creature_id else {
+        return;
+    };
+    let aura_id = game.players()[0]
+        .hand_card_by_definition(&CardDefinitionId::new("holy-strength"))
+        .map(|card| card.id().clone());
+    assert!(aura_id.is_some(), "aura should be in hand");
+    let Some(aura_id) = aura_id else {
+        return;
+    };
+
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), aura_id.clone())
+                .with_target(SpellTarget::Creature(creature_id.clone())),
+        )
+        .unwrap();
+    let _ = resolve_current_stack(&service, &mut game);
+
+    let creature = game.players()[0].battlefield_card(&creature_id);
+    assert_eq!(
+        creature.and_then(demonictutor::CardInstance::creature_stats),
+        Some((4, 4))
+    );
+    assert_eq!(
+        game.players()[0]
+            .battlefield_card(&aura_id)
+            .and_then(|card| card.attached_to().cloned()),
+        Some(creature_id)
+    );
+}
+
+#[test]
+fn stat_boost_aura_bonus_is_removed_when_the_aura_leaves_battlefield() {
+    let (service, mut game) = setup_two_player_game(
+        "game-aura-bonus-removed",
+        filled_library(
+            vec![
+                creature_card("silvercoat", 0, 2, 2),
+                stat_boost_creature_aura_enchantment_card("holy-strength", 0, 2, 2),
+            ],
+            10,
+        ),
+        filled_library(
+            vec![destroy_target_artifact_or_enchantment_instant_card(
+                "disenchant-lite",
+                0,
+            )],
+            10,
+        ),
+    );
+
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
+
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(
+                PlayerId::new("player-1"),
+                CardInstanceId::new("game-aura-bonus-removed-player-1-0"),
+            ),
+        )
+        .unwrap();
+    let _ = resolve_current_stack(&service, &mut game);
+
+    let creature_id = game.players()[0]
+        .battlefield_card_by_definition(&CardDefinitionId::new("silvercoat"))
+        .map(|card| card.id().clone());
+    assert!(creature_id.is_some(), "creature should be on battlefield");
+    let Some(creature_id) = creature_id else {
+        return;
+    };
+    let aura_id = game.players()[0]
+        .hand_card_by_definition(&CardDefinitionId::new("holy-strength"))
+        .map(|card| card.id().clone());
+    assert!(aura_id.is_some(), "aura should be in hand");
+    let Some(aura_id) = aura_id else {
+        return;
+    };
+
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), aura_id.clone())
+                .with_target(SpellTarget::Creature(creature_id.clone())),
+        )
+        .unwrap();
+    let _ = resolve_current_stack(&service, &mut game);
+    assert_eq!(
+        game.players()[0]
+            .battlefield_card(&creature_id)
+            .and_then(demonictutor::CardInstance::creature_stats),
+        Some((4, 4))
+    );
+
+    let _ = pass_priority_once(&service, &mut game);
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(
+                PlayerId::new("player-2"),
+                CardInstanceId::new("game-aura-bonus-removed-player-2-0"),
+            )
+            .with_target(SpellTarget::Permanent(aura_id.clone())),
+        )
+        .unwrap();
+    let _ = resolve_current_stack(&service, &mut game);
+
+    assert!(game.players()[0].battlefield_card(&aura_id).is_none());
+    assert!(game.players()[0].graveyard_card(&aura_id).is_some());
+    assert_eq!(
+        game.players()[0]
+            .battlefield_card(&creature_id)
+            .and_then(demonictutor::CardInstance::creature_stats),
+        Some((2, 2))
+    );
 }
 
 #[test]

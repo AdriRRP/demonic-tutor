@@ -2,9 +2,9 @@
 
 use {
     super::{
-        ActivatedAbilityProfile, ActivatedManaAbilityProfile, AttachmentProfile, CardType,
-        CastingPermissionProfile, CastingRule, ManaColor, ManaCost, SupportedSpellRules,
-        TriggeredAbilityProfile,
+        ActivatedAbilityProfile, ActivatedManaAbilityProfile, AttachedStatBoostProfile,
+        AttachmentProfile, CardType, CastingPermissionProfile, CastingRule, ManaColor, ManaCost,
+        SupportedSpellRules, TriggeredAbilityProfile,
     },
     crate::domain::play::ids::CardDefinitionId,
 };
@@ -21,6 +21,7 @@ pub struct CardDefinition {
     triggered_ability: Option<TriggeredAbilityProfile>,
     initial_loyalty: Option<u32>,
     attachment_profile: Option<AttachmentProfile>,
+    attached_stat_boost: Option<AttachedStatBoostProfile>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -35,6 +36,7 @@ pub struct CardDefinitionParts {
     pub triggered_ability: Option<TriggeredAbilityProfile>,
     pub initial_loyalty: Option<u32>,
     pub attachment_profile: Option<AttachmentProfile>,
+    pub attached_stat_boost: Option<AttachedStatBoostProfile>,
 }
 
 impl CardDefinition {
@@ -59,6 +61,7 @@ impl CardDefinition {
             triggered_ability: None,
             initial_loyalty: None,
             attachment_profile: None,
+            attached_stat_boost: None,
         }
     }
 
@@ -78,6 +81,7 @@ impl CardDefinition {
             triggered_ability: None,
             initial_loyalty: None,
             attachment_profile: None,
+            attached_stat_boost: None,
         }
     }
 
@@ -135,6 +139,15 @@ impl CardDefinition {
     }
 
     #[must_use]
+    pub const fn with_attached_stat_boost(
+        mut self,
+        attached_stat_boost: AttachedStatBoostProfile,
+    ) -> Self {
+        self.attached_stat_boost = Some(attached_stat_boost);
+        self
+    }
+
+    #[must_use]
     pub fn from_parts(parts: CardDefinitionParts) -> Self {
         Self {
             id: parts.id,
@@ -147,6 +160,7 @@ impl CardDefinition {
             triggered_ability: parts.triggered_ability,
             initial_loyalty: parts.initial_loyalty,
             attachment_profile: parts.attachment_profile,
+            attached_stat_boost: parts.attached_stat_boost,
         }
     }
 
@@ -203,5 +217,10 @@ impl CardDefinition {
     #[must_use]
     pub const fn attachment_profile(&self) -> Option<AttachmentProfile> {
         self.attachment_profile
+    }
+
+    #[must_use]
+    pub const fn attached_stat_boost(&self) -> Option<AttachedStatBoostProfile> {
+        self.attached_stat_boost
     }
 }

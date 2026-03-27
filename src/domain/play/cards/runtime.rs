@@ -2,9 +2,9 @@
 
 use {
     super::{
-        ActivatedAbilityProfile, ActivatedManaAbilityProfile, AttachmentProfile, CardDefinition,
-        CardType, CastingPermissionProfile, CastingRule, KeywordAbility, KeywordAbilitySet,
-        ManaCost, SupportedSpellRules, TriggeredAbilityProfile,
+        ActivatedAbilityProfile, ActivatedManaAbilityProfile, AttachedStatBoostProfile,
+        AttachmentProfile, CardDefinition, CardType, CastingPermissionProfile, CastingRule,
+        KeywordAbility, KeywordAbilitySet, ManaCost, SupportedSpellRules, TriggeredAbilityProfile,
     },
     crate::domain::play::ids::{CardDefinitionId, CardInstanceId, PlayerCardHandle, PlayerId},
     std::sync::Arc,
@@ -23,6 +23,8 @@ struct CreatureRuntime {
     deathtouch_damage: bool,
     temporary_power: u32,
     temporary_toughness: u32,
+    attached_power_bonus: u32,
+    attached_toughness_bonus: u32,
     flags: u8,
     blocking_target: Option<PlayerCardHandle>,
     blocked_by: Vec<PlayerCardHandle>,
@@ -45,6 +47,7 @@ pub struct PermanentSpellPayload {
     triggered_ability: Option<TriggeredAbilityProfile>,
     initial_loyalty: Option<u32>,
     attachment_profile: Option<AttachmentProfile>,
+    attached_stat_boost: Option<AttachedStatBoostProfile>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -74,6 +77,8 @@ impl CreatureRuntime {
             deathtouch_damage: false,
             temporary_power: 0,
             temporary_toughness: 0,
+            attached_power_bonus: 0,
+            attached_toughness_bonus: 0,
             flags: CREATURE_FLAG_SUMMONING_SICKNESS,
             blocking_target: None,
             blocked_by: Vec::new(),
@@ -90,6 +95,8 @@ impl CreatureRuntime {
             deathtouch_damage: false,
             temporary_power: 0,
             temporary_toughness: 0,
+            attached_power_bonus: 0,
+            attached_toughness_bonus: 0,
             flags: CREATURE_FLAG_SUMMONING_SICKNESS,
             blocking_target: None,
             blocked_by: Vec::new(),
@@ -305,6 +312,7 @@ impl CardInstance {
             triggered_ability: definition.triggered_ability(),
             initial_loyalty: definition.initial_loyalty(),
             attachment_profile: definition.attachment_profile(),
+            attached_stat_boost: definition.attached_stat_boost(),
         }
     }
 
@@ -465,6 +473,9 @@ impl SpellPayload {
         }
         if let Some(attachment_profile) = payload.attachment_profile {
             definition = definition.with_attachment_profile(attachment_profile);
+        }
+        if let Some(attached_stat_boost) = payload.attached_stat_boost {
+            definition = definition.with_attached_stat_boost(attached_stat_boost);
         }
         CardInstance {
             id,
@@ -674,6 +685,11 @@ impl CardInstance {
     }
 
     #[must_use]
+    pub fn attached_stat_boost(&self) -> Option<AttachedStatBoostProfile> {
+        self.face.definition.attached_stat_boost()
+    }
+
+    #[must_use]
     pub const fn attached_to(&self) -> Option<&CardInstanceId> {
         self.runtime.attached_to.as_ref()
     }
@@ -687,7 +703,10 @@ impl CardInstance {
     pub const fn power(&self) -> Option<u32> {
         match &self.runtime.kind {
             CardRuntimeKind::Creature(creature) => Some(
-                creature.power + creature.plus_one_plus_one_counters + creature.temporary_power,
+                creature.power
+                    + creature.plus_one_plus_one_counters
+                    + creature.temporary_power
+                    + creature.attached_power_bonus,
             ),
             CardRuntimeKind::NonCreature => None,
         }
@@ -699,7 +718,8 @@ impl CardInstance {
             CardRuntimeKind::Creature(creature) => Some(
                 creature.toughness
                     + creature.plus_one_plus_one_counters
-                    + creature.temporary_toughness,
+                    + creature.temporary_toughness
+                    + creature.attached_toughness_bonus,
             ),
             CardRuntimeKind::NonCreature => None,
         }
@@ -709,10 +729,14 @@ impl CardInstance {
     pub const fn creature_stats(&self) -> Option<(u32, u32)> {
         match &self.runtime.kind {
             CardRuntimeKind::Creature(creature) => Some((
-                creature.power + creature.plus_one_plus_one_counters + creature.temporary_power,
+                creature.power
+                    + creature.plus_one_plus_one_counters
+                    + creature.temporary_power
+                    + creature.attached_power_bonus,
                 creature.toughness
                     + creature.plus_one_plus_one_counters
-                    + creature.temporary_toughness,
+                    + creature.temporary_toughness
+                    + creature.attached_toughness_bonus,
             )),
             CardRuntimeKind::NonCreature => None,
         }
@@ -856,6 +880,7 @@ impl CardInstance {
                     >= creature.toughness
                         + creature.plus_one_plus_one_counters
                         + creature.temporary_toughness
+                        + creature.attached_toughness_bonus
                     || (creature.deathtouch_damage && creature.damage > 0)
             }
             CardRuntimeKind::NonCreature => false,
@@ -869,6 +894,7 @@ impl CardInstance {
                 creature.toughness
                     + creature.plus_one_plus_one_counters
                     + creature.temporary_toughness
+                    + creature.attached_toughness_bonus
                     == 0
             }
             CardRuntimeKind::NonCreature => false,
@@ -908,6 +934,22 @@ impl CardInstance {
         if let CardRuntimeKind::Creature(creature) = &mut self.runtime.kind {
             creature.temporary_power += power;
             creature.temporary_toughness += toughness;
+        }
+    }
+
+    pub const fn add_attached_stat_bonus(&mut self, power: u32, toughness: u32) {
+        if let CardRuntimeKind::Creature(creature) = &mut self.runtime.kind {
+            creature.attached_power_bonus = creature.attached_power_bonus.saturating_add(power);
+            creature.attached_toughness_bonus =
+                creature.attached_toughness_bonus.saturating_add(toughness);
+        }
+    }
+
+    pub const fn remove_attached_stat_bonus(&mut self, power: u32, toughness: u32) {
+        if let CardRuntimeKind::Creature(creature) = &mut self.runtime.kind {
+            creature.attached_power_bonus = creature.attached_power_bonus.saturating_sub(power);
+            creature.attached_toughness_bonus =
+                creature.attached_toughness_bonus.saturating_sub(toughness);
         }
     }
 

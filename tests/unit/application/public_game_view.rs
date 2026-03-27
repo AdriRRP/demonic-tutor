@@ -3,9 +3,9 @@
 #![allow(clippy::expect_used)]
 
 use crate::support::{
-    advance_to_player_first_main_satisfying_cleanup, create_service,
-    creature_aura_enchantment_card, creature_card, first_hand_card_id, forest_card, player,
-    player_deck, player_library,
+    advance_to_player_first_main_satisfying_cleanup, create_service, creature_card,
+    first_hand_card_id, forest_card, player, player_deck, player_library,
+    stat_boost_creature_aura_enchantment_card,
 };
 use demonictutor::{
     game_view, CastSpellCommand, DealOpeningHandsCommand, Game, GameId, Phase, PublicGameView,
@@ -113,7 +113,7 @@ fn game_view_projects_attached_creature_for_aura_permanents() {
             "p1",
             vec![
                 creature_card("silvercoat", 0, 2, 2),
-                creature_aura_enchantment_card("holy-strength", 0),
+                stat_boost_creature_aura_enchantment_card("holy-strength", 0, 2, 2),
                 forest_card("p1-forest-a"),
                 forest_card("p1-forest-b"),
                 forest_card("p1-forest-c"),
@@ -195,6 +195,13 @@ fn game_view_projects_attached_creature_for_aura_permanents() {
         .iter()
         .find(|card| card.card_id == aura_id)
         .expect("aura should be visible");
+    let creature = p1
+        .battlefield
+        .iter()
+        .find(|card| card.card_id == creature_id)
+        .expect("creature should be visible");
 
     assert_eq!(aura.attached_to, Some(creature_id));
+    assert_eq!(creature.power, Some(4));
+    assert_eq!(creature.toughness, Some(4));
 }
