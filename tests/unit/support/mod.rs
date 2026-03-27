@@ -177,6 +177,11 @@ pub fn untap_target_creature_instant_card(name: &str, mana_cost: u32) -> Library
         .with_supported_spell_rules(SupportedSpellRules::untap_target_creature())
 }
 
+pub fn cannot_block_target_creature_instant_card(name: &str, mana_cost: u32) -> LibraryCard {
+    LibraryCard::new(CardDefinitionId::new(name), CardType::Instant, mana_cost)
+        .with_supported_spell_rules(SupportedSpellRules::cannot_block_target_creature_this_turn())
+}
+
 pub fn self_growing_creature_card(
     name: &str,
     mana_cost: u32,

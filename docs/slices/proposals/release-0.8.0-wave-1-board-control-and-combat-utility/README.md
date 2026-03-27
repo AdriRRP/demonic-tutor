@@ -15,9 +15,9 @@ Slices:
     - first explicit spell corridor that taps a target creature on the battlefield
   - `support-untap-target-creature-effects`
     - first explicit spell corridor that untaps a target creature on the battlefield
-- pending:
   - `support-cannot-block-this-turn-effects`
-    - support temporary combat restriction effects applied during the turn
+    - first temporary combat restriction effect applied to one target creature until turn end
+- pending:
   - `support-defender-and-static-cannot-attack-restrictions`
     - support creatures and a bounded static subset that cannot attack under the modeled rules
 

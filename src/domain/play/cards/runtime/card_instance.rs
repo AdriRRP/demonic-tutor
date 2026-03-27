@@ -547,8 +547,17 @@ impl CardInstance {
     #[must_use]
     pub const fn cannot_block(&self) -> bool {
         match &self.runtime.kind {
-            CardRuntimeKind::Creature(creature) => creature.attached_cant_block_count > 0,
+            CardRuntimeKind::Creature(creature) => {
+                creature.attached_cant_block_count > 0 || creature.temporary_cant_block_count > 0
+            }
             CardRuntimeKind::NonCreature => false,
+        }
+    }
+
+    pub const fn add_temporary_cant_block(&mut self) {
+        if let CardRuntimeKind::Creature(creature) = &mut self.runtime.kind {
+            creature.temporary_cant_block_count =
+                creature.temporary_cant_block_count.saturating_add(1);
         }
     }
 
@@ -556,6 +565,7 @@ impl CardInstance {
         if let CardRuntimeKind::Creature(creature) = &mut self.runtime.kind {
             creature.temporary_power = 0;
             creature.temporary_toughness = 0;
+            creature.temporary_cant_block_count = 0;
         }
     }
 

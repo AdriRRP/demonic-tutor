@@ -5,13 +5,15 @@
 use {
     crate::support::{
         advance_to_first_main_satisfying_cleanup, advance_to_player_first_main_satisfying_cleanup,
-        advance_turn_raw, artifact_card, choose_one_target_player_gain_or_lose_life_instant_card,
-        close_empty_priority_window, counter_target_spell_instant_card,
-        creature_aura_enchantment_card, creature_card, creature_card_with_keyword,
-        destroy_target_artifact_or_enchantment_instant_card, enchantment_card, filled_library,
-        land_card, resolve_top_stack_with_passes, return_target_permanent_to_hand_instant_card,
-        setup_two_player_game, stat_boost_creature_aura_enchantment_card,
-        tap_target_creature_instant_card, target_player_discards_chosen_card_sorcery_card,
+        advance_to_player_phase_satisfying_cleanup, advance_turn_raw, artifact_card,
+        cannot_block_target_creature_instant_card,
+        choose_one_target_player_gain_or_lose_life_instant_card, close_empty_priority_window,
+        counter_target_spell_instant_card, creature_aura_enchantment_card, creature_card,
+        creature_card_with_keyword, destroy_target_artifact_or_enchantment_instant_card,
+        enchantment_card, filled_library, land_card, resolve_top_stack_with_passes,
+        return_target_permanent_to_hand_instant_card, setup_two_player_game,
+        stat_boost_creature_aura_enchantment_card, tap_target_creature_instant_card,
+        target_player_discards_chosen_card_sorcery_card,
         targeted_attacking_creature_damage_instant_card,
         targeted_controlled_creature_damage_instant_card, targeted_damage_instant_card,
         targeted_destroy_creature_instant_card, targeted_exile_creature_instant_card,
@@ -757,6 +759,99 @@ fn untap_target_creature_spell_untaps_the_target_creature_on_resolution() {
     assert!(!game.players()[0]
         .battlefield_card(&creature_id)
         .is_some_and(demonictutor::CardInstance::is_tapped));
+}
+
+#[test]
+fn cannot_block_target_creature_spell_prevents_blocking_for_the_rest_of_turn() {
+    let (service, mut game) = setup_two_player_game(
+        "game-cannot-block-target-creature",
+        filled_library(
+            vec![
+                creature_card("attacker", 0, 2, 2),
+                cannot_block_target_creature_instant_card("falter-ping", 0),
+            ],
+            10,
+        ),
+        filled_library(vec![creature_card("blocker", 0, 2, 2)], 10),
+    );
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
+
+    let attacker_id = game.players()[0]
+        .hand_card_by_definition(&CardDefinitionId::new("attacker"))
+        .map(|card| card.id().clone());
+    assert!(attacker_id.is_some(), "attacker should be in hand");
+    let Some(attacker_id) = attacker_id else {
+        return;
+    };
+    let spell_id = game.players()[0]
+        .hand_card_by_definition(&CardDefinitionId::new("falter-ping"))
+        .map(|card| card.id().clone());
+    assert!(spell_id.is_some(), "spell should be in hand");
+    let Some(spell_id) = spell_id else {
+        return;
+    };
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), attacker_id.clone()),
+        )
+        .unwrap();
+    let _ = resolve_current_stack(&service, &mut game);
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-2");
+
+    let blocker_id = game.players()[1]
+        .hand_card_by_definition(&CardDefinitionId::new("blocker"))
+        .map(|card| card.id().clone());
+    assert!(blocker_id.is_some(), "blocker should be in hand");
+    let Some(blocker_id) = blocker_id else {
+        return;
+    };
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-2"), blocker_id.clone()),
+        )
+        .unwrap();
+    let _ = resolve_current_stack(&service, &mut game);
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), spell_id)
+                .with_target(SpellTarget::Creature(blocker_id.clone())),
+        )
+        .unwrap();
+    let _ = resolve_current_stack(&service, &mut game);
+
+    advance_to_player_phase_satisfying_cleanup(
+        &service,
+        &mut game,
+        "player-1",
+        demonictutor::Phase::DeclareAttackers,
+    );
+
+    service
+        .declare_attackers(
+            &mut game,
+            DeclareAttackersCommand::new(PlayerId::new("player-1"), vec![attacker_id.clone()]),
+        )
+        .unwrap();
+    close_empty_priority_window(&service, &mut game);
+
+    let result = service.declare_blockers(
+        &mut game,
+        demonictutor::DeclareBlockersCommand::new(
+            PlayerId::new("player-2"),
+            vec![(blocker_id.clone(), attacker_id)],
+        ),
+    );
+    assert!(matches!(
+        result,
+        Err(DomainError::Card(demonictutor::CardError::CannotBlock { card, .. })) if card == blocker_id
+    ));
 }
 
 #[test]

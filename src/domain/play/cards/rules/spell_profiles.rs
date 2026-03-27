@@ -29,6 +29,7 @@ pub enum SpellResolutionProfile {
     AttachToTargetCreature,
     TapTargetCreature,
     UntapTargetCreature,
+    CannotBlockTargetCreatureThisTurn,
     DealDamage { damage: u32 },
     GainLife { amount: u32 },
     LoseLife { amount: u32 },
@@ -183,6 +184,16 @@ impl SupportedSpellRules {
                 SingleTargetRule::any_creature_on_battlefield(),
             ),
             resolution: SpellResolutionProfile::UntapTargetCreature,
+        }
+    }
+
+    #[must_use]
+    pub const fn cannot_block_target_creature_this_turn() -> Self {
+        Self {
+            targeting: SpellTargetingProfile::ExactlyOne(
+                SingleTargetRule::any_creature_on_battlefield(),
+            ),
+            resolution: SpellResolutionProfile::CannotBlockTargetCreatureThisTurn,
         }
     }
 
