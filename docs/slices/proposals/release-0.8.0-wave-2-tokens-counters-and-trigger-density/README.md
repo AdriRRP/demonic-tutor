@@ -13,9 +13,9 @@ Slices:
 - implemented:
   - `support-keyworded-creature-token-creation`
     - support tokens that enter with explicit supported keywords such as flying or vigilance
-- pending:
   - `support-multiple-token-creation-from-one-effect`
     - support effects that create more than one token at resolution
+- pending:
   - `support-distribute-plus-one-plus-one-counters`
     - support placing counters across one or more chosen creatures in a bounded targeting subset
   - `support-attack-and-combat-damage-triggers`

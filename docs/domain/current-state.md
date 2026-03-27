@@ -66,6 +66,7 @@ Implemented capabilities include:
 - resolving the first explicit `untap target creature` spell subset through the shared targeting and stack corridor
 - resolving the first explicit `target creature can't block this turn` spell subset through the shared targeting and combat-legality corridor
 - resolving the first explicit keyworded creature-token creation subset for one supported token with one supported keyword
+- resolving the first explicit multi-token creation subset for one supported effect that creates multiple identical vanilla creature tokens
 - advancing turns
 - full phase progression using State pattern (Setup, Untap, Upkeep, Draw, FirstMain, BeginningOfCombat, DeclareAttackers, DeclareBlockers, CombatDamage, EndOfCombat, SecondMain, EndStep)
 - keyword abilities: Flying and Reach affect combat blocking legality, Haste bypasses summoning-sickness attack restriction, Vigilance avoids tapping on attack, Menace requires at least two blockers, Trample assigns excess damage after forward lethal assignment through declared blockers, First strike splits combat damage into an earlier and later supported pass, Double strike deals damage in both supported combat-damage passes, Lifelink gains life equal to combat damage dealt in the supported subset, Hexproof rejects opposing targeted spells against the supported creature subset, Indestructible survives the current lethal-damage and destroy corridors, Defender rejects attack declaration for the supported static subset, and Deathtouch makes nonzero combat damage lethal for the current SBA subset

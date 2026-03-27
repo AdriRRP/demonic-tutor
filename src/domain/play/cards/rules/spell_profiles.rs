@@ -58,6 +58,11 @@ pub enum SpellResolutionProfile {
         power: u32,
         toughness: u32,
     },
+    CreateMultipleVanillaCreatureTokens {
+        count: u32,
+        power: u32,
+        toughness: u32,
+    },
     CreateKeywordedCreatureToken {
         power: u32,
         toughness: u32,
@@ -199,6 +204,22 @@ impl SupportedSpellRules {
                 power,
                 toughness,
                 keywords,
+            },
+        }
+    }
+
+    #[must_use]
+    pub const fn create_multiple_vanilla_creature_tokens(
+        count: u32,
+        power: u32,
+        toughness: u32,
+    ) -> Self {
+        Self {
+            targeting: SpellTargetingProfile::None,
+            resolution: SpellResolutionProfile::CreateMultipleVanillaCreatureTokens {
+                count,
+                power,
+                toughness,
             },
         }
     }

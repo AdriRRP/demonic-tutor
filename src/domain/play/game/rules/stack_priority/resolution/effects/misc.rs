@@ -15,18 +15,7 @@ pub(super) fn resolve_create_vanilla_creature_token_effect(
     power: u32,
     toughness: u32,
 ) -> Result<SpellResolutionSideEffects, DomainError> {
-    let token_number = context.stack.next_object_number();
-    let token_id = CardInstanceId::new(format!("{}-token-{}", context.game_id, token_number));
-    let definition_id = CardDefinitionId::new(format!("token-{power}-{toughness}"));
-    let token =
-        CardInstance::new_vanilla_creature_token(token_id.clone(), definition_id, power, toughness);
-    context.players[context.controller_index]
-        .receive_battlefield_card(token)
-        .ok_or_else(|| {
-            DomainError::Game(GameError::InternalInvariantViolation(
-                "failed to place created token onto the battlefield".to_string(),
-            ))
-        })?;
+    let token_id = create_vanilla_token(context, power, toughness)?;
 
     review_state_based_actions_after_effect(
         context.game_id,
@@ -40,6 +29,50 @@ pub(super) fn resolve_create_vanilla_creature_token_effect(
             moved_cards: vec![token_id],
         },
     )
+}
+
+pub(super) fn resolve_create_multiple_vanilla_creature_tokens_effect(
+    context: &mut ResolutionContext<'_>,
+    count: u32,
+    power: u32,
+    toughness: u32,
+) -> Result<SpellResolutionSideEffects, DomainError> {
+    let moved_cards = (0..count)
+        .map(|_| create_vanilla_token(context, power, toughness))
+        .collect::<Result<Vec<_>, _>>()?;
+
+    review_state_based_actions_after_effect(
+        context.game_id,
+        context.players,
+        context.terminal_state,
+        EffectOutcomeSeed {
+            card_exiled: None,
+            card_discarded: None,
+            life_changed: None,
+            creatures_died: Vec::new(),
+            moved_cards,
+        },
+    )
+}
+
+fn create_vanilla_token(
+    context: &mut ResolutionContext<'_>,
+    power: u32,
+    toughness: u32,
+) -> Result<CardInstanceId, DomainError> {
+    let token_number = context.stack.next_object_number();
+    let token_id = CardInstanceId::new(format!("{}-token-{}", context.game_id, token_number));
+    let definition_id = CardDefinitionId::new(format!("token-{power}-{toughness}"));
+    let token =
+        CardInstance::new_vanilla_creature_token(token_id.clone(), definition_id, power, toughness);
+    context.players[context.controller_index]
+        .receive_battlefield_card(token)
+        .ok_or_else(|| {
+            DomainError::Game(GameError::InternalInvariantViolation(
+                "failed to place created token onto the battlefield".to_string(),
+            ))
+        })?;
+    Ok(token_id)
 }
 
 pub(super) fn resolve_create_keyworded_creature_token_effect(

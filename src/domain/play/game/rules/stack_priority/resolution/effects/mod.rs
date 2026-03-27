@@ -22,6 +22,7 @@ use self::{
     },
     misc::{
         resolve_create_keyworded_creature_token_effect,
+        resolve_create_multiple_vanilla_creature_tokens_effect,
         resolve_create_vanilla_creature_token_effect,
     },
     modifiers::{
@@ -79,6 +80,16 @@ pub(super) fn apply_supported_spell_rules(
         SpellResolutionProfile::CreateVanillaCreatureToken { power, toughness } => {
             resolve_create_vanilla_creature_token_effect(&mut context, power, toughness)
         }
+        SpellResolutionProfile::CreateMultipleVanillaCreatureTokens {
+            count,
+            power,
+            toughness,
+        } => resolve_create_multiple_vanilla_creature_tokens_effect(
+            &mut context,
+            count,
+            power,
+            toughness,
+        ),
         SpellResolutionProfile::CreateKeywordedCreatureToken {
             power,
             toughness,

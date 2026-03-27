@@ -182,6 +182,19 @@ pub fn put_counter_on_target_creature_sorcery_card(name: &str, mana_cost: u32) -
         )
 }
 
+pub fn create_multiple_vanilla_creature_tokens_sorcery_card(
+    name: &str,
+    mana_cost: u32,
+    count: u32,
+    power: u32,
+    toughness: u32,
+) -> LibraryCard {
+    LibraryCard::new(CardDefinitionId::new(name), CardType::Sorcery, mana_cost)
+        .with_supported_spell_rules(
+            SupportedSpellRules::create_multiple_vanilla_creature_tokens(count, power, toughness),
+        )
+}
+
 pub fn tap_target_creature_instant_card(name: &str, mana_cost: u32) -> LibraryCard {
     LibraryCard::new(CardDefinitionId::new(name), CardType::Instant, mana_cost)
         .with_supported_spell_rules(SupportedSpellRules::tap_target_creature())
