@@ -4,6 +4,7 @@ use super::{
     CardInstanceId, ManaCost, Player, PlayerCardZone, PrepareHandSpellCastError,
     PreparedHandSpellCast,
 };
+use crate::domain::play::cards::CastingRule;
 
 #[allow(clippy::missing_const_for_fn)]
 impl Player {
@@ -74,8 +75,18 @@ impl Player {
             let _ = self.cards.rollback_remove(handle, owned);
             return Err(PrepareHandSpellCastError::MissingCard);
         }
+        let exile_on_resolution =
+            owned
+                .card
+                .casting_permission_profile()
+                .is_some_and(|permission| {
+                    permission.supports(CastingRule::ExileOnResolutionWhenCastFromOwnGraveyard)
+                });
         self.cards.commit_removed(handle, owned.card.id());
-        let payload = owned.card.into_spell_payload();
+        let mut payload = owned.card.into_spell_payload();
+        if exile_on_resolution {
+            payload.mark_exile_on_resolution();
+        }
         self.mana = next_mana;
 
         Ok(PreparedHandSpellCast {

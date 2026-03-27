@@ -470,6 +470,7 @@ const PERMISSION_OPEN_PRIORITY_WINDOW: u8 = 1 << 0;
 const PERMISSION_ACTIVE_PLAYER_EMPTY_MAIN_PHASE_WINDOW: u8 = 1 << 1;
 const PERMISSION_OPEN_PRIORITY_WINDOW_DURING_OWN_TURN: u8 = 1 << 2;
 const PERMISSION_CAST_FROM_OWN_GRAVEYARD: u8 = 1 << 3;
+const PERMISSION_EXILE_ON_RESOLUTION_WHEN_CAST_FROM_OWN_GRAVEYARD: u8 = 1 << 4;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CastingRule {
@@ -477,6 +478,7 @@ pub enum CastingRule {
     ActivePlayerEmptyMainPhaseWindow,
     OpenPriorityWindowDuringOwnTurn,
     CastFromOwnGraveyard,
+    ExileOnResolutionWhenCastFromOwnGraveyard,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -521,6 +523,9 @@ impl CastingPermissionProfile {
             CastingRule::CastFromOwnGraveyard => {
                 self.0 |= PERMISSION_CAST_FROM_OWN_GRAVEYARD;
             }
+            CastingRule::ExileOnResolutionWhenCastFromOwnGraveyard => {
+                self.0 |= PERMISSION_EXILE_ON_RESOLUTION_WHEN_CAST_FROM_OWN_GRAVEYARD;
+            }
         }
         self
     }
@@ -536,6 +541,9 @@ impl CastingPermissionProfile {
                 self.0 & PERMISSION_OPEN_PRIORITY_WINDOW_DURING_OWN_TURN != 0
             }
             CastingRule::CastFromOwnGraveyard => self.0 & PERMISSION_CAST_FROM_OWN_GRAVEYARD != 0,
+            CastingRule::ExileOnResolutionWhenCastFromOwnGraveyard => {
+                self.0 & PERMISSION_EXILE_ON_RESOLUTION_WHEN_CAST_FROM_OWN_GRAVEYARD != 0
+            }
         }
     }
 }

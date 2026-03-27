@@ -13,9 +13,9 @@ Slices:
 - implemented:
   - `support-return-instant-or-sorcery-from-graveyard-to-hand`
     - support recovering spells as explicit graveyard value
-- pending:
   - `support-one-shot-cast-from-graveyard-with-exile-on-resolution`
     - support a bounded flashback-like corridor on explicit card profiles
+- pending:
   - `support-surveil-on-explicit-card-profiles`
     - support top-of-library to graveyard/keep choices as graveyard enabler plus card selection
   - `support-end-step-spell-recursion-triggers`

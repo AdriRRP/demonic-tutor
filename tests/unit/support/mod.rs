@@ -261,6 +261,13 @@ pub fn graveyard_cast_instant_card(name: &str, mana_cost: u32, damage: u32) -> L
         .with_casting_rule(CastingRule::CastFromOwnGraveyard)
 }
 
+pub fn graveyard_cast_exiling_instant_card(name: &str, mana_cost: u32, damage: u32) -> LibraryCard {
+    LibraryCard::new(CardDefinitionId::new(name), CardType::Instant, mana_cost)
+        .with_supported_spell_rules(SupportedSpellRules::deal_damage_to_any_target(damage))
+        .with_casting_rule(CastingRule::CastFromOwnGraveyard)
+        .with_casting_rule(CastingRule::ExileOnResolutionWhenCastFromOwnGraveyard)
+}
+
 pub fn targeted_opponent_damage_instant_card(
     name: &str,
     mana_cost: u32,

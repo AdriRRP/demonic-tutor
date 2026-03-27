@@ -40,36 +40,42 @@ impl CardInstance {
                         id: self.id,
                         owner_id,
                         definition_id,
+                        exile_on_resolution: false,
                         kind: SpellPayloadKind::Artifact(Self::permanent_payload(definition)),
                     },
                     CardType::Enchantment => SpellPayload {
                         id: self.id,
                         owner_id,
                         definition_id,
+                        exile_on_resolution: false,
                         kind: SpellPayloadKind::Enchantment(Self::permanent_payload(definition)),
                     },
                     CardType::Planeswalker => SpellPayload {
                         id: self.id,
                         owner_id,
                         definition_id,
+                        exile_on_resolution: false,
                         kind: SpellPayloadKind::Planeswalker(Self::permanent_payload(definition)),
                     },
                     CardType::Land => SpellPayload {
                         id: self.id,
                         owner_id,
                         definition_id,
+                        exile_on_resolution: false,
                         kind: SpellPayloadKind::Land(Self::permanent_payload(definition)),
                     },
                     CardType::Instant => SpellPayload {
                         id: self.id,
                         owner_id,
                         definition_id,
+                        exile_on_resolution: false,
                         kind: SpellPayloadKind::Instant(Self::effect_payload(definition)),
                     },
                     CardType::Sorcery => SpellPayload {
                         id: self.id,
                         owner_id,
                         definition_id,
+                        exile_on_resolution: false,
                         kind: SpellPayloadKind::Sorcery(Self::effect_payload(definition)),
                     },
                     CardType::Creature => {
@@ -81,6 +87,7 @@ impl CardInstance {
                             id: self.id,
                             owner_id,
                             definition_id,
+                            exile_on_resolution: false,
                             kind: SpellPayloadKind::Land(Self::permanent_payload(definition)),
                         }
                     }
@@ -90,6 +97,7 @@ impl CardInstance {
                 id: self.id,
                 owner_id,
                 definition_id,
+                exile_on_resolution: false,
                 kind: SpellPayloadKind::Creature(CreatureSpellPayload {
                     power: creature.power,
                     toughness: creature.toughness,
@@ -119,6 +127,15 @@ impl SpellPayload {
         self.owner_id.as_ref()
     }
 
+    pub(crate) const fn mark_exile_on_resolution(&mut self) {
+        self.exile_on_resolution = true;
+    }
+
+    #[must_use]
+    pub const fn exile_on_resolution(&self) -> bool {
+        self.exile_on_resolution
+    }
+
     #[must_use]
     pub const fn kind(&self) -> &SpellPayloadKind {
         &self.kind
@@ -140,6 +157,10 @@ impl SpellPayload {
             }
             if permission.supports(CastingRule::CastFromOwnGraveyard) {
                 definition = definition.with_casting_rule(CastingRule::CastFromOwnGraveyard);
+            }
+            if permission.supports(CastingRule::ExileOnResolutionWhenCastFromOwnGraveyard) {
+                definition = definition
+                    .with_casting_rule(CastingRule::ExileOnResolutionWhenCastFromOwnGraveyard);
             }
         }
         CardInstance {
@@ -239,6 +260,7 @@ impl SpellPayload {
             id,
             owner_id,
             definition_id,
+            exile_on_resolution: _,
             kind,
         } = self;
 

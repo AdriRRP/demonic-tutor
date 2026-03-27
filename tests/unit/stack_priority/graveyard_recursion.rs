@@ -5,8 +5,8 @@ use {
     crate::support::{
         advance_to_first_main_satisfying_cleanup, advance_to_player_first_main_satisfying_cleanup,
         cast_spell_and_resolve, creature_card, etb_life_gain_creature_card, filled_library,
-        graveyard_cast_instant_card, mill_self_sorcery_card, mill_target_player_sorcery_card,
-        player, reanimate_target_creature_card_sorcery_card,
+        graveyard_cast_exiling_instant_card, graveyard_cast_instant_card, mill_self_sorcery_card,
+        mill_target_player_sorcery_card, player, reanimate_target_creature_card_sorcery_card,
         return_target_creature_card_from_graveyard_to_hand_sorcery_card,
         return_target_instant_or_sorcery_card_from_graveyard_to_hand_sorcery_card,
         setup_two_player_game, target_player_discards_chosen_card_sorcery_card,
@@ -401,4 +401,46 @@ fn explicit_profile_allows_casting_a_supported_spell_from_its_own_graveyard() {
 
     assert_eq!(player(&game, "player-2").life(), 16);
     assert!(player(&game, "player-1").graveyard_card(&bolt_id).is_some());
+}
+
+#[test]
+fn explicit_profile_can_exile_a_supported_spell_after_casting_it_from_its_own_graveyard() {
+    let (service, mut game) = setup_two_player_game(
+        "game-cast-from-graveyard-exile",
+        filled_library(
+            vec![graveyard_cast_exiling_instant_card("echo-flash", 0, 2)],
+            10,
+        ),
+        filled_library(Vec::new(), 10),
+    );
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
+
+    let bolt_id = player(&game, "player-1")
+        .hand_card_by_definition(&demonictutor::CardDefinitionId::new("echo-flash"))
+        .unwrap()
+        .id()
+        .clone();
+    cast_with_target_and_resolve(
+        &service,
+        &mut game,
+        "player-1",
+        bolt_id.clone(),
+        SpellTarget::Player(PlayerId::new("player-2")),
+    );
+    let graveyard_bolt = player(&game, "player-1").graveyard_card(&bolt_id).unwrap();
+    assert!(graveyard_bolt
+        .casting_permission_profile()
+        .unwrap()
+        .supports(demonictutor::CastingRule::CastFromOwnGraveyard));
+    cast_with_target_and_resolve(
+        &service,
+        &mut game,
+        "player-1",
+        bolt_id.clone(),
+        SpellTarget::Player(PlayerId::new("player-2")),
+    );
+
+    assert_eq!(player(&game, "player-2").life(), 16);
+    assert!(player(&game, "player-1").graveyard_card(&bolt_id).is_none());
+    assert!(player(&game, "player-1").exile_card(&bolt_id).is_some());
 }

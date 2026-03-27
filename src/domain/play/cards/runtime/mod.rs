@@ -199,5 +199,6 @@ pub struct SpellPayload {
     id: CardInstanceId,
     owner_id: Option<PlayerId>,
     definition_id: CardDefinitionId,
+    exile_on_resolution: bool,
     kind: SpellPayloadKind,
 }

@@ -141,6 +141,7 @@ impl StackTopResolved {
 pub enum SpellCastOutcome {
     EnteredBattlefield,
     ResolvedToGraveyard,
+    ResolvedToExile,
 }
 
 #[derive(Debug, Clone)]

@@ -170,9 +170,10 @@ fn materialize_stack_card_id(
 }
 
 fn move_resolved_spell_to_destination(
+    game_id: &GameId,
     context: &mut SpellDestinationContext<'_>,
     payload: SpellPayload,
-) -> Result<SpellCastOutcome, crate::domain::play::errors::DomainError> {
+) -> Result<(SpellCastOutcome, Option<CardExiled>), crate::domain::play::errors::DomainError> {
     if matches!(
         (
             context.card_type,
@@ -191,10 +192,12 @@ fn move_resolved_spell_to_destination(
             context.supported_spell_rules,
             context.target,
             payload,
-        );
+        )
+        .map(|outcome| (outcome, None));
     }
 
     move_resolved_spell_to_its_destination(
+        game_id,
         context.players,
         context.controller_index,
         context.card_type,
@@ -425,7 +428,8 @@ fn resolve_spell_from_stack(
     let supported_spell_rules = payload.supported_spell_rules();
     let source_card_id = payload.id().clone();
 
-    let outcome = move_resolved_spell_to_destination(
+    let (outcome, resolved_spell_card_exiled) = move_resolved_spell_to_destination(
+        game_id,
         &mut SpellDestinationContext {
             players,
             card_locations,
@@ -456,7 +460,7 @@ fn resolve_spell_from_stack(
         mana_cost_paid,
         outcome,
     );
-    let (card_exiled, card_discarded, life_changed, creatures_died, moved_cards, game_ended) =
+    let (effect_card_exiled, card_discarded, life_changed, creatures_died, moved_cards, game_ended) =
         apply_supported_spell_rules(self::effects::ResolutionContext::new(
             game_id,
             players,
@@ -468,6 +472,7 @@ fn resolve_spell_from_stack(
             target.as_ref(),
             choice,
         ))?;
+    let card_exiled = effect_card_exiled.or(resolved_spell_card_exiled);
     triggered_abilities_put_on_stack.extend(enqueue_entered_battlefield_triggers_for_moved_cards(
         game_id,
         players,
