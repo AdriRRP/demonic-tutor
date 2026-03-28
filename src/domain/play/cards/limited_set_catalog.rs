@@ -16,6 +16,7 @@ pub enum SupportedLimitedSetCardProfile {
         keyword_abilities: KeywordAbilitySet,
         activated_ability: Option<ActivatedAbilityProfile>,
         triggered_ability: Option<TriggeredAbilityProfile>,
+        controller_static_effect: Option<ControllerStaticEffectProfile>,
     },
     Spell {
         card_type: CardType,
@@ -127,7 +128,7 @@ fn classify_creature(
         attachment_profile: None,
         attached_stat_boost: None,
         attached_combat_restriction: None,
-        controller_static_effect: None,
+        controller_static_effect,
         initial_loyalty: None,
         ..
     } = shape
@@ -135,13 +136,16 @@ fn classify_creature(
         return None;
     };
 
-    (is_creature && !(activated_ability.is_some() && triggered_ability.is_some())).then_some(
-        SupportedLimitedSetCardProfile::Creature {
-            keyword_abilities: creature_keywords,
-            activated_ability,
-            triggered_ability,
-        },
-    )
+    (is_creature
+        && !(activated_ability.is_some() && triggered_ability.is_some())
+        && !(controller_static_effect.is_some()
+            && (activated_ability.is_some() || triggered_ability.is_some())))
+    .then_some(SupportedLimitedSetCardProfile::Creature {
+        keyword_abilities: creature_keywords,
+        activated_ability,
+        triggered_ability,
+        controller_static_effect,
+    })
 }
 
 fn classify_spell(
@@ -152,7 +156,6 @@ fn classify_spell(
 ) -> Option<SupportedLimitedSetCardProfile> {
     let CardAuthoringShape {
         resolution,
-        has_spell_rules: true,
         activated_ability: None,
         triggered_ability: None,
         activated_mana_ability: None,
@@ -161,6 +164,7 @@ fn classify_spell(
         attached_combat_restriction: None,
         controller_static_effect: None,
         initial_loyalty: None,
+        ..
     } = shape
     else {
         return None;
@@ -395,6 +399,24 @@ mod tests {
         assert!(matches!(
             card.supported_limited_set_profile(),
             Some(SupportedLimitedSetCardProfile::Enchantment {
+                controller_static_effect: Some(
+                    ControllerStaticEffectProfile::CreaturesYouControlPlusOnePlusOne
+                ),
+                ..
+            })
+        ));
+    }
+
+    #[test]
+    fn classifies_supported_creature_anthem_profile() {
+        let card = LibraryCard::creature(CardDefinitionId::new("anthem-bear"), 3, 2, 2)
+            .with_controller_static_effect(
+                ControllerStaticEffectProfile::CreaturesYouControlPlusOnePlusOne,
+            );
+
+        assert!(matches!(
+            card.supported_limited_set_profile(),
+            Some(SupportedLimitedSetCardProfile::Creature {
                 controller_static_effect: Some(
                     ControllerStaticEffectProfile::CreaturesYouControlPlusOnePlusOne
                 ),

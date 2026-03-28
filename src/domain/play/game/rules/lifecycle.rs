@@ -85,6 +85,23 @@ fn validate_opening_hand_size(player_library: &PlayerLibrary) -> Result<(), Doma
     }
 }
 
+fn validate_curated_library_card_profiles(
+    player_library: &PlayerLibrary,
+) -> Result<(), DomainError> {
+    for card in &player_library.cards {
+        if card.supported_limited_set_profile().is_none() {
+            return Err(DomainError::Game(
+                GameError::UnsupportedCuratedCardProfile {
+                    player: player_library.player_id.clone(),
+                    definition: card.definition_id().clone(),
+                },
+            ));
+        }
+    }
+
+    Ok(())
+}
+
 fn validate_player_libraries(
     players: &[Player],
     cmd: &DealOpeningHandsCommand,
@@ -99,6 +116,7 @@ fn validate_player_libraries(
         }
         validate_player_exists(players, &player_library.player_id)?;
         validate_opening_hand_size(player_library)?;
+        validate_curated_library_card_profiles(player_library)?;
     }
 
     if cmd.player_libraries.len() != players.len() {

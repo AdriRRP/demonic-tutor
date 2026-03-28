@@ -68,6 +68,7 @@ Implemented capabilities include:
 - resolving the first explicit bounded `distribute two +1/+1 counters among up to two target creatures` spell subset
 - resolving the first explicit `attacks` and `deals combat damage to a player` triggered-ability subset through the shared combat and stack corridors
 - deriving an explicit limited-set card-profile catalog from authored `LibraryCard` definitions for the first curated environment
+- rejecting curated-set library loads whose authored `LibraryCard` definitions exceed that supported profile catalog
 - resolving the first explicit keyworded creature-token creation subset for one supported token with one supported keyword
 - resolving the first explicit multi-token creation subset for one supported effect that creates multiple identical vanilla creature tokens
 - advancing turns

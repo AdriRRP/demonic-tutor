@@ -2,7 +2,7 @@
 
 use crate::domain::play::{
     cards::{CastingPermissionProfile, CastingRule},
-    ids::{CardInstanceId, PlayerId, StackObjectId},
+    ids::{CardDefinitionId, CardInstanceId, PlayerId, StackObjectId},
     phase::Phase,
 };
 
@@ -76,6 +76,10 @@ pub enum GameError {
     },
     MissingPlayerLibrary(PlayerId),
     DuplicatePlayerLibrary(PlayerId),
+    UnsupportedCuratedCardProfile {
+        player: PlayerId,
+        definition: CardDefinitionId,
+    },
     OpeningHandsAlreadyDealt,
     GameAlreadyEnded,
     InvalidDrawCount(u32),
@@ -279,6 +283,12 @@ impl std::fmt::Display for GameError {
             ),
             Self::MissingPlayerLibrary(pid) => write_player_library_error(f, "missing", pid),
             Self::DuplicatePlayerLibrary(pid) => write_player_library_error(f, "duplicate", pid),
+            Self::UnsupportedCuratedCardProfile { player, definition } => write!(
+                f,
+                "player {} library contains unsupported curated-set card definition {}",
+                player.as_str(),
+                definition.as_str()
+            ),
             Self::OpeningHandsAlreadyDealt => write!(f, "opening hands have already been dealt"),
             Self::GameAlreadyEnded => write!(f, "the game has already ended"),
             Self::InvalidDrawCount(requested) => {

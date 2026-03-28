@@ -4,7 +4,10 @@
 
 use {
     crate::support::{create_service, creature_library},
-    demonictutor::{CardDefinitionId, CardType, DomainError, GameError, LibraryCard},
+    demonictutor::{
+        ActivatedAbilityProfile, CardDefinitionId, CardType, DomainError, GameError, LibraryCard,
+        TriggeredAbilityProfile,
+    },
 };
 
 #[test]
@@ -130,4 +133,42 @@ fn deal_opening_hands_uses_explicit_non_creature_library_input() {
     let card_instance = card.to_card_instance(demonictutor::CardInstanceId::new("card-1"));
 
     assert!(card_instance.card_type().is_land());
+}
+
+#[test]
+fn deal_opening_hands_rejects_library_cards_outside_the_curated_profile_catalog() {
+    let service = create_service();
+    let mut game = crate::support::start_two_player_game(&service, "game-1");
+    let unsupported_card =
+        LibraryCard::creature(CardDefinitionId::new("illegal-creature"), 1, 2, 2)
+            .with_activated_ability(ActivatedAbilityProfile::tap_to_gain_life_to_controller(1))
+            .with_triggered_ability(TriggeredAbilityProfile::attacks_gain_life_to_controller(1));
+
+    let result = service.deal_opening_hands(
+        &mut game,
+        &demonictutor::DealOpeningHandsCommand::new(vec![
+            crate::support::player_library(
+                "player-1",
+                vec![
+                    unsupported_card,
+                    LibraryCard::creature(CardDefinitionId::new("filler-1"), 1, 2, 2),
+                    LibraryCard::creature(CardDefinitionId::new("filler-2"), 1, 2, 2),
+                    LibraryCard::creature(CardDefinitionId::new("filler-3"), 1, 2, 2),
+                    LibraryCard::creature(CardDefinitionId::new("filler-4"), 1, 2, 2),
+                    LibraryCard::creature(CardDefinitionId::new("filler-5"), 1, 2, 2),
+                    LibraryCard::creature(CardDefinitionId::new("filler-6"), 1, 2, 2),
+                ],
+            ),
+            crate::support::player_library("player-2", creature_library(7)),
+        ]),
+    );
+
+    assert!(matches!(
+        result,
+        Err(DomainError::Game(GameError::UnsupportedCuratedCardProfile {
+            player,
+            definition,
+        })) if player == demonictutor::PlayerId::new("player-1")
+            && definition == CardDefinitionId::new("illegal-creature")
+    ));
 }

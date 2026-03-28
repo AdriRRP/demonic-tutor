@@ -612,11 +612,7 @@ pub fn anthem_enchantment_card(name: &str, mana_cost: u32) -> LibraryCard {
 }
 
 pub fn planeswalker_card(name: &str, mana_cost: u32) -> LibraryCard {
-    LibraryCard::new(
-        CardDefinitionId::new(name),
-        CardType::Planeswalker,
-        mana_cost,
-    )
+    loyalty_planeswalker_card(name, mana_cost, 3, 1, 1)
 }
 
 pub fn loyalty_planeswalker_card(
@@ -666,12 +662,8 @@ pub fn flash_enchantment_card(name: &str, mana_cost: u32) -> LibraryCard {
 }
 
 pub fn flash_planeswalker_card(name: &str, mana_cost: u32) -> LibraryCard {
-    LibraryCard::new(
-        CardDefinitionId::new(name),
-        CardType::Planeswalker,
-        mana_cost,
-    )
-    .with_casting_rule(CastingRule::OpenPriorityWindow)
+    loyalty_planeswalker_card(name, mana_cost, 3, 1, 1)
+        .with_casting_rule(CastingRule::OpenPriorityWindow)
 }
 
 pub fn own_turn_priority_artifact_card(name: &str, mana_cost: u32) -> LibraryCard {

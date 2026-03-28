@@ -6,12 +6,10 @@ Goal:
 
 Slice count:
 
-- `3`
+- `2`
 
 Slices:
 
-- `validate-curated-card-pool-at-load-time`
-  - reject cards whose declared behavior exceeds the supported profile catalog
 - `publish-card-capability-matrix-for-set-design`
   - provide one canonical matrix that maps supported profiles to rules support
 - `add-limited-set-deck-construction-rules-baseline`
