@@ -6,10 +6,10 @@ use crate::support::{
     advance_to_first_main_satisfying_cleanup, advance_to_player_first_main_satisfying_cleanup,
     advance_turn_raw, attacks_life_gain_haste_creature_card, cast_spell_and_resolve,
     close_empty_priority_window, combat_damage_to_player_life_gain_haste_creature_card,
-    create_service, etb_may_life_gain_creature_card, filled_library, first_hand_card_id,
-    forest_card, loot_sorcery_card, player, player_deck, player_library, rummage_sorcery_card,
-    sacrifice_life_gain_artifact_card, setup_two_player_game, surveil_sorcery_card,
-    target_player_discards_chosen_card_sorcery_card,
+    create_service, creature_card, etb_may_life_gain_creature_card, filled_library,
+    first_hand_card_id, forest_card, loot_sorcery_card, player, player_deck, player_library,
+    rummage_sorcery_card, sacrifice_life_gain_artifact_card, setup_two_player_game,
+    surveil_sorcery_card, target_player_discards_chosen_card_sorcery_card,
 };
 use demonictutor::{
     public_command_result, ActivateAbilityCommand, CardDefinitionId, CastSpellCommand,
@@ -343,6 +343,73 @@ fn resolve_combat_damage_emits_effects_before_close_and_supported_damage_trigger
             DomainEvent::CombatDamageResolved(_),
             DomainEvent::TriggeredAbilityPutOnStack(event),
         ] if event.trigger == TriggeredAbilityEvent::DealsCombatDamageToPlayer
+    ));
+}
+
+#[test]
+fn resolve_combat_damage_surfaces_zone_moves_for_creatures_that_die_in_combat() {
+    let (service, mut game) = setup_two_player_game(
+        "game-public-combat-zone-moves",
+        filled_library(vec![creature_card("attacker", 0, 3, 3)], 10),
+        filled_library(vec![creature_card("blocker", 0, 2, 2)], 10),
+    );
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
+
+    let attacker_id = player(&game, "player-1")
+        .hand_card_by_definition(&CardDefinitionId::new("attacker"))
+        .expect("attacker should be in hand")
+        .id()
+        .clone();
+    cast_spell_and_resolve(&service, &mut game, "player-1", attacker_id.clone());
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-2");
+    let blocker_id = player(&game, "player-2")
+        .hand_card_by_definition(&CardDefinitionId::new("blocker"))
+        .expect("blocker should be in hand")
+        .id()
+        .clone();
+    cast_spell_and_resolve(&service, &mut game, "player-2", blocker_id.clone());
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
+    advance_turn_raw(&service, &mut game);
+    close_empty_priority_window(&service, &mut game);
+    advance_turn_raw(&service, &mut game);
+    service
+        .declare_attackers(
+            &mut game,
+            DeclareAttackersCommand::new(PlayerId::new("player-1"), vec![attacker_id.clone()]),
+        )
+        .expect("attackers should be declared");
+    close_empty_priority_window(&service, &mut game);
+    service
+        .declare_blockers(
+            &mut game,
+            DeclareBlockersCommand::new(
+                PlayerId::new("player-2"),
+                vec![(blocker_id.clone(), attacker_id)],
+            ),
+        )
+        .expect("blockers should be declared");
+    close_empty_priority_window(&service, &mut game);
+
+    let result = service.execute_public_command(
+        &mut game,
+        PublicGameCommand::ResolveCombatDamage(ResolveCombatDamageCommand::new(PlayerId::new(
+            "player-1",
+        ))),
+    );
+
+    assert!(matches!(result.status, PublicCommandStatus::Applied));
+    assert!(matches!(
+        result.emitted_events.as_slice(),
+        [
+            DomainEvent::CreatureDied(creature_died),
+            DomainEvent::CardMovedZone(zone_change),
+            DomainEvent::CombatDamageResolved(_),
+        ] if creature_died.card_id == blocker_id
+            && zone_change.card_id == blocker_id
+            && zone_change.origin_zone.as_str() == "battlefield"
+            && zone_change.destination_zone.as_str() == "graveyard"
     ));
 }
 

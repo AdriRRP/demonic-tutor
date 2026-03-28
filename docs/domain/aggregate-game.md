@@ -251,7 +251,7 @@ The current model intentionally omits:
 
 - rules text
 - most counter families beyond the current explicit `+1/+1` counter subset
-- non-instant spell responses while a priority window is open
+- broad non-instant response support beyond the current explicit card-face casting-permission subset
 
 These may be introduced incrementally in future slices.
 
@@ -261,7 +261,7 @@ The current triggered-ability support is intentionally tiny and explicit:
 - dies triggers on supported creatures
 - beginning-of-upkeep triggers on supported battlefield permanents across all controllers
 - beginning-of-end-step triggers on supported battlefield permanents across all controllers
-- the current supported triggered effects are still explicit profiles, currently limited to life gain, optional life gain, and one bounded end-step spell-recursion effect
+- the current supported triggered effects are still explicit profiles, currently limited to life gain, optional life gain, explicit `Attacks`, explicit `DealsCombatDamageToPlayer`, and one bounded end-step spell-recursion effect
 
 This is not yet a generic trigger engine for arbitrary delayed, intervening-if, or multi-object ordering cases.
 
