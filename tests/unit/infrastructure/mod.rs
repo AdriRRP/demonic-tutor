@@ -115,6 +115,21 @@ fn projection_logs_events() {
 }
 
 #[test]
+fn projection_logs_reuse_cached_snapshot_across_reads() {
+    let projection = GameLogProjection::new();
+
+    projection.handle(&DomainEvent::GameStarted(GameStarted::new(
+        GameId::new("game-1"),
+        vec![PlayerId::new("player-1"), PlayerId::new("player-2")],
+    )));
+
+    let first = projection.logs();
+    let second = projection.logs();
+
+    assert!(std::sync::Arc::ptr_eq(&first, &second));
+}
+
+#[test]
 fn projection_logs_multiple_events() {
     let projection = GameLogProjection::new();
 

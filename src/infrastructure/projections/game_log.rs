@@ -26,6 +26,12 @@ impl GameLogProjection {
 
     #[must_use]
     pub fn logs(&self) -> Arc<[String]> {
+        if let Ok(state) = self.logs.read() {
+            if let Some(snapshot) = &state.snapshot {
+                return Arc::clone(snapshot);
+            }
+        }
+
         self.logs
             .write()
             .map(|mut state| {
