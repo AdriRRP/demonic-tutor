@@ -7,8 +7,8 @@ This directory contains the live proposal backlog.
 The current planning horizon to reach an honestly playable limited subset is:
 
 - `1` release
-- `2` waves
-- `6` slices
+- `1` wave
+- `4` slices
 
 The planning gates are:
 
@@ -30,5 +30,4 @@ See:
 
 ## Active Proposal Waves
 
-- [release-0.8.0-wave-3-golden-playable-matchups](release-0.8.0-wave-3-golden-playable-matchups/README.md)
 - [release-0.8.0-wave-4-ui-release-candidate-hardening](release-0.8.0-wave-4-ui-release-candidate-hardening/README.md)

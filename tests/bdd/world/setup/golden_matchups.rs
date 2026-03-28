@@ -7,6 +7,99 @@ use {
 };
 
 impl GameplayWorld {
+    pub fn setup_green_white_counter_growth_in_first_main(&mut self) {
+        self.reset_game_with_libraries(
+            "bdd-golden-gw-counters",
+            support::filled_library(
+                vec![
+                    support::creature_card("bdd-grove-initiate-a", 0, 1, 1),
+                    support::creature_card("bdd-grove-initiate-b", 0, 1, 1),
+                    support::distribute_two_counters_among_up_to_two_target_creatures_sorcery_card(
+                        "bdd-shared-blessing",
+                        0,
+                    ),
+                ],
+                10,
+            ),
+            support::filled_library(Vec::new(), 10),
+        );
+
+        let service = support::create_service();
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-1",
+        );
+
+        let first_creature_id = self.hand_card_by_definition("Alice", "bdd-grove-initiate-a");
+        service
+            .cast_spell(
+                self.game_mut(),
+                CastSpellCommand::new(Self::player_id("Alice"), first_creature_id.clone()),
+            )
+            .expect("first counter creature cast should succeed");
+        support::resolve_top_stack_with_passes(&service, self.game_mut());
+
+        let second_creature_id = self.hand_card_by_definition("Alice", "bdd-grove-initiate-b");
+        service
+            .cast_spell(
+                self.game_mut(),
+                CastSpellCommand::new(Self::player_id("Alice"), second_creature_id.clone()),
+            )
+            .expect("second counter creature cast should succeed");
+        support::resolve_top_stack_with_passes(&service, self.game_mut());
+
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-2",
+        );
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-1",
+        );
+
+        self.tracked_card_id = Some(self.hand_card_by_definition("Alice", "bdd-shared-blessing"));
+        self.tracked_attacker_id = Some(first_creature_id);
+        self.tracked_blocker_id = Some(second_creature_id);
+        self.reset_observations();
+        assert_eq!(self.game().phase(), &Phase::FirstMain);
+    }
+
+    pub fn setup_green_white_tokens_and_anthem_in_first_main(&mut self) {
+        self.reset_game_with_libraries(
+            "bdd-golden-gw-tokens-anthem",
+            support::filled_library(
+                vec![
+                    support::create_multiple_vanilla_creature_tokens_sorcery_card(
+                        "bdd-call-the-grove",
+                        0,
+                        2,
+                        1,
+                        1,
+                    ),
+                    support::anthem_enchantment_card("bdd-rally-banner", 0),
+                ],
+                10,
+            ),
+            support::filled_library(Vec::new(), 10),
+        );
+
+        let service = support::create_service();
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-1",
+        );
+
+        self.tracked_card_id = Some(self.hand_card_by_definition("Alice", "bdd-call-the-grove"));
+        self.tracked_response_card_id =
+            Some(self.hand_card_by_definition("Alice", "bdd-rally-banner"));
+        self.reset_observations();
+        assert_eq!(self.game().phase(), &Phase::FirstMain);
+    }
+
     pub fn setup_black_red_sacrifice_outlet_in_first_main(&mut self) {
         self.reset_game_with_libraries(
             "bdd-golden-br-sac-outlet",

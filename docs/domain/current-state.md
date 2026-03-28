@@ -76,6 +76,7 @@ Implemented capabilities include:
 - rejecting curated-set library loads whose authored `LibraryCard` definitions exceed that supported profile catalog
 - publishing one canonical curated-set card capability matrix for set design
 - publishing one canonical deck-construction baseline for the first curated limited environment
+- executing a third curated golden matchup for green-white counters through distributed counters, token buildup, anthem scaling, and combat growth
 - executing a second curated golden matchup for black-red value play through discard, sacrifice-cost activation, removal, and creature recursion
 - executing the first curated golden matchup for white-blue tempo through flyers, bounce, and combat tricks
 - resolving the first explicit keyworded creature-token creation subset for one supported token with one supported keyword

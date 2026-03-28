@@ -6,14 +6,11 @@ Goal:
 
 Slice count:
 
-- `2`
+- `0`
 
-Slices:
+Status:
 
-- `add-green-white-counters-golden-matchups`
-  - validate counters, tokens, anthem effects, and combat growth through executable scenarios
-- `add-blue-black-graveyard-value-golden-matchups`
-  - validate mill, spell recursion, and cast-from-graveyard play patterns through executable scenarios
+- fully implemented
 
 Why this wave has high return:
 

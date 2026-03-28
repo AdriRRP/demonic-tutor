@@ -242,6 +242,36 @@ impl GameplayWorld {
         self.cast_targeted_creature_spell_with_card(caster_alias, card_id, target_card_id);
     }
 
+    pub fn cast_tracked_targeted_attacker_spell_with_secondary_tracked_blocker_choice(
+        &mut self,
+        caster_alias: &str,
+    ) {
+        let card_id = self
+            .tracked_card_id
+            .clone()
+            .expect("tracked card should exist");
+        let primary_target_id = self
+            .tracked_attacker_id
+            .clone()
+            .expect("tracked primary target should exist");
+        let secondary_target_id = self
+            .tracked_blocker_id
+            .clone()
+            .expect("tracked secondary target should exist");
+        let service = support::create_service();
+        let outcome = service
+            .cast_spell(
+                self.game_mut(),
+                CastSpellCommand::new(Self::player_id(caster_alias), card_id)
+                    .with_target(SpellTarget::Creature(primary_target_id))
+                    .with_choice(SpellChoice::SecondaryCreatureTarget(Some(
+                        secondary_target_id,
+                    ))),
+            )
+            .expect("casting tracked spell with secondary creature choice should succeed");
+        self.last_spell_put_on_stack = Some(outcome.spell_put_on_stack);
+    }
+
     pub fn cast_tracked_targeted_response_spell_at_blocker(&mut self, caster_alias: &str) {
         let card_id = self
             .tracked_response_card_id
