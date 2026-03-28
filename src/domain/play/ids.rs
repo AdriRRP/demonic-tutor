@@ -5,7 +5,7 @@ use std::{
     fmt,
     hash::{Hash, Hasher},
     ops::Deref,
-    sync::{Arc, Mutex, OnceLock},
+    sync::{Arc, OnceLock, RwLock},
 };
 
 const INLINE_ID_CAPACITY: usize = 22;
@@ -167,13 +167,23 @@ impl IdInterner {
     }
 }
 
-fn shared_interner() -> &'static Mutex<IdInterner> {
-    static SHARED_INTERNER: OnceLock<Mutex<IdInterner>> = OnceLock::new();
-    SHARED_INTERNER.get_or_init(|| Mutex::new(IdInterner::default()))
+fn shared_interner() -> &'static RwLock<IdInterner> {
+    static SHARED_INTERNER: OnceLock<RwLock<IdInterner>> = OnceLock::new();
+    SHARED_INTERNER.get_or_init(|| RwLock::new(IdInterner::default()))
 }
 
 fn intern_numeric_core(public: &SharedIdStr) -> NumericCoreId {
-    let mut interner = match shared_interner().lock() {
+    if let Some(core) = {
+        let interner = match shared_interner().read() {
+            Ok(guard) => guard,
+            Err(poisoned) => poisoned.into_inner(),
+        };
+        interner.by_public.get(public).copied()
+    } {
+        return core;
+    }
+
+    let mut interner = match shared_interner().write() {
         Ok(guard) => guard,
         Err(poisoned) => poisoned.into_inner(),
     };
@@ -181,7 +191,7 @@ fn intern_numeric_core(public: &SharedIdStr) -> NumericCoreId {
 }
 
 fn public_for_numeric_core(core: NumericCoreId) -> Option<SharedIdStr> {
-    let interner = match shared_interner().lock() {
+    let interner = match shared_interner().read() {
         Ok(guard) => guard,
         Err(poisoned) => poisoned.into_inner(),
     };
