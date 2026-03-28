@@ -3,15 +3,16 @@
 #![allow(clippy::expect_used, clippy::panic)]
 
 use crate::support::{
-    advance_to_player_first_main_satisfying_cleanup, create_service, first_hand_card_id,
+    advance_to_first_main_satisfying_cleanup, advance_to_player_first_main_satisfying_cleanup,
+    create_service, etb_may_life_gain_creature_card, filled_library, first_hand_card_id,
     forest_card, loot_sorcery_card, player, player_deck, player_library, rummage_sorcery_card,
-    target_player_discards_chosen_card_sorcery_card,
+    setup_two_player_game, target_player_discards_chosen_card_sorcery_card,
 };
 use demonictutor::{
     public_command_result, CardDefinitionId, CastSpellCommand, DealOpeningHandsCommand,
     DiscardKind, DomainEvent, GameId, PassPriorityCommand, PlayLandCommand, PlayerId,
-    PublicCommandStatus, PublicGameCommand, ResolvePendingHandChoiceCommand, SpellChoice,
-    SpellTarget, StartGameCommand,
+    PublicCommandStatus, PublicGameCommand, ResolveOptionalEffectCommand,
+    ResolvePendingHandChoiceCommand, SpellChoice, SpellTarget, StartGameCommand,
 };
 
 fn game_in_first_main() -> (crate::support::TestService, demonictutor::Game) {
@@ -288,6 +289,44 @@ fn rummage_game_in_pending_choice() -> (
     (service, game, discard_id)
 }
 
+fn optional_effect_game_in_pending_choice() -> (crate::support::TestService, demonictutor::Game) {
+    let (service, mut game) = setup_two_player_game(
+        "game-public-optional-effect",
+        filled_library(
+            vec![etb_may_life_gain_creature_card("kindly-cleric", 0, 1, 1, 2)],
+            10,
+        ),
+        filled_library(Vec::new(), 10),
+    );
+
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
+    service.execute_public_command(
+        &mut game,
+        PublicGameCommand::CastSpell(CastSpellCommand::new(
+            PlayerId::new("player-1"),
+            demonictutor::CardInstanceId::new("game-public-optional-effect-player-1-0"),
+        )),
+    );
+    service.execute_public_command(
+        &mut game,
+        PublicGameCommand::PassPriority(PassPriorityCommand::new(PlayerId::new("player-1"))),
+    );
+    service.execute_public_command(
+        &mut game,
+        PublicGameCommand::PassPriority(PassPriorityCommand::new(PlayerId::new("player-2"))),
+    );
+    service.execute_public_command(
+        &mut game,
+        PublicGameCommand::PassPriority(PassPriorityCommand::new(PlayerId::new("player-1"))),
+    );
+    service.execute_public_command(
+        &mut game,
+        PublicGameCommand::PassPriority(PassPriorityCommand::new(PlayerId::new("player-2"))),
+    );
+
+    (service, game)
+}
+
 #[test]
 fn execute_public_command_returns_applied_status_events_and_next_snapshot() {
     let (service, mut game) = game_in_first_main();
@@ -480,4 +519,24 @@ fn execute_public_command_preserves_terminal_loot_draw_before_resolution_events(
     ));
     assert!(game.is_over());
     assert!(player(&game, "p1").graveyard_card(&loot_id).is_some());
+}
+
+#[test]
+fn execute_public_command_preserves_optional_effect_event_order() {
+    let (service, mut game) = optional_effect_game_in_pending_choice();
+
+    let application = service.execute_public_command(
+        &mut game,
+        PublicGameCommand::ResolveOptionalEffect(ResolveOptionalEffectCommand::accept(
+            PlayerId::new("player-1"),
+        )),
+    );
+
+    assert!(matches!(
+        application.emitted_events.as_slice(),
+        [
+            DomainEvent::LifeChanged(_),
+            DomainEvent::StackTopResolved(_)
+        ]
+    ));
 }

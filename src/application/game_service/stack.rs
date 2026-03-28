@@ -56,12 +56,13 @@ pub fn domain_events_for_resolve_optional_effect(
     outcome: &ResolveOptionalEffectOutcome,
 ) -> Vec<DomainEvent> {
     let mut domain_events = DomainEvents::default();
-    domain_events.extend(outcome.triggered_abilities_put_on_stack.iter().cloned());
-    domain_events.push_optional(outcome.stack_top_resolved.clone());
-    domain_events.push_optional(outcome.spell_cast.clone());
+    domain_events.push_optional(outcome.card_discarded.clone());
     domain_events.push_optional(outcome.card_exiled.clone());
     domain_events.push_optional(outcome.life_changed.clone());
     domain_events.extend(outcome.creatures_died.iter().cloned());
+    domain_events.push_optional(outcome.stack_top_resolved.clone());
+    domain_events.push_optional(outcome.spell_cast.clone());
+    domain_events.extend(outcome.triggered_abilities_put_on_stack.iter().cloned());
     domain_events.push_optional(outcome.game_ended.clone());
     domain_events.into_vec()
 }
