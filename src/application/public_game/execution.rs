@@ -15,7 +15,10 @@ use crate::{
                 domain_events_for_resolve_pending_hand_choice,
                 domain_events_for_resolve_pending_scry, domain_events_for_resolve_pending_surveil,
             },
-            turn_flow::{domain_events_for_advance_turn, domain_events_for_draw_cards_effect},
+            turn_flow::{
+                domain_events_for_advance_turn, domain_events_for_discard_for_cleanup,
+                domain_events_for_draw_cards_effect,
+            },
             GameService,
         },
         EventBus, EventStore,
@@ -136,7 +139,7 @@ where
                 .map(|outcome| domain_events_for_draw_cards_effect(&outcome)),
             PublicGameCommand::DiscardForCleanup(cmd) => self
                 .discard_for_cleanup(game, cmd)
-                .map(|event| vec![event.into()]),
+                .map(|event| domain_events_for_discard_for_cleanup(&event)),
             PublicGameCommand::AdjustPlayerLifeEffect(cmd) => self
                 .adjust_player_life_effect(game, cmd)
                 .map(|outcome| domain_events_for_adjust_player_life_effect(&outcome)),

@@ -4,20 +4,21 @@
 
 use crate::support::{
     advance_to_first_main_satisfying_cleanup, advance_to_player_first_main_satisfying_cleanup,
-    advance_turn_raw, attacks_life_gain_haste_creature_card, cast_spell_and_resolve,
-    close_empty_priority_window, combat_damage_to_player_life_gain_haste_creature_card,
-    create_service, creature_card, etb_may_life_gain_creature_card, filled_library,
-    first_hand_card_id, forest_card, loot_sorcery_card, player, player_deck, player_library,
-    rummage_sorcery_card, sacrifice_life_gain_artifact_card, setup_two_player_game,
-    surveil_sorcery_card, target_player_discards_chosen_card_sorcery_card,
+    advance_to_player_phase_satisfying_cleanup, advance_turn_raw,
+    attacks_life_gain_haste_creature_card, cast_spell_and_resolve, close_empty_priority_window,
+    combat_damage_to_player_life_gain_haste_creature_card, create_service, creature_card,
+    etb_may_life_gain_creature_card, filled_library, first_hand_card_id, forest_card,
+    loot_sorcery_card, player, player_deck, player_library, rummage_sorcery_card,
+    sacrifice_life_gain_artifact_card, setup_two_player_game, surveil_sorcery_card,
+    target_player_discards_chosen_card_sorcery_card,
 };
 use demonictutor::{
     public_command_result, ActivateAbilityCommand, CardDefinitionId, CastSpellCommand,
-    DealOpeningHandsCommand, DeclareAttackersCommand, DeclareBlockersCommand, DiscardKind,
-    DomainEvent, GameId, PassPriorityCommand, PlayLandCommand, PlayerId, PublicCommandStatus,
-    PublicGameCommand, ResolveCombatDamageCommand, ResolveOptionalEffectCommand,
-    ResolvePendingHandChoiceCommand, ResolvePendingSurveilCommand, SpellChoice, SpellTarget,
-    StartGameCommand, TriggeredAbilityEvent,
+    DealOpeningHandsCommand, DeclareAttackersCommand, DeclareBlockersCommand,
+    DiscardForCleanupCommand, DiscardKind, DomainEvent, GameId, PassPriorityCommand, Phase,
+    PlayLandCommand, PlayerId, PublicCommandStatus, PublicGameCommand, ResolveCombatDamageCommand,
+    ResolveOptionalEffectCommand, ResolvePendingHandChoiceCommand, ResolvePendingSurveilCommand,
+    SpellChoice, SpellTarget, StartGameCommand, TriggeredAbilityEvent,
 };
 
 fn game_in_first_main() -> (crate::support::TestService, demonictutor::Game) {
@@ -900,6 +901,42 @@ fn execute_public_command_surfaces_zone_move_for_sacrifice_activation_cost() {
         ] if moved.card_id == artifact_id
             && moved.zone_owner_id == PlayerId::new("player-1")
             && moved.origin_zone.as_str() == "battlefield"
+            && moved.destination_zone.as_str() == "graveyard"
+    ));
+}
+
+#[test]
+fn execute_public_command_surfaces_cleanup_discard_zone_change() {
+    let (service, mut game) = setup_two_player_game(
+        "game-public-cleanup-discard",
+        filled_library(vec![creature_card("c1", 0, 2, 2)], 20),
+        filled_library(Vec::new(), 20),
+    );
+    advance_to_player_phase_satisfying_cleanup(&service, &mut game, "player-1", Phase::EndStep);
+
+    let discarded_id = player(&game, "player-1")
+        .hand_card_at(0)
+        .expect("cleanup discard should have one hand card to discard")
+        .id()
+        .clone();
+
+    let application = service.execute_public_command(
+        &mut game,
+        PublicGameCommand::DiscardForCleanup(DiscardForCleanupCommand::new(
+            PlayerId::new("player-1"),
+            discarded_id.clone(),
+        )),
+    );
+
+    assert!(matches!(
+        application.emitted_events.as_slice(),
+        [
+            DomainEvent::CardDiscarded(discarded),
+            DomainEvent::CardMovedZone(moved),
+        ] if discarded.card_id == discarded_id
+            && discarded.discard_kind == DiscardKind::CleanupHandSize
+            && moved.card_id == discarded_id
+            && moved.origin_zone.as_str() == "hand"
             && moved.destination_zone.as_str() == "graveyard"
     ));
 }
