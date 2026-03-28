@@ -3,7 +3,7 @@
 use {
     super::super::support,
     super::super::GameplayWorld,
-    demonictutor::{CastSpellCommand, PlayerId, SpellTarget},
+    demonictutor::{CastSpellCommand, PlayerId, SpellChoice, SpellTarget},
 };
 
 impl GameplayWorld {
@@ -121,6 +121,31 @@ impl GameplayWorld {
         self.last_spell_put_on_stack = Some(outcome.spell_put_on_stack);
     }
 
+    pub fn cast_tracked_targeted_player_spell_choosing_tracked_blocker_card(
+        &mut self,
+        caster_alias: &str,
+        target_alias: &str,
+    ) {
+        let card_id = self
+            .tracked_card_id
+            .clone()
+            .expect("tracked card should exist");
+        let chosen_card_id = self
+            .tracked_blocker_id
+            .clone()
+            .expect("tracked choice card should exist");
+        let service = support::create_service();
+        let outcome = service
+            .cast_spell(
+                self.game_mut(),
+                CastSpellCommand::new(Self::player_id(caster_alias), card_id)
+                    .with_target(SpellTarget::Player(Self::player_id(target_alias)))
+                    .with_choice(SpellChoice::HandCard(chosen_card_id)),
+            )
+            .expect("casting targeted player spell with hand choice should succeed");
+        self.last_spell_put_on_stack = Some(outcome.spell_put_on_stack);
+    }
+
     pub fn try_cast_tracked_targeted_player_spell(
         &mut self,
         caster_alias: &str,
@@ -181,6 +206,18 @@ impl GameplayWorld {
         self.cast_targeted_graveyard_card_spell_with_card(caster_alias, card_id, target_card_id);
     }
 
+    pub fn cast_tracked_response_targeted_graveyard_card_spell(&mut self, caster_alias: &str) {
+        let card_id = self
+            .tracked_response_card_id
+            .clone()
+            .expect("tracked response card should exist");
+        let target_card_id = self
+            .tracked_blocker_id
+            .clone()
+            .expect("tracked target graveyard card should exist");
+        self.cast_targeted_graveyard_card_spell_with_card(caster_alias, card_id, target_card_id);
+    }
+
     pub fn try_cast_tracked_targeted_creature_spell(&mut self, caster_alias: &str) {
         let card_id = self
             .tracked_card_id
@@ -215,6 +252,21 @@ impl GameplayWorld {
             .clone()
             .expect("tracked blocker should exist");
         self.cast_targeted_creature_spell_with_card(caster_alias, card_id, target_card_id);
+    }
+
+    pub fn cast_tracked_blocker_as_spell(&mut self, caster_alias: &str) {
+        let card_id = self
+            .tracked_blocker_id
+            .clone()
+            .expect("tracked blocker card should exist");
+        let service = support::create_service();
+        let outcome = service
+            .cast_spell(
+                self.game_mut(),
+                CastSpellCommand::new(Self::player_id(caster_alias), card_id),
+            )
+            .expect("casting tracked blocker as spell should succeed");
+        self.last_spell_put_on_stack = Some(outcome.spell_put_on_stack);
     }
 
     pub fn try_cast_tracked_targeted_response_spell_at_blocker(&mut self, caster_alias: &str) {

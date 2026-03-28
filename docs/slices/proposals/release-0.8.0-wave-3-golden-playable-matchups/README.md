@@ -6,12 +6,10 @@ Goal:
 
 Slice count:
 
-- `3`
+- `2`
 
 Slices:
 
-- `add-black-red-sacrifice-golden-matchups`
-  - validate discard, sacrifice costs, recursion, and removal through executable scenarios
 - `add-green-white-counters-golden-matchups`
   - validate counters, tokens, anthem effects, and combat growth through executable scenarios
 - `add-blue-black-graveyard-value-golden-matchups`

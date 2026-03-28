@@ -193,6 +193,7 @@ async fn run_other_features() {
         "features/life/adjust_player_life_effect.feature",
         "features/life/lose_on_zero_life.feature",
         "features/combat/keyword_abilities.feature",
+        "features/golden/black_red_sacrifice_matchups.feature",
         "features/golden/white_blue_tempo_matchups.feature",
         "features/zones/exile_zone.feature",
     ])

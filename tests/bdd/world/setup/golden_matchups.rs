@@ -7,6 +7,125 @@ use {
 };
 
 impl GameplayWorld {
+    pub fn setup_black_red_sacrifice_outlet_in_first_main(&mut self) {
+        self.reset_game_with_libraries(
+            "bdd-golden-br-sac-outlet",
+            support::filled_library(
+                vec![support::sacrifice_life_gain_artifact_card(
+                    "bdd-blood-shard",
+                    0,
+                    2,
+                )],
+                10,
+            ),
+            support::filled_library(Vec::new(), 10),
+        );
+
+        let service = support::create_service();
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-1",
+        );
+        let artifact_id = self.hand_card_by_definition("Alice", "bdd-blood-shard");
+        service
+            .cast_spell(
+                self.game_mut(),
+                CastSpellCommand::new(Self::player_id("Alice"), artifact_id.clone()),
+            )
+            .expect("sacrifice outlet cast should succeed");
+        support::resolve_top_stack_with_passes(&service, self.game_mut());
+
+        self.tracked_card_id = Some(artifact_id);
+        self.reset_observations();
+        assert_eq!(self.game().phase(), &Phase::FirstMain);
+    }
+
+    pub fn setup_black_red_discard_pressure_in_first_main(&mut self) {
+        self.reset_game_with_libraries(
+            "bdd-golden-br-discard",
+            support::filled_library(
+                vec![support::creature_card("bdd-ashen-raider", 0, 2, 2)],
+                10,
+            ),
+            support::filled_library(
+                vec![support::target_player_discards_chosen_card_sorcery_card(
+                    "bdd-coerce-lite",
+                    0,
+                )],
+                10,
+            ),
+        );
+
+        let service = support::create_service();
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-2",
+        );
+
+        self.tracked_card_id = Some(self.hand_card_by_definition("Bob", "bdd-coerce-lite"));
+        self.tracked_blocker_id = Some(
+            self.player("Alice")
+                .hand_card_at(0)
+                .expect("alice should have a hand card to discard")
+                .id()
+                .clone(),
+        );
+        self.reset_observations();
+        assert_eq!(self.game().phase(), &Phase::FirstMain);
+    }
+
+    pub fn setup_black_red_removal_and_recursion(&mut self) {
+        self.reset_game_with_libraries(
+            "bdd-golden-br-removal-recursion",
+            support::filled_library(
+                vec![
+                    support::creature_card("bdd-cinder-ghoul", 0, 2, 2),
+                    support::return_target_creature_card_from_graveyard_to_hand_sorcery_card(
+                        "bdd-raise-dead-lite",
+                        0,
+                    ),
+                ],
+                10,
+            ),
+            support::filled_library(
+                vec![support::targeted_destroy_creature_instant_card(
+                    "bdd-cull", 0,
+                )],
+                10,
+            ),
+        );
+
+        let service = support::create_service();
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-1",
+        );
+        let creature_id = self.hand_card_by_definition("Alice", "bdd-cinder-ghoul");
+        let recursion_id = self.hand_card_by_definition("Alice", "bdd-raise-dead-lite");
+        service
+            .cast_spell(
+                self.game_mut(),
+                CastSpellCommand::new(Self::player_id("Alice"), creature_id.clone()),
+            )
+            .expect("creature cast should succeed");
+        support::resolve_top_stack_with_passes(&service, self.game_mut());
+
+        support::advance_to_player_first_main_satisfying_cleanup(
+            &service,
+            self.game_mut(),
+            "player-2",
+        );
+
+        self.tracked_card_id = Some(self.hand_card_by_definition("Bob", "bdd-cull"));
+        self.tracked_response_card_id = Some(recursion_id);
+        self.tracked_blocker_id = Some(creature_id);
+        self.reset_observations();
+        assert_eq!(self.game().phase(), &Phase::FirstMain);
+    }
+
     pub fn setup_white_blue_tempo_bounce_after_attackers(&mut self) {
         self.reset_game_with_libraries(
             "bdd-golden-wu-tempo-bounce",
