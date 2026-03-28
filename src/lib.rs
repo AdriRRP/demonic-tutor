@@ -23,8 +23,9 @@ pub use domain::play::{
         AttachmentProfile, CardInstance, CardType, CastingPermissionProfile, CastingRule,
         ControllerStaticEffectProfile, CreatureTargetRule, KeywordAbility, KeywordAbilitySet,
         ManaColor, ManaCost, PlayerTargetRule, SingleTargetRule, SpellResolutionProfile,
-        SpellTargetKind, SpellTargetingProfile, SupportedSpellRules, TriggeredAbilityEffect,
-        TriggeredAbilityEvent, TriggeredAbilityProfile,
+        SpellTargetKind, SpellTargetingProfile, SupportedLimitedSetCardProfile,
+        SupportedSpellRules, TriggeredAbilityEffect, TriggeredAbilityEvent,
+        TriggeredAbilityProfile,
     },
     commands::{
         ActivateAbilityCommand, AdjustPlayerLifeEffectCommand, AdvanceTurnCommand,

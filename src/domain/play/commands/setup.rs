@@ -4,8 +4,8 @@ use crate::domain::play::{
     cards::{
         ActivatedAbilityProfile, AttachedCombatRestrictionProfile, AttachedStatBoostProfile,
         AttachmentProfile, CardDefinition, CardInstance, CardType, CastingRule,
-        ControllerStaticEffectProfile, KeywordAbilitySet, ManaColor, ManaCost, SupportedSpellRules,
-        TriggeredAbilityProfile,
+        ControllerStaticEffectProfile, KeywordAbilitySet, ManaColor, ManaCost,
+        SupportedLimitedSetCardProfile, SupportedSpellRules, TriggeredAbilityProfile,
     },
     ids::{CardDefinitionId, CardInstanceId, DeckId, PlayerId},
 };
@@ -219,6 +219,23 @@ impl LibraryCard {
     #[must_use]
     pub const fn creature_profile(&self) -> Option<&LibraryCreature> {
         self.creature.as_ref()
+    }
+
+    #[must_use]
+    pub const fn definition(&self) -> &CardDefinition {
+        &self.definition
+    }
+
+    #[must_use]
+    pub fn supported_limited_set_profile(&self) -> Option<SupportedLimitedSetCardProfile> {
+        crate::domain::play::cards::supported_limited_set_card_profile(
+            &self.definition,
+            self.creature
+                .map_or(KeywordAbilitySet::empty(), |creature| {
+                    creature.keyword_abilities
+                }),
+            self.creature.is_some(),
+        )
     }
 
     #[must_use]

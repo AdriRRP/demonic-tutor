@@ -67,6 +67,7 @@ Implemented capabilities include:
 - resolving the first explicit `target creature can't block this turn` spell subset through the shared targeting and combat-legality corridor
 - resolving the first explicit bounded `distribute two +1/+1 counters among up to two target creatures` spell subset
 - resolving the first explicit `attacks` and `deals combat damage to a player` triggered-ability subset through the shared combat and stack corridors
+- deriving an explicit limited-set card-profile catalog from authored `LibraryCard` definitions for the first curated environment
 - resolving the first explicit keyworded creature-token creation subset for one supported token with one supported keyword
 - resolving the first explicit multi-token creation subset for one supported effect that creates multiple identical vanilla creature tokens
 - advancing turns
@@ -161,6 +162,7 @@ The domain currently includes:
 - the current trigger subset now also supports the first explicit `you may` corridor with a pending yes/no choice surfaced at resolution time
 - the current trigger subset now also supports one explicit beginning-of-end-step recursion profile that returns the first supported instant or sorcery card from its controller's graveyard to hand
 - the current trigger subset now also supports one explicit `Attacks` profile and one explicit `DealsCombatDamageToPlayer` profile that both reuse the shared triggered-ability stack corridor
+- the current authoring boundary now classifies supported curated-set cards through one explicit limited-set profile catalog keyed by base card family plus the currently allowed authored subprofiles
 - pending stack-time player choices are now modeled through one closed aggregate concept instead of parallel pending fields
 - aggregate location lookups and compact battlefield refs now name the current player-arena index explicitly instead of calling that carrier position an owner index
 - the current spell-effect subset now also supports explicit `loot` and `rummage`, surfaced as pending hand-card choice prompts during resolution

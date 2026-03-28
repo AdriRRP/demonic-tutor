@@ -6,12 +6,10 @@ Goal:
 
 Slice count:
 
-- `4`
+- `3`
 
 Slices:
 
-- `define-supported-limited-set-card-profile-catalog`
-  - declare the exact supported card-profile families allowed in the first playable set
 - `validate-curated-card-pool-at-load-time`
   - reject cards whose declared behavior exceeds the supported profile catalog
 - `publish-card-capability-matrix-for-set-design`

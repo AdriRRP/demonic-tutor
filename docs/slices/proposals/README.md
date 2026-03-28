@@ -8,7 +8,7 @@ The current planning horizon to reach an honestly playable limited subset is:
 
 - `1` release
 - `3` waves
-- `12` slices
+- `11` slices
 
 The planning gates are:
 

@@ -15,7 +15,7 @@ The proposed horizon is:
 
 - `1` release
 - `3` waves
-- `12` slices
+- `11` slices
 
 The releases are:
 
@@ -67,4 +67,4 @@ Goal:
 Waves:
 
 - `3`
-- `12` slices
+- `11` slices
