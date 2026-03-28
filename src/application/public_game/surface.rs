@@ -1093,14 +1093,17 @@ mod tests {
 
     #[test]
     fn pending_decision_surface_stays_explicit_when_request_payload_cannot_be_built() {
-        let (mut game, _) = crate::domain::play::game::Game::start(StartGameCommand::new(
+        let start = crate::domain::play::game::Game::start(StartGameCommand::new(
             GameId::new("game-unavailable-pending-decision"),
             vec![
                 PlayerDeck::new(PlayerId::new("p1"), DeckId::new("d1")),
                 PlayerDeck::new(PlayerId::new("p2"), DeckId::new("d2")),
             ],
-        ))
-        .unwrap_or_else(|_| panic!("game should start"));
+        ));
+        assert!(start.is_ok(), "game should start");
+        let Some((mut game, _)) = start.ok() else {
+            return;
+        };
         game.replace_pending_decision(Some(PendingDecision::scry(0, 999, 1)));
 
         let surface = public_surface_state(&game, &PlayerId::new("p1"));

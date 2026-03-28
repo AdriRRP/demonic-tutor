@@ -40,14 +40,13 @@ impl EventStore for InMemoryEventStore {
         aggregate_id: &str,
         new_events: &[DomainEvent],
     ) -> Result<(), Box<dyn Error + Send + Sync>> {
-        {
-            let mut events = self.events.write().map_err(|e| e.to_string())?;
-            let entry = events.entry(aggregate_id.to_string()).or_default();
-            entry
-                .chunks
-                .push(Arc::<[DomainEvent]>::from(new_events.to_vec()));
-            entry.combined = None;
-        }
+        let mut events = self.events.write().map_err(|e| e.to_string())?;
+        let entry = events.entry(aggregate_id.to_string()).or_default();
+        entry
+            .chunks
+            .push(Arc::<[DomainEvent]>::from(new_events.to_vec()));
+        entry.combined = None;
+        drop(events);
         Ok(())
     }
 
@@ -67,10 +66,13 @@ impl EventStore for InMemoryEventStore {
 
         let mut events = self.events.write().map_err(|e| e.to_string())?;
         let Some(entry) = events.get_mut(aggregate_id) else {
+            drop(events);
             return Ok(Arc::<[DomainEvent]>::from(Vec::<DomainEvent>::new()));
         };
         if let Some(combined) = &entry.combined {
-            return Ok(Arc::clone(combined));
+            let combined = Arc::clone(combined);
+            drop(events);
+            return Ok(combined);
         }
 
         let total_len = entry.chunks.iter().map(|chunk| chunk.len()).sum();
@@ -80,6 +82,7 @@ impl EventStore for InMemoryEventStore {
         }
         let combined = Arc::<[DomainEvent]>::from(combined_events);
         entry.combined = Some(Arc::clone(&combined));
+        drop(events);
 
         Ok(combined)
     }
