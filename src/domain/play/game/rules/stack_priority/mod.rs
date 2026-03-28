@@ -51,6 +51,7 @@ pub struct StackPriorityContext<'a> {
 #[derive(Debug, Clone)]
 pub struct CastSpellOutcome {
     pub spell_put_on_stack: SpellPutOnStack,
+    pub zone_changes: Vec<CardMovedZone>,
 }
 
 #[derive(Debug, Clone)]

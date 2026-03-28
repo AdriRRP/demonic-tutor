@@ -69,8 +69,7 @@ impl Game {
             cmd,
         );
         if let Ok(outcome) = &result {
-            self.card_locations
-                .remove(&outcome.spell_put_on_stack.card_id);
+            self.sync_zone_changes(&outcome.zone_changes)?;
         }
         result
     }

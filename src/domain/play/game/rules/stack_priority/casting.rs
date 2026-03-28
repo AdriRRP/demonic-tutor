@@ -15,7 +15,7 @@ use {
         },
         commands::{CastSpellCommand, SpellChoice},
         errors::{CardError, DomainError, GameError, PhaseError},
-        events::SpellPutOnStack,
+        events::{CardMovedZone, SpellPutOnStack, ZoneType},
         game::{
             helpers, invariants,
             model::{
@@ -24,7 +24,7 @@ use {
             },
             SpellTarget,
         },
-        ids::{CardInstanceId, PlayerId},
+        ids::{CardInstanceId, GameId, PlayerId},
         phase::Phase,
     },
 };
@@ -267,6 +267,25 @@ fn prepare_stack_spell_object(
         mana_cost,
         spell: SpellOnStack::new(prepared_cast.into_payload(), mana_cost, target, choice),
     }
+}
+
+fn zone_change_for_spell_put_on_stack(
+    game_id: &GameId,
+    player_id: &PlayerId,
+    card_id: &CardInstanceId,
+    from_graveyard: bool,
+) -> CardMovedZone {
+    CardMovedZone::new(
+        game_id.clone(),
+        player_id.clone(),
+        card_id.clone(),
+        if from_graveyard {
+            ZoneType::Graveyard
+        } else {
+            ZoneType::Hand
+        },
+        ZoneType::Stack,
+    )
 }
 
 fn validate_spell_choice(
@@ -662,12 +681,18 @@ pub fn cast_spell(
     Ok(CastSpellOutcome {
         spell_put_on_stack: SpellPutOnStack::new(
             game_id.clone(),
-            player_id,
-            card_id,
+            player_id.clone(),
+            card_id.clone(),
             spell_card_type,
             spell_mana_cost,
             crate::domain::play::ids::StackObjectId::for_stack_object(game_id, stack_object_number),
             target,
         ),
+        zone_changes: vec![zone_change_for_spell_put_on_stack(
+            game_id,
+            &player_id,
+            &card_id,
+            from_graveyard,
+        )],
     })
 }
