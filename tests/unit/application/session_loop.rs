@@ -8,9 +8,10 @@ use crate::support::{
     setup_two_player_game,
 };
 use demonictutor::{
-    public_command_result, CardDefinitionId, DomainEvent, GameEndReason, GameId, PlayerId,
-    PublicCommandStatus, PublicGameCommand, PublicPlayableSubsetVersion, PublicRematchCommand,
-    PublicSeededGameSetup, PublicSeededPlayerSetup,
+    public_command_result, ActivatedAbilityProfile, CardDefinitionId, DomainError, DomainEvent,
+    GameEndReason, GameError, GameId, LibraryCard, PlayerId, PublicCommandStatus,
+    PublicGameCommand, PublicPlayableSubsetVersion, PublicRematchCommand, PublicSeededGameSetup,
+    PublicSeededPlayerSetup, TriggeredAbilityProfile,
 };
 
 fn seeded_setup(game_id: &str, seed: u64) -> PublicSeededGameSetup {
@@ -31,6 +32,52 @@ fn seeded_setup(game_id: &str, seed: u64) -> PublicSeededGameSetup {
                     instant_card("p1-spell-f", 0),
                     instant_card("p1-spell-g", 0),
                     instant_card("p1-spell-h", 0),
+                ],
+            ),
+            PublicSeededPlayerSetup::new(
+                PlayerId::new("player-2"),
+                demonictutor::DeckId::new("deck-2"),
+                vec![
+                    land_card("p2-land-a"),
+                    land_card("p2-land-b"),
+                    instant_card("p2-spell-a", 0),
+                    instant_card("p2-spell-b", 0),
+                    instant_card("p2-spell-c", 0),
+                    instant_card("p2-spell-d", 0),
+                    instant_card("p2-spell-e", 0),
+                    instant_card("p2-spell-f", 0),
+                    instant_card("p2-spell-g", 0),
+                    instant_card("p2-spell-h", 0),
+                ],
+            ),
+        ],
+        seed,
+    )
+}
+
+fn invalid_seeded_setup(game_id: &str, seed: u64) -> PublicSeededGameSetup {
+    let unsupported_card =
+        LibraryCard::creature(CardDefinitionId::new("illegal-creature"), 1, 2, 2)
+            .with_activated_ability(ActivatedAbilityProfile::tap_to_gain_life_to_controller(1))
+            .with_triggered_ability(TriggeredAbilityProfile::attacks_gain_life_to_controller(1));
+
+    PublicSeededGameSetup::new(
+        GameId::new(game_id),
+        vec![
+            PublicSeededPlayerSetup::new(
+                PlayerId::new("player-1"),
+                demonictutor::DeckId::new("deck-1"),
+                vec![
+                    unsupported_card,
+                    forest_card("p1-forest-a"),
+                    forest_card("p1-forest-b"),
+                    instant_card("p1-spell-a", 0),
+                    instant_card("p1-spell-b", 0),
+                    instant_card("p1-spell-c", 0),
+                    instant_card("p1-spell-d", 0),
+                    instant_card("p1-spell-e", 0),
+                    instant_card("p1-spell-f", 0),
+                    instant_card("p1-spell-g", 0),
                 ],
             ),
             PublicSeededPlayerSetup::new(
@@ -143,6 +190,32 @@ fn seeded_public_rematch_reuses_setup_with_a_new_game_id() {
     assert_eq!(
         rematch_result.game.playable_subset_version,
         PublicPlayableSubsetVersion::V1
+    );
+}
+
+#[test]
+fn seeded_public_game_setup_does_not_persist_partial_start_when_opening_hands_fail() {
+    let service = create_service();
+    let setup = invalid_seeded_setup("game-seeded-invalid-setup", 9);
+
+    let result = service.start_seeded_public_game(setup);
+
+    assert!(matches!(
+        result,
+        Err(DomainError::Game(GameError::UnsupportedCuratedCardProfile {
+            player,
+            definition,
+        })) if player == PlayerId::new("player-1")
+            && definition == CardDefinitionId::new("illegal-creature")
+    ));
+
+    let log = service
+        .public_event_log(&GameId::new("game-seeded-invalid-setup"))
+        .expect("failed seeded setup should not break event-log reads");
+
+    assert!(
+        log.is_empty(),
+        "failed seeded setup should not persist a partial lifecycle stream"
     );
 }
 

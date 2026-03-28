@@ -58,10 +58,10 @@ where
             .map(PublicSeededPlayerSetup::player_deck)
             .collect();
         let player_libraries = seeded_player_libraries(&setup.players, setup.shuffle_seed);
-        let (mut game, game_started) =
-            self.start_game(StartGameCommand::new(setup.game_id, player_decks))?;
-        let opening_hands =
-            self.deal_opening_hands(&mut game, &DealOpeningHandsCommand::new(player_libraries))?;
+        let (game, game_started, opening_hands) = self.start_game_with_opening_hands(
+            StartGameCommand::new(setup.game_id, player_decks),
+            &DealOpeningHandsCommand::new(player_libraries),
+        )?;
         let emitted_events = std::iter::once(game_started.into())
             .chain(opening_hands.into_iter().map(Into::into))
             .collect();

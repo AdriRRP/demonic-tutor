@@ -110,9 +110,9 @@ fn priority_surface_state(game: &Game, player_id: &PlayerId) -> PublicSurfaceSta
     let mana_source_ids = tappable_mana_source_ids(game, player_id);
     let castable_cards = castable_cards(game, player_id);
     let activatable_cards = activatable_cards(game, player_id);
-    let spell_target_candidates_by_card =
+    let mut spell_target_candidates_by_card =
         spell_target_candidate_cache(game, player_id, &castable_cards);
-    let ability_target_candidates_by_card =
+    let mut ability_target_candidates_by_card =
         ability_target_candidate_cache(game, player_id, &activatable_cards);
 
     let mut actions = Vec::new();
@@ -151,12 +151,12 @@ fn priority_surface_state(game: &Game, player_id: &PlayerId) -> PublicSurfaceSta
     let mut choice_requests = Vec::new();
     for castable in &castable_cards {
         if castable.requires_target {
+            let source_card_id = castable.card_id.clone();
             choice_requests.push(PublicChoiceRequest::SpellTarget {
                 player_id: player_id.clone(),
-                source_card_id: castable.card_id.clone(),
+                source_card_id: source_card_id.clone(),
                 candidates: spell_target_candidates_by_card
-                    .get(&castable.card_id)
-                    .cloned()
+                    .remove(&source_card_id)
                     .unwrap_or_default(),
             });
         }
@@ -174,8 +174,7 @@ fn priority_surface_state(game: &Game, player_id: &PlayerId) -> PublicSurfaceSta
                 player_id: player_id.clone(),
                 source_card_id: source_card_id.clone(),
                 candidates: ability_target_candidates_by_card
-                    .get(&source_card_id)
-                    .cloned()
+                    .remove(&source_card_id)
                     .unwrap_or_default(),
             });
         }
