@@ -414,7 +414,13 @@ fn resolve_combat_damage_step(
         ctx.terminal_state,
     )?;
 
-    Ok((damage_events, life_changed, creatures_died, zone_changes, game_ended))
+    Ok((
+        damage_events,
+        life_changed,
+        creatures_died,
+        zone_changes,
+        game_ended,
+    ))
 }
 
 #[derive(Debug, Clone)]

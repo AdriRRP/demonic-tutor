@@ -37,11 +37,9 @@ fn bounce_returns_foreign_owned_permanent_to_owners_hand() {
         &card_id,
     );
 
-    assert!(
-        moved.as_ref().is_some_and(|event| event.card_id == card_id
-            && matches!(event.origin_zone, ZoneType::Battlefield)
-            && matches!(event.destination_zone, ZoneType::Hand))
-    );
+    assert!(moved.as_ref().is_some_and(|event| event.card_id == card_id
+        && matches!(event.origin_zone, ZoneType::Battlefield)
+        && matches!(event.destination_zone, ZoneType::Hand)));
     assert!(players[0].battlefield_card(&card_id).is_none());
     assert!(players[1].hand_card(&card_id).is_some());
 }
@@ -71,11 +69,9 @@ fn bounce_reports_token_departure_to_created_zone() {
         &token_id,
     );
 
-    assert!(
-        moved.as_ref().is_some_and(|event| event.card_id == token_id
-            && matches!(event.origin_zone, ZoneType::Battlefield)
-            && matches!(event.destination_zone, ZoneType::Created))
-    );
+    assert!(moved.as_ref().is_some_and(|event| event.card_id == token_id
+        && matches!(event.origin_zone, ZoneType::Battlefield)
+        && matches!(event.destination_zone, ZoneType::Created)));
     assert!(players[0].battlefield_card(&token_id).is_none());
     assert!(!players[0].owns_card(&token_id));
 }

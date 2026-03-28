@@ -23,7 +23,9 @@ struct StateBasedActionCheckResult {
 impl StateBasedActionCheckResult {
     #[must_use]
     const fn changed(&self) -> bool {
-        !self.creatures_died.is_empty() || !self.zone_changes.is_empty() || self.game_ended.is_some()
+        !self.creatures_died.is_empty()
+            || !self.zone_changes.is_empty()
+            || self.game_ended.is_some()
     }
 }
 
@@ -358,26 +360,28 @@ mod tests {
             .expect("creature should be on battlefield")
             .add_damage(2);
 
-        let result = check_state_based_actions(&game_id, &mut players, &mut terminal_state).unwrap();
+        let result =
+            check_state_based_actions(&game_id, &mut players, &mut terminal_state).unwrap();
 
         assert!(players[0].battlefield_card(&creature_id).is_none());
         assert!(players[0].graveyard_card(&creature_id).is_some());
         assert!(players[0].battlefield_card(&aura_id).is_none());
         assert!(players[0].graveyard_card(&aura_id).is_some());
-        assert!(
-            result
-                .zone_changes
-                .iter()
-                .any(|event| event.card_id == aura_id
-                    && matches!(event.origin_zone, ZoneType::Battlefield)
-                    && matches!(event.destination_zone, ZoneType::Graveyard))
-        );
+        assert!(result
+            .zone_changes
+            .iter()
+            .any(|event| event.card_id == aura_id
+                && matches!(event.origin_zone, ZoneType::Battlefield)
+                && matches!(event.destination_zone, ZoneType::Graveyard)));
     }
 
     #[test]
     fn token_that_dies_reports_departure_to_created_zone() {
         let game_id = GameId::new("game-token-dies-zone-change");
-        let mut players = vec![Player::new(PlayerId::new("p1")), Player::new(PlayerId::new("p2"))];
+        let mut players = vec![
+            Player::new(PlayerId::new("p1")),
+            Player::new(PlayerId::new("p2")),
+        ];
         let mut terminal_state = TerminalState::default();
         let token_id = CardInstanceId::new("token-1");
 
@@ -397,11 +401,12 @@ mod tests {
         let result =
             check_state_based_actions(&game_id, &mut players, &mut terminal_state).unwrap();
 
-        assert!(
-            result.zone_changes.iter().any(|event| event.card_id == token_id
+        assert!(result
+            .zone_changes
+            .iter()
+            .any(|event| event.card_id == token_id
                 && matches!(event.origin_zone, ZoneType::Battlefield)
-                && matches!(event.destination_zone, ZoneType::Created))
-        );
+                && matches!(event.destination_zone, ZoneType::Created)));
         assert!(players[0].battlefield_card(&token_id).is_none());
         assert!(!players[0].owns_card(&token_id));
     }

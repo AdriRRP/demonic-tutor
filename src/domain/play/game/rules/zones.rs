@@ -102,12 +102,14 @@ fn battlefield_departure_destination(
     handle: PlayerCardHandle,
     destination_zone: ZoneType,
 ) -> Result<ZoneType, DomainError> {
-    let card = players[controller_index].card_by_handle(handle).ok_or_else(|| {
-        DomainError::Game(GameError::InternalInvariantViolation(format!(
-            "missing card handle {} during battlefield departure",
-            handle.index()
-        )))
-    })?;
+    let card = players[controller_index]
+        .card_by_handle(handle)
+        .ok_or_else(|| {
+            DomainError::Game(GameError::InternalInvariantViolation(format!(
+                "missing card handle {} during battlefield departure",
+                handle.index()
+            )))
+        })?;
 
     if card.is_token() {
         return Ok(ZoneType::Created);

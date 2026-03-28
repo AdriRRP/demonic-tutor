@@ -157,14 +157,12 @@ pub(super) fn resolve_destroy_target_artifact_or_enchantment_effect(
     let mut zone_changes = Vec::new();
     match target {
         SpellTarget::Permanent(card_id) => {
-            if let Some((moved_card, zone_change)) =
-                destroy_noncreature_permanent(
-                    context.game_id,
-                    context.players,
-                    context.card_locations,
-                    &card_id,
-                )
-            {
+            if let Some((moved_card, zone_change)) = destroy_noncreature_permanent(
+                context.game_id,
+                context.players,
+                context.card_locations,
+                &card_id,
+            ) {
                 moved_cards.push(moved_card);
                 zone_changes.push(zone_change);
             }
