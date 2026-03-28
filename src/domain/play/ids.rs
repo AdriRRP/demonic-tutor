@@ -1,11 +1,10 @@
-//! Supports dual-layer play ids with numeric core identity and stable public text.
+//! Supports stable play ids with compact shared text storage.
 
 use std::{
-    collections::HashMap,
     fmt,
     hash::{Hash, Hasher},
     ops::Deref,
-    sync::{Arc, OnceLock, RwLock},
+    sync::Arc,
 };
 
 const INLINE_ID_CAPACITY: usize = 22;
@@ -133,71 +132,6 @@ impl fmt::Display for SharedIdStr {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-struct NumericCoreId(u64);
-
-impl NumericCoreId {
-    const fn new(value: u64) -> Self {
-        Self(value)
-    }
-}
-
-#[derive(Default)]
-struct IdInterner {
-    next: u64,
-    by_public: HashMap<SharedIdStr, NumericCoreId>,
-    by_core: HashMap<NumericCoreId, SharedIdStr>,
-}
-
-impl IdInterner {
-    fn intern(&mut self, public: &SharedIdStr) -> NumericCoreId {
-        if let Some(core) = self.by_public.get(public).copied() {
-            return core;
-        }
-
-        self.next += 1;
-        let core = NumericCoreId::new(self.next);
-        self.by_public.insert(public.clone(), core);
-        self.by_core.insert(core, public.clone());
-        core
-    }
-
-    fn public_for_core(&self, core: NumericCoreId) -> Option<SharedIdStr> {
-        self.by_core.get(&core).cloned()
-    }
-}
-
-fn shared_interner() -> &'static RwLock<IdInterner> {
-    static SHARED_INTERNER: OnceLock<RwLock<IdInterner>> = OnceLock::new();
-    SHARED_INTERNER.get_or_init(|| RwLock::new(IdInterner::default()))
-}
-
-fn intern_numeric_core(public: &SharedIdStr) -> NumericCoreId {
-    if let Some(core) = {
-        let interner = match shared_interner().read() {
-            Ok(guard) => guard,
-            Err(poisoned) => poisoned.into_inner(),
-        };
-        interner.by_public.get(public).copied()
-    } {
-        return core;
-    }
-
-    let mut interner = match shared_interner().write() {
-        Ok(guard) => guard,
-        Err(poisoned) => poisoned.into_inner(),
-    };
-    interner.intern(public)
-}
-
-fn public_for_numeric_core(core: NumericCoreId) -> Option<SharedIdStr> {
-    let interner = match shared_interner().read() {
-        Ok(guard) => guard,
-        Err(poisoned) => poisoned.into_inner(),
-    };
-    interner.public_for_core(core)
-}
-
 macro_rules! shared_text_id {
     ($name:ident, display) => {
         #[derive(Clone, PartialEq, Eq, Hash)]
@@ -269,78 +203,11 @@ macro_rules! shared_text_id {
     };
 }
 
-macro_rules! interned_id {
-    ($name:ident, display) => {
-        #[derive(Clone)]
-        pub struct $name {
-            core: NumericCoreId,
-            public: SharedIdStr,
-        }
-
-        impl $name {
-            pub fn new(value: impl Into<String>) -> Self {
-                let public = SharedIdStr::from(value.into());
-                let core = intern_numeric_core(&public);
-                Self { core, public }
-            }
-
-            #[must_use]
-            pub fn as_str(&self) -> &str {
-                &self.public
-            }
-        }
-
-        impl From<String> for $name {
-            fn from(value: String) -> Self {
-                Self::new(value)
-            }
-        }
-
-        impl fmt::Debug for $name {
-            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-                f.write_str(self.as_str())
-            }
-        }
-
-        impl PartialEq for $name {
-            fn eq(&self, other: &Self) -> bool {
-                self.core == other.core
-            }
-        }
-
-        impl Eq for $name {}
-
-        impl Hash for $name {
-            fn hash<H: Hasher>(&self, state: &mut H) {
-                self.core.hash(state);
-            }
-        }
-
-        impl fmt::Display for $name {
-            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-                write!(f, "{}", self.public)
-            }
-        }
-    };
-}
-
 shared_text_id!(GameId, display);
 shared_text_id!(PlayerId, display);
 shared_text_id!(DeckId);
-interned_id!(CardInstanceId, display);
+shared_text_id!(CardInstanceId, display);
 shared_text_id!(CardDefinitionId, display);
-
-impl CardInstanceId {
-    pub(crate) const fn core_u64(&self) -> u64 {
-        self.core.0
-    }
-
-    pub(crate) fn from_core_u64(core: u64) -> Option<Self> {
-        let core = NumericCoreId::new(core);
-        let public = public_for_numeric_core(core)?;
-        Some(Self { core, public })
-    }
-}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct PlayerCardHandle(usize);
@@ -439,21 +306,21 @@ mod tests {
     }
 
     #[test]
-    fn same_public_text_reuses_the_same_numeric_core() {
+    fn same_public_text_keeps_card_instance_ids_equal() {
         let left = CardInstanceId::new("card-42");
         let right = CardInstanceId::new("card-42");
 
         assert_eq!(left, right);
-        assert_eq!(left.core.0, right.core.0);
+        assert_eq!(left.as_str(), right.as_str());
     }
 
     #[test]
-    fn different_public_texts_receive_distinct_numeric_cores() {
+    fn different_public_texts_keep_card_instance_ids_distinct() {
         let left = CardInstanceId::new("card-a");
         let right = CardInstanceId::new("card-b");
 
         assert_ne!(left, right);
-        assert_ne!(left.core.0, right.core.0);
+        assert_ne!(left.as_str(), right.as_str());
     }
 
     #[test]

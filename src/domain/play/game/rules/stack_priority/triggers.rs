@@ -62,7 +62,7 @@ fn enqueue_trigger_from_handle(
         controller_index,
         StackObjectKind::TriggeredAbility(TriggeredAbilityOnStack::new(
             StackCardRef::new(controller_index, handle),
-            card.id().core_u64(),
+            card.id().clone(),
             triggered_ability,
         )),
     ));

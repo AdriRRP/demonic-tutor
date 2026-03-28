@@ -198,7 +198,7 @@ pub struct SpellOnStack {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ActivatedAbilityOnStack {
     source_card_ref: StackCardRef,
-    source_card_core: u64,
+    source_card_id: CardInstanceId,
     ability: ActivatedAbilityProfile,
     target: Option<StackTargetRef>,
 }
@@ -206,7 +206,7 @@ pub struct ActivatedAbilityOnStack {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TriggeredAbilityOnStack {
     source_card_ref: StackCardRef,
-    source_card_core: u64,
+    source_card_id: CardInstanceId,
     ability: TriggeredAbilityProfile,
 }
 
@@ -214,13 +214,13 @@ impl ActivatedAbilityOnStack {
     #[must_use]
     pub const fn new(
         source_card_ref: StackCardRef,
-        source_card_core: u64,
+        source_card_id: CardInstanceId,
         ability: ActivatedAbilityProfile,
         target: Option<StackTargetRef>,
     ) -> Self {
         Self {
             source_card_ref,
-            source_card_core,
+            source_card_id,
             ability,
             target,
         }
@@ -233,9 +233,7 @@ impl ActivatedAbilityOnStack {
 
     #[must_use]
     pub fn source_card_id(&self) -> CardInstanceId {
-        CardInstanceId::from_core_u64(self.source_card_core).unwrap_or_else(|| {
-            CardInstanceId::new(format!("missing-card-core-{}", self.source_card_core))
-        })
+        self.source_card_id.clone()
     }
 
     #[must_use]
@@ -258,12 +256,12 @@ impl TriggeredAbilityOnStack {
     #[must_use]
     pub const fn new(
         source_card_ref: StackCardRef,
-        source_card_core: u64,
+        source_card_id: CardInstanceId,
         ability: TriggeredAbilityProfile,
     ) -> Self {
         Self {
             source_card_ref,
-            source_card_core,
+            source_card_id,
             ability,
         }
     }
@@ -275,9 +273,7 @@ impl TriggeredAbilityOnStack {
 
     #[must_use]
     pub fn source_card_id(&self) -> CardInstanceId {
-        CardInstanceId::from_core_u64(self.source_card_core).unwrap_or_else(|| {
-            CardInstanceId::new(format!("missing-card-core-{}", self.source_card_core))
-        })
+        self.source_card_id.clone()
     }
 
     #[must_use]

@@ -22,8 +22,7 @@ use {
 
 struct PreparedActivationSource {
     handle: StackCardRef,
-    source_card_core: u64,
-    public_source_card_id: CardInstanceId,
+    source_card_id: CardInstanceId,
     ability: crate::domain::play::cards::ActivatedAbilityProfile,
     card_type: CardType,
     loyalty: Option<u32>,
@@ -56,8 +55,7 @@ fn prepare_activation_source(
 
     Ok(PreparedActivationSource {
         handle: StackCardRef::new(player_index, handle),
-        source_card_core: source_card_id.core_u64(),
-        public_source_card_id: source_card_id.clone(),
+        source_card_id: source_card_id.clone(),
         ability: card.activated_ability().ok_or_else(|| {
             DomainError::Card(CardError::NoActivatedAbility(source_card_id.clone()))
         })?,
@@ -472,7 +470,7 @@ pub fn activate_ability(
         player_index,
         StackObjectKind::ActivatedAbility(ActivatedAbilityOnStack::new(
             prepared.handle,
-            prepared.source_card_core,
+            prepared.source_card_id.clone(),
             prepared.ability,
             prepared_target,
         )),
@@ -484,7 +482,7 @@ pub fn activate_ability(
         activated_ability_put_on_stack: ActivatedAbilityPutOnStack::new(
             game_id.clone(),
             player_id,
-            prepared.public_source_card_id,
+            prepared.source_card_id,
             prepared.ability.effect(),
             crate::domain::play::ids::StackObjectId::for_stack_object(game_id, stack_object_number),
         ),

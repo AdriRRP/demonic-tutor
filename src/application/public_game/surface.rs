@@ -1506,7 +1506,7 @@ mod tests {
             99,
             StackObjectKind::ActivatedAbility(ActivatedAbilityOnStack::new(
                 StackCardRef::new(0, PlayerCardHandle::new(0)),
-                source_card_id.core_u64(),
+                source_card_id.clone(),
                 ActivatedAbilityProfile::tap_to_gain_life_to_target_player(1),
                 Some(StackTargetRef::Player(1)),
             )),
@@ -1542,7 +1542,7 @@ mod tests {
             0,
             StackObjectKind::ActivatedAbility(ActivatedAbilityOnStack::new(
                 StackCardRef::new(0, PlayerCardHandle::new(0)),
-                source_card_id.core_u64(),
+                source_card_id.clone(),
                 ActivatedAbilityProfile::tap_to_gain_life_to_target_player(1),
                 Some(StackTargetRef::Player(99)),
             )),
