@@ -8,9 +8,9 @@ use crate::support::{
     attacks_life_gain_haste_creature_card, cast_spell_and_resolve, close_empty_priority_window,
     combat_damage_to_player_life_gain_haste_creature_card, create_service, creature_card,
     etb_may_life_gain_creature_card, filled_library, first_hand_card_id, forest_card,
-    loot_sorcery_card, player, player_deck, player_library, rummage_sorcery_card,
-    sacrifice_life_gain_artifact_card, setup_two_player_game, surveil_sorcery_card,
-    target_player_discards_chosen_card_sorcery_card,
+    loot_sorcery_card, player, player_deck, player_library, resolve_top_stack_with_passes,
+    rummage_sorcery_card, sacrifice_life_gain_artifact_card, sacrifice_life_gain_creature_card,
+    setup_two_player_game, surveil_sorcery_card, target_player_discards_chosen_card_sorcery_card,
 };
 use demonictutor::{
     public_command_result, ActivateAbilityCommand, CardDefinitionId, CastSpellCommand,
@@ -899,6 +899,59 @@ fn execute_public_command_surfaces_zone_move_for_sacrifice_activation_cost() {
             DomainEvent::CardMovedZone(moved),
             DomainEvent::ActivatedAbilityPutOnStack(_),
         ] if moved.card_id == artifact_id
+            && moved.zone_owner_id == PlayerId::new("player-1")
+            && moved.origin_zone.as_str() == "battlefield"
+            && moved.destination_zone.as_str() == "graveyard"
+    ));
+}
+
+#[test]
+fn execute_public_command_orders_creature_sacrifice_death_before_zone_change() {
+    let (service, mut game) = setup_two_player_game(
+        "game-public-creature-sacrifice-order",
+        filled_library(
+            vec![sacrifice_life_gain_creature_card(
+                "grim-offering",
+                0,
+                1,
+                1,
+                2,
+            )],
+            10,
+        ),
+        filled_library(Vec::new(), 10),
+    );
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
+
+    let creature_id = player(&game, "player-1")
+        .hand_card_by_definition(&CardDefinitionId::new("grim-offering"))
+        .expect("creature should be in hand")
+        .id()
+        .clone();
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), creature_id.clone()),
+        )
+        .expect("creature should cast");
+    resolve_top_stack_with_passes(&service, &mut game);
+
+    let application = service.execute_public_command(
+        &mut game,
+        PublicGameCommand::ActivateAbility(ActivateAbilityCommand::new(
+            PlayerId::new("player-1"),
+            creature_id.clone(),
+        )),
+    );
+
+    assert!(matches!(
+        application.emitted_events.as_slice(),
+        [
+            DomainEvent::CreatureDied(died),
+            DomainEvent::CardMovedZone(moved),
+            DomainEvent::ActivatedAbilityPutOnStack(_),
+        ] if died.card_id == creature_id
+            && moved.card_id == creature_id
             && moved.zone_owner_id == PlayerId::new("player-1")
             && moved.origin_zone.as_str() == "battlefield"
             && moved.destination_zone.as_str() == "graveyard"

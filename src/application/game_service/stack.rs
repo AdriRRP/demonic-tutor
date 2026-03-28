@@ -132,8 +132,8 @@ fn push_resolution_event_plan(domain_events: &mut DomainEvents, plan: &Resolutio
 
 pub fn domain_events_for_activate_ability(outcome: &ActivateAbilityOutcome) -> Vec<DomainEvent> {
     let mut domain_events = DomainEvents::default();
-    domain_events.extend(outcome.zone_changes.iter().cloned());
     domain_events.extend(outcome.creatures_died.iter().cloned());
+    domain_events.extend(outcome.zone_changes.iter().cloned());
     domain_events.push(outcome.activated_ability_put_on_stack.clone());
     domain_events.into_vec()
 }
