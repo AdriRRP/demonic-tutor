@@ -12,10 +12,10 @@ use crate::domain::play::{
 use super::{
     PublicActivatableCard, PublicBattlefieldCardView, PublicBinaryChoice, PublicBlockerOption,
     PublicCardView, PublicCastableCard, PublicChoiceCandidate, PublicChoiceRequest,
-    PublicCombatStateView, PublicCommandApplication, PublicCommandResult, PublicGameView,
-    PublicLegalAction, PublicModalSpellChoice, PublicPermanentStateView, PublicPlayerView,
-    PublicPriorityView, PublicScryChoice, PublicStackObjectView, PublicStackTargetView,
-    PublicSurveilChoice,
+    PublicCombatStateView, PublicCommandApplication, PublicCommandResult, PublicEventLogEntry,
+    PublicGameView, PublicLegalAction, PublicModalSpellChoice, PublicPermanentStateView,
+    PublicPlayerView, PublicPriorityView, PublicScryChoice, PublicStackObjectView,
+    PublicStackTargetView, PublicSurveilChoice,
 };
 
 #[derive(Debug, Default)]
@@ -316,6 +316,18 @@ pub fn public_command_result(
         legal_actions: surface.legal_actions,
         choice_requests: surface.choice_requests,
     }
+}
+
+#[must_use]
+pub fn public_event_log(
+    events: &[crate::domain::play::events::DomainEvent],
+) -> Vec<PublicEventLogEntry> {
+    events
+        .iter()
+        .cloned()
+        .zip(1_u64..)
+        .map(|(event, sequence)| PublicEventLogEntry { sequence, event })
+        .collect()
 }
 
 fn player_view(player: &Player, _index: usize, active_player_id: &PlayerId) -> PublicPlayerView {

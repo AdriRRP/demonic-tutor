@@ -323,6 +323,12 @@ pub struct PublicCommandResult {
     pub choice_requests: Vec<PublicChoiceRequest>,
 }
 
+#[derive(Debug, Clone)]
+pub struct PublicEventLogEntry {
+    pub sequence: u64,
+    pub event: DomainEvent,
+}
+
 impl From<ModalSpellMode> for PublicModalSpellChoice {
     fn from(value: ModalSpellMode) -> Self {
         match value {

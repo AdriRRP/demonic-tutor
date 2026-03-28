@@ -28,6 +28,7 @@ Implemented capabilities include:
 - deriving current supported target-selection candidates and blocker options from canonical aggregate legality queries instead of application-local rule approximations
 - surfacing public choice requests for target selection, explicit hand-card choice, bounded modal spell choice, bounded optional secondary-target spell choice, binary optional-effect decisions, and cleanup discard
 - returning a deterministic public command envelope with emitted events, updated snapshot, legal actions, and visible choice requests
+- exposing a deterministic persisted public event log with explicit sequence numbers for replay and animation clients
 - projecting the attached creature id for the current supported Aura subset in the public battlefield snapshot
 - dealing opening hands
 - mulligan support (London Mulligan - simplified)

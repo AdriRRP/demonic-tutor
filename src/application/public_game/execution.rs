@@ -18,11 +18,12 @@ use crate::{
         },
         EventBus, EventStore,
     },
-    domain::play::{errors::DomainError, events::DomainEvent, game::Game},
+    domain::play::{errors::DomainError, events::DomainEvent, game::Game, ids::GameId},
 };
 
 use super::{
-    PublicCommandApplication, PublicCommandRejection, PublicCommandStatus, PublicGameCommand,
+    public_event_log, PublicCommandApplication, PublicCommandRejection, PublicCommandStatus,
+    PublicEventLogEntry, PublicGameCommand,
 };
 
 impl<E, B> GameService<E, B>
@@ -30,6 +31,21 @@ where
     E: EventStore,
     B: EventBus,
 {
+    /// Returns the persisted public event log for one game in deterministic sequence order.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the backing event store cannot load the persisted stream.
+    pub fn public_event_log(
+        &self,
+        game_id: &GameId,
+    ) -> Result<Vec<PublicEventLogEntry>, DomainError> {
+        let aggregate_id = game_id.to_string();
+        let events = self.load_persisted_events(&aggregate_id)?;
+
+        Ok(public_event_log(&events))
+    }
+
     /// Executes a public gameplay command and returns a UI-friendly deterministic envelope.
     pub fn execute_public_command(
         &self,

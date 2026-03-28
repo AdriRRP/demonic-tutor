@@ -78,4 +78,15 @@ where
         let domain_events = events.iter().cloned().map(Into::into).collect::<Vec<_>>();
         self.persist_and_publish_events(game_id, &domain_events)
     }
+
+    pub(crate) fn load_persisted_events(
+        &self,
+        game_id: &str,
+    ) -> Result<Vec<DomainEvent>, DomainError> {
+        self.event_store.get_events(game_id).map_err(|err| {
+            DomainError::Game(GameError::InternalInvariantViolation(format!(
+                "failed to load persisted domain events for aggregate {game_id}: {err}"
+            )))
+        })
+    }
 }

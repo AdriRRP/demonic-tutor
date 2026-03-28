@@ -7,10 +7,11 @@ pub mod public_game;
 pub use game_service::GameService;
 pub use ports::{EventBus, EventStore};
 pub use public_game::{
-    choice_requests, game_view, legal_actions, public_command_result, PublicActivatableCard,
-    PublicBattlefieldCardView, PublicBinaryChoice, PublicCardView, PublicCastableCard,
-    PublicChoiceCandidate, PublicChoiceRequest, PublicCommandApplication, PublicCommandRejection,
-    PublicCommandResult, PublicCommandStatus, PublicGameCommand, PublicGameView, PublicLegalAction,
-    PublicModalSpellChoice, PublicPlayerView, PublicPriorityView, PublicScryChoice,
-    PublicStackObjectView, PublicStackTargetView, PublicSurveilChoice,
+    choice_requests, game_view, legal_actions, public_command_result, public_event_log,
+    PublicActivatableCard, PublicBattlefieldCardView, PublicBinaryChoice, PublicCardView,
+    PublicCastableCard, PublicChoiceCandidate, PublicChoiceRequest, PublicCommandApplication,
+    PublicCommandRejection, PublicCommandResult, PublicCommandStatus, PublicEventLogEntry,
+    PublicGameCommand, PublicGameView, PublicLegalAction, PublicModalSpellChoice, PublicPlayerView,
+    PublicPriorityView, PublicScryChoice, PublicStackObjectView, PublicStackTargetView,
+    PublicSurveilChoice,
 };

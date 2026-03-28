@@ -6,12 +6,10 @@ Goal:
 
 Slice count:
 
-- `4`
+- `3`
 
 Slices:
 
-- `expose-public-event-log-for-replay-and-animation`
-  - provide a deterministic event stream suitable for UI playback and debugging
 - `expose-stable-prompt-ordering-for-simultaneous-triggers-and-choices`
   - fix one deterministic ordering contract for surfaced prompts in the supported subset
 - `support-concede-rematch-and-seeded-game-setup-commands`
