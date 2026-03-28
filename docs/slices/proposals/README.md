@@ -27,11 +27,11 @@ That means:
 
 See:
 
-- [playable-horizon.md](/Users/adrianramos/Repos/demonictutor/docs/slices/proposals/playable-horizon.md)
+- [playable-horizon.md](playable-horizon.md)
 
 ## Active Proposal Waves
 
-- [release-0.8.0-wave-1-counters-and-combat-triggers](/Users/adrianramos/Repos/demonictutor/docs/slices/proposals/release-0.8.0-wave-1-counters-and-combat-triggers/README.md)
-- [release-0.8.0-wave-2-limited-set-authoring-contract](/Users/adrianramos/Repos/demonictutor/docs/slices/proposals/release-0.8.0-wave-2-limited-set-authoring-contract/README.md)
-- [release-0.8.0-wave-3-golden-playable-matchups](/Users/adrianramos/Repos/demonictutor/docs/slices/proposals/release-0.8.0-wave-3-golden-playable-matchups/README.md)
-- [release-0.8.0-wave-4-ui-release-candidate-hardening](/Users/adrianramos/Repos/demonictutor/docs/slices/proposals/release-0.8.0-wave-4-ui-release-candidate-hardening/README.md)
+- [release-0.8.0-wave-1-counters-and-combat-triggers](release-0.8.0-wave-1-counters-and-combat-triggers/README.md)
+- [release-0.8.0-wave-2-limited-set-authoring-contract](release-0.8.0-wave-2-limited-set-authoring-contract/README.md)
+- [release-0.8.0-wave-3-golden-playable-matchups](release-0.8.0-wave-3-golden-playable-matchups/README.md)
+- [release-0.8.0-wave-4-ui-release-candidate-hardening](release-0.8.0-wave-4-ui-release-candidate-hardening/README.md)

@@ -24,5 +24,5 @@ Add any other context about the feature request here.
 
 ## Guidelines
 
-- Check the current [vertical slices](docs/vertical-slices.md) to see what's implemented
-- Check the [domain glossary](DOMAIN_GLOSSARY.md) for existing terminology
+- Check the current [vertical slices](../../docs/architecture/vertical-slices.md) to see what's implemented
+- Check the [domain glossary](../../docs/domain/DOMAIN_GLOSSARY.md) for existing terminology
