@@ -16,8 +16,8 @@ use {
                 LifeChanged, SpellCast, StackTopResolved, TriggeredAbilityPutOnStack,
             },
             game::{
-                ActivateAbilityOutcome, CastSpellOutcome, Game, PassPriorityOutcome,
-                ResolveOptionalEffectOutcome, ResolvePendingHandChoiceOutcome,
+                ActivateAbilityOutcome, CastSpellOutcome, Game, GameCheckpointSpec,
+                PassPriorityOutcome, ResolveOptionalEffectOutcome, ResolvePendingHandChoiceOutcome,
                 ResolvePendingScryOutcome, ResolvePendingSurveilOutcome,
             },
         },
@@ -314,6 +314,7 @@ where
     ) -> Result<CastSpellOutcome, DomainError> {
         self.apply_persisted(
             game,
+            GameCheckpointSpec::STACK_PRIORITY,
             |game| game.cast_spell(cmd),
             domain_events_for_cast_spell,
         )
@@ -331,6 +332,7 @@ where
     ) -> Result<ActivateAbilityOutcome, DomainError> {
         self.apply_persisted(
             game,
+            GameCheckpointSpec::STACK_PRIORITY,
             |game| game.activate_ability(cmd),
             domain_events_for_activate_ability,
         )
@@ -348,6 +350,7 @@ where
     ) -> Result<PassPriorityOutcome, DomainError> {
         self.apply_persisted(
             game,
+            GameCheckpointSpec::STACK_PRIORITY,
             |game| game.pass_priority(cmd),
             domain_events_for_pass_priority,
         )
@@ -365,6 +368,7 @@ where
     ) -> Result<ResolveOptionalEffectOutcome, DomainError> {
         self.apply_persisted(
             game,
+            GameCheckpointSpec::STACK_PRIORITY,
             |game| game.resolve_optional_effect(cmd),
             domain_events_for_resolve_optional_effect,
         )
@@ -382,6 +386,7 @@ where
     ) -> Result<ResolvePendingHandChoiceOutcome, DomainError> {
         self.apply_persisted(
             game,
+            GameCheckpointSpec::STACK_PRIORITY,
             |game| game.resolve_pending_hand_choice(cmd),
             domain_events_for_resolve_pending_hand_choice,
         )
@@ -399,6 +404,7 @@ where
     ) -> Result<ResolvePendingScryOutcome, DomainError> {
         self.apply_persisted(
             game,
+            GameCheckpointSpec::STACK_PRIORITY,
             |game| game.resolve_pending_scry(cmd),
             domain_events_for_resolve_pending_scry,
         )
@@ -416,6 +422,7 @@ where
     ) -> Result<ResolvePendingSurveilOutcome, DomainError> {
         self.apply_persisted(
             game,
+            GameCheckpointSpec::STACK_PRIORITY,
             |game| game.resolve_pending_surveil(cmd),
             domain_events_for_resolve_pending_surveil,
         )

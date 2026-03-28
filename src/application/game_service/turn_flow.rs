@@ -8,7 +8,7 @@ use {
             commands::{AdvanceTurnCommand, DiscardForCleanupCommand, DrawCardsEffectCommand},
             errors::DomainError,
             events::{CardDiscarded, CardMovedZone, DomainEvent, ZoneType},
-            game::{AdvanceTurnOutcome, DrawCardsEffectOutcome, Game},
+            game::{AdvanceTurnOutcome, DrawCardsEffectOutcome, Game, GameCheckpointSpec},
         },
     },
 };
@@ -65,6 +65,7 @@ where
     ) -> Result<AdvanceTurnOutcome, DomainError> {
         self.apply_persisted(
             game,
+            GameCheckpointSpec::ADVANCE_TURN,
             |game| game.advance_turn(cmd),
             domain_events_for_advance_turn,
         )
@@ -82,6 +83,7 @@ where
     ) -> Result<DrawCardsEffectOutcome, DomainError> {
         self.apply_persisted(
             game,
+            GameCheckpointSpec::DRAW_CARDS_EFFECT,
             |game| game.draw_cards_effect(cmd),
             domain_events_for_draw_cards_effect,
         )
@@ -99,6 +101,7 @@ where
     ) -> Result<CardDiscarded, DomainError> {
         self.apply_persisted(
             game,
+            GameCheckpointSpec::DISCARD_FOR_CLEANUP,
             |game| game.discard_for_cleanup(cmd),
             domain_events_for_discard_for_cleanup,
         )

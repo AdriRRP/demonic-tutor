@@ -138,20 +138,6 @@ fn priority_surface_state(game: &Game, player_id: &PlayerId) -> PublicSurfaceSta
         });
     }
 
-    if !castable_cards.is_empty() {
-        actions.push(PublicLegalAction::CastSpell {
-            player_id: player_id.clone(),
-            castable_cards: castable_cards.clone(),
-        });
-    }
-
-    if !activatable_cards.is_empty() {
-        actions.push(PublicLegalAction::ActivateAbility {
-            player_id: player_id.clone(),
-            activatable_cards: activatable_cards.clone(),
-        });
-    }
-
     let mut choice_requests = Vec::new();
     for castable in &castable_cards {
         if castable.requires_target {
@@ -182,6 +168,20 @@ fn priority_surface_state(game: &Game, player_id: &PlayerId) -> PublicSurfaceSta
                     .unwrap_or_default(),
             });
         }
+    }
+
+    if !castable_cards.is_empty() {
+        actions.push(PublicLegalAction::CastSpell {
+            player_id: player_id.clone(),
+            castable_cards,
+        });
+    }
+
+    if !activatable_cards.is_empty() {
+        actions.push(PublicLegalAction::ActivateAbility {
+            player_id: player_id.clone(),
+            activatable_cards,
+        });
     }
 
     PublicSurfaceState::with_choice_requests(actions, choice_requests)

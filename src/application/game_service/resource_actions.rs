@@ -10,7 +10,7 @@ use {
             },
             errors::DomainError,
             events::{CardMovedZone, DomainEvent, LandPlayed, LandTapped, ManaAdded, ZoneType},
-            game::{AdjustPlayerLifeEffectOutcome, Game},
+            game::{AdjustPlayerLifeEffectOutcome, Game, GameCheckpointSpec},
         },
     },
 };
@@ -57,7 +57,9 @@ where
         game: &mut Game,
         cmd: PlayLandCommand,
     ) -> Result<LandPlayed, DomainError> {
-        self.apply_persisted_event(game, |game| game.play_land(cmd))
+        self.apply_persisted_event(game, GameCheckpointSpec::PLAY_LAND, |game| {
+            game.play_land(cmd)
+        })
     }
 
     /// Exiles a card.
@@ -70,7 +72,9 @@ where
         game: &mut Game,
         cmd: &ExileCardCommand,
     ) -> Result<CardMovedZone, DomainError> {
-        self.apply_persisted_event(game, |game| game.exile_card(cmd))
+        self.apply_persisted_event(game, GameCheckpointSpec::EXILE_CARD, |game| {
+            game.exile_card(cmd)
+        })
     }
 
     /// Resolves an explicit life effect from a caster onto a target player.
@@ -85,6 +89,7 @@ where
     ) -> Result<AdjustPlayerLifeEffectOutcome, DomainError> {
         self.apply_persisted(
             game,
+            GameCheckpointSpec::ADJUST_PLAYER_LIFE_EFFECT,
             |game| game.adjust_player_life_effect(cmd),
             domain_events_for_adjust_player_life_effect,
         )
@@ -102,6 +107,7 @@ where
     ) -> Result<(LandTapped, ManaAdded), DomainError> {
         self.apply_persisted(
             game,
+            GameCheckpointSpec::TAP_LAND,
             |game| game.tap_land(cmd),
             |(land_event, mana_event)| {
                 let mut domain_events = DomainEvents::with(land_event.clone());

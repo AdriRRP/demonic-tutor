@@ -10,7 +10,7 @@ use {
             },
             errors::DomainError,
             events::{GameEnded, GameStarted, MulliganTaken, OpeningHandDealt},
-            game::Game,
+            game::{Game, GameCheckpointSpec},
         },
     },
 };
@@ -65,6 +65,7 @@ where
     ) -> Result<Vec<OpeningHandDealt>, DomainError> {
         self.apply_persisted(
             game,
+            GameCheckpointSpec::DEAL_OPENING_HANDS,
             |game| game.deal_opening_hands(cmd),
             |events| events.iter().cloned().map(Into::into).collect(),
         )
@@ -80,7 +81,9 @@ where
         game: &mut Game,
         cmd: MulliganCommand,
     ) -> Result<MulliganTaken, DomainError> {
-        self.apply_persisted_event(game, |game| game.mulligan(cmd))
+        self.apply_persisted_event(game, GameCheckpointSpec::MULLIGAN, |game| {
+            game.mulligan(cmd)
+        })
     }
 
     /// Concedes an active game for one player.
@@ -89,6 +92,6 @@ where
     ///
     /// Returns an error if the command is invalid.
     pub fn concede(&self, game: &mut Game, cmd: ConcedeCommand) -> Result<GameEnded, DomainError> {
-        self.apply_persisted_event(game, |game| game.concede(cmd))
+        self.apply_persisted_event(game, GameCheckpointSpec::CONCEDE, |game| game.concede(cmd))
     }
 }

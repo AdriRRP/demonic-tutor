@@ -10,7 +10,7 @@ use {
             },
             errors::DomainError,
             events::{BlockersDeclared, CardMovedZone, DomainEvent, ZoneType},
-            game::{DeclareAttackersOutcome, Game, ResolveCombatDamageOutcome},
+            game::{DeclareAttackersOutcome, Game, GameCheckpointSpec, ResolveCombatDamageOutcome},
         },
     },
 };
@@ -68,6 +68,7 @@ where
     ) -> Result<DeclareAttackersOutcome, DomainError> {
         self.apply_persisted(
             game,
+            GameCheckpointSpec::DECLARE_ATTACKERS,
             |game| game.declare_attackers(cmd),
             domain_events_for_declare_attackers,
         )
@@ -83,7 +84,9 @@ where
         game: &mut Game,
         cmd: DeclareBlockersCommand,
     ) -> Result<BlockersDeclared, DomainError> {
-        self.apply_persisted_event(game, |game| game.declare_blockers(cmd))
+        self.apply_persisted_event(game, GameCheckpointSpec::DECLARE_BLOCKERS, |game| {
+            game.declare_blockers(cmd)
+        })
     }
 
     /// Resolves combat damage.
@@ -98,6 +101,7 @@ where
     ) -> Result<ResolveCombatDamageOutcome, DomainError> {
         self.apply_persisted(
             game,
+            GameCheckpointSpec::RESOLVE_COMBAT_DAMAGE,
             |game| game.resolve_combat_damage(cmd),
             domain_events_for_resolve_combat_damage,
         )
