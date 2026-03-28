@@ -212,6 +212,9 @@ pub enum PublicChoiceCandidate {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PublicChoiceRequest {
+    PriorityUnavailable {
+        player_id: PlayerId,
+    },
     PendingDecisionUnavailable {
         player_id: PlayerId,
         decision: PublicPendingDecisionKind,

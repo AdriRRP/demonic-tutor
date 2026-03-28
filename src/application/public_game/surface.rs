@@ -152,6 +152,15 @@ fn unavailable_pending_decision_surface(
     )
 }
 
+fn unavailable_priority_surface(viewer_id: &PlayerId) -> PublicSurfaceState {
+    PublicSurfaceState::with_choice_requests(
+        Vec::new(),
+        vec![PublicChoiceRequest::PriorityUnavailable {
+            player_id: viewer_id.clone(),
+        }],
+    )
+}
+
 fn priority_surface_state(game: &Game, player: &Player) -> PublicSurfaceState {
     let player_id = player.id();
 
@@ -392,7 +401,7 @@ pub(super) fn public_surface_state(game: &Game, viewer_id: &PlayerId) -> PublicS
                     let current_holder = priority.current_holder();
                     if current_holder == viewer_id {
                         player_by_id(game, current_holder)
-                            .map_or_else(PublicSurfaceState::default, |player| {
+                            .map_or_else(|| unavailable_priority_surface(viewer_id), |player| {
                                 priority_surface_state(game, player)
                             })
                     } else {
@@ -982,15 +991,16 @@ fn sort_choice_requests(choice_requests: &mut [PublicChoiceRequest]) {
 
 fn choice_request_sort_key(request: &PublicChoiceRequest) -> (u8, &str, &str) {
     match request {
+        PublicChoiceRequest::PriorityUnavailable { player_id } => (0, player_id.as_str(), ""),
         PublicChoiceRequest::PendingDecisionUnavailable {
             player_id,
             decision,
         } => (
             match decision {
-                PublicPendingDecisionKind::Scry => 0,
-                PublicPendingDecisionKind::Surveil => 1,
-                PublicPendingDecisionKind::HandChoice => 2,
-                PublicPendingDecisionKind::OptionalEffect => 3,
+                PublicPendingDecisionKind::Scry => 1,
+                PublicPendingDecisionKind::Surveil => 2,
+                PublicPendingDecisionKind::HandChoice => 3,
+                PublicPendingDecisionKind::OptionalEffect => 4,
             },
             player_id.as_str(),
             "",
@@ -999,52 +1009,52 @@ fn choice_request_sort_key(request: &PublicChoiceRequest) -> (u8, &str, &str) {
             player_id,
             source_card_id,
             ..
-        } => (4, player_id.as_str(), source_card_id.as_str()),
+        } => (5, player_id.as_str(), source_card_id.as_str()),
         PublicChoiceRequest::PendingSurveil {
             player_id,
             source_card_id,
             ..
-        } => (5, player_id.as_str(), source_card_id.as_str()),
+        } => (6, player_id.as_str(), source_card_id.as_str()),
         PublicChoiceRequest::PendingHandChoice {
             player_id,
             source_card_id,
             ..
-        } => (6, player_id.as_str(), source_card_id.as_str()),
+        } => (7, player_id.as_str(), source_card_id.as_str()),
         PublicChoiceRequest::OptionalEffectDecision {
             player_id,
             source_card_id,
             ..
-        } => (7, player_id.as_str(), source_card_id.as_str()),
+        } => (8, player_id.as_str(), source_card_id.as_str()),
         PublicChoiceRequest::SpellTarget {
             player_id,
             source_card_id,
             ..
-        } => (8, player_id.as_str(), source_card_id.as_str()),
+        } => (9, player_id.as_str(), source_card_id.as_str()),
         PublicChoiceRequest::SpellChoiceUnavailable {
             player_id,
             source_card_id,
-        } => (9, player_id.as_str(), source_card_id.as_str()),
+        } => (10, player_id.as_str(), source_card_id.as_str()),
         PublicChoiceRequest::SpellChoice {
             player_id,
             source_card_id,
             ..
-        } => (10, player_id.as_str(), source_card_id.as_str()),
+        } => (11, player_id.as_str(), source_card_id.as_str()),
         PublicChoiceRequest::SpellSecondaryCreatureChoice {
             player_id,
             source_card_id,
             ..
-        } => (11, player_id.as_str(), source_card_id.as_str()),
+        } => (12, player_id.as_str(), source_card_id.as_str()),
         PublicChoiceRequest::SpellModalChoice {
             player_id,
             source_card_id,
             ..
-        } => (12, player_id.as_str(), source_card_id.as_str()),
+        } => (13, player_id.as_str(), source_card_id.as_str()),
         PublicChoiceRequest::AbilityTarget {
             player_id,
             source_card_id,
             ..
-        } => (13, player_id.as_str(), source_card_id.as_str()),
-        PublicChoiceRequest::CleanupDiscard { player_id, .. } => (14, player_id.as_str(), ""),
+        } => (14, player_id.as_str(), source_card_id.as_str()),
+        PublicChoiceRequest::CleanupDiscard { player_id, .. } => (15, player_id.as_str(), ""),
     }
 }
 
@@ -1070,7 +1080,7 @@ mod tests {
     use crate::{
         domain::play::{
             commands::{PlayerDeck, StartGameCommand},
-            game::PendingDecision,
+            game::{PendingDecision, PriorityState},
             ids::{DeckId, GameId, PlayerId},
         },
         PublicChoiceRequest, PublicLegalAction, PublicPendingDecisionKind,
@@ -1131,6 +1141,30 @@ mod tests {
             request,
             PublicChoiceRequest::PendingDecisionUnavailable { player_id, decision }
                 if player_id.as_str() == "p1" && *decision == PublicPendingDecisionKind::Scry
+        )));
+    }
+
+    #[test]
+    fn priority_surface_stays_explicit_when_priority_holder_is_missing() {
+        let start = crate::domain::play::game::Game::start(StartGameCommand::new(
+            GameId::new("game-unavailable-priority-holder"),
+            vec![
+                PlayerDeck::new(PlayerId::new("p1"), DeckId::new("d1")),
+                PlayerDeck::new(PlayerId::new("p2"), DeckId::new("d2")),
+            ],
+        ));
+        assert!(start.is_ok(), "game should start");
+        let Some((mut game, _)) = start.ok() else {
+            return;
+        };
+        game.replace_priority(Some(PriorityState::opened(PlayerId::new("ghost"))));
+
+        let surface = public_surface_state(&game, &PlayerId::new("ghost"));
+
+        assert!(surface.choice_requests.iter().any(|request| matches!(
+            request,
+            PublicChoiceRequest::PriorityUnavailable { player_id }
+                if player_id.as_str() == "ghost"
         )));
     }
 }
