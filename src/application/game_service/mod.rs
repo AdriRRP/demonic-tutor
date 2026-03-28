@@ -10,13 +10,17 @@ pub(crate) mod turn_flow;
 
 use crate::{
     application::{EventBus, EventStore},
+    application::public_game::PublicEventLogEntry,
     domain::play::{
         errors::{DomainError, GameError},
         events::DomainEvent,
         game::Game,
     },
 };
-use std::sync::Arc;
+use std::{
+    collections::HashMap,
+    sync::{Arc, RwLock},
+};
 
 use self::rollback::GameRollback;
 
@@ -27,6 +31,7 @@ where
 {
     event_store: E,
     event_bus: B,
+    public_event_log_cache: RwLock<HashMap<String, Arc<[PublicEventLogEntry]>>>,
 }
 
 impl<E, B> GameService<E, B>
@@ -35,10 +40,11 @@ where
     B: EventBus,
 {
     #[must_use]
-    pub const fn new(event_store: E, event_bus: B) -> Self {
+    pub fn new(event_store: E, event_bus: B) -> Self {
         Self {
             event_store,
             event_bus,
+            public_event_log_cache: RwLock::new(HashMap::new()),
         }
     }
 
@@ -53,6 +59,7 @@ where
                     "failed to persist domain events for aggregate {game_id}: {err}"
                 )))
             })?;
+            self.invalidate_public_event_log_cache(game_id);
             for event in events {
                 self.event_bus.publish(event);
             }
@@ -117,5 +124,31 @@ where
                 "failed to load persisted domain events for aggregate {game_id}: {err}"
             )))
         })
+    }
+
+    pub(crate) fn cached_public_event_log(
+        &self,
+        game_id: &str,
+    ) -> Option<Arc<[PublicEventLogEntry]>> {
+        self.public_event_log_cache
+            .read()
+            .ok()
+            .and_then(|cache| cache.get(game_id).cloned())
+    }
+
+    pub(crate) fn store_public_event_log_cache(
+        &self,
+        game_id: &str,
+        entries: Arc<[PublicEventLogEntry]>,
+    ) {
+        if let Ok(mut cache) = self.public_event_log_cache.write() {
+            cache.insert(game_id.to_string(), entries);
+        }
+    }
+
+    fn invalidate_public_event_log_cache(&self, game_id: &str) {
+        if let Ok(mut cache) = self.public_event_log_cache.write() {
+            cache.remove(game_id);
+        }
     }
 }

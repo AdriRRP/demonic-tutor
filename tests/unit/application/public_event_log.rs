@@ -1,14 +1,47 @@
 //! Unit coverage for the public replay event log query.
 
+use std::{
+    error::Error,
+    sync::{
+        atomic::{AtomicUsize, Ordering},
+        Arc,
+    },
+};
+
 use demonictutor::{
-    public_command_result, public_event_log, DomainEvent, GameId, PlayLandCommand, PlayerId,
-    PriorityPassed, PublicCommandStatus, PublicEvent, PublicGameCommand,
+    public_command_result, public_event_log, DomainEvent, EventStore, GameId, GameService,
+    InMemoryEventBus, PlayLandCommand, PlayerId, PriorityPassed, PublicCommandStatus, PublicEvent,
+    PublicGameCommand,
 };
 
 use crate::support::{
     advance_to_player_first_main_satisfying_cleanup, filled_library, first_hand_card_id, land_card,
     player, setup_two_player_game,
 };
+
+#[derive(Clone)]
+struct CountingEventStore {
+    events: Arc<[DomainEvent]>,
+    reads: Arc<AtomicUsize>,
+}
+
+impl EventStore for CountingEventStore {
+    fn append(
+        &self,
+        _aggregate_id: &str,
+        _events: &[DomainEvent],
+    ) -> Result<(), Box<dyn Error + Send + Sync>> {
+        Ok(())
+    }
+
+    fn get_events(
+        &self,
+        _aggregate_id: &str,
+    ) -> Result<Arc<[DomainEvent]>, Box<dyn Error + Send + Sync>> {
+        self.reads.fetch_add(1, Ordering::SeqCst);
+        Ok(Arc::clone(&self.events))
+    }
+}
 
 #[test]
 fn public_event_log_assigns_stable_sequences_to_raw_events() {
@@ -109,4 +142,29 @@ fn public_event_log_redacts_hidden_opening_hand_and_draw_card_ids() {
             if event.player_id == PlayerId::new("player-1")
                 && event.draw_kind == demonictutor::DrawKind::TurnStep
     ));
+}
+
+#[test]
+fn game_service_public_event_log_reuses_cached_public_projection_across_reads() {
+    let reads = Arc::new(AtomicUsize::new(0));
+    let store = CountingEventStore {
+        events: Arc::from(vec![DomainEvent::PriorityPassed(PriorityPassed {
+            game_id: GameId::new("game-public-event-log-cache"),
+            player_id: PlayerId::new("player-1"),
+        })]),
+        reads: Arc::clone(&reads),
+    };
+    let service = GameService::new(store, InMemoryEventBus::new());
+
+    let first = service
+        .public_event_log(&GameId::new("game-public-event-log-cache"))
+        .expect("first replay read should succeed");
+    let second = service
+        .public_event_log(&GameId::new("game-public-event-log-cache"))
+        .expect("second replay read should succeed");
+
+    assert_eq!(first.len(), 1);
+    assert_eq!(second.len(), 1);
+    assert_eq!(first[0].sequence, second[0].sequence);
+    assert_eq!(reads.load(Ordering::SeqCst), 1);
 }

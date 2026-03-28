@@ -1,6 +1,7 @@
 //! Executes public gameplay commands and assembles deterministic response envelopes.
 
 use rand::{rngs::StdRng, seq::SliceRandom, SeedableRng};
+use std::sync::Arc;
 
 use crate::{
     application::{
@@ -96,9 +97,14 @@ where
         game_id: &GameId,
     ) -> Result<Vec<PublicEventLogEntry>, DomainError> {
         let aggregate_id = game_id.to_string();
+        if let Some(cached) = self.cached_public_event_log(&aggregate_id) {
+            return Ok(cached.iter().cloned().collect());
+        }
         let events = self.load_persisted_events(&aggregate_id)?;
+        let log = public_event_log(events.iter());
+        self.store_public_event_log_cache(&aggregate_id, Arc::from(log.clone()));
 
-        Ok(public_event_log(events.iter()))
+        Ok(log)
     }
 
     /// Executes a public gameplay command and returns a UI-friendly deterministic envelope.
