@@ -10,7 +10,7 @@ use {
                 ResolveOptionalEffectCommand, ResolvePendingHandChoiceCommand,
                 ResolvePendingScryCommand, ResolvePendingSurveilCommand,
             },
-            errors::DomainError,
+            errors::{DomainError, GameError},
             events::{
                 CardDiscarded, CardDrawn, CardMovedZone, CreatureDied, DomainEvent, GameEnded,
                 LifeChanged, SpellCast, StackTopResolved, TriggeredAbilityPutOnStack,
@@ -23,6 +23,25 @@ use {
         },
     },
 };
+
+fn rollback_for_pending_decision_controller(game: &Game) -> Result<GameRollback, DomainError> {
+    let Some(pending_decision) = game.pending_decision() else {
+        return Ok(GameRollback::default());
+    };
+
+    let controller_id = game
+        .players()
+        .get(pending_decision.controller_index())
+        .ok_or_else(|| {
+            DomainError::Game(GameError::InternalInvariantViolation(
+                "pending decision controller index should exist in player list".to_string(),
+            ))
+        })?
+        .id()
+        .clone();
+
+    GameRollback::default().capture_player(game, &controller_id)
+}
 
 struct ResolutionEffectBatch<'a> {
     card_drawn: &'a [CardDrawn],
@@ -435,13 +454,11 @@ where
         game: &mut Game,
         cmd: ResolvePendingScryCommand,
     ) -> Result<ResolvePendingScryOutcome, DomainError> {
-        let rollback = GameRollback::default()
-            .capture_all_players(game)?
+        let rollback = rollback_for_pending_decision_controller(game)?
             .capture_card_locations(game)
             .capture_stack(game)
             .capture_priority(game)
-            .capture_pending_decision(game)
-            .capture_terminal_state(game);
+            .capture_pending_decision(game);
         self.apply_persisted(
             game,
             rollback,
@@ -460,13 +477,11 @@ where
         game: &mut Game,
         cmd: ResolvePendingSurveilCommand,
     ) -> Result<ResolvePendingSurveilOutcome, DomainError> {
-        let rollback = GameRollback::default()
-            .capture_all_players(game)?
+        let rollback = rollback_for_pending_decision_controller(game)?
             .capture_card_locations(game)
             .capture_stack(game)
             .capture_priority(game)
-            .capture_pending_decision(game)
-            .capture_terminal_state(game);
+            .capture_pending_decision(game);
         self.apply_persisted(
             game,
             rollback,
