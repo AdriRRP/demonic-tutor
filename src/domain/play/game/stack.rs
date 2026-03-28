@@ -14,9 +14,32 @@ use {
         },
         errors::DomainError,
     },
+    std::collections::HashSet,
 };
 
 impl Game {
+    fn sync_zone_changes_and_moved_cards(
+        &mut self,
+        zone_changes: &[crate::domain::play::events::CardMovedZone],
+        moved_cards: &[crate::domain::play::ids::CardInstanceId],
+    ) -> Result<(), DomainError> {
+        let mut synced_cards = HashSet::new();
+
+        for zone_change in zone_changes {
+            self.sync_card_location_from_zone_change(zone_change)?;
+            synced_cards.insert(zone_change.card_id.clone());
+        }
+
+        for card_id in moved_cards {
+            if synced_cards.contains(card_id) {
+                continue;
+            }
+            self.sync_card_location_from_any_player(card_id);
+        }
+
+        Ok(())
+    }
+
     /// Activates a supported non-mana ability from the battlefield.
     ///
     /// # Errors
@@ -42,11 +65,7 @@ impl Game {
             cmd,
         );
         if let Ok(outcome) = &result {
-            for moved_card in &outcome.moved_cards {
-                let _ = self
-                    .card_locations
-                    .set_zone(moved_card, super::model::PlayerCardZone::Graveyard);
-            }
+            self.sync_zone_changes_and_moved_cards(&outcome.zone_changes, &outcome.moved_cards)?;
         }
         result
     }
@@ -129,9 +148,7 @@ impl Game {
                     super::helpers::find_player_index(&self.players, &creature_died.player_id)?;
                 self.sync_card_location_from_player(owner_index, &creature_died.card_id);
             }
-            for card_id in &outcome.moved_cards {
-                self.sync_card_location_from_any_player(card_id);
-            }
+            self.sync_zone_changes_and_moved_cards(&outcome.zone_changes, &outcome.moved_cards)?;
         }
         result
     }
@@ -176,9 +193,7 @@ impl Game {
                     super::helpers::find_player_index(&self.players, &creature_died.player_id)?;
                 self.sync_card_location_from_player(owner_index, &creature_died.card_id);
             }
-            for card_id in &outcome.moved_cards {
-                self.sync_card_location_from_any_player(card_id);
-            }
+            self.sync_zone_changes_and_moved_cards(&outcome.zone_changes, &outcome.moved_cards)?;
         }
         result
     }
@@ -223,9 +238,7 @@ impl Game {
                     super::helpers::find_player_index(&self.players, &card_discarded.player_id)?;
                 self.sync_card_location_from_player(owner_index, &card_discarded.card_id);
             }
-            for card_id in &outcome.moved_cards {
-                self.sync_card_location_from_any_player(card_id);
-            }
+            self.sync_zone_changes_and_moved_cards(&outcome.zone_changes, &outcome.moved_cards)?;
         }
         result
     }
@@ -260,6 +273,7 @@ impl Game {
                     super::helpers::find_player_index(&self.players, &spell_cast.player_id)?;
                 self.sync_card_location_from_player(owner_index, &spell_cast.card_id);
             }
+            self.sync_zone_changes_and_moved_cards(&outcome.zone_changes, &outcome.moved_cards)?;
         }
         result
     }
@@ -294,20 +308,7 @@ impl Game {
                     super::helpers::find_player_index(&self.players, &spell_cast.player_id)?;
                 self.sync_card_location_from_player(owner_index, &spell_cast.card_id);
             }
-            for moved_card in &outcome.moved_cards {
-                let owner_index = self
-                    .players
-                    .iter()
-                    .position(|player| player.owns_card(moved_card))
-                    .ok_or_else(|| {
-                        DomainError::Game(
-                            crate::domain::play::errors::GameError::InternalInvariantViolation(
-                                format!("missing owner for surveilled card {moved_card}"),
-                            ),
-                        )
-                    })?;
-                self.sync_card_location_from_player(owner_index, moved_card);
-            }
+            self.sync_zone_changes_and_moved_cards(&outcome.zone_changes, &outcome.moved_cards)?;
         }
         result
     }

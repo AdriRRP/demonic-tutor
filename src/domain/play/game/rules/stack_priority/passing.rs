@@ -2,9 +2,7 @@
 
 use {
     super::{
-        deferred_resolution::{
-            build_spell_resolution_events_from_parts, move_spell_to_resolution_destination,
-        },
+        deferred_resolution::{remove_pending_spell, resolve_pending_spell_to_default_destination},
         hand_choice_effect::draw_cards_for_pending_effect,
         resolution::resolve_stack_object,
         PassPriorityOutcome, StackPriorityContext,
@@ -195,39 +193,21 @@ pub fn pass_priority(
                     )?;
 
                     if let Some(game_ended) = game_ended {
-                        let resolved_stack_object = stack.pop().ok_or_else(|| {
-                        DomainError::Game(GameError::InternalInvariantViolation(
-                            "loot spell should still be on the stack while opening its pending hand choice".to_string(),
-                        ))
-                    })?;
-                        let controller_id = players[controller_index].id().clone();
-                        let crate::domain::play::game::StackObjectKind::Spell(spell) =
-                            resolved_stack_object.into_kind()
-                        else {
-                            return Err(DomainError::Game(GameError::InternalInvariantViolation(
-                                "pending loot resolution requires a spell stack object".to_string(),
-                            )));
-                        };
-                        let source_card_id = spell.source_card_id().clone();
-                        let card_type = *spell.card_type();
-                        let mana_cost_paid = spell.mana_cost_paid();
-                        let payload = spell.into_payload();
-                        let (spell_outcome, moved_cards) = move_spell_to_resolution_destination(
+                        let pending_spell = remove_pending_spell(
                             players,
+                            stack,
                             controller_index,
-                            payload,
-                            card_type,
+                            stack_object_number,
+                            "loot spell should still be on the stack while opening its pending hand choice",
+                            "pending loot resolution requires a spell stack object",
                         )?;
-                        let (stack_top_resolved, spell_cast) =
-                            build_spell_resolution_events_from_parts(
+                        let (stack_top_resolved, spell_cast, moved_cards) =
+                            resolve_pending_spell_to_default_destination(
                                 game_id,
-                                &controller_id,
-                                stack_object_number,
-                                &source_card_id,
-                                card_type,
-                                mana_cost_paid,
-                                spell_outcome,
-                            );
+                                players,
+                                controller_index,
+                                pending_spell,
+                            )?;
 
                         *priority = None;
                         return Ok(PassPriorityOutcome {

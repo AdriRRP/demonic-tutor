@@ -14,7 +14,7 @@ mod turn_flow;
 
 use crate::domain::play::{
     errors::{DomainError, GameError},
-    events::GameEndReason,
+    events::{CardMovedZone, GameEndReason, ZoneType},
     ids::{CardInstanceId, GameId, PlayerId},
     phase::Phase,
 };
@@ -295,5 +295,27 @@ impl Game {
         }
 
         self.card_locations.remove(card_id);
+    }
+
+    fn sync_card_location_from_zone_change(
+        &mut self,
+        zone_change: &CardMovedZone,
+    ) -> Result<(), DomainError> {
+        match zone_change.destination_zone {
+            ZoneType::Library
+            | ZoneType::Hand
+            | ZoneType::Battlefield
+            | ZoneType::Graveyard
+            | ZoneType::Exile => {
+                let owner_index =
+                    helpers::find_player_index(&self.players, &zone_change.player_id)?;
+                self.sync_card_location_from_player(owner_index, &zone_change.card_id);
+            }
+            ZoneType::Stack | ZoneType::Created => {
+                self.card_locations.remove(&zone_change.card_id);
+            }
+        }
+
+        Ok(())
     }
 }
