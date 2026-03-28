@@ -156,12 +156,13 @@ fn game_service_public_event_log_reuses_cached_public_projection_across_reads() 
     };
     let service = GameService::new(store, InMemoryEventBus::new());
 
-    let first = service
-        .public_event_log(&GameId::new("game-public-event-log-cache"))
-        .expect("first replay read should succeed");
-    let second = service
-        .public_event_log(&GameId::new("game-public-event-log-cache"))
-        .expect("second replay read should succeed");
+    let first = service.public_event_log(&GameId::new("game-public-event-log-cache"));
+    assert!(first.is_ok(), "first replay read should succeed");
+    let first = first.unwrap_or_default();
+
+    let second = service.public_event_log(&GameId::new("game-public-event-log-cache"));
+    assert!(second.is_ok(), "second replay read should succeed");
+    let second = second.unwrap_or_default();
 
     assert_eq!(first.len(), 1);
     assert_eq!(second.len(), 1);

@@ -34,11 +34,13 @@ impl EventStore for InMemoryEventStore {
         aggregate_id: &str,
         new_events: &[DomainEvent],
     ) -> Result<(), Box<dyn Error + Send + Sync>> {
-        let mut events = self.events.write().map_err(|e| e.to_string())?;
-        events
-            .entry(aggregate_id.to_string())
-            .or_default()
-            .push(Arc::<[DomainEvent]>::from(new_events.to_vec()));
+        {
+            let mut events = self.events.write().map_err(|e| e.to_string())?;
+            events
+                .entry(aggregate_id.to_string())
+                .or_default()
+                .push(Arc::<[DomainEvent]>::from(new_events.to_vec()));
+        }
         Ok(())
     }
 
@@ -46,10 +48,13 @@ impl EventStore for InMemoryEventStore {
         &self,
         aggregate_id: &str,
     ) -> Result<Arc<[DomainEvent]>, Box<dyn Error + Send + Sync>> {
-        let events = self.events.read().map_err(|e| e.to_string())?;
-        let Some(chunks) = events.get(aggregate_id) else {
-            return Ok(Arc::<[DomainEvent]>::from(Vec::<DomainEvent>::new()));
+        let chunks = {
+            let events = self.events.read().map_err(|e| e.to_string())?;
+            events.get(aggregate_id).cloned().unwrap_or_default()
         };
+        if chunks.is_empty() {
+            return Ok(Arc::<[DomainEvent]>::from(Vec::<DomainEvent>::new()));
+        }
 
         let total_len = chunks.iter().map(|chunk| chunk.len()).sum();
         let mut combined_events = Vec::with_capacity(total_len);

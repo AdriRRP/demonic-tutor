@@ -20,7 +20,10 @@ impl GameLogProjection {
 
     #[must_use]
     pub fn logs(&self) -> Arc<[String]> {
-        self.logs.read().map(|logs| Arc::clone(&logs)).unwrap_or_default()
+        self.logs
+            .read()
+            .map(|logs| Arc::clone(&logs))
+            .unwrap_or_default()
     }
 
     fn describe_event(event: &DomainEvent) -> String {

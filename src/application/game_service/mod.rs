@@ -9,8 +9,8 @@ pub(crate) mod stack;
 pub(crate) mod turn_flow;
 
 use crate::{
-    application::{EventBus, EventStore},
     application::public_game::PublicEventLogEntry,
+    application::{EventBus, EventStore},
     domain::play::{
         errors::{DomainError, GameError},
         events::DomainEvent,
