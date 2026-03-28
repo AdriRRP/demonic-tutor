@@ -1,26 +1,26 @@
 //! Supports infrastructure projections game log.
 
-use {crate::domain::play::events::DomainEvent, std::sync::RwLock};
+use {
+    crate::domain::play::events::DomainEvent,
+    std::sync::{Arc, RwLock},
+};
 
 #[derive(Debug, Default)]
 pub struct GameLogProjection {
-    logs: RwLock<Vec<String>>,
+    logs: RwLock<Arc<[String]>>,
 }
 
 impl GameLogProjection {
     #[must_use]
-    pub const fn new() -> Self {
+    pub fn new() -> Self {
         Self {
-            logs: RwLock::new(Vec::new()),
+            logs: RwLock::new(Arc::<[String]>::from(Vec::<String>::new())),
         }
     }
 
     #[must_use]
-    pub fn logs(&self) -> Vec<String> {
-        self.logs
-            .read()
-            .map(|logs| logs.clone())
-            .unwrap_or_default()
+    pub fn logs(&self) -> Arc<[String]> {
+        self.logs.read().map(|logs| Arc::clone(&logs)).unwrap_or_default()
     }
 
     fn describe_event(event: &DomainEvent) -> String {
@@ -163,7 +163,9 @@ impl GameLogProjection {
         let log_entry = Self::describe_event(event);
 
         if let Ok(mut logs) = self.logs.write() {
-            logs.push(log_entry);
+            let mut next_logs = logs.iter().cloned().collect::<Vec<_>>();
+            next_logs.push(log_entry);
+            *logs = Arc::from(next_logs);
         }
     }
 }
