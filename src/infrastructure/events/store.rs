@@ -10,7 +10,13 @@ use {
 };
 
 pub struct InMemoryEventStore {
-    events: RwLock<HashMap<String, Vec<Arc<[DomainEvent]>>>>,
+    events: RwLock<HashMap<String, EventChunks>>,
+}
+
+#[derive(Default)]
+struct EventChunks {
+    chunks: Vec<Arc<[DomainEvent]>>,
+    combined: Option<Arc<[DomainEvent]>>,
 }
 
 impl InMemoryEventStore {
@@ -36,10 +42,11 @@ impl EventStore for InMemoryEventStore {
     ) -> Result<(), Box<dyn Error + Send + Sync>> {
         {
             let mut events = self.events.write().map_err(|e| e.to_string())?;
-            events
-                .entry(aggregate_id.to_string())
-                .or_default()
+            let entry = events.entry(aggregate_id.to_string()).or_default();
+            entry
+                .chunks
                 .push(Arc::<[DomainEvent]>::from(new_events.to_vec()));
+            entry.combined = None;
         }
         Ok(())
     }
@@ -48,20 +55,32 @@ impl EventStore for InMemoryEventStore {
         &self,
         aggregate_id: &str,
     ) -> Result<Arc<[DomainEvent]>, Box<dyn Error + Send + Sync>> {
-        let chunks = {
+        let cached = {
             let events = self.events.read().map_err(|e| e.to_string())?;
-            events.get(aggregate_id).cloned().unwrap_or_default()
+            events
+                .get(aggregate_id)
+                .and_then(|entry| entry.combined.clone())
         };
-        if chunks.is_empty() {
-            return Ok(Arc::<[DomainEvent]>::from(Vec::<DomainEvent>::new()));
+        if let Some(combined) = cached {
+            return Ok(combined);
         }
 
-        let total_len = chunks.iter().map(|chunk| chunk.len()).sum();
+        let mut events = self.events.write().map_err(|e| e.to_string())?;
+        let Some(entry) = events.get_mut(aggregate_id) else {
+            return Ok(Arc::<[DomainEvent]>::from(Vec::<DomainEvent>::new()));
+        };
+        if let Some(combined) = &entry.combined {
+            return Ok(Arc::clone(combined));
+        }
+
+        let total_len = entry.chunks.iter().map(|chunk| chunk.len()).sum();
         let mut combined_events = Vec::with_capacity(total_len);
-        for chunk in chunks {
+        for chunk in &entry.chunks {
             combined_events.extend(chunk.iter().cloned());
         }
+        let combined = Arc::<[DomainEvent]>::from(combined_events);
+        entry.combined = Some(Arc::clone(&combined));
 
-        Ok(Arc::<[DomainEvent]>::from(combined_events))
+        Ok(combined)
     }
 }
