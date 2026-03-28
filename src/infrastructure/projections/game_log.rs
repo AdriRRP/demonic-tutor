@@ -208,13 +208,9 @@ impl GameLogProjection {
     pub fn handle(&self, event: &DomainEvent) {
         let log_entry = Self::describe_event(event);
 
-        let (mut state, poisoned) = match self.logs.write() {
-            Ok(state) => (state, false),
-            Err(poisoned) => (poisoned.into_inner(), true),
-        };
-        if poisoned {
-            state.entries.push(Arc::from(Self::LOCK_POISONED_MESSAGE));
-        }
+        let mut state = self.logs.write().unwrap_or_else(|_| {
+            panic!("{}", Self::LOCK_POISONED_MESSAGE);
+        });
         state.entries.push(Arc::from(log_entry));
         state.snapshot = None;
     }
@@ -236,5 +232,23 @@ mod tests {
 
         let logs = projection.logs();
         assert_eq!(logs, Err(GameLogProjectionError::LockPoisoned));
+    }
+
+    #[test]
+    fn handle_panics_when_projection_lock_is_poisoned() {
+        let projection = GameLogProjection::new();
+        let _ = std::panic::catch_unwind(|| {
+            let _guard = projection.logs.write().expect("lock should be available");
+            std::panic::panic_any("poison projection lock");
+        });
+
+        let result = std::panic::catch_unwind(|| {
+            projection.handle(&DomainEvent::GameStarted(crate::domain::play::events::GameStarted::new(
+                crate::domain::play::ids::GameId::new("poisoned"),
+                vec![crate::domain::play::ids::PlayerId::new("p1")],
+            )));
+        });
+
+        assert!(result.is_err(), "poisoned handle should panic explicitly");
     }
 }
