@@ -49,9 +49,9 @@ impl PublicEventLogCache {
         Some(entry)
     }
 
-    fn insert(&mut self, game_id: String, entries: Arc<[PublicEventLogEntry]>) {
-        self.entries.insert(game_id.clone(), entries);
-        self.touch(&game_id);
+    fn insert(&mut self, game_id: &str, entries: Arc<[PublicEventLogEntry]>) {
+        self.entries.insert(game_id.to_string(), entries);
+        self.touch(game_id);
 
         while self.entries.len() > PUBLIC_EVENT_LOG_CACHE_CAPACITY {
             let Some(oldest) = self.recency.pop_front() else {
@@ -182,7 +182,7 @@ where
         entries: Arc<[PublicEventLogEntry]>,
     ) {
         if let Ok(mut cache) = self.public_event_log_cache.write() {
-            cache.insert(game_id.to_string(), entries);
+            cache.insert(game_id, entries);
         }
     }
 

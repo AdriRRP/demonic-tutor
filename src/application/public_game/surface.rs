@@ -939,7 +939,11 @@ fn public_choice_candidate(
     }
 }
 
-fn append_concede_action(game: &Game, viewer_id: &PlayerId, legal_actions: &mut Vec<PublicLegalAction>) {
+fn append_concede_action(
+    game: &Game,
+    viewer_id: &PlayerId,
+    legal_actions: &mut Vec<PublicLegalAction>,
+) {
     if game.players().iter().any(|player| player.id() == viewer_id) {
         legal_actions.push(PublicLegalAction::Concede {
             player_id: viewer_id.clone(),

@@ -146,7 +146,10 @@ impl GameLogProjection {
     fn log_game_ended(event: &crate::domain::play::events::GameEnded) -> String {
         match (&event.loser_id, &event.winner_id) {
             (Some(loser_id), Some(winner_id)) => {
-                format!("Game ended: {loser_id} lost to {winner_id} via {:?}", event.reason)
+                format!(
+                    "Game ended: {loser_id} lost to {winner_id} via {:?}",
+                    event.reason
+                )
             }
             _ => format!("Game ended in a draw via {:?}", event.reason),
         }

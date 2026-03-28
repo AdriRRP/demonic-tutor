@@ -244,7 +244,10 @@ mod tests {
     #[test]
     fn simultaneous_zero_life_ends_the_game_as_a_draw() {
         let game_id = GameId::new("game-simultaneous-zero-life");
-        let mut players = vec![Player::new(PlayerId::new("p1")), Player::new(PlayerId::new("p2"))];
+        let mut players = vec![
+            Player::new(PlayerId::new("p1")),
+            Player::new(PlayerId::new("p2")),
+        ];
         let mut terminal_state = TerminalState::active();
         players[0].adjust_life(-20);
         players[1].adjust_life(-20);
