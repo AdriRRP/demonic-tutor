@@ -2,10 +2,10 @@
 
 use {
     super::{
-        hand_choice_effect::{
-            build_spell_resolution_events, draw_cards_for_pending_effect,
-            move_spell_to_resolution_destination,
+        deferred_resolution::{
+            build_spell_resolution_events_from_parts, move_spell_to_resolution_destination,
         },
+        hand_choice_effect::draw_cards_for_pending_effect,
         resolution::resolve_stack_object,
         PassPriorityOutcome, StackPriorityContext,
     },
@@ -215,15 +215,16 @@ pub fn pass_priority(
                             payload,
                             card_type,
                         )?;
-                        let (stack_top_resolved, spell_cast) = build_spell_resolution_events(
-                            game_id,
-                            &controller_id,
-                            stack_object_number,
-                            &source_card_id,
-                            card_type,
-                            mana_cost_paid,
-                            spell_outcome,
-                        );
+                        let (stack_top_resolved, spell_cast) =
+                            build_spell_resolution_events_from_parts(
+                                game_id,
+                                &controller_id,
+                                stack_object_number,
+                                &source_card_id,
+                                card_type,
+                                mana_cost_paid,
+                                spell_outcome,
+                            );
 
                         *priority = None;
                         return Ok(PassPriorityOutcome {

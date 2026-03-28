@@ -95,6 +95,7 @@ pub fn domain_events_for_resolve_pending_surveil(
     outcome: &ResolvePendingSurveilOutcome,
 ) -> Vec<DomainEvent> {
     let mut domain_events = DomainEvents::default();
+    domain_events.extend(outcome.cards_moved_to_graveyard.iter().cloned());
     domain_events.push_optional(outcome.stack_top_resolved.clone());
     domain_events.push_optional(outcome.spell_cast.clone());
     domain_events.push_optional(outcome.game_ended.clone());

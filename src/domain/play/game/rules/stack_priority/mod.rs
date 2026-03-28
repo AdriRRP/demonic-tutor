@@ -2,6 +2,7 @@
 
 mod activation;
 mod casting;
+mod deferred_resolution;
 mod hand_choice_effect;
 mod optional_effect;
 mod passing;
@@ -17,9 +18,9 @@ use super::super::{
 };
 use crate::domain::play::{
     events::{
-        ActivatedAbilityPutOnStack, CardDiscarded, CardDrawn, CardExiled, CreatureDied, GameEnded,
-        LifeChanged, PriorityPassed, SpellCast, SpellPutOnStack, StackTopResolved,
-        TriggeredAbilityPutOnStack,
+        ActivatedAbilityPutOnStack, CardDiscarded, CardDrawn, CardExiled, CardMovedToGraveyard,
+        CreatureDied, GameEnded, LifeChanged, PriorityPassed, SpellCast, SpellPutOnStack,
+        StackTopResolved, TriggeredAbilityPutOnStack,
     },
     ids::{CardInstanceId, GameId, PlayerId},
     phase::Phase,
@@ -113,6 +114,7 @@ pub struct ResolvePendingScryOutcome {
 pub struct ResolvePendingSurveilOutcome {
     pub stack_top_resolved: Option<StackTopResolved>,
     pub spell_cast: Option<SpellCast>,
+    pub cards_moved_to_graveyard: Vec<CardMovedToGraveyard>,
     pub moved_cards: Vec<CardInstanceId>,
     pub game_ended: Option<GameEnded>,
     pub priority_still_open: bool,

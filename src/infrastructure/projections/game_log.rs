@@ -97,6 +97,12 @@ impl GameLogProjection {
                     e.card_id, e.player_id, e.origin_zone
                 )
             }
+            DomainEvent::CardMovedToGraveyard(e) => {
+                format!(
+                    "Card {} controlled by {} moved to graveyard from {:?}",
+                    e.card_id, e.player_id, e.origin_zone
+                )
+            }
         }
     }
 

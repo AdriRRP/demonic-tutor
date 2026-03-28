@@ -50,3 +50,28 @@ impl CardExiled {
         }
     }
 }
+
+#[derive(Debug, Clone)]
+pub struct CardMovedToGraveyard {
+    pub game_id: GameId,
+    pub player_id: PlayerId,
+    pub card_id: CardInstanceId,
+    pub origin_zone: ZoneType,
+}
+
+impl CardMovedToGraveyard {
+    #[must_use]
+    pub const fn new(
+        game_id: GameId,
+        player_id: PlayerId,
+        card_id: CardInstanceId,
+        origin_zone: ZoneType,
+    ) -> Self {
+        Self {
+            game_id,
+            player_id,
+            card_id,
+            origin_zone,
+        }
+    }
+}
