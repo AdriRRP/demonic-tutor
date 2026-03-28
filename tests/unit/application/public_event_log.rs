@@ -201,6 +201,47 @@ fn game_service_public_event_log_evicts_oldest_cached_timelines() {
 }
 
 #[test]
+fn game_service_public_event_log_promotes_recently_read_timeline_before_eviction() {
+    let reads = Arc::new(AtomicUsize::new(0));
+    let store = CountingEventStore {
+        events: Arc::from(vec![DomainEvent::PriorityPassed(PriorityPassed {
+            game_id: GameId::new("game-public-event-log-promotion"),
+            player_id: PlayerId::new("player-1"),
+        })]),
+        reads: Arc::clone(&reads),
+    };
+    let service = GameService::new(store, InMemoryEventBus::new());
+
+    for index in 0..64 {
+        let result = service.public_event_log(&GameId::new(format!("promoted-game-{index}")));
+        assert!(result.is_ok(), "cache warmup should succeed: {result:?}");
+    }
+    assert_eq!(reads.load(Ordering::SeqCst), 64);
+
+    let reread_oldest = service.public_event_log(&GameId::new("promoted-game-0"));
+    assert!(reread_oldest.is_ok(), "rereading oldest cached timeline should succeed");
+    assert_eq!(reads.load(Ordering::SeqCst), 64);
+
+    let overflow = service.public_event_log(&GameId::new("promoted-game-64"));
+    assert!(overflow.is_ok(), "capacity-overflow read should succeed");
+    assert_eq!(reads.load(Ordering::SeqCst), 65);
+
+    let reread_promoted = service.public_event_log(&GameId::new("promoted-game-0"));
+    assert!(
+        reread_promoted.is_ok(),
+        "recently reread timeline should stay cached after overflow"
+    );
+    assert_eq!(reads.load(Ordering::SeqCst), 65);
+
+    let reread_next_oldest = service.public_event_log(&GameId::new("promoted-game-1"));
+    assert!(
+        reread_next_oldest.is_ok(),
+        "the true oldest untouched timeline should be evicted first"
+    );
+    assert_eq!(reads.load(Ordering::SeqCst), 66);
+}
+
+#[test]
 fn game_service_public_event_log_evicts_large_cached_timelines_by_footprint() {
     let reads = Arc::new(AtomicUsize::new(0));
     let store = CountingEventStore {

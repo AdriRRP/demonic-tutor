@@ -63,10 +63,14 @@ struct CacheRecencyNode {
 }
 
 impl PublicEventLogCache {
-    fn get(&self, game_id: &str) -> Option<Arc<[PublicEventLogEntry]>> {
-        self.entries
-            .get(game_id)
-            .map(|cached| Arc::clone(&cached.entries))
+    fn get(&mut self, game_id: &str) -> Option<Arc<[PublicEventLogEntry]>> {
+        let recency_node = self.entries.get(game_id)?.recency_node;
+        let entries = Arc::clone(&self.entries.get(game_id)?.entries);
+
+        self.unlink_recency_node(recency_node);
+        self.link_recency_node_as_newest(recency_node);
+
+        Some(entries)
     }
 
     fn insert(&mut self, game_id: &str, entries: Arc<[PublicEventLogEntry]>) {
@@ -279,7 +283,7 @@ where
         &self,
         game_id: &str,
     ) -> Option<Arc<[PublicEventLogEntry]>> {
-        let cache = match self.public_event_log_cache.read() {
+        let mut cache = match self.public_event_log_cache.write() {
             Ok(cache) => cache,
             Err(poisoned) => poisoned.into_inner(),
         };
