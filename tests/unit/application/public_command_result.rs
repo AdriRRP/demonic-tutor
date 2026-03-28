@@ -263,7 +263,7 @@ fn declare_attackers_emits_triggered_ability_put_on_stack_for_supported_attack_t
 }
 
 #[test]
-fn resolve_combat_damage_emits_triggered_ability_put_on_stack_for_supported_damage_triggers() {
+fn resolve_combat_damage_emits_effects_before_close_and_supported_damage_triggers() {
     let (service, mut game) = setup_two_player_game(
         "game-public-combat-damage-trigger",
         filled_library(
@@ -339,8 +339,8 @@ fn resolve_combat_damage_emits_triggered_ability_put_on_stack_for_supported_dama
     assert!(matches!(
         result.emitted_events.as_slice(),
         [
-            DomainEvent::CombatDamageResolved(_),
             DomainEvent::LifeChanged(_),
+            DomainEvent::CombatDamageResolved(_),
             DomainEvent::TriggeredAbilityPutOnStack(event),
         ] if event.trigger == TriggeredAbilityEvent::DealsCombatDamageToPlayer
     ));
