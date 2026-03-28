@@ -1,7 +1,7 @@
 //! Supports application game service resource actions.
 
 use {
-    super::{common::DomainEvents, GameService},
+    super::{common::DomainEvents, rollback::GameRollback, GameService},
     crate::{
         application::{EventBus, EventStore},
         domain::play::{
@@ -10,7 +10,7 @@ use {
             },
             errors::DomainError,
             events::{CardMovedZone, DomainEvent, LandPlayed, LandTapped, ManaAdded, ZoneType},
-            game::{AdjustPlayerLifeEffectOutcome, Game, GameCheckpointSpec},
+            game::{AdjustPlayerLifeEffectOutcome, Game},
         },
     },
 };
@@ -57,9 +57,10 @@ where
         game: &mut Game,
         cmd: PlayLandCommand,
     ) -> Result<LandPlayed, DomainError> {
-        self.apply_persisted_event(game, GameCheckpointSpec::PLAY_LAND, |game| {
-            game.play_land(cmd)
-        })
+        let rollback = GameRollback::default()
+            .capture_player(game, &cmd.player_id)?
+            .capture_card_locations(game);
+        self.apply_persisted_event(game, rollback, |game| game.play_land(cmd))
     }
 
     /// Exiles a card.
@@ -72,9 +73,10 @@ where
         game: &mut Game,
         cmd: &ExileCardCommand,
     ) -> Result<CardMovedZone, DomainError> {
-        self.apply_persisted_event(game, GameCheckpointSpec::EXILE_CARD, |game| {
-            game.exile_card(cmd)
-        })
+        let rollback = GameRollback::default()
+            .capture_player(game, &cmd.player_id)?
+            .capture_card_locations(game);
+        self.apply_persisted_event(game, rollback, |game| game.exile_card(cmd))
     }
 
     /// Resolves an explicit life effect from a caster onto a target player.
@@ -87,9 +89,13 @@ where
         game: &mut Game,
         cmd: AdjustPlayerLifeEffectCommand,
     ) -> Result<AdjustPlayerLifeEffectOutcome, DomainError> {
+        let rollback = GameRollback::default()
+            .capture_all_players(game)?
+            .capture_card_locations(game)
+            .capture_terminal_state(game);
         self.apply_persisted(
             game,
-            GameCheckpointSpec::ADJUST_PLAYER_LIFE_EFFECT,
+            rollback,
             |game| game.adjust_player_life_effect(cmd),
             domain_events_for_adjust_player_life_effect,
         )
@@ -105,9 +111,10 @@ where
         game: &mut Game,
         cmd: TapLandCommand,
     ) -> Result<(LandTapped, ManaAdded), DomainError> {
+        let rollback = GameRollback::default().capture_player(game, &cmd.player_id)?;
         self.apply_persisted(
             game,
-            GameCheckpointSpec::TAP_LAND,
+            rollback,
             |game| game.tap_land(cmd),
             |(land_event, mana_event)| {
                 let mut domain_events = DomainEvents::with(land_event.clone());

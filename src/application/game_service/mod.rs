@@ -4,6 +4,7 @@ pub(crate) mod combat;
 mod common;
 mod lifecycle;
 pub(crate) mod resource_actions;
+mod rollback;
 pub(crate) mod stack;
 pub(crate) mod turn_flow;
 
@@ -12,9 +13,11 @@ use crate::{
     domain::play::{
         errors::{DomainError, GameError},
         events::DomainEvent,
-        game::{Game, GameCheckpointSpec},
+        game::Game,
     },
 };
+
+use self::rollback::GameRollback;
 
 pub struct GameService<E, B>
 where
@@ -67,7 +70,7 @@ where
     fn apply_persisted<T, F, M>(
         &self,
         game: &mut Game,
-        checkpoint_spec: GameCheckpointSpec,
+        rollback: GameRollback,
         apply: F,
         map_events: M,
     ) -> Result<T, DomainError>
@@ -75,17 +78,16 @@ where
         F: FnOnce(&mut Game) -> Result<T, DomainError>,
         M: FnOnce(&T) -> Vec<DomainEvent>,
     {
-        let checkpoint = game.checkpoint(checkpoint_spec);
         let outcome = match apply(game) {
             Ok(outcome) => outcome,
             Err(err) => {
-                game.restore_checkpoint(checkpoint);
+                rollback.restore(game)?;
                 return Err(err);
             }
         };
         let domain_events = map_events(&outcome);
         if let Err(err) = self.persist_and_publish_events(game.id().as_str(), &domain_events) {
-            game.restore_checkpoint(checkpoint);
+            rollback.restore(game)?;
             return Err(err);
         }
 
@@ -95,16 +97,14 @@ where
     fn apply_persisted_event<T, F>(
         &self,
         game: &mut Game,
-        checkpoint_spec: GameCheckpointSpec,
+        rollback: GameRollback,
         apply: F,
     ) -> Result<T, DomainError>
     where
         T: Clone + Into<DomainEvent>,
         F: FnOnce(&mut Game) -> Result<T, DomainError>,
     {
-        self.apply_persisted(game, checkpoint_spec, apply, |event| {
-            vec![event.clone().into()]
-        })
+        self.apply_persisted(game, rollback, apply, |event| vec![event.clone().into()])
     }
 
     pub(crate) fn load_persisted_events(

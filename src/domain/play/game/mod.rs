@@ -41,97 +41,6 @@ pub use rules::{
 };
 pub use targets::SpellTarget;
 
-#[derive(Debug, Clone, Copy, Default)]
-pub(crate) struct GameCheckpointSpec(u16);
-
-impl GameCheckpointSpec {
-    const ACTIVE_PLAYER_INDEX: u16 = 1 << 0;
-    const PHASE: u16 = 1 << 1;
-    const TURN_NUMBER: u16 = 1 << 2;
-    const PLAYERS: u16 = 1 << 3;
-    const CARD_LOCATIONS: u16 = 1 << 4;
-    const STACK: u16 = 1 << 5;
-    const PRIORITY: u16 = 1 << 6;
-    const PENDING_DECISION: u16 = 1 << 7;
-    const TERMINAL_STATE: u16 = 1 << 8;
-
-    pub(crate) const DEAL_OPENING_HANDS: Self = Self(Self::PLAYERS);
-
-    pub(crate) const MULLIGAN: Self = Self::DEAL_OPENING_HANDS;
-
-    pub(crate) const CONCEDE: Self = Self(Self::TERMINAL_STATE);
-
-    pub(crate) const PLAY_LAND: Self = Self(Self::PLAYERS | Self::CARD_LOCATIONS);
-
-    pub(crate) const EXILE_CARD: Self = Self::PLAY_LAND;
-    pub(crate) const DRAW_CARDS_EFFECT: Self =
-        Self(Self::PLAYERS | Self::CARD_LOCATIONS | Self::TERMINAL_STATE);
-    pub(crate) const DISCARD_FOR_CLEANUP: Self = Self::PLAY_LAND;
-
-    pub(crate) const ADJUST_PLAYER_LIFE_EFFECT: Self =
-        Self(Self::PLAYERS | Self::CARD_LOCATIONS | Self::TERMINAL_STATE);
-
-    pub(crate) const TAP_LAND: Self = Self(Self::PLAYERS);
-
-    pub(crate) const DECLARE_ATTACKERS: Self =
-        Self(Self::PHASE | Self::PLAYERS | Self::STACK | Self::PRIORITY);
-
-    pub(crate) const DECLARE_BLOCKERS: Self = Self(Self::PHASE | Self::PLAYERS | Self::PRIORITY);
-
-    pub(crate) const RESOLVE_COMBAT_DAMAGE: Self = Self(
-        Self::PHASE
-            | Self::PLAYERS
-            | Self::CARD_LOCATIONS
-            | Self::STACK
-            | Self::PRIORITY
-            | Self::TERMINAL_STATE,
-    );
-
-    pub(crate) const ADVANCE_TURN: Self = Self(
-        Self::ACTIVE_PLAYER_INDEX
-            | Self::PHASE
-            | Self::TURN_NUMBER
-            | Self::PLAYERS
-            | Self::CARD_LOCATIONS
-            | Self::STACK
-            | Self::PRIORITY
-            | Self::TERMINAL_STATE,
-    );
-
-    pub(crate) const STACK_PRIORITY: Self = Self(
-        Self::PLAYERS
-            | Self::CARD_LOCATIONS
-            | Self::STACK
-            | Self::PRIORITY
-            | Self::PENDING_DECISION
-            | Self::TERMINAL_STATE,
-    );
-
-    const fn captures(self, flag: u16) -> bool {
-        self.0 & flag != 0
-    }
-}
-
-#[derive(Debug, Clone, Default)]
-enum SnapshotField<T> {
-    #[default]
-    Skipped,
-    Captured(T),
-}
-
-#[derive(Debug, Clone, Default)]
-pub(crate) struct GameCheckpoint {
-    active_player_index: SnapshotField<usize>,
-    phase: SnapshotField<Phase>,
-    turn_number: SnapshotField<u32>,
-    players: SnapshotField<Vec<Player>>,
-    card_locations: SnapshotField<AggregateCardLocationIndex>,
-    stack: SnapshotField<StackZone>,
-    priority: SnapshotField<Option<PriorityState>>,
-    pending_decision: SnapshotField<Option<PendingDecision>>,
-    terminal_state: SnapshotField<TerminalState>,
-}
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PendingHandChoiceKind {
     Loot { draw_count: u32 },
@@ -356,6 +265,96 @@ impl Game {
         self.terminal_state.end_reason()
     }
 
+    pub(crate) fn player_index(&self, player_id: &PlayerId) -> Result<usize, DomainError> {
+        helpers::find_player_index(&self.players, player_id)
+    }
+
+    #[must_use]
+    pub(crate) fn cloned_player(&self, index: usize) -> Option<Player> {
+        self.players.get(index).cloned()
+    }
+
+    pub(crate) fn replace_player(&mut self, index: usize, player: Player) -> Option<()> {
+        let slot = self.players.get_mut(index)?;
+        *slot = player;
+        Some(())
+    }
+
+    #[must_use]
+    pub(crate) const fn active_player_index_value(&self) -> usize {
+        self.active_player_index
+    }
+
+    pub(crate) const fn replace_active_player_index(&mut self, active_player_index: usize) {
+        self.active_player_index = active_player_index;
+    }
+
+    #[must_use]
+    pub(crate) const fn phase_value(&self) -> Phase {
+        self.phase
+    }
+
+    pub(crate) const fn replace_phase(&mut self, phase: Phase) {
+        self.phase = phase;
+    }
+
+    #[must_use]
+    pub(crate) const fn turn_number_value(&self) -> u32 {
+        self.turn_number
+    }
+
+    pub(crate) const fn replace_turn_number(&mut self, turn_number: u32) {
+        self.turn_number = turn_number;
+    }
+
+    #[must_use]
+    pub(crate) fn cloned_card_locations(&self) -> AggregateCardLocationIndex {
+        self.card_locations.clone()
+    }
+
+    pub(crate) fn replace_card_locations(&mut self, card_locations: AggregateCardLocationIndex) {
+        self.card_locations = card_locations;
+    }
+
+    #[must_use]
+    pub(crate) fn cloned_stack(&self) -> StackZone {
+        self.stack.clone()
+    }
+
+    pub(crate) fn replace_stack(&mut self, stack: StackZone) {
+        self.stack = stack;
+    }
+
+    #[must_use]
+    pub(crate) fn cloned_priority(&self) -> Option<PriorityState> {
+        self.priority.clone()
+    }
+
+    pub(crate) fn replace_priority(&mut self, priority: Option<PriorityState>) {
+        self.priority = priority;
+    }
+
+    #[must_use]
+    pub(crate) fn cloned_pending_decision(&self) -> Option<PendingDecision> {
+        self.pending_decision.clone()
+    }
+
+    pub(crate) const fn replace_pending_decision(
+        &mut self,
+        pending_decision: Option<PendingDecision>,
+    ) {
+        self.pending_decision = pending_decision;
+    }
+
+    #[must_use]
+    pub(crate) fn cloned_terminal_state(&self) -> TerminalState {
+        self.terminal_state.clone()
+    }
+
+    pub(crate) fn replace_terminal_state(&mut self, terminal_state: TerminalState) {
+        self.terminal_state = terminal_state;
+    }
+
     fn sync_card_location_from_player(&mut self, owner_index: usize, card_id: &CardInstanceId) {
         let Some(player) = self.players.get(owner_index) else {
             return;
@@ -442,85 +441,5 @@ impl Game {
         }
 
         Ok(())
-    }
-
-    pub(crate) fn checkpoint(&self, spec: GameCheckpointSpec) -> GameCheckpoint {
-        GameCheckpoint {
-            active_player_index: if spec.captures(GameCheckpointSpec::ACTIVE_PLAYER_INDEX) {
-                SnapshotField::Captured(self.active_player_index)
-            } else {
-                SnapshotField::Skipped
-            },
-            phase: if spec.captures(GameCheckpointSpec::PHASE) {
-                SnapshotField::Captured(self.phase)
-            } else {
-                SnapshotField::Skipped
-            },
-            turn_number: if spec.captures(GameCheckpointSpec::TURN_NUMBER) {
-                SnapshotField::Captured(self.turn_number)
-            } else {
-                SnapshotField::Skipped
-            },
-            players: if spec.captures(GameCheckpointSpec::PLAYERS) {
-                SnapshotField::Captured(self.players.clone())
-            } else {
-                SnapshotField::Skipped
-            },
-            card_locations: if spec.captures(GameCheckpointSpec::CARD_LOCATIONS) {
-                SnapshotField::Captured(self.card_locations.clone())
-            } else {
-                SnapshotField::Skipped
-            },
-            stack: if spec.captures(GameCheckpointSpec::STACK) {
-                SnapshotField::Captured(self.stack.clone())
-            } else {
-                SnapshotField::Skipped
-            },
-            priority: if spec.captures(GameCheckpointSpec::PRIORITY) {
-                SnapshotField::Captured(self.priority.clone())
-            } else {
-                SnapshotField::Skipped
-            },
-            pending_decision: if spec.captures(GameCheckpointSpec::PENDING_DECISION) {
-                SnapshotField::Captured(self.pending_decision.clone())
-            } else {
-                SnapshotField::Skipped
-            },
-            terminal_state: if spec.captures(GameCheckpointSpec::TERMINAL_STATE) {
-                SnapshotField::Captured(self.terminal_state.clone())
-            } else {
-                SnapshotField::Skipped
-            },
-        }
-    }
-
-    pub(crate) fn restore_checkpoint(&mut self, checkpoint: GameCheckpoint) {
-        if let SnapshotField::Captured(active_player_index) = checkpoint.active_player_index {
-            self.active_player_index = active_player_index;
-        }
-        if let SnapshotField::Captured(phase) = checkpoint.phase {
-            self.phase = phase;
-        }
-        if let SnapshotField::Captured(turn_number) = checkpoint.turn_number {
-            self.turn_number = turn_number;
-        }
-        if let SnapshotField::Captured(players) = checkpoint.players {
-            self.players = players;
-        }
-        if let SnapshotField::Captured(card_locations) = checkpoint.card_locations {
-            self.card_locations = card_locations;
-        }
-        if let SnapshotField::Captured(stack) = checkpoint.stack {
-            self.stack = stack;
-        }
-        if let SnapshotField::Captured(priority) = checkpoint.priority {
-            self.priority = priority;
-        }
-        if let SnapshotField::Captured(pending_decision) = checkpoint.pending_decision {
-            self.pending_decision = pending_decision;
-        }
-        if let SnapshotField::Captured(terminal_state) = checkpoint.terminal_state {
-            self.terminal_state = terminal_state;
-        }
     }
 }

@@ -1,14 +1,14 @@
 //! Supports application game service turn flow.
 
 use {
-    super::{common::DomainEvents, GameService},
+    super::{common::DomainEvents, rollback::GameRollback, GameService},
     crate::{
         application::{EventBus, EventStore},
         domain::play::{
             commands::{AdvanceTurnCommand, DiscardForCleanupCommand, DrawCardsEffectCommand},
             errors::DomainError,
             events::{CardDiscarded, CardMovedZone, DomainEvent, ZoneType},
-            game::{AdvanceTurnOutcome, DrawCardsEffectOutcome, Game, GameCheckpointSpec},
+            game::{AdvanceTurnOutcome, DrawCardsEffectOutcome, Game},
         },
     },
 };
@@ -63,9 +63,18 @@ where
         game: &mut Game,
         cmd: AdvanceTurnCommand,
     ) -> Result<AdvanceTurnOutcome, DomainError> {
+        let rollback = GameRollback::default()
+            .capture_all_players(game)?
+            .capture_card_locations(game)
+            .capture_stack(game)
+            .capture_active_player_index(game)
+            .capture_phase(game)
+            .capture_turn_number(game)
+            .capture_priority(game)
+            .capture_terminal_state(game);
         self.apply_persisted(
             game,
-            GameCheckpointSpec::ADVANCE_TURN,
+            rollback,
             |game| game.advance_turn(cmd),
             domain_events_for_advance_turn,
         )
@@ -81,9 +90,13 @@ where
         game: &mut Game,
         cmd: &DrawCardsEffectCommand,
     ) -> Result<DrawCardsEffectOutcome, DomainError> {
+        let rollback = GameRollback::default()
+            .capture_player(game, &cmd.target_player_id)?
+            .capture_card_locations(game)
+            .capture_terminal_state(game);
         self.apply_persisted(
             game,
-            GameCheckpointSpec::DRAW_CARDS_EFFECT,
+            rollback,
             |game| game.draw_cards_effect(cmd),
             domain_events_for_draw_cards_effect,
         )
@@ -99,9 +112,12 @@ where
         game: &mut Game,
         cmd: DiscardForCleanupCommand,
     ) -> Result<CardDiscarded, DomainError> {
+        let rollback = GameRollback::default()
+            .capture_player(game, &cmd.player_id)?
+            .capture_card_locations(game);
         self.apply_persisted(
             game,
-            GameCheckpointSpec::DISCARD_FOR_CLEANUP,
+            rollback,
             |game| game.discard_for_cleanup(cmd),
             domain_events_for_discard_for_cleanup,
         )

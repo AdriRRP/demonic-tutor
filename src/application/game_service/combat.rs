@@ -1,7 +1,7 @@
 //! Supports application game service combat.
 
 use {
-    super::{common::DomainEvents, GameService},
+    super::{common::DomainEvents, rollback::GameRollback, GameService},
     crate::{
         application::{EventBus, EventStore},
         domain::play::{
@@ -10,7 +10,7 @@ use {
             },
             errors::DomainError,
             events::{BlockersDeclared, CardMovedZone, DomainEvent, ZoneType},
-            game::{DeclareAttackersOutcome, Game, GameCheckpointSpec, ResolveCombatDamageOutcome},
+            game::{DeclareAttackersOutcome, Game, ResolveCombatDamageOutcome},
         },
     },
 };
@@ -66,9 +66,14 @@ where
         game: &mut Game,
         cmd: DeclareAttackersCommand,
     ) -> Result<DeclareAttackersOutcome, DomainError> {
+        let rollback = GameRollback::default()
+            .capture_player(game, &cmd.player_id)?
+            .capture_phase(game)
+            .capture_stack(game)
+            .capture_priority(game);
         self.apply_persisted(
             game,
-            GameCheckpointSpec::DECLARE_ATTACKERS,
+            rollback,
             |game| game.declare_attackers(cmd),
             domain_events_for_declare_attackers,
         )
@@ -84,9 +89,13 @@ where
         game: &mut Game,
         cmd: DeclareBlockersCommand,
     ) -> Result<BlockersDeclared, DomainError> {
-        self.apply_persisted_event(game, GameCheckpointSpec::DECLARE_BLOCKERS, |game| {
-            game.declare_blockers(cmd)
-        })
+        let active_player_id = game.active_player().clone();
+        let rollback = GameRollback::default()
+            .capture_player(game, &cmd.player_id)?
+            .capture_player(game, &active_player_id)?
+            .capture_phase(game)
+            .capture_priority(game);
+        self.apply_persisted_event(game, rollback, |game| game.declare_blockers(cmd))
     }
 
     /// Resolves combat damage.
@@ -99,9 +108,16 @@ where
         game: &mut Game,
         cmd: ResolveCombatDamageCommand,
     ) -> Result<ResolveCombatDamageOutcome, DomainError> {
+        let rollback = GameRollback::default()
+            .capture_all_players(game)?
+            .capture_card_locations(game)
+            .capture_stack(game)
+            .capture_phase(game)
+            .capture_priority(game)
+            .capture_terminal_state(game);
         self.apply_persisted(
             game,
-            GameCheckpointSpec::RESOLVE_COMBAT_DAMAGE,
+            rollback,
             |game| game.resolve_combat_damage(cmd),
             domain_events_for_resolve_combat_damage,
         )

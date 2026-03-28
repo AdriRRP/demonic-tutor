@@ -1,7 +1,7 @@
 //! Supports application game service lifecycle.
 
 use {
-    super::GameService,
+    super::{rollback::GameRollback, GameService},
     crate::{
         application::{EventBus, EventStore},
         domain::play::{
@@ -10,7 +10,7 @@ use {
             },
             errors::DomainError,
             events::{GameEnded, GameStarted, MulliganTaken, OpeningHandDealt},
-            game::{Game, GameCheckpointSpec},
+            game::Game,
         },
     },
 };
@@ -63,9 +63,10 @@ where
         game: &mut Game,
         cmd: &DealOpeningHandsCommand,
     ) -> Result<Vec<OpeningHandDealt>, DomainError> {
+        let rollback = GameRollback::default().capture_all_players(game)?;
         self.apply_persisted(
             game,
-            GameCheckpointSpec::DEAL_OPENING_HANDS,
+            rollback,
             |game| game.deal_opening_hands(cmd),
             |events| events.iter().cloned().map(Into::into).collect(),
         )
@@ -81,9 +82,8 @@ where
         game: &mut Game,
         cmd: MulliganCommand,
     ) -> Result<MulliganTaken, DomainError> {
-        self.apply_persisted_event(game, GameCheckpointSpec::MULLIGAN, |game| {
-            game.mulligan(cmd)
-        })
+        let rollback = GameRollback::default().capture_player(game, &cmd.player_id)?;
+        self.apply_persisted_event(game, rollback, |game| game.mulligan(cmd))
     }
 
     /// Concedes an active game for one player.
@@ -92,6 +92,7 @@ where
     ///
     /// Returns an error if the command is invalid.
     pub fn concede(&self, game: &mut Game, cmd: ConcedeCommand) -> Result<GameEnded, DomainError> {
-        self.apply_persisted_event(game, GameCheckpointSpec::CONCEDE, |game| game.concede(cmd))
+        let rollback = GameRollback::default().capture_terminal_state(game);
+        self.apply_persisted_event(game, rollback, |game| game.concede(cmd))
     }
 }

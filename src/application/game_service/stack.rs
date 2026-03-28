@@ -1,7 +1,7 @@
 //! Supports application game service stack.
 
 use {
-    super::{common::DomainEvents, GameService},
+    super::{common::DomainEvents, rollback::GameRollback, GameService},
     crate::{
         application::{EventBus, EventStore},
         domain::play::{
@@ -16,8 +16,8 @@ use {
                 LifeChanged, SpellCast, StackTopResolved, TriggeredAbilityPutOnStack,
             },
             game::{
-                ActivateAbilityOutcome, CastSpellOutcome, Game, GameCheckpointSpec,
-                PassPriorityOutcome, ResolveOptionalEffectOutcome, ResolvePendingHandChoiceOutcome,
+                ActivateAbilityOutcome, CastSpellOutcome, Game, PassPriorityOutcome,
+                ResolveOptionalEffectOutcome, ResolvePendingHandChoiceOutcome,
                 ResolvePendingScryOutcome, ResolvePendingSurveilOutcome,
             },
         },
@@ -312,9 +312,14 @@ where
         game: &mut Game,
         cmd: CastSpellCommand,
     ) -> Result<CastSpellOutcome, DomainError> {
+        let rollback = GameRollback::default()
+            .capture_player(game, &cmd.player_id)?
+            .capture_card_locations(game)
+            .capture_stack(game)
+            .capture_priority(game);
         self.apply_persisted(
             game,
-            GameCheckpointSpec::STACK_PRIORITY,
+            rollback,
             |game| game.cast_spell(cmd),
             domain_events_for_cast_spell,
         )
@@ -330,9 +335,16 @@ where
         game: &mut Game,
         cmd: ActivateAbilityCommand,
     ) -> Result<ActivateAbilityOutcome, DomainError> {
+        let rollback = GameRollback::default()
+            .capture_all_players(game)?
+            .capture_card_locations(game)
+            .capture_stack(game)
+            .capture_priority(game)
+            .capture_pending_decision(game)
+            .capture_terminal_state(game);
         self.apply_persisted(
             game,
-            GameCheckpointSpec::STACK_PRIORITY,
+            rollback,
             |game| game.activate_ability(cmd),
             domain_events_for_activate_ability,
         )
@@ -348,9 +360,16 @@ where
         game: &mut Game,
         cmd: PassPriorityCommand,
     ) -> Result<PassPriorityOutcome, DomainError> {
+        let rollback = GameRollback::default()
+            .capture_all_players(game)?
+            .capture_card_locations(game)
+            .capture_stack(game)
+            .capture_priority(game)
+            .capture_pending_decision(game)
+            .capture_terminal_state(game);
         self.apply_persisted(
             game,
-            GameCheckpointSpec::STACK_PRIORITY,
+            rollback,
             |game| game.pass_priority(cmd),
             domain_events_for_pass_priority,
         )
@@ -366,9 +385,16 @@ where
         game: &mut Game,
         cmd: ResolveOptionalEffectCommand,
     ) -> Result<ResolveOptionalEffectOutcome, DomainError> {
+        let rollback = GameRollback::default()
+            .capture_all_players(game)?
+            .capture_card_locations(game)
+            .capture_stack(game)
+            .capture_priority(game)
+            .capture_pending_decision(game)
+            .capture_terminal_state(game);
         self.apply_persisted(
             game,
-            GameCheckpointSpec::STACK_PRIORITY,
+            rollback,
             |game| game.resolve_optional_effect(cmd),
             domain_events_for_resolve_optional_effect,
         )
@@ -384,9 +410,16 @@ where
         game: &mut Game,
         cmd: ResolvePendingHandChoiceCommand,
     ) -> Result<ResolvePendingHandChoiceOutcome, DomainError> {
+        let rollback = GameRollback::default()
+            .capture_all_players(game)?
+            .capture_card_locations(game)
+            .capture_stack(game)
+            .capture_priority(game)
+            .capture_pending_decision(game)
+            .capture_terminal_state(game);
         self.apply_persisted(
             game,
-            GameCheckpointSpec::STACK_PRIORITY,
+            rollback,
             |game| game.resolve_pending_hand_choice(cmd),
             domain_events_for_resolve_pending_hand_choice,
         )
@@ -402,9 +435,16 @@ where
         game: &mut Game,
         cmd: ResolvePendingScryCommand,
     ) -> Result<ResolvePendingScryOutcome, DomainError> {
+        let rollback = GameRollback::default()
+            .capture_all_players(game)?
+            .capture_card_locations(game)
+            .capture_stack(game)
+            .capture_priority(game)
+            .capture_pending_decision(game)
+            .capture_terminal_state(game);
         self.apply_persisted(
             game,
-            GameCheckpointSpec::STACK_PRIORITY,
+            rollback,
             |game| game.resolve_pending_scry(cmd),
             domain_events_for_resolve_pending_scry,
         )
@@ -420,9 +460,16 @@ where
         game: &mut Game,
         cmd: ResolvePendingSurveilCommand,
     ) -> Result<ResolvePendingSurveilOutcome, DomainError> {
+        let rollback = GameRollback::default()
+            .capture_all_players(game)?
+            .capture_card_locations(game)
+            .capture_stack(game)
+            .capture_priority(game)
+            .capture_pending_decision(game)
+            .capture_terminal_state(game);
         self.apply_persisted(
             game,
-            GameCheckpointSpec::STACK_PRIORITY,
+            rollback,
             |game| game.resolve_pending_surveil(cmd),
             domain_events_for_resolve_pending_surveil,
         )
