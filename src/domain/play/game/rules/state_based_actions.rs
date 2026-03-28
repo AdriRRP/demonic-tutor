@@ -1,7 +1,5 @@
 //! Supports game rules state based actions.
 
-use std::borrow::Cow;
-
 use {
     super::super::{
         helpers,
@@ -27,16 +25,6 @@ impl StateBasedActionCheckResult {
     const fn changed(&self) -> bool {
         !self.creatures_died.is_empty() || self.moved_to_graveyard || self.game_ended.is_some()
     }
-}
-
-fn current_locations<'a>(
-    players: &[Player],
-    card_locations: Option<&'a AggregateCardLocationIndex>,
-) -> Cow<'a, AggregateCardLocationIndex> {
-    card_locations.map_or_else(
-        || Cow::Owned(AggregateCardLocationIndex::from_players(players)),
-        Cow::Borrowed,
-    )
 }
 
 #[derive(Debug, Clone)]
@@ -180,7 +168,7 @@ fn review_attached_aura_state_based_actions(
 pub fn check_state_based_actions(
     game_id: &GameId,
     players: &mut [Player],
-    card_locations: Option<&AggregateCardLocationIndex>,
+    _card_locations: Option<&AggregateCardLocationIndex>,
     terminal_state: &mut TerminalState,
 ) -> Result<StateBasedActionsResult, crate::domain::play::errors::DomainError> {
     let mut total_creatures_died = Vec::new();
@@ -189,7 +177,7 @@ pub fn check_state_based_actions(
     loop {
         let mut changes = false;
 
-        let current_locations = current_locations(players, card_locations);
+        let current_locations = AggregateCardLocationIndex::from_players(players);
 
         let creature_result =
             review_supported_creature_state_based_actions(game_id, players, &current_locations)?;
@@ -237,7 +225,7 @@ mod tests {
 
     use super::*;
     use crate::domain::play::{
-        cards::CardInstance,
+        cards::{AttachmentProfile, CardDefinition, CardInstance, CardType},
         ids::{CardDefinitionId, CardInstanceId, PlayerId},
     };
 
@@ -271,5 +259,58 @@ mod tests {
         assert_eq!(result.creatures_died[0].player_id, PlayerId::new("p2"));
         assert!(players[0].battlefield_card(&card_id).is_none());
         assert!(players[1].graveyard_card(&card_id).is_some());
+    }
+
+    #[test]
+    fn stale_external_location_index_does_not_keep_orphaned_aura_on_battlefield() {
+        let game_id = GameId::new("game-stale-sba-locations");
+        let mut players = vec![
+            Player::new(PlayerId::new("p1")),
+            Player::new(PlayerId::new("p2")),
+        ];
+        let mut terminal_state = TerminalState::default();
+        let creature_id = CardInstanceId::new("enchanted-bear");
+        let aura_id = CardInstanceId::new("holy-strength");
+
+        assert!(players[0]
+            .receive_battlefield_card(CardInstance::new_creature(
+                creature_id.clone(),
+                CardDefinitionId::new("enchanted-bear"),
+                0,
+                2,
+                2,
+            ))
+            .is_some());
+
+        let aura_definition = CardDefinition::for_card_type(
+            CardDefinitionId::new("holy-strength"),
+            0,
+            &CardType::Enchantment,
+        )
+        .with_attachment_profile(AttachmentProfile::EnchantCreature);
+        let mut aura =
+            CardInstance::from_definition(aura_id.clone(), aura_definition, CardType::Enchantment);
+        aura.attach_to(creature_id.clone());
+        assert!(players[0].receive_battlefield_card(aura).is_some());
+
+        let stale_locations = AggregateCardLocationIndex::from_players(&players);
+
+        players[0]
+            .battlefield_card_mut(&creature_id)
+            .expect("creature should be on battlefield")
+            .add_damage(2);
+
+        let _ = check_state_based_actions(
+            &game_id,
+            &mut players,
+            Some(&stale_locations),
+            &mut terminal_state,
+        )
+        .unwrap();
+
+        assert!(players[0].battlefield_card(&creature_id).is_none());
+        assert!(players[0].graveyard_card(&creature_id).is_some());
+        assert!(players[0].battlefield_card(&aura_id).is_none());
+        assert!(players[0].graveyard_card(&aura_id).is_some());
     }
 }

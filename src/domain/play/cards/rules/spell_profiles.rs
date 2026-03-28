@@ -165,7 +165,11 @@ impl SupportedSpellRules {
     }
 
     #[must_use]
-    pub const fn scry(amount: u32) -> Self {
+    ///
+    /// # Panics
+    /// Panics if `amount` is not `1`, because the current slice only supports explicit `scry 1`.
+    pub fn scry(amount: u32) -> Self {
+        assert_eq!(amount, 1, "the current slice only supports explicit scry 1");
         Self {
             targeting: SpellTargetingProfile::None,
             resolution: SpellResolutionProfile::Scry { amount },
@@ -173,7 +177,14 @@ impl SupportedSpellRules {
     }
 
     #[must_use]
-    pub const fn surveil(amount: u32) -> Self {
+    ///
+    /// # Panics
+    /// Panics if `amount` is not `1`, because the current slice only supports explicit `surveil 1`.
+    pub fn surveil(amount: u32) -> Self {
+        assert_eq!(
+            amount, 1,
+            "the current slice only supports explicit surveil 1"
+        );
         Self {
             targeting: SpellTargetingProfile::None,
             resolution: SpellResolutionProfile::Surveil { amount },
@@ -512,5 +523,24 @@ impl SupportedSpellRules {
     #[must_use]
     pub const fn requires_choice(self) -> bool {
         self.requires_explicit_hand_card_choice() || self.requires_explicit_modal_choice()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    //! Unit coverage for bounded spell profile constructors.
+
+    use super::SupportedSpellRules;
+
+    #[test]
+    #[should_panic(expected = "the current slice only supports explicit scry 1")]
+    fn scry_rejects_unsupported_amounts() {
+        let _ = SupportedSpellRules::scry(2);
+    }
+
+    #[test]
+    #[should_panic(expected = "the current slice only supports explicit surveil 1")]
+    fn surveil_rejects_unsupported_amounts() {
+        let _ = SupportedSpellRules::surveil(2);
     }
 }
