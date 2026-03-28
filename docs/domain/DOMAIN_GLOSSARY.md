@@ -115,7 +115,7 @@ In the current DemonicTutor model, this maximum is 7 and cleanup discard is hand
 
 To move a card from a player's hand to their graveyard.
 
-In the current runtime model, discard is supported only as explicit cleanup behavior when the active player is above the maximum hand size at end of turn.
+In the current runtime model, discard is supported both as explicit cleanup behavior when the active player is above the maximum hand size at end of turn and as an explicit spell effect in the current targeted-discard subset.
 
 ---
 
@@ -207,7 +207,7 @@ In the current runtime, the exercised mana-ability subset is the land-tap corrid
 
 An explicit object chosen for a targeted spell while that spell is cast and represented on the stack.
 
-The current runtime supports only player and creature spell targets.
+The current runtime supports a small closed target set including players, creatures, permanents, graveyard cards, and stack objects.
 
 ---
 

@@ -29,7 +29,7 @@ struct PreparedActivationSource {
     loyalty: Option<u32>,
 }
 
-type ActivationCostOutcome = (Vec<CreatureDied>, Vec<CardMovedZone>, Vec<CardInstanceId>);
+type ActivationCostOutcome = (Vec<CreatureDied>, Vec<CardMovedZone>);
 
 fn prepare_activation_source(
     players: &[crate::domain::play::game::Player],
@@ -104,7 +104,6 @@ fn pay_activation_costs(
 ) -> Result<ActivationCostOutcome, DomainError> {
     let mut creatures_died = Vec::new();
     let mut zone_changes = Vec::new();
-    let mut moved_cards = Vec::new();
     if ability.loyalty_change().is_negative() {
         let available = source_loyalty.unwrap_or(0);
         let required = ability.loyalty_change().unsigned_abs();
@@ -192,7 +191,6 @@ fn pay_activation_costs(
             player_index,
             source_handle.handle(),
         )?;
-        moved_cards.push(source_card_id.clone());
         zone_changes.push(CardMovedZone::new(
             game_id.clone(),
             owner_id.clone(),
@@ -205,7 +203,7 @@ fn pay_activation_costs(
         }
     }
 
-    Ok((creatures_died, zone_changes, moved_cards))
+    Ok((creatures_died, zone_changes))
 }
 
 fn prepare_ability_target(
@@ -458,7 +456,7 @@ pub fn activate_ability(
         }
     }
     let prepared_target = prepare_ability_target(players, card_locations, target.as_ref())?;
-    let (creatures_died, zone_changes, _moved_cards) = pay_activation_costs(
+    let (creatures_died, zone_changes) = pay_activation_costs(
         players,
         game_id,
         card_locations,
