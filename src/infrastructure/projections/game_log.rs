@@ -12,8 +12,8 @@ pub struct GameLogProjection {
 
 #[derive(Debug, Default)]
 struct GameLogState {
-    entries: Vec<String>,
-    snapshot: Option<Arc<[String]>>,
+    entries: Vec<Arc<str>>,
+    snapshot: Option<Arc<[Arc<str>]>>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -38,7 +38,7 @@ impl GameLogProjection {
     ///
     /// Returns [`GameLogProjectionError::LockPoisoned`] when the projection lock
     /// has been poisoned and the snapshot can no longer be read safely.
-    pub fn logs(&self) -> Result<Arc<[String]>, GameLogProjectionError> {
+    pub fn logs(&self) -> Result<Arc<[Arc<str>]>, GameLogProjectionError> {
         let Ok(state) = self.logs.read() else {
             return Err(GameLogProjectionError::LockPoisoned);
         };
@@ -54,7 +54,7 @@ impl GameLogProjection {
                     return Ok(Arc::clone(snapshot));
                 }
 
-                let snapshot = Arc::<[String]>::from(state.entries.clone());
+                let snapshot = Arc::<[Arc<str>]>::from(state.entries.clone());
                 state.snapshot = Some(Arc::clone(&snapshot));
                 Ok(snapshot)
             },
@@ -213,9 +213,9 @@ impl GameLogProjection {
             Err(poisoned) => (poisoned.into_inner(), true),
         };
         if poisoned {
-            state.entries.push(Self::LOCK_POISONED_MESSAGE.to_string());
+            state.entries.push(Arc::from(Self::LOCK_POISONED_MESSAGE));
         }
-        state.entries.push(log_entry);
+        state.entries.push(Arc::from(log_entry));
         state.snapshot = None;
     }
 }
