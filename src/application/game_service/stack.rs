@@ -429,8 +429,7 @@ where
         game: &mut Game,
         cmd: ResolvePendingHandChoiceCommand,
     ) -> Result<ResolvePendingHandChoiceOutcome, DomainError> {
-        let rollback = GameRollback::default()
-            .capture_all_players(game)?
+        let rollback = rollback_for_pending_decision_controller(game)?
             .capture_card_locations(game)
             .capture_stack(game)
             .capture_priority(game)
