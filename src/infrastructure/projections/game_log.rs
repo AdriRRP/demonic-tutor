@@ -26,11 +26,14 @@ impl GameLogProjection {
 
     #[must_use]
     pub fn logs(&self) -> Arc<[String]> {
-        if let Ok(state) = self.logs.read() {
-            if let Some(snapshot) = &state.snapshot {
-                return Arc::clone(snapshot);
-            }
+        let state = self
+            .logs
+            .read()
+            .expect("game log projection lock poisoned while reading snapshot");
+        if let Some(snapshot) = &state.snapshot {
+            return Arc::clone(snapshot);
         }
+        drop(state);
 
         self.logs
             .write()
@@ -43,7 +46,7 @@ impl GameLogProjection {
                 state.snapshot = Some(Arc::clone(&snapshot));
                 snapshot
             })
-            .unwrap_or_default()
+            .expect("game log projection lock poisoned while building snapshot")
     }
 
     fn describe_event(event: &DomainEvent) -> String {
@@ -193,9 +196,30 @@ impl GameLogProjection {
     pub fn handle(&self, event: &DomainEvent) {
         let log_entry = Self::describe_event(event);
 
-        if let Ok(mut state) = self.logs.write() {
-            state.entries.push(log_entry);
-            state.snapshot = None;
-        }
+        let mut state = self
+            .logs
+            .write()
+            .expect("game log projection lock poisoned while appending event");
+        state.entries.push(log_entry);
+        state.snapshot = None;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #![allow(clippy::expect_used)]
+
+    use super::*;
+
+    #[test]
+    #[should_panic(expected = "game log projection lock poisoned while reading snapshot")]
+    fn logs_panics_when_projection_lock_is_poisoned() {
+        let projection = GameLogProjection::new();
+        let _ = std::panic::catch_unwind(|| {
+            let _guard = projection.logs.write().expect("lock should be available");
+            panic!("poison projection lock");
+        });
+
+        let _ = projection.logs();
     }
 }
