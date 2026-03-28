@@ -216,13 +216,19 @@ pub fn check_state_based_actions(
             changes = true;
         }
         total_creatures_died.extend(creature_result.creatures_died);
-        total_zone_changes.extend(creature_result.zone_changes);
 
         let refreshed_locations = if creature_changed {
-            AggregateCardLocationIndex::from_players(players)
+            // Creature SBAs only move doomed permanents off the battlefield, which is enough
+            // for attached aura legality checks to treat their attachments as gone.
+            let mut refreshed_locations = current_locations.clone();
+            for zone_change in &creature_result.zone_changes {
+                refreshed_locations.remove(&zone_change.card_id);
+            }
+            refreshed_locations
         } else {
             current_locations
         };
+        total_zone_changes.extend(creature_result.zone_changes);
         let attached_aura_result =
             review_attached_aura_state_based_actions(game_id, players, &refreshed_locations)?;
         if attached_aura_result.changed() {
