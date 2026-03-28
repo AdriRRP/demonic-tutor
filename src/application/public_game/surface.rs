@@ -671,9 +671,19 @@ fn stack_target_view(
 }
 
 fn player_by_id<'a>(game: &'a Game, player_id: &PlayerId) -> Option<&'a Player> {
-    game.players()
-        .iter()
-        .find(|player| player.id() == player_id)
+    let players = game.players();
+    match players {
+        [first, second] => {
+            if first.id() == player_id {
+                Some(first)
+            } else if second.id() == player_id {
+                Some(second)
+            } else {
+                None
+            }
+        }
+        _ => players.iter().find(|player| player.id() == player_id),
+    }
 }
 
 fn playable_land_ids(game: &Game, player: &Player) -> Vec<CardInstanceId> {
@@ -938,22 +948,43 @@ fn opponent_hand_choice_candidates(
     players: &[Player],
     actor_id: &PlayerId,
 ) -> Option<Vec<CardInstanceId>> {
-    players
-        .iter()
-        .find(|player| player.id() != actor_id)
-        .map(Player::hand_card_ids)
+    match players {
+        [first, second] => {
+            if first.id() == actor_id {
+                Some(second.hand_card_ids())
+            } else if second.id() == actor_id {
+                Some(first.hand_card_ids())
+            } else {
+                None
+            }
+        }
+        _ => players
+            .iter()
+            .find(|player| player.id() != actor_id)
+            .map(Player::hand_card_ids),
+    }
 }
 
 fn active_player(game: &Game) -> Option<&Player> {
-    game.players()
-        .iter()
-        .find(|player| player.id() == game.active_player())
+    player_by_id(game, game.active_player())
 }
 
 fn defending_player<'a>(game: &'a Game, active_player: &Player) -> Option<&'a Player> {
-    game.players()
-        .iter()
-        .find(|player| player.id() != active_player.id())
+    let players = game.players();
+    match players {
+        [first, second] => {
+            if first.id() == active_player.id() {
+                Some(second)
+            } else if second.id() == active_player.id() {
+                Some(first)
+            } else {
+                None
+            }
+        }
+        _ => players
+            .iter()
+            .find(|player| player.id() != active_player.id()),
+    }
 }
 
 fn public_choice_candidate(
