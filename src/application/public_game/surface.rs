@@ -1,6 +1,6 @@
 //! Projects the aggregate into the public gameplay read contract.
 
-use std::{borrow::Borrow, collections::HashMap};
+use std::{borrow::Borrow, collections::HashMap, sync::Arc};
 
 use crate::domain::play::{
     cards::{CardInstance, KeywordAbility},
@@ -423,16 +423,18 @@ pub fn public_command_result(
 }
 
 #[must_use]
-pub fn public_event_log<I>(events: I) -> Vec<PublicEventLogEntry>
+pub fn public_event_log<I>(events: I) -> Arc<[PublicEventLogEntry]>
 where
     I: IntoIterator,
     I::Item: Borrow<DomainEvent>,
 {
-    public_events(events)
-        .into_iter()
-        .zip(1_u64..)
-        .map(|(event, sequence)| PublicEventLogEntry { sequence, event })
-        .collect()
+    Arc::from(
+        public_events(events)
+            .into_iter()
+            .zip(1_u64..)
+            .map(|(event, sequence)| PublicEventLogEntry { sequence, event })
+            .collect::<Vec<_>>(),
+    )
 }
 
 pub(super) fn public_events<I>(events: I) -> Vec<PublicEvent>

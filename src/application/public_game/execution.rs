@@ -95,14 +95,14 @@ where
     pub fn public_event_log(
         &self,
         game_id: &GameId,
-    ) -> Result<Vec<PublicEventLogEntry>, DomainError> {
+    ) -> Result<Arc<[PublicEventLogEntry]>, DomainError> {
         let aggregate_id = game_id.to_string();
         if let Some(cached) = self.cached_public_event_log(&aggregate_id) {
-            return Ok(cached.iter().cloned().collect());
+            return Ok(cached);
         }
         let events = self.load_persisted_events(&aggregate_id)?;
         let log = public_event_log(events.iter());
-        self.store_public_event_log_cache(&aggregate_id, Arc::from(log.clone()));
+        self.store_public_event_log_cache(&aggregate_id, Arc::clone(&log));
 
         Ok(log)
     }
