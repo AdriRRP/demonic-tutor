@@ -152,10 +152,8 @@ fn unavailable_pending_decision_surface(
     )
 }
 
-fn priority_surface_state(game: &Game, player_id: &PlayerId) -> PublicSurfaceState {
-    let Some(player) = player_by_id(game, player_id) else {
-        return PublicSurfaceState::default();
-    };
+fn priority_surface_state(game: &Game, player: &Player) -> PublicSurfaceState {
+    let player_id = player.id();
 
     let playable_land_ids = playable_land_ids(game, player);
     let mana_source_ids = tappable_mana_source_ids(game, player);
@@ -294,30 +292,33 @@ fn ability_target_candidate_cache(
 fn phase_surface_state(game: &Game, viewer_id: &PlayerId) -> PublicSurfaceState {
     let mut actions = Vec::new();
     let mut choice_requests = Vec::new();
+    let Some(active_player) = active_player(game) else {
+        return PublicSurfaceState::default();
+    };
 
     match game.phase() {
         Phase::DeclareAttackers => {
-            let player_id = game.active_player().clone();
-            if &player_id != viewer_id {
+            if active_player.id() != viewer_id {
                 return PublicSurfaceState::default();
             }
             actions.push(PublicLegalAction::DeclareAttackers {
-                player_id: player_id.clone(),
-                attacker_ids: attack_candidate_ids(game, &player_id),
+                player_id: active_player.id().clone(),
+                attacker_ids: attack_candidate_ids(game, active_player),
             });
         }
         Phase::DeclareBlockers => {
-            let player_id =
-                defending_player_id(game).unwrap_or_else(|| game.active_player().clone());
-            if &player_id != viewer_id {
+            let Some(defending_player) = defending_player(game, active_player) else {
+                return PublicSurfaceState::default();
+            };
+            if defending_player.id() != viewer_id {
                 return PublicSurfaceState::default();
             }
-            let attacker_ids = attacking_creature_ids(game, game.active_player());
+            let attacker_ids = attacking_creature_ids(active_player);
             actions.push(PublicLegalAction::DeclareBlockers {
-                player_id: player_id.clone(),
+                player_id: defending_player.id().clone(),
                 attacker_ids,
                 blocker_options: game
-                    .blocker_options(&player_id)
+                    .blocker_options(defending_player.id())
                     .into_iter()
                     .map(|option| PublicBlockerOption {
                         blocker_id: option.blocker_id().clone(),
@@ -327,44 +328,38 @@ fn phase_surface_state(game: &Game, viewer_id: &PlayerId) -> PublicSurfaceState 
             });
         }
         Phase::CombatDamage => {
-            if game.active_player() != viewer_id {
+            if active_player.id() != viewer_id {
                 return PublicSurfaceState::default();
             }
             actions.push(PublicLegalAction::ResolveCombatDamage {
-                player_id: game.active_player().clone(),
+                player_id: active_player.id().clone(),
             });
         }
         Phase::EndStep => {
-            let Some(player) = active_player(game) else {
-                return PublicSurfaceState {
-                    legal_actions: actions,
-                    choice_requests,
-                };
-            };
-            if player.id() != viewer_id {
+            if active_player.id() != viewer_id {
                 return PublicSurfaceState::default();
             }
-            if player.hand_size() > 7 {
+            if active_player.hand_size() > 7 {
                 actions.push(PublicLegalAction::DiscardForCleanup {
-                    player_id: player.id().clone(),
-                    card_ids: player.hand_card_ids(),
+                    player_id: active_player.id().clone(),
+                    card_ids: active_player.hand_card_ids(),
                 });
                 choice_requests.push(PublicChoiceRequest::CleanupDiscard {
-                    player_id: player.id().clone(),
-                    hand_card_ids: player.hand_card_ids(),
+                    player_id: active_player.id().clone(),
+                    hand_card_ids: active_player.hand_card_ids(),
                 });
             } else {
                 actions.push(PublicLegalAction::AdvanceTurn {
-                    player_id: game.active_player().clone(),
+                    player_id: active_player.id().clone(),
                 });
             }
         }
         _ => {
-            if game.active_player() != viewer_id {
+            if active_player.id() != viewer_id {
                 return PublicSurfaceState::default();
             }
             actions.push(PublicLegalAction::AdvanceTurn {
-                player_id: game.active_player().clone(),
+                player_id: active_player.id().clone(),
             });
         }
     }
@@ -384,7 +379,10 @@ pub(super) fn public_surface_state(game: &Game, viewer_id: &PlayerId) -> PublicS
                 |priority| {
                     let current_holder = priority.current_holder();
                     if current_holder == viewer_id {
-                        priority_surface_state(game, current_holder)
+                        player_by_id(game, current_holder)
+                            .map_or_else(PublicSurfaceState::default, |player| {
+                                priority_surface_state(game, player)
+                            })
                     } else {
                         PublicSurfaceState::default()
                     }
@@ -715,7 +713,7 @@ fn spell_choice_request(
         return Some(PublicChoiceRequest::SpellChoice {
             player_id: player.id().clone(),
             source_card_id: source_card_id.clone(),
-            hand_card_ids: opponent_hand_choice_candidates(game, player.id()),
+            hand_card_ids: opponent_hand_choice_candidates(game.players(), player.id()),
         });
     }
 
@@ -852,34 +850,20 @@ fn activatable_card(
     }
 }
 
-fn attack_candidate_ids(game: &Game, player_id: &PlayerId) -> Vec<CardInstanceId> {
-    let Some(player) = game
-        .players()
-        .iter()
-        .find(|player| player.id() == player_id)
-    else {
-        return Vec::new();
-    };
-
+fn attack_candidate_ids(game: &Game, player: &Player) -> Vec<CardInstanceId> {
     player
         .battlefield_card_ids()
-        .filter(|card_id| game.can_attack_with(player_id, card_id))
+        .filter(|card_id| game.can_attack_with(player.id(), card_id))
         .cloned()
         .collect()
 }
 
-fn attacking_creature_ids(game: &Game, player_id: &PlayerId) -> Vec<CardInstanceId> {
-    game.players()
-        .iter()
-        .find(|player| player.id() == player_id)
-        .map(|player| {
-            player
-                .battlefield_cards()
-                .filter(|card| card.is_attacking())
-                .map(|card| card.id().clone())
-                .collect()
-        })
-        .unwrap_or_default()
+fn attacking_creature_ids(player: &Player) -> Vec<CardInstanceId> {
+    player
+        .battlefield_cards()
+        .filter(|card| card.is_attacking())
+        .map(|card| card.id().clone())
+        .collect()
 }
 
 fn spell_target_candidates(
@@ -910,8 +894,8 @@ fn ability_target_candidates(
     candidates
 }
 
-fn opponent_hand_choice_candidates(game: &Game, actor_id: &PlayerId) -> Vec<CardInstanceId> {
-    game.players()
+fn opponent_hand_choice_candidates(players: &[Player], actor_id: &PlayerId) -> Vec<CardInstanceId> {
+    players
         .iter()
         .find(|player| player.id() != actor_id)
         .map(Player::hand_card_ids)
@@ -924,11 +908,10 @@ fn active_player(game: &Game) -> Option<&Player> {
         .find(|player| player.id() == game.active_player())
 }
 
-fn defending_player_id(game: &Game) -> Option<PlayerId> {
+fn defending_player<'a>(game: &'a Game, active_player: &Player) -> Option<&'a Player> {
     game.players()
         .iter()
-        .find(|player| player.id() != game.active_player())
-        .map(|player| player.id().clone())
+        .find(|player| player.id() != active_player.id())
 }
 
 fn public_choice_candidate(
