@@ -212,6 +212,10 @@ pub enum PublicChoiceCandidate {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PublicChoiceRequest {
+    PendingDecisionUnavailable {
+        player_id: PlayerId,
+        decision: PublicPendingDecisionKind,
+    },
     PendingScry {
         player_id: PlayerId,
         source_card_id: CardInstanceId,
@@ -264,6 +268,14 @@ pub enum PublicChoiceRequest {
         player_id: PlayerId,
         hand_card_ids: Vec<CardInstanceId>,
     },
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PublicPendingDecisionKind {
+    Scry,
+    Surveil,
+    HandChoice,
+    OptionalEffect,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

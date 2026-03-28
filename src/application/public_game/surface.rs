@@ -15,9 +15,9 @@ use super::{
     PublicCardDrawn, PublicCardView, PublicCastableCard, PublicChoiceCandidate,
     PublicChoiceRequest, PublicCombatStateView, PublicCommandApplication, PublicCommandResult,
     PublicEvent, PublicEventLogEntry, PublicGameView, PublicLegalAction, PublicModalSpellChoice,
-    PublicOpeningHandDealt, PublicPermanentStateView, PublicPlayableSubsetVersion,
-    PublicPlayerView, PublicPriorityView, PublicScryChoice, PublicStackObjectView,
-    PublicStackTargetView, PublicSurveilChoice,
+    PublicOpeningHandDealt, PublicPendingDecisionKind, PublicPermanentStateView,
+    PublicPlayableSubsetVersion, PublicPlayerView, PublicPriorityView, PublicScryChoice,
+    PublicStackObjectView, PublicStackTargetView, PublicSurveilChoice,
 };
 
 #[derive(Debug, Default)]
@@ -102,13 +102,54 @@ fn pending_action_and_request(game: &Game) -> Option<PublicSurfaceState> {
                 pending_optional_effect_request(game),
             ),
         };
-        return Some(PublicSurfaceState::with_choice_requests(
-            vec![action],
-            request.into_iter().collect(),
-        ));
+        return request
+            .map(|request| PublicSurfaceState::with_choice_requests(vec![action], vec![request]));
     }
 
     None
+}
+
+fn unavailable_pending_decision_surface(
+    game: &Game,
+    pending_decision: &crate::domain::play::game::PendingDecision,
+) -> PublicSurfaceState {
+    let player_id = game.players()[pending_decision.controller_index()]
+        .id()
+        .clone();
+    let (action, decision) = match pending_decision {
+        crate::domain::play::game::PendingDecision::Scry { .. } => (
+            PublicLegalAction::ResolvePendingScry {
+                player_id: player_id.clone(),
+            },
+            PublicPendingDecisionKind::Scry,
+        ),
+        crate::domain::play::game::PendingDecision::Surveil { .. } => (
+            PublicLegalAction::ResolvePendingSurveil {
+                player_id: player_id.clone(),
+            },
+            PublicPendingDecisionKind::Surveil,
+        ),
+        crate::domain::play::game::PendingDecision::HandChoice { .. } => (
+            PublicLegalAction::ResolvePendingHandChoice {
+                player_id: player_id.clone(),
+            },
+            PublicPendingDecisionKind::HandChoice,
+        ),
+        crate::domain::play::game::PendingDecision::OptionalEffect { .. } => (
+            PublicLegalAction::ResolveOptionalEffect {
+                player_id: player_id.clone(),
+            },
+            PublicPendingDecisionKind::OptionalEffect,
+        ),
+    };
+
+    PublicSurfaceState::with_choice_requests(
+        vec![action],
+        vec![PublicChoiceRequest::PendingDecisionUnavailable {
+            player_id,
+            decision,
+        }],
+    )
 }
 
 fn priority_surface_state(game: &Game, player_id: &PlayerId) -> PublicSurfaceState {
@@ -326,7 +367,8 @@ pub(super) fn public_surface_state(game: &Game, viewer_id: &PlayerId) -> PublicS
         |pending_decision| {
             let controller_id = game.players()[pending_decision.controller_index()].id();
             if controller_id == viewer_id {
-                pending_action_and_request(game).unwrap_or_default()
+                pending_action_and_request(game)
+                    .unwrap_or_else(|| unavailable_pending_decision_surface(game, pending_decision))
             } else {
                 PublicSurfaceState::default()
             }
@@ -961,7 +1003,8 @@ const fn legal_action_player_id(action: &PublicLegalAction) -> &PlayerId {
 
 const fn choice_request_player_id(request: &PublicChoiceRequest) -> &PlayerId {
     match request {
-        PublicChoiceRequest::PendingScry { player_id, .. }
+        PublicChoiceRequest::PendingDecisionUnavailable { player_id, .. }
+        | PublicChoiceRequest::PendingScry { player_id, .. }
         | PublicChoiceRequest::PendingSurveil { player_id, .. }
         | PublicChoiceRequest::PendingHandChoice { player_id, .. }
         | PublicChoiceRequest::OptionalEffectDecision { player_id, .. }
@@ -981,52 +1024,65 @@ fn sort_choice_requests(choice_requests: &mut [PublicChoiceRequest]) {
 
 fn choice_request_sort_key(request: &PublicChoiceRequest) -> (u8, &str, &str) {
     match request {
+        PublicChoiceRequest::PendingDecisionUnavailable {
+            player_id,
+            decision,
+        } => (
+            match decision {
+                PublicPendingDecisionKind::Scry => 0,
+                PublicPendingDecisionKind::Surveil => 1,
+                PublicPendingDecisionKind::HandChoice => 2,
+                PublicPendingDecisionKind::OptionalEffect => 3,
+            },
+            player_id.as_str(),
+            "",
+        ),
         PublicChoiceRequest::PendingScry {
             player_id,
             source_card_id,
             ..
-        } => (0, player_id.as_str(), source_card_id.as_str()),
+        } => (4, player_id.as_str(), source_card_id.as_str()),
         PublicChoiceRequest::PendingSurveil {
             player_id,
             source_card_id,
             ..
-        } => (1, player_id.as_str(), source_card_id.as_str()),
+        } => (5, player_id.as_str(), source_card_id.as_str()),
         PublicChoiceRequest::PendingHandChoice {
             player_id,
             source_card_id,
             ..
-        } => (2, player_id.as_str(), source_card_id.as_str()),
+        } => (6, player_id.as_str(), source_card_id.as_str()),
         PublicChoiceRequest::OptionalEffectDecision {
             player_id,
             source_card_id,
             ..
-        } => (3, player_id.as_str(), source_card_id.as_str()),
+        } => (7, player_id.as_str(), source_card_id.as_str()),
         PublicChoiceRequest::SpellTarget {
             player_id,
             source_card_id,
             ..
-        } => (4, player_id.as_str(), source_card_id.as_str()),
+        } => (8, player_id.as_str(), source_card_id.as_str()),
         PublicChoiceRequest::SpellChoice {
             player_id,
             source_card_id,
             ..
-        } => (5, player_id.as_str(), source_card_id.as_str()),
+        } => (9, player_id.as_str(), source_card_id.as_str()),
         PublicChoiceRequest::SpellSecondaryCreatureChoice {
             player_id,
             source_card_id,
             ..
-        } => (6, player_id.as_str(), source_card_id.as_str()),
+        } => (10, player_id.as_str(), source_card_id.as_str()),
         PublicChoiceRequest::SpellModalChoice {
             player_id,
             source_card_id,
             ..
-        } => (7, player_id.as_str(), source_card_id.as_str()),
+        } => (11, player_id.as_str(), source_card_id.as_str()),
         PublicChoiceRequest::AbilityTarget {
             player_id,
             source_card_id,
             ..
-        } => (8, player_id.as_str(), source_card_id.as_str()),
-        PublicChoiceRequest::CleanupDiscard { player_id, .. } => (9, player_id.as_str(), ""),
+        } => (12, player_id.as_str(), source_card_id.as_str()),
+        PublicChoiceRequest::CleanupDiscard { player_id, .. } => (13, player_id.as_str(), ""),
     }
 }
 
@@ -1041,5 +1097,46 @@ fn choice_candidate_sort_key(candidate: &PublicChoiceCandidate) -> (u8, &str) {
         PublicChoiceCandidate::Player(player_id) => (0, player_id.as_str()),
         PublicChoiceCandidate::Card(card_id) => (1, card_id.as_str()),
         PublicChoiceCandidate::StackSpell(stack_object_id) => (2, stack_object_id.as_str()),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    //! Verifies the public surface keeps pending-decision failures explicit.
+
+    use super::public_surface_state;
+    use crate::{
+        domain::play::{
+            commands::{PlayerDeck, StartGameCommand},
+            game::PendingDecision,
+            ids::{DeckId, GameId, PlayerId},
+        },
+        PublicChoiceRequest, PublicLegalAction, PublicPendingDecisionKind,
+    };
+
+    #[test]
+    fn pending_decision_surface_stays_explicit_when_request_payload_cannot_be_built() {
+        let (mut game, _) = crate::domain::play::game::Game::start(StartGameCommand::new(
+            GameId::new("game-unavailable-pending-decision"),
+            vec![
+                PlayerDeck::new(PlayerId::new("p1"), DeckId::new("d1")),
+                PlayerDeck::new(PlayerId::new("p2"), DeckId::new("d2")),
+            ],
+        ))
+        .unwrap_or_else(|_| panic!("game should start"));
+        game.replace_pending_decision(Some(PendingDecision::scry(0, 999, 1)));
+
+        let surface = public_surface_state(&game, &PlayerId::new("p1"));
+
+        assert!(surface.legal_actions.iter().any(|action| matches!(
+            action,
+            PublicLegalAction::ResolvePendingScry { player_id }
+                if player_id.as_str() == "p1"
+        )));
+        assert!(surface.choice_requests.iter().any(|request| matches!(
+            request,
+            PublicChoiceRequest::PendingDecisionUnavailable { player_id, decision }
+                if player_id.as_str() == "p1" && *decision == PublicPendingDecisionKind::Scry
+        )));
     }
 }

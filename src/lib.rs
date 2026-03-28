@@ -10,10 +10,10 @@ pub use application::{
     PublicCardView, PublicCastableCard, PublicChoiceCandidate, PublicChoiceRequest,
     PublicCommandApplication, PublicCommandRejection, PublicCommandResult, PublicCommandStatus,
     PublicEvent, PublicEventLogEntry, PublicGameCommand, PublicGameSessionStart, PublicGameView,
-    PublicLegalAction, PublicModalSpellChoice, PublicOpeningHandDealt, PublicPlayableSubsetVersion,
-    PublicPlayerView, PublicPriorityView, PublicRematchCommand, PublicScryChoice,
-    PublicSeededGameSetup, PublicSeededPlayerSetup, PublicStackObjectView, PublicStackTargetView,
-    PublicSurveilChoice,
+    PublicLegalAction, PublicModalSpellChoice, PublicOpeningHandDealt, PublicPendingDecisionKind,
+    PublicPlayableSubsetVersion, PublicPlayerView, PublicPriorityView, PublicRematchCommand,
+    PublicScryChoice, PublicSeededGameSetup, PublicSeededPlayerSetup, PublicStackObjectView,
+    PublicStackTargetView, PublicSurveilChoice,
 };
 pub use application::{EventBus, EventStore, GameService};
 
