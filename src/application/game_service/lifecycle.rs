@@ -105,6 +105,8 @@ where
 mod tests {
     //! Verifies lifecycle rollback restores aggregate state after persistence failures.
 
+    #![allow(clippy::expect_used)]
+
     use std::{error::Error, io};
 
     use super::GameService;

@@ -68,6 +68,8 @@ impl Game {
 mod tests {
     //! Verifies lifecycle keeps the aggregate card-location index truthful.
 
+    #![allow(clippy::expect_used)]
+
     use super::*;
     use crate::domain::play::{
         commands::{PlayerDeck, PlayerLibrary},
