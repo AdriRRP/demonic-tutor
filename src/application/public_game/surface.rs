@@ -194,30 +194,32 @@ fn priority_surface_state(game: &Game, player: &Player) -> PublicSurfaceState {
 
     let mut choice_requests = Vec::new();
     for castable in &castable_cards {
-        if castable.requires_target {
-            let source_card_id = castable.card_id.clone();
-            choice_requests.push(PublicChoiceRequest::SpellTarget {
-                player_id: player_id.clone(),
-                source_card_id: source_card_id.clone(),
-                candidates: take_spell_target_candidates(
-                    game,
-                    player_id,
-                    &mut spell_target_candidates_by_card,
-                    &source_card_id,
-                ),
-            });
-        }
+        let cached_target_candidates = castable.requires_target.then(|| {
+            take_spell_target_candidates(
+                game,
+                player_id,
+                &mut spell_target_candidates_by_card,
+                &castable.card_id,
+            )
+        });
+
         if castable.requires_choice {
             if let Some(request) = spell_choice_request(
                 game,
                 player,
                 &castable.card_id,
-                spell_target_candidates_by_card
-                    .get(&castable.card_id)
-                    .map(Vec::as_slice),
+                cached_target_candidates.as_deref(),
             ) {
                 choice_requests.push(request);
             }
+        }
+
+        if castable.requires_target {
+            choice_requests.push(PublicChoiceRequest::SpellTarget {
+                player_id: player_id.clone(),
+                source_card_id: castable.card_id.clone(),
+                candidates: cached_target_candidates.unwrap_or_default(),
+            });
         }
     }
 
