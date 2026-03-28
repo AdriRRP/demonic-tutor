@@ -42,10 +42,14 @@ impl EventStore for InMemoryEventStore {
     ) -> Result<(), Box<dyn Error + Send + Sync>> {
         let mut events = self.events.write().map_err(|e| e.to_string())?;
         let entry = events.entry(aggregate_id.to_string()).or_default();
-        entry
-            .chunks
-            .push(Arc::<[DomainEvent]>::from(new_events.to_vec()));
-        entry.combined = None;
+        let new_chunk = Arc::<[DomainEvent]>::from(new_events.to_vec());
+        entry.chunks.push(Arc::clone(&new_chunk));
+        if let Some(combined) = &entry.combined {
+            let mut next = Vec::with_capacity(combined.len() + new_chunk.len());
+            next.extend(combined.iter().cloned());
+            next.extend(new_chunk.iter().cloned());
+            entry.combined = Some(Arc::<[DomainEvent]>::from(next));
+        }
         drop(events);
         Ok(())
     }
