@@ -81,7 +81,9 @@ pub fn game_view(game: &Game) -> PublicGameView {
 #[must_use]
 fn pending_action_and_request(game: &Game) -> Option<PublicSurfaceState> {
     if let Some(pending_decision) = game.pending_decision() {
-        let player_id = game.players()[pending_decision.controller_index()]
+        let player_id = game
+            .players()
+            .get(pending_decision.controller_index())?
             .id()
             .clone();
         let (action, request) = match pending_decision {
@@ -110,12 +112,10 @@ fn pending_action_and_request(game: &Game) -> Option<PublicSurfaceState> {
 }
 
 fn unavailable_pending_decision_surface(
-    game: &Game,
+    viewer_id: &PlayerId,
     pending_decision: &crate::domain::play::game::PendingDecision,
 ) -> PublicSurfaceState {
-    let player_id = game.players()[pending_decision.controller_index()]
-        .id()
-        .clone();
+    let player_id = viewer_id.clone();
     let (action, decision) = match pending_decision {
         crate::domain::play::game::PendingDecision::Scry { .. } => (
             PublicLegalAction::ResolvePendingScry {
@@ -402,10 +402,19 @@ pub(super) fn public_surface_state(game: &Game, viewer_id: &PlayerId) -> PublicS
             )
         },
         |pending_decision| {
-            let controller_id = game.players()[pending_decision.controller_index()].id();
+            let Some(controller_id) = game
+                .players()
+                .get(pending_decision.controller_index())
+                .map(crate::domain::play::game::Player::id)
+            else {
+                return unavailable_pending_decision_surface(viewer_id, pending_decision);
+            };
+
             if controller_id == viewer_id {
                 pending_action_and_request(game)
-                    .unwrap_or_else(|| unavailable_pending_decision_surface(game, pending_decision))
+                    .unwrap_or_else(|| {
+                        unavailable_pending_decision_surface(viewer_id, pending_decision)
+                    })
             } else {
                 PublicSurfaceState::default()
             }
@@ -1081,6 +1090,35 @@ mod tests {
             return;
         };
         game.replace_pending_decision(Some(PendingDecision::scry(0, 999, 1)));
+
+        let surface = public_surface_state(&game, &PlayerId::new("p1"));
+
+        assert!(surface.legal_actions.iter().any(|action| matches!(
+            action,
+            PublicLegalAction::ResolvePendingScry { player_id }
+                if player_id.as_str() == "p1"
+        )));
+        assert!(surface.choice_requests.iter().any(|request| matches!(
+            request,
+            PublicChoiceRequest::PendingDecisionUnavailable { player_id, decision }
+                if player_id.as_str() == "p1" && *decision == PublicPendingDecisionKind::Scry
+        )));
+    }
+
+    #[test]
+    fn pending_decision_surface_does_not_panic_when_controller_index_is_stale() {
+        let start = crate::domain::play::game::Game::start(StartGameCommand::new(
+            GameId::new("game-stale-pending-controller"),
+            vec![
+                PlayerDeck::new(PlayerId::new("p1"), DeckId::new("d1")),
+                PlayerDeck::new(PlayerId::new("p2"), DeckId::new("d2")),
+            ],
+        ));
+        assert!(start.is_ok(), "game should start");
+        let Some((mut game, _)) = start.ok() else {
+            return;
+        };
+        game.replace_pending_decision(Some(PendingDecision::scry(99, 999, 1)));
 
         let surface = public_surface_state(&game, &PlayerId::new("p1"));
 
