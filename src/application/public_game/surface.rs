@@ -223,13 +223,16 @@ fn ability_target_candidate_cache(
         .collect()
 }
 
-fn phase_surface_state(game: &Game) -> PublicSurfaceState {
+fn phase_surface_state(game: &Game, viewer_id: &PlayerId) -> PublicSurfaceState {
     let mut actions = Vec::new();
     let mut choice_requests = Vec::new();
 
     match game.phase() {
         Phase::DeclareAttackers => {
             let player_id = game.active_player().clone();
+            if &player_id != viewer_id {
+                return PublicSurfaceState::default();
+            }
             actions.push(PublicLegalAction::DeclareAttackers {
                 player_id: player_id.clone(),
                 attacker_ids: attack_candidate_ids(game, &player_id),
@@ -238,6 +241,9 @@ fn phase_surface_state(game: &Game) -> PublicSurfaceState {
         Phase::DeclareBlockers => {
             let player_id =
                 defending_player_id(game).unwrap_or_else(|| game.active_player().clone());
+            if &player_id != viewer_id {
+                return PublicSurfaceState::default();
+            }
             let attacker_ids = attacking_creature_ids(game, game.active_player());
             actions.push(PublicLegalAction::DeclareBlockers {
                 player_id: player_id.clone(),
@@ -253,6 +259,9 @@ fn phase_surface_state(game: &Game) -> PublicSurfaceState {
             });
         }
         Phase::CombatDamage => {
+            if game.active_player() != viewer_id {
+                return PublicSurfaceState::default();
+            }
             actions.push(PublicLegalAction::ResolveCombatDamage {
                 player_id: game.active_player().clone(),
             });
@@ -264,6 +273,9 @@ fn phase_surface_state(game: &Game) -> PublicSurfaceState {
                     choice_requests,
                 };
             };
+            if player.id() != viewer_id {
+                return PublicSurfaceState::default();
+            }
             if player.hand_size() > 7 {
                 actions.push(PublicLegalAction::DiscardForCleanup {
                     player_id: player.id().clone(),
@@ -280,6 +292,9 @@ fn phase_surface_state(game: &Game) -> PublicSurfaceState {
             }
         }
         _ => {
+            if game.active_player() != viewer_id {
+                return PublicSurfaceState::default();
+            }
             actions.push(PublicLegalAction::AdvanceTurn {
                 player_id: game.active_player().clone(),
             });
@@ -297,7 +312,7 @@ pub(super) fn public_surface_state(game: &Game, viewer_id: &PlayerId) -> PublicS
     let mut state = game.pending_decision().map_or_else(
         || {
             game.priority().map_or_else(
-                || phase_surface_state(game),
+                || phase_surface_state(game, viewer_id),
                 |priority| {
                     let current_holder = priority.current_holder();
                     if current_holder == viewer_id {

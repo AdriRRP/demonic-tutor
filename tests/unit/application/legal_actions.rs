@@ -313,3 +313,68 @@ fn legal_actions_hide_priority_holder_private_options_from_other_viewers() {
         [PublicLegalAction::Concede { player_id }] if player_id.as_str() == "p2"
     ));
 }
+
+#[test]
+fn legal_actions_hide_cleanup_private_options_from_non_active_viewers() {
+    let service = create_service();
+    let libraries = vec![
+        player_library(
+            "p1",
+            vec![
+                forest_card("p1-forest-a"),
+                forest_card("p1-forest-b"),
+                forest_card("p1-forest-c"),
+                forest_card("p1-forest-d"),
+                forest_card("p1-forest-e"),
+                forest_card("p1-forest-f"),
+                forest_card("p1-forest-g"),
+                forest_card("p1-forest-h"),
+                forest_card("p1-forest-i"),
+                forest_card("p1-forest-j"),
+            ],
+        ),
+        player_library(
+            "p2",
+            vec![
+                forest_card("p2-forest-a"),
+                forest_card("p2-forest-b"),
+                forest_card("p2-forest-c"),
+                forest_card("p2-forest-d"),
+                forest_card("p2-forest-e"),
+                forest_card("p2-forest-f"),
+                forest_card("p2-forest-g"),
+                forest_card("p2-forest-h"),
+                forest_card("p2-forest-i"),
+                forest_card("p2-forest-j"),
+            ],
+        ),
+    ];
+    let decks = vec![player_deck("p1", "d1"), player_deck("p2", "d2")];
+
+    let (mut game, _) = service
+        .start_game(StartGameCommand::new(
+            GameId::new("game-cleanup-hidden-from-opponent"),
+            decks,
+        ))
+        .expect("game should start");
+    service
+        .deal_opening_hands(&mut game, &DealOpeningHandsCommand::new(libraries))
+        .expect("opening hands should be dealt");
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "p1");
+    service
+        .draw_cards_effect(
+            &mut game,
+            &DrawCardsEffectCommand::new(PlayerId::new("p1"), PlayerId::new("p1"), 1),
+        )
+        .expect("explicit draw should be legal in first main");
+    advance_to_player_phase_satisfying_cleanup(&service, &mut game, "p1", Phase::EndStep);
+    close_empty_priority_window(&service, &mut game);
+
+    let actions = legal_actions(&game, &PlayerId::new("p2"));
+
+    assert!(matches!(
+        actions.as_slice(),
+        [PublicLegalAction::Concede { player_id }] if player_id.as_str() == "p2"
+    ));
+}
