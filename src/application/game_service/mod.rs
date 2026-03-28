@@ -19,7 +19,10 @@ use crate::{
 };
 use std::{
     collections::HashMap,
-    sync::{Arc, RwLock},
+    sync::{
+        atomic::{AtomicU64, Ordering},
+        Arc, RwLock,
+    },
 };
 
 use self::rollback::GameRollback;
@@ -32,6 +35,7 @@ where
     event_store: E,
     event_bus: B,
     public_event_log_cache: RwLock<PublicEventLogCache>,
+    public_event_log_access_clock: AtomicU64,
 }
 
 const PUBLIC_EVENT_LOG_CACHE_CAPACITY: usize = 64;
@@ -40,10 +44,6 @@ const PUBLIC_EVENT_LOG_CACHE_MAX_BYTES: usize = 512 * 1024;
 #[derive(Debug, Default)]
 struct PublicEventLogCache {
     entries: HashMap<String, CachedPublicEventLog>,
-    recency_nodes: Vec<CacheRecencyNode>,
-    free_recency_nodes: Vec<usize>,
-    oldest: Option<usize>,
-    newest: Option<usize>,
     total_estimated_bytes: usize,
 }
 
@@ -51,32 +51,14 @@ struct PublicEventLogCache {
 struct CachedPublicEventLog {
     entries: Arc<[PublicEventLogEntry]>,
     estimated_bytes: usize,
-    recency_node: usize,
-}
-
-#[derive(Debug, Default)]
-struct CacheRecencyNode {
-    game_id: String,
-    previous: Option<usize>,
-    next: Option<usize>,
+    last_access_tick: AtomicU64,
 }
 
 impl PublicEventLogCache {
-    fn get(&self, game_id: &str) -> Option<(Arc<[PublicEventLogEntry]>, usize)> {
+    fn get(&self, game_id: &str, access_tick: u64) -> Option<Arc<[PublicEventLogEntry]>> {
         let cached = self.entries.get(game_id)?;
-        Some((Arc::clone(&cached.entries), cached.recency_node))
-    }
-
-    fn promote_if_current(&mut self, game_id: &str, recency_node: usize) {
-        let Some(cached) = self.entries.get(game_id) else {
-            return;
-        };
-        if cached.recency_node != recency_node || self.newest == Some(recency_node) {
-            return;
-        }
-
-        self.unlink_recency_node(recency_node);
-        self.link_recency_node_as_newest(recency_node);
+        cached.last_access_tick.store(access_tick, Ordering::Relaxed);
+        Some(Arc::clone(&cached.entries))
     }
 
     fn insert(
@@ -84,38 +66,33 @@ impl PublicEventLogCache {
         game_id: &str,
         entries: Arc<[PublicEventLogEntry]>,
         estimated_bytes: usize,
+        access_tick: u64,
     ) {
         if let Some(previous) = self.entries.remove(game_id) {
             self.total_estimated_bytes = self
                 .total_estimated_bytes
                 .saturating_sub(previous.estimated_bytes);
-            self.unlink_recency_node(previous.recency_node);
-            self.recycle_recency_node(previous.recency_node);
         }
-        let recency_node = self.allocate_recency_node(game_id);
         self.total_estimated_bytes += estimated_bytes;
-        self.link_recency_node_as_newest(recency_node);
         self.entries.insert(
             game_id.to_string(),
             CachedPublicEventLog {
                 entries,
                 estimated_bytes,
-                recency_node,
+                last_access_tick: AtomicU64::new(access_tick),
             },
         );
 
         while self.entries.len() > PUBLIC_EVENT_LOG_CACHE_CAPACITY
             || self.total_estimated_bytes > PUBLIC_EVENT_LOG_CACHE_MAX_BYTES
         {
-            let Some(oldest_node) = self.pop_oldest_recency_node() else {
+            let Some(oldest_game_id) = self.oldest_game_id() else {
                 break;
             };
-            let oldest_game_id = self.recency_nodes[oldest_node].game_id.clone();
             if let Some(evicted) = self.entries.remove(&oldest_game_id) {
                 self.total_estimated_bytes = self
                     .total_estimated_bytes
                     .saturating_sub(evicted.estimated_bytes);
-                self.recycle_recency_node(oldest_node);
             }
         }
     }
@@ -125,70 +102,14 @@ impl PublicEventLogCache {
             self.total_estimated_bytes = self
                 .total_estimated_bytes
                 .saturating_sub(removed.estimated_bytes);
-            self.unlink_recency_node(removed.recency_node);
-            self.recycle_recency_node(removed.recency_node);
         }
     }
 
-    fn allocate_recency_node(&mut self, game_id: &str) -> usize {
-        if let Some(index) = self.free_recency_nodes.pop() {
-            self.recency_nodes[index] = CacheRecencyNode {
-                game_id: game_id.to_string(),
-                previous: None,
-                next: None,
-            };
-            return index;
-        }
-
-        self.recency_nodes.push(CacheRecencyNode {
-            game_id: game_id.to_string(),
-            previous: None,
-            next: None,
-        });
-        self.recency_nodes.len() - 1
-    }
-
-    fn recycle_recency_node(&mut self, node_index: usize) {
-        self.recency_nodes[node_index] = CacheRecencyNode::default();
-        self.free_recency_nodes.push(node_index);
-    }
-
-    fn link_recency_node_as_newest(&mut self, node_index: usize) {
-        self.recency_nodes[node_index].previous = self.newest;
-        self.recency_nodes[node_index].next = None;
-
-        if let Some(previous_newest) = self.newest {
-            self.recency_nodes[previous_newest].next = Some(node_index);
-        } else {
-            self.oldest = Some(node_index);
-        }
-        self.newest = Some(node_index);
-    }
-
-    fn unlink_recency_node(&mut self, node_index: usize) {
-        let previous = self.recency_nodes[node_index].previous;
-        let next = self.recency_nodes[node_index].next;
-
-        if let Some(previous_index) = previous {
-            self.recency_nodes[previous_index].next = next;
-        } else {
-            self.oldest = next;
-        }
-
-        if let Some(next_index) = next {
-            self.recency_nodes[next_index].previous = previous;
-        } else {
-            self.newest = previous;
-        }
-
-        self.recency_nodes[node_index].previous = None;
-        self.recency_nodes[node_index].next = None;
-    }
-
-    fn pop_oldest_recency_node(&mut self) -> Option<usize> {
-        let oldest = self.oldest?;
-        self.unlink_recency_node(oldest);
-        Some(oldest)
+    fn oldest_game_id(&self) -> Option<String> {
+        self.entries
+            .iter()
+            .min_by_key(|(_, cached)| cached.last_access_tick.load(Ordering::Relaxed))
+            .map(|(game_id, _)| game_id.clone())
     }
 }
 
@@ -209,6 +130,7 @@ where
             event_store,
             event_bus,
             public_event_log_cache: RwLock::new(PublicEventLogCache::default()),
+            public_event_log_access_clock: AtomicU64::new(0),
         }
     }
 
@@ -294,22 +216,14 @@ where
         &self,
         game_id: &str,
     ) -> Result<Option<Arc<[PublicEventLogEntry]>>, DomainError> {
-        let (entries, recency_node) = {
-            let cache = self
-                .public_event_log_cache
-                .read()
-                .map_err(|_| Self::cache_error("read cached public event logs"))?;
-            let Some((entries, recency_node)) = cache.get(game_id) else {
-                return Ok(None);
-            };
-            drop(cache);
-            (entries, recency_node)
-        };
-        if let Ok(mut cache) = self.public_event_log_cache.try_write() {
-            cache.promote_if_current(game_id, recency_node);
-        }
-
-        Ok(Some(entries))
+        let access_tick = self.public_event_log_access_clock.fetch_add(1, Ordering::Relaxed) + 1;
+        let cache = self
+            .public_event_log_cache
+            .read()
+            .map_err(|_| Self::cache_error("read cached public event logs"))?;
+        let entries = cache.get(game_id, access_tick);
+        drop(cache);
+        Ok(entries)
     }
 
     pub(crate) fn store_public_event_log_cache(
@@ -318,11 +232,12 @@ where
         entries: Arc<[PublicEventLogEntry]>,
         estimated_bytes: usize,
     ) -> Result<(), DomainError> {
+        let access_tick = self.public_event_log_access_clock.fetch_add(1, Ordering::Relaxed) + 1;
         let mut cache = self
             .public_event_log_cache
             .write()
             .map_err(|_| Self::cache_error("store a cached public event log"))?;
-        cache.insert(game_id, entries, estimated_bytes);
+        cache.insert(game_id, entries, estimated_bytes, access_tick);
         drop(cache);
         Ok(())
     }
