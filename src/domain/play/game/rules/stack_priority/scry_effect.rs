@@ -103,7 +103,7 @@ pub fn resolve_pending_scry(
         "pending scry spell must still exist on the stack",
         "pending scry requires a spell stack object",
     )?;
-    let (stack_top_resolved, spell_cast, _) = resolve_pending_spell_to_default_destination(
+    let (stack_top_resolved, spell_cast) = resolve_pending_spell_to_default_destination(
         game_id,
         players,
         controller_index,

@@ -244,13 +244,12 @@ pub fn resolve_pending_hand_choice(
     };
     zone_changes.extend(card_drawn.iter().map(zone_change_for_drawn_card));
 
-    let (stack_top_resolved, spell_cast, _moved_cards) =
-        resolve_pending_spell_to_default_destination(
-            game_id,
-            players,
-            controller_index,
-            pending_spell,
-        )?;
+    let (stack_top_resolved, spell_cast) = resolve_pending_spell_to_default_destination(
+        game_id,
+        players,
+        controller_index,
+        pending_spell,
+    )?;
     zone_changes.push(zone_change_for_spell_cast(&spell_cast));
 
     if terminal_state.is_over() {

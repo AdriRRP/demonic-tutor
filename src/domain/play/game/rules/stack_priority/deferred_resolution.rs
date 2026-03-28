@@ -113,13 +113,13 @@ pub(super) fn resolve_pending_spell_to_default_destination(
     players: &mut [Player],
     controller_index: usize,
     pending_spell: PendingSpellResolution,
-) -> Result<(StackTopResolved, SpellCast, Vec<CardInstanceId>), DomainError> {
+) -> Result<(StackTopResolved, SpellCast), DomainError> {
     let controller_id = pending_spell.controller_id().clone();
     let source_card_id = pending_spell.source_card_id().clone();
     let card_type = pending_spell.card_type();
     let mana_cost_paid = pending_spell.mana_cost_paid();
     let stack_object_number = pending_spell.stack_object_number();
-    let (spell_outcome, moved_cards) = move_spell_to_resolution_destination(
+    let (spell_outcome, _moved_cards) = move_spell_to_resolution_destination(
         players,
         controller_index,
         pending_spell.into_payload(),
@@ -135,7 +135,7 @@ pub(super) fn resolve_pending_spell_to_default_destination(
         spell_outcome,
     );
 
-    Ok((stack_top_resolved, spell_cast, moved_cards))
+    Ok((stack_top_resolved, spell_cast))
 }
 
 pub(super) fn move_spell_to_resolution_destination(

@@ -31,17 +31,16 @@ use crate::domain::play::{
     ids::GameId,
 };
 
-type ResolvedSpellOutcome = (
-    StackTopResolved,
-    Vec<TriggeredAbilityPutOnStack>,
-    Option<SpellCast>,
-    Option<CardDiscarded>,
-    Vec<CardMovedZone>,
-    Option<LifeChanged>,
-    Vec<CreatureDied>,
-    Vec<crate::domain::play::ids::CardInstanceId>,
-    Option<GameEnded>,
-);
+pub(super) struct ResolvedSpellOutcome {
+    pub(super) stack_top_resolved: StackTopResolved,
+    pub(super) triggered_abilities_put_on_stack: Vec<TriggeredAbilityPutOnStack>,
+    pub(super) spell_cast: Option<SpellCast>,
+    pub(super) card_discarded: Option<CardDiscarded>,
+    pub(super) zone_changes: Vec<CardMovedZone>,
+    pub(super) life_changed: Option<LifeChanged>,
+    pub(super) creatures_died: Vec<CreatureDied>,
+    pub(super) game_ended: Option<GameEnded>,
+}
 
 struct SpellDestinationContext<'a> {
     players: &'a mut [Player],
@@ -549,17 +548,16 @@ fn resolve_spell_from_stack(
         &creatures_died,
     )?);
 
-    Ok((
+    Ok(ResolvedSpellOutcome {
         stack_top_resolved,
         triggered_abilities_put_on_stack,
-        Some(spell_cast),
+        spell_cast: Some(spell_cast),
         card_discarded,
         zone_changes,
         life_changed,
         creatures_died,
-        moved_cards,
         game_ended,
-    ))
+    })
 }
 
 fn resolve_activated_ability_from_stack(
@@ -631,17 +629,16 @@ fn resolve_activated_ability_from_stack(
         terminal_state,
     )?;
 
-    Ok((
+    Ok(ResolvedSpellOutcome {
         stack_top_resolved,
-        Vec::new(),
-        None,
-        None,
-        Vec::new(),
+        triggered_abilities_put_on_stack: Vec::new(),
+        spell_cast: None,
+        card_discarded: None,
+        zone_changes: Vec::new(),
         life_changed,
         creatures_died,
-        Vec::new(),
         game_ended,
-    ))
+    })
 }
 
 fn resolve_triggered_ability_from_stack(
@@ -670,7 +667,7 @@ fn resolve_triggered_ability_from_stack(
         source_card_id,
     );
 
-    let (life_changed, zone_changes, moved_cards) = match ability.effect() {
+    let (life_changed, zone_changes) = match ability.effect() {
         TriggeredAbilityEffect::GainLifeToController(amount)
         | TriggeredAbilityEffect::MayGainLifeToController(amount) => (
             Some(super::super::game_effects::adjust_player_life_by_index(
@@ -679,7 +676,6 @@ fn resolve_triggered_ability_from_stack(
                 controller_index,
                 amount.cast_signed(),
             )?),
-            Vec::new(),
             Vec::new(),
         ),
         TriggeredAbilityEffect::ReturnFirstInstantOrSorceryCardFromGraveyardToHand => {
@@ -707,7 +703,7 @@ fn resolve_triggered_ability_from_stack(
                     )
                 })
                 .collect();
-            (None, zone_changes, moved_cards)
+            (None, zone_changes)
         }
     };
 
@@ -720,17 +716,16 @@ fn resolve_triggered_ability_from_stack(
         terminal_state,
     )?;
 
-    Ok((
+    Ok(ResolvedSpellOutcome {
         stack_top_resolved,
-        Vec::new(),
-        None,
-        None,
+        triggered_abilities_put_on_stack: Vec::new(),
+        spell_cast: None,
+        card_discarded: None,
         zone_changes,
         life_changed,
         creatures_died,
-        moved_cards,
         game_ended,
-    ))
+    })
 }
 
 pub(super) fn resolve_stack_object(

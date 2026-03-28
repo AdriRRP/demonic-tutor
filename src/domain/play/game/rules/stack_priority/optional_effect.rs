@@ -83,17 +83,7 @@ pub fn resolve_optional_effect(
         ))
     })?;
 
-    let (
-        stack_top_resolved,
-        triggered_abilities_put_on_stack,
-        spell_cast,
-        card_discarded,
-        zone_changes,
-        life_changed,
-        creatures_died,
-        _moved_cards,
-        game_ended,
-    ) = if accept {
+    let resolved = if accept {
         resolve_stack_object(
             game_id,
             players,
@@ -103,17 +93,16 @@ pub fn resolve_optional_effect(
             stack_object,
         )?
     } else {
-        (
-            stack_top_resolved_without_effect(game_id, players, &stack_object),
-            Vec::new(),
-            None,
-            None,
-            Vec::new(),
-            None,
-            Vec::new(),
-            Vec::new(),
-            None,
-        )
+        super::resolution::ResolvedSpellOutcome {
+            stack_top_resolved: stack_top_resolved_without_effect(game_id, players, &stack_object),
+            triggered_abilities_put_on_stack: Vec::new(),
+            spell_cast: None,
+            card_discarded: None,
+            zone_changes: Vec::new(),
+            life_changed: None,
+            creatures_died: Vec::new(),
+            game_ended: None,
+        }
     };
 
     if terminal_state.is_over() {
@@ -123,14 +112,14 @@ pub fn resolve_optional_effect(
     }
 
     Ok(ResolveOptionalEffectOutcome {
-        stack_top_resolved: Some(stack_top_resolved),
-        triggered_abilities_put_on_stack,
-        spell_cast,
-        card_discarded,
-        zone_changes,
-        life_changed,
-        creatures_died,
-        game_ended,
+        stack_top_resolved: Some(resolved.stack_top_resolved),
+        triggered_abilities_put_on_stack: resolved.triggered_abilities_put_on_stack,
+        spell_cast: resolved.spell_cast,
+        card_discarded: resolved.card_discarded,
+        zone_changes: resolved.zone_changes,
+        life_changed: resolved.life_changed,
+        creatures_died: resolved.creatures_died,
+        game_ended: resolved.game_ended,
         priority_still_open: priority.is_some(),
     })
 }

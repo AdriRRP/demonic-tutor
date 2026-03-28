@@ -225,7 +225,7 @@ pub fn pass_priority(
                             "loot spell should still be on the stack while opening its pending hand choice",
                             "pending loot resolution requires a spell stack object",
                         )?;
-                        let (stack_top_resolved, spell_cast, _moved_cards) =
+                        let (stack_top_resolved, spell_cast) =
                             resolve_pending_spell_to_default_destination(
                                 game_id,
                                 players,
@@ -334,17 +334,7 @@ pub fn pass_priority(
             "priority resolution expected a stack object".to_string(),
         ))
     })?;
-    let (
-        stack_top_resolved,
-        triggered_abilities_put_on_stack,
-        spell_cast,
-        card_discarded,
-        zone_changes,
-        life_changed,
-        creatures_died,
-        _moved_cards,
-        game_ended,
-    ) = resolve_stack_object(
+    let resolved = resolve_stack_object(
         game_id,
         players,
         card_locations,
@@ -361,15 +351,15 @@ pub fn pass_priority(
 
     Ok(PassPriorityOutcome {
         priority_passed,
-        triggered_abilities_put_on_stack,
-        stack_top_resolved: Some(stack_top_resolved),
-        spell_cast,
+        triggered_abilities_put_on_stack: resolved.triggered_abilities_put_on_stack,
+        stack_top_resolved: Some(resolved.stack_top_resolved),
+        spell_cast: resolved.spell_cast,
         card_drawn: Vec::new(),
-        card_discarded,
-        zone_changes,
-        life_changed,
-        creatures_died,
-        game_ended,
+        card_discarded: resolved.card_discarded,
+        zone_changes: resolved.zone_changes,
+        life_changed: resolved.life_changed,
+        creatures_died: resolved.creatures_died,
+        game_ended: resolved.game_ended,
         priority_still_open: priority.is_some(),
     })
 }
