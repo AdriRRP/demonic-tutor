@@ -176,7 +176,10 @@ where
                 message: err.to_string(),
             }),
         };
-        let emitted_events = public_events(result.unwrap_or_default());
+        let emitted_events = match result {
+            Ok(events) => public_events(events),
+            Err(_) => Vec::new(),
+        };
 
         PublicCommandApplication {
             status,
