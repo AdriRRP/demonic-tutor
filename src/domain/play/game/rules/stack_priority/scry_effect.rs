@@ -3,12 +3,11 @@
 use crate::domain::play::{
     commands::ResolvePendingScryCommand,
     errors::{DomainError, GameError},
-    events::SpellCastOutcome,
     game::{PendingDecision, PriorityState},
 };
 
 use super::{
-    deferred_resolution::{build_spell_resolution_events_from_parts, remove_pending_spell},
+    deferred_resolution::{remove_pending_spell, resolve_pending_spell_to_default_destination},
     ResolvePendingScryOutcome, StackPriorityContext,
 };
 
@@ -86,22 +85,12 @@ pub fn resolve_pending_scry(
         "pending scry spell must still exist on the stack",
         "pending scry requires a spell stack object",
     )?;
-    let controller_id = pending_spell.controller_id().clone();
-    let source_card_id = pending_spell.source_card_id().clone();
-    let card_type = pending_spell.card_type();
-    let mana_cost_paid = pending_spell.mana_cost_paid();
-    let stack_object_number = pending_spell.stack_object_number();
-    players[controller_index]
-        .receive_graveyard_card(pending_spell.into_payload().into_card_instance());
-    let (stack_top_resolved, spell_cast) = build_spell_resolution_events_from_parts(
+    let (stack_top_resolved, spell_cast, _) = resolve_pending_spell_to_default_destination(
         game_id,
-        &controller_id,
-        stack_object_number,
-        &source_card_id,
-        card_type,
-        mana_cost_paid,
-        SpellCastOutcome::ResolvedToGraveyard,
-    );
+        players,
+        controller_index,
+        pending_spell,
+    )?;
 
     *priority = Some(PriorityState::opened(active_player.clone()));
 

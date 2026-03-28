@@ -99,7 +99,7 @@ impl GameLogProjection {
             }
             DomainEvent::CardExiled(e) => {
                 format!(
-                    "Card {} controlled by {} was exiled from {:?}",
+                    "Card {} moved to exile in {} from {:?}",
                     e.card_id, e.player_id, e.origin_zone
                 )
             }
