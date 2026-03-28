@@ -14,7 +14,10 @@ mod turn_flow;
 
 use crate::domain::play::{
     errors::{DomainError, GameError},
-    events::{CardMovedZone, GameEndReason, ZoneType},
+    events::{
+        CardDiscarded, CardDrawn, CardExiled, CardMovedZone, CreatureDied, GameEndReason,
+        LandPlayed, SpellCast, SpellCastOutcome, ZoneType,
+    },
     ids::{CardInstanceId, GameId, PlayerId},
     phase::Phase,
 };
@@ -279,6 +282,79 @@ impl Game {
 
         self.card_locations
             .upsert(card_id.clone(), owner_index, handle, zone);
+    }
+
+    fn sync_zone_changes(&mut self, zone_changes: &[CardMovedZone]) -> Result<(), DomainError> {
+        for zone_change in zone_changes {
+            self.sync_card_location_from_zone_change(zone_change)?;
+        }
+
+        Ok(())
+    }
+
+    pub(crate) fn zone_change_for_spell_cast(event: &SpellCast) -> CardMovedZone {
+        let destination_zone = match event.outcome {
+            SpellCastOutcome::EnteredBattlefield => ZoneType::Battlefield,
+            SpellCastOutcome::ResolvedToGraveyard => ZoneType::Graveyard,
+            SpellCastOutcome::ResolvedToExile => ZoneType::Exile,
+        };
+        CardMovedZone::new(
+            event.game_id.clone(),
+            event.player_id.clone(),
+            event.card_id.clone(),
+            ZoneType::Stack,
+            destination_zone,
+        )
+    }
+
+    pub(crate) fn zone_change_for_card_drawn(event: &CardDrawn) -> CardMovedZone {
+        CardMovedZone::new(
+            event.game_id.clone(),
+            event.player_id.clone(),
+            event.card_id.clone(),
+            ZoneType::Library,
+            ZoneType::Hand,
+        )
+    }
+
+    pub(crate) fn zone_change_for_card_discarded(event: &CardDiscarded) -> CardMovedZone {
+        CardMovedZone::new(
+            event.game_id.clone(),
+            event.player_id.clone(),
+            event.card_id.clone(),
+            ZoneType::Hand,
+            ZoneType::Graveyard,
+        )
+    }
+
+    pub(crate) fn zone_change_for_land_played(event: &LandPlayed) -> CardMovedZone {
+        CardMovedZone::new(
+            event.game_id.clone(),
+            event.player_id.clone(),
+            event.card_id.clone(),
+            ZoneType::Hand,
+            ZoneType::Battlefield,
+        )
+    }
+
+    pub(crate) fn zone_change_for_creature_died(event: &CreatureDied) -> CardMovedZone {
+        CardMovedZone::new(
+            event.game_id.clone(),
+            event.player_id.clone(),
+            event.card_id.clone(),
+            ZoneType::Battlefield,
+            ZoneType::Graveyard,
+        )
+    }
+
+    pub(crate) fn zone_change_for_card_exiled(event: &CardExiled) -> CardMovedZone {
+        CardMovedZone::new(
+            event.game_id.clone(),
+            event.zone_owner_id.clone(),
+            event.card_id.clone(),
+            event.origin_zone.clone(),
+            ZoneType::Exile,
+        )
     }
 
     fn sync_card_location_from_zone_change(

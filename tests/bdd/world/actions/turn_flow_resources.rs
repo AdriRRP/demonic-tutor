@@ -3,9 +3,10 @@
 use {
     super::super::support,
     super::super::GameplayWorld,
+    demonictutor::domain::play::events::ZoneType,
     demonictutor::domain::play::game::PlayerCardZone,
     demonictutor::{
-        AdjustPlayerLifeEffectCommand, AdvanceTurnCommand, AdvanceTurnOutcome,
+        AdjustPlayerLifeEffectCommand, AdvanceTurnCommand, AdvanceTurnOutcome, CardMovedZone,
         DiscardForCleanupCommand, DrawCardsEffectCommand, PassPriorityCommand, PlayLandCommand,
         PlayerId, TapLandCommand,
     },
@@ -120,7 +121,22 @@ impl GameplayWorld {
         self.last_priority_passed = Some(outcome.priority_passed);
         self.last_stack_top_resolved = outcome.stack_top_resolved;
         self.last_spell_cast = outcome.spell_cast;
-        self.last_card_exiled = outcome.card_exiled;
+        self.last_zone_change = outcome
+            .zone_changes
+            .iter()
+            .find(|event| event.destination_zone.as_str() == "exile")
+            .cloned()
+            .or_else(|| {
+                outcome.card_exiled.as_ref().map(|event| {
+                    CardMovedZone::new(
+                        event.game_id.clone(),
+                        event.zone_owner_id.clone(),
+                        event.card_id.clone(),
+                        event.origin_zone.clone(),
+                        ZoneType::Exile,
+                    )
+                })
+            });
         self.last_life_changed = outcome.life_changed;
         self.last_creature_died = outcome.creatures_died;
         self.last_game_ended = outcome.game_ended;

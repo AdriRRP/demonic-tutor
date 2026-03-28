@@ -10,5 +10,5 @@ Feature: Exile target creature
     When Alice passes priority
     And Bob passes priority
     Then the game emits StackTopResolved
-    And the game emits CardExiled
+    And the game emits CardMovedZone to exile
     And Bob's creature is in exile

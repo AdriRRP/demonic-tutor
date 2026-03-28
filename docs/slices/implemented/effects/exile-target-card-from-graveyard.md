@@ -8,7 +8,7 @@ Support a targeted spell that exiles a card from a graveyard.
 
 - a supported spell may choose a legal card in a graveyard
 - on resolution, the target card moves from graveyard to its owner's exile zone
-- the shared resolution corridor emits `CardExiled` for the effect
+- the shared resolution corridor now surfaces `CardMovedZone(origin -> Exile)` as the public visible zone-move event for the effect
 
 ## Invariants
 

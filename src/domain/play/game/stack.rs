@@ -13,53 +13,23 @@ use {
             ResolvePendingScryCommand, ResolvePendingSurveilCommand,
         },
         errors::DomainError,
-        events::{
-            CardDiscarded, CardDrawn, CardExiled, CardMovedZone, CreatureDied, SpellCast,
-            SpellCastOutcome, ZoneType,
-        },
+        events::{CardDiscarded, CardDrawn, CardExiled, CardMovedZone, CreatureDied, SpellCast},
     },
 };
 
 impl Game {
-    fn sync_zone_changes(&mut self, zone_changes: &[CardMovedZone]) -> Result<(), DomainError> {
-        for zone_change in zone_changes {
-            self.sync_card_location_from_zone_change(zone_change)?;
-        }
-
-        Ok(())
-    }
-
     fn append_spell_resolution_zone_change(
         zone_changes: &mut Vec<CardMovedZone>,
         spell_cast: &SpellCast,
     ) {
-        let destination_zone = match spell_cast.outcome {
-            SpellCastOutcome::EnteredBattlefield => ZoneType::Battlefield,
-            SpellCastOutcome::ResolvedToGraveyard => ZoneType::Graveyard,
-            SpellCastOutcome::ResolvedToExile => ZoneType::Exile,
-        };
-        zone_changes.push(CardMovedZone::new(
-            spell_cast.game_id.clone(),
-            spell_cast.player_id.clone(),
-            spell_cast.card_id.clone(),
-            ZoneType::Stack,
-            destination_zone,
-        ));
+        zone_changes.push(Self::zone_change_for_spell_cast(spell_cast));
     }
 
     fn append_drawn_card_zone_changes(
         zone_changes: &mut Vec<CardMovedZone>,
         card_drawn: &[CardDrawn],
     ) {
-        zone_changes.extend(card_drawn.iter().map(|event| {
-            CardMovedZone::new(
-                event.game_id.clone(),
-                event.player_id.clone(),
-                event.card_id.clone(),
-                ZoneType::Library,
-                ZoneType::Hand,
-            )
-        }));
+        zone_changes.extend(card_drawn.iter().map(Self::zone_change_for_card_drawn));
     }
 
     fn append_discarded_card_zone_change(
@@ -69,13 +39,7 @@ impl Game {
         let Some(event) = card_discarded else {
             return;
         };
-        zone_changes.push(CardMovedZone::new(
-            event.game_id.clone(),
-            event.player_id.clone(),
-            event.card_id.clone(),
-            ZoneType::Hand,
-            ZoneType::Graveyard,
-        ));
+        zone_changes.push(Self::zone_change_for_card_discarded(event));
     }
 
     fn append_exiled_card_zone_change(
@@ -85,28 +49,18 @@ impl Game {
         let Some(event) = card_exiled else {
             return;
         };
-        zone_changes.push(CardMovedZone::new(
-            event.game_id.clone(),
-            event.zone_owner_id.clone(),
-            event.card_id.clone(),
-            event.origin_zone.clone(),
-            ZoneType::Exile,
-        ));
+        zone_changes.push(Self::zone_change_for_card_exiled(event));
     }
 
     fn append_creature_died_zone_changes(
         zone_changes: &mut Vec<CardMovedZone>,
         creatures_died: &[CreatureDied],
     ) {
-        zone_changes.extend(creatures_died.iter().map(|event| {
-            CardMovedZone::new(
-                event.game_id.clone(),
-                event.player_id.clone(),
-                event.card_id.clone(),
-                ZoneType::Battlefield,
-                ZoneType::Graveyard,
-            )
-        }));
+        zone_changes.extend(
+            creatures_died
+                .iter()
+                .map(Self::zone_change_for_creature_died),
+        );
     }
 
     fn canonical_zone_changes_for_activate_ability(

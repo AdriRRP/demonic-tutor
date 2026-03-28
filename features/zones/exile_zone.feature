@@ -12,7 +12,7 @@ Feature: Exile zone exists as a player-owned game zone
     When a spell or ability exiles that creature
     Then that creature is no longer on the battlefield
     And that creature enters Alice's exile zone
-    And the game emits CardExiled
+    And the game emits CardMovedZone to exile
 
 
   Scenario: A card is moved from the graveyard to exile
@@ -20,7 +20,7 @@ Feature: Exile zone exists as a player-owned game zone
     When a spell or ability exiles that creature from the graveyard
     Then that creature leaves the graveyard
     And that creature enters Bob's exile zone
-    And the game emits CardExiled
+    And the game emits CardMovedZone to exile
 
   Scenario: A card cannot exist in exile and another zone simultaneously
     Given a creature is in Alice's exile zone

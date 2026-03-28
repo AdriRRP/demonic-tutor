@@ -6,7 +6,7 @@ Push another internal corridor away from public string ids by using player index
 
 ## Supported Behavior
 
-- battlefield and graveyard exile effects still emit the same public `CardExiled` events
+- battlefield and graveyard exile effects now surface the same public `CardMovedZone(origin -> Exile)` events at the application boundary
 - id-based rule helpers remain available at the outer API surface
 - internal resolution paths can now stay in index space longer before crossing outward boundaries
 

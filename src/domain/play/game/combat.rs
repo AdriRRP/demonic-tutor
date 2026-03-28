@@ -90,11 +90,12 @@ impl Game {
             Some(PriorityState::opened(active_player))
         };
 
-        for creature_died in &outcome.creatures_died {
-            let owner_index =
-                super::helpers::find_player_index(&self.players, &creature_died.player_id)?;
-            self.sync_card_location_from_player(owner_index, &creature_died.card_id);
-        }
+        let zone_changes = outcome
+            .creatures_died
+            .iter()
+            .map(Self::zone_change_for_creature_died)
+            .collect::<Vec<_>>();
+        self.sync_zone_changes(&zone_changes)?;
         Ok(outcome)
     }
 }

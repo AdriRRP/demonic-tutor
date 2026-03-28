@@ -9,7 +9,7 @@ use {
                 AdjustPlayerLifeEffectCommand, ExileCardCommand, PlayLandCommand, TapLandCommand,
             },
             errors::DomainError,
-            events::{CardExiled, DomainEvent, LandPlayed, LandTapped, ManaAdded},
+            events::{CardMovedZone, DomainEvent, LandPlayed, LandTapped, ManaAdded},
             game::{AdjustPlayerLifeEffectOutcome, Game},
         },
     },
@@ -54,11 +54,12 @@ where
         &self,
         game: &mut Game,
         cmd: &ExileCardCommand,
-    ) -> Result<CardExiled, DomainError> {
+    ) -> Result<CardMovedZone, DomainError> {
         let event = game.exile_card(cmd)?;
-        self.persist_and_publish_event(game.id().as_str(), &event)?;
+        let zone_change = Game::zone_change_for_card_exiled(&event);
+        self.persist_and_publish_event(game.id().as_str(), &zone_change)?;
 
-        Ok(event)
+        Ok(zone_change)
     }
 
     /// Resolves an explicit life effect from a caster onto a target player.

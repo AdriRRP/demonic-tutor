@@ -41,10 +41,11 @@ pub use domain::play::{
     errors::{CardError, DomainError, GameError, PhaseError, PlayerError},
     events::{
         ActivatedAbilityPutOnStack, AttackersDeclared, BlockersDeclared, CardDiscarded, CardDrawn,
-        CardExiled, CombatDamageResolved, CreatureDied, DamageEvent, DiscardKind, DomainEvent,
-        DrawKind, GameEndReason, GameEnded, GameStarted, LandPlayed, LandTapped, LifeChanged,
-        ManaAdded, MulliganTaken, OpeningHandDealt, PriorityPassed, SpellCast, SpellCastOutcome,
-        SpellPutOnStack, StackTopResolved, TriggeredAbilityPutOnStack, TurnProgressed,
+        CardExiled, CardMovedZone, CombatDamageResolved, CreatureDied, DamageEvent, DiscardKind,
+        DomainEvent, DrawKind, GameEndReason, GameEnded, GameStarted, LandPlayed, LandTapped,
+        LifeChanged, ManaAdded, MulliganTaken, OpeningHandDealt, PriorityPassed, SpellCast,
+        SpellCastOutcome, SpellPutOnStack, StackTopResolved, TriggeredAbilityPutOnStack,
+        TurnProgressed,
     },
     game::{
         ActivateAbilityOutcome, ActivatedAbilityOnStack, AdjustPlayerLifeEffectOutcome,

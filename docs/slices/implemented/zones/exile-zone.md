@@ -82,9 +82,9 @@ This slice follows the existing zone model foundation because:
 
 ### Events
 
-- add `CardExiled` event
+- add visible exile-zone movement events
 ```rust
-pub struct CardExiled {
+pub struct CardMovedZone {
     pub game_id: GameId,
     pub player_id: PlayerId,
     pub card_id: CardInstanceId,
@@ -126,7 +126,7 @@ This behavior belongs to the `Game` aggregate because:
 - a card can be moved to exile from the graveyard
 - exiled cards are visible through the player's exile zone
 - cards cannot be in both exile and another zone simultaneously
-- `CardExiled` event is emitted when exile occurs
+- a visible zone-move event to `Exile` is emitted when exile occurs
 
 ---
 

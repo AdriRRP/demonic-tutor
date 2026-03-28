@@ -125,6 +125,6 @@ impl GameplayWorld {
                 &ExileCardCommand::new(Self::player_id(alias), card_id, from_battlefield),
             )
             .expect("exiling tracked card should succeed");
-        self.last_card_exiled = Some(event);
+        self.last_zone_change = Some(event);
     }
 }

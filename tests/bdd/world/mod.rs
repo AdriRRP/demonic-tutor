@@ -10,7 +10,7 @@ mod setup_combat_windows;
 mod setup_priority_windows;
 
 use demonictutor::{
-    ActivatedAbilityPutOnStack, CardDiscarded, CardDrawn, CardExiled, CardInstanceId,
+    ActivatedAbilityPutOnStack, CardDiscarded, CardDrawn, CardInstanceId, CardMovedZone,
     CombatDamageResolved, CreatureDied, Game, GameEnded, LifeChanged, PriorityPassed, SpellCast,
     SpellPutOnStack, StackTopResolved, TurnProgressed,
 };
@@ -23,7 +23,7 @@ pub struct GameplayWorld {
     pub last_card_drawn: Option<CardDrawn>,
     pub last_cards_drawn: Vec<CardDrawn>,
     pub last_card_discarded: Option<CardDiscarded>,
-    pub last_card_exiled: Option<CardExiled>,
+    pub last_zone_change: Option<CardMovedZone>,
     pub last_activated_ability_put_on_stack: Option<ActivatedAbilityPutOnStack>,
     pub last_spell_put_on_stack: Option<SpellPutOnStack>,
     pub last_spell_cast: Option<SpellCast>,

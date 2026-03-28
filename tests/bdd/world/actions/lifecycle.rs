@@ -13,7 +13,7 @@ impl GameplayWorld {
         self.last_card_drawn = None;
         self.last_cards_drawn.clear();
         self.last_card_discarded = None;
-        self.last_card_exiled = None;
+        self.last_zone_change = None;
         self.last_activated_ability_put_on_stack = None;
         self.last_spell_put_on_stack = None;
         self.last_spell_cast = None;

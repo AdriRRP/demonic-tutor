@@ -41,7 +41,8 @@ impl Game {
             ..
         }) = &result
         {
-            self.sync_card_location_from_player(self.active_player_index, &card_drawn.card_id);
+            let zone_changes = [Self::zone_change_for_card_drawn(card_drawn)];
+            self.sync_zone_changes(&zone_changes)?;
         }
         result
     }
@@ -72,9 +73,12 @@ impl Game {
             cmd,
         );
         if let Ok(outcome) = &result {
-            for card_drawn in &outcome.cards_drawn {
-                self.sync_card_location_from_player(target_player_index, &card_drawn.card_id);
-            }
+            let zone_changes = outcome
+                .cards_drawn
+                .iter()
+                .map(Self::zone_change_for_card_drawn)
+                .collect::<Vec<_>>();
+            self.sync_zone_changes(&zone_changes)?;
         }
         result
     }
@@ -97,7 +101,8 @@ impl Game {
             cmd,
         );
         if let Ok(event) = &result {
-            self.sync_card_location_from_player(active_player_index, &event.card_id);
+            let zone_changes = [Self::zone_change_for_card_discarded(event)];
+            self.sync_zone_changes(&zone_changes)?;
         }
         result
     }
@@ -153,9 +158,8 @@ impl Game {
             )
         };
         if let Ok(event) = &result {
-            let owner_index =
-                super::helpers::find_player_index(&self.players, &event.zone_owner_id)?;
-            self.sync_card_location_from_player(owner_index, &event.card_id);
+            let zone_changes = [Self::zone_change_for_card_exiled(event)];
+            self.sync_zone_changes(&zone_changes)?;
         }
         result
     }

@@ -52,7 +52,9 @@ fn push_resolution_effect_batch(
 ) {
     domain_events.extend(batch.card_drawn.iter().cloned());
     domain_events.push_optional(batch.card_discarded.cloned());
-    domain_events.push_optional(batch.card_exiled.cloned());
+    if let Some(card_exiled) = batch.card_exiled {
+        domain_events.push(Game::zone_change_for_card_exiled(card_exiled));
+    }
     domain_events.extend(batch.zone_changes.iter().cloned());
     domain_events.push_optional(batch.life_changed.cloned());
     domain_events.extend(batch.creatures_died.iter().cloned());

@@ -27,9 +27,13 @@ fn creature_enters_alice_exile_zone(world: &mut GameplayWorld) {
     assert!(world.exile_contains("Alice", card_id));
 }
 
-#[then("the game emits CardExiled")]
-fn game_emits_card_exiled(world: &mut GameplayWorld) {
-    assert!(world.last_card_exiled.is_some());
+#[then("the game emits CardMovedZone to exile")]
+fn game_emits_card_moved_zone_to_exile(world: &mut GameplayWorld) {
+    let event = world
+        .last_zone_change
+        .as_ref()
+        .expect("expected zone change event");
+    assert_eq!(event.destination_zone.as_str(), "exile");
 }
 
 #[given("a creature is in Bob's graveyard")]

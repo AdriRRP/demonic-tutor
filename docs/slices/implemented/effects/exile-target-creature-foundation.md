@@ -8,7 +8,7 @@ Support a targeted spell that exiles a creature from the battlefield.
 
 - a supported targeted spell may choose a legal creature on the battlefield
 - on resolution, the target creature is moved to its owner's exile zone
-- the shared resolution corridor emits `CardExiled` for the effect
+- the shared resolution corridor now surfaces `CardMovedZone(origin -> Exile)` as the public visible zone-move event for the effect
 
 ## Invariants
 
