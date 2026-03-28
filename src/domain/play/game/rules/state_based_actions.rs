@@ -8,7 +8,7 @@ use {
         TerminalState,
     },
     crate::domain::play::{
-        events::{CreatureDied, GameEndReason, GameEnded},
+        events::{CardMovedZone, CreatureDied, GameEndReason, GameEnded, ZoneType},
         ids::GameId,
     },
 };
@@ -16,28 +16,34 @@ use {
 #[derive(Debug, Clone)]
 struct StateBasedActionCheckResult {
     creatures_died: Vec<CreatureDied>,
-    moved_to_graveyard: bool,
+    zone_changes: Vec<CardMovedZone>,
     game_ended: Option<GameEnded>,
 }
 
 impl StateBasedActionCheckResult {
     #[must_use]
     const fn changed(&self) -> bool {
-        !self.creatures_died.is_empty() || self.moved_to_graveyard || self.game_ended.is_some()
+        !self.creatures_died.is_empty() || !self.zone_changes.is_empty() || self.game_ended.is_some()
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct StateBasedActionsResult {
     pub creatures_died: Vec<CreatureDied>,
+    pub zone_changes: Vec<CardMovedZone>,
     pub game_ended: Option<GameEnded>,
 }
 
 impl StateBasedActionsResult {
     #[must_use]
-    pub const fn new(creatures_died: Vec<CreatureDied>, game_ended: Option<GameEnded>) -> Self {
+    pub const fn new(
+        creatures_died: Vec<CreatureDied>,
+        zone_changes: Vec<CardMovedZone>,
+        game_ended: Option<GameEnded>,
+    ) -> Self {
         Self {
             creatures_died,
+            zone_changes,
             game_ended,
         }
     }
@@ -91,6 +97,7 @@ fn review_supported_creature_state_based_actions(
     card_locations: &AggregateCardLocationIndex,
 ) -> Result<StateBasedActionCheckResult, crate::domain::play::errors::DomainError> {
     let mut creatures_died = Vec::new();
+    let mut zone_changes = Vec::new();
 
     for player_index in 0..players.len() {
         let doomed_handles = players[player_index]
@@ -112,22 +119,34 @@ fn review_supported_creature_state_based_actions(
                 player_index,
                 handle,
             )?;
-            creatures_died.push(CreatureDied::new(game_id.clone(), owner_id, card_id));
+            creatures_died.push(CreatureDied::new(
+                game_id.clone(),
+                owner_id.clone(),
+                card_id.clone(),
+            ));
+            zone_changes.push(CardMovedZone::new(
+                game_id.clone(),
+                owner_id,
+                card_id,
+                ZoneType::Battlefield,
+                ZoneType::Graveyard,
+            ));
         }
     }
 
     Ok(StateBasedActionCheckResult {
         creatures_died,
-        moved_to_graveyard: false,
+        zone_changes,
         game_ended: None,
     })
 }
 
 fn review_attached_aura_state_based_actions(
+    game_id: &GameId,
     players: &mut [Player],
     card_locations: &AggregateCardLocationIndex,
 ) -> Result<StateBasedActionCheckResult, crate::domain::play::errors::DomainError> {
-    let mut moved_to_graveyard = false;
+    let mut zone_changes = Vec::new();
 
     for player_index in 0..players.len() {
         let doomed_handles = players[player_index]
@@ -150,19 +169,25 @@ fn review_attached_aura_state_based_actions(
             .collect::<Vec<_>>();
 
         for handle in doomed_handles {
-            zones::move_battlefield_handle_to_owner_graveyard_by_index(
+            let (owner_id, card_id) = zones::move_battlefield_handle_to_owner_graveyard_by_index(
                 players,
                 card_locations,
                 player_index,
                 handle,
             )?;
-            moved_to_graveyard = true;
+            zone_changes.push(CardMovedZone::new(
+                game_id.clone(),
+                owner_id,
+                card_id,
+                ZoneType::Battlefield,
+                ZoneType::Graveyard,
+            ));
         }
     }
 
     Ok(StateBasedActionCheckResult {
         creatures_died: Vec::new(),
-        moved_to_graveyard,
+        zone_changes,
         game_ended: None,
     })
 }
@@ -184,6 +209,7 @@ pub fn check_state_based_actions(
     terminal_state: &mut TerminalState,
 ) -> Result<StateBasedActionsResult, crate::domain::play::errors::DomainError> {
     let mut total_creatures_died = Vec::new();
+    let mut total_zone_changes = Vec::new();
     let mut final_game_ended = None;
 
     loop {
@@ -197,12 +223,14 @@ pub fn check_state_based_actions(
             changes = true;
         }
         total_creatures_died.extend(creature_result.creatures_died);
+        total_zone_changes.extend(creature_result.zone_changes);
 
         let attached_aura_result =
-            review_attached_aura_state_based_actions(players, &current_locations)?;
+            review_attached_aura_state_based_actions(game_id, players, &current_locations)?;
         if attached_aura_result.changed() {
             changes = true;
         }
+        total_zone_changes.extend(attached_aura_result.zone_changes);
 
         if terminal_state.is_over() {
             break;
@@ -210,7 +238,7 @@ pub fn check_state_based_actions(
 
         let zero_life_result = StateBasedActionCheckResult {
             creatures_died: Vec::new(),
-            moved_to_graveyard: false,
+            zone_changes: Vec::new(),
             game_ended: end_game_for_zero_life(game_id, players, terminal_state)?,
         };
         if zero_life_result.changed() {
@@ -227,6 +255,7 @@ pub fn check_state_based_actions(
 
     Ok(StateBasedActionsResult::new(
         total_creatures_died,
+        total_zone_changes,
         final_game_ended,
     ))
 }
@@ -238,6 +267,7 @@ mod tests {
     use super::*;
     use crate::domain::play::{
         cards::{AttachmentProfile, CardDefinition, CardInstance, CardType},
+        events::ZoneType,
         ids::{CardDefinitionId, CardInstanceId, PlayerId},
     };
 
@@ -338,11 +368,19 @@ mod tests {
             .expect("creature should be on battlefield")
             .add_damage(2);
 
-        let _ = check_state_based_actions(&game_id, &mut players, &mut terminal_state).unwrap();
+        let result = check_state_based_actions(&game_id, &mut players, &mut terminal_state).unwrap();
 
         assert!(players[0].battlefield_card(&creature_id).is_none());
         assert!(players[0].graveyard_card(&creature_id).is_some());
         assert!(players[0].battlefield_card(&aura_id).is_none());
         assert!(players[0].graveyard_card(&aura_id).is_some());
+        assert!(
+            result
+                .zone_changes
+                .iter()
+                .any(|event| event.card_id == aura_id
+                    && matches!(event.origin_zone, ZoneType::Battlefield)
+                    && matches!(event.destination_zone, ZoneType::Graveyard))
+        );
     }
 }

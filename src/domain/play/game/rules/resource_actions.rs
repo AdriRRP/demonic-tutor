@@ -10,7 +10,9 @@ use {
         cards::CardType,
         commands::{AdjustPlayerLifeEffectCommand, PlayLandCommand, TapLandCommand},
         errors::{CardError, DomainError, GameError, PhaseError},
-        events::{CreatureDied, GameEnded, LandPlayed, LandTapped, LifeChanged, ManaAdded},
+        events::{
+            CardMovedZone, CreatureDied, GameEnded, LandPlayed, LandTapped, LifeChanged, ManaAdded,
+        },
         ids::GameId,
         phase::Phase,
     },
@@ -20,6 +22,7 @@ use {
 pub struct AdjustPlayerLifeEffectOutcome {
     pub life_changed: LifeChanged,
     pub creatures_died: Vec<CreatureDied>,
+    pub zone_changes: Vec<CardMovedZone>,
     pub game_ended: Option<GameEnded>,
 }
 
@@ -92,11 +95,13 @@ impl AdjustPlayerLifeEffectOutcome {
     pub const fn new(
         life_changed: LifeChanged,
         creatures_died: Vec<CreatureDied>,
+        zone_changes: Vec<CardMovedZone>,
         game_ended: Option<GameEnded>,
     ) -> Self {
         Self {
             life_changed,
             creatures_died,
+            zone_changes,
             game_ended,
         }
     }
@@ -243,12 +248,14 @@ pub fn adjust_player_life_effect(
     )?;
     let StateBasedActionsResult {
         creatures_died,
+        zone_changes,
         game_ended,
     } = state_based_actions::check_state_based_actions(game_id, players, terminal_state)?;
 
     Ok(AdjustPlayerLifeEffectOutcome::new(
         life_changed,
         creatures_died,
+        zone_changes,
         game_ended,
     ))
 }

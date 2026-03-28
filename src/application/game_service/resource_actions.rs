@@ -9,35 +9,18 @@ use {
                 AdjustPlayerLifeEffectCommand, ExileCardCommand, PlayLandCommand, TapLandCommand,
             },
             errors::DomainError,
-            events::{CardMovedZone, DomainEvent, LandPlayed, LandTapped, ManaAdded, ZoneType},
+            events::{CardMovedZone, DomainEvent, LandPlayed, LandTapped, ManaAdded},
             game::{AdjustPlayerLifeEffectOutcome, Game},
         },
     },
 };
-
-fn zone_change_for_creature_died(
-    event: &crate::domain::play::events::CreatureDied,
-) -> CardMovedZone {
-    CardMovedZone::new(
-        event.game_id.clone(),
-        event.player_id.clone(),
-        event.card_id.clone(),
-        ZoneType::Battlefield,
-        ZoneType::Graveyard,
-    )
-}
 
 pub fn domain_events_for_adjust_player_life_effect(
     outcome: &AdjustPlayerLifeEffectOutcome,
 ) -> Vec<DomainEvent> {
     let mut domain_events = DomainEvents::with(outcome.life_changed.clone());
     domain_events.extend(outcome.creatures_died.iter().cloned());
-    domain_events.extend(
-        outcome
-            .creatures_died
-            .iter()
-            .map(zone_change_for_creature_died),
-    );
+    domain_events.extend(outcome.zone_changes.iter().cloned());
     domain_events.push_optional(outcome.game_ended.clone());
     domain_events.into_vec()
 }
@@ -131,7 +114,7 @@ mod tests {
 
     use super::domain_events_for_adjust_player_life_effect;
     use crate::domain::play::{
-        events::{CreatureDied, DomainEvent, LifeChanged},
+        events::{CardMovedZone, CreatureDied, DomainEvent, LifeChanged, ZoneType},
         game::AdjustPlayerLifeEffectOutcome,
         ids::{CardInstanceId, GameId, PlayerId},
     };
@@ -144,6 +127,13 @@ mod tests {
                 GameId::new("game"),
                 PlayerId::new("p1"),
                 CardInstanceId::new("creature-1"),
+            )],
+            vec![CardMovedZone::new(
+                GameId::new("game"),
+                PlayerId::new("p1"),
+                CardInstanceId::new("creature-1"),
+                ZoneType::Battlefield,
+                ZoneType::Graveyard,
             )],
             None,
         );

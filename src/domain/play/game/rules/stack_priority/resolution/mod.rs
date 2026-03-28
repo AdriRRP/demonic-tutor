@@ -212,21 +212,6 @@ fn zone_change_for_card_discarded(event: &CardDiscarded) -> CardMovedZone {
     )
 }
 
-fn zone_changes_for_creatures_died(creatures_died: &[CreatureDied]) -> Vec<CardMovedZone> {
-    creatures_died
-        .iter()
-        .map(|event| {
-            CardMovedZone::new(
-                event.game_id.clone(),
-                event.player_id.clone(),
-                event.card_id.clone(),
-                ZoneType::Battlefield,
-                ZoneType::Graveyard,
-            )
-        })
-        .collect()
-}
-
 fn move_resolved_spell_to_destination(
     context: &mut SpellDestinationContext<'_>,
     payload: SpellPayload,
@@ -532,9 +517,6 @@ fn resolve_spell_from_stack(
     if let Some(event) = &card_discarded {
         push_unique_zone_change(&mut zone_changes, zone_change_for_card_discarded(event));
     }
-    for zone_change in zone_changes_for_creatures_died(&creatures_died) {
-        push_unique_zone_change(&mut zone_changes, zone_change);
-    }
     triggered_abilities_put_on_stack.extend(enqueue_entered_battlefield_triggers_for_moved_cards(
         game_id,
         players,
@@ -622,6 +604,7 @@ fn resolve_activated_ability_from_stack(
 
     let super::super::state_based_actions::StateBasedActionsResult {
         creatures_died,
+        zone_changes,
         game_ended,
     } = super::super::state_based_actions::check_state_based_actions(
         game_id,
@@ -634,7 +617,7 @@ fn resolve_activated_ability_from_stack(
         triggered_abilities_put_on_stack: Vec::new(),
         spell_cast: None,
         card_discarded: None,
-        zone_changes: Vec::new(),
+        zone_changes,
         life_changed,
         creatures_died,
         game_ended,
@@ -709,12 +692,18 @@ fn resolve_triggered_ability_from_stack(
 
     let super::super::state_based_actions::StateBasedActionsResult {
         creatures_died,
+        zone_changes: sba_zone_changes,
         game_ended,
     } = super::super::state_based_actions::check_state_based_actions(
         game_id,
         players,
         terminal_state,
     )?;
+
+    let mut zone_changes = zone_changes;
+    for zone_change in sba_zone_changes {
+        push_unique_zone_change(&mut zone_changes, zone_change);
+    }
 
     Ok(ResolvedSpellOutcome {
         stack_top_resolved,

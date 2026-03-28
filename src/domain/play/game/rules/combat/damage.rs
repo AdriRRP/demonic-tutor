@@ -22,8 +22,8 @@ use crate::domain::play::{
     commands::ResolveCombatDamageCommand,
     errors::{DomainError, GameError},
     events::{
-        CombatDamageResolved, CreatureDied, DamageEvent, DamageTarget, GameEnded, LifeChanged,
-        TriggeredAbilityPutOnStack,
+        CardMovedZone, CombatDamageResolved, CreatureDied, DamageEvent, DamageTarget, GameEnded,
+        LifeChanged, TriggeredAbilityPutOnStack,
     },
     ids::{CardInstanceId, GameId},
 };
@@ -45,6 +45,7 @@ type DamageStepOutcome = (
     Vec<DamageEvent>,
     Vec<LifeChanged>,
     Vec<CreatureDied>,
+    Vec<CardMovedZone>,
     Option<GameEnded>,
 );
 
@@ -405,6 +406,7 @@ fn resolve_combat_damage_step(
     )?);
     let StateBasedActionsResult {
         creatures_died,
+        zone_changes,
         game_ended,
     } = state_based_actions::check_state_based_actions(
         ctx.game_id,
@@ -412,7 +414,7 @@ fn resolve_combat_damage_step(
         ctx.terminal_state,
     )?;
 
-    Ok((damage_events, life_changed, creatures_died, game_ended))
+    Ok((damage_events, life_changed, creatures_died, zone_changes, game_ended))
 }
 
 #[derive(Debug, Clone)]
@@ -420,6 +422,7 @@ pub struct ResolveCombatDamageOutcome {
     pub combat_damage_resolved: CombatDamageResolved,
     pub life_changed: Vec<LifeChanged>,
     pub creatures_died: Vec<CreatureDied>,
+    pub zone_changes: Vec<CardMovedZone>,
     pub triggered_abilities_put_on_stack: Vec<TriggeredAbilityPutOnStack>,
     pub game_ended: Option<GameEnded>,
 }
@@ -430,6 +433,7 @@ impl ResolveCombatDamageOutcome {
         combat_damage_resolved: CombatDamageResolved,
         life_changed: Vec<LifeChanged>,
         creatures_died: Vec<CreatureDied>,
+        zone_changes: Vec<CardMovedZone>,
         triggered_abilities_put_on_stack: Vec<TriggeredAbilityPutOnStack>,
         game_ended: Option<GameEnded>,
     ) -> Self {
@@ -437,6 +441,7 @@ impl ResolveCombatDamageOutcome {
             combat_damage_resolved,
             life_changed,
             creatures_died,
+            zone_changes,
             triggered_abilities_put_on_stack,
             game_ended,
         }
@@ -479,12 +484,14 @@ pub fn resolve_combat_damage(
     let mut damage_events: Vec<DamageEvent> = Vec::new();
     let mut life_changed: Vec<LifeChanged> = Vec::new();
     let mut creatures_died: Vec<CreatureDied> = Vec::new();
+    let mut zone_changes: Vec<CardMovedZone> = Vec::new();
     let mut game_ended: Option<GameEnded> = None;
 
     let (
         first_step_events,
         first_step_life_changed,
         first_step_creatures_died,
+        first_step_zone_changes,
         first_step_game_ended,
     ) = if has_first_strike_step {
         resolve_combat_damage_step(
@@ -519,6 +526,7 @@ pub fn resolve_combat_damage(
     damage_events.extend(first_step_events);
     merge_life_changed(&mut life_changed, first_step_life_changed);
     creatures_died.extend(first_step_creatures_died);
+    zone_changes.extend(first_step_zone_changes);
     if let Some(ended) = first_step_game_ended {
         game_ended = Some(ended);
     }
@@ -539,6 +547,7 @@ pub fn resolve_combat_damage(
             second_step_events,
             second_step_life_changed,
             second_step_creatures_died,
+            second_step_zone_changes,
             second_step_game_ended,
         ) = resolve_combat_damage_step(
             &mut DamageStepContext {
@@ -556,6 +565,7 @@ pub fn resolve_combat_damage(
         damage_events.extend(second_step_events);
         merge_life_changed(&mut life_changed, second_step_life_changed);
         creatures_died.extend(second_step_creatures_died);
+        zone_changes.extend(second_step_zone_changes);
         game_ended = second_step_game_ended;
     }
 
@@ -600,6 +610,7 @@ pub fn resolve_combat_damage(
         CombatDamageResolved::new(game_id.clone(), cmd.player_id, damage_events),
         life_changed,
         creatures_died,
+        zone_changes,
         triggered_abilities_put_on_stack,
         game_ended,
     ))

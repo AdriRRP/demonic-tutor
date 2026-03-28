@@ -9,23 +9,11 @@ use {
                 DeclareAttackersCommand, DeclareBlockersCommand, ResolveCombatDamageCommand,
             },
             errors::DomainError,
-            events::{BlockersDeclared, CardMovedZone, DomainEvent, ZoneType},
+            events::{BlockersDeclared, DomainEvent},
             game::{DeclareAttackersOutcome, Game, ResolveCombatDamageOutcome},
         },
     },
 };
-
-fn zone_change_for_creature_died(
-    event: &crate::domain::play::events::CreatureDied,
-) -> CardMovedZone {
-    CardMovedZone::new(
-        event.game_id.clone(),
-        event.player_id.clone(),
-        event.card_id.clone(),
-        ZoneType::Battlefield,
-        ZoneType::Graveyard,
-    )
-}
 
 pub fn domain_events_for_declare_attackers(outcome: &DeclareAttackersOutcome) -> Vec<DomainEvent> {
     let mut domain_events = DomainEvents::with(outcome.attackers_declared.clone());
@@ -39,12 +27,7 @@ pub fn domain_events_for_resolve_combat_damage(
     let mut domain_events = DomainEvents::default();
     domain_events.extend(outcome.life_changed.iter().cloned());
     domain_events.extend(outcome.creatures_died.iter().cloned());
-    domain_events.extend(
-        outcome
-            .creatures_died
-            .iter()
-            .map(zone_change_for_creature_died),
-    );
+    domain_events.extend(outcome.zone_changes.iter().cloned());
     domain_events.push(outcome.combat_damage_resolved.clone());
     domain_events.extend(outcome.triggered_abilities_put_on_stack.iter().cloned());
     domain_events.push_optional(outcome.game_ended.clone());

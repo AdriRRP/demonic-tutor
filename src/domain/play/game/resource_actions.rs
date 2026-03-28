@@ -55,12 +55,7 @@ impl Game {
             cmd,
         );
         if let Ok(outcome) = &result {
-            let zone_changes = outcome
-                .creatures_died
-                .iter()
-                .map(Self::zone_change_for_creature_died)
-                .collect::<Vec<_>>();
-            self.sync_zone_changes(&zone_changes)?;
+            self.sync_zone_changes(&outcome.zone_changes)?;
         }
         result
     }

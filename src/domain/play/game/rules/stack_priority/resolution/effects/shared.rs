@@ -81,11 +81,12 @@ pub(super) fn review_state_based_actions(
 ) -> Result<SpellResolutionSideEffects, DomainError> {
     let StateBasedActionsResult {
         creatures_died,
+        zone_changes,
         game_ended,
     } = state_based_actions::check_state_based_actions(game_id, players, terminal_state)?;
     Ok((
         None,
-        Vec::new(),
+        zone_changes,
         None,
         creatures_died,
         Vec::new(),
@@ -149,16 +150,18 @@ pub(super) fn review_state_based_actions_after_effect(
 ) -> Result<SpellResolutionSideEffects, DomainError> {
     let EffectOutcomeSeed {
         card_discarded,
-        zone_changes,
+        mut zone_changes,
         life_changed,
         mut creatures_died,
         moved_cards,
     } = seed;
     let StateBasedActionsResult {
         creatures_died: sba_creatures_died,
+        zone_changes: sba_zone_changes,
         game_ended,
     } = state_based_actions::check_state_based_actions(game_id, players, terminal_state)?;
     creatures_died.extend(sba_creatures_died);
+    zone_changes.extend(sba_zone_changes);
     Ok((
         card_discarded,
         zone_changes,
