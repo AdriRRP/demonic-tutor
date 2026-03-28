@@ -33,9 +33,9 @@ use crate::{
 };
 
 use super::{
-    public_event_log, PublicCommandApplication, PublicCommandRejection, PublicCommandStatus,
-    PublicEventLogEntry, PublicGameCommand, PublicGameSessionStart, PublicRematchCommand,
-    PublicSeededGameSetup, PublicSeededPlayerSetup,
+    public_event_log, surface::public_surface_state, PublicCommandApplication,
+    PublicCommandRejection, PublicCommandStatus, PublicEventLogEntry, PublicGameCommand,
+    PublicGameSessionStart, PublicRematchCommand, PublicSeededGameSetup, PublicSeededPlayerSetup,
 };
 
 impl<E, B> GameService<E, B>
@@ -195,10 +195,12 @@ fn public_game_session_start(
     game: &Game,
     emitted_events: Vec<DomainEvent>,
 ) -> PublicGameSessionStart {
+    let (legal_actions, choice_requests) = public_surface_state(game).into_parts();
+
     PublicGameSessionStart {
         emitted_events,
         game: super::game_view(game),
-        legal_actions: super::legal_actions(game),
-        choice_requests: super::choice_requests(game),
+        legal_actions,
+        choice_requests,
     }
 }

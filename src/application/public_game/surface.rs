@@ -19,7 +19,7 @@ use super::{
 };
 
 #[derive(Debug, Default)]
-struct PublicSurfaceState {
+pub(super) struct PublicSurfaceState {
     legal_actions: Vec<PublicLegalAction>,
     choice_requests: Vec<PublicChoiceRequest>,
 }
@@ -34,6 +34,10 @@ impl PublicSurfaceState {
             legal_actions,
             choice_requests,
         }
+    }
+
+    pub(super) fn into_parts(self) -> (Vec<PublicLegalAction>, Vec<PublicChoiceRequest>) {
+        (self.legal_actions, self.choice_requests)
     }
 }
 
@@ -283,7 +287,7 @@ fn phase_surface_state(game: &Game) -> PublicSurfaceState {
     PublicSurfaceState::with_choice_requests(actions, choice_requests)
 }
 
-fn public_surface_state(game: &Game) -> PublicSurfaceState {
+pub(super) fn public_surface_state(game: &Game) -> PublicSurfaceState {
     if game.is_over() {
         return PublicSurfaceState::default();
     }
