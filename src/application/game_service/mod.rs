@@ -16,6 +16,7 @@ use crate::{
         game::Game,
     },
 };
+use std::sync::Arc;
 
 use self::rollback::GameRollback;
 
@@ -110,7 +111,7 @@ where
     pub(crate) fn load_persisted_events(
         &self,
         game_id: &str,
-    ) -> Result<Vec<DomainEvent>, DomainError> {
+    ) -> Result<Arc<[DomainEvent]>, DomainError> {
         self.event_store.get_events(game_id).map_err(|err| {
             DomainError::Game(GameError::InternalInvariantViolation(format!(
                 "failed to load persisted domain events for aggregate {game_id}: {err}"

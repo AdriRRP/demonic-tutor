@@ -1,6 +1,6 @@
 //! Projects the aggregate into the public gameplay read contract.
 
-use std::collections::HashMap;
+use std::{borrow::Borrow, collections::HashMap};
 
 use crate::domain::play::{
     cards::{CardInstance, KeywordAbility},
@@ -294,12 +294,29 @@ pub(super) fn public_surface_state(game: &Game, viewer_id: &PlayerId) -> PublicS
         return PublicSurfaceState::default();
     }
 
-    let mut state = pending_action_and_request(game).unwrap_or_else(|| {
-        game.priority().map_or_else(
-            || phase_surface_state(game),
-            |priority| priority_surface_state(game, priority.current_holder()),
-        )
-    });
+    let mut state = game.pending_decision().map_or_else(
+        || {
+            game.priority().map_or_else(
+                || phase_surface_state(game),
+                |priority| {
+                    let current_holder = priority.current_holder();
+                    if current_holder == viewer_id {
+                        priority_surface_state(game, current_holder)
+                    } else {
+                        PublicSurfaceState::default()
+                    }
+                },
+            )
+        },
+        |pending_decision| {
+            let controller_id = game.players()[pending_decision.controller_index()].id();
+            if controller_id == viewer_id {
+                pending_action_and_request(game).unwrap_or_default()
+            } else {
+                PublicSurfaceState::default()
+            }
+        },
+    );
     append_concede_actions(game, &mut state.legal_actions);
     state
         .legal_actions
@@ -340,7 +357,8 @@ pub fn public_command_result(
 #[must_use]
 pub fn public_event_log<I>(events: I) -> Vec<PublicEventLogEntry>
 where
-    I: IntoIterator<Item = DomainEvent>,
+    I: IntoIterator,
+    I::Item: Borrow<DomainEvent>,
 {
     public_events(events)
         .into_iter()
@@ -351,49 +369,55 @@ where
 
 pub(super) fn public_events<I>(events: I) -> Vec<PublicEvent>
 where
-    I: IntoIterator<Item = DomainEvent>,
+    I: IntoIterator,
+    I::Item: Borrow<DomainEvent>,
 {
-    events.into_iter().map(public_event).collect()
+    events
+        .into_iter()
+        .map(|event| public_event(event.borrow()))
+        .collect()
 }
 
-fn public_event(event: DomainEvent) -> PublicEvent {
+fn public_event(event: &DomainEvent) -> PublicEvent {
     match event {
-        DomainEvent::GameStarted(event) => PublicEvent::GameStarted(event),
+        DomainEvent::GameStarted(event) => PublicEvent::GameStarted(event.clone()),
         DomainEvent::OpeningHandDealt(event) => {
             PublicEvent::OpeningHandDealt(PublicOpeningHandDealt {
-                game_id: event.game_id,
-                player_id: event.player_id,
+                game_id: event.game_id.clone(),
+                player_id: event.player_id.clone(),
                 card_count: event.cards.len(),
             })
         }
-        DomainEvent::GameEnded(event) => PublicEvent::GameEnded(event),
-        DomainEvent::LandPlayed(event) => PublicEvent::LandPlayed(event),
-        DomainEvent::TurnProgressed(event) => PublicEvent::TurnProgressed(event),
+        DomainEvent::GameEnded(event) => PublicEvent::GameEnded(event.clone()),
+        DomainEvent::LandPlayed(event) => PublicEvent::LandPlayed(event.clone()),
+        DomainEvent::TurnProgressed(event) => PublicEvent::TurnProgressed(event.clone()),
         DomainEvent::CardDrawn(event) => PublicEvent::CardDrawn(PublicCardDrawn {
-            game_id: event.game_id,
-            player_id: event.player_id,
+            game_id: event.game_id.clone(),
+            player_id: event.player_id.clone(),
             draw_kind: event.draw_kind,
         }),
-        DomainEvent::CardDiscarded(event) => PublicEvent::CardDiscarded(event),
-        DomainEvent::MulliganTaken(event) => PublicEvent::MulliganTaken(event),
-        DomainEvent::LifeChanged(event) => PublicEvent::LifeChanged(event),
-        DomainEvent::LandTapped(event) => PublicEvent::LandTapped(event),
-        DomainEvent::ManaAdded(event) => PublicEvent::ManaAdded(event),
+        DomainEvent::CardDiscarded(event) => PublicEvent::CardDiscarded(event.clone()),
+        DomainEvent::MulliganTaken(event) => PublicEvent::MulliganTaken(event.clone()),
+        DomainEvent::LifeChanged(event) => PublicEvent::LifeChanged(event.clone()),
+        DomainEvent::LandTapped(event) => PublicEvent::LandTapped(event.clone()),
+        DomainEvent::ManaAdded(event) => PublicEvent::ManaAdded(event.clone()),
         DomainEvent::ActivatedAbilityPutOnStack(event) => {
-            PublicEvent::ActivatedAbilityPutOnStack(event)
+            PublicEvent::ActivatedAbilityPutOnStack(event.clone())
         }
         DomainEvent::TriggeredAbilityPutOnStack(event) => {
-            PublicEvent::TriggeredAbilityPutOnStack(event)
+            PublicEvent::TriggeredAbilityPutOnStack(event.clone())
         }
-        DomainEvent::SpellPutOnStack(event) => PublicEvent::SpellPutOnStack(event),
-        DomainEvent::PriorityPassed(event) => PublicEvent::PriorityPassed(event),
-        DomainEvent::StackTopResolved(event) => PublicEvent::StackTopResolved(event),
-        DomainEvent::SpellCast(event) => PublicEvent::SpellCast(event),
-        DomainEvent::AttackersDeclared(event) => PublicEvent::AttackersDeclared(event),
-        DomainEvent::BlockersDeclared(event) => PublicEvent::BlockersDeclared(event),
-        DomainEvent::CombatDamageResolved(event) => PublicEvent::CombatDamageResolved(event),
-        DomainEvent::CreatureDied(event) => PublicEvent::CreatureDied(event),
-        DomainEvent::CardMovedZone(event) => PublicEvent::CardMovedZone(event),
+        DomainEvent::SpellPutOnStack(event) => PublicEvent::SpellPutOnStack(event.clone()),
+        DomainEvent::PriorityPassed(event) => PublicEvent::PriorityPassed(event.clone()),
+        DomainEvent::StackTopResolved(event) => PublicEvent::StackTopResolved(event.clone()),
+        DomainEvent::SpellCast(event) => PublicEvent::SpellCast(event.clone()),
+        DomainEvent::AttackersDeclared(event) => PublicEvent::AttackersDeclared(event.clone()),
+        DomainEvent::BlockersDeclared(event) => PublicEvent::BlockersDeclared(event.clone()),
+        DomainEvent::CombatDamageResolved(event) => {
+            PublicEvent::CombatDamageResolved(event.clone())
+        }
+        DomainEvent::CreatureDied(event) => PublicEvent::CreatureDied(event.clone()),
+        DomainEvent::CardMovedZone(event) => PublicEvent::CardMovedZone(event.clone()),
     }
 }
 

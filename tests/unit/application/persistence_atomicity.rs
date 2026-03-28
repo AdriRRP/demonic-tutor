@@ -2,7 +2,7 @@
 
 #![allow(clippy::expect_used)]
 
-use std::{error::Error, io};
+use std::{error::Error, io, sync::Arc};
 
 use demonictutor::{EventStore, GameService, InMemoryEventBus, PlayLandCommand, PlayerId};
 
@@ -25,8 +25,8 @@ impl EventStore for FailingEventStore {
     fn get_events(
         &self,
         _aggregate_id: &str,
-    ) -> Result<Vec<demonictutor::DomainEvent>, Box<dyn Error + Send + Sync>> {
-        Ok(Vec::new())
+    ) -> Result<Arc<[demonictutor::DomainEvent]>, Box<dyn Error + Send + Sync>> {
+        Ok(Arc::from(Vec::<demonictutor::DomainEvent>::new()))
     }
 }
 

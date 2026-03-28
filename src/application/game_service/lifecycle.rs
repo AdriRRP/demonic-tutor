@@ -107,7 +107,7 @@ mod tests {
 
     #![allow(clippy::expect_used)]
 
-    use std::{error::Error, io};
+    use std::{error::Error, io, sync::Arc};
 
     use super::GameService;
     use crate::{
@@ -137,9 +137,11 @@ mod tests {
         fn get_events(
             &self,
             _aggregate_id: &str,
-        ) -> Result<Vec<crate::domain::play::events::DomainEvent>, Box<dyn Error + Send + Sync>>
+        ) -> Result<Arc<[crate::domain::play::events::DomainEvent]>, Box<dyn Error + Send + Sync>>
         {
-            Ok(Vec::new())
+            Ok(Arc::from(
+                Vec::<crate::domain::play::events::DomainEvent>::new(),
+            ))
         }
     }
 

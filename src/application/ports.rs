@@ -1,6 +1,9 @@
 //! Supports application ports.
 
-use {crate::domain::play::events::DomainEvent, std::error::Error};
+use {
+    crate::domain::play::events::DomainEvent,
+    std::{error::Error, sync::Arc},
+};
 
 pub trait EventBus: Send + Sync {
     fn publish(&self, event: &DomainEvent);
@@ -26,5 +29,5 @@ pub trait EventStore: Send + Sync {
     fn get_events(
         &self,
         aggregate_id: &str,
-    ) -> Result<Vec<DomainEvent>, Box<dyn Error + Send + Sync>>;
+    ) -> Result<Arc<[DomainEvent]>, Box<dyn Error + Send + Sync>>;
 }
