@@ -10,7 +10,7 @@ use {
 };
 
 pub struct InMemoryEventStore {
-    events: RwLock<HashMap<String, Arc<[DomainEvent]>>>,
+    events: RwLock<HashMap<String, Vec<Arc<[DomainEvent]>>>>,
 }
 
 impl InMemoryEventStore {
@@ -35,14 +35,10 @@ impl EventStore for InMemoryEventStore {
         new_events: &[DomainEvent],
     ) -> Result<(), Box<dyn Error + Send + Sync>> {
         let mut events = self.events.write().map_err(|e| e.to_string())?;
-        let key = aggregate_id.to_string();
-        let combined_events = events.get(&key).map_or_else(Vec::new, |existing| {
-            existing.iter().cloned().collect::<Vec<_>>()
-        });
-        let mut combined_events = combined_events;
-        combined_events.extend(new_events.iter().cloned());
-        events.insert(key, Arc::<[DomainEvent]>::from(combined_events));
-        drop(events);
+        events
+            .entry(aggregate_id.to_string())
+            .or_default()
+            .push(Arc::<[DomainEvent]>::from(new_events.to_vec()));
         Ok(())
     }
 
@@ -51,9 +47,16 @@ impl EventStore for InMemoryEventStore {
         aggregate_id: &str,
     ) -> Result<Arc<[DomainEvent]>, Box<dyn Error + Send + Sync>> {
         let events = self.events.read().map_err(|e| e.to_string())?;
-        Ok(events
-            .get(aggregate_id)
-            .cloned()
-            .unwrap_or_else(|| Arc::<[DomainEvent]>::from(Vec::<DomainEvent>::new())))
+        let Some(chunks) = events.get(aggregate_id) else {
+            return Ok(Arc::<[DomainEvent]>::from(Vec::<DomainEvent>::new()));
+        };
+
+        let total_len = chunks.iter().map(|chunk| chunk.len()).sum();
+        let mut combined_events = Vec::with_capacity(total_len);
+        for chunk in chunks {
+            combined_events.extend(chunk.iter().cloned());
+        }
+
+        Ok(Arc::<[DomainEvent]>::from(combined_events))
     }
 }
