@@ -381,6 +381,10 @@ impl Game {
         Ok(())
     }
 
+    fn rebuild_card_locations_from_players(&mut self) {
+        self.card_locations = AggregateCardLocationIndex::from_players(&self.players);
+    }
+
     pub(crate) fn zone_change_for_card_drawn(event: &CardDrawn) -> CardMovedZone {
         CardMovedZone::new(
             event.game_id.clone(),
