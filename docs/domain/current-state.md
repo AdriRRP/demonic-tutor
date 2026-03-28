@@ -8,6 +8,10 @@ Detailed slice documentation lives in:
 
 docs/slices/
 
+Curated-set authoring truth also lives in:
+
+- [limited-set-capability-matrix.md](limited-set-capability-matrix.md)
+
 ---
 
 # Implemented Gameplay Capabilities
@@ -69,6 +73,7 @@ Implemented capabilities include:
 - resolving the first explicit `attacks` and `deals combat damage to a player` triggered-ability subset through the shared combat and stack corridors
 - deriving an explicit limited-set card-profile catalog from authored `LibraryCard` definitions for the first curated environment
 - rejecting curated-set library loads whose authored `LibraryCard` definitions exceed that supported profile catalog
+- publishing one canonical curated-set card capability matrix for set design
 - resolving the first explicit keyworded creature-token creation subset for one supported token with one supported keyword
 - resolving the first explicit multi-token creation subset for one supported effect that creates multiple identical vanilla creature tokens
 - advancing turns

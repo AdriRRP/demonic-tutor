@@ -14,4 +14,4 @@ The engine now rejects curated-set library loads whose authored `LibraryCard` de
 ## Notes
 
 - the enforcement point is `PlayerLibrary` ingestion rather than `StartGameCommand`, because that is where authored card pools actually enter the aggregate today
-- this slice intentionally validates against the current catalog only; it does not yet publish a designer-facing capability matrix
+- the designer-facing capability matrix is now published separately as the next implemented slice

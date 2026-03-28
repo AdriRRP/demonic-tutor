@@ -6,12 +6,10 @@ Goal:
 
 Slice count:
 
-- `2`
+- `1`
 
 Slices:
 
-- `publish-card-capability-matrix-for-set-design`
-  - provide one canonical matrix that maps supported profiles to rules support
 - `add-limited-set-deck-construction-rules-baseline`
   - formalize the exact deckbuilding assumptions for the first curated environment
 
