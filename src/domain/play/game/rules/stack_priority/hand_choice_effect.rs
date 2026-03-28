@@ -297,6 +297,7 @@ pub fn resolve_pending_hand_choice(
     }
 
     Ok(ResolvePendingHandChoiceOutcome {
+        kind,
         stack_top_resolved: Some(stack_top_resolved),
         spell_cast: Some(spell_cast),
         card_drawn,

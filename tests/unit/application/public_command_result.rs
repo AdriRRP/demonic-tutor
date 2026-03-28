@@ -4,11 +4,14 @@
 
 use crate::support::{
     advance_to_player_first_main_satisfying_cleanup, create_service, first_hand_card_id,
-    forest_card, player_deck, player_library,
+    forest_card, loot_sorcery_card, player, player_deck, player_library, rummage_sorcery_card,
+    target_player_discards_chosen_card_sorcery_card,
 };
 use demonictutor::{
-    public_command_result, DealOpeningHandsCommand, GameId, PlayLandCommand, PlayerId,
-    PublicCommandStatus, PublicGameCommand, StartGameCommand,
+    public_command_result, CardDefinitionId, CastSpellCommand, DealOpeningHandsCommand,
+    DiscardKind, DomainEvent, GameId, PassPriorityCommand, PlayLandCommand, PlayerId,
+    PublicCommandStatus, PublicGameCommand, ResolvePendingHandChoiceCommand, SpellChoice,
+    SpellTarget, StartGameCommand,
 };
 
 fn game_in_first_main() -> (crate::support::TestService, demonictutor::Game) {
@@ -60,6 +63,163 @@ fn game_in_first_main() -> (crate::support::TestService, demonictutor::Game) {
     (service, game)
 }
 
+fn loot_game_in_pending_choice() -> (
+    crate::support::TestService,
+    demonictutor::Game,
+    demonictutor::CardInstanceId,
+) {
+    let service = create_service();
+    let libraries = vec![
+        player_library(
+            "p1",
+            vec![
+                loot_sorcery_card("p1-loot", 0, 1),
+                forest_card("p1-hand-a"),
+                forest_card("p1-hand-b"),
+                forest_card("p1-hand-c"),
+                forest_card("p1-hand-d"),
+                forest_card("p1-hand-e"),
+                forest_card("p1-draw-a"),
+                forest_card("p1-pad-a"),
+                forest_card("p1-pad-b"),
+                forest_card("p1-pad-c"),
+            ],
+        ),
+        player_library(
+            "p2",
+            vec![
+                forest_card("p2-a"),
+                forest_card("p2-b"),
+                forest_card("p2-c"),
+                forest_card("p2-d"),
+                forest_card("p2-e"),
+                forest_card("p2-f"),
+                forest_card("p2-g"),
+                forest_card("p2-h"),
+                forest_card("p2-i"),
+                forest_card("p2-j"),
+            ],
+        ),
+    ];
+    let decks = vec![player_deck("p1", "d1"), player_deck("p2", "d2")];
+
+    let (mut game, _) = service
+        .start_game(StartGameCommand::new(
+            GameId::new("game-public-loot"),
+            decks,
+        ))
+        .expect("game should start");
+    service
+        .deal_opening_hands(&mut game, &DealOpeningHandsCommand::new(libraries))
+        .expect("opening hands should be dealt");
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "p1");
+
+    let loot_id = player(&game, "p1")
+        .hand_card_by_definition(&CardDefinitionId::new("p1-loot"))
+        .expect("loot spell should be in hand")
+        .id()
+        .clone();
+
+    service.execute_public_command(
+        &mut game,
+        PublicGameCommand::CastSpell(CastSpellCommand::new(PlayerId::new("p1"), loot_id)),
+    );
+    service.execute_public_command(
+        &mut game,
+        PublicGameCommand::PassPriority(PassPriorityCommand::new(PlayerId::new("p1"))),
+    );
+    service.execute_public_command(
+        &mut game,
+        PublicGameCommand::PassPriority(PassPriorityCommand::new(PlayerId::new("p2"))),
+    );
+
+    let discard_id = player(&game, "p1")
+        .hand_card_by_definition(&CardDefinitionId::new("p1-draw-a"))
+        .expect("drawn card should be in hand")
+        .id()
+        .clone();
+
+    (service, game, discard_id)
+}
+
+fn rummage_game_in_pending_choice() -> (
+    crate::support::TestService,
+    demonictutor::Game,
+    demonictutor::CardInstanceId,
+) {
+    let service = create_service();
+    let libraries = vec![
+        player_library(
+            "p1",
+            vec![
+                rummage_sorcery_card("p1-rummage", 0, 1),
+                forest_card("p1-hand-a"),
+                forest_card("p1-hand-b"),
+                forest_card("p1-hand-c"),
+                forest_card("p1-hand-d"),
+                forest_card("p1-hand-e"),
+                forest_card("p1-hand-f"),
+                forest_card("p1-draw-a"),
+                forest_card("p1-pad-a"),
+                forest_card("p1-pad-b"),
+            ],
+        ),
+        player_library(
+            "p2",
+            vec![
+                forest_card("p2-a"),
+                forest_card("p2-b"),
+                forest_card("p2-c"),
+                forest_card("p2-d"),
+                forest_card("p2-e"),
+                forest_card("p2-f"),
+                forest_card("p2-g"),
+                forest_card("p2-h"),
+                forest_card("p2-i"),
+                forest_card("p2-j"),
+            ],
+        ),
+    ];
+    let decks = vec![player_deck("p1", "d1"), player_deck("p2", "d2")];
+
+    let (mut game, _) = service
+        .start_game(StartGameCommand::new(
+            GameId::new("game-public-rummage"),
+            decks,
+        ))
+        .expect("game should start");
+    service
+        .deal_opening_hands(&mut game, &DealOpeningHandsCommand::new(libraries))
+        .expect("opening hands should be dealt");
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "p1");
+
+    let rummage_id = player(&game, "p1")
+        .hand_card_by_definition(&CardDefinitionId::new("p1-rummage"))
+        .expect("rummage spell should be in hand")
+        .id()
+        .clone();
+    let discard_id = player(&game, "p1")
+        .hand_card_by_definition(&CardDefinitionId::new("p1-hand-a"))
+        .expect("discard choice should be in hand")
+        .id()
+        .clone();
+
+    service.execute_public_command(
+        &mut game,
+        PublicGameCommand::CastSpell(CastSpellCommand::new(PlayerId::new("p1"), rummage_id)),
+    );
+    service.execute_public_command(
+        &mut game,
+        PublicGameCommand::PassPriority(PassPriorityCommand::new(PlayerId::new("p1"))),
+    );
+    service.execute_public_command(
+        &mut game,
+        PublicGameCommand::PassPriority(PassPriorityCommand::new(PlayerId::new("p2"))),
+    );
+
+    (service, game, discard_id)
+}
+
 #[test]
 fn execute_public_command_returns_applied_status_events_and_next_snapshot() {
     let (service, mut game) = game_in_first_main();
@@ -101,4 +261,127 @@ fn execute_public_command_returns_rejected_status_and_preserves_follow_up_contra
     }
     assert!(result.emitted_events.is_empty());
     assert!(!result.legal_actions.is_empty());
+}
+
+#[test]
+fn execute_public_command_preserves_loot_effect_event_order() {
+    let (service, mut game, discard_id) = loot_game_in_pending_choice();
+
+    let application = service.execute_public_command(
+        &mut game,
+        PublicGameCommand::ResolvePendingHandChoice(ResolvePendingHandChoiceCommand::new(
+            PlayerId::new("p1"),
+            discard_id,
+        )),
+    );
+
+    assert!(matches!(
+        application.emitted_events.as_slice(),
+        [
+            DomainEvent::CardDiscarded(_),
+            DomainEvent::StackTopResolved(_),
+            DomainEvent::SpellCast(_),
+        ]
+    ));
+}
+
+#[test]
+fn execute_public_command_preserves_rummage_effect_event_order() {
+    let (service, mut game, discard_id) = rummage_game_in_pending_choice();
+
+    let application = service.execute_public_command(
+        &mut game,
+        PublicGameCommand::ResolvePendingHandChoice(ResolvePendingHandChoiceCommand::new(
+            PlayerId::new("p1"),
+            discard_id,
+        )),
+    );
+
+    assert!(matches!(
+        application.emitted_events.as_slice(),
+        [
+            DomainEvent::CardDiscarded(_),
+            DomainEvent::CardDrawn(_),
+            DomainEvent::StackTopResolved(_),
+            DomainEvent::SpellCast(_),
+        ]
+    ));
+}
+
+#[test]
+fn execute_public_command_surfaces_card_discarded_from_pass_priority_resolution() {
+    let service = create_service();
+    let libraries = vec![
+        player_library(
+            "p1",
+            vec![
+                target_player_discards_chosen_card_sorcery_card("p1-discard", 0),
+                forest_card("p1-a"),
+                forest_card("p1-b"),
+                forest_card("p1-c"),
+                forest_card("p1-d"),
+                forest_card("p1-e"),
+                forest_card("p1-f"),
+                forest_card("p1-g"),
+                forest_card("p1-h"),
+                forest_card("p1-i"),
+            ],
+        ),
+        player_library(
+            "p2",
+            vec![
+                forest_card("p2-keep"),
+                forest_card("p2-a"),
+                forest_card("p2-b"),
+                forest_card("p2-c"),
+                forest_card("p2-d"),
+                forest_card("p2-e"),
+                forest_card("p2-f"),
+                forest_card("p2-g"),
+                forest_card("p2-h"),
+                forest_card("p2-i"),
+            ],
+        ),
+    ];
+    let decks = vec![player_deck("p1", "d1"), player_deck("p2", "d2")];
+    let (mut game, _) = service
+        .start_game(StartGameCommand::new(
+            GameId::new("game-public-pass-priority-discard"),
+            decks,
+        ))
+        .expect("game should start");
+    service
+        .deal_opening_hands(&mut game, &DealOpeningHandsCommand::new(libraries))
+        .expect("opening hands should be dealt");
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "p1");
+
+    let discard_spell_id = player(&game, "p1")
+        .hand_card_by_definition(&CardDefinitionId::new("p1-discard"))
+        .expect("discard spell should be in hand")
+        .id()
+        .clone();
+    let chosen_id = first_hand_card_id(&game, "p2");
+
+    service.execute_public_command(
+        &mut game,
+        PublicGameCommand::CastSpell(
+            CastSpellCommand::new(PlayerId::new("p1"), discard_spell_id)
+                .with_target(SpellTarget::Player(PlayerId::new("p2")))
+                .with_choice(SpellChoice::HandCard(chosen_id.clone())),
+        ),
+    );
+    service.execute_public_command(
+        &mut game,
+        PublicGameCommand::PassPriority(PassPriorityCommand::new(PlayerId::new("p1"))),
+    );
+    let application = service.execute_public_command(
+        &mut game,
+        PublicGameCommand::PassPriority(PassPriorityCommand::new(PlayerId::new("p2"))),
+    );
+
+    assert!(application.emitted_events.iter().any(|event| matches!(
+        event,
+        DomainEvent::CardDiscarded(discarded)
+            if discarded.card_id == chosen_id && discarded.discard_kind == DiscardKind::SpellEffect
+    )));
 }
