@@ -33,6 +33,19 @@ struct ResolutionEffectBatch<'a> {
     creatures_died: &'a [CreatureDied],
 }
 
+struct ResolutionFollowUp<'a> {
+    triggered_abilities_put_on_stack: &'a [TriggeredAbilityPutOnStack],
+    game_ended: Option<&'a GameEnded>,
+}
+
+struct ResolutionEventPlan<'a> {
+    effects_before_close: &'a [ResolutionEffectBatch<'a>],
+    stack_top_resolved: Option<&'a StackTopResolved>,
+    spell_cast: Option<&'a SpellCast>,
+    effects_after_close: &'a [ResolutionEffectBatch<'a>],
+    follow_up: ResolutionFollowUp<'a>,
+}
+
 fn push_resolution_effect_batch(
     domain_events: &mut DomainEvents,
     batch: &ResolutionEffectBatch<'_>,
@@ -72,6 +85,17 @@ fn push_resolution_follow_up_events(
     domain_events.push_optional(game_ended.cloned());
 }
 
+fn push_resolution_event_plan(domain_events: &mut DomainEvents, plan: &ResolutionEventPlan<'_>) {
+    push_resolution_effect_sequence(domain_events, plan.effects_before_close);
+    push_resolution_close_events(domain_events, plan.stack_top_resolved, plan.spell_cast);
+    push_resolution_effect_sequence(domain_events, plan.effects_after_close);
+    push_resolution_follow_up_events(
+        domain_events,
+        plan.follow_up.triggered_abilities_put_on_stack,
+        plan.follow_up.game_ended,
+    );
+}
+
 pub fn domain_events_for_activate_ability(outcome: &ActivateAbilityOutcome) -> Vec<DomainEvent> {
     let mut domain_events = DomainEvents::default();
     domain_events.extend(outcome.zone_changes.iter().cloned());
@@ -86,56 +110,57 @@ pub fn domain_events_for_cast_spell(outcome: &CastSpellOutcome) -> Vec<DomainEve
 
 pub fn domain_events_for_pass_priority(outcome: &PassPriorityOutcome) -> Vec<DomainEvent> {
     let mut domain_events = DomainEvents::with(outcome.priority_passed.clone());
+    let effects_with_draws = [ResolutionEffectBatch {
+        card_drawn: &outcome.card_drawn,
+        card_discarded: outcome.card_discarded.as_ref(),
+        card_exiled: outcome.card_exiled.as_ref(),
+        zone_changes: &outcome.zone_changes,
+        life_changed: outcome.life_changed.as_ref(),
+        creatures_died: &outcome.creatures_died,
+    }];
+    let effects_without_draws = [ResolutionEffectBatch {
+        card_drawn: &[],
+        card_discarded: outcome.card_discarded.as_ref(),
+        card_exiled: outcome.card_exiled.as_ref(),
+        zone_changes: &outcome.zone_changes,
+        life_changed: outcome.life_changed.as_ref(),
+        creatures_died: &outcome.creatures_died,
+    }];
+    let draws_only = [ResolutionEffectBatch {
+        card_drawn: &outcome.card_drawn,
+        card_discarded: None,
+        card_exiled: None,
+        zone_changes: &[],
+        life_changed: None,
+        creatures_died: &[],
+    }];
+    let empty_batches: [ResolutionEffectBatch<'_>; 0] = [];
     let draws_happen_before_resolution =
         !outcome.card_drawn.is_empty() && outcome.stack_top_resolved.is_some();
-    let batches = if draws_happen_before_resolution {
-        [
-            ResolutionEffectBatch {
-                card_drawn: &outcome.card_drawn,
-                card_discarded: outcome.card_discarded.as_ref(),
-                card_exiled: outcome.card_exiled.as_ref(),
-                zone_changes: &outcome.zone_changes,
-                life_changed: outcome.life_changed.as_ref(),
-                creatures_died: &outcome.creatures_died,
+    let plan = if draws_happen_before_resolution {
+        ResolutionEventPlan {
+            effects_before_close: &effects_with_draws,
+            stack_top_resolved: outcome.stack_top_resolved.as_ref(),
+            spell_cast: outcome.spell_cast.as_ref(),
+            effects_after_close: &empty_batches,
+            follow_up: ResolutionFollowUp {
+                triggered_abilities_put_on_stack: &outcome.triggered_abilities_put_on_stack,
+                game_ended: outcome.game_ended.as_ref(),
             },
-            ResolutionEffectBatch {
-                card_drawn: &[],
-                card_discarded: None,
-                card_exiled: None,
-                zone_changes: &[],
-                life_changed: None,
-                creatures_died: &[],
-            },
-        ]
+        }
     } else {
-        [
-            ResolutionEffectBatch {
-                card_drawn: &[],
-                card_discarded: outcome.card_discarded.as_ref(),
-                card_exiled: outcome.card_exiled.as_ref(),
-                zone_changes: &outcome.zone_changes,
-                life_changed: outcome.life_changed.as_ref(),
-                creatures_died: &outcome.creatures_died,
+        ResolutionEventPlan {
+            effects_before_close: &effects_without_draws,
+            stack_top_resolved: outcome.stack_top_resolved.as_ref(),
+            spell_cast: outcome.spell_cast.as_ref(),
+            effects_after_close: &draws_only,
+            follow_up: ResolutionFollowUp {
+                triggered_abilities_put_on_stack: &outcome.triggered_abilities_put_on_stack,
+                game_ended: outcome.game_ended.as_ref(),
             },
-            ResolutionEffectBatch {
-                card_drawn: &outcome.card_drawn,
-                card_discarded: None,
-                card_exiled: None,
-                zone_changes: &[],
-                life_changed: None,
-                creatures_died: &[],
-            },
-        ]
+        }
     };
-    push_resolution_effect_sequence(&mut domain_events, &batches[..1]);
-    push_resolution_close_events(
-        &mut domain_events,
-        outcome.stack_top_resolved.as_ref(),
-        outcome.spell_cast.as_ref(),
-    );
-    domain_events.extend(outcome.triggered_abilities_put_on_stack.iter().cloned());
-    push_resolution_effect_sequence(&mut domain_events, &batches[1..]);
-    domain_events.push_optional(outcome.game_ended.clone());
+    push_resolution_event_plan(&mut domain_events, &plan);
     domain_events.into_vec()
 }
 
@@ -143,26 +168,27 @@ pub fn domain_events_for_resolve_optional_effect(
     outcome: &ResolveOptionalEffectOutcome,
 ) -> Vec<DomainEvent> {
     let mut domain_events = DomainEvents::default();
-    push_resolution_effect_sequence(
+    let effects = [ResolutionEffectBatch {
+        card_drawn: &[],
+        card_discarded: outcome.card_discarded.as_ref(),
+        card_exiled: outcome.card_exiled.as_ref(),
+        zone_changes: &outcome.zone_changes,
+        life_changed: outcome.life_changed.as_ref(),
+        creatures_died: &outcome.creatures_died,
+    }];
+    let empty_batches: [ResolutionEffectBatch<'_>; 0] = [];
+    push_resolution_event_plan(
         &mut domain_events,
-        &[ResolutionEffectBatch {
-            card_drawn: &[],
-            card_discarded: outcome.card_discarded.as_ref(),
-            card_exiled: outcome.card_exiled.as_ref(),
-            zone_changes: &outcome.zone_changes,
-            life_changed: outcome.life_changed.as_ref(),
-            creatures_died: &outcome.creatures_died,
-        }],
-    );
-    push_resolution_close_events(
-        &mut domain_events,
-        outcome.stack_top_resolved.as_ref(),
-        outcome.spell_cast.as_ref(),
-    );
-    push_resolution_follow_up_events(
-        &mut domain_events,
-        &outcome.triggered_abilities_put_on_stack,
-        outcome.game_ended.as_ref(),
+        &ResolutionEventPlan {
+            effects_before_close: &effects,
+            stack_top_resolved: outcome.stack_top_resolved.as_ref(),
+            spell_cast: outcome.spell_cast.as_ref(),
+            effects_after_close: &empty_batches,
+            follow_up: ResolutionFollowUp {
+                triggered_abilities_put_on_stack: &outcome.triggered_abilities_put_on_stack,
+                game_ended: outcome.game_ended.as_ref(),
+            },
+        },
     );
     domain_events.into_vec()
 }
@@ -171,33 +197,38 @@ pub fn domain_events_for_resolve_pending_hand_choice(
     outcome: &ResolvePendingHandChoiceOutcome,
 ) -> Vec<DomainEvent> {
     let mut domain_events = DomainEvents::default();
-    push_resolution_effect_sequence(
+    let effects_before_close = [
+        ResolutionEffectBatch {
+            card_drawn: &[],
+            card_discarded: outcome.card_discarded.as_ref(),
+            card_exiled: None,
+            zone_changes: &outcome.zone_changes,
+            life_changed: None,
+            creatures_died: &[],
+        },
+        ResolutionEffectBatch {
+            card_drawn: &outcome.card_drawn,
+            card_discarded: None,
+            card_exiled: None,
+            zone_changes: &[],
+            life_changed: None,
+            creatures_died: &[],
+        },
+    ];
+    let empty_batches: [ResolutionEffectBatch<'_>; 0] = [];
+    push_resolution_event_plan(
         &mut domain_events,
-        &[
-            ResolutionEffectBatch {
-                card_drawn: &[],
-                card_discarded: outcome.card_discarded.as_ref(),
-                card_exiled: None,
-                zone_changes: &outcome.zone_changes,
-                life_changed: None,
-                creatures_died: &[],
+        &ResolutionEventPlan {
+            effects_before_close: &effects_before_close,
+            stack_top_resolved: outcome.stack_top_resolved.as_ref(),
+            spell_cast: outcome.spell_cast.as_ref(),
+            effects_after_close: &empty_batches,
+            follow_up: ResolutionFollowUp {
+                triggered_abilities_put_on_stack: &[],
+                game_ended: outcome.game_ended.as_ref(),
             },
-            ResolutionEffectBatch {
-                card_drawn: &outcome.card_drawn,
-                card_discarded: None,
-                card_exiled: None,
-                zone_changes: &[],
-                life_changed: None,
-                creatures_died: &[],
-            },
-        ],
+        },
     );
-    push_resolution_close_events(
-        &mut domain_events,
-        outcome.stack_top_resolved.as_ref(),
-        outcome.spell_cast.as_ref(),
-    );
-    push_resolution_follow_up_events(&mut domain_events, &[], outcome.game_ended.as_ref());
     domain_events.into_vec()
 }
 
@@ -205,23 +236,28 @@ pub fn domain_events_for_resolve_pending_scry(
     outcome: &ResolvePendingScryOutcome,
 ) -> Vec<DomainEvent> {
     let mut domain_events = DomainEvents::default();
-    push_resolution_effect_sequence(
+    let effects = [ResolutionEffectBatch {
+        card_drawn: &[],
+        card_discarded: None,
+        card_exiled: None,
+        zone_changes: &outcome.zone_changes,
+        life_changed: None,
+        creatures_died: &[],
+    }];
+    let empty_batches: [ResolutionEffectBatch<'_>; 0] = [];
+    push_resolution_event_plan(
         &mut domain_events,
-        &[ResolutionEffectBatch {
-            card_drawn: &[],
-            card_discarded: None,
-            card_exiled: None,
-            zone_changes: &outcome.zone_changes,
-            life_changed: None,
-            creatures_died: &[],
-        }],
+        &ResolutionEventPlan {
+            effects_before_close: &effects,
+            stack_top_resolved: outcome.stack_top_resolved.as_ref(),
+            spell_cast: outcome.spell_cast.as_ref(),
+            effects_after_close: &empty_batches,
+            follow_up: ResolutionFollowUp {
+                triggered_abilities_put_on_stack: &[],
+                game_ended: outcome.game_ended.as_ref(),
+            },
+        },
     );
-    push_resolution_close_events(
-        &mut domain_events,
-        outcome.stack_top_resolved.as_ref(),
-        outcome.spell_cast.as_ref(),
-    );
-    push_resolution_follow_up_events(&mut domain_events, &[], outcome.game_ended.as_ref());
     domain_events.into_vec()
 }
 
@@ -229,23 +265,28 @@ pub fn domain_events_for_resolve_pending_surveil(
     outcome: &ResolvePendingSurveilOutcome,
 ) -> Vec<DomainEvent> {
     let mut domain_events = DomainEvents::default();
-    push_resolution_effect_sequence(
+    let effects = [ResolutionEffectBatch {
+        card_drawn: &[],
+        card_discarded: None,
+        card_exiled: None,
+        zone_changes: &outcome.zone_changes,
+        life_changed: None,
+        creatures_died: &[],
+    }];
+    let empty_batches: [ResolutionEffectBatch<'_>; 0] = [];
+    push_resolution_event_plan(
         &mut domain_events,
-        &[ResolutionEffectBatch {
-            card_drawn: &[],
-            card_discarded: None,
-            card_exiled: None,
-            zone_changes: &outcome.zone_changes,
-            life_changed: None,
-            creatures_died: &[],
-        }],
+        &ResolutionEventPlan {
+            effects_before_close: &effects,
+            stack_top_resolved: outcome.stack_top_resolved.as_ref(),
+            spell_cast: outcome.spell_cast.as_ref(),
+            effects_after_close: &empty_batches,
+            follow_up: ResolutionFollowUp {
+                triggered_abilities_put_on_stack: &[],
+                game_ended: outcome.game_ended.as_ref(),
+            },
+        },
     );
-    push_resolution_close_events(
-        &mut domain_events,
-        outcome.stack_top_resolved.as_ref(),
-        outcome.spell_cast.as_ref(),
-    );
-    push_resolution_follow_up_events(&mut domain_events, &[], outcome.game_ended.as_ref());
     domain_events.into_vec()
 }
 
