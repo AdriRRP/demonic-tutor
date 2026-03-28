@@ -387,12 +387,6 @@ pub(super) fn public_surface_state(game: &Game, viewer_id: &PlayerId) -> PublicS
     );
     append_concede_action(game, viewer_id, &mut state.legal_actions);
     state
-        .legal_actions
-        .retain(|action| legal_action_player_id(action) == viewer_id);
-    state
-        .choice_requests
-        .retain(|request| choice_request_player_id(request) == viewer_id);
-    state
 }
 
 #[must_use]
@@ -948,42 +942,6 @@ fn append_concede_action(
         legal_actions.push(PublicLegalAction::Concede {
             player_id: viewer_id.clone(),
         });
-    }
-}
-
-const fn legal_action_player_id(action: &PublicLegalAction) -> &PlayerId {
-    match action {
-        PublicLegalAction::Concede { player_id }
-        | PublicLegalAction::ResolvePendingScry { player_id }
-        | PublicLegalAction::ResolvePendingSurveil { player_id }
-        | PublicLegalAction::ResolvePendingHandChoice { player_id }
-        | PublicLegalAction::ResolveOptionalEffect { player_id }
-        | PublicLegalAction::PassPriority { player_id }
-        | PublicLegalAction::PlayLand { player_id, .. }
-        | PublicLegalAction::TapManaSource { player_id, .. }
-        | PublicLegalAction::CastSpell { player_id, .. }
-        | PublicLegalAction::ActivateAbility { player_id, .. }
-        | PublicLegalAction::DeclareAttackers { player_id, .. }
-        | PublicLegalAction::DeclareBlockers { player_id, .. }
-        | PublicLegalAction::ResolveCombatDamage { player_id }
-        | PublicLegalAction::AdvanceTurn { player_id }
-        | PublicLegalAction::DiscardForCleanup { player_id, .. } => player_id,
-    }
-}
-
-const fn choice_request_player_id(request: &PublicChoiceRequest) -> &PlayerId {
-    match request {
-        PublicChoiceRequest::PendingDecisionUnavailable { player_id, .. }
-        | PublicChoiceRequest::PendingScry { player_id, .. }
-        | PublicChoiceRequest::PendingSurveil { player_id, .. }
-        | PublicChoiceRequest::PendingHandChoice { player_id, .. }
-        | PublicChoiceRequest::OptionalEffectDecision { player_id, .. }
-        | PublicChoiceRequest::SpellTarget { player_id, .. }
-        | PublicChoiceRequest::SpellChoice { player_id, .. }
-        | PublicChoiceRequest::SpellSecondaryCreatureChoice { player_id, .. }
-        | PublicChoiceRequest::SpellModalChoice { player_id, .. }
-        | PublicChoiceRequest::AbilityTarget { player_id, .. }
-        | PublicChoiceRequest::CleanupDiscard { player_id, .. } => player_id,
     }
 }
 
