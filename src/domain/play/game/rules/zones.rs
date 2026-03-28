@@ -276,7 +276,7 @@ fn exile_card_from_player_zone_by_index(
 /// # Errors
 /// Returns `DomainError::Game::PlayerNotFound` if the player is not found.
 /// Returns `DomainError::Card::NotOnBattlefield` if the card is not on the battlefield.
-pub fn exile_card_from_battlefield_by_index(
+pub(crate) fn exile_card_from_battlefield_by_index(
     game_id: &GameId,
     players: &mut [Player],
     player_index: usize,
@@ -297,7 +297,7 @@ pub fn exile_card_from_battlefield_by_index(
 /// # Errors
 /// Returns an invariant error if the player index or handle do not match the current
 /// aggregate state.
-pub fn exile_card_from_battlefield_handle_by_index(
+pub(crate) fn exile_card_from_battlefield_handle_by_index(
     game_id: &GameId,
     players: &mut [Player],
     card_locations: &AggregateCardLocationIndex,
@@ -373,7 +373,7 @@ pub fn exile_card_from_battlefield_handle_by_index(
 /// # Errors
 /// Returns `DomainError::Game::PlayerNotFound` if the player is not found.
 /// Returns `DomainError::Card::NotOnBattlefield` if the card is not on the battlefield.
-pub fn exile_card_from_battlefield(
+pub(crate) fn exile_card_from_battlefield(
     game_id: &GameId,
     players: &mut [Player],
     player_id: &PlayerId,
@@ -391,7 +391,7 @@ pub fn exile_card_from_battlefield(
 /// # Errors
 /// Returns `DomainError::Game::PlayerNotFound` if the player is not found.
 /// Returns `DomainError::Card::NotOnBattlefield` if the card is not in the graveyard.
-pub fn exile_card_from_graveyard_by_index(
+pub(crate) fn exile_card_from_graveyard_by_index(
     game_id: &GameId,
     players: &mut [Player],
     player_index: usize,
@@ -412,7 +412,7 @@ pub fn exile_card_from_graveyard_by_index(
 /// # Errors
 /// Returns an invariant error if the player index or handle do not match the current
 /// aggregate state.
-pub fn exile_card_from_graveyard_handle_by_index(
+pub(crate) fn exile_card_from_graveyard_handle_by_index(
     game_id: &GameId,
     players: &mut [Player],
     player_index: usize,
@@ -433,7 +433,7 @@ pub fn exile_card_from_graveyard_handle_by_index(
 /// # Errors
 /// Returns `DomainError::Game::PlayerNotFound` if the player is not found.
 /// Returns `DomainError::Card::NotOnBattlefield` if the card is not in the graveyard.
-pub fn exile_card_from_graveyard(
+pub(crate) fn exile_card_from_graveyard(
     game_id: &GameId,
     players: &mut [Player],
     player_id: &PlayerId,

@@ -68,16 +68,23 @@ fn exile_card_from_graveyard(
     players: &mut [crate::domain::play::game::Player],
     card_locations: &crate::domain::play::game::AggregateCardLocationIndex,
     target_id: &CardInstanceId,
-) -> Option<crate::domain::play::events::CardExiled> {
+) -> Option<CardMovedZone> {
     let location = card_locations.location(target_id)?;
     (location.zone() == crate::domain::play::game::PlayerCardZone::Graveyard).then_some(())?;
-    zones::exile_card_from_graveyard_handle_by_index(
+    let exiled = zones::exile_card_from_graveyard_handle_by_index(
         game_id,
         players,
         location.player_index(),
         location.handle(),
     )
-    .ok()
+    .ok()?;
+    Some(CardMovedZone::new(
+        exiled.game_id,
+        exiled.zone_owner_id,
+        exiled.card_id,
+        exiled.origin_zone,
+        ZoneType::Exile,
+    ))
 }
 
 pub(super) fn resolve_return_target_creature_from_graveyard_effect(
@@ -132,7 +139,6 @@ pub(super) fn resolve_return_target_creature_from_graveyard_effect(
         context.players,
         context.terminal_state,
         EffectOutcomeSeed {
-            card_exiled: None,
             card_discarded: None,
             zone_changes,
             life_changed: None,
@@ -195,7 +201,6 @@ pub(super) fn resolve_reanimate_target_creature_effect(
         context.players,
         context.terminal_state,
         EffectOutcomeSeed {
-            card_exiled: None,
             card_discarded: None,
             zone_changes,
             life_changed: None,
@@ -259,7 +264,6 @@ pub(super) fn resolve_return_target_instant_or_sorcery_from_graveyard_effect(
         context.players,
         context.terminal_state,
         EffectOutcomeSeed {
-            card_exiled: None,
             card_discarded: None,
             zone_changes,
             life_changed: None,
@@ -289,17 +293,19 @@ pub(super) fn resolve_exile_target_graveyard_card_effect(
         );
     };
 
-    let card_exiled = match target {
+    let zone_changes = match target {
         SpellTarget::GraveyardCard(card_id) => exile_card_from_graveyard(
             context.game_id,
             context.players,
             context.card_locations,
             &card_id,
-        ),
+        )
+        .into_iter()
+        .collect(),
         SpellTarget::Player(_)
         | SpellTarget::Creature(_)
         | SpellTarget::Permanent(_)
-        | SpellTarget::StackObject(_) => None,
+        | SpellTarget::StackObject(_) => Vec::new(),
     };
 
     review_state_based_actions_after_effect(
@@ -307,9 +313,8 @@ pub(super) fn resolve_exile_target_graveyard_card_effect(
         context.players,
         context.terminal_state,
         EffectOutcomeSeed {
-            card_exiled,
             card_discarded: None,
-            zone_changes: Vec::new(),
+            zone_changes,
             life_changed: None,
             creatures_died: Vec::new(),
             moved_cards: Vec::new(),
@@ -349,7 +354,6 @@ pub(super) fn resolve_mill_effect(
         context.players,
         context.terminal_state,
         EffectOutcomeSeed {
-            card_exiled: None,
             card_discarded: None,
             zone_changes,
             life_changed: None,

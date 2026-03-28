@@ -23,7 +23,6 @@ pub(super) fn resolve_create_vanilla_creature_token_effect(
         context.players,
         context.terminal_state,
         EffectOutcomeSeed {
-            card_exiled: None,
             card_discarded: None,
             zone_changes: vec![CardMovedZone::new(
                 context.game_id.clone(),
@@ -67,7 +66,6 @@ pub(super) fn resolve_create_multiple_vanilla_creature_tokens_effect(
         context.players,
         context.terminal_state,
         EffectOutcomeSeed {
-            card_exiled: None,
             card_discarded: None,
             zone_changes,
             life_changed: None,
@@ -126,7 +124,6 @@ pub(super) fn resolve_create_keyworded_creature_token_effect(
         context.players,
         context.terminal_state,
         EffectOutcomeSeed {
-            card_exiled: None,
             card_discarded: None,
             zone_changes: vec![CardMovedZone::new(
                 context.game_id.clone(),

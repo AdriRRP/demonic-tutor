@@ -55,8 +55,7 @@ where
         game: &mut Game,
         cmd: &ExileCardCommand,
     ) -> Result<CardMovedZone, DomainError> {
-        let event = game.exile_card(cmd)?;
-        let zone_change = Game::zone_change_for_card_exiled(&event);
+        let zone_change = game.exile_card(cmd)?;
         self.persist_and_publish_event(game.id().as_str(), &zone_change)?;
 
         Ok(zone_change)

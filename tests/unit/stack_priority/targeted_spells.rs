@@ -2383,10 +2383,11 @@ fn exile_target_creature_spell_can_exile_a_creature_when_it_resolves() {
     let resolution = resolve_current_stack(&service, &mut game);
     assert!(resolution.life_changed.is_none());
     assert!(resolution.creatures_died.is_empty());
-    assert_eq!(
-        resolution.card_exiled.as_ref().unwrap().card_id,
-        creature_id
-    );
+    assert!(resolution.zone_changes.iter().any(|event| {
+        event.card_id == creature_id
+            && event.origin_zone.as_str() == "battlefield"
+            && event.destination_zone.as_str() == "exile"
+    }));
     assert!(game.players()[1]
         .battlefield_cards()
         .all(|card| card.definition_id() != &CardDefinitionId::new("bob-bear")));
@@ -2443,7 +2444,10 @@ fn exile_target_creature_spell_does_not_apply_if_the_target_is_gone_on_resolutio
     assert_eq!(first_resolution.creatures_died[0].card_id, creature_id);
 
     let second_resolution = resolve_current_stack(&service, &mut game);
-    assert!(second_resolution.card_exiled.is_none());
+    assert!(second_resolution
+        .zone_changes
+        .iter()
+        .all(|event| event.destination_zone.as_str() != "exile"));
     assert!(second_resolution.life_changed.is_none());
     assert!(second_resolution.creatures_died.is_empty());
     assert_eq!(game.players()[1].graveyard_size(), 1);
@@ -2487,10 +2491,11 @@ fn exile_target_graveyard_card_spell_can_exile_a_card_from_a_graveyard_when_it_r
         .unwrap();
 
     let resolution = resolve_current_stack(&service, &mut game);
-    assert_eq!(
-        resolution.card_exiled.as_ref().unwrap().card_id,
-        graveyard_card_id
-    );
+    assert!(resolution.zone_changes.iter().any(|event| {
+        event.card_id == graveyard_card_id
+            && event.origin_zone.as_str() == "graveyard"
+            && event.destination_zone.as_str() == "exile"
+    }));
     assert!(game.players()[1].exile_contains(&graveyard_card_id));
     assert!(!game.players()[1].graveyard_contains(&graveyard_card_id));
 }
@@ -2573,7 +2578,10 @@ fn exile_target_graveyard_card_spell_does_not_apply_if_the_target_is_gone_on_res
         .unwrap();
 
     let resolution = resolve_current_stack(&service, &mut game);
-    assert!(resolution.card_exiled.is_none());
+    assert!(resolution
+        .zone_changes
+        .iter()
+        .all(|event| event.destination_zone.as_str() != "exile"));
     assert!(game.players()[1].exile_contains(&graveyard_card_id));
     assert!(!game.players()[1].graveyard_contains(&graveyard_card_id));
 }

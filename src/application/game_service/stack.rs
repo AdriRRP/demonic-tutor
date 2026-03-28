@@ -12,8 +12,8 @@ use {
             },
             errors::DomainError,
             events::{
-                CardDiscarded, CardDrawn, CardExiled, CardMovedZone, CreatureDied, DomainEvent,
-                GameEnded, LifeChanged, SpellCast, StackTopResolved, TriggeredAbilityPutOnStack,
+                CardDiscarded, CardDrawn, CardMovedZone, CreatureDied, DomainEvent, GameEnded,
+                LifeChanged, SpellCast, StackTopResolved, TriggeredAbilityPutOnStack,
             },
             game::{
                 ActivateAbilityOutcome, CastSpellOutcome, Game, PassPriorityOutcome,
@@ -27,7 +27,6 @@ use {
 struct ResolutionEffectBatch<'a> {
     card_drawn: &'a [CardDrawn],
     card_discarded: Option<&'a CardDiscarded>,
-    card_exiled: Option<&'a CardExiled>,
     zone_changes: &'a [CardMovedZone],
     life_changed: Option<&'a LifeChanged>,
     creatures_died: &'a [CreatureDied],
@@ -52,9 +51,6 @@ fn push_resolution_effect_batch(
 ) {
     domain_events.extend(batch.card_drawn.iter().cloned());
     domain_events.push_optional(batch.card_discarded.cloned());
-    if let Some(card_exiled) = batch.card_exiled {
-        domain_events.push(Game::zone_change_for_card_exiled(card_exiled));
-    }
     domain_events.extend(batch.zone_changes.iter().cloned());
     domain_events.push_optional(batch.life_changed.cloned());
     domain_events.extend(batch.creatures_died.iter().cloned());
@@ -115,7 +111,6 @@ pub fn domain_events_for_pass_priority(outcome: &PassPriorityOutcome) -> Vec<Dom
     let effects_with_draws = [ResolutionEffectBatch {
         card_drawn: &outcome.card_drawn,
         card_discarded: outcome.card_discarded.as_ref(),
-        card_exiled: outcome.card_exiled.as_ref(),
         zone_changes: &outcome.zone_changes,
         life_changed: outcome.life_changed.as_ref(),
         creatures_died: &outcome.creatures_died,
@@ -123,7 +118,6 @@ pub fn domain_events_for_pass_priority(outcome: &PassPriorityOutcome) -> Vec<Dom
     let effects_without_draws = [ResolutionEffectBatch {
         card_drawn: &[],
         card_discarded: outcome.card_discarded.as_ref(),
-        card_exiled: outcome.card_exiled.as_ref(),
         zone_changes: &outcome.zone_changes,
         life_changed: outcome.life_changed.as_ref(),
         creatures_died: &outcome.creatures_died,
@@ -131,7 +125,6 @@ pub fn domain_events_for_pass_priority(outcome: &PassPriorityOutcome) -> Vec<Dom
     let draws_only = [ResolutionEffectBatch {
         card_drawn: &outcome.card_drawn,
         card_discarded: None,
-        card_exiled: None,
         zone_changes: &[],
         life_changed: None,
         creatures_died: &[],
@@ -173,7 +166,6 @@ pub fn domain_events_for_resolve_optional_effect(
     let effects = [ResolutionEffectBatch {
         card_drawn: &[],
         card_discarded: outcome.card_discarded.as_ref(),
-        card_exiled: outcome.card_exiled.as_ref(),
         zone_changes: &outcome.zone_changes,
         life_changed: outcome.life_changed.as_ref(),
         creatures_died: &outcome.creatures_died,
@@ -203,7 +195,6 @@ pub fn domain_events_for_resolve_pending_hand_choice(
         ResolutionEffectBatch {
             card_drawn: &[],
             card_discarded: outcome.card_discarded.as_ref(),
-            card_exiled: None,
             zone_changes: &outcome.zone_changes,
             life_changed: None,
             creatures_died: &[],
@@ -211,7 +202,6 @@ pub fn domain_events_for_resolve_pending_hand_choice(
         ResolutionEffectBatch {
             card_drawn: &outcome.card_drawn,
             card_discarded: None,
-            card_exiled: None,
             zone_changes: &[],
             life_changed: None,
             creatures_died: &[],
@@ -241,7 +231,6 @@ pub fn domain_events_for_resolve_pending_scry(
     let effects = [ResolutionEffectBatch {
         card_drawn: &[],
         card_discarded: None,
-        card_exiled: None,
         zone_changes: &outcome.zone_changes,
         life_changed: None,
         creatures_died: &[],
@@ -270,7 +259,6 @@ pub fn domain_events_for_resolve_pending_surveil(
     let effects = [ResolutionEffectBatch {
         card_drawn: &[],
         card_discarded: None,
-        card_exiled: None,
         zone_changes: &outcome.zone_changes,
         life_changed: None,
         creatures_died: &[],

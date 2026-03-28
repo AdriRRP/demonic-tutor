@@ -13,7 +13,7 @@ use {
             ResolvePendingScryCommand, ResolvePendingSurveilCommand,
         },
         errors::DomainError,
-        events::{CardDiscarded, CardDrawn, CardExiled, CardMovedZone, CreatureDied, SpellCast},
+        events::{CardDiscarded, CardDrawn, CardMovedZone, CreatureDied, SpellCast},
     },
 };
 
@@ -40,16 +40,6 @@ impl Game {
             return;
         };
         zone_changes.push(Self::zone_change_for_card_discarded(event));
-    }
-
-    fn append_exiled_card_zone_change(
-        zone_changes: &mut Vec<CardMovedZone>,
-        card_exiled: Option<&CardExiled>,
-    ) {
-        let Some(event) = card_exiled else {
-            return;
-        };
-        zone_changes.push(Self::zone_change_for_card_exiled(event));
     }
 
     fn append_creature_died_zone_changes(
@@ -79,7 +69,6 @@ impl Game {
             Self::append_spell_resolution_zone_change(&mut zone_changes, spell_cast);
         }
         Self::append_drawn_card_zone_changes(&mut zone_changes, &outcome.card_drawn);
-        Self::append_exiled_card_zone_change(&mut zone_changes, outcome.card_exiled.as_ref());
         Self::append_discarded_card_zone_change(&mut zone_changes, outcome.card_discarded.as_ref());
         Self::append_creature_died_zone_changes(&mut zone_changes, &outcome.creatures_died);
         zone_changes
@@ -92,7 +81,6 @@ impl Game {
         if let Some(spell_cast) = &outcome.spell_cast {
             Self::append_spell_resolution_zone_change(&mut zone_changes, spell_cast);
         }
-        Self::append_exiled_card_zone_change(&mut zone_changes, outcome.card_exiled.as_ref());
         Self::append_discarded_card_zone_change(&mut zone_changes, outcome.card_discarded.as_ref());
         Self::append_creature_died_zone_changes(&mut zone_changes, &outcome.creatures_died);
         zone_changes

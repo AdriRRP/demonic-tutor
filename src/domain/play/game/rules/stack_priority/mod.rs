@@ -18,9 +18,9 @@ use super::super::{
 };
 use crate::domain::play::{
     events::{
-        ActivatedAbilityPutOnStack, CardDiscarded, CardDrawn, CardExiled, CardMovedZone,
-        CreatureDied, GameEnded, LifeChanged, PriorityPassed, SpellCast, SpellPutOnStack,
-        StackTopResolved, TriggeredAbilityPutOnStack,
+        ActivatedAbilityPutOnStack, CardDiscarded, CardDrawn, CardMovedZone, CreatureDied,
+        GameEnded, LifeChanged, PriorityPassed, SpellCast, SpellPutOnStack, StackTopResolved,
+        TriggeredAbilityPutOnStack,
     },
     ids::{CardInstanceId, GameId, PlayerId},
     phase::Phase,
@@ -68,7 +68,6 @@ pub struct PassPriorityOutcome {
     pub stack_top_resolved: Option<StackTopResolved>,
     pub spell_cast: Option<SpellCast>,
     pub card_drawn: Vec<CardDrawn>,
-    pub card_exiled: Option<CardExiled>,
     pub card_discarded: Option<CardDiscarded>,
     pub zone_changes: Vec<CardMovedZone>,
     pub life_changed: Option<LifeChanged>,
@@ -83,7 +82,6 @@ pub struct ResolveOptionalEffectOutcome {
     pub stack_top_resolved: Option<StackTopResolved>,
     pub triggered_abilities_put_on_stack: Vec<TriggeredAbilityPutOnStack>,
     pub spell_cast: Option<SpellCast>,
-    pub card_exiled: Option<CardExiled>,
     pub card_discarded: Option<CardDiscarded>,
     pub zone_changes: Vec<CardMovedZone>,
     pub life_changed: Option<LifeChanged>,

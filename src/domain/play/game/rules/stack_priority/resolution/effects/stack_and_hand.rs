@@ -104,7 +104,6 @@ pub(super) fn resolve_return_target_permanent_to_hand_effect(
         context.players,
         context.terminal_state,
         EffectOutcomeSeed {
-            card_exiled: None,
             card_discarded: None,
             zone_changes,
             life_changed: None,
@@ -178,7 +177,6 @@ pub(super) fn resolve_counter_target_spell_effect(
         context.players,
         context.terminal_state,
         EffectOutcomeSeed {
-            card_exiled: None,
             card_discarded: None,
             zone_changes,
             life_changed: None,
@@ -241,7 +239,6 @@ pub(super) fn resolve_target_player_discards_chosen_card_effect(
         context.players,
         context.terminal_state,
         EffectOutcomeSeed {
-            card_exiled: None,
             card_discarded,
             zone_changes,
             life_changed: None,

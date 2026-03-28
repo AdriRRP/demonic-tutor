@@ -96,7 +96,6 @@ pub(super) fn resolve_pump_target_creature_effect(
         context.players,
         context.terminal_state,
         EffectOutcomeSeed {
-            card_exiled: None,
             card_discarded: None,
             zone_changes: Vec::new(),
             life_changed: None,
@@ -139,7 +138,6 @@ pub(super) fn resolve_put_counter_on_target_creature_effect(
         context.players,
         context.terminal_state,
         EffectOutcomeSeed {
-            card_exiled: None,
             card_discarded: None,
             zone_changes: Vec::new(),
             life_changed: None,
@@ -229,7 +227,6 @@ pub(super) fn resolve_distribute_two_counters_among_up_to_two_target_creatures_e
         context.players,
         context.terminal_state,
         EffectOutcomeSeed {
-            card_exiled: None,
             card_discarded: None,
             zone_changes: Vec::new(),
             life_changed: None,
@@ -268,7 +265,6 @@ pub(super) fn resolve_tap_target_creature_effect(
         context.players,
         context.terminal_state,
         EffectOutcomeSeed {
-            card_exiled: None,
             card_discarded: None,
             zone_changes: Vec::new(),
             life_changed: None,
@@ -307,7 +303,6 @@ pub(super) fn resolve_untap_target_creature_effect(
         context.players,
         context.terminal_state,
         EffectOutcomeSeed {
-            card_exiled: None,
             card_discarded: None,
             zone_changes: Vec::new(),
             life_changed: None,
@@ -350,7 +345,6 @@ pub(super) fn resolve_cannot_block_target_creature_effect(
         context.players,
         context.terminal_state,
         EffectOutcomeSeed {
-            card_exiled: None,
             card_discarded: None,
             zone_changes: Vec::new(),
             life_changed: None,

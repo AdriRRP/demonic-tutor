@@ -3,10 +3,9 @@
 use {
     super::super::support,
     super::super::GameplayWorld,
-    demonictutor::domain::play::events::ZoneType,
     demonictutor::domain::play::game::PlayerCardZone,
     demonictutor::{
-        AdjustPlayerLifeEffectCommand, AdvanceTurnCommand, AdvanceTurnOutcome, CardMovedZone,
+        AdjustPlayerLifeEffectCommand, AdvanceTurnCommand, AdvanceTurnOutcome,
         DiscardForCleanupCommand, DrawCardsEffectCommand, PassPriorityCommand, PlayLandCommand,
         PlayerId, TapLandCommand,
     },
@@ -125,18 +124,7 @@ impl GameplayWorld {
             .zone_changes
             .iter()
             .find(|event| event.destination_zone.as_str() == "exile")
-            .cloned()
-            .or_else(|| {
-                outcome.card_exiled.as_ref().map(|event| {
-                    CardMovedZone::new(
-                        event.game_id.clone(),
-                        event.zone_owner_id.clone(),
-                        event.card_id.clone(),
-                        event.origin_zone.clone(),
-                        ZoneType::Exile,
-                    )
-                })
-            });
+            .cloned();
         self.last_life_changed = outcome.life_changed;
         self.last_creature_died = outcome.creatures_died;
         self.last_game_ended = outcome.game_ended;

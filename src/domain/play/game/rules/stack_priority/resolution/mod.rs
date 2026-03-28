@@ -35,7 +35,6 @@ type ResolvedSpellOutcome = (
     StackTopResolved,
     Vec<TriggeredAbilityPutOnStack>,
     Option<SpellCast>,
-    Option<CardExiled>,
     Option<CardDiscarded>,
     Vec<CardMovedZone>,
     Option<LifeChanged>,
@@ -470,26 +469,27 @@ fn resolve_spell_from_stack(
         mana_cost_paid,
         outcome,
     );
-    let (
-        effect_card_exiled,
-        card_discarded,
-        zone_changes,
-        life_changed,
-        creatures_died,
-        moved_cards,
-        game_ended,
-    ) = apply_supported_spell_rules(self::effects::ResolutionContext::new(
-        game_id,
-        players,
-        card_locations,
-        terminal_state,
-        stack,
-        controller_index,
-        supported_spell_rules,
-        target.as_ref(),
-        choice,
-    ))?;
-    let card_exiled = effect_card_exiled.or(resolved_spell_card_exiled);
+    let (card_discarded, mut zone_changes, life_changed, creatures_died, moved_cards, game_ended) =
+        apply_supported_spell_rules(self::effects::ResolutionContext::new(
+            game_id,
+            players,
+            card_locations,
+            terminal_state,
+            stack,
+            controller_index,
+            supported_spell_rules,
+            target.as_ref(),
+            choice,
+        ))?;
+    if let Some(card_exiled) = resolved_spell_card_exiled {
+        zone_changes.push(CardMovedZone::new(
+            card_exiled.game_id,
+            card_exiled.zone_owner_id,
+            card_exiled.card_id,
+            card_exiled.origin_zone,
+            ZoneType::Exile,
+        ));
+    }
     triggered_abilities_put_on_stack.extend(enqueue_entered_battlefield_triggers_for_moved_cards(
         game_id,
         players,
@@ -507,7 +507,6 @@ fn resolve_spell_from_stack(
         stack_top_resolved,
         triggered_abilities_put_on_stack,
         Some(spell_cast),
-        card_exiled,
         card_discarded,
         zone_changes,
         life_changed,
@@ -589,7 +588,6 @@ fn resolve_activated_ability_from_stack(
     Ok((
         stack_top_resolved,
         Vec::new(),
-        None,
         None,
         None,
         Vec::new(),
@@ -679,7 +677,6 @@ fn resolve_triggered_ability_from_stack(
     Ok((
         stack_top_resolved,
         Vec::new(),
-        None,
         None,
         None,
         zone_changes,

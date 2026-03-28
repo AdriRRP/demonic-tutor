@@ -7,7 +7,7 @@ use {
             AdvanceTurnCommand, DiscardForCleanupCommand, DrawCardsEffectCommand, ExileCardCommand,
         },
         errors::DomainError,
-        events::{CardDiscarded, CardExiled},
+        events::{CardDiscarded, CardMovedZone},
     },
 };
 
@@ -111,7 +111,10 @@ impl Game {
     ///
     /// # Errors
     /// See [`rules::zones::exile_card_from_battlefield`] and [`rules::zones::exile_card_from_graveyard`].
-    pub fn exile_card(&mut self, cmd: &ExileCardCommand) -> Result<CardExiled, DomainError> {
+    pub(crate) fn exile_card(
+        &mut self,
+        cmd: &ExileCardCommand,
+    ) -> Result<CardMovedZone, DomainError> {
         invariants::require_game_active(self.is_over())?;
         let indexed_location = self
             .card_locations
@@ -156,9 +159,10 @@ impl Game {
                 &cmd.player_id,
                 &cmd.card_id,
             )
-        };
+        }
+        .map(|event| Self::zone_change_for_card_exiled(&event));
         if let Ok(event) = &result {
-            let zone_changes = [Self::zone_change_for_card_exiled(event)];
+            let zone_changes = [event.clone()];
             self.sync_zone_changes(&zone_changes)?;
         }
         result

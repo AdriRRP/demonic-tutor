@@ -13,13 +13,12 @@ use crate::domain::play::game::{
 use crate::domain::play::{
     cards::SupportedSpellRules,
     errors::{DomainError, GameError},
-    events::{CardDiscarded, CardExiled, CardMovedZone, CreatureDied, GameEnded, LifeChanged},
+    events::{CardDiscarded, CardMovedZone, CreatureDied, GameEnded, LifeChanged},
     game::{model::StackSpellChoice, SpellTarget},
     ids::{CardInstanceId, GameId},
 };
 
 pub(super) type SpellResolutionSideEffects = (
-    Option<CardExiled>,
     Option<CardDiscarded>,
     Vec<CardMovedZone>,
     Option<LifeChanged>,
@@ -68,7 +67,6 @@ impl<'a> ResolutionContext<'a> {
 }
 
 pub(super) struct EffectOutcomeSeed {
-    pub(super) card_exiled: Option<CardExiled>,
     pub(super) card_discarded: Option<CardDiscarded>,
     pub(super) zone_changes: Vec<CardMovedZone>,
     pub(super) life_changed: Option<LifeChanged>,
@@ -86,7 +84,6 @@ pub(super) fn review_state_based_actions(
         game_ended,
     } = state_based_actions::check_state_based_actions(game_id, players, terminal_state)?;
     Ok((
-        None,
         None,
         Vec::new(),
         None,
@@ -151,7 +148,6 @@ pub(super) fn review_state_based_actions_after_effect(
     seed: EffectOutcomeSeed,
 ) -> Result<SpellResolutionSideEffects, DomainError> {
     let EffectOutcomeSeed {
-        card_exiled,
         card_discarded,
         zone_changes,
         life_changed,
@@ -164,7 +160,6 @@ pub(super) fn review_state_based_actions_after_effect(
     } = state_based_actions::check_state_based_actions(game_id, players, terminal_state)?;
     creatures_died.extend(sba_creatures_died);
     Ok((
-        card_exiled,
         card_discarded,
         zone_changes,
         life_changed,

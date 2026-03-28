@@ -68,7 +68,6 @@ pub(super) fn resolve_targeted_player_life_effect(
         context.players,
         context.terminal_state,
         EffectOutcomeSeed {
-            card_exiled: None,
             card_discarded: None,
             zone_changes: Vec::new(),
             life_changed,
@@ -145,7 +144,6 @@ pub(super) fn resolve_damage_effect(
         context.players,
         context.terminal_state,
         EffectOutcomeSeed {
-            card_exiled: None,
             card_discarded: None,
             zone_changes: Vec::new(),
             life_changed,
