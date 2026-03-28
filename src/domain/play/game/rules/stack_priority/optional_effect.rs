@@ -91,7 +91,7 @@ pub fn resolve_optional_effect(
         zone_changes,
         life_changed,
         creatures_died,
-        moved_cards,
+        _moved_cards,
         game_ended,
     ) = if accept {
         resolve_stack_object(
@@ -130,7 +130,6 @@ pub fn resolve_optional_effect(
         zone_changes,
         life_changed,
         creatures_died,
-        moved_cards,
         game_ended,
         priority_still_open: priority.is_some(),
     })

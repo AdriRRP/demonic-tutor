@@ -123,7 +123,6 @@ pub fn resolve_pending_surveil(
         stack_top_resolved: Some(stack_top_resolved),
         spell_cast: Some(spell_cast),
         zone_changes,
-        moved_cards,
         game_ended: None,
         priority_still_open: true,
     })

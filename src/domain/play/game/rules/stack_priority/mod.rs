@@ -22,7 +22,7 @@ use crate::domain::play::{
         GameEnded, LifeChanged, PriorityPassed, SpellCast, SpellPutOnStack, StackTopResolved,
         TriggeredAbilityPutOnStack,
     },
-    ids::{CardInstanceId, GameId, PlayerId},
+    ids::{GameId, PlayerId},
     phase::Phase,
 };
 
@@ -58,7 +58,6 @@ pub struct ActivateAbilityOutcome {
     pub activated_ability_put_on_stack: ActivatedAbilityPutOnStack,
     pub creatures_died: Vec<CreatureDied>,
     pub zone_changes: Vec<CardMovedZone>,
-    pub moved_cards: Vec<CardInstanceId>,
 }
 
 #[derive(Debug, Clone)]
@@ -72,7 +71,6 @@ pub struct PassPriorityOutcome {
     pub zone_changes: Vec<CardMovedZone>,
     pub life_changed: Option<LifeChanged>,
     pub creatures_died: Vec<CreatureDied>,
-    pub moved_cards: Vec<CardInstanceId>,
     pub game_ended: Option<GameEnded>,
     pub priority_still_open: bool,
 }
@@ -86,7 +84,6 @@ pub struct ResolveOptionalEffectOutcome {
     pub zone_changes: Vec<CardMovedZone>,
     pub life_changed: Option<LifeChanged>,
     pub creatures_died: Vec<CreatureDied>,
-    pub moved_cards: Vec<CardInstanceId>,
     pub game_ended: Option<GameEnded>,
     pub priority_still_open: bool,
 }
@@ -98,7 +95,6 @@ pub struct ResolvePendingHandChoiceOutcome {
     pub card_drawn: Vec<CardDrawn>,
     pub card_discarded: Option<CardDiscarded>,
     pub zone_changes: Vec<CardMovedZone>,
-    pub moved_cards: Vec<CardInstanceId>,
     pub game_ended: Option<GameEnded>,
     pub priority_still_open: bool,
 }
@@ -108,7 +104,6 @@ pub struct ResolvePendingScryOutcome {
     pub stack_top_resolved: Option<StackTopResolved>,
     pub spell_cast: Option<SpellCast>,
     pub zone_changes: Vec<CardMovedZone>,
-    pub moved_cards: Vec<CardInstanceId>,
     pub game_ended: Option<GameEnded>,
     pub priority_still_open: bool,
 }
@@ -118,7 +113,6 @@ pub struct ResolvePendingSurveilOutcome {
     pub stack_top_resolved: Option<StackTopResolved>,
     pub spell_cast: Option<SpellCast>,
     pub zone_changes: Vec<CardMovedZone>,
-    pub moved_cards: Vec<CardInstanceId>,
     pub game_ended: Option<GameEnded>,
     pub priority_still_open: bool,
 }

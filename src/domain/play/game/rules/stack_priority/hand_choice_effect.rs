@@ -213,7 +213,7 @@ pub fn resolve_pending_hand_choice(
         )?,
     };
 
-    let (stack_top_resolved, spell_cast, moved_cards) =
+    let (stack_top_resolved, spell_cast, _moved_cards) =
         resolve_pending_spell_to_default_destination(
             game_id,
             players,
@@ -233,7 +233,6 @@ pub fn resolve_pending_hand_choice(
         card_drawn,
         card_discarded,
         zone_changes,
-        moved_cards,
         game_ended,
         priority_still_open: priority.is_some(),
     })

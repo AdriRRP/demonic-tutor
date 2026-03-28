@@ -68,7 +68,7 @@ pub fn resolve_pending_scry(
         }));
     }
 
-    let moved_cards = if move_to_bottom {
+    let _moved_cards = if move_to_bottom {
         players[controller_index]
             .move_top_library_card_to_bottom()
             .into_iter()
@@ -98,7 +98,6 @@ pub fn resolve_pending_scry(
         stack_top_resolved: Some(stack_top_resolved),
         spell_cast: Some(spell_cast),
         zone_changes: Vec::new(),
-        moved_cards,
         game_ended: None,
         priority_still_open: true,
     })

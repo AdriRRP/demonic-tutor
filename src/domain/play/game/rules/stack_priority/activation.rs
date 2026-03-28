@@ -458,7 +458,7 @@ pub fn activate_ability(
         }
     }
     let prepared_target = prepare_ability_target(players, card_locations, target.as_ref())?;
-    let (creatures_died, zone_changes, moved_cards) = pay_activation_costs(
+    let (creatures_died, zone_changes, _moved_cards) = pay_activation_costs(
         players,
         game_id,
         card_locations,
@@ -493,6 +493,5 @@ pub fn activate_ability(
         ),
         creatures_died,
         zone_changes,
-        moved_cards,
     })
 }

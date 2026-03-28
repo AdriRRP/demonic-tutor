@@ -174,12 +174,7 @@ impl Player {
 
 ```rust
 impl Game {
-    pub(crate) fn exile_card(
-        &mut self,
-        player_id: &PlayerId,
-        card: CardInstance,
-        origin_zone: ZoneType,
-    ) -> CardExiled { ... }
+    pub(crate) fn exile_card(&mut self, cmd: &ExileCardCommand) -> CardMovedZone { ... }
 }
 ```
 
@@ -187,4 +182,4 @@ impl Game {
 
 ## Rules Support Statement
 
-This slice introduces the exile zone as a foundational zone model and also exposes a minimal public exile action for moving cards from battlefield or graveyard into exile. Exile-linked abilities, face-down exile, and return-from-exile behavior remain future work.
+This slice introduces the exile zone as a foundational zone model and also exposes a minimal public exile action for moving cards from battlefield or graveyard into exile. In the current model, that visible move is reported canonically as `CardMovedZone(... -> Exile)`. Exile-linked abilities, face-down exile, and return-from-exile behavior remain future work.

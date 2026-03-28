@@ -128,7 +128,6 @@ pub fn pass_priority(
             zone_changes: Vec::new(),
             life_changed: None,
             creatures_died: Vec::new(),
-            moved_cards: Vec::new(),
             game_ended: None,
             priority_still_open: true,
         });
@@ -146,7 +145,6 @@ pub fn pass_priority(
             zone_changes: Vec::new(),
             life_changed: None,
             creatures_died: Vec::new(),
-            moved_cards: Vec::new(),
             game_ended: None,
             priority_still_open: false,
         });
@@ -169,7 +167,6 @@ pub fn pass_priority(
                 zone_changes: Vec::new(),
                 life_changed: None,
                 creatures_died: Vec::new(),
-                moved_cards: Vec::new(),
                 game_ended: None,
                 priority_still_open: false,
             });
@@ -198,7 +195,7 @@ pub fn pass_priority(
                             "loot spell should still be on the stack while opening its pending hand choice",
                             "pending loot resolution requires a spell stack object",
                         )?;
-                        let (stack_top_resolved, spell_cast, moved_cards) =
+                        let (stack_top_resolved, spell_cast, _moved_cards) =
                             resolve_pending_spell_to_default_destination(
                                 game_id,
                                 players,
@@ -217,7 +214,6 @@ pub fn pass_priority(
                             zone_changes: Vec::new(),
                             life_changed: None,
                             creatures_died: Vec::new(),
-                            moved_cards,
                             game_ended: Some(game_ended),
                             priority_still_open: false,
                         });
@@ -244,7 +240,6 @@ pub fn pass_priority(
                 zone_changes: Vec::new(),
                 life_changed: None,
                 creatures_died: Vec::new(),
-                moved_cards: Vec::new(),
                 game_ended: None,
                 priority_still_open: false,
             });
@@ -269,7 +264,6 @@ pub fn pass_priority(
                     zone_changes: Vec::new(),
                     life_changed: None,
                     creatures_died: Vec::new(),
-                    moved_cards: Vec::new(),
                     game_ended: None,
                     priority_still_open: false,
                 });
@@ -295,7 +289,6 @@ pub fn pass_priority(
                     zone_changes: Vec::new(),
                     life_changed: None,
                     creatures_died: Vec::new(),
-                    moved_cards: Vec::new(),
                     game_ended: None,
                     priority_still_open: false,
                 });
@@ -316,7 +309,7 @@ pub fn pass_priority(
         zone_changes,
         life_changed,
         creatures_died,
-        moved_cards,
+        _moved_cards,
         game_ended,
     ) = resolve_stack_object(
         game_id,
@@ -343,7 +336,6 @@ pub fn pass_priority(
         zone_changes,
         life_changed,
         creatures_died,
-        moved_cards,
         game_ended,
         priority_still_open: priority.is_some(),
     })
