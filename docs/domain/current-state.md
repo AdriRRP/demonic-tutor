@@ -25,11 +25,13 @@ Implemented capabilities include:
 - projecting a stable public game snapshot for clients, including phase, priority, stack, battlefield, graveyard, exile, and hand counts
 - surfacing a public legal-action menu derived from the current supported actor and game state
 - deriving that public legal-action menu from read-only aggregate legality queries instead of speculative command probes
+- surfacing explicit concede actions for active games in the public legal-action menu
 - deriving current supported target-selection candidates and blocker options from canonical aggregate legality queries instead of application-local rule approximations
 - surfacing public choice requests for target selection, explicit hand-card choice, bounded modal spell choice, bounded optional secondary-target spell choice, binary optional-effect decisions, and cleanup discard
 - returning a deterministic public command envelope with emitted events, updated snapshot, legal actions, and visible choice requests
 - exposing a deterministic persisted public event log with explicit sequence numbers for replay and animation clients
 - exposing deterministic public prompt ordering for the current supported simultaneous trigger batches, choice requests, and target candidate lists
+- exposing deterministic seeded game setup and rematch helpers for public session bootstrapping
 - projecting the attached creature id for the current supported Aura subset in the public battlefield snapshot
 - dealing opening hands
 - mulligan support (London Mulligan - simplified)
@@ -38,6 +40,7 @@ Implemented capabilities include:
 - resolving explicit draw effects that draw multiple cards one by one onto the chosen player
 - ending the game when a player must draw from an empty library
 - ending the game when a player reaches 0 life
+- ending the game when one player concedes
 - playing lands
 - tapping lands for mana
 - tapping lands for mana in the currently exercised open priority windows while the acting player holds priority

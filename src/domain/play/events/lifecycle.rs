@@ -37,6 +37,7 @@ impl OpeningHandDealt {
 pub enum GameEndReason {
     EmptyLibraryDraw,
     ZeroLife,
+    Conceded,
 }
 
 #[derive(Debug, Clone)]

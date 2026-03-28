@@ -5,3 +5,4 @@ mod legal_actions;
 mod public_command_result;
 mod public_event_log;
 mod public_game_view;
+mod session_loop;

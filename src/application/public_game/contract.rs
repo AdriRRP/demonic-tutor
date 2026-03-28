@@ -4,14 +4,14 @@ use crate::domain::play::{
     cards::{CardType, KeywordAbility},
     commands::{
         ActivateAbilityCommand, AdjustPlayerLifeEffectCommand, AdvanceTurnCommand,
-        CastSpellCommand, DeclareAttackersCommand, DeclareBlockersCommand,
-        DiscardForCleanupCommand, DrawCardsEffectCommand, ExileCardCommand, ModalSpellMode,
-        PassPriorityCommand, PlayLandCommand, ResolveCombatDamageCommand,
-        ResolveOptionalEffectCommand, ResolvePendingHandChoiceCommand, ResolvePendingScryCommand,
-        ResolvePendingSurveilCommand, TapLandCommand,
+        CastSpellCommand, ConcedeCommand, DeclareAttackersCommand, DeclareBlockersCommand,
+        DiscardForCleanupCommand, DrawCardsEffectCommand, ExileCardCommand, LibraryCard,
+        ModalSpellMode, PassPriorityCommand, PlayLandCommand, PlayerDeck,
+        ResolveCombatDamageCommand, ResolveOptionalEffectCommand, ResolvePendingHandChoiceCommand,
+        ResolvePendingScryCommand, ResolvePendingSurveilCommand, TapLandCommand,
     },
     events::{DomainEvent, GameEndReason},
-    ids::{CardDefinitionId, CardInstanceId, GameId, PlayerId, StackObjectId},
+    ids::{CardDefinitionId, CardInstanceId, DeckId, GameId, PlayerId, StackObjectId},
     phase::Phase,
 };
 
@@ -137,6 +137,9 @@ pub struct PublicBlockerOption {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PublicLegalAction {
+    Concede {
+        player_id: PlayerId,
+    },
     ResolvePendingScry {
         player_id: PlayerId,
     },
@@ -278,6 +281,7 @@ pub enum PublicSurveilChoice {
 
 #[derive(Debug, Clone)]
 pub enum PublicGameCommand {
+    Concede(ConcedeCommand),
     PlayLand(PlayLandCommand),
     TapLand(TapLandCommand),
     CastSpell(CastSpellCommand),
@@ -327,6 +331,84 @@ pub struct PublicCommandResult {
 pub struct PublicEventLogEntry {
     pub sequence: u64,
     pub event: DomainEvent,
+}
+
+#[derive(Debug, Clone)]
+pub struct PublicSeededPlayerSetup {
+    pub player_id: PlayerId,
+    pub deck_id: DeckId,
+    pub cards: Vec<LibraryCard>,
+}
+
+impl PublicSeededPlayerSetup {
+    #[must_use]
+    pub const fn new(player_id: PlayerId, deck_id: DeckId, cards: Vec<LibraryCard>) -> Self {
+        Self {
+            player_id,
+            deck_id,
+            cards,
+        }
+    }
+
+    #[must_use]
+    pub fn player_deck(&self) -> PlayerDeck {
+        PlayerDeck::new(self.player_id.clone(), self.deck_id.clone())
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct PublicSeededGameSetup {
+    pub game_id: GameId,
+    pub players: Vec<PublicSeededPlayerSetup>,
+    pub shuffle_seed: u64,
+}
+
+impl PublicSeededGameSetup {
+    #[must_use]
+    pub const fn new(
+        game_id: GameId,
+        players: Vec<PublicSeededPlayerSetup>,
+        shuffle_seed: u64,
+    ) -> Self {
+        Self {
+            game_id,
+            players,
+            shuffle_seed,
+        }
+    }
+
+    #[must_use]
+    pub fn with_game_id(&self, game_id: GameId) -> Self {
+        Self {
+            game_id,
+            players: self.players.clone(),
+            shuffle_seed: self.shuffle_seed,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct PublicRematchCommand {
+    pub game_id: GameId,
+    pub original_setup: PublicSeededGameSetup,
+}
+
+impl PublicRematchCommand {
+    #[must_use]
+    pub const fn new(game_id: GameId, original_setup: PublicSeededGameSetup) -> Self {
+        Self {
+            game_id,
+            original_setup,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct PublicGameSessionStart {
+    pub emitted_events: Vec<DomainEvent>,
+    pub game: PublicGameView,
+    pub legal_actions: Vec<PublicLegalAction>,
+    pub choice_requests: Vec<PublicChoiceRequest>,
 }
 
 impl From<ModalSpellMode> for PublicModalSpellChoice {

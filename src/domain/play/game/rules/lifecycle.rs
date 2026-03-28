@@ -2,14 +2,18 @@
 
 use {
     super::super::{
+        helpers,
         model::{Player, OPENING_HAND_SIZE},
         Game, TerminalState,
     },
     crate::domain::play::{
         cards::CardInstance,
-        commands::{DealOpeningHandsCommand, MulliganCommand, PlayerLibrary, StartGameCommand},
+        commands::{
+            ConcedeCommand, DealOpeningHandsCommand, MulliganCommand, PlayerLibrary,
+            StartGameCommand,
+        },
         errors::{DomainError, GameError, PlayerError},
-        events::{GameStarted, MulliganTaken, OpeningHandDealt},
+        events::{GameEndReason, GameEnded, GameStarted, MulliganTaken, OpeningHandDealt},
         ids::{CardInstanceId, GameId, PlayerId},
         phase::Phase,
     },
@@ -259,6 +263,32 @@ pub fn deal_opening_hands(
     }
 
     Ok(events)
+}
+
+/// Concedes an active two-player game.
+///
+/// # Errors
+/// Returns an error if the conceding player does not exist.
+pub fn concede(
+    game_id: &GameId,
+    players: &[Player],
+    terminal_state: &mut TerminalState,
+    cmd: ConcedeCommand,
+) -> Result<GameEnded, DomainError> {
+    validate_player_exists(players, &cmd.player_id)?;
+    let winner_id = helpers::opposing_player_id(players, &cmd.player_id)?;
+    terminal_state.end(
+        winner_id.clone(),
+        cmd.player_id.clone(),
+        GameEndReason::Conceded,
+    );
+
+    Ok(GameEnded::new(
+        game_id.clone(),
+        winner_id,
+        cmd.player_id,
+        GameEndReason::Conceded,
+    ))
 }
 
 /// Performs a mulligan, shuffling hand back into library and drawing new hand.

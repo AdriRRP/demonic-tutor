@@ -288,15 +288,14 @@ fn public_surface_state(game: &Game) -> PublicSurfaceState {
         return PublicSurfaceState::default();
     }
 
-    if let Some(state) = pending_action_and_request(game) {
-        return state;
-    }
-
-    if let Some(priority) = game.priority() {
-        return priority_surface_state(game, priority.current_holder());
-    }
-
-    phase_surface_state(game)
+    let mut state = pending_action_and_request(game).unwrap_or_else(|| {
+        game.priority().map_or_else(
+            || phase_surface_state(game),
+            |priority| priority_surface_state(game, priority.current_holder()),
+        )
+    });
+    append_concede_actions(game, &mut state.legal_actions);
+    state
 }
 
 #[must_use]
@@ -816,6 +815,28 @@ fn public_choice_candidate(
             PublicChoiceCandidate::StackSpell(stack_object_id)
         }
     }
+}
+
+fn append_concede_actions(game: &Game, legal_actions: &mut Vec<PublicLegalAction>) {
+    let mut concede_actions = game
+        .players()
+        .iter()
+        .map(|player| PublicLegalAction::Concede {
+            player_id: player.id().clone(),
+        })
+        .collect::<Vec<_>>();
+    concede_actions.sort_by(|left, right| match (left, right) {
+        (
+            PublicLegalAction::Concede {
+                player_id: left_player_id,
+            },
+            PublicLegalAction::Concede {
+                player_id: right_player_id,
+            },
+        ) => left_player_id.as_str().cmp(right_player_id.as_str()),
+        _ => std::cmp::Ordering::Equal,
+    });
+    legal_actions.extend(concede_actions);
 }
 
 fn sort_choice_requests(choice_requests: &mut [PublicChoiceRequest]) {

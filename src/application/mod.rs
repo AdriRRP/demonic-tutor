@@ -11,7 +11,8 @@ pub use public_game::{
     PublicActivatableCard, PublicBattlefieldCardView, PublicBinaryChoice, PublicCardView,
     PublicCastableCard, PublicChoiceCandidate, PublicChoiceRequest, PublicCommandApplication,
     PublicCommandRejection, PublicCommandResult, PublicCommandStatus, PublicEventLogEntry,
-    PublicGameCommand, PublicGameView, PublicLegalAction, PublicModalSpellChoice, PublicPlayerView,
-    PublicPriorityView, PublicScryChoice, PublicStackObjectView, PublicStackTargetView,
-    PublicSurveilChoice,
+    PublicGameCommand, PublicGameSessionStart, PublicGameView, PublicLegalAction,
+    PublicModalSpellChoice, PublicPlayerView, PublicPriorityView, PublicRematchCommand,
+    PublicScryChoice, PublicSeededGameSetup, PublicSeededPlayerSetup, PublicStackObjectView,
+    PublicStackTargetView, PublicSurveilChoice,
 };

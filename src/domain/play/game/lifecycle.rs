@@ -3,9 +3,9 @@
 use {
     super::{invariants, rules, Game},
     crate::domain::play::{
-        commands::{DealOpeningHandsCommand, MulliganCommand, StartGameCommand},
+        commands::{ConcedeCommand, DealOpeningHandsCommand, MulliganCommand, StartGameCommand},
         errors::DomainError,
-        events::{GameStarted, MulliganTaken, OpeningHandDealt},
+        events::{GameEnded, GameStarted, MulliganTaken, OpeningHandDealt},
     },
 };
 
@@ -44,5 +44,14 @@ impl Game {
             &self.phase,
             cmd,
         )
+    }
+
+    /// Concedes the active game for one player.
+    ///
+    /// # Errors
+    /// See [`rules::lifecycle::concede`].
+    pub fn concede(&mut self, cmd: ConcedeCommand) -> Result<GameEnded, DomainError> {
+        invariants::require_game_active(self.is_over())?;
+        rules::lifecycle::concede(&self.id, &self.players, &mut self.terminal_state, cmd)
     }
 }

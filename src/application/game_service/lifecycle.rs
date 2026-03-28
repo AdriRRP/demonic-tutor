@@ -5,9 +5,11 @@ use {
     crate::{
         application::{EventBus, EventStore},
         domain::play::{
-            commands::{DealOpeningHandsCommand, MulliganCommand, StartGameCommand},
+            commands::{
+                ConcedeCommand, DealOpeningHandsCommand, MulliganCommand, StartGameCommand,
+            },
             errors::DomainError,
-            events::{GameStarted, MulliganTaken, OpeningHandDealt},
+            events::{GameEnded, GameStarted, MulliganTaken, OpeningHandDealt},
             game::Game,
         },
     },
@@ -57,6 +59,18 @@ where
         cmd: MulliganCommand,
     ) -> Result<MulliganTaken, DomainError> {
         let event = game.mulligan(cmd)?;
+        self.persist_and_publish_event(game.id().as_str(), &event)?;
+
+        Ok(event)
+    }
+
+    /// Concedes an active game for one player.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the command is invalid.
+    pub fn concede(&self, game: &mut Game, cmd: ConcedeCommand) -> Result<GameEnded, DomainError> {
+        let event = game.concede(cmd)?;
         self.persist_and_publish_event(game.id().as_str(), &event)?;
 
         Ok(event)

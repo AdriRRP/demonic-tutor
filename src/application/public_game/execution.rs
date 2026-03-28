@@ -1,5 +1,7 @@
 //! Executes public gameplay commands and assembles deterministic response envelopes.
 
+use rand::{rngs::StdRng, seq::SliceRandom, SeedableRng};
+
 use crate::{
     application::{
         game_service::{
@@ -18,12 +20,19 @@ use crate::{
         },
         EventBus, EventStore,
     },
-    domain::play::{errors::DomainError, events::DomainEvent, game::Game, ids::GameId},
+    domain::play::{
+        commands::{DealOpeningHandsCommand, PlayerLibrary, StartGameCommand},
+        errors::DomainError,
+        events::DomainEvent,
+        game::Game,
+        ids::GameId,
+    },
 };
 
 use super::{
     public_event_log, PublicCommandApplication, PublicCommandRejection, PublicCommandStatus,
-    PublicEventLogEntry, PublicGameCommand,
+    PublicEventLogEntry, PublicGameCommand, PublicGameSessionStart, PublicRematchCommand,
+    PublicSeededGameSetup, PublicSeededPlayerSetup,
 };
 
 impl<E, B> GameService<E, B>
@@ -31,6 +40,45 @@ where
     E: EventStore,
     B: EventBus,
 {
+    /// Starts one public game from a deterministic seeded setup.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the lifecycle commands are invalid.
+    pub fn start_seeded_public_game(
+        &self,
+        setup: PublicSeededGameSetup,
+    ) -> Result<(Game, PublicGameSessionStart), DomainError> {
+        let player_decks = setup
+            .players
+            .iter()
+            .map(PublicSeededPlayerSetup::player_deck)
+            .collect();
+        let player_libraries = seeded_player_libraries(&setup.players, setup.shuffle_seed);
+        let (mut game, game_started) =
+            self.start_game(StartGameCommand::new(setup.game_id, player_decks))?;
+        let opening_hands =
+            self.deal_opening_hands(&mut game, &DealOpeningHandsCommand::new(player_libraries))?;
+        let emitted_events = std::iter::once(game_started.into())
+            .chain(opening_hands.into_iter().map(Into::into))
+            .collect();
+        let session = public_game_session_start(&game, emitted_events);
+
+        Ok((game, session))
+    }
+
+    /// Starts a seeded rematch using the same setup shape with a new game id.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the lifecycle commands are invalid.
+    pub fn rematch_seeded_public_game(
+        &self,
+        cmd: PublicRematchCommand,
+    ) -> Result<(Game, PublicGameSessionStart), DomainError> {
+        self.start_seeded_public_game(cmd.original_setup.with_game_id(cmd.game_id))
+    }
+
     /// Returns the persisted public event log for one game in deterministic sequence order.
     ///
     /// # Errors
@@ -53,6 +101,9 @@ where
         command: PublicGameCommand,
     ) -> PublicCommandApplication {
         let result: Result<Vec<DomainEvent>, DomainError> = match command {
+            PublicGameCommand::Concede(cmd) => {
+                self.concede(game, cmd).map(|event| vec![event.into()])
+            }
             PublicGameCommand::PlayLand(cmd) => {
                 self.play_land(game, cmd).map(|event| vec![event.into()])
             }
@@ -118,5 +169,33 @@ where
             status,
             emitted_events,
         }
+    }
+}
+
+fn seeded_player_libraries(
+    players: &[PublicSeededPlayerSetup],
+    shuffle_seed: u64,
+) -> Vec<PlayerLibrary> {
+    let mut rng = StdRng::seed_from_u64(shuffle_seed);
+
+    players
+        .iter()
+        .map(|player| {
+            let mut cards = player.cards.clone();
+            cards.shuffle(&mut rng);
+            PlayerLibrary::new(player.player_id.clone(), cards)
+        })
+        .collect()
+}
+
+fn public_game_session_start(
+    game: &Game,
+    emitted_events: Vec<DomainEvent>,
+) -> PublicGameSessionStart {
+    PublicGameSessionStart {
+        emitted_events,
+        game: super::game_view(game),
+        legal_actions: super::legal_actions(game),
+        choice_requests: super::choice_requests(game),
     }
 }

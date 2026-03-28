@@ -9,7 +9,7 @@ mod turn_flow;
 mod zones;
 
 pub use combat::{DeclareAttackersCommand, DeclareBlockersCommand, ResolveCombatDamageCommand};
-pub use lifecycle::{DealOpeningHandsCommand, MulliganCommand, StartGameCommand};
+pub use lifecycle::{ConcedeCommand, DealOpeningHandsCommand, MulliganCommand, StartGameCommand};
 pub use resource_actions::{AdjustPlayerLifeEffectCommand, PlayLandCommand, TapLandCommand};
 pub use setup::{LibraryCard, LibraryCreature, PlayerDeck, PlayerLibrary};
 pub use stack_priority::{

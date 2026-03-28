@@ -6,12 +6,10 @@ Goal:
 
 Slice count:
 
-- `2`
+- `1`
 
 Slices:
 
-- `support-concede-rematch-and-seeded-game-setup-commands`
-  - support the minimum session loop needed for repeated real playtests
 - `freeze-v1-playable-subset-and-reject-unsupported-card-loads`
   - lock the first playable scope so UI and content can rely on it
 
