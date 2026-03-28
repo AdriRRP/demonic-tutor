@@ -93,7 +93,7 @@ impl GameLogProjection {
             }
             DomainEvent::CardMovedZone(e) => {
                 format!(
-                    "Card {} controlled by {} moved from {:?} to {:?}",
+                    "Card {} moved in {} from {:?} to {:?}",
                     e.card_id, e.player_id, e.origin_zone, e.destination_zone
                 )
             }

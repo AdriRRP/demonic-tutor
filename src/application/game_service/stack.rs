@@ -24,21 +24,34 @@ use {
     },
 };
 
-fn push_resolution_effect_events(
+struct ResolutionEffectBatch<'a> {
+    card_drawn: &'a [CardDrawn],
+    card_discarded: Option<&'a CardDiscarded>,
+    card_exiled: Option<&'a CardExiled>,
+    zone_changes: &'a [CardMovedZone],
+    life_changed: Option<&'a LifeChanged>,
+    creatures_died: &'a [CreatureDied],
+}
+
+fn push_resolution_effect_batch(
     domain_events: &mut DomainEvents,
-    card_drawn: &[CardDrawn],
-    card_discarded: Option<&CardDiscarded>,
-    card_exiled: Option<&CardExiled>,
-    zone_changes: &[CardMovedZone],
-    life_changed: Option<&LifeChanged>,
-    creatures_died: &[CreatureDied],
+    batch: &ResolutionEffectBatch<'_>,
 ) {
-    domain_events.extend(card_drawn.iter().cloned());
-    domain_events.push_optional(card_discarded.cloned());
-    domain_events.push_optional(card_exiled.cloned());
-    domain_events.extend(zone_changes.iter().cloned());
-    domain_events.push_optional(life_changed.cloned());
-    domain_events.extend(creatures_died.iter().cloned());
+    domain_events.extend(batch.card_drawn.iter().cloned());
+    domain_events.push_optional(batch.card_discarded.cloned());
+    domain_events.push_optional(batch.card_exiled.cloned());
+    domain_events.extend(batch.zone_changes.iter().cloned());
+    domain_events.push_optional(batch.life_changed.cloned());
+    domain_events.extend(batch.creatures_died.iter().cloned());
+}
+
+fn push_resolution_effect_sequence(
+    domain_events: &mut DomainEvents,
+    batches: &[ResolutionEffectBatch<'_>],
+) {
+    for batch in batches {
+        push_resolution_effect_batch(domain_events, batch);
+    }
 }
 
 fn push_resolution_close_events(
@@ -75,36 +88,53 @@ pub fn domain_events_for_pass_priority(outcome: &PassPriorityOutcome) -> Vec<Dom
     let mut domain_events = DomainEvents::with(outcome.priority_passed.clone());
     let draws_happen_before_resolution =
         !outcome.card_drawn.is_empty() && outcome.stack_top_resolved.is_some();
-    if draws_happen_before_resolution {
-        push_resolution_effect_events(
-            &mut domain_events,
-            &outcome.card_drawn,
-            outcome.card_discarded.as_ref(),
-            outcome.card_exiled.as_ref(),
-            &outcome.zone_changes,
-            outcome.life_changed.as_ref(),
-            &outcome.creatures_died,
-        );
+    let batches = if draws_happen_before_resolution {
+        [
+            ResolutionEffectBatch {
+                card_drawn: &outcome.card_drawn,
+                card_discarded: outcome.card_discarded.as_ref(),
+                card_exiled: outcome.card_exiled.as_ref(),
+                zone_changes: &outcome.zone_changes,
+                life_changed: outcome.life_changed.as_ref(),
+                creatures_died: &outcome.creatures_died,
+            },
+            ResolutionEffectBatch {
+                card_drawn: &[],
+                card_discarded: None,
+                card_exiled: None,
+                zone_changes: &[],
+                life_changed: None,
+                creatures_died: &[],
+            },
+        ]
     } else {
-        push_resolution_effect_events(
-            &mut domain_events,
-            &[],
-            outcome.card_discarded.as_ref(),
-            outcome.card_exiled.as_ref(),
-            &outcome.zone_changes,
-            outcome.life_changed.as_ref(),
-            &outcome.creatures_died,
-        );
-    }
+        [
+            ResolutionEffectBatch {
+                card_drawn: &[],
+                card_discarded: outcome.card_discarded.as_ref(),
+                card_exiled: outcome.card_exiled.as_ref(),
+                zone_changes: &outcome.zone_changes,
+                life_changed: outcome.life_changed.as_ref(),
+                creatures_died: &outcome.creatures_died,
+            },
+            ResolutionEffectBatch {
+                card_drawn: &outcome.card_drawn,
+                card_discarded: None,
+                card_exiled: None,
+                zone_changes: &[],
+                life_changed: None,
+                creatures_died: &[],
+            },
+        ]
+    };
+    push_resolution_effect_sequence(&mut domain_events, &batches[..1]);
     push_resolution_close_events(
         &mut domain_events,
         outcome.stack_top_resolved.as_ref(),
         outcome.spell_cast.as_ref(),
     );
     domain_events.extend(outcome.triggered_abilities_put_on_stack.iter().cloned());
-    if !draws_happen_before_resolution {
-        domain_events.extend(outcome.card_drawn.iter().cloned());
-    }
+    push_resolution_effect_sequence(&mut domain_events, &batches[1..]);
     domain_events.push_optional(outcome.game_ended.clone());
     domain_events.into_vec()
 }
@@ -113,14 +143,16 @@ pub fn domain_events_for_resolve_optional_effect(
     outcome: &ResolveOptionalEffectOutcome,
 ) -> Vec<DomainEvent> {
     let mut domain_events = DomainEvents::default();
-    push_resolution_effect_events(
+    push_resolution_effect_sequence(
         &mut domain_events,
-        &[],
-        outcome.card_discarded.as_ref(),
-        outcome.card_exiled.as_ref(),
-        &outcome.zone_changes,
-        outcome.life_changed.as_ref(),
-        &outcome.creatures_died,
+        &[ResolutionEffectBatch {
+            card_drawn: &[],
+            card_discarded: outcome.card_discarded.as_ref(),
+            card_exiled: outcome.card_exiled.as_ref(),
+            zone_changes: &outcome.zone_changes,
+            life_changed: outcome.life_changed.as_ref(),
+            creatures_died: &outcome.creatures_died,
+        }],
     );
     push_resolution_close_events(
         &mut domain_events,
@@ -139,16 +171,27 @@ pub fn domain_events_for_resolve_pending_hand_choice(
     outcome: &ResolvePendingHandChoiceOutcome,
 ) -> Vec<DomainEvent> {
     let mut domain_events = DomainEvents::default();
-    push_resolution_effect_events(
+    push_resolution_effect_sequence(
         &mut domain_events,
-        &[],
-        outcome.card_discarded.as_ref(),
-        None,
-        &outcome.zone_changes,
-        None,
-        &[],
+        &[
+            ResolutionEffectBatch {
+                card_drawn: &[],
+                card_discarded: outcome.card_discarded.as_ref(),
+                card_exiled: None,
+                zone_changes: &outcome.zone_changes,
+                life_changed: None,
+                creatures_died: &[],
+            },
+            ResolutionEffectBatch {
+                card_drawn: &outcome.card_drawn,
+                card_discarded: None,
+                card_exiled: None,
+                zone_changes: &[],
+                life_changed: None,
+                creatures_died: &[],
+            },
+        ],
     );
-    domain_events.extend(outcome.card_drawn.iter().cloned());
     push_resolution_close_events(
         &mut domain_events,
         outcome.stack_top_resolved.as_ref(),
@@ -162,14 +205,16 @@ pub fn domain_events_for_resolve_pending_scry(
     outcome: &ResolvePendingScryOutcome,
 ) -> Vec<DomainEvent> {
     let mut domain_events = DomainEvents::default();
-    push_resolution_effect_events(
+    push_resolution_effect_sequence(
         &mut domain_events,
-        &[],
-        None,
-        None,
-        &outcome.zone_changes,
-        None,
-        &[],
+        &[ResolutionEffectBatch {
+            card_drawn: &[],
+            card_discarded: None,
+            card_exiled: None,
+            zone_changes: &outcome.zone_changes,
+            life_changed: None,
+            creatures_died: &[],
+        }],
     );
     push_resolution_close_events(
         &mut domain_events,
@@ -184,14 +229,16 @@ pub fn domain_events_for_resolve_pending_surveil(
     outcome: &ResolvePendingSurveilOutcome,
 ) -> Vec<DomainEvent> {
     let mut domain_events = DomainEvents::default();
-    push_resolution_effect_events(
+    push_resolution_effect_sequence(
         &mut domain_events,
-        &[],
-        None,
-        None,
-        &outcome.zone_changes,
-        None,
-        &[],
+        &[ResolutionEffectBatch {
+            card_drawn: &[],
+            card_discarded: None,
+            card_exiled: None,
+            zone_changes: &outcome.zone_changes,
+            life_changed: None,
+            creatures_died: &[],
+        }],
     );
     push_resolution_close_events(
         &mut domain_events,
