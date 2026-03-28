@@ -404,7 +404,6 @@ fn resolve_combat_damage_step(
     } = state_based_actions::check_state_based_actions(
         ctx.game_id,
         ctx.players,
-        Some(ctx.card_locations),
         ctx.terminal_state,
     )?;
 

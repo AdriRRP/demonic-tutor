@@ -79,24 +79,10 @@ pub(super) fn review_state_based_actions(
     players: &mut [Player],
     terminal_state: &mut TerminalState,
 ) -> Result<SpellResolutionSideEffects, DomainError> {
-    review_state_based_actions_with_locations(game_id, players, None, terminal_state)
-}
-
-pub(super) fn review_state_based_actions_with_locations(
-    game_id: &GameId,
-    players: &mut [Player],
-    card_locations: Option<&AggregateCardLocationIndex>,
-    terminal_state: &mut TerminalState,
-) -> Result<SpellResolutionSideEffects, DomainError> {
     let StateBasedActionsResult {
         creatures_died,
         game_ended,
-    } = state_based_actions::check_state_based_actions(
-        game_id,
-        players,
-        card_locations,
-        terminal_state,
-    )?;
+    } = state_based_actions::check_state_based_actions(game_id, players, terminal_state)?;
     Ok((None, None, None, creatures_died, Vec::new(), game_ended))
 }
 
@@ -154,22 +140,6 @@ pub(super) fn review_state_based_actions_after_effect(
     terminal_state: &mut TerminalState,
     seed: EffectOutcomeSeed,
 ) -> Result<SpellResolutionSideEffects, DomainError> {
-    review_state_based_actions_after_effect_with_locations(
-        game_id,
-        players,
-        None,
-        terminal_state,
-        seed,
-    )
-}
-
-pub(super) fn review_state_based_actions_after_effect_with_locations(
-    game_id: &GameId,
-    players: &mut [Player],
-    card_locations: Option<&AggregateCardLocationIndex>,
-    terminal_state: &mut TerminalState,
-    seed: EffectOutcomeSeed,
-) -> Result<SpellResolutionSideEffects, DomainError> {
     let EffectOutcomeSeed {
         card_exiled,
         card_discarded,
@@ -180,12 +150,7 @@ pub(super) fn review_state_based_actions_after_effect_with_locations(
     let StateBasedActionsResult {
         creatures_died: sba_creatures_died,
         game_ended,
-    } = state_based_actions::check_state_based_actions(
-        game_id,
-        players,
-        card_locations,
-        terminal_state,
-    )?;
+    } = state_based_actions::check_state_based_actions(game_id, players, terminal_state)?;
     creatures_died.extend(sba_creatures_died);
     Ok((
         card_exiled,

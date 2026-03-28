@@ -178,7 +178,7 @@ The domain currently includes:
 - card definitions are currently created through card-type-aware constructors so supported spell cards receive casting semantics when the face is built
 - stack-borne spells now carry explicit spell snapshots and resolution metadata instead of reusing the full moved card runtime
 - supported activated abilities on the stack now also prefer internal source references, materializing public card ids only when leaving the runtime core
-- the aggregate card-location index is maintained transactionally for supported moves instead of refreshed from whole-player snapshots during normal gameplay
+- the aggregate card-location index remains the canonical lookup for supported zone moves, while the current SBA review regenerates a fresh index from live player state on each iteration
 - ordered visible zones now combine reusable slots, visible indexing, and sparse-position compaction so position lookup and ordered removal both avoid the earlier linear hot-path costs
 - resolving the top stack object after two consecutive passes
 - the explicit combat corridor progresses through `BeginningOfCombat`, `DeclareAttackers`, `DeclareBlockers`, `CombatDamage`, and `EndOfCombat`

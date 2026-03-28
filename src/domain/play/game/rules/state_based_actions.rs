@@ -168,7 +168,6 @@ fn review_attached_aura_state_based_actions(
 pub fn check_state_based_actions(
     game_id: &GameId,
     players: &mut [Player],
-    _card_locations: Option<&AggregateCardLocationIndex>,
     terminal_state: &mut TerminalState,
 ) -> Result<StateBasedActionsResult, crate::domain::play::errors::DomainError> {
     let mut total_creatures_died = Vec::new();
@@ -253,7 +252,7 @@ mod tests {
         assert!(players[0].receive_battlefield_card(card).is_some());
 
         let result =
-            check_state_based_actions(&game_id, &mut players, None, &mut terminal_state).unwrap();
+            check_state_based_actions(&game_id, &mut players, &mut terminal_state).unwrap();
 
         assert_eq!(result.creatures_died.len(), 1);
         assert_eq!(result.creatures_died[0].player_id, PlayerId::new("p2"));
@@ -293,20 +292,12 @@ mod tests {
         aura.attach_to(creature_id.clone());
         assert!(players[0].receive_battlefield_card(aura).is_some());
 
-        let stale_locations = AggregateCardLocationIndex::from_players(&players);
-
         players[0]
             .battlefield_card_mut(&creature_id)
             .expect("creature should be on battlefield")
             .add_damage(2);
 
-        let _ = check_state_based_actions(
-            &game_id,
-            &mut players,
-            Some(&stale_locations),
-            &mut terminal_state,
-        )
-        .unwrap();
+        let _ = check_state_based_actions(&game_id, &mut players, &mut terminal_state).unwrap();
 
         assert!(players[0].battlefield_card(&creature_id).is_none());
         assert!(players[0].graveyard_card(&creature_id).is_some());

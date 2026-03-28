@@ -244,7 +244,7 @@ pub fn adjust_player_life_effect(
     let StateBasedActionsResult {
         creatures_died,
         game_ended,
-    } = state_based_actions::check_state_based_actions(game_id, players, None, terminal_state)?;
+    } = state_based_actions::check_state_based_actions(game_id, players, terminal_state)?;
 
     Ok(AdjustPlayerLifeEffectOutcome::new(
         life_changed,
