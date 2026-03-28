@@ -43,10 +43,8 @@ struct PublicEventLogCache {
 }
 
 impl PublicEventLogCache {
-    fn get(&mut self, game_id: &str) -> Option<Arc<[PublicEventLogEntry]>> {
-        let entry = self.entries.get(game_id).cloned()?;
-        self.touch(game_id);
-        Some(entry)
+    fn get(&self, game_id: &str) -> Option<Arc<[PublicEventLogEntry]>> {
+        self.entries.get(game_id).cloned()
     }
 
     fn insert(&mut self, game_id: &str, entries: Arc<[PublicEventLogEntry]>) {
@@ -171,9 +169,9 @@ where
         game_id: &str,
     ) -> Option<Arc<[PublicEventLogEntry]>> {
         self.public_event_log_cache
-            .write()
+            .read()
             .ok()
-            .and_then(|mut cache| cache.get(game_id))
+            .and_then(|cache| cache.get(game_id))
     }
 
     pub(crate) fn store_public_event_log_cache(
