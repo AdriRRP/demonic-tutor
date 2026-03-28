@@ -722,11 +722,19 @@ fn spell_choice_request(
     let rules = card.supported_spell_rules();
 
     if rules.requires_explicit_hand_card_choice() {
-        return Some(PublicChoiceRequest::SpellChoice {
-            player_id: player.id().clone(),
-            source_card_id: source_card_id.clone(),
-            hand_card_ids: opponent_hand_choice_candidates(game.players(), player.id()),
-        });
+        return Some(
+            opponent_hand_choice_candidates(game.players(), player.id()).map_or(
+                PublicChoiceRequest::SpellChoiceUnavailable {
+                    player_id: player.id().clone(),
+                    source_card_id: source_card_id.clone(),
+                },
+                |hand_card_ids| PublicChoiceRequest::SpellChoice {
+                    player_id: player.id().clone(),
+                    source_card_id: source_card_id.clone(),
+                    hand_card_ids,
+                },
+            ),
+        );
     }
 
     if rules.requires_explicit_secondary_creature_choice() {
@@ -906,12 +914,14 @@ fn ability_target_candidates(
     candidates
 }
 
-fn opponent_hand_choice_candidates(players: &[Player], actor_id: &PlayerId) -> Vec<CardInstanceId> {
+fn opponent_hand_choice_candidates(
+    players: &[Player],
+    actor_id: &PlayerId,
+) -> Option<Vec<CardInstanceId>> {
     players
         .iter()
         .find(|player| player.id() != actor_id)
         .map(Player::hand_card_ids)
-        .unwrap_or_default()
 }
 
 fn active_player(game: &Game) -> Option<&Player> {
@@ -1001,27 +1011,31 @@ fn choice_request_sort_key(request: &PublicChoiceRequest) -> (u8, &str, &str) {
             source_card_id,
             ..
         } => (8, player_id.as_str(), source_card_id.as_str()),
+        PublicChoiceRequest::SpellChoiceUnavailable {
+            player_id,
+            source_card_id,
+        } => (9, player_id.as_str(), source_card_id.as_str()),
         PublicChoiceRequest::SpellChoice {
             player_id,
             source_card_id,
             ..
-        } => (9, player_id.as_str(), source_card_id.as_str()),
+        } => (10, player_id.as_str(), source_card_id.as_str()),
         PublicChoiceRequest::SpellSecondaryCreatureChoice {
             player_id,
             source_card_id,
             ..
-        } => (10, player_id.as_str(), source_card_id.as_str()),
+        } => (11, player_id.as_str(), source_card_id.as_str()),
         PublicChoiceRequest::SpellModalChoice {
             player_id,
             source_card_id,
             ..
-        } => (11, player_id.as_str(), source_card_id.as_str()),
+        } => (12, player_id.as_str(), source_card_id.as_str()),
         PublicChoiceRequest::AbilityTarget {
             player_id,
             source_card_id,
             ..
-        } => (12, player_id.as_str(), source_card_id.as_str()),
-        PublicChoiceRequest::CleanupDiscard { player_id, .. } => (13, player_id.as_str(), ""),
+        } => (13, player_id.as_str(), source_card_id.as_str()),
+        PublicChoiceRequest::CleanupDiscard { player_id, .. } => (14, player_id.as_str(), ""),
     }
 }
 

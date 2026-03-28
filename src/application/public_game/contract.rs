@@ -243,6 +243,10 @@ pub enum PublicChoiceRequest {
         source_card_id: CardInstanceId,
         candidates: Vec<PublicChoiceCandidate>,
     },
+    SpellChoiceUnavailable {
+        player_id: PlayerId,
+        source_card_id: CardInstanceId,
+    },
     SpellChoice {
         player_id: PlayerId,
         source_card_id: CardInstanceId,
