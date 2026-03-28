@@ -84,8 +84,20 @@ impl EventStore for InMemoryEventStore {
     ) -> Result<(), Box<dyn Error + Send + Sync>> {
         let mut events = self.events.write().map_err(|e| e.to_string())?;
         let entry = events.entry(aggregate_id.to_string()).or_default();
-        let new_chunk = Arc::<[DomainEvent]>::from(new_events.to_vec());
-        entry.pending_chunks.push(Arc::clone(&new_chunk));
+        if entry.pending_chunks.is_empty() {
+            if let Some(combined) = &entry.combined {
+                let mut updated = Vec::with_capacity(combined.len() + new_events.len());
+                updated.extend(combined.iter().cloned());
+                updated.extend(new_events.iter().cloned());
+                entry.combined = Some(Arc::<[DomainEvent]>::from(updated));
+                drop(events);
+                return Ok(());
+            }
+        }
+
+        entry
+            .pending_chunks
+            .push(Arc::<[DomainEvent]>::from(new_events.to_vec()));
         drop(events);
         Ok(())
     }
