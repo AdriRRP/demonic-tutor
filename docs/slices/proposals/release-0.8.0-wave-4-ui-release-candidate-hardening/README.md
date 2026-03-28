@@ -6,12 +6,10 @@ Goal:
 
 Slice count:
 
-- `1`
+- `0`
 
 Slices:
-
-- `freeze-v1-playable-subset-and-reject-unsupported-card-loads`
-  - lock the first playable scope so UI and content can rely on it
+- none
 
 Why this wave has high return:
 

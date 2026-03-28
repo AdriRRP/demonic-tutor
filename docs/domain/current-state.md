@@ -12,6 +12,7 @@ Curated-set authoring truth also lives in:
 
 - [limited-set-capability-matrix.md](limited-set-capability-matrix.md)
 - [limited-set-deck-construction-baseline.md](limited-set-deck-construction-baseline.md)
+- [playable-subset-v1.md](playable-subset-v1.md)
 
 ---
 
@@ -32,6 +33,7 @@ Implemented capabilities include:
 - exposing a deterministic persisted public event log with explicit sequence numbers for replay and animation clients
 - exposing deterministic public prompt ordering for the current supported simultaneous trigger batches, choice requests, and target candidate lists
 - exposing deterministic seeded game setup and rematch helpers for public session bootstrapping
+- exposing `playable_subset_version = v1` in the public game view so clients can pin against the first frozen playable contract
 - projecting the attached creature id for the current supported Aura subset in the public battlefield snapshot
 - dealing opening hands
 - mulligan support (London Mulligan - simplified)

@@ -9,7 +9,7 @@ use crate::support::{
 };
 use demonictutor::{
     game_view, CastSpellCommand, DealOpeningHandsCommand, Game, GameId, Phase, PublicGameView,
-    SpellTarget, StartGameCommand,
+    PublicPlayableSubsetVersion, SpellTarget, StartGameCommand,
 };
 
 fn started_game() -> Game {
@@ -63,6 +63,10 @@ fn game_view_projects_public_state_without_hidden_hand_contents() {
 
     let view: PublicGameView = game_view(&game);
 
+    assert_eq!(
+        view.playable_subset_version,
+        PublicPlayableSubsetVersion::V1
+    );
     assert_eq!(view.phase, Phase::Setup);
     assert_eq!(view.active_player_id.as_str(), "p1");
     assert_eq!(view.players.len(), 2);

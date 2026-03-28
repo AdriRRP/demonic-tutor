@@ -10,9 +10,9 @@ pub use application::{
     PublicCastableCard, PublicChoiceCandidate, PublicChoiceRequest, PublicCommandApplication,
     PublicCommandRejection, PublicCommandResult, PublicCommandStatus, PublicEventLogEntry,
     PublicGameCommand, PublicGameSessionStart, PublicGameView, PublicLegalAction,
-    PublicModalSpellChoice, PublicPlayerView, PublicPriorityView, PublicRematchCommand,
-    PublicScryChoice, PublicSeededGameSetup, PublicSeededPlayerSetup, PublicStackObjectView,
-    PublicStackTargetView, PublicSurveilChoice,
+    PublicModalSpellChoice, PublicPlayableSubsetVersion, PublicPlayerView, PublicPriorityView,
+    PublicRematchCommand, PublicScryChoice, PublicSeededGameSetup, PublicSeededPlayerSetup,
+    PublicStackObjectView, PublicStackTargetView, PublicSurveilChoice,
 };
 pub use application::{EventBus, EventStore, GameService};
 

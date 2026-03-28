@@ -9,8 +9,8 @@ use crate::support::{
 };
 use demonictutor::{
     public_command_result, CardDefinitionId, DomainEvent, GameEndReason, GameId, PlayerId,
-    PublicCommandStatus, PublicGameCommand, PublicRematchCommand, PublicSeededGameSetup,
-    PublicSeededPlayerSetup,
+    PublicCommandStatus, PublicGameCommand, PublicPlayableSubsetVersion, PublicRematchCommand,
+    PublicSeededGameSetup, PublicSeededPlayerSetup,
 };
 
 fn seeded_setup(game_id: &str, seed: u64) -> PublicSeededGameSetup {
@@ -139,6 +139,10 @@ fn seeded_public_rematch_reuses_setup_with_a_new_game_id() {
     assert_eq!(
         rematch_result.game.game_id,
         GameId::new("game-seeded-rematch-new")
+    );
+    assert_eq!(
+        rematch_result.game.playable_subset_version,
+        PublicPlayableSubsetVersion::V1
     );
 }
 

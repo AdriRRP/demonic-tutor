@@ -6,13 +6,13 @@ This directory contains the live proposal backlog.
 
 The current planning horizon to reach an honestly playable limited subset is:
 
-- `1` release
-- `1` wave
-- `1` slice
+- `0` releases
+- `0` waves
+- `0` slices
 
-The planning gates are:
+The current planning gate has been reached:
 
-- after `0.8.0`, the project should be able to support real best-of-one games with a deliberately constrained curated limited set
+- after `0.8.0`, the project supports the first real best-of-one product shell for a deliberately constrained curated limited set
 
 ## Release Status
 
@@ -21,7 +21,7 @@ The planning gates are:
 That means:
 
 - the public gameplay snapshot and legal-action surface are stable enough to support the first UI without inventing domain semantics in the frontend
-- the remaining backlog in this directory belongs entirely to `0.8.0`
+- the remaining backlog in this directory should be empty until a new post-`0.8.0` release horizon is proposed
 - closed `0.7.0` wave proposals should not remain in the live backlog
 
 See:
@@ -30,4 +30,4 @@ See:
 
 ## Active Proposal Waves
 
-- [release-0.8.0-wave-4-ui-release-candidate-hardening](release-0.8.0-wave-4-ui-release-candidate-hardening/README.md)
+- none

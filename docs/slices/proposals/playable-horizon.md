@@ -13,13 +13,11 @@ It does not claim full Magic support.
 
 The proposed horizon is:
 
-- `1` release
-- `1` wave
-- `1` slice
+- `0` releases
+- `0` waves
+- `0` slices
 
-The releases are:
-
-- `0.8.0` — finish the curated limited-set contract and harden the first actually playable product shell
+The current horizon is closed.
 
 ## Planning Gates
 
@@ -32,9 +30,9 @@ It is now about expanding that client against a richer, explicitly bounded curat
 
 ### Limited-Set Playable Gate
 
-The first honest "limited set playable" milestone should now be `0.8.0`.
+The first honest "limited set playable" milestone is now `0.8.0`.
 
-At that point the project should have:
+That release now has:
 
 - a curated card pool whose supported patterns are explicit
 - golden decks and golden gameplay scenarios covering the intended archetypes
@@ -58,13 +56,8 @@ If the curated set later needs those families, the roadmap must expand.
 
 ### `0.8.0`
 
-Goal:
+Outcome:
 
-- freeze the curated playable subset
-- prove real end-to-end matchups
-- harden the public contract for a first real playable client
-
-Waves:
-
-- `1`
-- `1` slice
+- frozen curated playable subset
+- real end-to-end golden matchups
+- public runtime contract hardened for a first real playable client

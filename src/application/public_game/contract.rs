@@ -75,6 +75,11 @@ pub enum PublicStackTargetView {
     StackSpell(StackObjectId),
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PublicPlayableSubsetVersion {
+    V1,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PublicStackObjectView {
     Spell {
@@ -101,6 +106,7 @@ pub enum PublicStackObjectView {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PublicGameView {
     pub game_id: GameId,
+    pub playable_subset_version: PublicPlayableSubsetVersion,
     pub active_player_id: PlayerId,
     pub phase: Phase,
     pub turn_number: u32,

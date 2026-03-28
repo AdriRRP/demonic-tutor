@@ -14,8 +14,8 @@ use super::{
     PublicCardView, PublicCastableCard, PublicChoiceCandidate, PublicChoiceRequest,
     PublicCombatStateView, PublicCommandApplication, PublicCommandResult, PublicEventLogEntry,
     PublicGameView, PublicLegalAction, PublicModalSpellChoice, PublicPermanentStateView,
-    PublicPlayerView, PublicPriorityView, PublicScryChoice, PublicStackObjectView,
-    PublicStackTargetView, PublicSurveilChoice,
+    PublicPlayableSubsetVersion, PublicPlayerView, PublicPriorityView, PublicScryChoice,
+    PublicStackObjectView, PublicStackTargetView, PublicSurveilChoice,
 };
 
 #[derive(Debug, Default)]
@@ -55,6 +55,7 @@ pub fn game_view(game: &Game) -> PublicGameView {
 
     PublicGameView {
         game_id: game.id().clone(),
+        playable_subset_version: PublicPlayableSubsetVersion::V1,
         active_player_id,
         phase: *game.phase(),
         turn_number: game.turn_number(),

@@ -6,6 +6,8 @@ It describes what a set designer may currently express through `LibraryCard` wit
 
 It does not claim broader Magic support than the current engine actually implements.
 
+The frozen client-facing version of this bounded authoring contract is documented in [playable-subset-v1.md](playable-subset-v1.md).
+
 ---
 
 ## Purpose
