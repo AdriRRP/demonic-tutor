@@ -250,7 +250,7 @@ Card instances can be checked for whether they represent permanents (cards that 
 The current model intentionally omits:
 
 - rules text
-- counters
+- most counter families beyond the current explicit `+1/+1` counter subset
 - non-instant spell responses while a priority window is open
 
 These may be introduced incrementally in future slices.
