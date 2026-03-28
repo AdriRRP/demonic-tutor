@@ -14,8 +14,8 @@ It does not claim full Magic support.
 The proposed horizon is:
 
 - `1` release
-- `3` waves
-- `9` slices
+- `2` waves
+- `8` slices
 
 The releases are:
 
@@ -66,5 +66,5 @@ Goal:
 
 Waves:
 
-- `3`
-- `9` slices
+- `2`
+- `8` slices

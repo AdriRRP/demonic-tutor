@@ -331,6 +331,10 @@ Responsible outside the aggregate:
 - deck legality
 - deck persistence
 
+For the first curated limited environment, the current baseline for those responsibilities is documented in:
+
+- [limited-set-deck-construction-baseline.md](limited-set-deck-construction-baseline.md)
+
 ---
 
 ## Future Play Expansion

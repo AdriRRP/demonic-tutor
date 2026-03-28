@@ -6,12 +6,11 @@ Goal:
 
 Slice count:
 
-- `1`
+- `0`
 
 Slices:
 
-- `add-limited-set-deck-construction-rules-baseline`
-  - formalize the exact deckbuilding assumptions for the first curated environment
+- none
 
 Why this wave has high return:
 
