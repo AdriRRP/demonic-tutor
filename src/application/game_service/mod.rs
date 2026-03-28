@@ -49,7 +49,7 @@ impl PublicEventLogCache {
 
     fn insert(&mut self, game_id: &str, entries: Arc<[PublicEventLogEntry]>) {
         self.entries.insert(game_id.to_string(), entries);
-        self.touch(game_id);
+        self.recency.push_back(game_id.to_string());
 
         while self.entries.len() > PUBLIC_EVENT_LOG_CACHE_CAPACITY {
             let Some(oldest) = self.recency.pop_front() else {
@@ -63,12 +63,6 @@ impl PublicEventLogCache {
 
     fn remove(&mut self, game_id: &str) {
         self.entries.remove(game_id);
-        self.recency.retain(|cached| cached != game_id);
-    }
-
-    fn touch(&mut self, game_id: &str) {
-        self.recency.retain(|cached| cached != game_id);
-        self.recency.push_back(game_id.to_string());
     }
 }
 
