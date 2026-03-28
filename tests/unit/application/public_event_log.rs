@@ -219,7 +219,10 @@ fn game_service_public_event_log_promotes_recently_read_timeline_before_eviction
     assert_eq!(reads.load(Ordering::SeqCst), 64);
 
     let reread_oldest = service.public_event_log(&GameId::new("promoted-game-0"));
-    assert!(reread_oldest.is_ok(), "rereading oldest cached timeline should succeed");
+    assert!(
+        reread_oldest.is_ok(),
+        "rereading oldest cached timeline should succeed"
+    );
     assert_eq!(reads.load(Ordering::SeqCst), 64);
 
     let overflow = service.public_event_log(&GameId::new("promoted-game-64"));

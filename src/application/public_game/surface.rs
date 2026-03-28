@@ -402,10 +402,10 @@ pub(super) fn public_surface_state(game: &Game, viewer_id: &PlayerId) -> PublicS
                 |priority| {
                     let current_holder = priority.current_holder();
                     if current_holder == viewer_id {
-                        player_by_id(game, current_holder)
-                            .map_or_else(|| unavailable_priority_surface(viewer_id), |player| {
-                                priority_surface_state(game, player)
-                            })
+                        player_by_id(game, current_holder).map_or_else(
+                            || unavailable_priority_surface(viewer_id),
+                            |player| priority_surface_state(game, player),
+                        )
                     } else {
                         PublicSurfaceState::default()
                     }
@@ -422,10 +422,9 @@ pub(super) fn public_surface_state(game: &Game, viewer_id: &PlayerId) -> PublicS
             };
 
             if controller_id == viewer_id {
-                pending_action_and_request(game)
-                    .unwrap_or_else(|| {
-                        unavailable_pending_decision_surface(viewer_id, pending_decision)
-                    })
+                pending_action_and_request(game).unwrap_or_else(|| {
+                    unavailable_pending_decision_surface(viewer_id, pending_decision)
+                })
             } else {
                 PublicSurfaceState::default()
             }
@@ -622,11 +621,7 @@ fn stack_object_view(
     game: &Game,
     object: &crate::domain::play::game::StackObject,
 ) -> Option<PublicStackObjectView> {
-    let controller_id = game
-        .players()
-        .get(object.controller_index())?
-        .id()
-        .clone();
+    let controller_id = game.players().get(object.controller_index())?.id().clone();
     Some(match object.kind() {
         StackObjectKind::Spell(spell) => PublicStackObjectView::Spell {
             number: object.number(),

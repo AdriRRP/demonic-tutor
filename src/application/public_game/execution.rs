@@ -176,10 +176,7 @@ where
                 message: err.to_string(),
             }),
         };
-        let emitted_events = match result {
-            Ok(events) => public_events(events),
-            Err(_) => Vec::new(),
-        };
+        let emitted_events = result.map_or_else(|_| Vec::new(), public_events);
 
         PublicCommandApplication {
             status,

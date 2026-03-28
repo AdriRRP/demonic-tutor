@@ -196,147 +196,183 @@ fn approximate_public_event_log_entry_bytes(entry: &PublicEventLogEntry) -> usiz
 
 fn approximate_public_event_bytes(event: &PublicEvent) -> usize {
     match event {
-        PublicEvent::GameStarted(event) => {
-            approximate_game_id_bytes(&event.game_id)
-                + event
-                    .players
-                    .iter()
-                    .map(approximate_player_id_bytes)
-                    .sum::<usize>()
-                + event.players.capacity() * size_of::<crate::domain::play::ids::PlayerId>()
-        }
+        PublicEvent::GameStarted(event) => approximate_game_started_event_bytes(event),
         PublicEvent::OpeningHandDealt(event) => {
-            approximate_game_id_bytes(&event.game_id) + approximate_player_id_bytes(&event.player_id)
+            approximate_game_and_player_bytes(&event.game_id, &event.player_id)
         }
-        PublicEvent::GameEnded(event) => {
-            approximate_game_id_bytes(&event.game_id)
-                + event
-                    .winner_id
-                    .as_ref()
-                    .map_or(0, approximate_player_id_bytes)
-                + event
-                    .loser_id
-                    .as_ref()
-                    .map_or(0, approximate_player_id_bytes)
-        }
+        PublicEvent::GameEnded(event) => approximate_game_ended_event_bytes(event),
         PublicEvent::LandPlayed(event) => {
-            approximate_game_id_bytes(&event.game_id)
-                + approximate_player_id_bytes(&event.player_id)
-                + approximate_card_id_bytes(&event.card_id)
+            approximate_game_player_card_bytes(&event.game_id, &event.player_id, &event.card_id)
         }
         PublicEvent::TurnProgressed(event) => {
-            approximate_game_id_bytes(&event.game_id)
-                + approximate_player_id_bytes(&event.active_player)
+            approximate_game_and_player_bytes(&event.game_id, &event.active_player)
         }
         PublicEvent::CardDrawn(event) => {
-            approximate_game_id_bytes(&event.game_id) + approximate_player_id_bytes(&event.player_id)
+            approximate_game_and_player_bytes(&event.game_id, &event.player_id)
         }
         PublicEvent::CardDiscarded(event) => {
-            approximate_game_id_bytes(&event.game_id)
-                + approximate_player_id_bytes(&event.player_id)
-                + approximate_card_id_bytes(&event.card_id)
+            approximate_game_player_card_bytes(&event.game_id, &event.player_id, &event.card_id)
         }
         PublicEvent::MulliganTaken(event) => {
-            approximate_game_id_bytes(&event.game_id) + approximate_player_id_bytes(&event.player_id)
+            approximate_game_and_player_bytes(&event.game_id, &event.player_id)
         }
         PublicEvent::LifeChanged(event) => {
-            approximate_game_id_bytes(&event.game_id) + approximate_player_id_bytes(&event.player_id)
+            approximate_game_and_player_bytes(&event.game_id, &event.player_id)
         }
         PublicEvent::LandTapped(event) => {
-            approximate_game_id_bytes(&event.game_id)
-                + approximate_player_id_bytes(&event.player_id)
-                + approximate_card_id_bytes(&event.card_id)
+            approximate_game_player_card_bytes(&event.game_id, &event.player_id, &event.card_id)
         }
         PublicEvent::ManaAdded(event) => {
-            approximate_game_id_bytes(&event.game_id) + approximate_player_id_bytes(&event.player_id)
+            approximate_game_and_player_bytes(&event.game_id, &event.player_id)
         }
-        PublicEvent::ActivatedAbilityPutOnStack(event) => {
-            approximate_game_id_bytes(&event.game_id)
-                + approximate_player_id_bytes(&event.player_id)
-                + approximate_card_id_bytes(&event.source_card_id)
-                + approximate_stack_object_id_bytes(&event.stack_object_id)
-        }
-        PublicEvent::TriggeredAbilityPutOnStack(event) => {
-            approximate_game_id_bytes(&event.game_id)
-                + approximate_player_id_bytes(&event.player_id)
-                + approximate_card_id_bytes(&event.source_card_id)
-                + approximate_stack_object_id_bytes(&event.stack_object_id)
-        }
-        PublicEvent::SpellPutOnStack(event) => {
-            approximate_game_id_bytes(&event.game_id)
-                + approximate_player_id_bytes(&event.player_id)
-                + approximate_card_id_bytes(&event.card_id)
-                + approximate_stack_object_id_bytes(&event.stack_object_id)
-                + event
-                    .target
-                    .as_ref()
-                    .map_or(0, approximate_spell_target_bytes)
-        }
+        PublicEvent::ActivatedAbilityPutOnStack(event) => approximate_stack_source_event_bytes(
+            &event.game_id,
+            &event.player_id,
+            &event.source_card_id,
+            &event.stack_object_id,
+        ),
+        PublicEvent::TriggeredAbilityPutOnStack(event) => approximate_stack_source_event_bytes(
+            &event.game_id,
+            &event.player_id,
+            &event.source_card_id,
+            &event.stack_object_id,
+        ),
+        PublicEvent::SpellPutOnStack(event) => approximate_spell_put_on_stack_event_bytes(event),
         PublicEvent::PriorityPassed(event) => {
-            approximate_game_id_bytes(&event.game_id) + approximate_player_id_bytes(&event.player_id)
+            approximate_game_and_player_bytes(&event.game_id, &event.player_id)
         }
-        PublicEvent::StackTopResolved(event) => {
-            approximate_game_id_bytes(&event.game_id)
-                + approximate_player_id_bytes(&event.player_id)
-                + approximate_stack_object_id_bytes(&event.stack_object_id)
-                + approximate_card_id_bytes(&event.source_card_id)
-        }
+        PublicEvent::StackTopResolved(event) => approximate_stack_source_event_bytes(
+            &event.game_id,
+            &event.player_id,
+            &event.source_card_id,
+            &event.stack_object_id,
+        ),
         PublicEvent::SpellCast(event) => {
-            approximate_game_id_bytes(&event.game_id)
-                + approximate_player_id_bytes(&event.player_id)
-                + approximate_card_id_bytes(&event.card_id)
+            approximate_game_player_card_bytes(&event.game_id, &event.player_id, &event.card_id)
         }
-        PublicEvent::AttackersDeclared(event) => {
-            approximate_game_id_bytes(&event.game_id)
-                + approximate_player_id_bytes(&event.player_id)
-                + event
-                    .attackers
-                    .iter()
-                    .map(approximate_card_id_bytes)
-                    .sum::<usize>()
-                + event.attackers.capacity() * size_of::<crate::domain::play::ids::CardInstanceId>()
-        }
-        PublicEvent::BlockersDeclared(event) => {
-            approximate_game_id_bytes(&event.game_id)
-                + approximate_player_id_bytes(&event.player_id)
-                + event
-                    .assignments
-                    .iter()
-                    .map(|(attacker_id, blocker_id)| {
-                        approximate_card_id_bytes(attacker_id)
-                            + approximate_card_id_bytes(blocker_id)
-                    })
-                    .sum::<usize>()
-                + event.assignments.capacity()
-                    * size_of::<(
-                        crate::domain::play::ids::CardInstanceId,
-                        crate::domain::play::ids::CardInstanceId,
-                    )>()
-        }
+        PublicEvent::AttackersDeclared(event) => approximate_attackers_declared_event_bytes(event),
+        PublicEvent::BlockersDeclared(event) => approximate_blockers_declared_event_bytes(event),
         PublicEvent::CombatDamageResolved(event) => {
-            approximate_game_id_bytes(&event.game_id)
-                + approximate_player_id_bytes(&event.player_id)
-                + event
-                    .damage_events
-                    .iter()
-                    .map(approximate_damage_event_bytes)
-                    .sum::<usize>()
-                + event
-                    .damage_events
-                    .capacity()
-                    * size_of::<crate::domain::play::events::DamageEvent>()
+            approximate_combat_damage_resolved_event_bytes(event)
         }
         PublicEvent::CreatureDied(event) => {
-            approximate_game_id_bytes(&event.game_id)
-                + approximate_player_id_bytes(&event.player_id)
-                + approximate_card_id_bytes(&event.card_id)
+            approximate_game_player_card_bytes(&event.game_id, &event.player_id, &event.card_id)
         }
         PublicEvent::CardMovedZone(event) => {
-            approximate_game_id_bytes(&event.game_id)
-                + approximate_player_id_bytes(&event.zone_owner_id)
-                + approximate_card_id_bytes(&event.card_id)
+            approximate_game_player_card_bytes(&event.game_id, &event.zone_owner_id, &event.card_id)
         }
     }
+}
+
+fn approximate_game_started_event_bytes(event: &crate::domain::play::events::GameStarted) -> usize {
+    approximate_game_id_bytes(&event.game_id)
+        + approximate_player_vec_bytes(&event.players)
+        + event.players.capacity() * size_of::<crate::domain::play::ids::PlayerId>()
+}
+
+fn approximate_game_ended_event_bytes(event: &crate::domain::play::events::GameEnded) -> usize {
+    approximate_game_id_bytes(&event.game_id)
+        + event
+            .winner_id
+            .as_ref()
+            .map_or(0, approximate_player_id_bytes)
+        + event
+            .loser_id
+            .as_ref()
+            .map_or(0, approximate_player_id_bytes)
+}
+
+fn approximate_spell_put_on_stack_event_bytes(
+    event: &crate::domain::play::events::SpellPutOnStack,
+) -> usize {
+    approximate_stack_source_event_bytes(
+        &event.game_id,
+        &event.player_id,
+        &event.card_id,
+        &event.stack_object_id,
+    ) + event
+        .target
+        .as_ref()
+        .map_or(0, approximate_spell_target_bytes)
+}
+
+fn approximate_attackers_declared_event_bytes(
+    event: &crate::domain::play::events::AttackersDeclared,
+) -> usize {
+    approximate_game_and_player_bytes(&event.game_id, &event.player_id)
+        + approximate_card_vec_bytes(&event.attackers)
+        + event.attackers.capacity() * size_of::<crate::domain::play::ids::CardInstanceId>()
+}
+
+fn approximate_blockers_declared_event_bytes(
+    event: &crate::domain::play::events::BlockersDeclared,
+) -> usize {
+    approximate_game_and_player_bytes(&event.game_id, &event.player_id)
+        + approximate_assignment_vec_bytes(&event.assignments)
+        + event.assignments.capacity()
+            * size_of::<(
+                crate::domain::play::ids::CardInstanceId,
+                crate::domain::play::ids::CardInstanceId,
+            )>()
+}
+
+fn approximate_combat_damage_resolved_event_bytes(
+    event: &crate::domain::play::events::CombatDamageResolved,
+) -> usize {
+    approximate_game_and_player_bytes(&event.game_id, &event.player_id)
+        + event
+            .damage_events
+            .iter()
+            .map(approximate_damage_event_bytes)
+            .sum::<usize>()
+        + event.damage_events.capacity() * size_of::<crate::domain::play::events::DamageEvent>()
+}
+
+fn approximate_game_and_player_bytes(
+    game_id: &crate::domain::play::ids::GameId,
+    player_id: &crate::domain::play::ids::PlayerId,
+) -> usize {
+    approximate_game_id_bytes(game_id) + approximate_player_id_bytes(player_id)
+}
+
+fn approximate_game_player_card_bytes(
+    game_id: &crate::domain::play::ids::GameId,
+    player_id: &crate::domain::play::ids::PlayerId,
+    card_id: &crate::domain::play::ids::CardInstanceId,
+) -> usize {
+    approximate_game_and_player_bytes(game_id, player_id) + approximate_card_id_bytes(card_id)
+}
+
+fn approximate_stack_source_event_bytes(
+    game_id: &crate::domain::play::ids::GameId,
+    player_id: &crate::domain::play::ids::PlayerId,
+    source_card_id: &crate::domain::play::ids::CardInstanceId,
+    stack_object_id: &crate::domain::play::ids::StackObjectId,
+) -> usize {
+    approximate_game_player_card_bytes(game_id, player_id, source_card_id)
+        + approximate_stack_object_id_bytes(stack_object_id)
+}
+
+fn approximate_player_vec_bytes(players: &[crate::domain::play::ids::PlayerId]) -> usize {
+    players.iter().map(approximate_player_id_bytes).sum()
+}
+
+fn approximate_card_vec_bytes(cards: &[crate::domain::play::ids::CardInstanceId]) -> usize {
+    cards.iter().map(approximate_card_id_bytes).sum()
+}
+
+fn approximate_assignment_vec_bytes(
+    assignments: &[(
+        crate::domain::play::ids::CardInstanceId,
+        crate::domain::play::ids::CardInstanceId,
+    )],
+) -> usize {
+    assignments
+        .iter()
+        .map(|(attacker_id, blocker_id)| {
+            approximate_card_id_bytes(attacker_id) + approximate_card_id_bytes(blocker_id)
+        })
+        .sum()
 }
 
 fn approximate_game_id_bytes(id: &crate::domain::play::ids::GameId) -> usize {
@@ -371,9 +407,7 @@ fn approximate_spell_target_bytes(target: &crate::domain::play::game::SpellTarge
     }
 }
 
-fn approximate_damage_event_bytes(
-    event: &crate::domain::play::events::DamageEvent,
-) -> usize {
+fn approximate_damage_event_bytes(event: &crate::domain::play::events::DamageEvent) -> usize {
     approximate_card_id_bytes(&event.source)
         + match &event.target {
             crate::domain::play::events::DamageTarget::Creature(card_id) => {

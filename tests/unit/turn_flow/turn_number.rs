@@ -55,7 +55,7 @@ fn advance_turn_emits_turn_progressed_event() {
         .unwrap();
     assert!(matches!(outcome, AdvanceTurnOutcome::Progressed { .. }));
 
-    let logs = projection.logs().expect("logs should be readable");
+    let logs = projection.logs().unwrap();
     let turn_log = logs.iter().find(|l| l.contains("Turn progressed"));
     assert!(turn_log.is_some());
 }

@@ -32,6 +32,12 @@ impl GameLogProjection {
         }
     }
 
+    /// Returns the current textual log snapshot.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`GameLogProjectionError::LockPoisoned`] when the projection lock
+    /// has been poisoned and the snapshot can no longer be read safely.
     pub fn logs(&self) -> Result<Arc<[String]>, GameLogProjectionError> {
         let Ok(state) = self.logs.read() else {
             return Err(GameLogProjectionError::LockPoisoned);
@@ -212,7 +218,6 @@ impl GameLogProjection {
         state.entries.push(log_entry);
         state.snapshot = None;
     }
-
 }
 
 #[cfg(test)]
