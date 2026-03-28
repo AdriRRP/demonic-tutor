@@ -447,11 +447,16 @@ fn execute_public_command_surfaces_card_discarded_from_pass_priority_resolution(
         PublicGameCommand::PassPriority(PassPriorityCommand::new(PlayerId::new("p2"))),
     );
 
-    assert!(application.emitted_events.iter().any(|event| matches!(
-        event,
-        DomainEvent::CardDiscarded(discarded)
-            if discarded.card_id == chosen_id && discarded.discard_kind == DiscardKind::SpellEffect
-    )));
+    assert!(matches!(
+        application.emitted_events.as_slice(),
+        [
+            DomainEvent::PriorityPassed(_),
+            DomainEvent::CardDiscarded(discarded),
+            DomainEvent::StackTopResolved(_),
+            DomainEvent::SpellCast(_),
+        ] if discarded.card_id == chosen_id
+            && discarded.discard_kind == DiscardKind::SpellEffect
+    ));
 }
 
 #[test]
