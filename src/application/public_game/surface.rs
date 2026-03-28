@@ -429,10 +429,13 @@ where
     I::Item: Borrow<DomainEvent>,
 {
     Arc::from(
-        public_events(events)
+        events
             .into_iter()
             .zip(1_u64..)
-            .map(|(event, sequence)| PublicEventLogEntry { sequence, event })
+            .map(|(event, sequence)| PublicEventLogEntry {
+                sequence,
+                event: public_event(event.borrow()),
+            })
             .collect::<Vec<_>>(),
     )
 }
