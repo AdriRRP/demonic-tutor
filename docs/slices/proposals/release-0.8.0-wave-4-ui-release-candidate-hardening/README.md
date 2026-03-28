@@ -6,12 +6,10 @@ Goal:
 
 Slice count:
 
-- `3`
+- `2`
 
 Slices:
 
-- `expose-stable-prompt-ordering-for-simultaneous-triggers-and-choices`
-  - fix one deterministic ordering contract for surfaced prompts in the supported subset
 - `support-concede-rematch-and-seeded-game-setup-commands`
   - support the minimum session loop needed for repeated real playtests
 - `freeze-v1-playable-subset-and-reject-unsupported-card-loads`

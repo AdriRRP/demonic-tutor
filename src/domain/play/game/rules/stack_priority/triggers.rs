@@ -11,6 +11,28 @@ use crate::domain::play::{
     ids::{GameId, PlayerCardHandle},
 };
 
+fn stable_battlefield_trigger_handles(
+    players: &[Player],
+    controller_index: usize,
+) -> Result<Vec<PlayerCardHandle>, DomainError> {
+    let player = players.get(controller_index).ok_or_else(|| {
+        DomainError::Game(GameError::InternalInvariantViolation(format!(
+            "missing trigger controller at index {controller_index}"
+        )))
+    })?;
+
+    let mut handles = player
+        .battlefield_handles()
+        .filter_map(|handle| {
+            player
+                .card_by_handle(handle)
+                .map(|card| (card.id().as_str().to_owned(), handle))
+        })
+        .collect::<Vec<_>>();
+    handles.sort_by(|left, right| left.0.cmp(&right.0));
+    Ok(handles.into_iter().map(|(_, handle)| handle).collect())
+}
+
 fn enqueue_trigger_from_handle(
     game_id: &GameId,
     players: &[Player],
@@ -82,12 +104,7 @@ pub fn enqueue_battlefield_step_triggers(
     expected_event: TriggeredAbilityEvent,
     stack: &mut StackZone,
 ) -> Result<Vec<TriggeredAbilityPutOnStack>, DomainError> {
-    let player = players.get(controller_index).ok_or_else(|| {
-        DomainError::Game(GameError::InternalInvariantViolation(format!(
-            "missing trigger controller at index {controller_index}"
-        )))
-    })?;
-    let handles = player.battlefield_handles().collect::<Vec<_>>();
+    let handles = stable_battlefield_trigger_handles(players, controller_index)?;
     let mut events = Vec::new();
 
     for handle in handles {

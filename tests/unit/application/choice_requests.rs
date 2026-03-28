@@ -5,12 +5,13 @@
 use crate::support::{
     advance_to_player_first_main_satisfying_cleanup,
     choose_one_target_player_gain_or_lose_life_instant_card, close_empty_priority_window,
-    create_service, creature_card_with_keyword,
+    create_service, creature_card, creature_card_with_keyword,
     distribute_two_counters_among_up_to_two_target_creatures_sorcery_card,
     etb_may_life_gain_creature_card, filled_library, forest_card, loot_sorcery_card, player,
     player_deck, player_library, resolve_top_stack_with_passes, scry_sorcery_card,
-    setup_two_player_game, surveil_sorcery_card, target_player_discards_chosen_card_sorcery_card,
-    targeted_damage_instant_card, targeted_opponent_damage_instant_card,
+    setup_two_player_game, surveil_sorcery_card, tap_target_creature_instant_card,
+    target_player_discards_chosen_card_sorcery_card, targeted_damage_instant_card,
+    targeted_opponent_damage_instant_card,
 };
 use demonictutor::{
     choice_requests, CardDefinitionId, CardInstanceId, CastSpellCommand, DealOpeningHandsCommand,
@@ -219,6 +220,89 @@ fn choice_requests_surface_optional_secondary_target_choice_for_distributed_coun
                 && creature_ids.is_empty()
                 && *allows_skipping
     )));
+}
+
+#[test]
+fn choice_requests_surface_target_candidates_in_stable_public_order() {
+    let (service, mut game) = setup_two_player_game(
+        "game-choice-request-stable-target-order",
+        filled_library(
+            vec![
+                forest_card("p1-buffer"),
+                tap_target_creature_instant_card("p1-tap-creature", 0),
+            ],
+            10,
+        ),
+        filled_library(
+            vec![
+                creature_card("zeta-creature", 0, 2, 2),
+                creature_card("alpha-creature", 0, 2, 2),
+            ],
+            10,
+        ),
+    );
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-2");
+    let alpha_id = player(&game, "player-2")
+        .hand_card_by_definition(&CardDefinitionId::new("alpha-creature"))
+        .expect("alpha creature should be in hand")
+        .id()
+        .clone();
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-2"), alpha_id.clone()),
+        )
+        .expect("alpha creature should be castable");
+    resolve_top_stack_with_passes(&service, &mut game);
+
+    let zeta_id = player(&game, "player-2")
+        .hand_card_by_definition(&CardDefinitionId::new("zeta-creature"))
+        .expect("zeta creature should be in hand")
+        .id()
+        .clone();
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-2"), zeta_id.clone()),
+        )
+        .expect("zeta creature should be castable");
+    resolve_top_stack_with_passes(&service, &mut game);
+
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "player-1");
+    let spell_id = player(&game, "player-1")
+        .hand_card_by_definition(&CardDefinitionId::new("p1-tap-creature"))
+        .expect("tap spell should be in hand")
+        .id()
+        .clone();
+
+    let requests = choice_requests(&game);
+    let candidate_ids = requests
+        .iter()
+        .find_map(|request| match request {
+            PublicChoiceRequest::SpellTarget {
+                source_card_id,
+                candidates,
+                ..
+            } if *source_card_id == spell_id => Some(
+                candidates
+                    .iter()
+                    .filter_map(|candidate| match candidate {
+                        PublicChoiceCandidate::Card(card_id) => Some(card_id.clone()),
+                        PublicChoiceCandidate::Player(_) | PublicChoiceCandidate::StackSpell(_) => {
+                            None
+                        }
+                    })
+                    .collect::<Vec<_>>(),
+            ),
+            _ => None,
+        })
+        .expect("tap spell choice request should be present");
+
+    let mut expected_ids = vec![alpha_id, zeta_id];
+    expected_ids.sort_by(|left, right| left.as_str().cmp(right.as_str()));
+
+    assert_eq!(candidate_ids, expected_ids);
 }
 
 #[test]

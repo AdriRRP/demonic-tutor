@@ -60,9 +60,16 @@ fn enqueue_dies_triggers(
     stack: &mut StackZone,
     creatures_died: &[CreatureDied],
 ) -> Result<Vec<TriggeredAbilityPutOnStack>, crate::domain::play::errors::DomainError> {
+    let mut ordered_creatures_died = creatures_died.to_vec();
+    ordered_creatures_died.sort_by(|left, right| {
+        left.player_id
+            .as_str()
+            .cmp(right.player_id.as_str())
+            .then_with(|| left.card_id.as_str().cmp(right.card_id.as_str()))
+    });
     let mut events = Vec::new();
 
-    for creature_died in creatures_died {
+    for creature_died in &ordered_creatures_died {
         let owner_index = crate::domain::play::game::helpers::find_player_index(
             players,
             &creature_died.player_id,
@@ -377,9 +384,11 @@ fn enqueue_entered_battlefield_triggers_for_moved_cards(
     stack: &mut StackZone,
     moved_cards: &[crate::domain::play::ids::CardInstanceId],
 ) -> Result<Vec<TriggeredAbilityPutOnStack>, crate::domain::play::errors::DomainError> {
+    let mut ordered_moved_cards = moved_cards.to_vec();
+    ordered_moved_cards.sort_by(|left, right| left.as_str().cmp(right.as_str()));
     let mut events = Vec::new();
 
-    for card_id in moved_cards {
+    for card_id in &ordered_moved_cards {
         let Some((owner_index, handle)) =
             players
                 .iter()

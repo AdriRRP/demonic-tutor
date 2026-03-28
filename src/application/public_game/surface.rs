@@ -24,6 +24,19 @@ struct PublicSurfaceState {
     choice_requests: Vec<PublicChoiceRequest>,
 }
 
+impl PublicSurfaceState {
+    fn with_choice_requests(
+        legal_actions: Vec<PublicLegalAction>,
+        mut choice_requests: Vec<PublicChoiceRequest>,
+    ) -> Self {
+        sort_choice_requests(&mut choice_requests);
+        Self {
+            legal_actions,
+            choice_requests,
+        }
+    }
+}
+
 #[must_use]
 pub fn game_view(game: &Game) -> PublicGameView {
     let active_player_id = game.active_player().clone();
@@ -82,10 +95,10 @@ fn pending_action_and_request(game: &Game) -> Option<PublicSurfaceState> {
                 pending_optional_effect_request(game),
             ),
         };
-        return Some(PublicSurfaceState {
-            legal_actions: vec![action],
-            choice_requests: request.into_iter().collect(),
-        });
+        return Some(PublicSurfaceState::with_choice_requests(
+            vec![action],
+            request.into_iter().collect(),
+        ));
     }
 
     None
@@ -167,10 +180,7 @@ fn priority_surface_state(game: &Game, player_id: &PlayerId) -> PublicSurfaceSta
         }
     }
 
-    PublicSurfaceState {
-        legal_actions: actions,
-        choice_requests,
-    }
+    PublicSurfaceState::with_choice_requests(actions, choice_requests)
 }
 
 fn spell_target_candidate_cache(
@@ -270,10 +280,7 @@ fn phase_surface_state(game: &Game) -> PublicSurfaceState {
         }
     }
 
-    PublicSurfaceState {
-        legal_actions: actions,
-        choice_requests,
-    }
+    PublicSurfaceState::with_choice_requests(actions, choice_requests)
 }
 
 fn public_surface_state(game: &Game) -> PublicSurfaceState {
@@ -749,10 +756,13 @@ fn spell_target_candidates(
     actor_id: &PlayerId,
     card_id: &CardInstanceId,
 ) -> Vec<PublicChoiceCandidate> {
-    game.spell_target_candidates(actor_id, card_id)
+    let mut candidates = game
+        .spell_target_candidates(actor_id, card_id)
         .into_iter()
         .map(public_choice_candidate)
-        .collect()
+        .collect::<Vec<_>>();
+    sort_choice_candidates(&mut candidates);
+    candidates
 }
 
 fn ability_target_candidates(
@@ -760,10 +770,13 @@ fn ability_target_candidates(
     actor_id: &PlayerId,
     source_card_id: &CardInstanceId,
 ) -> Vec<PublicChoiceCandidate> {
-    game.ability_target_candidates(actor_id, source_card_id)
+    let mut candidates = game
+        .ability_target_candidates(actor_id, source_card_id)
         .into_iter()
         .map(public_choice_candidate)
-        .collect()
+        .collect::<Vec<_>>();
+    sort_choice_candidates(&mut candidates);
+    candidates
 }
 
 fn opponent_hand_choice_candidates(game: &Game, actor_id: &PlayerId) -> Vec<CardInstanceId> {
@@ -802,5 +815,75 @@ fn public_choice_candidate(
         crate::domain::play::game::SpellTarget::StackObject(stack_object_id) => {
             PublicChoiceCandidate::StackSpell(stack_object_id)
         }
+    }
+}
+
+fn sort_choice_requests(choice_requests: &mut [PublicChoiceRequest]) {
+    choice_requests
+        .sort_by(|left, right| choice_request_sort_key(left).cmp(&choice_request_sort_key(right)));
+}
+
+fn choice_request_sort_key(request: &PublicChoiceRequest) -> (u8, &str, &str) {
+    match request {
+        PublicChoiceRequest::PendingScry {
+            player_id,
+            source_card_id,
+            ..
+        } => (0, player_id.as_str(), source_card_id.as_str()),
+        PublicChoiceRequest::PendingSurveil {
+            player_id,
+            source_card_id,
+            ..
+        } => (1, player_id.as_str(), source_card_id.as_str()),
+        PublicChoiceRequest::PendingHandChoice {
+            player_id,
+            source_card_id,
+            ..
+        } => (2, player_id.as_str(), source_card_id.as_str()),
+        PublicChoiceRequest::OptionalEffectDecision {
+            player_id,
+            source_card_id,
+            ..
+        } => (3, player_id.as_str(), source_card_id.as_str()),
+        PublicChoiceRequest::SpellTarget {
+            player_id,
+            source_card_id,
+            ..
+        } => (4, player_id.as_str(), source_card_id.as_str()),
+        PublicChoiceRequest::SpellChoice {
+            player_id,
+            source_card_id,
+            ..
+        } => (5, player_id.as_str(), source_card_id.as_str()),
+        PublicChoiceRequest::SpellSecondaryCreatureChoice {
+            player_id,
+            source_card_id,
+            ..
+        } => (6, player_id.as_str(), source_card_id.as_str()),
+        PublicChoiceRequest::SpellModalChoice {
+            player_id,
+            source_card_id,
+            ..
+        } => (7, player_id.as_str(), source_card_id.as_str()),
+        PublicChoiceRequest::AbilityTarget {
+            player_id,
+            source_card_id,
+            ..
+        } => (8, player_id.as_str(), source_card_id.as_str()),
+        PublicChoiceRequest::CleanupDiscard { player_id, .. } => (9, player_id.as_str(), ""),
+    }
+}
+
+fn sort_choice_candidates(candidates: &mut [PublicChoiceCandidate]) {
+    candidates.sort_by(|left, right| {
+        choice_candidate_sort_key(left).cmp(&choice_candidate_sort_key(right))
+    });
+}
+
+fn choice_candidate_sort_key(candidate: &PublicChoiceCandidate) -> (u8, &str) {
+    match candidate {
+        PublicChoiceCandidate::Player(player_id) => (0, player_id.as_str()),
+        PublicChoiceCandidate::Card(card_id) => (1, card_id.as_str()),
+        PublicChoiceCandidate::StackSpell(stack_object_id) => (2, stack_object_id.as_str()),
     }
 }

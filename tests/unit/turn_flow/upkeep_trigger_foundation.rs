@@ -229,3 +229,84 @@ fn entering_upkeep_enqueues_triggers_from_all_players_battlefields() {
     }));
     assert_eq!(game.stack().len(), 2);
 }
+
+#[test]
+fn entering_upkeep_orders_same_controller_triggers_by_source_card_id() {
+    let (service, mut game) = setup_two_player_game(
+        "game-upkeep-trigger-stable-order",
+        filled_library(
+            vec![
+                upkeep_life_gain_artifact_card("zeta-dial", 0, 1),
+                upkeep_life_gain_artifact_card("alpha-dial", 0, 1),
+            ],
+            10,
+        ),
+        filled_library(Vec::new(), 10),
+    );
+
+    advance_to_player_phase_resolving_stack(&service, &mut game, "player-1", Phase::FirstMain);
+    let alpha_id = player(&game, "player-1")
+        .hand_card_by_definition(&CardDefinitionId::new("alpha-dial"))
+        .unwrap()
+        .id()
+        .clone();
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), alpha_id.clone()),
+        )
+        .unwrap();
+    resolve_current_stack(&service, &mut game);
+
+    let zeta_id = player(&game, "player-1")
+        .hand_card_by_definition(&CardDefinitionId::new("zeta-dial"))
+        .unwrap()
+        .id()
+        .clone();
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), zeta_id.clone()),
+        )
+        .unwrap();
+    resolve_current_stack(&service, &mut game);
+
+    advance_to_player_phase_resolving_stack(&service, &mut game, "player-1", Phase::Untap);
+    let outcome = service
+        .advance_turn(&mut game, AdvanceTurnCommand::new())
+        .unwrap();
+
+    let AdvanceTurnOutcome::Progressed {
+        triggered_abilities_put_on_stack,
+        ..
+    } = outcome
+    else {
+        panic!("upkeep transition should progress turn");
+    };
+
+    let mut expected_ids = vec![alpha_id, zeta_id];
+    expected_ids.sort_by(|left, right| left.as_str().cmp(right.as_str()));
+
+    assert_eq!(
+        triggered_abilities_put_on_stack
+            .iter()
+            .map(|event| event.source_card_id.clone())
+            .collect::<Vec<_>>(),
+        expected_ids
+    );
+    let mut expected_stack_ids = game
+        .stack()
+        .objects()
+        .iter()
+        .map(demonictutor::StackObject::source_card_id)
+        .collect::<Vec<_>>();
+    expected_stack_ids.sort_by(|left, right| left.as_str().cmp(right.as_str()));
+    assert_eq!(
+        game.stack()
+            .objects()
+            .iter()
+            .map(demonictutor::StackObject::source_card_id)
+            .collect::<Vec<_>>(),
+        expected_stack_ids
+    );
+}
