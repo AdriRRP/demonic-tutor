@@ -59,14 +59,12 @@ impl EventStore for InMemoryEventStore {
     ) -> Result<Arc<[DomainEvent]>, Box<dyn Error + Send + Sync>> {
         let cached = {
             let events = self.events.read().map_err(|e| e.to_string())?;
-            events
-                .get(aggregate_id)
-                .and_then(|entry| {
-                    entry.combined.as_ref().and_then(|combined| {
-                        (combined.covered_chunks == entry.chunks.len())
-                            .then(|| Arc::clone(&combined.events))
-                    })
+            events.get(aggregate_id).and_then(|entry| {
+                entry.combined.as_ref().and_then(|combined| {
+                    (combined.covered_chunks == entry.chunks.len())
+                        .then(|| Arc::clone(&combined.events))
                 })
+            })
         };
         if let Some(combined) = cached {
             return Ok(combined);
@@ -85,12 +83,14 @@ impl EventStore for InMemoryEventStore {
             }
         }
 
-        let (covered_chunks, combined_len) = entry
-            .combined
-            .as_ref()
-            .map_or((0, 0), |combined| (combined.covered_chunks, combined.events.len()));
+        let (covered_chunks, combined_len) = entry.combined.as_ref().map_or((0, 0), |combined| {
+            (combined.covered_chunks, combined.events.len())
+        });
         let pending_chunks = &entry.chunks[covered_chunks..];
-        let pending_len = pending_chunks.iter().map(|chunk| chunk.len()).sum::<usize>();
+        let pending_len = pending_chunks
+            .iter()
+            .map(|chunk| chunk.len())
+            .sum::<usize>();
         let mut combined_events = Vec::with_capacity(combined_len + pending_len);
         if let Some(combined) = &entry.combined {
             combined_events.extend(combined.events.iter().cloned());

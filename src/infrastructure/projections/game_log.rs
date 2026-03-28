@@ -29,18 +29,17 @@ impl GameLogProjection {
 
     #[must_use]
     pub fn logs(&self) -> Arc<[String]> {
-        let state = match self.logs.read() {
-            Ok(state) => state,
-            Err(_) => return Self::poisoned_snapshot(),
+        let Ok(state) = self.logs.read() else {
+            return Self::poisoned_snapshot();
         };
         if let Some(snapshot) = &state.snapshot {
             return Arc::clone(snapshot);
         }
         drop(state);
 
-        self.logs
-            .write()
-            .map(|mut state| {
+        self.logs.write().map_or_else(
+            |_| Self::poisoned_snapshot(),
+            |mut state| {
                 if let Some(snapshot) = &state.snapshot {
                     return Arc::clone(snapshot);
                 }
@@ -48,8 +47,8 @@ impl GameLogProjection {
                 let snapshot = Arc::<[String]>::from(state.entries.clone());
                 state.snapshot = Some(Arc::clone(&snapshot));
                 snapshot
-            })
-            .unwrap_or_else(|_| Self::poisoned_snapshot())
+            },
+        )
     }
 
     fn describe_event(event: &DomainEvent) -> String {
@@ -204,9 +203,7 @@ impl GameLogProjection {
             Err(poisoned) => (poisoned.into_inner(), true),
         };
         if poisoned {
-            state
-                .entries
-                .push(Self::LOCK_POISONED_MESSAGE.to_string());
+            state.entries.push(Self::LOCK_POISONED_MESSAGE.to_string());
         }
         state.entries.push(log_entry);
         state.snapshot = None;
@@ -219,7 +216,7 @@ impl GameLogProjection {
 
 #[cfg(test)]
 mod tests {
-    #![allow(clippy::expect_used)]
+    #![allow(clippy::expect_used, clippy::panic)]
 
     use super::*;
 
