@@ -5,13 +5,14 @@ use crate::domain::play::{
     commands::ResolvePendingHandChoiceCommand,
     errors::{DomainError, GameError},
     events::{
-        CardDiscarded, DiscardKind, GameEnded, SpellCast, SpellCastOutcome, StackTopResolved,
+        CardDiscarded, CardDrawn, DiscardKind, DrawKind, GameEnded, SpellCast, SpellCastOutcome,
+        StackTopResolved,
     },
     game::{
         model::{PlayerCardZone, StackObjectKind},
         PendingDecision, PendingHandChoiceKind, PriorityState,
     },
-    ids::PlayerCardHandle,
+    ids::{CardInstanceId, PlayerCardHandle},
 };
 
 use super::{ResolvePendingHandChoiceOutcome, StackPriorityContext};
@@ -29,7 +30,7 @@ const fn restore_pending_hand_choice(
     ));
 }
 
-fn build_spell_resolution_events(
+pub(super) fn build_spell_resolution_events(
     game_id: &crate::domain::play::ids::GameId,
     controller_id: &crate::domain::play::ids::PlayerId,
     stack_object_number: u32,
@@ -58,15 +59,18 @@ fn build_spell_resolution_events(
     )
 }
 
-fn draw_cards_for_pending_effect(
+pub(super) fn draw_cards_for_pending_effect(
     game_id: &crate::domain::play::ids::GameId,
     players: &mut [crate::domain::play::game::Player],
     terminal_state: &mut crate::domain::play::game::TerminalState,
     controller_index: usize,
     draw_count: u32,
-) -> Result<Option<GameEnded>, DomainError> {
+) -> Result<(Vec<CardDrawn>, Option<GameEnded>), DomainError> {
+    let controller_id = players[controller_index].id().clone();
+    let mut cards_drawn = Vec::new();
+
     for _ in 0..draw_count {
-        if players[controller_index].draw_one_into_hand().is_none() {
+        let Some(card_id) = players[controller_index].draw_one_into_hand() else {
             let game_ended =
                 crate::domain::play::game::rules::game_effects::end_game_for_empty_library_draw(
                     game_id,
@@ -74,25 +78,26 @@ fn draw_cards_for_pending_effect(
                     terminal_state,
                     controller_index,
                 )?;
-            return Ok(Some(game_ended));
-        }
+            return Ok((cards_drawn, Some(game_ended)));
+        };
+
+        cards_drawn.push(CardDrawn::new(
+            game_id.clone(),
+            controller_id.clone(),
+            card_id,
+            DrawKind::ExplicitEffect,
+        ));
     }
 
-    Ok(None)
+    Ok((cards_drawn, None))
 }
 
-fn move_spell_to_resolution_destination(
+pub(super) fn move_spell_to_resolution_destination(
     players: &mut [crate::domain::play::game::Player],
     controller_index: usize,
     payload: crate::domain::play::cards::SpellPayload,
     card_type: CardType,
-) -> Result<
-    (
-        SpellCastOutcome,
-        Vec<crate::domain::play::ids::CardInstanceId>,
-    ),
-    DomainError,
-> {
+) -> Result<(SpellCastOutcome, Vec<CardInstanceId>), DomainError> {
     let player = players.get_mut(controller_index).ok_or_else(|| {
         DomainError::Game(GameError::InternalInvariantViolation(format!(
             "missing spell controller at player index {controller_index}"
@@ -262,8 +267,8 @@ pub fn resolve_pending_hand_choice(
         DiscardKind::SpellEffect,
     ));
 
-    let game_ended = match kind {
-        PendingHandChoiceKind::Loot { .. } => None,
+    let (card_drawn, game_ended) = match kind {
+        PendingHandChoiceKind::Loot { .. } => (Vec::new(), None),
         PendingHandChoiceKind::Rummage { draw_count } => draw_cards_for_pending_effect(
             game_id,
             players,
@@ -294,6 +299,7 @@ pub fn resolve_pending_hand_choice(
     Ok(ResolvePendingHandChoiceOutcome {
         stack_top_resolved: Some(stack_top_resolved),
         spell_cast: Some(spell_cast),
+        card_drawn,
         card_discarded,
         moved_cards,
         game_ended,

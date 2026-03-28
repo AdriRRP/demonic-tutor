@@ -36,6 +36,7 @@ pub fn domain_events_for_pass_priority(outcome: &PassPriorityOutcome) -> Vec<Dom
     domain_events.extend(outcome.triggered_abilities_put_on_stack.iter().cloned());
     domain_events.push_optional(outcome.stack_top_resolved.clone());
     domain_events.push_optional(outcome.spell_cast.clone());
+    domain_events.extend(outcome.card_drawn.iter().cloned());
     domain_events.push_optional(outcome.card_exiled.clone());
     domain_events.push_optional(outcome.life_changed.clone());
     domain_events.extend(outcome.creatures_died.iter().cloned());
@@ -63,6 +64,7 @@ pub fn domain_events_for_resolve_pending_hand_choice(
     let mut domain_events = DomainEvents::default();
     domain_events.push_optional(outcome.stack_top_resolved.clone());
     domain_events.push_optional(outcome.spell_cast.clone());
+    domain_events.extend(outcome.card_drawn.iter().cloned());
     domain_events.push_optional(outcome.card_discarded.clone());
     domain_events.push_optional(outcome.game_ended.clone());
     domain_events.into_vec()

@@ -1,7 +1,14 @@
 //! Supports rules stack priority passing.
 
 use {
-    super::{resolution::resolve_stack_object, PassPriorityOutcome, StackPriorityContext},
+    super::{
+        hand_choice_effect::{
+            build_spell_resolution_events, draw_cards_for_pending_effect,
+            move_spell_to_resolution_destination,
+        },
+        resolution::resolve_stack_object,
+        PassPriorityOutcome, StackPriorityContext,
+    },
     crate::domain::play::{
         commands::PassPriorityCommand,
         errors::{DomainError, GameError},
@@ -118,6 +125,7 @@ pub fn pass_priority(
             triggered_abilities_put_on_stack: Vec::new(),
             stack_top_resolved: None,
             spell_cast: None,
+            card_drawn: Vec::new(),
             card_exiled: None,
             card_discarded: None,
             life_changed: None,
@@ -135,6 +143,7 @@ pub fn pass_priority(
             triggered_abilities_put_on_stack: Vec::new(),
             stack_top_resolved: None,
             spell_cast: None,
+            card_drawn: Vec::new(),
             card_exiled: None,
             card_discarded: None,
             life_changed: None,
@@ -157,6 +166,7 @@ pub fn pass_priority(
                 triggered_abilities_put_on_stack: Vec::new(),
                 stack_top_resolved: None,
                 spell_cast: None,
+                card_drawn: Vec::new(),
                 card_exiled: None,
                 card_discarded: None,
                 life_changed: None,
@@ -168,33 +178,74 @@ pub fn pass_priority(
         }
 
         if let Some(kind) = stack_object_pending_hand_choice_kind(stack_object) {
-            if let crate::domain::play::game::PendingHandChoiceKind::Loot { draw_count } = kind {
-                let controller_index = stack_object.controller_index();
-                for _ in 0..draw_count {
-                    if players[controller_index].draw_one_into_hand().is_none() {
-                        let game_ended = crate::domain::play::game::rules::game_effects::end_game_for_empty_library_draw(
-                            game_id,
+            let pending_card_drawn =
+                if let crate::domain::play::game::PendingHandChoiceKind::Loot { draw_count } = kind
+                {
+                    let controller_index = stack_object.controller_index();
+                    let stack_object_number = stack_object.number();
+                    let (card_drawn, game_ended) = draw_cards_for_pending_effect(
+                        game_id,
+                        players,
+                        terminal_state,
+                        controller_index,
+                        draw_count,
+                    )?;
+
+                    if let Some(game_ended) = game_ended {
+                        let resolved_stack_object = stack.pop().ok_or_else(|| {
+                        DomainError::Game(GameError::InternalInvariantViolation(
+                            "loot spell should still be on the stack while opening its pending hand choice".to_string(),
+                        ))
+                    })?;
+                        let controller_id = players[controller_index].id().clone();
+                        let crate::domain::play::game::StackObjectKind::Spell(spell) =
+                            resolved_stack_object.into_kind()
+                        else {
+                            return Err(DomainError::Game(GameError::InternalInvariantViolation(
+                                "pending loot resolution requires a spell stack object".to_string(),
+                            )));
+                        };
+                        let source_card_id = spell.source_card_id().clone();
+                        let card_type = *spell.card_type();
+                        let mana_cost_paid = spell.mana_cost_paid();
+                        let payload = spell.into_payload();
+                        let (spell_outcome, moved_cards) = move_spell_to_resolution_destination(
                             players,
-                            terminal_state,
                             controller_index,
+                            payload,
+                            card_type,
                         )?;
+                        let (stack_top_resolved, spell_cast) = build_spell_resolution_events(
+                            game_id,
+                            &controller_id,
+                            stack_object_number,
+                            &source_card_id,
+                            card_type,
+                            mana_cost_paid,
+                            spell_outcome,
+                        );
+
                         *priority = None;
                         return Ok(PassPriorityOutcome {
                             priority_passed,
                             triggered_abilities_put_on_stack: Vec::new(),
-                            stack_top_resolved: None,
-                            spell_cast: None,
+                            stack_top_resolved: Some(stack_top_resolved),
+                            spell_cast: Some(spell_cast),
+                            card_drawn,
                             card_exiled: None,
                             card_discarded: None,
                             life_changed: None,
                             creatures_died: Vec::new(),
-                            moved_cards: Vec::new(),
+                            moved_cards,
                             game_ended: Some(game_ended),
                             priority_still_open: false,
                         });
                     }
-                }
-            }
+
+                    card_drawn
+                } else {
+                    Vec::new()
+                };
 
             *priority = None;
             *pending_decision = Some(PendingDecision::hand_choice(
@@ -207,6 +258,7 @@ pub fn pass_priority(
                 triggered_abilities_put_on_stack: Vec::new(),
                 stack_top_resolved: None,
                 spell_cast: None,
+                card_drawn: pending_card_drawn,
                 card_exiled: None,
                 card_discarded: None,
                 life_changed: None,
@@ -231,6 +283,7 @@ pub fn pass_priority(
                     triggered_abilities_put_on_stack: Vec::new(),
                     stack_top_resolved: None,
                     spell_cast: None,
+                    card_drawn: Vec::new(),
                     card_exiled: None,
                     card_discarded: None,
                     life_changed: None,
@@ -256,6 +309,7 @@ pub fn pass_priority(
                     triggered_abilities_put_on_stack: Vec::new(),
                     stack_top_resolved: None,
                     spell_cast: None,
+                    card_drawn: Vec::new(),
                     card_exiled: None,
                     card_discarded: None,
                     life_changed: None,
@@ -303,6 +357,7 @@ pub fn pass_priority(
         triggered_abilities_put_on_stack,
         stack_top_resolved: Some(stack_top_resolved),
         spell_cast,
+        card_drawn: Vec::new(),
         card_exiled,
         card_discarded,
         life_changed,

@@ -17,7 +17,7 @@ use super::super::{
 };
 use crate::domain::play::{
     events::{
-        ActivatedAbilityPutOnStack, CardDiscarded, CardExiled, CreatureDied, GameEnded,
+        ActivatedAbilityPutOnStack, CardDiscarded, CardDrawn, CardExiled, CreatureDied, GameEnded,
         LifeChanged, PriorityPassed, SpellCast, SpellPutOnStack, StackTopResolved,
         TriggeredAbilityPutOnStack,
     },
@@ -65,6 +65,7 @@ pub struct PassPriorityOutcome {
     pub triggered_abilities_put_on_stack: Vec<TriggeredAbilityPutOnStack>,
     pub stack_top_resolved: Option<StackTopResolved>,
     pub spell_cast: Option<SpellCast>,
+    pub card_drawn: Vec<CardDrawn>,
     pub card_exiled: Option<CardExiled>,
     pub card_discarded: Option<CardDiscarded>,
     pub life_changed: Option<LifeChanged>,
@@ -92,6 +93,7 @@ pub struct ResolveOptionalEffectOutcome {
 pub struct ResolvePendingHandChoiceOutcome {
     pub stack_top_resolved: Option<StackTopResolved>,
     pub spell_cast: Option<SpellCast>,
+    pub card_drawn: Vec<CardDrawn>,
     pub card_discarded: Option<CardDiscarded>,
     pub moved_cards: Vec<CardInstanceId>,
     pub game_ended: Option<GameEnded>,

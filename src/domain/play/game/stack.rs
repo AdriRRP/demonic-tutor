@@ -109,6 +109,11 @@ impl Game {
                     super::helpers::find_player_index(&self.players, &spell_cast.player_id)?;
                 self.sync_card_location_from_player(owner_index, &spell_cast.card_id);
             }
+            for card_drawn in &outcome.card_drawn {
+                let owner_index =
+                    super::helpers::find_player_index(&self.players, &card_drawn.player_id)?;
+                self.sync_card_location_from_player(owner_index, &card_drawn.card_id);
+            }
             if let Some(card_exiled) = &outcome.card_exiled {
                 let owner_index =
                     super::helpers::find_player_index(&self.players, &card_exiled.player_id)?;
@@ -207,6 +212,11 @@ impl Game {
                 let owner_index =
                     super::helpers::find_player_index(&self.players, &spell_cast.player_id)?;
                 self.sync_card_location_from_player(owner_index, &spell_cast.card_id);
+            }
+            for card_drawn in &outcome.card_drawn {
+                let owner_index =
+                    super::helpers::find_player_index(&self.players, &card_drawn.player_id)?;
+                self.sync_card_location_from_player(owner_index, &card_drawn.card_id);
             }
             if let Some(card_discarded) = &outcome.card_discarded {
                 let owner_index =

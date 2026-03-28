@@ -12,7 +12,6 @@ use demonictutor::{
 };
 
 fn setup_game() -> (crate::support::TestService, demonictutor::Game) {
-    let service = create_service();
     let libraries = vec![
         player_library(
             "p1",
@@ -46,6 +45,13 @@ fn setup_game() -> (crate::support::TestService, demonictutor::Game) {
             ],
         ),
     ];
+    setup_game_with_libraries(libraries)
+}
+
+fn setup_game_with_libraries(
+    libraries: Vec<demonictutor::PlayerLibrary>,
+) -> (crate::support::TestService, demonictutor::Game) {
+    let service = create_service();
     let decks = vec![player_deck("p1", "d1"), player_deck("p2", "d2")];
 
     let (mut game, _) = service
@@ -103,6 +109,45 @@ fn loot_spell_draws_then_prompts_for_discard() {
     assert!(player(&game, "p1")
         .hand_card_by_definition(&CardDefinitionId::new("p1-draw-a"))
         .is_some());
+}
+
+#[test]
+fn loot_pending_choice_emits_explicit_draw_event() {
+    let (service, mut game) = setup_game();
+    let loot_id = player(&game, "p1")
+        .hand_card_by_definition(&CardDefinitionId::new("p1-loot"))
+        .expect("loot spell should be in hand")
+        .id()
+        .clone();
+
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(demonictutor::PlayerId::new("p1"), loot_id),
+        )
+        .expect("loot should cast");
+    service
+        .pass_priority(
+            &mut game,
+            PassPriorityCommand::new(demonictutor::PlayerId::new("p1")),
+        )
+        .expect("active player should pass");
+    let outcome = service
+        .pass_priority(
+            &mut game,
+            PassPriorityCommand::new(demonictutor::PlayerId::new("p2")),
+        )
+        .expect("opponent should pass");
+
+    assert_eq!(outcome.card_drawn.len(), 1);
+    assert_eq!(
+        outcome.card_drawn[0].draw_kind,
+        demonictutor::DrawKind::ExplicitEffect
+    );
+    assert_eq!(
+        player(&game, "p1").card_zone(&outcome.card_drawn[0].card_id),
+        Some(demonictutor::domain::play::game::PlayerCardZone::Hand)
+    );
 }
 
 #[test]
@@ -188,6 +233,116 @@ fn rummage_spell_discards_selected_card_before_drawing() {
     assert!(player(&game, "p1")
         .hand_card_by_definition(&CardDefinitionId::new("p1-draw-a"))
         .is_some());
+}
+
+#[test]
+fn rummage_resolution_emits_explicit_draw_event() {
+    let (service, mut game) = setup_game();
+    let rummage_id = player(&game, "p1")
+        .hand_card_by_definition(&CardDefinitionId::new("p1-rummage"))
+        .expect("rummage spell should be in hand")
+        .id()
+        .clone();
+    let discard_id = player(&game, "p1")
+        .hand_card_by_definition(&CardDefinitionId::new("p1-hand-a"))
+        .expect("known hand card should be in hand")
+        .id()
+        .clone();
+
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(demonictutor::PlayerId::new("p1"), rummage_id),
+        )
+        .expect("rummage should cast");
+    pass_both_players(&service, &mut game);
+    let outcome = service
+        .resolve_pending_hand_choice(
+            &mut game,
+            ResolvePendingHandChoiceCommand::new(demonictutor::PlayerId::new("p1"), discard_id),
+        )
+        .expect("pending rummage choice should resolve");
+
+    assert_eq!(outcome.card_drawn.len(), 1);
+    assert_eq!(
+        outcome.card_drawn[0].draw_kind,
+        demonictutor::DrawKind::ExplicitEffect
+    );
+    assert_eq!(
+        player(&game, "p1").card_zone(&outcome.card_drawn[0].card_id),
+        Some(demonictutor::domain::play::game::PlayerCardZone::Hand)
+    );
+}
+
+#[test]
+fn loot_terminal_draw_failure_still_resolves_and_clears_the_stack() {
+    let libraries = vec![
+        player_library(
+            "p1",
+            vec![
+                loot_sorcery_card("p1-loot", 0, 1),
+                forest_card("p1-hand-a"),
+                forest_card("p1-hand-b"),
+                forest_card("p1-hand-c"),
+                forest_card("p1-hand-d"),
+                forest_card("p1-hand-e"),
+                forest_card("p1-hand-f"),
+                forest_card("p1-draw-step"),
+            ],
+        ),
+        player_library(
+            "p2",
+            vec![
+                forest_card("p2-a"),
+                forest_card("p2-b"),
+                forest_card("p2-c"),
+                forest_card("p2-d"),
+                forest_card("p2-e"),
+                forest_card("p2-f"),
+                forest_card("p2-g"),
+                forest_card("p2-h"),
+                forest_card("p2-i"),
+                forest_card("p2-j"),
+            ],
+        ),
+    ];
+    let (service, mut game) = setup_game_with_libraries(libraries);
+    let loot_id = player(&game, "p1")
+        .hand_card_by_definition(&CardDefinitionId::new("p1-loot"))
+        .expect("loot spell should be in hand")
+        .id()
+        .clone();
+
+    assert_eq!(player(&game, "p1").library_size(), 0);
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(demonictutor::PlayerId::new("p1"), loot_id.clone()),
+        )
+        .expect("loot should cast");
+    service
+        .pass_priority(
+            &mut game,
+            PassPriorityCommand::new(demonictutor::PlayerId::new("p1")),
+        )
+        .expect("active player should pass");
+    let outcome = service
+        .pass_priority(
+            &mut game,
+            PassPriorityCommand::new(demonictutor::PlayerId::new("p2")),
+        )
+        .expect("opponent should pass");
+
+    assert!(game.is_over());
+    assert!(game.stack().is_empty());
+    assert!(game.pending_decision().is_none());
+    assert!(outcome.stack_top_resolved.is_some());
+    assert!(outcome.spell_cast.is_some());
+    assert!(outcome.game_ended.is_some());
+    assert_eq!(
+        player(&game, "p1").card_zone(&loot_id),
+        Some(demonictutor::domain::play::game::PlayerCardZone::Graveyard)
+    );
 }
 
 #[test]
