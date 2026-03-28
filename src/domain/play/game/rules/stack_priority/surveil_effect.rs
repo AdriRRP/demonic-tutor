@@ -109,7 +109,12 @@ pub fn resolve_pending_surveil(
     let moved_cards = if move_to_graveyard {
         players[controller_index]
             .mill_cards_to_graveyard(1)
-            .unwrap_or_default()
+            .ok_or_else(|| {
+                DomainError::Game(GameError::InternalInvariantViolation(
+                    "pending surveil failed to move the looked-at card from library to graveyard"
+                        .to_string(),
+                ))
+            })?
     } else {
         Vec::new()
     };
