@@ -58,7 +58,7 @@ impl EventStore for InMemoryEventStore {
                 entry
                     .pending_chunks
                     .is_empty()
-                    .then(|| entry.combined.as_ref())
+                    .then_some(entry.combined.as_ref())
                     .flatten()
                     .map(Arc::clone)
             })
@@ -73,11 +73,10 @@ impl EventStore for InMemoryEventStore {
             return Ok(Arc::<[DomainEvent]>::from(Vec::<DomainEvent>::new()));
         };
         if entry.pending_chunks.is_empty() {
-            let combined = entry
-                .combined
-                .as_ref()
-                .map(Arc::clone)
-                .unwrap_or_else(|| Arc::<[DomainEvent]>::from(Vec::<DomainEvent>::new()));
+            let combined = entry.combined.as_ref().map_or_else(
+                || Arc::<[DomainEvent]>::from(Vec::<DomainEvent>::new()),
+                Arc::clone,
+            );
             drop(events);
             return Ok(combined);
         }

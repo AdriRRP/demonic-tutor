@@ -71,16 +71,14 @@ impl PublicEventLogCache {
 
     fn insert(&mut self, game_id: &str, entries: Arc<[PublicEventLogEntry]>) {
         let estimated_bytes = approximate_public_event_log_bytes(entries.as_ref());
-        let recency_node = if let Some(previous) = self.entries.remove(game_id) {
+        if let Some(previous) = self.entries.remove(game_id) {
             self.total_estimated_bytes = self
                 .total_estimated_bytes
                 .saturating_sub(previous.estimated_bytes);
             self.unlink_recency_node(previous.recency_node);
             self.recycle_recency_node(previous.recency_node);
-            self.allocate_recency_node(game_id)
-        } else {
-            self.allocate_recency_node(game_id)
-        };
+        }
+        let recency_node = self.allocate_recency_node(game_id);
         self.total_estimated_bytes += estimated_bytes;
         self.link_recency_node_as_newest(recency_node);
         self.entries.insert(
@@ -180,7 +178,7 @@ impl PublicEventLogCache {
     }
 }
 
-fn approximate_public_event_log_bytes(entries: &[PublicEventLogEntry]) -> usize {
+const fn approximate_public_event_log_bytes(entries: &[PublicEventLogEntry]) -> usize {
     // Coarse byte budget: the contiguous slice backing the cached projection.
     size_of_val(entries)
 }

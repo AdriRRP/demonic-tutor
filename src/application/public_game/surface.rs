@@ -723,8 +723,8 @@ fn spell_choice_request(
 
     if rules.requires_explicit_hand_card_choice() {
         return Some(
-            opponent_hand_choice_candidates(game.players(), player.id()).map_or(
-                PublicChoiceRequest::SpellChoiceUnavailable {
+            opponent_hand_choice_candidates(game.players(), player.id()).map_or_else(
+                || PublicChoiceRequest::SpellChoiceUnavailable {
                     player_id: player.id().clone(),
                     source_card_id: source_card_id.clone(),
                 },
