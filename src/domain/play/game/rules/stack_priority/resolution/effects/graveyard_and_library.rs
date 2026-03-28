@@ -6,7 +6,7 @@ use super::shared::{
     SpellResolutionSideEffects,
 };
 use crate::domain::play::{
-    errors::DomainError,
+    errors::{DomainError, GameError},
     events::{CardMovedZone, ZoneType},
     game::{rules::zones, SpellTarget},
     ids::{CardInstanceId, GameId},
@@ -334,7 +334,11 @@ pub(super) fn resolve_mill_effect(
     };
     let moved_cards = context.players[target_player_index]
         .mill_cards_to_graveyard(amount as usize)
-        .unwrap_or_default();
+        .ok_or_else(|| {
+            DomainError::Game(GameError::InternalInvariantViolation(
+                "mill effect failed to move milled cards from library to graveyard".to_string(),
+            ))
+        })?;
     let zone_changes = moved_cards
         .iter()
         .cloned()
