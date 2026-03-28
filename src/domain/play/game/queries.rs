@@ -163,6 +163,12 @@ fn candidate_stack_spell_targets(game: &Game) -> Vec<SpellTarget> {
     game.stack()
         .objects()
         .iter()
+        .filter(|object| {
+            matches!(
+                object.kind(),
+                crate::domain::play::game::model::StackObjectKind::Spell(_)
+            )
+        })
         .map(|object| {
             SpellTarget::StackObject(StackObjectId::for_stack_object(game.id(), object.number()))
         })
