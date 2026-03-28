@@ -3,7 +3,7 @@
 use crate::domain::play::{
     commands::ResolvePendingSurveilCommand,
     errors::{DomainError, GameError},
-    events::{CardMovedZone, ZoneType},
+    events::{CardMovedZone, SpellCastOutcome, ZoneType},
     game::{PendingDecision, PriorityState},
 };
 
@@ -30,6 +30,23 @@ fn build_surveil_zone_changes(
             )
         })
         .collect()
+}
+
+fn zone_change_for_spell_cast(
+    spell_cast: &crate::domain::play::events::SpellCast,
+) -> CardMovedZone {
+    let destination_zone = match spell_cast.outcome {
+        SpellCastOutcome::EnteredBattlefield => ZoneType::Battlefield,
+        SpellCastOutcome::ResolvedToGraveyard => ZoneType::Graveyard,
+        SpellCastOutcome::ResolvedToExile => ZoneType::Exile,
+    };
+    CardMovedZone::new(
+        spell_cast.game_id.clone(),
+        spell_cast.player_id.clone(),
+        spell_cast.card_id.clone(),
+        ZoneType::Stack,
+        destination_zone,
+    )
 }
 
 /// Resolves a pending surveil decision.
@@ -96,7 +113,7 @@ pub fn resolve_pending_surveil(
     } else {
         Vec::new()
     };
-    let zone_changes = if move_to_graveyard {
+    let mut zone_changes = if move_to_graveyard {
         build_surveil_zone_changes(game_id, players[controller_index].id(), &moved_cards)
     } else {
         Vec::new()
@@ -116,6 +133,7 @@ pub fn resolve_pending_surveil(
         controller_index,
         pending_spell,
     )?;
+    zone_changes.push(zone_change_for_spell_cast(&spell_cast));
 
     *priority = Some(PriorityState::opened(active_player.clone()));
 

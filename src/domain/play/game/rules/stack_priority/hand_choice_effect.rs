@@ -3,7 +3,10 @@
 use crate::domain::play::{
     commands::ResolvePendingHandChoiceCommand,
     errors::{DomainError, GameError},
-    events::{CardDiscarded, CardDrawn, CardMovedZone, DiscardKind, DrawKind, GameEnded, ZoneType},
+    events::{
+        CardDiscarded, CardDrawn, CardMovedZone, DiscardKind, DrawKind, GameEnded,
+        SpellCastOutcome, ZoneType,
+    },
     game::{model::PlayerCardZone, PendingDecision, PendingHandChoiceKind, PriorityState},
     ids::PlayerCardHandle,
 };
@@ -111,6 +114,33 @@ fn validate_pending_hand_choice(
     Ok(handle)
 }
 
+fn zone_change_for_drawn_card(event: &CardDrawn) -> CardMovedZone {
+    CardMovedZone::new(
+        event.game_id.clone(),
+        event.player_id.clone(),
+        event.card_id.clone(),
+        ZoneType::Library,
+        ZoneType::Hand,
+    )
+}
+
+fn zone_change_for_spell_cast(
+    spell_cast: &crate::domain::play::events::SpellCast,
+) -> CardMovedZone {
+    let destination_zone = match spell_cast.outcome {
+        SpellCastOutcome::EnteredBattlefield => ZoneType::Battlefield,
+        SpellCastOutcome::ResolvedToGraveyard => ZoneType::Graveyard,
+        SpellCastOutcome::ResolvedToExile => ZoneType::Exile,
+    };
+    CardMovedZone::new(
+        spell_cast.game_id.clone(),
+        spell_cast.player_id.clone(),
+        spell_cast.card_id.clone(),
+        ZoneType::Stack,
+        destination_zone,
+    )
+}
+
 /// Finishes a pending hand-choice spell effect.
 ///
 /// # Errors
@@ -189,7 +219,7 @@ pub fn resolve_pending_hand_choice(
         chosen_card_id,
         DiscardKind::SpellEffect,
     ));
-    let zone_changes = card_discarded
+    let mut zone_changes = card_discarded
         .as_ref()
         .map(|discarded| {
             vec![CardMovedZone::new(
@@ -212,6 +242,7 @@ pub fn resolve_pending_hand_choice(
             draw_count,
         )?,
     };
+    zone_changes.extend(card_drawn.iter().map(zone_change_for_drawn_card));
 
     let (stack_top_resolved, spell_cast, _moved_cards) =
         resolve_pending_spell_to_default_destination(
@@ -220,6 +251,7 @@ pub fn resolve_pending_hand_choice(
             controller_index,
             pending_spell,
         )?;
+    zone_changes.push(zone_change_for_spell_cast(&spell_cast));
 
     if terminal_state.is_over() {
         *priority = None;

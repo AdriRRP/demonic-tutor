@@ -4,7 +4,7 @@ use {
     super::super::model::{AggregateCardLocationIndex, Player},
     crate::domain::play::{
         errors::{CardError, DomainError, GameError},
-        events::{CardExiled, ZoneType},
+        events::{CardMovedZone, ZoneType},
         ids::{CardInstanceId, GameId, PlayerCardHandle, PlayerId},
     },
 };
@@ -209,7 +209,7 @@ fn exile_card_from_player_zone_handle_by_index(
     handle: PlayerCardHandle,
     source_zone: ZoneType,
     move_card: impl FnOnce(&mut Player, PlayerCardHandle) -> Option<()>,
-) -> Result<CardExiled, DomainError> {
+) -> Result<CardMovedZone, DomainError> {
     let player = players.get_mut(player_index).ok_or_else(|| {
         DomainError::Game(GameError::InternalInvariantViolation(format!(
             "player index {player_index} must exist during zone transition"
@@ -233,11 +233,12 @@ fn exile_card_from_player_zone_handle_by_index(
         })
     })?;
 
-    Ok(CardExiled::new(
+    Ok(CardMovedZone::new(
         game_id.clone(),
         player_id,
         card_id,
         source_zone,
+        ZoneType::Exile,
     ))
 }
 
@@ -248,7 +249,7 @@ fn exile_card_from_player_zone_by_index(
     card_id: &CardInstanceId,
     source_zone: ZoneType,
     move_card: impl FnOnce(&mut Player, &CardInstanceId) -> Option<()>,
-) -> Result<CardExiled, DomainError> {
+) -> Result<CardMovedZone, DomainError> {
     let player = players.get_mut(player_index).ok_or_else(|| {
         DomainError::Game(GameError::InternalInvariantViolation(format!(
             "player index {player_index} must exist during zone transition"
@@ -263,11 +264,12 @@ fn exile_card_from_player_zone_by_index(
         })
     })?;
 
-    Ok(CardExiled::new(
+    Ok(CardMovedZone::new(
         game_id.clone(),
         player_id,
         card_id.clone(),
         source_zone,
+        ZoneType::Exile,
     ))
 }
 
@@ -281,7 +283,7 @@ pub(crate) fn exile_card_from_battlefield_by_index(
     players: &mut [Player],
     player_index: usize,
     card_id: &CardInstanceId,
-) -> Result<CardExiled, DomainError> {
+) -> Result<CardMovedZone, DomainError> {
     exile_card_from_player_zone_by_index(
         game_id,
         players,
@@ -303,7 +305,7 @@ pub(crate) fn exile_card_from_battlefield_handle_by_index(
     card_locations: &AggregateCardLocationIndex,
     player_index: usize,
     handle: PlayerCardHandle,
-) -> Result<CardExiled, DomainError> {
+) -> Result<CardMovedZone, DomainError> {
     let owner_index = owner_index_for_battlefield_handle(players, player_index, handle)?;
     remove_attached_aura_effects_for_battlefield_handle(
         players,
@@ -336,11 +338,12 @@ pub(crate) fn exile_card_from_battlefield_handle_by_index(
                     card: card_id.clone(),
                 })
             })?;
-        return Ok(CardExiled::new(
+        return Ok(CardMovedZone::new(
             game_id.clone(),
             owner_id,
             card_id,
             ZoneType::Battlefield,
+            ZoneType::Exile,
         ));
     }
 
@@ -360,11 +363,12 @@ pub(crate) fn exile_card_from_battlefield_handle_by_index(
     let owner_id = owner.id().clone();
     owner.receive_exile_card(card);
 
-    Ok(CardExiled::new(
+    Ok(CardMovedZone::new(
         game_id.clone(),
         owner_id,
         card_id,
         ZoneType::Battlefield,
+        ZoneType::Exile,
     ))
 }
 
@@ -378,7 +382,7 @@ pub(crate) fn exile_card_from_battlefield(
     players: &mut [Player],
     player_id: &PlayerId,
     card_id: &CardInstanceId,
-) -> Result<CardExiled, DomainError> {
+) -> Result<CardMovedZone, DomainError> {
     let player_index = players
         .iter()
         .position(|p| p.id() == player_id)
@@ -396,7 +400,7 @@ pub(crate) fn exile_card_from_graveyard_by_index(
     players: &mut [Player],
     player_index: usize,
     card_id: &CardInstanceId,
-) -> Result<CardExiled, DomainError> {
+) -> Result<CardMovedZone, DomainError> {
     exile_card_from_player_zone_by_index(
         game_id,
         players,
@@ -417,7 +421,7 @@ pub(crate) fn exile_card_from_graveyard_handle_by_index(
     players: &mut [Player],
     player_index: usize,
     handle: PlayerCardHandle,
-) -> Result<CardExiled, DomainError> {
+) -> Result<CardMovedZone, DomainError> {
     exile_card_from_player_zone_handle_by_index(
         game_id,
         players,
@@ -438,7 +442,7 @@ pub(crate) fn exile_card_from_graveyard(
     players: &mut [Player],
     player_id: &PlayerId,
     card_id: &CardInstanceId,
-) -> Result<CardExiled, DomainError> {
+) -> Result<CardMovedZone, DomainError> {
     let player_index = players
         .iter()
         .position(|p| p.id() == player_id)

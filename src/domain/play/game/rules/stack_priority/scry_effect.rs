@@ -3,6 +3,7 @@
 use crate::domain::play::{
     commands::ResolvePendingScryCommand,
     errors::{DomainError, GameError},
+    events::{CardMovedZone, SpellCastOutcome, ZoneType},
     game::{PendingDecision, PriorityState},
 };
 
@@ -10,6 +11,23 @@ use super::{
     deferred_resolution::{remove_pending_spell, resolve_pending_spell_to_default_destination},
     ResolvePendingScryOutcome, StackPriorityContext,
 };
+
+fn zone_change_for_spell_cast(
+    spell_cast: &crate::domain::play::events::SpellCast,
+) -> CardMovedZone {
+    let destination_zone = match spell_cast.outcome {
+        SpellCastOutcome::EnteredBattlefield => ZoneType::Battlefield,
+        SpellCastOutcome::ResolvedToGraveyard => ZoneType::Graveyard,
+        SpellCastOutcome::ResolvedToExile => ZoneType::Exile,
+    };
+    CardMovedZone::new(
+        spell_cast.game_id.clone(),
+        spell_cast.player_id.clone(),
+        spell_cast.card_id.clone(),
+        ZoneType::Stack,
+        destination_zone,
+    )
+}
 
 /// Resolves a pending scry decision.
 ///
@@ -91,13 +109,14 @@ pub fn resolve_pending_scry(
         controller_index,
         pending_spell,
     )?;
+    let zone_changes = vec![zone_change_for_spell_cast(&spell_cast)];
 
     *priority = Some(PriorityState::opened(active_player.clone()));
 
     Ok(ResolvePendingScryOutcome {
         stack_top_resolved: Some(stack_top_resolved),
         spell_cast: Some(spell_cast),
-        zone_changes: Vec::new(),
+        zone_changes,
         game_ended: None,
         priority_still_open: true,
     })

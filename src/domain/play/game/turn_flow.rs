@@ -159,8 +159,7 @@ impl Game {
                 &cmd.player_id,
                 &cmd.card_id,
             )
-        }
-        .map(|event| Self::zone_change_for_card_exiled(&event));
+        };
         if let Ok(event) = &result {
             let zone_changes = [event.clone()];
             self.sync_zone_changes(&zone_changes)?;

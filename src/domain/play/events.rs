@@ -20,7 +20,6 @@ pub use stack_priority::{
 pub use turn_flow::{
     CardDiscarded, CardDrawn, DiscardKind, DrawKind, MulliganTaken, TurnProgressed,
 };
-pub(crate) use zones::CardExiled;
 pub use zones::{CardMovedZone, ZoneType};
 
 macro_rules! impl_domain_event_from {

@@ -21,7 +21,7 @@ use crate::domain::play::{
         TriggeredAbilityEffect, TriggeredAbilityEvent,
     },
     events::{
-        CardDiscarded, CardExiled, CardMovedZone, CreatureDied, GameEnded, LifeChanged, SpellCast,
+        CardDiscarded, CardMovedZone, CreatureDied, GameEnded, LifeChanged, SpellCast,
         SpellCastOutcome, StackTopResolved, TriggeredAbilityPutOnStack, ZoneType,
     },
     game::{
@@ -176,11 +176,62 @@ fn materialize_stack_card_id(
         .clone())
 }
 
+fn push_unique_zone_change(zone_changes: &mut Vec<CardMovedZone>, zone_change: CardMovedZone) {
+    let exists = zone_changes.iter().any(|existing| {
+        existing.zone_owner_id == zone_change.zone_owner_id
+            && existing.card_id == zone_change.card_id
+            && existing.origin_zone.as_str() == zone_change.origin_zone.as_str()
+            && existing.destination_zone.as_str() == zone_change.destination_zone.as_str()
+    });
+    if !exists {
+        zone_changes.push(zone_change);
+    }
+}
+
+fn zone_change_for_spell_cast(event: &SpellCast) -> CardMovedZone {
+    let destination_zone = match event.outcome {
+        SpellCastOutcome::EnteredBattlefield => ZoneType::Battlefield,
+        SpellCastOutcome::ResolvedToGraveyard => ZoneType::Graveyard,
+        SpellCastOutcome::ResolvedToExile => ZoneType::Exile,
+    };
+    CardMovedZone::new(
+        event.game_id.clone(),
+        event.player_id.clone(),
+        event.card_id.clone(),
+        ZoneType::Stack,
+        destination_zone,
+    )
+}
+
+fn zone_change_for_card_discarded(event: &CardDiscarded) -> CardMovedZone {
+    CardMovedZone::new(
+        event.game_id.clone(),
+        event.player_id.clone(),
+        event.card_id.clone(),
+        ZoneType::Hand,
+        ZoneType::Graveyard,
+    )
+}
+
+fn zone_changes_for_creatures_died(creatures_died: &[CreatureDied]) -> Vec<CardMovedZone> {
+    creatures_died
+        .iter()
+        .map(|event| {
+            CardMovedZone::new(
+                event.game_id.clone(),
+                event.player_id.clone(),
+                event.card_id.clone(),
+                ZoneType::Battlefield,
+                ZoneType::Graveyard,
+            )
+        })
+        .collect()
+}
+
 fn move_resolved_spell_to_destination(
-    game_id: &GameId,
     context: &mut SpellDestinationContext<'_>,
     payload: SpellPayload,
-) -> Result<(SpellCastOutcome, Option<CardExiled>), crate::domain::play::errors::DomainError> {
+) -> Result<SpellCastOutcome, crate::domain::play::errors::DomainError> {
     if matches!(
         (
             context.card_type,
@@ -199,12 +250,10 @@ fn move_resolved_spell_to_destination(
             context.supported_spell_rules,
             context.target,
             payload,
-        )
-        .map(|outcome| (outcome, None));
+        );
     }
 
     move_resolved_spell_to_its_destination(
-        game_id,
         context.players,
         context.controller_index,
         context.card_type,
@@ -437,8 +486,7 @@ fn resolve_spell_from_stack(
     let supported_spell_rules = payload.supported_spell_rules();
     let source_card_id = payload.id().clone();
 
-    let (outcome, resolved_spell_card_exiled) = move_resolved_spell_to_destination(
-        game_id,
+    let outcome = move_resolved_spell_to_destination(
         &mut SpellDestinationContext {
             players,
             card_locations,
@@ -481,14 +529,12 @@ fn resolve_spell_from_stack(
             target.as_ref(),
             choice,
         ))?;
-    if let Some(card_exiled) = resolved_spell_card_exiled {
-        zone_changes.push(CardMovedZone::new(
-            card_exiled.game_id,
-            card_exiled.zone_owner_id,
-            card_exiled.card_id,
-            card_exiled.origin_zone,
-            ZoneType::Exile,
-        ));
+    push_unique_zone_change(&mut zone_changes, zone_change_for_spell_cast(&spell_cast));
+    if let Some(event) = &card_discarded {
+        push_unique_zone_change(&mut zone_changes, zone_change_for_card_discarded(event));
+    }
+    for zone_change in zone_changes_for_creatures_died(&creatures_died) {
+        push_unique_zone_change(&mut zone_changes, zone_change);
     }
     triggered_abilities_put_on_stack.extend(enqueue_entered_battlefield_triggers_for_moved_cards(
         game_id,

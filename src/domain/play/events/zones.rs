@@ -60,28 +60,3 @@ impl CardMovedZone {
         }
     }
 }
-
-#[derive(Debug, Clone)]
-pub struct CardExiled {
-    pub game_id: GameId,
-    pub zone_owner_id: PlayerId,
-    pub card_id: CardInstanceId,
-    pub origin_zone: ZoneType,
-}
-
-impl CardExiled {
-    #[must_use]
-    pub const fn new(
-        game_id: GameId,
-        zone_owner_id: PlayerId,
-        card_id: CardInstanceId,
-        origin_zone: ZoneType,
-    ) -> Self {
-        Self {
-            game_id,
-            zone_owner_id,
-            card_id,
-            origin_zone,
-        }
-    }
-}

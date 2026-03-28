@@ -10,11 +10,41 @@ use {
     crate::domain::play::{
         commands::PassPriorityCommand,
         errors::{DomainError, GameError},
-        events::PriorityPassed,
+        events::{CardDrawn, CardMovedZone, PriorityPassed, SpellCast, ZoneType},
         game::{invariants, model::PriorityState, PendingDecision, Player},
         ids::PlayerId,
     },
 };
+
+fn zone_change_for_spell_cast(event: &SpellCast) -> CardMovedZone {
+    let destination_zone = match event.outcome {
+        crate::domain::play::events::SpellCastOutcome::EnteredBattlefield => ZoneType::Battlefield,
+        crate::domain::play::events::SpellCastOutcome::ResolvedToGraveyard => ZoneType::Graveyard,
+        crate::domain::play::events::SpellCastOutcome::ResolvedToExile => ZoneType::Exile,
+    };
+    CardMovedZone::new(
+        event.game_id.clone(),
+        event.player_id.clone(),
+        event.card_id.clone(),
+        ZoneType::Stack,
+        destination_zone,
+    )
+}
+
+fn zone_changes_for_drawn_cards(card_drawn: &[CardDrawn]) -> Vec<CardMovedZone> {
+    card_drawn
+        .iter()
+        .map(|event| {
+            CardMovedZone::new(
+                event.game_id.clone(),
+                event.player_id.clone(),
+                event.card_id.clone(),
+                ZoneType::Library,
+                ZoneType::Hand,
+            )
+        })
+        .collect()
+}
 
 fn other_player_id(players: &[Player], player_id: &PlayerId) -> Result<PlayerId, DomainError> {
     players
@@ -202,6 +232,8 @@ pub fn pass_priority(
                                 controller_index,
                                 pending_spell,
                             )?;
+                        let mut zone_changes = zone_changes_for_drawn_cards(&card_drawn);
+                        zone_changes.push(zone_change_for_spell_cast(&spell_cast));
 
                         *priority = None;
                         return Ok(PassPriorityOutcome {
@@ -211,7 +243,7 @@ pub fn pass_priority(
                             spell_cast: Some(spell_cast),
                             card_drawn,
                             card_discarded: None,
-                            zone_changes: Vec::new(),
+                            zone_changes,
                             life_changed: None,
                             creatures_died: Vec::new(),
                             game_ended: Some(game_ended),
@@ -225,6 +257,7 @@ pub fn pass_priority(
                 };
 
             *priority = None;
+            let zone_changes = zone_changes_for_drawn_cards(&pending_card_drawn);
             *pending_decision = Some(PendingDecision::hand_choice(
                 stack_object.controller_index(),
                 stack_object.number(),
@@ -237,7 +270,7 @@ pub fn pass_priority(
                 spell_cast: None,
                 card_drawn: pending_card_drawn,
                 card_discarded: None,
-                zone_changes: Vec::new(),
+                zone_changes,
                 life_changed: None,
                 creatures_died: Vec::new(),
                 game_ended: None,

@@ -15,8 +15,7 @@ mod turn_flow;
 use crate::domain::play::{
     errors::{DomainError, GameError},
     events::{
-        CardDiscarded, CardDrawn, CardExiled, CardMovedZone, CreatureDied, GameEndReason,
-        LandPlayed, SpellCast, SpellCastOutcome, ZoneType,
+        CardDiscarded, CardDrawn, CardMovedZone, CreatureDied, GameEndReason, LandPlayed, ZoneType,
     },
     ids::{CardInstanceId, GameId, PlayerId},
     phase::Phase,
@@ -292,21 +291,6 @@ impl Game {
         Ok(())
     }
 
-    pub(crate) fn zone_change_for_spell_cast(event: &SpellCast) -> CardMovedZone {
-        let destination_zone = match event.outcome {
-            SpellCastOutcome::EnteredBattlefield => ZoneType::Battlefield,
-            SpellCastOutcome::ResolvedToGraveyard => ZoneType::Graveyard,
-            SpellCastOutcome::ResolvedToExile => ZoneType::Exile,
-        };
-        CardMovedZone::new(
-            event.game_id.clone(),
-            event.player_id.clone(),
-            event.card_id.clone(),
-            ZoneType::Stack,
-            destination_zone,
-        )
-    }
-
     pub(crate) fn zone_change_for_card_drawn(event: &CardDrawn) -> CardMovedZone {
         CardMovedZone::new(
             event.game_id.clone(),
@@ -344,16 +328,6 @@ impl Game {
             event.card_id.clone(),
             ZoneType::Battlefield,
             ZoneType::Graveyard,
-        )
-    }
-
-    pub(crate) fn zone_change_for_card_exiled(event: &CardExiled) -> CardMovedZone {
-        CardMovedZone::new(
-            event.game_id.clone(),
-            event.zone_owner_id.clone(),
-            event.card_id.clone(),
-            event.origin_zone.clone(),
-            ZoneType::Exile,
         )
     }
 

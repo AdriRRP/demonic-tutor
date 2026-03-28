@@ -51,7 +51,24 @@ fn push_resolution_effect_batch(
 ) {
     domain_events.extend(batch.card_drawn.iter().cloned());
     domain_events.push_optional(batch.card_discarded.cloned());
-    domain_events.extend(batch.zone_changes.iter().cloned());
+    domain_events.extend(
+        batch
+            .zone_changes
+            .iter()
+            .filter(|event| {
+                !matches!(
+                    event.origin_zone,
+                    crate::domain::play::events::ZoneType::Stack
+                ) && !matches!(
+                    (&event.origin_zone, &event.destination_zone),
+                    (
+                        crate::domain::play::events::ZoneType::Library,
+                        crate::domain::play::events::ZoneType::Hand
+                    )
+                )
+            })
+            .cloned(),
+    );
     domain_events.push_optional(batch.life_changed.cloned());
     domain_events.extend(batch.creatures_died.iter().cloned());
 }
