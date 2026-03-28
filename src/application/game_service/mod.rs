@@ -18,7 +18,7 @@ use crate::{
     },
 };
 use std::{
-    collections::{HashMap, VecDeque},
+    collections::HashMap,
     mem::size_of_val,
     sync::{Arc, RwLock},
 };
@@ -41,7 +41,10 @@ const PUBLIC_EVENT_LOG_CACHE_MAX_BYTES: usize = 512 * 1024;
 #[derive(Debug, Default)]
 struct PublicEventLogCache {
     entries: HashMap<String, CachedPublicEventLog>,
-    recency: VecDeque<String>,
+    recency_nodes: Vec<CacheRecencyNode>,
+    free_recency_nodes: Vec<usize>,
+    oldest: Option<usize>,
+    newest: Option<usize>,
     total_estimated_bytes: usize,
 }
 
@@ -49,6 +52,14 @@ struct PublicEventLogCache {
 struct CachedPublicEventLog {
     entries: Arc<[PublicEventLogEntry]>,
     estimated_bytes: usize,
+    recency_node: usize,
+}
+
+#[derive(Debug, Default)]
+struct CacheRecencyNode {
+    game_id: String,
+    previous: Option<usize>,
+    next: Option<usize>,
 }
 
 impl PublicEventLogCache {
@@ -60,31 +71,39 @@ impl PublicEventLogCache {
 
     fn insert(&mut self, game_id: &str, entries: Arc<[PublicEventLogEntry]>) {
         let estimated_bytes = approximate_public_event_log_bytes(entries.as_ref());
-        if let Some(previous) = self.entries.insert(
+        let recency_node = if let Some(previous) = self.entries.remove(game_id) {
+            self.total_estimated_bytes = self
+                .total_estimated_bytes
+                .saturating_sub(previous.estimated_bytes);
+            self.unlink_recency_node(previous.recency_node);
+            self.recycle_recency_node(previous.recency_node);
+            self.allocate_recency_node(game_id)
+        } else {
+            self.allocate_recency_node(game_id)
+        };
+        self.total_estimated_bytes += estimated_bytes;
+        self.link_recency_node_as_newest(recency_node);
+        self.entries.insert(
             game_id.to_string(),
             CachedPublicEventLog {
                 entries,
                 estimated_bytes,
+                recency_node,
             },
-        ) {
-            self.total_estimated_bytes = self
-                .total_estimated_bytes
-                .saturating_sub(previous.estimated_bytes);
-        }
-        self.total_estimated_bytes += estimated_bytes;
-        self.recency.push_back(game_id.to_string());
+        );
 
         while self.entries.len() > PUBLIC_EVENT_LOG_CACHE_CAPACITY
             || self.total_estimated_bytes > PUBLIC_EVENT_LOG_CACHE_MAX_BYTES
         {
-            let Some(oldest) = self.recency.pop_front() else {
+            let Some(oldest_node) = self.pop_oldest_recency_node() else {
                 break;
             };
-            if let Some(evicted) = self.entries.remove(&oldest) {
+            let oldest_game_id = self.recency_nodes[oldest_node].game_id.clone();
+            if let Some(evicted) = self.entries.remove(&oldest_game_id) {
                 self.total_estimated_bytes = self
                     .total_estimated_bytes
                     .saturating_sub(evicted.estimated_bytes);
-                break;
+                self.recycle_recency_node(oldest_node);
             }
         }
     }
@@ -94,7 +113,70 @@ impl PublicEventLogCache {
             self.total_estimated_bytes = self
                 .total_estimated_bytes
                 .saturating_sub(removed.estimated_bytes);
+            self.unlink_recency_node(removed.recency_node);
+            self.recycle_recency_node(removed.recency_node);
         }
+    }
+
+    fn allocate_recency_node(&mut self, game_id: &str) -> usize {
+        if let Some(index) = self.free_recency_nodes.pop() {
+            self.recency_nodes[index] = CacheRecencyNode {
+                game_id: game_id.to_string(),
+                previous: None,
+                next: None,
+            };
+            return index;
+        }
+
+        self.recency_nodes.push(CacheRecencyNode {
+            game_id: game_id.to_string(),
+            previous: None,
+            next: None,
+        });
+        self.recency_nodes.len() - 1
+    }
+
+    fn recycle_recency_node(&mut self, node_index: usize) {
+        self.recency_nodes[node_index] = CacheRecencyNode::default();
+        self.free_recency_nodes.push(node_index);
+    }
+
+    fn link_recency_node_as_newest(&mut self, node_index: usize) {
+        self.recency_nodes[node_index].previous = self.newest;
+        self.recency_nodes[node_index].next = None;
+
+        if let Some(previous_newest) = self.newest {
+            self.recency_nodes[previous_newest].next = Some(node_index);
+        } else {
+            self.oldest = Some(node_index);
+        }
+        self.newest = Some(node_index);
+    }
+
+    fn unlink_recency_node(&mut self, node_index: usize) {
+        let previous = self.recency_nodes[node_index].previous;
+        let next = self.recency_nodes[node_index].next;
+
+        if let Some(previous_index) = previous {
+            self.recency_nodes[previous_index].next = next;
+        } else {
+            self.oldest = next;
+        }
+
+        if let Some(next_index) = next {
+            self.recency_nodes[next_index].previous = previous;
+        } else {
+            self.newest = previous;
+        }
+
+        self.recency_nodes[node_index].previous = None;
+        self.recency_nodes[node_index].next = None;
+    }
+
+    fn pop_oldest_recency_node(&mut self) -> Option<usize> {
+        let oldest = self.oldest?;
+        self.unlink_recency_node(oldest);
+        Some(oldest)
     }
 }
 
