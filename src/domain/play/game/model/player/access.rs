@@ -6,6 +6,33 @@ use super::{
 
 #[allow(clippy::missing_const_for_fn)]
 impl Player {
+    #[cold]
+    #[track_caller]
+    #[allow(clippy::panic)]
+    fn stale_visible_zone_handle_invariant(
+        &self,
+        handle: PlayerCardHandle,
+        zone: PlayerCardZone,
+    ) -> ! {
+        panic!(
+            "player {} has stale {:?} handle {:?} in a visible zone",
+            self.id(),
+            zone,
+            handle
+        );
+    }
+
+    #[cold]
+    #[track_caller]
+    #[allow(clippy::panic)]
+    fn stale_battlefield_walk_handle_invariant(&self, handle: PlayerCardHandle) -> ! {
+        panic!(
+            "player {} has stale battlefield handle {:?} in the mutable battlefield walk",
+            self.id(),
+            handle
+        );
+    }
+
     pub(super) fn resolve_handle(&self, card_id: &CardInstanceId) -> Option<PlayerCardHandle> {
         self.cards.find_handle(card_id)
     }
@@ -46,12 +73,7 @@ impl Player {
         zone: PlayerCardZone,
     ) -> &CardInstance {
         let Some(card) = self.card_by_handle_in_zone(handle, zone) else {
-            unreachable!(
-                "player {} has stale {:?} handle {:?} in a visible zone",
-                self.id(),
-                zone,
-                handle
-            );
+            self.stale_visible_zone_handle_invariant(handle, zone);
         };
         card
     }
@@ -338,11 +360,7 @@ impl Player {
                 continue;
             };
             let Some(card) = self.cards.get_mut_by_handle(handle) else {
-                unreachable!(
-                    "player {} has stale battlefield handle {:?} in the mutable battlefield walk",
-                    self.id(),
-                    handle
-                );
+                self.stale_battlefield_walk_handle_invariant(handle);
             };
             f(card);
         }
