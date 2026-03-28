@@ -3,6 +3,7 @@
 use std::{
     fmt,
     hash::{Hash, Hasher},
+    mem::size_of,
     ops::Deref,
     sync::Arc,
 };
@@ -81,6 +82,16 @@ impl SharedIdStr {
             SharedIdStrRepr::Shared(shared) => shared.as_ref(),
         }
     }
+
+    #[must_use]
+    pub(crate) fn estimated_heap_bytes(&self) -> usize {
+        match &self.0 {
+            SharedIdStrRepr::Inline(_) => 0,
+            // `Arc<str>` stores the string bytes plus the strong/weak counters
+            // in the shared heap allocation.
+            SharedIdStrRepr::Shared(shared) => shared.len() + (2 * size_of::<usize>()),
+        }
+    }
 }
 
 impl From<String> for SharedIdStr {
@@ -140,9 +151,9 @@ macro_rules! shared_text_id {
         }
 
         impl $name {
-            pub fn new(value: impl Into<String>) -> Self {
+            pub fn new(value: impl AsRef<str>) -> Self {
                 Self {
-                    public: SharedIdStr::from(value.into()),
+                    public: SharedIdStr::from(value.as_ref()),
                 }
             }
 
@@ -154,6 +165,14 @@ macro_rules! shared_text_id {
 
         impl From<String> for $name {
             fn from(value: String) -> Self {
+                Self {
+                    public: SharedIdStr::from(value),
+                }
+            }
+        }
+
+        impl From<&str> for $name {
+            fn from(value: &str) -> Self {
                 Self::new(value)
             }
         }
@@ -177,9 +196,9 @@ macro_rules! shared_text_id {
         }
 
         impl $name {
-            pub fn new(value: impl Into<String>) -> Self {
+            pub fn new(value: impl AsRef<str>) -> Self {
                 Self {
-                    public: SharedIdStr::from(value.into()),
+                    public: SharedIdStr::from(value.as_ref()),
                 }
             }
 
@@ -191,6 +210,14 @@ macro_rules! shared_text_id {
 
         impl From<String> for $name {
             fn from(value: String) -> Self {
+                Self {
+                    public: SharedIdStr::from(value),
+                }
+            }
+        }
+
+        impl From<&str> for $name {
+            fn from(value: &str) -> Self {
                 Self::new(value)
             }
         }
@@ -208,6 +235,27 @@ shared_text_id!(PlayerId, display);
 shared_text_id!(DeckId);
 shared_text_id!(CardInstanceId, display);
 shared_text_id!(CardDefinitionId, display);
+
+impl GameId {
+    #[must_use]
+    pub(crate) fn estimated_heap_bytes(&self) -> usize {
+        self.public.estimated_heap_bytes()
+    }
+}
+
+impl PlayerId {
+    #[must_use]
+    pub(crate) fn estimated_heap_bytes(&self) -> usize {
+        self.public.estimated_heap_bytes()
+    }
+}
+
+impl CardInstanceId {
+    #[must_use]
+    pub(crate) fn estimated_heap_bytes(&self) -> usize {
+        self.public.estimated_heap_bytes()
+    }
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct PlayerCardHandle(usize);
@@ -230,9 +278,9 @@ pub struct StackObjectId {
 }
 
 impl StackObjectId {
-    pub fn new(value: impl Into<String>) -> Self {
+    pub fn new(value: impl AsRef<str>) -> Self {
         Self {
-            public: SharedIdStr::from(value.into()),
+            public: SharedIdStr::from(value.as_ref()),
         }
     }
 
@@ -253,6 +301,11 @@ impl StackObjectId {
     }
 
     #[must_use]
+    pub(crate) fn estimated_heap_bytes(&self) -> usize {
+        self.public.estimated_heap_bytes()
+    }
+
+    #[must_use]
     pub fn object_number(&self) -> Option<u32> {
         self.as_str().rsplit_once("-stack-")?.1.parse().ok()
     }
@@ -260,6 +313,14 @@ impl StackObjectId {
 
 impl From<String> for StackObjectId {
     fn from(value: String) -> Self {
+        Self {
+            public: SharedIdStr::from(value),
+        }
+    }
+}
+
+impl From<&str> for StackObjectId {
+    fn from(value: &str) -> Self {
         Self::new(value)
     }
 }

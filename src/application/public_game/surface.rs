@@ -490,18 +490,19 @@ where
     I: IntoIterator,
     I::Item: Borrow<DomainEvent>,
 {
+    let mut estimated_bytes = 2 * size_of::<usize>();
     let entries = events
         .into_iter()
         .zip(1_u64..)
-        .map(|(event, sequence)| PublicEventLogEntry {
-            sequence,
-            event: public_event(event.borrow()),
+        .map(|(event, sequence)| {
+            let entry = PublicEventLogEntry {
+                sequence,
+                event: public_event(event.borrow()),
+            };
+            estimated_bytes += approximate_public_event_log_entry_bytes(&entry);
+            entry
         })
         .collect::<Vec<_>>();
-    let estimated_bytes = entries
-        .iter()
-        .map(approximate_public_event_log_entry_bytes)
-        .sum();
 
     PublicEventLogProjection {
         entries: Arc::from(entries),
@@ -679,19 +680,19 @@ fn approximate_card_vec_bytes(cards: &[CardInstanceId]) -> usize {
 }
 
 fn approximate_game_id_bytes(id: &crate::domain::play::ids::GameId) -> usize {
-    id.as_str().len()
+    id.estimated_heap_bytes()
 }
 
 fn approximate_player_id_bytes(id: &PlayerId) -> usize {
-    id.as_str().len()
+    id.estimated_heap_bytes()
 }
 
 fn approximate_card_id_bytes(id: &CardInstanceId) -> usize {
-    id.as_str().len()
+    id.estimated_heap_bytes()
 }
 
 fn approximate_stack_object_id_bytes(id: &StackObjectId) -> usize {
-    id.as_str().len()
+    id.estimated_heap_bytes()
 }
 
 fn approximate_spell_target_bytes(target: &crate::domain::play::game::SpellTarget) -> usize {
