@@ -108,7 +108,7 @@ fn projection_logs_events() {
 
     projection.handle(&event);
 
-    let logs = projection.logs();
+    let logs = projection.logs().expect("logs should be readable");
     assert_eq!(logs.len(), 1);
     assert!(logs[0].contains("game-1"));
     assert!(logs[0].contains("player-1"));
@@ -123,8 +123,8 @@ fn projection_logs_reuse_cached_snapshot_across_reads() {
         vec![PlayerId::new("player-1"), PlayerId::new("player-2")],
     )));
 
-    let first = projection.logs();
-    let second = projection.logs();
+    let first = projection.logs().expect("first log snapshot should be readable");
+    let second = projection.logs().expect("second log snapshot should be readable");
 
     assert!(std::sync::Arc::ptr_eq(&first, &second));
 }
@@ -180,7 +180,7 @@ fn projection_logs_multiple_events() {
         SpellCastOutcome::EnteredBattlefield,
     )));
 
-    let logs = projection.logs();
+    let logs = projection.logs().expect("logs should be readable");
     assert_eq!(logs.len(), 7);
     assert!(logs[0].starts_with("Game"));
     assert!(logs[1].starts_with("Player"));
@@ -202,7 +202,7 @@ fn projection_logs_creature_died_events() {
         CardInstanceId::new("card-7"),
     )));
 
-    let logs = projection.logs();
+    let logs = projection.logs().expect("logs should be readable");
     assert_eq!(logs.len(), 1);
     assert!(logs[0].contains("card-7"));
     assert!(logs[0].contains("player-2"));
@@ -220,7 +220,7 @@ fn projection_logs_card_discarded_events() {
         DiscardKind::CleanupHandSize,
     )));
 
-    let logs = projection.logs();
+    let logs = projection.logs().expect("logs should be readable");
     assert_eq!(logs.len(), 1);
     assert!(logs[0].contains("player-1"));
     assert!(logs[0].contains("card-9"));
@@ -239,7 +239,7 @@ fn projection_logs_game_ended_events() {
         GameEndReason::EmptyLibraryDraw,
     )));
 
-    let logs = projection.logs();
+    let logs = projection.logs().expect("logs should be readable");
     assert_eq!(logs.len(), 1);
     assert!(logs[0].contains("player-1"));
     assert!(logs[0].contains("player-2"));
@@ -255,7 +255,7 @@ fn projection_logs_drawn_game_end_events() {
         GameEndReason::SimultaneousZeroLife,
     )));
 
-    let logs = projection.logs();
+    let logs = projection.logs().expect("logs should be readable");
     assert_eq!(logs.len(), 1);
     assert!(logs[0].contains("draw"));
     assert!(logs[0].contains("SimultaneousZeroLife"));

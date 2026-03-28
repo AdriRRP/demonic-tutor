@@ -16,6 +16,11 @@ struct GameLogState {
     snapshot: Option<Arc<[String]>>,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum GameLogProjectionError {
+    LockPoisoned,
+}
+
 impl GameLogProjection {
     const LOCK_POISONED_MESSAGE: &str =
         "[internal invariant violation] game log projection lock poisoned";
@@ -27,26 +32,25 @@ impl GameLogProjection {
         }
     }
 
-    #[must_use]
-    pub fn logs(&self) -> Arc<[String]> {
+    pub fn logs(&self) -> Result<Arc<[String]>, GameLogProjectionError> {
         let Ok(state) = self.logs.read() else {
-            return Self::poisoned_snapshot();
+            return Err(GameLogProjectionError::LockPoisoned);
         };
         if let Some(snapshot) = &state.snapshot {
-            return Arc::clone(snapshot);
+            return Ok(Arc::clone(snapshot));
         }
         drop(state);
 
         self.logs.write().map_or_else(
-            |_| Self::poisoned_snapshot(),
+            |_| Err(GameLogProjectionError::LockPoisoned),
             |mut state| {
                 if let Some(snapshot) = &state.snapshot {
-                    return Arc::clone(snapshot);
+                    return Ok(Arc::clone(snapshot));
                 }
 
                 let snapshot = Arc::<[String]>::from(state.entries.clone());
                 state.snapshot = Some(Arc::clone(&snapshot));
-                snapshot
+                Ok(snapshot)
             },
         )
     }
@@ -209,9 +213,6 @@ impl GameLogProjection {
         state.snapshot = None;
     }
 
-    fn poisoned_snapshot() -> Arc<[String]> {
-        Arc::from([Self::LOCK_POISONED_MESSAGE.to_string()])
-    }
 }
 
 #[cfg(test)]
@@ -229,7 +230,6 @@ mod tests {
         });
 
         let logs = projection.logs();
-        assert_eq!(logs.len(), 1);
-        assert_eq!(logs[0], GameLogProjection::LOCK_POISONED_MESSAGE);
+        assert_eq!(logs, Err(GameLogProjectionError::LockPoisoned));
     }
 }
