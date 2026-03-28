@@ -153,10 +153,14 @@ fn unavailable_pending_decision_surface(
 }
 
 fn priority_surface_state(game: &Game, player_id: &PlayerId) -> PublicSurfaceState {
-    let playable_land_ids = playable_land_ids(game, player_id);
-    let mana_source_ids = tappable_mana_source_ids(game, player_id);
-    let castable_cards = castable_cards(game, player_id);
-    let activatable_cards = activatable_cards(game, player_id);
+    let Some(player) = player_by_id(game, player_id) else {
+        return PublicSurfaceState::default();
+    };
+
+    let playable_land_ids = playable_land_ids(game, player);
+    let mana_source_ids = tappable_mana_source_ids(game, player);
+    let castable_cards = castable_cards(game, player);
+    let activatable_cards = activatable_cards(game, player);
     let mut spell_target_candidates_by_card =
         spell_target_candidate_cache(game, player_id, &castable_cards);
     let mut ability_target_candidates_by_card =
@@ -196,7 +200,7 @@ fn priority_surface_state(game: &Game, player_id: &PlayerId) -> PublicSurfaceSta
         if castable.requires_choice {
             if let Some(request) = spell_choice_request(
                 game,
-                player_id,
+                player,
                 &castable.card_id,
                 spell_target_candidates_by_card
                     .get(&castable.card_id)
@@ -621,47 +625,29 @@ fn stack_target_view(
     }
 }
 
-fn playable_land_ids(game: &Game, player_id: &PlayerId) -> Vec<CardInstanceId> {
-    let Some(player) = game
-        .players()
+fn player_by_id<'a>(game: &'a Game, player_id: &PlayerId) -> Option<&'a Player> {
+    game.players()
         .iter()
         .find(|player| player.id() == player_id)
-    else {
-        return Vec::new();
-    };
+}
 
+fn playable_land_ids(game: &Game, player: &Player) -> Vec<CardInstanceId> {
     player
         .hand_card_ids()
         .into_iter()
-        .filter(|card_id| game.can_play_land(player_id, card_id))
+        .filter(|card_id| game.can_play_land(player.id(), card_id))
         .collect()
 }
 
-fn tappable_mana_source_ids(game: &Game, player_id: &PlayerId) -> Vec<CardInstanceId> {
-    let Some(player) = game
-        .players()
-        .iter()
-        .find(|player| player.id() == player_id)
-    else {
-        return Vec::new();
-    };
-
+fn tappable_mana_source_ids(game: &Game, player: &Player) -> Vec<CardInstanceId> {
     player
         .battlefield_card_ids()
-        .filter(|card_id| game.can_tap_mana_source(player_id, card_id))
+        .filter(|card_id| game.can_tap_mana_source(player.id(), card_id))
         .cloned()
         .collect()
 }
 
-fn castable_cards(game: &Game, player_id: &PlayerId) -> Vec<PublicCastableCard> {
-    let Some(player) = game
-        .players()
-        .iter()
-        .find(|player| player.id() == player_id)
-    else {
-        return Vec::new();
-    };
-
+fn castable_cards(game: &Game, player: &Player) -> Vec<PublicCastableCard> {
     let mut candidates = player.hand_card_ids();
     candidates.extend(
         player
@@ -673,23 +659,19 @@ fn castable_cards(game: &Game, player_id: &PlayerId) -> Vec<PublicCastableCard> 
 
     candidates
         .into_iter()
-        .filter_map(|card_id| castable_card(game, player_id, &card_id))
+        .filter_map(|card_id| castable_card(game, player, &card_id))
         .collect()
 }
 
 fn castable_card(
     game: &Game,
-    player_id: &PlayerId,
+    player: &Player,
     card_id: &CardInstanceId,
 ) -> Option<PublicCastableCard> {
-    let player = game
-        .players()
-        .iter()
-        .find(|player| player.id() == player_id)?;
     let card = player
         .hand_card(card_id)
         .or_else(|| player.graveyard_card(card_id))?;
-    if game.castable_card(player_id, card_id) {
+    if game.castable_card(player.id(), card_id) {
         let rules = card.supported_spell_rules();
         Some(PublicCastableCard {
             card_id: card.id().clone(),
@@ -705,14 +687,10 @@ fn castable_card(
 
 fn spell_choice_request(
     game: &Game,
-    player_id: &PlayerId,
+    player: &Player,
     source_card_id: &CardInstanceId,
     cached_target_candidates: Option<&[PublicChoiceCandidate]>,
 ) -> Option<PublicChoiceRequest> {
-    let player = game
-        .players()
-        .iter()
-        .find(|player| player.id() == player_id)?;
     let card = player
         .hand_card(source_card_id)
         .or_else(|| player.graveyard_card(source_card_id))?;
@@ -720,15 +698,15 @@ fn spell_choice_request(
 
     if rules.requires_explicit_hand_card_choice() {
         return Some(PublicChoiceRequest::SpellChoice {
-            player_id: player_id.clone(),
+            player_id: player.id().clone(),
             source_card_id: source_card_id.clone(),
-            hand_card_ids: opponent_hand_choice_candidates(game, player_id),
+            hand_card_ids: opponent_hand_choice_candidates(game, player.id()),
         });
     }
 
     if rules.requires_explicit_secondary_creature_choice() {
         return Some(PublicChoiceRequest::SpellSecondaryCreatureChoice {
-            player_id: player_id.clone(),
+            player_id: player.id().clone(),
             source_card_id: source_card_id.clone(),
             creature_ids: cached_target_candidates
                 .unwrap_or(&[])
@@ -744,7 +722,7 @@ fn spell_choice_request(
 
     if rules.requires_explicit_modal_choice() {
         return Some(PublicChoiceRequest::SpellModalChoice {
-            player_id: player_id.clone(),
+            player_id: player.id().clone(),
             source_card_id: source_card_id.clone(),
             modes: vec![
                 PublicModalSpellChoice::TargetPlayerGainLife,
@@ -834,33 +812,21 @@ fn pending_surveil_request(game: &Game) -> Option<PublicChoiceRequest> {
     })
 }
 
-fn activatable_cards(game: &Game, player_id: &PlayerId) -> Vec<PublicActivatableCard> {
-    let Some(player) = game
-        .players()
-        .iter()
-        .find(|player| player.id() == player_id)
-    else {
-        return Vec::new();
-    };
-
+fn activatable_cards(game: &Game, player: &Player) -> Vec<PublicActivatableCard> {
     player
         .battlefield_card_ids()
-        .filter_map(|card_id| activatable_card(game, player_id, card_id))
+        .filter_map(|card_id| activatable_card(game, player, card_id))
         .collect()
 }
 
 fn activatable_card(
     game: &Game,
-    player_id: &PlayerId,
+    player: &Player,
     card_id: &CardInstanceId,
 ) -> Option<PublicActivatableCard> {
-    let player = game
-        .players()
-        .iter()
-        .find(|player| player.id() == player_id)?;
     let card = player.battlefield_card(card_id)?;
     let ability = card.activated_ability()?;
-    if game.activatable_card(player_id, card_id) {
+    if game.activatable_card(player.id(), card_id) {
         Some(PublicActivatableCard {
             card_id: card.id().clone(),
             definition_id: card.definition_id().clone(),

@@ -14,11 +14,10 @@ use crate::support::{
     targeted_opponent_damage_instant_card,
 };
 use demonictutor::{
-    choice_requests, CardDefinitionId, CardInstanceId, CastSpellCommand,
-    DealOpeningHandsCommand, DrawCardsEffectCommand, Game, GameId, KeywordAbility,
-    PassPriorityCommand, Phase, PlayerId, PublicBinaryChoice, PublicChoiceCandidate,
-    PublicChoiceRequest, PublicGameCommand, PublicModalSpellChoice, PublicScryChoice,
-    PublicSurveilChoice, StartGameCommand,
+    choice_requests, CardDefinitionId, CardInstanceId, CastSpellCommand, DealOpeningHandsCommand,
+    DrawCardsEffectCommand, Game, GameId, KeywordAbility, PassPriorityCommand, Phase, PlayerId,
+    PublicBinaryChoice, PublicChoiceCandidate, PublicChoiceRequest, PublicGameCommand,
+    PublicModalSpellChoice, PublicScryChoice, PublicSurveilChoice, StartGameCommand,
 };
 
 fn first_main_game_with_choice_cards() -> Game {
