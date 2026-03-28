@@ -116,7 +116,7 @@ pub enum PublicStackObjectView {
 pub struct PublicGameView {
     pub game_id: GameId,
     pub playable_subset_version: PublicPlayableSubsetVersion,
-    pub active_player_id: PlayerId,
+    pub active_player_id: Option<PlayerId>,
     pub phase: Phase,
     pub turn_number: u32,
     pub priority: Option<PublicPriorityView>,

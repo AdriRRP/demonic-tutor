@@ -55,7 +55,7 @@ pub fn game_view(game: &Game) -> PublicGameView {
         .players()
         .iter()
         .enumerate()
-        .map(|(index, player)| player_view(player, index, &active_player_id))
+        .map(|(index, player)| player_view(player, index, active_player_id.as_ref()))
         .collect();
     let stack = game
         .stack()
@@ -753,10 +753,10 @@ fn public_event(event: &DomainEvent) -> PublicEvent {
     }
 }
 
-fn player_view(player: &Player, _index: usize, active_player_id: &PlayerId) -> PublicPlayerView {
+fn player_view(player: &Player, _index: usize, active_player_id: Option<&PlayerId>) -> PublicPlayerView {
     PublicPlayerView {
         player_id: player.id().clone(),
-        is_active: player.id() == active_player_id,
+        is_active: active_player_id.is_some_and(|active_player_id| player.id() == active_player_id),
         life: player.life(),
         mana_total: player.mana(),
         hand_count: player.hand_size(),
@@ -1213,16 +1213,8 @@ fn active_player(game: &Game) -> Option<&Player> {
     game.players().get(game.active_player_index_value())
 }
 
-fn active_player_id_for_public_view(game: &Game) -> PlayerId {
-    active_player(game).map_or_else(
-        || {
-            PlayerId::new(format!(
-                "missing-active-player-{}",
-                game.active_player_index_value()
-            ))
-        },
-        |player| player.id().clone(),
-    )
+fn active_player_id_for_public_view(game: &Game) -> Option<PlayerId> {
+    active_player(game).map(|player| player.id().clone())
 }
 
 fn defending_player<'a>(game: &'a Game, active_player: &Player) -> Option<&'a Player> {
@@ -1591,6 +1583,27 @@ mod tests {
             PublicChoiceRequest::PhaseUnavailable { player_id, phase }
                 if player_id.as_str() == "p1" && *phase == Phase::FirstMain
         )));
+    }
+
+    #[test]
+    fn game_view_surfaces_missing_active_player_without_inventing_public_ids() {
+        let start = crate::domain::play::game::Game::start(StartGameCommand::new(
+            GameId::new("game-unavailable-active-player"),
+            vec![
+                PlayerDeck::new(PlayerId::new("p1"), DeckId::new("d1")),
+                PlayerDeck::new(PlayerId::new("p2"), DeckId::new("d2")),
+            ],
+        ));
+        assert!(start.is_ok(), "game should start");
+        let Some((mut game, _)) = start.ok() else {
+            return;
+        };
+        game.replace_active_player_index(99);
+
+        let view = game_view(&game);
+
+        assert_eq!(view.active_player_id, None);
+        assert!(view.players.iter().all(|player| !player.is_active));
     }
 
     #[test]
