@@ -18,7 +18,7 @@ use crate::{
     },
 };
 use std::{
-    collections::HashMap,
+    collections::{HashMap, VecDeque},
     sync::{Arc, RwLock},
 };
 
@@ -31,7 +31,47 @@ where
 {
     event_store: E,
     event_bus: B,
-    public_event_log_cache: RwLock<HashMap<String, Arc<[PublicEventLogEntry]>>>,
+    public_event_log_cache: RwLock<PublicEventLogCache>,
+}
+
+const PUBLIC_EVENT_LOG_CACHE_CAPACITY: usize = 64;
+
+#[derive(Debug, Default)]
+struct PublicEventLogCache {
+    entries: HashMap<String, Arc<[PublicEventLogEntry]>>,
+    recency: VecDeque<String>,
+}
+
+impl PublicEventLogCache {
+    fn get(&mut self, game_id: &str) -> Option<Arc<[PublicEventLogEntry]>> {
+        let entry = self.entries.get(game_id).cloned()?;
+        self.touch(game_id);
+        Some(entry)
+    }
+
+    fn insert(&mut self, game_id: String, entries: Arc<[PublicEventLogEntry]>) {
+        self.entries.insert(game_id.clone(), entries);
+        self.touch(&game_id);
+
+        while self.entries.len() > PUBLIC_EVENT_LOG_CACHE_CAPACITY {
+            let Some(oldest) = self.recency.pop_front() else {
+                break;
+            };
+            if self.entries.remove(&oldest).is_some() {
+                break;
+            }
+        }
+    }
+
+    fn remove(&mut self, game_id: &str) {
+        self.entries.remove(game_id);
+        self.recency.retain(|cached| cached != game_id);
+    }
+
+    fn touch(&mut self, game_id: &str) {
+        self.recency.retain(|cached| cached != game_id);
+        self.recency.push_back(game_id.to_string());
+    }
 }
 
 impl<E, B> GameService<E, B>
@@ -44,7 +84,7 @@ where
         Self {
             event_store,
             event_bus,
-            public_event_log_cache: RwLock::new(HashMap::new()),
+            public_event_log_cache: RwLock::new(PublicEventLogCache::default()),
         }
     }
 
@@ -131,9 +171,9 @@ where
         game_id: &str,
     ) -> Option<Arc<[PublicEventLogEntry]>> {
         self.public_event_log_cache
-            .read()
+            .write()
             .ok()
-            .and_then(|cache| cache.get(game_id).cloned())
+            .and_then(|mut cache| cache.get(game_id))
     }
 
     pub(crate) fn store_public_event_log_cache(

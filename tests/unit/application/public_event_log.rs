@@ -169,3 +169,33 @@ fn game_service_public_event_log_reuses_cached_public_projection_across_reads() 
     assert_eq!(first[0].sequence, second[0].sequence);
     assert_eq!(reads.load(Ordering::SeqCst), 1);
 }
+
+#[test]
+fn game_service_public_event_log_evicts_oldest_cached_timelines() {
+    let reads = Arc::new(AtomicUsize::new(0));
+    let store = CountingEventStore {
+        events: Arc::from(vec![DomainEvent::PriorityPassed(PriorityPassed {
+            game_id: GameId::new("game-public-event-log-eviction"),
+            player_id: PlayerId::new("player-1"),
+        })]),
+        reads: Arc::clone(&reads),
+    };
+    let service = GameService::new(store, InMemoryEventBus::new());
+
+    for index in 0..64 {
+        let result = service.public_event_log(&GameId::new(format!("cached-game-{index}")));
+        assert!(result.is_ok(), "cache warmup should succeed: {result:?}");
+    }
+    assert_eq!(reads.load(Ordering::SeqCst), 64);
+
+    let next = service.public_event_log(&GameId::new("cached-game-64"));
+    assert!(next.is_ok(), "capacity-overflow read should succeed");
+    assert_eq!(reads.load(Ordering::SeqCst), 65);
+
+    let reread_evicted = service.public_event_log(&GameId::new("cached-game-0"));
+    assert!(
+        reread_evicted.is_ok(),
+        "reading the oldest entry after eviction should succeed"
+    );
+    assert_eq!(reads.load(Ordering::SeqCst), 66);
+}
