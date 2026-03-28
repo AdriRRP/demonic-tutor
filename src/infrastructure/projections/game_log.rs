@@ -17,6 +17,9 @@ struct GameLogState {
 }
 
 impl GameLogProjection {
+    const LOCK_POISONED_MESSAGE: &str =
+        "[internal invariant violation] game log projection lock poisoned";
+
     #[must_use]
     pub fn new() -> Self {
         Self {
@@ -26,10 +29,10 @@ impl GameLogProjection {
 
     #[must_use]
     pub fn logs(&self) -> Arc<[String]> {
-        let state = self
-            .logs
-            .read()
-            .expect("game log projection lock poisoned while reading snapshot");
+        let state = match self.logs.read() {
+            Ok(state) => state,
+            Err(_) => return Self::poisoned_snapshot(),
+        };
         if let Some(snapshot) = &state.snapshot {
             return Arc::clone(snapshot);
         }
@@ -46,7 +49,7 @@ impl GameLogProjection {
                 state.snapshot = Some(Arc::clone(&snapshot));
                 snapshot
             })
-            .expect("game log projection lock poisoned while building snapshot")
+            .unwrap_or_else(|_| Self::poisoned_snapshot())
     }
 
     fn describe_event(event: &DomainEvent) -> String {
@@ -196,12 +199,21 @@ impl GameLogProjection {
     pub fn handle(&self, event: &DomainEvent) {
         let log_entry = Self::describe_event(event);
 
-        let mut state = self
-            .logs
-            .write()
-            .expect("game log projection lock poisoned while appending event");
+        let (mut state, poisoned) = match self.logs.write() {
+            Ok(state) => (state, false),
+            Err(poisoned) => (poisoned.into_inner(), true),
+        };
+        if poisoned {
+            state
+                .entries
+                .push(Self::LOCK_POISONED_MESSAGE.to_string());
+        }
         state.entries.push(log_entry);
         state.snapshot = None;
+    }
+
+    fn poisoned_snapshot() -> Arc<[String]> {
+        Arc::from([Self::LOCK_POISONED_MESSAGE.to_string()])
     }
 }
 
@@ -212,14 +224,15 @@ mod tests {
     use super::*;
 
     #[test]
-    #[should_panic(expected = "game log projection lock poisoned while reading snapshot")]
-    fn logs_panics_when_projection_lock_is_poisoned() {
+    fn logs_surface_lock_poisoning_explicitly() {
         let projection = GameLogProjection::new();
         let _ = std::panic::catch_unwind(|| {
             let _guard = projection.logs.write().expect("lock should be available");
-            panic!("poison projection lock");
+            std::panic::panic_any("poison projection lock");
         });
 
-        let _ = projection.logs();
+        let logs = projection.logs();
+        assert_eq!(logs.len(), 1);
+        assert_eq!(logs[0], GameLogProjection::LOCK_POISONED_MESSAGE);
     }
 }
