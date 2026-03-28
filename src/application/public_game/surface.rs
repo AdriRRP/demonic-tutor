@@ -385,7 +385,7 @@ pub(super) fn public_surface_state(game: &Game, viewer_id: &PlayerId) -> PublicS
             }
         },
     );
-    append_concede_actions(game, &mut state.legal_actions);
+    append_concede_action(game, viewer_id, &mut state.legal_actions);
     state
         .legal_actions
         .retain(|action| legal_action_player_id(action) == viewer_id);
@@ -936,26 +936,12 @@ fn public_choice_candidate(
     }
 }
 
-fn append_concede_actions(game: &Game, legal_actions: &mut Vec<PublicLegalAction>) {
-    let mut concede_actions = game
-        .players()
-        .iter()
-        .map(|player| PublicLegalAction::Concede {
-            player_id: player.id().clone(),
-        })
-        .collect::<Vec<_>>();
-    concede_actions.sort_by(|left, right| match (left, right) {
-        (
-            PublicLegalAction::Concede {
-                player_id: left_player_id,
-            },
-            PublicLegalAction::Concede {
-                player_id: right_player_id,
-            },
-        ) => left_player_id.as_str().cmp(right_player_id.as_str()),
-        _ => std::cmp::Ordering::Equal,
-    });
-    legal_actions.extend(concede_actions);
+fn append_concede_action(game: &Game, viewer_id: &PlayerId, legal_actions: &mut Vec<PublicLegalAction>) {
+    if game.players().iter().any(|player| player.id() == viewer_id) {
+        legal_actions.push(PublicLegalAction::Concede {
+            player_id: viewer_id.clone(),
+        });
+    }
 }
 
 const fn legal_action_player_id(action: &PublicLegalAction) -> &PlayerId {
