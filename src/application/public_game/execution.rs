@@ -24,7 +24,7 @@ use crate::{
         EventBus, EventStore,
     },
     domain::play::{
-        commands::{DealOpeningHandsCommand, PlayerLibrary, StartGameCommand},
+        commands::{DealOpeningHandsCommand, PlayerDeck, PlayerLibrary, StartGameCommand},
         errors::DomainError,
         events::DomainEvent,
         game::Game,
@@ -52,14 +52,14 @@ where
         &self,
         setup: PublicSeededGameSetup,
     ) -> Result<(Game, PublicGameSessionStart), DomainError> {
-        let player_decks = setup
-            .players
-            .iter()
-            .map(PublicSeededPlayerSetup::player_deck)
-            .collect();
-        let player_libraries = seeded_player_libraries(&setup.players, setup.shuffle_seed);
+        let PublicSeededGameSetup {
+            game_id,
+            players,
+            shuffle_seed,
+        } = setup;
+        let (player_decks, player_libraries) = seeded_start_inputs(players, shuffle_seed);
         let (game, game_started, opening_hands) = self.start_game_with_opening_hands(
-            StartGameCommand::new(setup.game_id, player_decks),
+            StartGameCommand::new(game_id, player_decks),
             &DealOpeningHandsCommand::new(player_libraries),
         )?;
         let emitted_events = std::iter::once(game_started.into())
@@ -175,20 +175,27 @@ where
     }
 }
 
-fn seeded_player_libraries(
-    players: &[PublicSeededPlayerSetup],
+fn seeded_start_inputs(
+    players: Vec<PublicSeededPlayerSetup>,
     shuffle_seed: u64,
-) -> Vec<PlayerLibrary> {
+) -> (Vec<PlayerDeck>, Vec<PlayerLibrary>) {
     let mut rng = StdRng::seed_from_u64(shuffle_seed);
 
     players
-        .iter()
+        .into_iter()
         .map(|player| {
-            let mut cards = player.cards.clone();
+            let PublicSeededPlayerSetup {
+                player_id,
+                deck_id,
+                mut cards,
+            } = player;
             cards.shuffle(&mut rng);
-            PlayerLibrary::new(player.player_id.clone(), cards)
+            (
+                PlayerDeck::new(player_id.clone(), deck_id),
+                PlayerLibrary::new(player_id, cards),
+            )
         })
-        .collect()
+        .unzip()
 }
 
 fn public_game_session_start(
