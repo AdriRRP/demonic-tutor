@@ -124,10 +124,7 @@ impl GameLogProjection {
                 format!("Combat damage resolved: {:?}", e.damage_events)
             }
             DomainEvent::CreatureDied(e) => {
-                format!(
-                    "Creature {} associated with {} died",
-                    e.card_id, e.player_id
-                )
+                format!("Creature {} owned by {} died", e.card_id, e.player_id)
             }
             DomainEvent::CardMovedZone(e) => {
                 format!(
