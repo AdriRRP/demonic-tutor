@@ -490,7 +490,7 @@ mod tests {
         )
         .expect("battlefield exile should succeed");
 
-        assert_eq!(event.player_id, PlayerId::new("p2"));
+        assert_eq!(event.zone_owner_id, PlayerId::new("p2"));
         assert!(players[0].battlefield_card(&card_id).is_none());
         assert!(players[1].exile_card(&card_id).is_some());
     }

@@ -13,31 +13,167 @@ use {
             ResolvePendingScryCommand, ResolvePendingSurveilCommand,
         },
         errors::DomainError,
+        events::{
+            CardDiscarded, CardDrawn, CardExiled, CardMovedZone, CreatureDied, SpellCast,
+            SpellCastOutcome, ZoneType,
+        },
     },
-    std::collections::HashSet,
 };
 
 impl Game {
-    fn sync_zone_changes_and_moved_cards(
-        &mut self,
-        zone_changes: &[crate::domain::play::events::CardMovedZone],
-        moved_cards: &[crate::domain::play::ids::CardInstanceId],
-    ) -> Result<(), DomainError> {
-        let mut synced_cards = HashSet::new();
-
+    fn sync_zone_changes(&mut self, zone_changes: &[CardMovedZone]) -> Result<(), DomainError> {
         for zone_change in zone_changes {
             self.sync_card_location_from_zone_change(zone_change)?;
-            synced_cards.insert(zone_change.card_id.clone());
-        }
-
-        for card_id in moved_cards {
-            if synced_cards.contains(card_id) {
-                continue;
-            }
-            self.sync_card_location_from_any_player(card_id);
         }
 
         Ok(())
+    }
+
+    fn append_spell_resolution_zone_change(
+        zone_changes: &mut Vec<CardMovedZone>,
+        spell_cast: &SpellCast,
+    ) {
+        let destination_zone = match spell_cast.outcome {
+            SpellCastOutcome::EnteredBattlefield => ZoneType::Battlefield,
+            SpellCastOutcome::ResolvedToGraveyard => ZoneType::Graveyard,
+            SpellCastOutcome::ResolvedToExile => ZoneType::Exile,
+        };
+        zone_changes.push(CardMovedZone::new(
+            spell_cast.game_id.clone(),
+            spell_cast.player_id.clone(),
+            spell_cast.card_id.clone(),
+            ZoneType::Stack,
+            destination_zone,
+        ));
+    }
+
+    fn append_drawn_card_zone_changes(
+        zone_changes: &mut Vec<CardMovedZone>,
+        card_drawn: &[CardDrawn],
+    ) {
+        zone_changes.extend(card_drawn.iter().map(|event| {
+            CardMovedZone::new(
+                event.game_id.clone(),
+                event.player_id.clone(),
+                event.card_id.clone(),
+                ZoneType::Library,
+                ZoneType::Hand,
+            )
+        }));
+    }
+
+    fn append_discarded_card_zone_change(
+        zone_changes: &mut Vec<CardMovedZone>,
+        card_discarded: Option<&CardDiscarded>,
+    ) {
+        let Some(event) = card_discarded else {
+            return;
+        };
+        zone_changes.push(CardMovedZone::new(
+            event.game_id.clone(),
+            event.player_id.clone(),
+            event.card_id.clone(),
+            ZoneType::Hand,
+            ZoneType::Graveyard,
+        ));
+    }
+
+    fn append_exiled_card_zone_change(
+        zone_changes: &mut Vec<CardMovedZone>,
+        card_exiled: Option<&CardExiled>,
+    ) {
+        let Some(event) = card_exiled else {
+            return;
+        };
+        zone_changes.push(CardMovedZone::new(
+            event.game_id.clone(),
+            event.zone_owner_id.clone(),
+            event.card_id.clone(),
+            event.origin_zone.clone(),
+            ZoneType::Exile,
+        ));
+    }
+
+    fn append_creature_died_zone_changes(
+        zone_changes: &mut Vec<CardMovedZone>,
+        creatures_died: &[CreatureDied],
+    ) {
+        zone_changes.extend(creatures_died.iter().map(|event| {
+            CardMovedZone::new(
+                event.game_id.clone(),
+                event.player_id.clone(),
+                event.card_id.clone(),
+                ZoneType::Battlefield,
+                ZoneType::Graveyard,
+            )
+        }));
+    }
+
+    fn canonical_zone_changes_for_activate_ability(
+        outcome: &ActivateAbilityOutcome,
+    ) -> Vec<CardMovedZone> {
+        let mut zone_changes = outcome.zone_changes.clone();
+        Self::append_creature_died_zone_changes(&mut zone_changes, &outcome.creatures_died);
+        zone_changes
+    }
+
+    fn canonical_zone_changes_for_pass_priority(
+        outcome: &PassPriorityOutcome,
+    ) -> Vec<CardMovedZone> {
+        let mut zone_changes = outcome.zone_changes.clone();
+        if let Some(spell_cast) = &outcome.spell_cast {
+            Self::append_spell_resolution_zone_change(&mut zone_changes, spell_cast);
+        }
+        Self::append_drawn_card_zone_changes(&mut zone_changes, &outcome.card_drawn);
+        Self::append_exiled_card_zone_change(&mut zone_changes, outcome.card_exiled.as_ref());
+        Self::append_discarded_card_zone_change(&mut zone_changes, outcome.card_discarded.as_ref());
+        Self::append_creature_died_zone_changes(&mut zone_changes, &outcome.creatures_died);
+        zone_changes
+    }
+
+    fn canonical_zone_changes_for_resolve_optional_effect(
+        outcome: &ResolveOptionalEffectOutcome,
+    ) -> Vec<CardMovedZone> {
+        let mut zone_changes = outcome.zone_changes.clone();
+        if let Some(spell_cast) = &outcome.spell_cast {
+            Self::append_spell_resolution_zone_change(&mut zone_changes, spell_cast);
+        }
+        Self::append_exiled_card_zone_change(&mut zone_changes, outcome.card_exiled.as_ref());
+        Self::append_discarded_card_zone_change(&mut zone_changes, outcome.card_discarded.as_ref());
+        Self::append_creature_died_zone_changes(&mut zone_changes, &outcome.creatures_died);
+        zone_changes
+    }
+
+    fn canonical_zone_changes_for_resolve_pending_hand_choice(
+        outcome: &ResolvePendingHandChoiceOutcome,
+    ) -> Vec<CardMovedZone> {
+        let mut zone_changes = outcome.zone_changes.clone();
+        if let Some(spell_cast) = &outcome.spell_cast {
+            Self::append_spell_resolution_zone_change(&mut zone_changes, spell_cast);
+        }
+        Self::append_drawn_card_zone_changes(&mut zone_changes, &outcome.card_drawn);
+        Self::append_discarded_card_zone_change(&mut zone_changes, outcome.card_discarded.as_ref());
+        zone_changes
+    }
+
+    fn canonical_zone_changes_for_resolve_pending_scry(
+        outcome: &ResolvePendingScryOutcome,
+    ) -> Vec<CardMovedZone> {
+        let mut zone_changes = outcome.zone_changes.clone();
+        if let Some(spell_cast) = &outcome.spell_cast {
+            Self::append_spell_resolution_zone_change(&mut zone_changes, spell_cast);
+        }
+        zone_changes
+    }
+
+    fn canonical_zone_changes_for_resolve_pending_surveil(
+        outcome: &ResolvePendingSurveilOutcome,
+    ) -> Vec<CardMovedZone> {
+        let mut zone_changes = outcome.zone_changes.clone();
+        if let Some(spell_cast) = &outcome.spell_cast {
+            Self::append_spell_resolution_zone_change(&mut zone_changes, spell_cast);
+        }
+        zone_changes
     }
 
     /// Activates a supported non-mana ability from the battlefield.
@@ -65,7 +201,8 @@ impl Game {
             cmd,
         );
         if let Ok(outcome) = &result {
-            self.sync_zone_changes_and_moved_cards(&outcome.zone_changes, &outcome.moved_cards)?;
+            let zone_changes = Self::canonical_zone_changes_for_activate_ability(outcome);
+            self.sync_zone_changes(&zone_changes)?;
         }
         result
     }
@@ -123,32 +260,8 @@ impl Game {
             cmd,
         );
         if let Ok(outcome) = &result {
-            if let Some(spell_cast) = &outcome.spell_cast {
-                let owner_index =
-                    super::helpers::find_player_index(&self.players, &spell_cast.player_id)?;
-                self.sync_card_location_from_player(owner_index, &spell_cast.card_id);
-            }
-            for card_drawn in &outcome.card_drawn {
-                let owner_index =
-                    super::helpers::find_player_index(&self.players, &card_drawn.player_id)?;
-                self.sync_card_location_from_player(owner_index, &card_drawn.card_id);
-            }
-            if let Some(card_exiled) = &outcome.card_exiled {
-                let owner_index =
-                    super::helpers::find_player_index(&self.players, &card_exiled.player_id)?;
-                self.sync_card_location_from_player(owner_index, &card_exiled.card_id);
-            }
-            if let Some(card_discarded) = &outcome.card_discarded {
-                let owner_index =
-                    super::helpers::find_player_index(&self.players, &card_discarded.player_id)?;
-                self.sync_card_location_from_player(owner_index, &card_discarded.card_id);
-            }
-            for creature_died in &outcome.creatures_died {
-                let owner_index =
-                    super::helpers::find_player_index(&self.players, &creature_died.player_id)?;
-                self.sync_card_location_from_player(owner_index, &creature_died.card_id);
-            }
-            self.sync_zone_changes_and_moved_cards(&outcome.zone_changes, &outcome.moved_cards)?;
+            let zone_changes = Self::canonical_zone_changes_for_pass_priority(outcome);
+            self.sync_zone_changes(&zone_changes)?;
         }
         result
     }
@@ -178,22 +291,8 @@ impl Game {
             cmd,
         );
         if let Ok(outcome) = &result {
-            if let Some(card_exiled) = &outcome.card_exiled {
-                let owner_index =
-                    super::helpers::find_player_index(&self.players, &card_exiled.player_id)?;
-                self.sync_card_location_from_player(owner_index, &card_exiled.card_id);
-            }
-            if let Some(card_discarded) = &outcome.card_discarded {
-                let owner_index =
-                    super::helpers::find_player_index(&self.players, &card_discarded.player_id)?;
-                self.sync_card_location_from_player(owner_index, &card_discarded.card_id);
-            }
-            for creature_died in &outcome.creatures_died {
-                let owner_index =
-                    super::helpers::find_player_index(&self.players, &creature_died.player_id)?;
-                self.sync_card_location_from_player(owner_index, &creature_died.card_id);
-            }
-            self.sync_zone_changes_and_moved_cards(&outcome.zone_changes, &outcome.moved_cards)?;
+            let zone_changes = Self::canonical_zone_changes_for_resolve_optional_effect(outcome);
+            self.sync_zone_changes(&zone_changes)?;
         }
         result
     }
@@ -223,22 +322,9 @@ impl Game {
             cmd,
         );
         if let Ok(outcome) = &result {
-            if let Some(spell_cast) = &outcome.spell_cast {
-                let owner_index =
-                    super::helpers::find_player_index(&self.players, &spell_cast.player_id)?;
-                self.sync_card_location_from_player(owner_index, &spell_cast.card_id);
-            }
-            for card_drawn in &outcome.card_drawn {
-                let owner_index =
-                    super::helpers::find_player_index(&self.players, &card_drawn.player_id)?;
-                self.sync_card_location_from_player(owner_index, &card_drawn.card_id);
-            }
-            if let Some(card_discarded) = &outcome.card_discarded {
-                let owner_index =
-                    super::helpers::find_player_index(&self.players, &card_discarded.player_id)?;
-                self.sync_card_location_from_player(owner_index, &card_discarded.card_id);
-            }
-            self.sync_zone_changes_and_moved_cards(&outcome.zone_changes, &outcome.moved_cards)?;
+            let zone_changes =
+                Self::canonical_zone_changes_for_resolve_pending_hand_choice(outcome);
+            self.sync_zone_changes(&zone_changes)?;
         }
         result
     }
@@ -268,12 +354,8 @@ impl Game {
             cmd,
         );
         if let Ok(outcome) = &result {
-            if let Some(spell_cast) = &outcome.spell_cast {
-                let owner_index =
-                    super::helpers::find_player_index(&self.players, &spell_cast.player_id)?;
-                self.sync_card_location_from_player(owner_index, &spell_cast.card_id);
-            }
-            self.sync_zone_changes_and_moved_cards(&outcome.zone_changes, &outcome.moved_cards)?;
+            let zone_changes = Self::canonical_zone_changes_for_resolve_pending_scry(outcome);
+            self.sync_zone_changes(&zone_changes)?;
         }
         result
     }
@@ -303,12 +385,8 @@ impl Game {
             cmd,
         );
         if let Ok(outcome) = &result {
-            if let Some(spell_cast) = &outcome.spell_cast {
-                let owner_index =
-                    super::helpers::find_player_index(&self.players, &spell_cast.player_id)?;
-                self.sync_card_location_from_player(owner_index, &spell_cast.card_id);
-            }
-            self.sync_zone_changes_and_moved_cards(&outcome.zone_changes, &outcome.moved_cards)?;
+            let zone_changes = Self::canonical_zone_changes_for_resolve_pending_surveil(outcome);
+            self.sync_zone_changes(&zone_changes)?;
         }
         result
     }

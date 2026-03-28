@@ -777,7 +777,7 @@ fn execute_public_command_surfaces_surveil_graveyard_move_before_resolution_clos
             DomainEvent::StackTopResolved(_),
             DomainEvent::SpellCast(_),
         ] if moved.card_id == looked_at_card_id
-            && moved.player_id == PlayerId::new("p1")
+            && moved.zone_owner_id == PlayerId::new("p1")
             && moved.origin_zone.as_str() == "library"
             && moved.destination_zone.as_str() == "graveyard"
     ));
@@ -831,7 +831,7 @@ fn execute_public_command_surfaces_zone_move_for_sacrifice_activation_cost() {
             DomainEvent::CardMovedZone(moved),
             DomainEvent::ActivatedAbilityPutOnStack(_),
         ] if moved.card_id == artifact_id
-            && moved.player_id == PlayerId::new("player-1")
+            && moved.zone_owner_id == PlayerId::new("player-1")
             && moved.origin_zone.as_str() == "battlefield"
             && moved.destination_zone.as_str() == "graveyard"
     ));

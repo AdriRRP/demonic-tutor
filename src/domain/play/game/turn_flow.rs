@@ -153,7 +153,8 @@ impl Game {
             )
         };
         if let Ok(event) = &result {
-            let owner_index = super::helpers::find_player_index(&self.players, &event.player_id)?;
+            let owner_index =
+                super::helpers::find_player_index(&self.players, &event.zone_owner_id)?;
             self.sync_card_location_from_player(owner_index, &event.card_id);
         }
         result

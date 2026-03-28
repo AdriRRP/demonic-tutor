@@ -281,22 +281,6 @@ impl Game {
             .upsert(card_id.clone(), owner_index, handle, zone);
     }
 
-    fn sync_card_location_from_any_player(&mut self, card_id: &CardInstanceId) {
-        for (owner_index, player) in self.players.iter().enumerate() {
-            let Some(handle) = player.resolve_public_card_handle(card_id) else {
-                continue;
-            };
-            let Some(zone) = player.card_zone(card_id) else {
-                continue;
-            };
-            self.card_locations
-                .upsert(card_id.clone(), owner_index, handle, zone);
-            return;
-        }
-
-        self.card_locations.remove(card_id);
-    }
-
     fn sync_card_location_from_zone_change(
         &mut self,
         zone_change: &CardMovedZone,
@@ -308,7 +292,7 @@ impl Game {
             | ZoneType::Graveyard
             | ZoneType::Exile => {
                 let owner_index =
-                    helpers::find_player_index(&self.players, &zone_change.player_id)?;
+                    helpers::find_player_index(&self.players, &zone_change.zone_owner_id)?;
                 self.sync_card_location_from_player(owner_index, &zone_change.card_id);
             }
             ZoneType::Stack | ZoneType::Created => {

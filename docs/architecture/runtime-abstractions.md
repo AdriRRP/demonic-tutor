@@ -42,6 +42,9 @@ That means:
 - internal logic prefers indices, handles, and compact carriers
 - public boundaries still expose stable ids and explicit events
 
+For visible zone-move events, the current boundary uses the player who owns the
+relevant visible zone, not a generic "controller" label.
+
 ---
 
 # Big Picture

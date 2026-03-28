@@ -1,5 +1,10 @@
 //! Supports play events zones.
 
+//! `zone_owner_id` names the player whose visible zone receives or owns the card
+//! for the movement being reported. It is intentionally not phrased as
+//! controller, because the current engine already reports moves for cards whose
+//! controller and owner may diverge in future slices.
+
 use crate::domain::play::ids::{CardInstanceId, GameId, PlayerId};
 
 #[derive(Debug, Clone)]
@@ -31,7 +36,7 @@ impl ZoneType {
 #[derive(Debug, Clone)]
 pub struct CardMovedZone {
     pub game_id: GameId,
-    pub player_id: PlayerId,
+    pub zone_owner_id: PlayerId,
     pub card_id: CardInstanceId,
     pub origin_zone: ZoneType,
     pub destination_zone: ZoneType,
@@ -41,14 +46,14 @@ impl CardMovedZone {
     #[must_use]
     pub const fn new(
         game_id: GameId,
-        player_id: PlayerId,
+        zone_owner_id: PlayerId,
         card_id: CardInstanceId,
         origin_zone: ZoneType,
         destination_zone: ZoneType,
     ) -> Self {
         Self {
             game_id,
-            player_id,
+            zone_owner_id,
             card_id,
             origin_zone,
             destination_zone,
@@ -59,7 +64,7 @@ impl CardMovedZone {
 #[derive(Debug, Clone)]
 pub struct CardExiled {
     pub game_id: GameId,
-    pub player_id: PlayerId,
+    pub zone_owner_id: PlayerId,
     pub card_id: CardInstanceId,
     pub origin_zone: ZoneType,
 }
@@ -68,13 +73,13 @@ impl CardExiled {
     #[must_use]
     pub const fn new(
         game_id: GameId,
-        player_id: PlayerId,
+        zone_owner_id: PlayerId,
         card_id: CardInstanceId,
         origin_zone: ZoneType,
     ) -> Self {
         Self {
             game_id,
-            player_id,
+            zone_owner_id,
             card_id,
             origin_zone,
         }
