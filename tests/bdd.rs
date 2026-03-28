@@ -17,6 +17,8 @@ mod cleanup;
 mod combat;
 #[path = "bdd/draw_effects.rs"]
 mod draw_effects;
+#[path = "bdd/golden_matchups.rs"]
+mod golden_matchups;
 #[path = "bdd/life.rs"]
 mod life;
 #[path = "bdd/spell_casting/mod.rs"]
@@ -191,6 +193,7 @@ async fn run_other_features() {
         "features/life/adjust_player_life_effect.feature",
         "features/life/lose_on_zero_life.feature",
         "features/combat/keyword_abilities.feature",
+        "features/golden/white_blue_tempo_matchups.feature",
         "features/zones/exile_zone.feature",
     ])
     .await;

@@ -6,12 +6,10 @@ Goal:
 
 Slice count:
 
-- `4`
+- `3`
 
 Slices:
 
-- `add-white-blue-tempo-golden-matchups`
-  - validate flyers, bounce, tempo, and combat tricks through executable scenarios
 - `add-black-red-sacrifice-golden-matchups`
   - validate discard, sacrifice costs, recursion, and removal through executable scenarios
 - `add-green-white-counters-golden-matchups`

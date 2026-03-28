@@ -126,6 +126,12 @@ impl GameplayWorld {
         self.last_game_ended = outcome.game_ended;
     }
 
+    pub fn close_current_priority_window(&mut self) {
+        let service = support::create_service();
+        support::close_empty_priority_window(&service, self.game_mut());
+        self.reset_observations();
+    }
+
     pub fn draw_cards_effect(&mut self, target_alias: &str, count: u32) {
         let service = support::create_service();
         let active_player = self.game().active_player().clone();

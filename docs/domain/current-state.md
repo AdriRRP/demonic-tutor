@@ -76,6 +76,7 @@ Implemented capabilities include:
 - rejecting curated-set library loads whose authored `LibraryCard` definitions exceed that supported profile catalog
 - publishing one canonical curated-set card capability matrix for set design
 - publishing one canonical deck-construction baseline for the first curated limited environment
+- executing the first curated golden matchup for white-blue tempo through flyers, bounce, and combat tricks
 - resolving the first explicit keyworded creature-token creation subset for one supported token with one supported keyword
 - resolving the first explicit multi-token creation subset for one supported effect that creates multiple identical vanilla creature tokens
 - advancing turns
