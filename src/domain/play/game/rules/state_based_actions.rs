@@ -211,13 +211,18 @@ pub fn check_state_based_actions(
 
         let creature_result =
             review_supported_creature_state_based_actions(game_id, players, &current_locations)?;
-        if creature_result.changed() {
+        let creature_changed = creature_result.changed();
+        if creature_changed {
             changes = true;
         }
         total_creatures_died.extend(creature_result.creatures_died);
         total_zone_changes.extend(creature_result.zone_changes);
 
-        let refreshed_locations = AggregateCardLocationIndex::from_players(players);
+        let refreshed_locations = if creature_changed {
+            AggregateCardLocationIndex::from_players(players)
+        } else {
+            current_locations
+        };
         let attached_aura_result =
             review_attached_aura_state_based_actions(game_id, players, &refreshed_locations)?;
         if attached_aura_result.changed() {
