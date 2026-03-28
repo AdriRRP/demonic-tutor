@@ -73,7 +73,7 @@ fn loot_game_in_pending_choice() -> (
         player_library(
             "p1",
             vec![
-                loot_sorcery_card("p1-loot", 0, 1),
+                loot_sorcery_card("p1-loot", 0, 2),
                 forest_card("p1-hand-a"),
                 forest_card("p1-hand-b"),
                 forest_card("p1-hand-c"),
@@ -140,6 +140,74 @@ fn loot_game_in_pending_choice() -> (
         .clone();
 
     (service, game, discard_id)
+}
+
+fn terminal_loot_game_on_stack() -> (
+    crate::support::TestService,
+    demonictutor::Game,
+    demonictutor::CardInstanceId,
+) {
+    let service = create_service();
+    let libraries = vec![
+        player_library(
+            "p1",
+            vec![
+                loot_sorcery_card("p1-loot", 0, 2),
+                forest_card("p1-hand-a"),
+                forest_card("p1-hand-b"),
+                forest_card("p1-hand-c"),
+                forest_card("p1-hand-d"),
+                forest_card("p1-hand-e"),
+                forest_card("p1-hand-f"),
+                forest_card("p1-draw-step"),
+                forest_card("p1-loot-draw"),
+            ],
+        ),
+        player_library(
+            "p2",
+            vec![
+                forest_card("p2-a"),
+                forest_card("p2-b"),
+                forest_card("p2-c"),
+                forest_card("p2-d"),
+                forest_card("p2-e"),
+                forest_card("p2-f"),
+                forest_card("p2-g"),
+                forest_card("p2-h"),
+                forest_card("p2-i"),
+                forest_card("p2-j"),
+            ],
+        ),
+    ];
+    let decks = vec![player_deck("p1", "d1"), player_deck("p2", "d2")];
+
+    let (mut game, _) = service
+        .start_game(StartGameCommand::new(
+            GameId::new("game-public-terminal-loot"),
+            decks,
+        ))
+        .expect("game should start");
+    service
+        .deal_opening_hands(&mut game, &DealOpeningHandsCommand::new(libraries))
+        .expect("opening hands should be dealt");
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "p1");
+
+    let loot_id = player(&game, "p1")
+        .hand_card_by_definition(&CardDefinitionId::new("p1-loot"))
+        .expect("loot spell should be in hand")
+        .id()
+        .clone();
+
+    service.execute_public_command(
+        &mut game,
+        PublicGameCommand::CastSpell(CastSpellCommand::new(PlayerId::new("p1"), loot_id.clone())),
+    );
+    service.execute_public_command(
+        &mut game,
+        PublicGameCommand::PassPriority(PassPriorityCommand::new(PlayerId::new("p1"))),
+    );
+
+    (service, game, loot_id)
 }
 
 fn rummage_game_in_pending_choice() -> (
@@ -384,4 +452,27 @@ fn execute_public_command_surfaces_card_discarded_from_pass_priority_resolution(
         DomainEvent::CardDiscarded(discarded)
             if discarded.card_id == chosen_id && discarded.discard_kind == DiscardKind::SpellEffect
     )));
+}
+
+#[test]
+fn execute_public_command_preserves_terminal_loot_draw_before_resolution_events() {
+    let (service, mut game, loot_id) = terminal_loot_game_on_stack();
+
+    let application = service.execute_public_command(
+        &mut game,
+        PublicGameCommand::PassPriority(PassPriorityCommand::new(PlayerId::new("p2"))),
+    );
+
+    assert!(matches!(
+        application.emitted_events.as_slice(),
+        [
+            DomainEvent::PriorityPassed(_),
+            DomainEvent::CardDrawn(_),
+            DomainEvent::StackTopResolved(_),
+            DomainEvent::SpellCast(_),
+            DomainEvent::GameEnded(_),
+        ]
+    ));
+    assert!(game.is_over());
+    assert!(player(&game, "p1").graveyard_card(&loot_id).is_some());
 }

@@ -34,9 +34,16 @@ pub fn domain_events_for_cast_spell(outcome: &CastSpellOutcome) -> Vec<DomainEve
 pub fn domain_events_for_pass_priority(outcome: &PassPriorityOutcome) -> Vec<DomainEvent> {
     let mut domain_events = DomainEvents::with(outcome.priority_passed.clone());
     domain_events.extend(outcome.triggered_abilities_put_on_stack.iter().cloned());
+    let draws_happen_before_resolution =
+        !outcome.card_drawn.is_empty() && outcome.stack_top_resolved.is_some();
+    if draws_happen_before_resolution {
+        domain_events.extend(outcome.card_drawn.iter().cloned());
+    }
     domain_events.push_optional(outcome.stack_top_resolved.clone());
     domain_events.push_optional(outcome.spell_cast.clone());
-    domain_events.extend(outcome.card_drawn.iter().cloned());
+    if !draws_happen_before_resolution {
+        domain_events.extend(outcome.card_drawn.iter().cloned());
+    }
     domain_events.push_optional(outcome.card_discarded.clone());
     domain_events.push_optional(outcome.card_exiled.clone());
     domain_events.push_optional(outcome.life_changed.clone());
@@ -63,15 +70,9 @@ pub fn domain_events_for_resolve_pending_hand_choice(
     outcome: &ResolvePendingHandChoiceOutcome,
 ) -> Vec<DomainEvent> {
     let mut domain_events = DomainEvents::default();
-    match outcome.kind {
-        crate::domain::play::game::PendingHandChoiceKind::Loot { .. } => {
-            domain_events.extend(outcome.card_drawn.iter().cloned());
-            domain_events.push_optional(outcome.card_discarded.clone());
-        }
-        crate::domain::play::game::PendingHandChoiceKind::Rummage { .. } => {
-            domain_events.push_optional(outcome.card_discarded.clone());
-            domain_events.extend(outcome.card_drawn.iter().cloned());
-        }
+    domain_events.push_optional(outcome.card_discarded.clone());
+    if !outcome.card_drawn.is_empty() {
+        domain_events.extend(outcome.card_drawn.iter().cloned());
     }
     domain_events.push_optional(outcome.stack_top_resolved.clone());
     domain_events.push_optional(outcome.spell_cast.clone());

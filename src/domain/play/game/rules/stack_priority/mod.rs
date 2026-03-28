@@ -13,7 +13,7 @@ pub(crate) mod triggers;
 
 use super::super::{
     model::{AggregateCardLocationIndex, PriorityState},
-    PendingHandChoiceKind, Player, TerminalState,
+    Player, TerminalState,
 };
 use crate::domain::play::{
     events::{
@@ -91,7 +91,6 @@ pub struct ResolveOptionalEffectOutcome {
 
 #[derive(Debug, Clone)]
 pub struct ResolvePendingHandChoiceOutcome {
-    pub kind: PendingHandChoiceKind,
     pub stack_top_resolved: Option<StackTopResolved>,
     pub spell_cast: Option<SpellCast>,
     pub card_drawn: Vec<CardDrawn>,
