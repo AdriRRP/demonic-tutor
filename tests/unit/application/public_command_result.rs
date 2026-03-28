@@ -15,8 +15,8 @@ use crate::support::{
 use demonictutor::{
     public_command_result, ActivateAbilityCommand, CardDefinitionId, CastSpellCommand,
     DealOpeningHandsCommand, DeclareAttackersCommand, DeclareBlockersCommand,
-    DiscardForCleanupCommand, DiscardKind, DomainEvent, GameId, PassPriorityCommand, Phase,
-    PlayLandCommand, PlayerId, PublicCommandStatus, PublicGameCommand, ResolveCombatDamageCommand,
+    DiscardForCleanupCommand, DiscardKind, GameId, PassPriorityCommand, Phase, PlayLandCommand,
+    PlayerId, PublicCommandStatus, PublicEvent, PublicGameCommand, ResolveCombatDamageCommand,
     ResolveOptionalEffectCommand, ResolvePendingHandChoiceCommand, ResolvePendingSurveilCommand,
     SpellChoice, SpellTarget, StartGameCommand, TriggeredAbilityEvent,
 };
@@ -257,8 +257,8 @@ fn declare_attackers_emits_triggered_ability_put_on_stack_for_supported_attack_t
     assert!(matches!(
         result.emitted_events.as_slice(),
         [
-            DomainEvent::AttackersDeclared(_),
-            DomainEvent::TriggeredAbilityPutOnStack(event),
+            PublicEvent::AttackersDeclared(_),
+            PublicEvent::TriggeredAbilityPutOnStack(event),
         ] if event.trigger == TriggeredAbilityEvent::Attacks
     ));
 }
@@ -340,9 +340,9 @@ fn resolve_combat_damage_emits_effects_before_close_and_supported_damage_trigger
     assert!(matches!(
         result.emitted_events.as_slice(),
         [
-            DomainEvent::LifeChanged(_),
-            DomainEvent::CombatDamageResolved(_),
-            DomainEvent::TriggeredAbilityPutOnStack(event),
+            PublicEvent::LifeChanged(_),
+            PublicEvent::CombatDamageResolved(_),
+            PublicEvent::TriggeredAbilityPutOnStack(event),
         ] if event.trigger == TriggeredAbilityEvent::DealsCombatDamageToPlayer
     ));
 }
@@ -404,9 +404,9 @@ fn resolve_combat_damage_surfaces_zone_moves_for_creatures_that_die_in_combat() 
     assert!(matches!(
         result.emitted_events.as_slice(),
         [
-            DomainEvent::CreatureDied(creature_died),
-            DomainEvent::CardMovedZone(zone_change),
-            DomainEvent::CombatDamageResolved(_),
+            PublicEvent::CreatureDied(creature_died),
+            PublicEvent::CardMovedZone(zone_change),
+            PublicEvent::CombatDamageResolved(_),
         ] if creature_died.card_id == blocker_id
             && zone_change.card_id == blocker_id
             && zone_change.origin_zone.as_str() == "battlefield"
@@ -665,10 +665,10 @@ fn execute_public_command_preserves_loot_effect_event_order() {
     assert!(matches!(
         application.emitted_events.as_slice(),
         [
-            DomainEvent::CardDiscarded(_),
-            DomainEvent::CardMovedZone(_),
-            DomainEvent::StackTopResolved(_),
-            DomainEvent::SpellCast(_),
+            PublicEvent::CardDiscarded(_),
+            PublicEvent::CardMovedZone(_),
+            PublicEvent::StackTopResolved(_),
+            PublicEvent::SpellCast(_),
         ]
     ));
 }
@@ -688,11 +688,11 @@ fn execute_public_command_preserves_rummage_effect_event_order() {
     assert!(matches!(
         application.emitted_events.as_slice(),
         [
-            DomainEvent::CardDiscarded(_),
-            DomainEvent::CardMovedZone(_),
-            DomainEvent::CardDrawn(_),
-            DomainEvent::StackTopResolved(_),
-            DomainEvent::SpellCast(_),
+            PublicEvent::CardDiscarded(_),
+            PublicEvent::CardMovedZone(_),
+            PublicEvent::CardDrawn(_),
+            PublicEvent::StackTopResolved(_),
+            PublicEvent::SpellCast(_),
         ]
     ));
 }
@@ -771,11 +771,11 @@ fn execute_public_command_surfaces_card_discarded_from_pass_priority_resolution(
     assert!(matches!(
         application.emitted_events.as_slice(),
         [
-            DomainEvent::PriorityPassed(_),
-            DomainEvent::CardDiscarded(discarded),
-            DomainEvent::CardMovedZone(moved),
-            DomainEvent::StackTopResolved(_),
-            DomainEvent::SpellCast(_),
+            PublicEvent::PriorityPassed(_),
+            PublicEvent::CardDiscarded(discarded),
+            PublicEvent::CardMovedZone(moved),
+            PublicEvent::StackTopResolved(_),
+            PublicEvent::SpellCast(_),
         ] if discarded.card_id == chosen_id
             && discarded.discard_kind == DiscardKind::SpellEffect
             && moved.card_id == chosen_id
@@ -796,11 +796,11 @@ fn execute_public_command_preserves_terminal_loot_draw_before_resolution_events(
     assert!(matches!(
         application.emitted_events.as_slice(),
         [
-            DomainEvent::PriorityPassed(_),
-            DomainEvent::CardDrawn(_),
-            DomainEvent::StackTopResolved(_),
-            DomainEvent::SpellCast(_),
-            DomainEvent::GameEnded(_),
+            PublicEvent::PriorityPassed(_),
+            PublicEvent::CardDrawn(_),
+            PublicEvent::StackTopResolved(_),
+            PublicEvent::SpellCast(_),
+            PublicEvent::GameEnded(_),
         ]
     ));
     assert!(game.is_over());
@@ -821,8 +821,8 @@ fn execute_public_command_preserves_optional_effect_event_order() {
     assert!(matches!(
         application.emitted_events.as_slice(),
         [
-            DomainEvent::LifeChanged(_),
-            DomainEvent::StackTopResolved(_)
+            PublicEvent::LifeChanged(_),
+            PublicEvent::StackTopResolved(_)
         ]
     ));
 }
@@ -841,9 +841,9 @@ fn execute_public_command_surfaces_surveil_graveyard_move_before_resolution_clos
     assert!(matches!(
         application.emitted_events.as_slice(),
         [
-            DomainEvent::CardMovedZone(moved),
-            DomainEvent::StackTopResolved(_),
-            DomainEvent::SpellCast(_),
+            PublicEvent::CardMovedZone(moved),
+            PublicEvent::StackTopResolved(_),
+            PublicEvent::SpellCast(_),
         ] if moved.card_id == looked_at_card_id
             && moved.zone_owner_id == PlayerId::new("p1")
             && moved.origin_zone.as_str() == "library"
@@ -896,8 +896,8 @@ fn execute_public_command_surfaces_zone_move_for_sacrifice_activation_cost() {
     assert!(matches!(
         application.emitted_events.as_slice(),
         [
-            DomainEvent::CardMovedZone(moved),
-            DomainEvent::ActivatedAbilityPutOnStack(_),
+            PublicEvent::CardMovedZone(moved),
+            PublicEvent::ActivatedAbilityPutOnStack(_),
         ] if moved.card_id == artifact_id
             && moved.zone_owner_id == PlayerId::new("player-1")
             && moved.origin_zone.as_str() == "battlefield"
@@ -947,9 +947,9 @@ fn execute_public_command_orders_creature_sacrifice_death_before_zone_change() {
     assert!(matches!(
         application.emitted_events.as_slice(),
         [
-            DomainEvent::CreatureDied(died),
-            DomainEvent::CardMovedZone(moved),
-            DomainEvent::ActivatedAbilityPutOnStack(_),
+            PublicEvent::CreatureDied(died),
+            PublicEvent::CardMovedZone(moved),
+            PublicEvent::ActivatedAbilityPutOnStack(_),
         ] if died.card_id == creature_id
             && moved.card_id == creature_id
             && moved.zone_owner_id == PlayerId::new("player-1")
@@ -984,8 +984,8 @@ fn execute_public_command_surfaces_cleanup_discard_zone_change() {
     assert!(matches!(
         application.emitted_events.as_slice(),
         [
-            DomainEvent::CardDiscarded(discarded),
-            DomainEvent::CardMovedZone(moved),
+            PublicEvent::CardDiscarded(discarded),
+            PublicEvent::CardMovedZone(moved),
         ] if discarded.card_id == discarded_id
             && discarded.discard_kind == DiscardKind::CleanupHandSize
             && moved.card_id == discarded_id

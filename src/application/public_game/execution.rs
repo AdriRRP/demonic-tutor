@@ -33,9 +33,11 @@ use crate::{
 };
 
 use super::{
-    public_event_log, surface::public_surface_state, PublicCommandApplication,
-    PublicCommandRejection, PublicCommandStatus, PublicEventLogEntry, PublicGameCommand,
-    PublicGameSessionStart, PublicRematchCommand, PublicSeededGameSetup, PublicSeededPlayerSetup,
+    public_event_log,
+    surface::{public_events, public_surface_state},
+    PublicCommandApplication, PublicCommandRejection, PublicCommandStatus, PublicEventLogEntry,
+    PublicGameCommand, PublicGameSessionStart, PublicRematchCommand, PublicSeededGameSetup,
+    PublicSeededPlayerSetup,
 };
 
 impl<E, B> GameService<E, B>
@@ -166,7 +168,7 @@ where
                 message: err.to_string(),
             }),
         };
-        let emitted_events = result.unwrap_or_default();
+        let emitted_events = public_events(result.unwrap_or_default());
 
         PublicCommandApplication {
             status,
@@ -205,7 +207,7 @@ fn public_game_session_start(
     let (legal_actions, choice_requests) = public_surface_state(game).into_parts();
 
     PublicGameSessionStart {
-        emitted_events,
+        emitted_events: public_events(emitted_events),
         game: super::game_view(game),
         legal_actions,
         choice_requests,

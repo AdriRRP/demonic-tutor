@@ -4,6 +4,7 @@ use std::collections::HashMap;
 
 use crate::domain::play::{
     cards::{CardInstance, KeywordAbility},
+    events::DomainEvent,
     game::{Game, Player, StackObjectKind},
     ids::{CardInstanceId, PlayerId, StackObjectId},
     phase::Phase,
@@ -11,11 +12,12 @@ use crate::domain::play::{
 
 use super::{
     PublicActivatableCard, PublicBattlefieldCardView, PublicBinaryChoice, PublicBlockerOption,
-    PublicCardView, PublicCastableCard, PublicChoiceCandidate, PublicChoiceRequest,
-    PublicCombatStateView, PublicCommandApplication, PublicCommandResult, PublicEventLogEntry,
-    PublicGameView, PublicLegalAction, PublicModalSpellChoice, PublicPermanentStateView,
-    PublicPlayableSubsetVersion, PublicPlayerView, PublicPriorityView, PublicScryChoice,
-    PublicStackObjectView, PublicStackTargetView, PublicSurveilChoice,
+    PublicCardDrawn, PublicCardView, PublicCastableCard, PublicChoiceCandidate,
+    PublicChoiceRequest, PublicCombatStateView, PublicCommandApplication, PublicCommandResult,
+    PublicEvent, PublicEventLogEntry, PublicGameView, PublicLegalAction, PublicModalSpellChoice,
+    PublicOpeningHandDealt, PublicPermanentStateView, PublicPlayableSubsetVersion,
+    PublicPlayerView, PublicPriorityView, PublicScryChoice, PublicStackObjectView,
+    PublicStackTargetView, PublicSurveilChoice,
 };
 
 #[derive(Debug, Default)]
@@ -331,13 +333,61 @@ pub fn public_command_result(
 #[must_use]
 pub fn public_event_log<I>(events: I) -> Vec<PublicEventLogEntry>
 where
-    I: IntoIterator<Item = crate::domain::play::events::DomainEvent>,
+    I: IntoIterator<Item = DomainEvent>,
 {
-    events
+    public_events(events)
         .into_iter()
         .zip(1_u64..)
         .map(|(event, sequence)| PublicEventLogEntry { sequence, event })
         .collect()
+}
+
+pub(super) fn public_events<I>(events: I) -> Vec<PublicEvent>
+where
+    I: IntoIterator<Item = DomainEvent>,
+{
+    events.into_iter().map(public_event).collect()
+}
+
+fn public_event(event: DomainEvent) -> PublicEvent {
+    match event {
+        DomainEvent::GameStarted(event) => PublicEvent::GameStarted(event),
+        DomainEvent::OpeningHandDealt(event) => {
+            PublicEvent::OpeningHandDealt(PublicOpeningHandDealt {
+                game_id: event.game_id,
+                player_id: event.player_id,
+                card_count: event.cards.len(),
+            })
+        }
+        DomainEvent::GameEnded(event) => PublicEvent::GameEnded(event),
+        DomainEvent::LandPlayed(event) => PublicEvent::LandPlayed(event),
+        DomainEvent::TurnProgressed(event) => PublicEvent::TurnProgressed(event),
+        DomainEvent::CardDrawn(event) => PublicEvent::CardDrawn(PublicCardDrawn {
+            game_id: event.game_id,
+            player_id: event.player_id,
+            draw_kind: event.draw_kind,
+        }),
+        DomainEvent::CardDiscarded(event) => PublicEvent::CardDiscarded(event),
+        DomainEvent::MulliganTaken(event) => PublicEvent::MulliganTaken(event),
+        DomainEvent::LifeChanged(event) => PublicEvent::LifeChanged(event),
+        DomainEvent::LandTapped(event) => PublicEvent::LandTapped(event),
+        DomainEvent::ManaAdded(event) => PublicEvent::ManaAdded(event),
+        DomainEvent::ActivatedAbilityPutOnStack(event) => {
+            PublicEvent::ActivatedAbilityPutOnStack(event)
+        }
+        DomainEvent::TriggeredAbilityPutOnStack(event) => {
+            PublicEvent::TriggeredAbilityPutOnStack(event)
+        }
+        DomainEvent::SpellPutOnStack(event) => PublicEvent::SpellPutOnStack(event),
+        DomainEvent::PriorityPassed(event) => PublicEvent::PriorityPassed(event),
+        DomainEvent::StackTopResolved(event) => PublicEvent::StackTopResolved(event),
+        DomainEvent::SpellCast(event) => PublicEvent::SpellCast(event),
+        DomainEvent::AttackersDeclared(event) => PublicEvent::AttackersDeclared(event),
+        DomainEvent::BlockersDeclared(event) => PublicEvent::BlockersDeclared(event),
+        DomainEvent::CombatDamageResolved(event) => PublicEvent::CombatDamageResolved(event),
+        DomainEvent::CreatureDied(event) => PublicEvent::CreatureDied(event),
+        DomainEvent::CardMovedZone(event) => PublicEvent::CardMovedZone(event),
+    }
 }
 
 fn player_view(player: &Player, _index: usize, active_player_id: &PlayerId) -> PublicPlayerView {

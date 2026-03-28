@@ -10,7 +10,12 @@ use crate::domain::play::{
         ResolveCombatDamageCommand, ResolveOptionalEffectCommand, ResolvePendingHandChoiceCommand,
         ResolvePendingScryCommand, ResolvePendingSurveilCommand, TapLandCommand,
     },
-    events::{DomainEvent, GameEndReason},
+    events::{
+        ActivatedAbilityPutOnStack, AttackersDeclared, BlockersDeclared, CardDiscarded,
+        CardMovedZone, CombatDamageResolved, CreatureDied, DrawKind, GameEndReason, GameEnded,
+        GameStarted, LandPlayed, LandTapped, LifeChanged, ManaAdded, MulliganTaken, PriorityPassed,
+        SpellCast, SpellPutOnStack, StackTopResolved, TriggeredAbilityPutOnStack, TurnProgressed,
+    },
     ids::{CardDefinitionId, CardInstanceId, DeckId, GameId, PlayerId, StackObjectId},
     phase::Phase,
 };
@@ -318,16 +323,56 @@ pub enum PublicCommandStatus {
     Rejected(PublicCommandRejection),
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PublicOpeningHandDealt {
+    pub game_id: GameId,
+    pub player_id: PlayerId,
+    pub card_count: usize,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PublicCardDrawn {
+    pub game_id: GameId,
+    pub player_id: PlayerId,
+    pub draw_kind: DrawKind,
+}
+
+#[derive(Debug, Clone)]
+pub enum PublicEvent {
+    GameStarted(GameStarted),
+    OpeningHandDealt(PublicOpeningHandDealt),
+    GameEnded(GameEnded),
+    LandPlayed(LandPlayed),
+    TurnProgressed(TurnProgressed),
+    CardDrawn(PublicCardDrawn),
+    CardDiscarded(CardDiscarded),
+    MulliganTaken(MulliganTaken),
+    LifeChanged(LifeChanged),
+    LandTapped(LandTapped),
+    ManaAdded(ManaAdded),
+    ActivatedAbilityPutOnStack(ActivatedAbilityPutOnStack),
+    TriggeredAbilityPutOnStack(TriggeredAbilityPutOnStack),
+    SpellPutOnStack(SpellPutOnStack),
+    PriorityPassed(PriorityPassed),
+    StackTopResolved(StackTopResolved),
+    SpellCast(SpellCast),
+    AttackersDeclared(AttackersDeclared),
+    BlockersDeclared(BlockersDeclared),
+    CombatDamageResolved(CombatDamageResolved),
+    CreatureDied(CreatureDied),
+    CardMovedZone(CardMovedZone),
+}
+
 #[derive(Debug, Clone)]
 pub struct PublicCommandApplication {
     pub status: PublicCommandStatus,
-    pub emitted_events: Vec<DomainEvent>,
+    pub emitted_events: Vec<PublicEvent>,
 }
 
 #[derive(Debug, Clone)]
 pub struct PublicCommandResult {
     pub status: PublicCommandStatus,
-    pub emitted_events: Vec<DomainEvent>,
+    pub emitted_events: Vec<PublicEvent>,
     pub game: PublicGameView,
     pub legal_actions: Vec<PublicLegalAction>,
     pub choice_requests: Vec<PublicChoiceRequest>,
@@ -336,7 +381,7 @@ pub struct PublicCommandResult {
 #[derive(Debug, Clone)]
 pub struct PublicEventLogEntry {
     pub sequence: u64,
-    pub event: DomainEvent,
+    pub event: PublicEvent,
 }
 
 #[derive(Debug, Clone)]
@@ -408,7 +453,7 @@ impl PublicRematchCommand {
 
 #[derive(Debug, Clone)]
 pub struct PublicGameSessionStart {
-    pub emitted_events: Vec<DomainEvent>,
+    pub emitted_events: Vec<PublicEvent>,
     pub game: PublicGameView,
     pub legal_actions: Vec<PublicLegalAction>,
     pub choice_requests: Vec<PublicChoiceRequest>,

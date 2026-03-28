@@ -8,9 +8,9 @@ use crate::support::{
     setup_two_player_game,
 };
 use demonictutor::{
-    public_command_result, ActivatedAbilityProfile, CardDefinitionId, DomainError, DomainEvent,
-    GameEndReason, GameError, GameId, LibraryCard, PlayerId, PublicCommandStatus,
-    PublicGameCommand, PublicPlayableSubsetVersion, PublicRematchCommand, PublicSeededGameSetup,
+    public_command_result, ActivatedAbilityProfile, CardDefinitionId, DomainError, GameEndReason,
+    GameError, GameId, LibraryCard, PlayerId, PublicCommandStatus, PublicEvent, PublicGameCommand,
+    PublicPlayableSubsetVersion, PublicRematchCommand, PublicSeededGameSetup,
     PublicSeededPlayerSetup, TriggeredAbilityProfile,
 };
 
@@ -129,13 +129,13 @@ fn seeded_public_game_setup_is_deterministic_for_the_same_seed() {
 
     assert!(matches!(
         result_a.emitted_events.first(),
-        Some(DomainEvent::GameStarted(_))
+        Some(PublicEvent::GameStarted(_))
     ));
     assert_eq!(
         result_a
             .emitted_events
             .iter()
-            .filter(|event| matches!(event, DomainEvent::OpeningHandDealt(_)))
+            .filter(|event| matches!(event, PublicEvent::OpeningHandDealt(_)))
             .count(),
         2
     );
@@ -236,7 +236,7 @@ fn concede_public_command_ends_the_game_with_conceded_reason() {
     assert!(matches!(result.status, PublicCommandStatus::Applied));
     assert!(matches!(
         result.emitted_events.as_slice(),
-        [DomainEvent::GameEnded(ended)] if ended.reason == GameEndReason::Conceded
+        [PublicEvent::GameEnded(ended)] if ended.reason == GameEndReason::Conceded
             && ended.loser_id == PlayerId::new("player-1")
             && ended.winner_id == PlayerId::new("player-2")
     ));

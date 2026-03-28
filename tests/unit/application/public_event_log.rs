@@ -2,7 +2,7 @@
 
 use demonictutor::{
     public_command_result, public_event_log, DomainEvent, GameId, PlayLandCommand, PlayerId,
-    PriorityPassed, PublicCommandStatus, PublicGameCommand,
+    PriorityPassed, PublicCommandStatus, PublicEvent, PublicGameCommand,
 };
 
 use crate::support::{
@@ -68,13 +68,45 @@ fn game_service_public_event_log_returns_persisted_public_timeline() {
         return;
     };
     assert_eq!(last_entry.sequence, log.len() as u64);
-    assert!(matches!(&log[0].event, DomainEvent::GameStarted(_)));
+    assert!(matches!(&log[0].event, PublicEvent::GameStarted(_)));
     assert!(log
         .iter()
-        .any(|entry| matches!(entry.event, DomainEvent::OpeningHandDealt(_))));
+        .any(|entry| matches!(entry.event, PublicEvent::OpeningHandDealt(_))));
     assert!(matches!(
         &last_entry.event,
-        DomainEvent::LandPlayed(played) if played.card_id == land_id
+        PublicEvent::LandPlayed(played) if played.card_id == land_id
     ));
     assert!(player(&game, "player-1").battlefield_contains(&land_id));
+}
+
+#[test]
+fn public_event_log_redacts_hidden_opening_hand_and_draw_card_ids() {
+    let log = public_event_log(vec![
+        DomainEvent::OpeningHandDealt(demonictutor::OpeningHandDealt::new(
+            GameId::new("game-public-event-log-redaction"),
+            PlayerId::new("player-1"),
+            vec![
+                demonictutor::CardInstanceId::new("hidden-a"),
+                demonictutor::CardInstanceId::new("hidden-b"),
+            ],
+        )),
+        DomainEvent::CardDrawn(demonictutor::CardDrawn::new(
+            GameId::new("game-public-event-log-redaction"),
+            PlayerId::new("player-1"),
+            demonictutor::CardInstanceId::new("drawn-hidden"),
+            demonictutor::DrawKind::TurnStep,
+        )),
+    ]);
+
+    assert!(matches!(
+        &log[0].event,
+        PublicEvent::OpeningHandDealt(event)
+            if event.card_count == 2 && event.player_id == PlayerId::new("player-1")
+    ));
+    assert!(matches!(
+        &log[1].event,
+        PublicEvent::CardDrawn(event)
+            if event.player_id == PlayerId::new("player-1")
+                && event.draw_kind == demonictutor::DrawKind::TurnStep
+    ));
 }
