@@ -14,7 +14,7 @@ use crate::support::{
     targeted_opponent_damage_instant_card,
 };
 use demonictutor::{
-    choice_requests, legal_actions, CardDefinitionId, CardInstanceId, CastSpellCommand,
+    choice_requests, CardDefinitionId, CardInstanceId, CastSpellCommand,
     DealOpeningHandsCommand, DrawCardsEffectCommand, Game, GameId, KeywordAbility,
     PassPriorityCommand, Phase, PlayerId, PublicBinaryChoice, PublicChoiceCandidate,
     PublicChoiceRequest, PublicGameCommand, PublicModalSpellChoice, PublicScryChoice,

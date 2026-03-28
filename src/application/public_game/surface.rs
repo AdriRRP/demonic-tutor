@@ -194,7 +194,14 @@ fn priority_surface_state(game: &Game, player_id: &PlayerId) -> PublicSurfaceSta
             });
         }
         if castable.requires_choice {
-            if let Some(request) = spell_choice_request(game, player_id, &castable.card_id) {
+            if let Some(request) = spell_choice_request(
+                game,
+                player_id,
+                &castable.card_id,
+                spell_target_candidates_by_card
+                    .get(&castable.card_id)
+                    .map(Vec::as_slice),
+            ) {
                 choice_requests.push(request);
             }
         }
@@ -700,6 +707,7 @@ fn spell_choice_request(
     game: &Game,
     player_id: &PlayerId,
     source_card_id: &CardInstanceId,
+    cached_target_candidates: Option<&[PublicChoiceCandidate]>,
 ) -> Option<PublicChoiceRequest> {
     let player = game
         .players()
@@ -722,10 +730,11 @@ fn spell_choice_request(
         return Some(PublicChoiceRequest::SpellSecondaryCreatureChoice {
             player_id: player_id.clone(),
             source_card_id: source_card_id.clone(),
-            creature_ids: spell_target_candidates(game, player_id, source_card_id)
-                .into_iter()
+            creature_ids: cached_target_candidates
+                .unwrap_or(&[])
+                .iter()
                 .filter_map(|candidate| match candidate {
-                    PublicChoiceCandidate::Card(card_id) => Some(card_id),
+                    PublicChoiceCandidate::Card(card_id) => Some(card_id.clone()),
                     PublicChoiceCandidate::Player(_) | PublicChoiceCandidate::StackSpell(_) => None,
                 })
                 .collect(),
