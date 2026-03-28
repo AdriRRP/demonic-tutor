@@ -106,10 +106,12 @@ impl EventStore for InMemoryEventStore {
                         .as_ref()
                         .map_or_else(empty_event_stream, Arc::clone));
                 }
-                Some((
+                let snapshot = (
                     entry.combined.as_ref().map(Arc::clone),
                     entry.pending_chunks.clone(),
-                ))
+                );
+                drop(events);
+                Some(snapshot)
             }) else {
                 return Ok(empty_event_stream());
             };
@@ -123,11 +125,13 @@ impl EventStore for InMemoryEventStore {
             if !same_cached_stream(entry.combined.as_ref(), combined_snapshot.as_ref())
                 || !same_pending_chunks(&entry.pending_chunks, &pending_snapshot)
             {
+                drop(events);
                 continue;
             }
 
             entry.pending_chunks.clear();
             entry.combined = Some(Arc::clone(&combined));
+            drop(events);
             return Ok(combined);
         }
     }

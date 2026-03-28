@@ -302,6 +302,7 @@ where
             let Some((entries, recency_node)) = cache.get(game_id) else {
                 return Ok(None);
             };
+            drop(cache);
             (entries, recency_node)
         };
         if let Ok(mut cache) = self.public_event_log_cache.try_write() {
@@ -322,6 +323,7 @@ where
             .write()
             .map_err(|_| Self::cache_error("store a cached public event log"))?;
         cache.insert(game_id, entries, estimated_bytes);
+        drop(cache);
         Ok(())
     }
 
@@ -331,6 +333,7 @@ where
             .write()
             .map_err(|_| Self::cache_error("invalidate a cached public event log"))?;
         cache.remove(game_id);
+        drop(cache);
         Ok(())
     }
 }
