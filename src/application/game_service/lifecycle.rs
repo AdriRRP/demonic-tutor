@@ -63,7 +63,9 @@ where
         game: &mut Game,
         cmd: &DealOpeningHandsCommand,
     ) -> Result<Vec<OpeningHandDealt>, DomainError> {
-        let rollback = GameRollback::default().capture_all_players(game)?;
+        let rollback = GameRollback::default()
+            .capture_all_players(game)?
+            .capture_card_locations(game);
         self.apply_persisted(
             game,
             rollback,
@@ -82,7 +84,9 @@ where
         game: &mut Game,
         cmd: MulliganCommand,
     ) -> Result<MulliganTaken, DomainError> {
-        let rollback = GameRollback::default().capture_player(game, &cmd.player_id)?;
+        let rollback = GameRollback::default()
+            .capture_player(game, &cmd.player_id)?
+            .capture_card_locations(game);
         self.apply_persisted_event(game, rollback, |game| game.mulligan(cmd))
     }
 
@@ -94,5 +98,126 @@ where
     pub fn concede(&self, game: &mut Game, cmd: ConcedeCommand) -> Result<GameEnded, DomainError> {
         let rollback = GameRollback::default().capture_terminal_state(game);
         self.apply_persisted_event(game, rollback, |game| game.concede(cmd))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    //! Verifies lifecycle rollback restores aggregate state after persistence failures.
+
+    use std::{error::Error, io};
+
+    use super::GameService;
+    use crate::{
+        application::EventStore,
+        domain::play::{
+            cards::ManaColor,
+            commands::{
+                DealOpeningHandsCommand, LibraryCard, MulliganCommand, PlayerDeck, PlayerLibrary,
+                StartGameCommand,
+            },
+            ids::{CardDefinitionId, DeckId, GameId, PlayerId},
+        },
+        infrastructure::{InMemoryEventBus, InMemoryEventStore},
+    };
+
+    struct FailingEventStore;
+
+    impl EventStore for FailingEventStore {
+        fn append(
+            &self,
+            _aggregate_id: &str,
+            _events: &[crate::domain::play::events::DomainEvent],
+        ) -> Result<(), Box<dyn Error + Send + Sync>> {
+            Err(Box::new(io::Error::other("simulated append failure")))
+        }
+
+        fn get_events(
+            &self,
+            _aggregate_id: &str,
+        ) -> Result<Vec<crate::domain::play::events::DomainEvent>, Box<dyn Error + Send + Sync>>
+        {
+            Ok(Vec::new())
+        }
+    }
+
+    fn build_game_setup(game_id: &str) -> StartGameCommand {
+        StartGameCommand::new(
+            GameId::new(game_id),
+            vec![
+                PlayerDeck::new(PlayerId::new("player-1"), DeckId::new("deck-1")),
+                PlayerDeck::new(PlayerId::new("player-2"), DeckId::new("deck-2")),
+            ],
+        )
+    }
+
+    fn build_library(player_prefix: &str, color: ManaColor, count: usize) -> Vec<LibraryCard> {
+        (0..count)
+            .map(|index| {
+                LibraryCard::land(
+                    CardDefinitionId::new(format!("{player_prefix}-land-{index}")),
+                    color,
+                )
+            })
+            .collect()
+    }
+
+    fn opening_hands_command(card_count: usize) -> DealOpeningHandsCommand {
+        DealOpeningHandsCommand::new(vec![
+            PlayerLibrary::new(
+                PlayerId::new("player-1"),
+                build_library("p1", ManaColor::Green, card_count),
+            ),
+            PlayerLibrary::new(
+                PlayerId::new("player-2"),
+                build_library("p2", ManaColor::Blue, card_count),
+            ),
+        ])
+    }
+
+    #[test]
+    fn deal_opening_hands_restores_card_locations_when_persistence_fails() {
+        let setup_service = GameService::new(InMemoryEventStore::new(), InMemoryEventBus::new());
+        let (mut game, _) = setup_service
+            .start_game(build_game_setup("game-opening-hands-rollback"))
+            .expect("game should start");
+        let before_locations = game.cloned_card_locations();
+
+        let failing_service = GameService::new(FailingEventStore, InMemoryEventBus::new());
+        let result = failing_service.deal_opening_hands(&mut game, &opening_hands_command(7));
+
+        assert!(
+            result.is_err(),
+            "persistence failure should reject the command"
+        );
+        assert_eq!(game.cloned_card_locations(), before_locations);
+        assert_eq!(game.players()[0].hand_size(), 0);
+        assert_eq!(game.players()[0].library_size(), 0);
+    }
+
+    #[test]
+    fn mulligan_restores_card_locations_when_persistence_fails() {
+        let setup_service = GameService::new(InMemoryEventStore::new(), InMemoryEventBus::new());
+        let (mut game, _) = setup_service
+            .start_game(build_game_setup("game-mulligan-rollback"))
+            .expect("game should start");
+        setup_service
+            .deal_opening_hands(&mut game, &opening_hands_command(14))
+            .expect("opening hands should succeed");
+        let before_locations = game.cloned_card_locations();
+        let before_hand = game.players()[0].hand_card_ids();
+        let before_library = game.players()[0].library_size();
+
+        let failing_service = GameService::new(FailingEventStore, InMemoryEventBus::new());
+        let result =
+            failing_service.mulligan(&mut game, MulliganCommand::new(PlayerId::new("player-1")));
+
+        assert!(
+            result.is_err(),
+            "persistence failure should reject the mulligan"
+        );
+        assert_eq!(game.cloned_card_locations(), before_locations);
+        assert_eq!(game.players()[0].hand_card_ids(), before_hand);
+        assert_eq!(game.players()[0].library_size(), before_library);
     }
 }
