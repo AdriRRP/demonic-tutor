@@ -1,4 +1,4 @@
-# Release 0.8.0 - Wave 3 - Graveyard And Spell Value Breadth
+# Release 0.7.0 - Wave 6 - Graveyard And Spell Value Breadth
 
 Goal:
 
@@ -17,9 +17,9 @@ Slices:
     - support a bounded flashback-like corridor on explicit card profiles
   - `support-surveil-on-explicit-card-profiles`
     - support top-of-library to graveyard/keep choices as graveyard enabler plus card selection
-- pending:
   - `support-end-step-spell-recursion-triggers`
     - support delayed-feeling value cards through explicit end-step trigger profiles that return a spell or card
+- pending:
 
 Why this wave has high return:
 

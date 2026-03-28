@@ -610,15 +610,30 @@ fn resolve_triggered_ability_from_stack(
         source_card_id,
     );
 
-    let life_changed = match ability.effect() {
+    let (life_changed, moved_cards) = match ability.effect() {
         TriggeredAbilityEffect::GainLifeToController(amount)
-        | TriggeredAbilityEffect::MayGainLifeToController(amount) => {
+        | TriggeredAbilityEffect::MayGainLifeToController(amount) => (
             Some(super::super::game_effects::adjust_player_life_by_index(
                 game_id,
                 players,
                 controller_index,
                 amount.cast_signed(),
-            )?)
+            )?),
+            Vec::new(),
+        ),
+        TriggeredAbilityEffect::ReturnFirstInstantOrSorceryCardFromGraveyardToHand => {
+            let moved_cards = players[controller_index]
+                .first_instant_or_sorcery_graveyard_handle()
+                .and_then(|handle| {
+                    let card_id = players[controller_index]
+                        .card_by_handle(handle)
+                        .map(|card| card.id().clone())?;
+                    players[controller_index].move_graveyard_handle_to_hand(handle)?;
+                    Some(card_id)
+                })
+                .into_iter()
+                .collect();
+            (None, moved_cards)
         }
     };
 
@@ -640,7 +655,7 @@ fn resolve_triggered_ability_from_stack(
         None,
         life_changed,
         creatures_died,
-        Vec::new(),
+        moved_cards,
         game_ended,
     ))
 }

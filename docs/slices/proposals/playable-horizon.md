@@ -13,15 +13,14 @@ It does not claim full Magic support.
 
 The proposed horizon is:
 
-- `3` releases
-- `9` waves
+- `2` releases
+- `10` waves
 - `36` slices
 
 The releases are:
 
-- `0.7.0` — stabilize the public gameplay contract and add choice-heavy card patterns
-- `0.8.0` — broaden board texture and common limited-card interactions
-- `0.9.0` — lock a curated limited-set contract and prove it with golden end-to-end matchups
+- `0.7.0` — stabilize the public gameplay contract and ship the first broad honest gameplay subset for UI work
+- `0.8.0` — finish the curated limited-set contract and harden the first actually playable product shell
 
 ## Planning Gates
 
@@ -45,7 +44,7 @@ That means the next planning horizon is no longer "what must exist before any UI
 
 ### Limited-Set Playable Gate
 
-The first honest "limited set playable" milestone should be `0.9.0`.
+The first honest "limited set playable" milestone should now be `0.8.0`.
 
 At that point the project should have:
 
@@ -74,34 +73,23 @@ If the curated set later needs those families, the roadmap must expand.
 Goal:
 
 - make the engine stable enough for UI work
-- unlock common choice-driven and attachment-driven cards
+- unlock the first broad enough gameplay subset that the UI can be built against the real engine contract
 
 Waves:
 
-- `3`
-- `12` slices
+- `6`
+- `22` slices
 
 ### `0.8.0`
 
 Goal:
 
-- broaden the gameplay texture of a curated limited environment
-- add the most common missing board-control, token, counter, trigger, and graveyard patterns
-
-Waves:
-
-- `3`
-- `12` slices
-
-### `0.9.0`
-
-Goal:
-
+- finish the missing snowball/combat-trigger patterns
 - freeze the curated playable subset
 - prove real end-to-end matchups
-- harden the public contract for UI work
+- harden the public contract for a first real playable client
 
 Waves:
 
-- `3`
-- `12` slices
+- `4`
+- `14` slices

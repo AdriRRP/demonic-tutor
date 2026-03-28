@@ -157,6 +157,7 @@ The domain currently includes:
 - the current player-target spell subset now also supports explicit `gain life` and explicit `lose life` as distinct effects from damage while reusing the shared life-change corridor
 - the current player-target spell subset now also supports the first explicit `choose one` corridor with a selected mode stored on stack and resolved deterministically
 - the current trigger subset now also supports the first explicit `you may` corridor with a pending yes/no choice surfaced at resolution time
+- the current trigger subset now also supports one explicit beginning-of-end-step recursion profile that returns the first supported instant or sorcery card from its controller's graveyard to hand
 - pending stack-time player choices are now modeled through one closed aggregate concept instead of parallel pending fields
 - aggregate location lookups and compact battlefield refs now name the current player-arena index explicitly instead of calling that carrier position an owner index
 - the current spell-effect subset now also supports explicit `loot` and `rummage`, surfaced as pending hand-card choice prompts during resolution

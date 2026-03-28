@@ -5,8 +5,9 @@
 
 use {
     crate::support::{
-        advance_to_first_main_satisfying_cleanup, end_step_life_gain_artifact_card, filled_library,
-        player, satisfy_cleanup_discard, setup_two_player_game,
+        advance_to_first_main_satisfying_cleanup, end_step_life_gain_artifact_card,
+        end_step_spell_recursion_artifact_card, filled_library, instant_card, player,
+        satisfy_cleanup_discard, setup_two_player_game,
     },
     demonictutor::{
         AdvanceTurnCommand, AdvanceTurnOutcome, CardDefinitionId, CastSpellCommand,
@@ -248,4 +249,66 @@ fn entering_end_step_enqueues_triggers_from_all_players_battlefields() {
             && event.trigger == TriggeredAbilityEvent::BeginningOfEndStep
     }));
     assert_eq!(game.stack().len(), 2);
+}
+
+#[test]
+fn end_step_trigger_can_return_supported_spell_from_owners_graveyard_to_hand() {
+    let (service, mut game) = setup_two_player_game(
+        "game-end-step-spell-recursion-trigger",
+        filled_library(
+            vec![
+                instant_card("recoverable-spell", 0),
+                end_step_spell_recursion_artifact_card("spell-lantern", 0),
+            ],
+            10,
+        ),
+        filled_library(Vec::new(), 10),
+    );
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
+
+    let spell_id = player(&game, "player-1")
+        .hand_card_by_definition(&CardDefinitionId::new("recoverable-spell"))
+        .unwrap()
+        .id()
+        .clone();
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), spell_id.clone()),
+        )
+        .unwrap();
+    resolve_current_stack(&service, &mut game);
+    assert!(player(&game, "player-1").graveyard_contains(&spell_id));
+
+    let artifact_id = player(&game, "player-1")
+        .hand_card_by_definition(&CardDefinitionId::new("spell-lantern"))
+        .unwrap()
+        .id()
+        .clone();
+    service
+        .cast_spell(
+            &mut game,
+            CastSpellCommand::new(PlayerId::new("player-1"), artifact_id),
+        )
+        .unwrap();
+    resolve_current_stack(&service, &mut game);
+
+    advance_to_player_phase_resolving_stack(&service, &mut game, "player-1", Phase::SecondMain);
+    let first_holder = game.priority().unwrap().current_holder().clone();
+    service
+        .pass_priority(&mut game, PassPriorityCommand::new(first_holder))
+        .unwrap();
+    let second_holder = game.priority().unwrap().current_holder().clone();
+    service
+        .pass_priority(&mut game, PassPriorityCommand::new(second_holder))
+        .unwrap();
+    service
+        .advance_turn(&mut game, AdvanceTurnCommand::new())
+        .unwrap();
+
+    let trigger_resolution = resolve_current_stack(&service, &mut game);
+
+    assert!(trigger_resolution.spell_cast.is_none());
+    assert!(player(&game, "player-1").hand_contains(&spell_id));
+    assert!(!player(&game, "player-1").graveyard_contains(&spell_id));
 }

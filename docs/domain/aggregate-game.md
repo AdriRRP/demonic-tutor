@@ -261,6 +261,7 @@ The current triggered-ability support is intentionally tiny and explicit:
 - dies triggers on supported creatures
 - beginning-of-upkeep triggers on supported battlefield permanents across all controllers
 - beginning-of-end-step triggers on supported battlefield permanents across all controllers
+- the current supported triggered effects are still explicit profiles, currently limited to life gain, optional life gain, and one bounded end-step spell-recursion effect
 
 This is not yet a generic trigger engine for arbitrary delayed, intervening-if, or multi-object ordering cases.
 

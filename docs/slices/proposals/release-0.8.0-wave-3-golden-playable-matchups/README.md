@@ -1,4 +1,4 @@
-# Release 0.9.0 - Wave 2 - Golden Playable Matchups
+# Release 0.8.0 - Wave 3 - Golden Playable Matchups
 
 Goal:
 

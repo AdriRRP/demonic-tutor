@@ -1,4 +1,4 @@
-# Release 0.9.0 - Wave 3 - UI Release Candidate Hardening
+# Release 0.8.0 - Wave 4 - UI Release Candidate Hardening
 
 Goal:
 

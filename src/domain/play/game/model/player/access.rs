@@ -275,6 +275,18 @@ impl Player {
         self.battlefield.iter().copied()
     }
 
+    pub(crate) fn first_instant_or_sorcery_graveyard_handle(&self) -> Option<PlayerCardHandle> {
+        self.graveyard.iter().copied().find(|handle| {
+            self.cards.get_by_handle(*handle).is_some_and(|card| {
+                matches!(
+                    card.card_type(),
+                    crate::domain::play::cards::CardType::Instant
+                        | crate::domain::play::cards::CardType::Sorcery
+                )
+            })
+        })
+    }
+
     pub fn for_each_battlefield_card_mut<F>(&mut self, mut f: F)
     where
         F: FnMut(&mut CardInstance),

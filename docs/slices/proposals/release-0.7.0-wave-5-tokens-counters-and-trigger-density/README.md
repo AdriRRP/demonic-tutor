@@ -1,4 +1,4 @@
-# Release 0.8.0 - Wave 2 - Tokens, Counters, And Trigger Density
+# Release 0.7.0 - Wave 5 - Tokens, Counters, And Trigger Density
 
 Goal:
 
@@ -16,11 +16,12 @@ Slices:
   - `support-multiple-token-creation-from-one-effect`
     - support effects that create more than one token at resolution
 - pending:
-  - `support-distribute-plus-one-plus-one-counters`
-    - support placing counters across one or more chosen creatures in a bounded targeting subset
-  - `support-attack-and-combat-damage-triggers`
-    - support first explicit attack triggers and combat-damage-to-player triggers
 
 Why this wave has high return:
 
 - it unlocks the kind of snowballing battlefield stories that limited formats rely on heavily
+
+Notes:
+
+- this wave was closed for `0.7.0` after the token-breadth foundation landed
+- the still-pending counter-distribution and combat-trigger expansions were moved forward into `0.8.0` so `0.7.0` can now close honestly

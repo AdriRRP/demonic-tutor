@@ -120,6 +120,7 @@ pub enum TriggeredAbilityEvent {
 pub enum TriggeredAbilityEffect {
     GainLifeToController(u32),
     MayGainLifeToController(u32),
+    ReturnFirstInstantOrSorceryCardFromGraveyardToHand,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -330,6 +331,15 @@ impl TriggeredAbilityProfile {
         Self {
             event: TriggeredAbilityEvent::BeginningOfEndStep,
             effect: TriggeredAbilityEffect::GainLifeToController(amount),
+        }
+    }
+
+    #[must_use]
+    pub const fn beginning_of_end_step_return_first_instant_or_sorcery_from_graveyard_to_hand(
+    ) -> Self {
+        Self {
+            event: TriggeredAbilityEvent::BeginningOfEndStep,
+            effect: TriggeredAbilityEffect::ReturnFirstInstantOrSorceryCardFromGraveyardToHand,
         }
     }
 

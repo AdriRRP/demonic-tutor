@@ -506,6 +506,12 @@ pub fn end_step_life_gain_artifact_card(name: &str, mana_cost: u32, amount: u32)
     )
 }
 
+pub fn end_step_spell_recursion_artifact_card(name: &str, mana_cost: u32) -> LibraryCard {
+    artifact_card(name, mana_cost).with_triggered_ability(
+        TriggeredAbilityProfile::beginning_of_end_step_return_first_instant_or_sorcery_from_graveyard_to_hand(),
+    )
+}
+
 pub fn enchantment_card(name: &str, mana_cost: u32) -> LibraryCard {
     LibraryCard::new(
         CardDefinitionId::new(name),

@@ -1,4 +1,4 @@
-# Release 0.9.0 - Wave 1 - Limited Set Authoring Contract
+# Release 0.8.0 - Wave 2 - Limited Set Authoring Contract
 
 Goal:
 

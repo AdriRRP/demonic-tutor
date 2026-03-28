@@ -1,4 +1,4 @@
-# Release 0.8.0 - Wave 1 - Board Control And Combat Utility
+# Release 0.7.0 - Wave 4 - Board Control And Combat Utility
 
 Goal:
 
