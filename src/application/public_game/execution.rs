@@ -94,7 +94,7 @@ where
         let aggregate_id = game_id.to_string();
         let events = self.load_persisted_events(&aggregate_id)?;
 
-        Ok(public_event_log(&events))
+        Ok(public_event_log(events))
     }
 
     /// Executes a public gameplay command and returns a UI-friendly deterministic envelope.

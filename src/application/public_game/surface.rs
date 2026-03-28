@@ -325,12 +325,12 @@ pub fn public_command_result(
 }
 
 #[must_use]
-pub fn public_event_log(
-    events: &[crate::domain::play::events::DomainEvent],
-) -> Vec<PublicEventLogEntry> {
+pub fn public_event_log<I>(events: I) -> Vec<PublicEventLogEntry>
+where
+    I: IntoIterator<Item = crate::domain::play::events::DomainEvent>,
+{
     events
-        .iter()
-        .cloned()
+        .into_iter()
         .zip(1_u64..)
         .map(|(event, sequence)| PublicEventLogEntry { sequence, event })
         .collect()

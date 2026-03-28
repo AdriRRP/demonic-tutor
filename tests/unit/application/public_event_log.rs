@@ -12,7 +12,7 @@ use crate::support::{
 
 #[test]
 fn public_event_log_assigns_stable_sequences_to_raw_events() {
-    let log = public_event_log(&[
+    let log = public_event_log(vec![
         DomainEvent::PriorityPassed(PriorityPassed {
             game_id: GameId::new("game-public-event-log-seq"),
             player_id: PlayerId::new("player-1"),
