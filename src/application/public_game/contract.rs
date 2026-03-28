@@ -75,6 +75,7 @@ pub struct PublicPlayerView {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PublicStackTargetView {
+    Unavailable,
     Player(PlayerId),
     Card(CardInstanceId),
     StackSpell(StackObjectId),
@@ -87,6 +88,9 @@ pub enum PublicPlayableSubsetVersion {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PublicStackObjectView {
+    Unavailable {
+        number: u32,
+    },
     Spell {
         number: u32,
         controller_id: PlayerId,
@@ -212,6 +216,10 @@ pub enum PublicChoiceCandidate {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PublicChoiceRequest {
+    PhaseUnavailable {
+        player_id: PlayerId,
+        phase: Phase,
+    },
     PriorityUnavailable {
         player_id: PlayerId,
     },

@@ -45,7 +45,7 @@ impl PublicSurfaceState {
 
 #[must_use]
 pub fn game_view(game: &Game) -> PublicGameView {
-    let active_player_id = game.active_player().clone();
+    let active_player_id = active_player_id_for_public_view(game);
     let players = game
         .players()
         .iter()
@@ -56,7 +56,7 @@ pub fn game_view(game: &Game) -> PublicGameView {
         .stack()
         .objects()
         .iter()
-        .filter_map(|object| stack_object_view(game, object))
+        .map(|object| stack_object_view(game, object))
         .collect();
 
     PublicGameView {
@@ -157,6 +157,16 @@ fn unavailable_priority_surface(viewer_id: &PlayerId) -> PublicSurfaceState {
         Vec::new(),
         vec![PublicChoiceRequest::PriorityUnavailable {
             player_id: viewer_id.clone(),
+        }],
+    )
+}
+
+fn unavailable_phase_surface(viewer_id: &PlayerId, phase: Phase) -> PublicSurfaceState {
+    PublicSurfaceState::with_choice_requests(
+        Vec::new(),
+        vec![PublicChoiceRequest::PhaseUnavailable {
+            player_id: viewer_id.clone(),
+            phase,
         }],
     )
 }
@@ -316,7 +326,7 @@ fn phase_surface_state(game: &Game, viewer_id: &PlayerId) -> PublicSurfaceState 
     let mut actions = Vec::new();
     let mut choice_requests = Vec::new();
     let Some(active_player) = active_player(game) else {
-        return PublicSurfaceState::default();
+        return unavailable_phase_surface(viewer_id, *game.phase());
     };
 
     match game.phase() {
@@ -331,7 +341,7 @@ fn phase_surface_state(game: &Game, viewer_id: &PlayerId) -> PublicSurfaceState 
         }
         Phase::DeclareBlockers => {
             let Some(defending_player) = defending_player(game, active_player) else {
-                return PublicSurfaceState::default();
+                return unavailable_phase_surface(viewer_id, *game.phase());
             };
             if defending_player.id() != viewer_id {
                 return PublicSurfaceState::default();
@@ -620,9 +630,19 @@ fn keyword_list(card: &CardInstance) -> Vec<KeywordAbility> {
 fn stack_object_view(
     game: &Game,
     object: &crate::domain::play::game::StackObject,
-) -> Option<PublicStackObjectView> {
-    let controller_id = game.players().get(object.controller_index())?.id().clone();
-    Some(match object.kind() {
+) -> PublicStackObjectView {
+    let Some(controller_id) = game
+        .players()
+        .get(object.controller_index())
+        .map(crate::domain::play::game::Player::id)
+        .cloned()
+    else {
+        return PublicStackObjectView::Unavailable {
+            number: object.number(),
+        };
+    };
+
+    match object.kind() {
         StackObjectKind::Spell(spell) => PublicStackObjectView::Spell {
             number: object.number(),
             controller_id,
@@ -630,7 +650,7 @@ fn stack_object_view(
             card_type: *spell.card_type(),
             target: spell
                 .target()
-                .and_then(|target| stack_target_view(game, *target)),
+                .map(|target| stack_target_view(game, *target)),
             requires_choice: spell.choice().is_some(),
         },
         StackObjectKind::ActivatedAbility(ability) => PublicStackObjectView::ActivatedAbility {
@@ -639,37 +659,39 @@ fn stack_object_view(
             source_card_id: ability.source_card_id(),
             target: ability
                 .target()
-                .and_then(|target| stack_target_view(game, *target)),
+                .map(|target| stack_target_view(game, *target)),
         },
         StackObjectKind::TriggeredAbility(ability) => PublicStackObjectView::TriggeredAbility {
             number: object.number(),
             controller_id,
             source_card_id: ability.source_card_id(),
         },
-    })
+    }
 }
 
 fn stack_target_view(
     game: &Game,
     target: crate::domain::play::game::model::StackTargetRef,
-) -> Option<PublicStackTargetView> {
+) -> PublicStackTargetView {
     match target {
         crate::domain::play::game::model::StackTargetRef::Player(index) => game
             .players()
             .get(index)
-            .map(|player| PublicStackTargetView::Player(player.id().clone())),
+            .map_or(PublicStackTargetView::Unavailable, |player| {
+                PublicStackTargetView::Player(player.id().clone())
+            }),
         crate::domain::play::game::model::StackTargetRef::Creature(card_ref)
         | crate::domain::play::game::model::StackTargetRef::Permanent(card_ref)
-        | crate::domain::play::game::model::StackTargetRef::GraveyardCard(card_ref) => {
-            let card = game
-                .players()
-                .get(card_ref.player_index())?
-                .card_by_handle(card_ref.handle())?;
-            Some(PublicStackTargetView::Card(card.id().clone()))
+        | crate::domain::play::game::model::StackTargetRef::GraveyardCard(card_ref) => game
+            .players()
+            .get(card_ref.player_index())
+            .and_then(|player| player.card_by_handle(card_ref.handle()))
+            .map_or(PublicStackTargetView::Unavailable, |card| {
+                PublicStackTargetView::Card(card.id().clone())
+            }),
+        crate::domain::play::game::model::StackTargetRef::StackSpell(number) => {
+            PublicStackTargetView::StackSpell(StackObjectId::for_stack_object(game.id(), number))
         }
-        crate::domain::play::game::model::StackTargetRef::StackSpell(number) => Some(
-            PublicStackTargetView::StackSpell(StackObjectId::for_stack_object(game.id(), number)),
-        ),
     }
 }
 
@@ -973,7 +995,19 @@ fn opponent_hand_choice_candidates(
 }
 
 fn active_player(game: &Game) -> Option<&Player> {
-    player_by_id(game, game.active_player())
+    game.players().get(game.active_player_index_value())
+}
+
+fn active_player_id_for_public_view(game: &Game) -> PlayerId {
+    active_player(game).map_or_else(
+        || {
+            PlayerId::new(format!(
+                "missing-active-player-{}",
+                game.active_player_index_value()
+            ))
+        },
+        |player| player.id().clone(),
+    )
 }
 
 fn defending_player<'a>(game: &'a Game, active_player: &Player) -> Option<&'a Player> {
@@ -1032,11 +1066,14 @@ fn sort_choice_requests(choice_requests: &mut [PublicChoiceRequest]) {
 fn choice_request_sort_key(request: &PublicChoiceRequest) -> (u8, &str, &str) {
     match request {
         PublicChoiceRequest::PriorityUnavailable { player_id } => (0, player_id.as_str(), ""),
+        PublicChoiceRequest::PhaseUnavailable { player_id, phase } => {
+            (1, player_id.as_str(), phase_sort_key(*phase))
+        }
         PublicChoiceRequest::PendingDecisionUnavailable {
             player_id,
             decision,
         } => (
-            match decision {
+            2 + match decision {
                 PublicPendingDecisionKind::Scry => 1,
                 PublicPendingDecisionKind::Surveil => 2,
                 PublicPendingDecisionKind::HandChoice => 3,
@@ -1049,52 +1086,69 @@ fn choice_request_sort_key(request: &PublicChoiceRequest) -> (u8, &str, &str) {
             player_id,
             source_card_id,
             ..
-        } => (5, player_id.as_str(), source_card_id.as_str()),
+        } => (6, player_id.as_str(), source_card_id.as_str()),
         PublicChoiceRequest::PendingSurveil {
             player_id,
             source_card_id,
             ..
-        } => (6, player_id.as_str(), source_card_id.as_str()),
+        } => (7, player_id.as_str(), source_card_id.as_str()),
         PublicChoiceRequest::PendingHandChoice {
             player_id,
             source_card_id,
             ..
-        } => (7, player_id.as_str(), source_card_id.as_str()),
+        } => (8, player_id.as_str(), source_card_id.as_str()),
         PublicChoiceRequest::OptionalEffectDecision {
             player_id,
             source_card_id,
             ..
-        } => (8, player_id.as_str(), source_card_id.as_str()),
+        } => (9, player_id.as_str(), source_card_id.as_str()),
         PublicChoiceRequest::SpellTarget {
             player_id,
             source_card_id,
             ..
-        } => (9, player_id.as_str(), source_card_id.as_str()),
+        } => (10, player_id.as_str(), source_card_id.as_str()),
         PublicChoiceRequest::SpellChoiceUnavailable {
             player_id,
             source_card_id,
-        } => (10, player_id.as_str(), source_card_id.as_str()),
+        } => (11, player_id.as_str(), source_card_id.as_str()),
         PublicChoiceRequest::SpellChoice {
             player_id,
             source_card_id,
             ..
-        } => (11, player_id.as_str(), source_card_id.as_str()),
+        } => (12, player_id.as_str(), source_card_id.as_str()),
         PublicChoiceRequest::SpellSecondaryCreatureChoice {
             player_id,
             source_card_id,
             ..
-        } => (12, player_id.as_str(), source_card_id.as_str()),
+        } => (13, player_id.as_str(), source_card_id.as_str()),
         PublicChoiceRequest::SpellModalChoice {
             player_id,
             source_card_id,
             ..
-        } => (13, player_id.as_str(), source_card_id.as_str()),
+        } => (14, player_id.as_str(), source_card_id.as_str()),
         PublicChoiceRequest::AbilityTarget {
             player_id,
             source_card_id,
             ..
-        } => (14, player_id.as_str(), source_card_id.as_str()),
-        PublicChoiceRequest::CleanupDiscard { player_id, .. } => (15, player_id.as_str(), ""),
+        } => (15, player_id.as_str(), source_card_id.as_str()),
+        PublicChoiceRequest::CleanupDiscard { player_id, .. } => (16, player_id.as_str(), ""),
+    }
+}
+
+const fn phase_sort_key(phase: Phase) -> &'static str {
+    match phase {
+        Phase::Setup => "Setup",
+        Phase::Untap => "Untap",
+        Phase::Upkeep => "Upkeep",
+        Phase::Draw => "Draw",
+        Phase::FirstMain => "FirstMain",
+        Phase::BeginningOfCombat => "BeginningOfCombat",
+        Phase::DeclareAttackers => "DeclareAttackers",
+        Phase::DeclareBlockers => "DeclareBlockers",
+        Phase::CombatDamage => "CombatDamage",
+        Phase::EndOfCombat => "EndOfCombat",
+        Phase::SecondMain => "SecondMain",
+        Phase::EndStep => "EndStep",
     }
 }
 
@@ -1114,16 +1168,25 @@ fn choice_candidate_sort_key(candidate: &PublicChoiceCandidate) -> (u8, &str) {
 
 #[cfg(test)]
 mod tests {
-    //! Verifies the public surface keeps pending-decision failures explicit.
+    //! Verifies the public surface keeps degraded projections explicit.
 
-    use super::public_surface_state;
+    use super::{game_view, public_surface_state};
     use crate::{
         domain::play::{
+            cards::ActivatedAbilityProfile,
             commands::{PlayerDeck, StartGameCommand},
-            game::{PendingDecision, PriorityState},
-            ids::{DeckId, GameId, PlayerId},
+            game::{
+                model::{
+                    ActivatedAbilityOnStack, StackCardRef, StackObject, StackObjectKind,
+                    StackTargetRef, StackZone,
+                },
+                PendingDecision, PriorityState,
+            },
+            ids::{CardInstanceId, DeckId, GameId, PlayerCardHandle, PlayerId},
+            phase::Phase,
         },
-        PublicChoiceRequest, PublicLegalAction, PublicPendingDecisionKind,
+        PublicChoiceRequest, PublicLegalAction, PublicPendingDecisionKind, PublicStackObjectView,
+        PublicStackTargetView,
     };
 
     #[test]
@@ -1205,6 +1268,106 @@ mod tests {
             request,
             PublicChoiceRequest::PriorityUnavailable { player_id }
                 if player_id.as_str() == "ghost"
+        )));
+    }
+
+    #[test]
+    fn game_view_keeps_stack_object_visible_when_controller_index_is_stale() {
+        let start = crate::domain::play::game::Game::start(StartGameCommand::new(
+            GameId::new("game-stale-stack-controller"),
+            vec![
+                PlayerDeck::new(PlayerId::new("p1"), DeckId::new("d1")),
+                PlayerDeck::new(PlayerId::new("p2"), DeckId::new("d2")),
+            ],
+        ));
+        assert!(start.is_ok(), "game should start");
+        let Some((mut game, _)) = start.ok() else {
+            return;
+        };
+
+        let source_card_id = CardInstanceId::new("stale-ability-source");
+        let mut stack = StackZone::empty();
+        stack.push(StackObject::new(
+            1,
+            99,
+            StackObjectKind::ActivatedAbility(ActivatedAbilityOnStack::new(
+                StackCardRef::new(0, PlayerCardHandle::new(0)),
+                source_card_id.core_u64(),
+                ActivatedAbilityProfile::tap_to_gain_life_to_target_player(1),
+                Some(StackTargetRef::Player(1)),
+            )),
+        ));
+        game.replace_stack(stack);
+
+        let view = game_view(&game);
+
+        assert!(matches!(
+            view.stack.as_slice(),
+            [PublicStackObjectView::Unavailable { number: 1 }]
+        ));
+    }
+
+    #[test]
+    fn game_view_marks_stack_targets_unavailable_when_target_refs_are_stale() {
+        let start = crate::domain::play::game::Game::start(StartGameCommand::new(
+            GameId::new("game-stale-stack-target"),
+            vec![
+                PlayerDeck::new(PlayerId::new("p1"), DeckId::new("d1")),
+                PlayerDeck::new(PlayerId::new("p2"), DeckId::new("d2")),
+            ],
+        ));
+        assert!(start.is_ok(), "game should start");
+        let Some((mut game, _)) = start.ok() else {
+            return;
+        };
+
+        let source_card_id = CardInstanceId::new("stale-target-ability");
+        let mut stack = StackZone::empty();
+        stack.push(StackObject::new(
+            1,
+            0,
+            StackObjectKind::ActivatedAbility(ActivatedAbilityOnStack::new(
+                StackCardRef::new(0, PlayerCardHandle::new(0)),
+                source_card_id.core_u64(),
+                ActivatedAbilityProfile::tap_to_gain_life_to_target_player(1),
+                Some(StackTargetRef::Player(99)),
+            )),
+        ));
+        game.replace_stack(stack);
+
+        let view = game_view(&game);
+
+        assert!(matches!(
+            view.stack.as_slice(),
+            [PublicStackObjectView::ActivatedAbility {
+                target: Some(PublicStackTargetView::Unavailable),
+                ..
+            }]
+        ));
+    }
+
+    #[test]
+    fn phase_surface_stays_explicit_when_active_player_index_is_stale() {
+        let start = crate::domain::play::game::Game::start(StartGameCommand::new(
+            GameId::new("game-unavailable-phase"),
+            vec![
+                PlayerDeck::new(PlayerId::new("p1"), DeckId::new("d1")),
+                PlayerDeck::new(PlayerId::new("p2"), DeckId::new("d2")),
+            ],
+        ));
+        assert!(start.is_ok(), "game should start");
+        let Some((mut game, _)) = start.ok() else {
+            return;
+        };
+        game.replace_active_player_index(99);
+        game.replace_phase(Phase::FirstMain);
+
+        let surface = public_surface_state(&game, &PlayerId::new("p1"));
+
+        assert!(surface.choice_requests.iter().any(|request| matches!(
+            request,
+            PublicChoiceRequest::PhaseUnavailable { player_id, phase }
+                if player_id.as_str() == "p1" && *phase == Phase::FirstMain
         )));
     }
 }
