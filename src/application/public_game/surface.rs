@@ -1003,11 +1003,16 @@ fn spell_choice_request(
     }
 
     if rules.requires_explicit_secondary_creature_choice() {
+        let Some(cached_target_candidates) = cached_target_candidates else {
+            return Some(PublicChoiceRequest::SpellSecondaryCreatureChoiceUnavailable {
+                player_id: player.id().clone(),
+                source_card_id: source_card_id.clone(),
+            });
+        };
         return Some(PublicChoiceRequest::SpellSecondaryCreatureChoice {
             player_id: player.id().clone(),
             source_card_id: source_card_id.clone(),
             creature_ids: cached_target_candidates
-                .unwrap_or(&[])
                 .iter()
                 .filter_map(|candidate| match candidate {
                     PublicChoiceCandidate::Card(card_id) => Some(card_id.clone()),
@@ -1326,22 +1331,26 @@ fn choice_request_sort_key(request: &PublicChoiceRequest) -> (u8, &str, &str) {
             source_card_id,
             ..
         } => (12, player_id.as_str(), source_card_id.as_str()),
+        PublicChoiceRequest::SpellSecondaryCreatureChoiceUnavailable {
+            player_id,
+            source_card_id,
+        } => (13, player_id.as_str(), source_card_id.as_str()),
         PublicChoiceRequest::SpellSecondaryCreatureChoice {
             player_id,
             source_card_id,
             ..
-        } => (13, player_id.as_str(), source_card_id.as_str()),
+        } => (14, player_id.as_str(), source_card_id.as_str()),
         PublicChoiceRequest::SpellModalChoice {
             player_id,
             source_card_id,
             ..
-        } => (14, player_id.as_str(), source_card_id.as_str()),
+        } => (15, player_id.as_str(), source_card_id.as_str()),
         PublicChoiceRequest::AbilityTarget {
             player_id,
             source_card_id,
             ..
-        } => (15, player_id.as_str(), source_card_id.as_str()),
-        PublicChoiceRequest::CleanupDiscard { player_id, .. } => (16, player_id.as_str(), ""),
+        } => (16, player_id.as_str(), source_card_id.as_str()),
+        PublicChoiceRequest::CleanupDiscard { player_id, .. } => (17, player_id.as_str(), ""),
     }
 }
 
@@ -1380,11 +1389,14 @@ fn choice_candidate_sort_key(candidate: &PublicChoiceCandidate) -> (u8, &str) {
 mod tests {
     //! Verifies the public surface keeps degraded projections explicit.
 
-    use super::{game_view, public_surface_state};
+    use super::{game_view, public_surface_state, spell_choice_request};
     use crate::{
         domain::play::{
+            cards::{CardType, ManaColor, SupportedSpellRules},
             cards::ActivatedAbilityProfile,
-            commands::{PlayerDeck, StartGameCommand},
+            commands::{
+                DealOpeningHandsCommand, LibraryCard, PlayerDeck, PlayerLibrary, StartGameCommand,
+            },
             game::{
                 model::{
                     ActivatedAbilityOnStack, StackCardRef, StackObject, StackObjectKind,
@@ -1392,7 +1404,7 @@ mod tests {
                 },
                 PendingDecision, PriorityState,
             },
-            ids::{CardInstanceId, DeckId, GameId, PlayerCardHandle, PlayerId},
+            ids::{CardDefinitionId, CardInstanceId, DeckId, GameId, PlayerCardHandle, PlayerId},
             phase::Phase,
         },
         PublicChoiceRequest, PublicLegalAction, PublicPendingDecisionKind, PublicStackObjectView,
@@ -1579,5 +1591,77 @@ mod tests {
             PublicChoiceRequest::PhaseUnavailable { player_id, phase }
                 if player_id.as_str() == "p1" && *phase == Phase::FirstMain
         )));
+    }
+
+    #[test]
+    fn spell_choice_request_stays_explicit_when_secondary_target_candidates_are_missing() {
+        let start = crate::domain::play::game::Game::start(StartGameCommand::new(
+            GameId::new("game-missing-secondary-choice-candidates"),
+            vec![
+                PlayerDeck::new(PlayerId::new("p1"), DeckId::new("d1")),
+                PlayerDeck::new(PlayerId::new("p2"), DeckId::new("d2")),
+            ],
+        ));
+        assert!(start.is_ok(), "game should start");
+        let Some((mut game, _)) = start.ok() else {
+            return;
+        };
+
+        let libraries = vec![
+            PlayerLibrary::new(
+                PlayerId::new("p1"),
+                vec![
+                    LibraryCard::new(
+                        CardDefinitionId::new("distribute-counters"),
+                        CardType::Sorcery,
+                        0,
+                    )
+                    .with_supported_spell_rules(
+                        SupportedSpellRules::distribute_two_plus_one_plus_one_counters_among_up_to_two_target_creatures(),
+                    ),
+                    LibraryCard::land(CardDefinitionId::new("p1-forest-a"), ManaColor::Green),
+                    LibraryCard::land(CardDefinitionId::new("p1-forest-b"), ManaColor::Green),
+                    LibraryCard::land(CardDefinitionId::new("p1-forest-c"), ManaColor::Green),
+                    LibraryCard::land(CardDefinitionId::new("p1-forest-d"), ManaColor::Green),
+                    LibraryCard::land(CardDefinitionId::new("p1-forest-e"), ManaColor::Green),
+                    LibraryCard::land(CardDefinitionId::new("p1-forest-f"), ManaColor::Green),
+                    LibraryCard::land(CardDefinitionId::new("p1-forest-g"), ManaColor::Green),
+                ],
+            ),
+            PlayerLibrary::new(
+                PlayerId::new("p2"),
+                vec![
+                    LibraryCard::land(CardDefinitionId::new("p2-forest-a"), ManaColor::Green),
+                    LibraryCard::land(CardDefinitionId::new("p2-forest-b"), ManaColor::Green),
+                    LibraryCard::land(CardDefinitionId::new("p2-forest-c"), ManaColor::Green),
+                    LibraryCard::land(CardDefinitionId::new("p2-forest-d"), ManaColor::Green),
+                    LibraryCard::land(CardDefinitionId::new("p2-forest-e"), ManaColor::Green),
+                    LibraryCard::land(CardDefinitionId::new("p2-forest-f"), ManaColor::Green),
+                    LibraryCard::land(CardDefinitionId::new("p2-forest-g"), ManaColor::Green),
+                ],
+            ),
+        ];
+        let dealt = game.deal_opening_hands(&DealOpeningHandsCommand::new(libraries));
+        assert!(dealt.is_ok(), "opening hands should be dealt");
+
+        let Some(player) = game.players().first() else {
+            panic!("p1 should exist");
+        };
+        let Some(spell_id) = player
+            .hand_card_by_definition(&CardDefinitionId::new("distribute-counters"))
+            .map(|card| card.id().clone())
+        else {
+            panic!("spell should be in opening hand");
+        };
+
+        let request = spell_choice_request(&game, player, &spell_id, None);
+
+        assert!(matches!(
+            request,
+            Some(PublicChoiceRequest::SpellSecondaryCreatureChoiceUnavailable {
+                player_id,
+                source_card_id,
+            }) if player_id.as_str() == "p1" && source_card_id == spell_id
+        ));
     }
 }
