@@ -3,13 +3,20 @@
 use {
     super::super::super::{helpers, model::Player},
     crate::domain::play::{
-        cards::CardType,
+        cards::{CardType, TriggeredAbilityEvent},
         commands::DeclareAttackersCommand,
         errors::{CardError, DomainError},
-        events::AttackersDeclared,
+        events::{AttackersDeclared, TriggeredAbilityPutOnStack},
+        game::model::StackZone,
         ids::{CardInstanceId, GameId},
     },
 };
+
+#[derive(Debug, Clone)]
+pub struct DeclareAttackersOutcome {
+    pub attackers_declared: AttackersDeclared,
+    pub triggered_abilities_put_on_stack: Vec<TriggeredAbilityPutOnStack>,
+}
 
 #[allow(clippy::redundant_pub_crate)]
 pub(crate) fn can_attack_with_candidate(
@@ -42,8 +49,9 @@ pub(crate) fn can_attack_with_candidate(
 pub fn declare_attackers(
     game_id: &GameId,
     players: &mut [Player],
+    stack: &mut StackZone,
     cmd: DeclareAttackersCommand,
-) -> Result<AttackersDeclared, DomainError> {
+) -> Result<DeclareAttackersOutcome, DomainError> {
     let player_idx = helpers::find_player_index(players, &cmd.player_id)?;
     let player = &mut players[player_idx];
     let mut valid_attackers: Vec<CardInstanceId> = Vec::new();
@@ -90,9 +98,29 @@ pub fn declare_attackers(
         valid_attackers.push(attacker_id.clone());
     }
 
-    Ok(AttackersDeclared::new(
-        game_id.clone(),
-        cmd.player_id,
-        valid_attackers,
-    ))
+    let attackers_declared =
+        AttackersDeclared::new(game_id.clone(), cmd.player_id, valid_attackers);
+    let trigger_handles = attackers_declared
+        .attackers
+        .iter()
+        .filter_map(|card_id| players[player_idx].resolve_public_card_handle(card_id))
+        .collect::<Vec<_>>();
+    let mut triggered_abilities_put_on_stack = Vec::new();
+    for handle in trigger_handles {
+        triggered_abilities_put_on_stack.extend(
+            crate::domain::play::game::rules::stack_priority::triggers::enqueue_trigger_for_card_handle(
+                game_id,
+                players,
+                player_idx,
+                handle,
+                TriggeredAbilityEvent::Attacks,
+                stack,
+            )?,
+        );
+    }
+
+    Ok(DeclareAttackersOutcome {
+        attackers_declared,
+        triggered_abilities_put_on_stack,
+    })
 }

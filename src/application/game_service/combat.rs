@@ -9,11 +9,17 @@ use {
                 DeclareAttackersCommand, DeclareBlockersCommand, ResolveCombatDamageCommand,
             },
             errors::DomainError,
-            events::{AttackersDeclared, BlockersDeclared, DomainEvent},
-            game::{Game, ResolveCombatDamageOutcome},
+            events::{BlockersDeclared, DomainEvent},
+            game::{DeclareAttackersOutcome, Game, ResolveCombatDamageOutcome},
         },
     },
 };
+
+pub fn domain_events_for_declare_attackers(outcome: &DeclareAttackersOutcome) -> Vec<DomainEvent> {
+    let mut domain_events = DomainEvents::with(outcome.attackers_declared.clone());
+    domain_events.extend(outcome.triggered_abilities_put_on_stack.iter().cloned());
+    domain_events.into_vec()
+}
 
 pub fn domain_events_for_resolve_combat_damage(
     outcome: &ResolveCombatDamageOutcome,
@@ -21,6 +27,7 @@ pub fn domain_events_for_resolve_combat_damage(
     let mut domain_events = DomainEvents::with(outcome.combat_damage_resolved.clone());
     domain_events.extend(outcome.life_changed.iter().cloned());
     domain_events.extend(outcome.creatures_died.iter().cloned());
+    domain_events.extend(outcome.triggered_abilities_put_on_stack.iter().cloned());
     domain_events.push_optional(outcome.game_ended.clone());
     domain_events.into_vec()
 }
@@ -39,11 +46,11 @@ where
         &self,
         game: &mut Game,
         cmd: DeclareAttackersCommand,
-    ) -> Result<AttackersDeclared, DomainError> {
-        let event = game.declare_attackers(cmd)?;
-        self.persist_and_publish_event(game.id().as_str(), &event)?;
-
-        Ok(event)
+    ) -> Result<DeclareAttackersOutcome, DomainError> {
+        let outcome = game.declare_attackers(cmd)?;
+        let domain_events = domain_events_for_declare_attackers(&outcome);
+        self.persist_and_publish_events(game.id().as_str(), &domain_events)?;
+        Ok(outcome)
     }
 
     /// Declares blocking creatures.

@@ -14,8 +14,8 @@ It does not claim full Magic support.
 The proposed horizon is:
 
 - `1` release
-- `4` waves
-- `14` slices
+- `3` waves
+- `12` slices
 
 The releases are:
 
@@ -60,12 +60,11 @@ If the curated set later needs those families, the roadmap must expand.
 
 Goal:
 
-- finish the missing snowball/combat-trigger patterns
 - freeze the curated playable subset
 - prove real end-to-end matchups
 - harden the public contract for a first real playable client
 
 Waves:
 
-- `4`
-- `14` slices
+- `3`
+- `12` slices

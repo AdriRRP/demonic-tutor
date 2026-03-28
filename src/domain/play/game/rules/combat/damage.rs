@@ -10,15 +10,20 @@ use self::{
     },
 };
 use super::super::{
-    super::{model::Player, AggregateCardLocationIndex, TerminalState},
-    game_effects, state_based_actions,
+    super::{
+        model::{Player, StackZone},
+        AggregateCardLocationIndex, TerminalState,
+    },
+    game_effects, stack_priority, state_based_actions,
     state_based_actions::StateBasedActionsResult,
 };
 use crate::domain::play::{
+    cards::TriggeredAbilityEvent,
     commands::ResolveCombatDamageCommand,
     errors::{DomainError, GameError},
     events::{
         CombatDamageResolved, CreatureDied, DamageEvent, DamageTarget, GameEnded, LifeChanged,
+        TriggeredAbilityPutOnStack,
     },
     ids::{CardInstanceId, GameId},
 };
@@ -415,6 +420,7 @@ pub struct ResolveCombatDamageOutcome {
     pub combat_damage_resolved: CombatDamageResolved,
     pub life_changed: Vec<LifeChanged>,
     pub creatures_died: Vec<CreatureDied>,
+    pub triggered_abilities_put_on_stack: Vec<TriggeredAbilityPutOnStack>,
     pub game_ended: Option<GameEnded>,
 }
 
@@ -424,22 +430,25 @@ impl ResolveCombatDamageOutcome {
         combat_damage_resolved: CombatDamageResolved,
         life_changed: Vec<LifeChanged>,
         creatures_died: Vec<CreatureDied>,
+        triggered_abilities_put_on_stack: Vec<TriggeredAbilityPutOnStack>,
         game_ended: Option<GameEnded>,
     ) -> Self {
         Self {
             combat_damage_resolved,
             life_changed,
             creatures_died,
+            triggered_abilities_put_on_stack,
             game_ended,
         }
     }
 }
 
-#[allow(clippy::too_many_lines)]
+#[allow(clippy::too_many_lines, clippy::too_many_arguments)]
 pub fn resolve_combat_damage(
     game_id: &GameId,
     players: &mut [Player],
     card_locations: &AggregateCardLocationIndex,
+    stack: &mut StackZone,
     terminal_state: &mut TerminalState,
     cmd: ResolveCombatDamageCommand,
     attacker_player_idx: usize,
@@ -551,11 +560,47 @@ pub fn resolve_combat_damage(
     }
 
     clear_combat_state(players);
+    let mut triggered_abilities_put_on_stack = Vec::new();
+    if game_ended.is_none() {
+        let mut trigger_sources = Vec::new();
+        for damage_event in &damage_events {
+            if let DamageTarget::Player(_) = &damage_event.target {
+                if !trigger_sources
+                    .iter()
+                    .any(|source| source == &damage_event.source)
+                {
+                    trigger_sources.push(damage_event.source.clone());
+                }
+            }
+        }
+
+        for source_card_id in trigger_sources {
+            for controller_index in 0..players.len() {
+                let Some(handle) =
+                    players[controller_index].resolve_public_card_handle(&source_card_id)
+                else {
+                    continue;
+                };
+                triggered_abilities_put_on_stack.extend(
+                    stack_priority::triggers::enqueue_trigger_for_card_handle(
+                        game_id,
+                        players,
+                        controller_index,
+                        handle,
+                        TriggeredAbilityEvent::DealsCombatDamageToPlayer,
+                        stack,
+                    )?,
+                );
+                break;
+            }
+        }
+    }
 
     Ok(ResolveCombatDamageOutcome::new(
         CombatDamageResolved::new(game_id.clone(), cmd.player_id, damage_events),
         life_changed,
         creatures_died,
+        triggered_abilities_put_on_stack,
         game_ended,
     ))
 }

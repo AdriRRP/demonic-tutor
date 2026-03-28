@@ -1,5 +1,7 @@
 //! Unit coverage for unit combat.
 
+#[path = "attack_and_combat_damage_triggers.rs"]
+mod attack_and_combat_damage_triggers;
 #[path = "aura_restrictions.rs"]
 mod aura_restrictions;
 #[path = "blocking_legality.rs"]

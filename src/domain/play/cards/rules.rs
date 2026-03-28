@@ -114,6 +114,8 @@ pub enum TriggeredAbilityEvent {
     Dies,
     BeginningOfUpkeep,
     BeginningOfEndStep,
+    Attacks,
+    DealsCombatDamageToPlayer,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -348,6 +350,22 @@ impl TriggeredAbilityProfile {
         Self {
             event: TriggeredAbilityEvent::EntersBattlefield,
             effect: TriggeredAbilityEffect::MayGainLifeToController(amount),
+        }
+    }
+
+    #[must_use]
+    pub const fn attacks_gain_life_to_controller(amount: u32) -> Self {
+        Self {
+            event: TriggeredAbilityEvent::Attacks,
+            effect: TriggeredAbilityEffect::GainLifeToController(amount),
+        }
+    }
+
+    #[must_use]
+    pub const fn deals_combat_damage_to_player_gain_life_to_controller(amount: u32) -> Self {
+        Self {
+            event: TriggeredAbilityEvent::DealsCombatDamageToPlayer,
+            effect: TriggeredAbilityEffect::GainLifeToController(amount),
         }
     }
 

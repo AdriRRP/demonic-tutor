@@ -5,7 +5,7 @@ use {
     crate::domain::play::{
         commands::{DeclareAttackersCommand, DeclareBlockersCommand, ResolveCombatDamageCommand},
         errors::DomainError,
-        events::{AttackersDeclared, BlockersDeclared},
+        events::BlockersDeclared,
         phase::Phase,
     },
 };
@@ -18,21 +18,22 @@ impl Game {
     pub fn declare_attackers(
         &mut self,
         cmd: DeclareAttackersCommand,
-    ) -> Result<AttackersDeclared, DomainError> {
+    ) -> Result<rules::combat::DeclareAttackersOutcome, DomainError> {
         invariants::require_game_active(self.is_over())?;
         invariants::require_no_open_priority_window(self.priority())?;
         let active_player = self.active_player().clone();
         let active_player_index = self.active_player_index;
-        let event = rules::combat::declare_attackers(
+        let outcome = rules::combat::declare_attackers(
             &self.id,
             &mut self.players,
             active_player_index,
             &self.phase,
+            &mut self.stack,
             cmd,
         )?;
         self.phase = Phase::DeclareBlockers;
         self.priority = Some(PriorityState::opened(active_player));
-        Ok(event)
+        Ok(outcome)
     }
 
     /// Declares blockers in combat.
@@ -75,6 +76,7 @@ impl Game {
             &self.id,
             &mut self.players,
             &self.card_locations,
+            &mut self.stack,
             active_player_index,
             &self.phase,
             &mut self.terminal_state,

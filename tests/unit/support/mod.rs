@@ -504,6 +504,56 @@ pub fn dies_life_gain_creature_card(
     )
 }
 
+pub fn attacks_life_gain_creature_card(
+    name: &str,
+    mana_cost: u32,
+    power: u32,
+    toughness: u32,
+    amount: u32,
+) -> LibraryCard {
+    creature_card(name, mana_cost, power, toughness).with_triggered_ability(
+        TriggeredAbilityProfile::attacks_gain_life_to_controller(amount),
+    )
+}
+
+pub fn attacks_life_gain_haste_creature_card(
+    name: &str,
+    mana_cost: u32,
+    power: u32,
+    toughness: u32,
+    amount: u32,
+) -> LibraryCard {
+    creature_card_with_keyword(name, mana_cost, power, toughness, KeywordAbility::Haste)
+        .with_triggered_ability(TriggeredAbilityProfile::attacks_gain_life_to_controller(
+            amount,
+        ))
+}
+
+pub fn combat_damage_to_player_life_gain_creature_card(
+    name: &str,
+    mana_cost: u32,
+    power: u32,
+    toughness: u32,
+    amount: u32,
+) -> LibraryCard {
+    creature_card(name, mana_cost, power, toughness).with_triggered_ability(
+        TriggeredAbilityProfile::deals_combat_damage_to_player_gain_life_to_controller(amount),
+    )
+}
+
+pub fn combat_damage_to_player_life_gain_haste_creature_card(
+    name: &str,
+    mana_cost: u32,
+    power: u32,
+    toughness: u32,
+    amount: u32,
+) -> LibraryCard {
+    creature_card_with_keyword(name, mana_cost, power, toughness, KeywordAbility::Haste)
+        .with_triggered_ability(
+            TriggeredAbilityProfile::deals_combat_damage_to_player_gain_life_to_controller(amount),
+        )
+}
+
 pub fn upkeep_life_gain_artifact_card(name: &str, mana_cost: u32, amount: u32) -> LibraryCard {
     artifact_card(name, mana_cost).with_triggered_ability(
         TriggeredAbilityProfile::beginning_of_upkeep_gain_life_to_controller(amount),

@@ -3,7 +3,9 @@
 use crate::{
     application::{
         game_service::{
-            combat::domain_events_for_resolve_combat_damage,
+            combat::{
+                domain_events_for_declare_attackers, domain_events_for_resolve_combat_damage,
+            },
             resource_actions::domain_events_for_adjust_player_life_effect,
             stack::{
                 domain_events_for_activate_ability, domain_events_for_cast_spell,
@@ -52,7 +54,7 @@ where
                 .map(|outcome| domain_events_for_pass_priority(&outcome)),
             PublicGameCommand::DeclareAttackers(cmd) => self
                 .declare_attackers(game, cmd)
-                .map(|event| vec![event.into()]),
+                .map(|outcome| domain_events_for_declare_attackers(&outcome)),
             PublicGameCommand::DeclareBlockers(cmd) => self
                 .declare_blockers(game, cmd)
                 .map(|event| vec![event.into()]),

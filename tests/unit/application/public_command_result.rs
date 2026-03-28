@@ -4,6 +4,8 @@
 
 use crate::support::{
     advance_to_first_main_satisfying_cleanup, advance_to_player_first_main_satisfying_cleanup,
+    advance_turn_raw, attacks_life_gain_haste_creature_card, cast_spell_and_resolve,
+    close_empty_priority_window, combat_damage_to_player_life_gain_haste_creature_card,
     create_service, etb_may_life_gain_creature_card, filled_library, first_hand_card_id,
     forest_card, loot_sorcery_card, player, player_deck, player_library, rummage_sorcery_card,
     sacrifice_life_gain_artifact_card, setup_two_player_game, surveil_sorcery_card,
@@ -11,10 +13,11 @@ use crate::support::{
 };
 use demonictutor::{
     public_command_result, ActivateAbilityCommand, CardDefinitionId, CastSpellCommand,
-    DealOpeningHandsCommand, DiscardKind, DomainEvent, GameId, PassPriorityCommand,
-    PlayLandCommand, PlayerId, PublicCommandStatus, PublicGameCommand,
-    ResolveOptionalEffectCommand, ResolvePendingHandChoiceCommand, ResolvePendingSurveilCommand,
-    SpellChoice, SpellTarget, StartGameCommand,
+    DealOpeningHandsCommand, DeclareAttackersCommand, DeclareBlockersCommand, DiscardKind,
+    DomainEvent, GameId, PassPriorityCommand, PlayLandCommand, PlayerId, PublicCommandStatus,
+    PublicGameCommand, ResolveCombatDamageCommand, ResolveOptionalEffectCommand,
+    ResolvePendingHandChoiceCommand, ResolvePendingSurveilCommand, SpellChoice, SpellTarget,
+    StartGameCommand, TriggeredAbilityEvent,
 };
 
 fn game_in_first_main() -> (crate::support::TestService, demonictutor::Game) {
@@ -211,6 +214,136 @@ fn terminal_loot_game_on_stack() -> (
     );
 
     (service, game, loot_id)
+}
+
+#[test]
+fn declare_attackers_emits_triggered_ability_put_on_stack_for_supported_attack_triggers() {
+    let (service, mut game) = setup_two_player_game(
+        "game-public-attack-trigger",
+        filled_library(
+            vec![attacks_life_gain_haste_creature_card(
+                "battle-adept",
+                0,
+                2,
+                2,
+                2,
+            )],
+            10,
+        ),
+        filled_library(Vec::new(), 10),
+    );
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
+
+    let creature_id = player(&game, "player-1")
+        .hand_card_by_definition(&CardDefinitionId::new("battle-adept"))
+        .expect("creature should be in hand")
+        .id()
+        .clone();
+    cast_spell_and_resolve(&service, &mut game, "player-1", creature_id.clone());
+    advance_turn_raw(&service, &mut game);
+    close_empty_priority_window(&service, &mut game);
+    advance_turn_raw(&service, &mut game);
+
+    let result = service.execute_public_command(
+        &mut game,
+        PublicGameCommand::DeclareAttackers(DeclareAttackersCommand::new(
+            PlayerId::new("player-1"),
+            vec![creature_id],
+        )),
+    );
+
+    assert!(matches!(result.status, PublicCommandStatus::Applied));
+    assert!(matches!(
+        result.emitted_events.as_slice(),
+        [
+            DomainEvent::AttackersDeclared(_),
+            DomainEvent::TriggeredAbilityPutOnStack(event),
+        ] if event.trigger == TriggeredAbilityEvent::Attacks
+    ));
+}
+
+#[test]
+fn resolve_combat_damage_emits_triggered_ability_put_on_stack_for_supported_damage_triggers() {
+    let (service, mut game) = setup_two_player_game(
+        "game-public-combat-damage-trigger",
+        filled_library(
+            vec![combat_damage_to_player_life_gain_haste_creature_card(
+                "graveknell-raider",
+                0,
+                2,
+                2,
+                3,
+            )],
+            10,
+        ),
+        filled_library(Vec::new(), 10),
+    );
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
+
+    let creature_id = player(&game, "player-1")
+        .hand_card_by_definition(&CardDefinitionId::new("graveknell-raider"))
+        .expect("creature should be in hand")
+        .id()
+        .clone();
+    cast_spell_and_resolve(&service, &mut game, "player-1", creature_id.clone());
+    advance_turn_raw(&service, &mut game);
+    close_empty_priority_window(&service, &mut game);
+    advance_turn_raw(&service, &mut game);
+    service.execute_public_command(
+        &mut game,
+        PublicGameCommand::DeclareAttackers(DeclareAttackersCommand::new(
+            PlayerId::new("player-1"),
+            vec![creature_id],
+        )),
+    );
+    service.execute_public_command(
+        &mut game,
+        PublicGameCommand::PassPriority(PassPriorityCommand::new(PlayerId::new("player-1"))),
+    );
+    service.execute_public_command(
+        &mut game,
+        PublicGameCommand::PassPriority(PassPriorityCommand::new(PlayerId::new("player-2"))),
+    );
+    service.execute_public_command(
+        &mut game,
+        PublicGameCommand::PassPriority(PassPriorityCommand::new(PlayerId::new("player-1"))),
+    );
+    service.execute_public_command(
+        &mut game,
+        PublicGameCommand::PassPriority(PassPriorityCommand::new(PlayerId::new("player-2"))),
+    );
+    service.execute_public_command(
+        &mut game,
+        PublicGameCommand::DeclareBlockers(DeclareBlockersCommand::new(
+            PlayerId::new("player-2"),
+            Vec::new(),
+        )),
+    );
+    service.execute_public_command(
+        &mut game,
+        PublicGameCommand::PassPriority(PassPriorityCommand::new(PlayerId::new("player-1"))),
+    );
+    service.execute_public_command(
+        &mut game,
+        PublicGameCommand::PassPriority(PassPriorityCommand::new(PlayerId::new("player-2"))),
+    );
+
+    let result = service.execute_public_command(
+        &mut game,
+        PublicGameCommand::ResolveCombatDamage(ResolveCombatDamageCommand::new(PlayerId::new(
+            "player-1",
+        ))),
+    );
+
+    assert!(matches!(result.status, PublicCommandStatus::Applied));
+    assert!(matches!(
+        result.emitted_events.as_slice(),
+        [
+            DomainEvent::CombatDamageResolved(_),
+            DomainEvent::LifeChanged(_),
+            DomainEvent::TriggeredAbilityPutOnStack(event),
+        ] if event.trigger == TriggeredAbilityEvent::DealsCombatDamageToPlayer
+    ));
 }
 
 fn rummage_game_in_pending_choice() -> (

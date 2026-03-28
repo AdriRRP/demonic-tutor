@@ -27,7 +27,7 @@ pub use model::{
 };
 pub use queries::LegalBlockerOption;
 pub use rules::{
-    combat::ResolveCombatDamageOutcome,
+    combat::{DeclareAttackersOutcome, ResolveCombatDamageOutcome},
     resource_actions::AdjustPlayerLifeEffectOutcome,
     stack_priority::{
         ActivateAbilityOutcome, CastSpellOutcome, PassPriorityOutcome,
