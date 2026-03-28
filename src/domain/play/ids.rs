@@ -198,7 +198,78 @@ fn public_for_numeric_core(core: NumericCoreId) -> Option<SharedIdStr> {
     interner.public_for_core(core)
 }
 
-macro_rules! dual_layer_id {
+macro_rules! shared_text_id {
+    ($name:ident, display) => {
+        #[derive(Clone, PartialEq, Eq, Hash)]
+        pub struct $name {
+            public: SharedIdStr,
+        }
+
+        impl $name {
+            pub fn new(value: impl Into<String>) -> Self {
+                Self {
+                    public: SharedIdStr::from(value.into()),
+                }
+            }
+
+            #[must_use]
+            pub fn as_str(&self) -> &str {
+                &self.public
+            }
+        }
+
+        impl From<String> for $name {
+            fn from(value: String) -> Self {
+                Self::new(value)
+            }
+        }
+
+        impl fmt::Debug for $name {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                f.write_str(self.as_str())
+            }
+        }
+
+        impl fmt::Display for $name {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                write!(f, "{}", self.public)
+            }
+        }
+    };
+    ($name:ident) => {
+        #[derive(Clone, PartialEq, Eq, Hash)]
+        pub struct $name {
+            public: SharedIdStr,
+        }
+
+        impl $name {
+            pub fn new(value: impl Into<String>) -> Self {
+                Self {
+                    public: SharedIdStr::from(value.into()),
+                }
+            }
+
+            #[must_use]
+            pub fn as_str(&self) -> &str {
+                &self.public
+            }
+        }
+
+        impl From<String> for $name {
+            fn from(value: String) -> Self {
+                Self::new(value)
+            }
+        }
+
+        impl fmt::Debug for $name {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                f.write_str(&self.public)
+            }
+        }
+    };
+}
+
+macro_rules! interned_id {
     ($name:ident, display) => {
         #[derive(Clone)]
         pub struct $name {
@@ -251,54 +322,13 @@ macro_rules! dual_layer_id {
             }
         }
     };
-    ($name:ident) => {
-        #[derive(Clone)]
-        pub struct $name {
-            core: NumericCoreId,
-            public: SharedIdStr,
-        }
-
-        impl $name {
-            pub fn new(value: impl Into<String>) -> Self {
-                let public = SharedIdStr::from(value.into());
-                let core = intern_numeric_core(&public);
-                Self { core, public }
-            }
-        }
-
-        impl From<String> for $name {
-            fn from(value: String) -> Self {
-                Self::new(value)
-            }
-        }
-
-        impl fmt::Debug for $name {
-            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-                f.write_str(&self.public)
-            }
-        }
-
-        impl PartialEq for $name {
-            fn eq(&self, other: &Self) -> bool {
-                self.core == other.core
-            }
-        }
-
-        impl Eq for $name {}
-
-        impl Hash for $name {
-            fn hash<H: Hasher>(&self, state: &mut H) {
-                self.core.hash(state);
-            }
-        }
-    };
 }
 
-dual_layer_id!(GameId, display);
-dual_layer_id!(PlayerId, display);
-dual_layer_id!(DeckId);
-dual_layer_id!(CardInstanceId, display);
-dual_layer_id!(CardDefinitionId, display);
+shared_text_id!(GameId, display);
+shared_text_id!(PlayerId, display);
+shared_text_id!(DeckId);
+interned_id!(CardInstanceId, display);
+shared_text_id!(CardDefinitionId, display);
 
 impl CardInstanceId {
     pub(crate) const fn core_u64(&self) -> u64 {
@@ -329,15 +359,14 @@ impl PlayerCardHandle {
 
 #[derive(Clone)]
 pub struct StackObjectId {
-    core: NumericCoreId,
     public: SharedIdStr,
 }
 
 impl StackObjectId {
     pub fn new(value: impl Into<String>) -> Self {
-        let public = SharedIdStr::from(value.into());
-        let core = intern_numeric_core(&public);
-        Self { core, public }
+        Self {
+            public: SharedIdStr::from(value.into()),
+        }
     }
 
     #[must_use]
@@ -376,7 +405,7 @@ impl fmt::Debug for StackObjectId {
 
 impl PartialEq for StackObjectId {
     fn eq(&self, other: &Self) -> bool {
-        self.core == other.core
+        self.public == other.public
     }
 }
 
@@ -384,7 +413,7 @@ impl Eq for StackObjectId {}
 
 impl Hash for StackObjectId {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        self.core.hash(state);
+        self.public.hash(state);
     }
 }
 
@@ -398,7 +427,7 @@ impl fmt::Display for StackObjectId {
 mod tests {
     //! Verifies numeric core ids remain stable while public text stays deterministic.
 
-    use super::{GameId, PlayerId, SharedIdStr, StackObjectId};
+    use super::{CardInstanceId, GameId, PlayerId, SharedIdStr, StackObjectId};
 
     #[test]
     fn short_ids_round_trip_through_inline_storage() {
@@ -411,8 +440,8 @@ mod tests {
 
     #[test]
     fn same_public_text_reuses_the_same_numeric_core() {
-        let left = GameId::new("game-42");
-        let right = GameId::new("game-42");
+        let left = CardInstanceId::new("card-42");
+        let right = CardInstanceId::new("card-42");
 
         assert_eq!(left, right);
         assert_eq!(left.core.0, right.core.0);
@@ -420,8 +449,8 @@ mod tests {
 
     #[test]
     fn different_public_texts_receive_distinct_numeric_cores() {
-        let left = PlayerId::new("player-a");
-        let right = PlayerId::new("player-b");
+        let left = CardInstanceId::new("card-a");
+        let right = CardInstanceId::new("card-b");
 
         assert_ne!(left, right);
         assert_ne!(left.core.0, right.core.0);
@@ -440,7 +469,6 @@ mod tests {
         let right = StackObjectId::new("game-9-stack-4");
 
         assert_eq!(left, right);
-        assert_eq!(left.core.0, right.core.0);
     }
 
     #[test]
