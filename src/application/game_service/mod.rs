@@ -181,12 +181,8 @@ impl PublicEventLogCache {
 }
 
 fn approximate_public_event_log_bytes(entries: &[PublicEventLogEntry]) -> usize {
-    // Coarse byte budget: fixed slice storage plus a debug-text estimate of event payload growth.
+    // Coarse byte budget: the contiguous slice backing the cached projection.
     size_of_val(entries)
-        + entries
-            .iter()
-            .map(|entry| format!("{:?}", entry.event).len())
-            .sum::<usize>()
 }
 
 impl<E, B> GameService<E, B>
