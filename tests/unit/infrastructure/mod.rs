@@ -98,6 +98,36 @@ fn event_store_empty_for_unknown_aggregate() {
 }
 
 #[test]
+fn event_store_merges_appended_events_after_a_cached_read() {
+    let store = InMemoryEventStore::new();
+
+    let first = DomainEvent::GameStarted(GameStarted::new(
+        GameId::new("game-cached-read-append"),
+        vec![PlayerId::new("player-1"), PlayerId::new("player-2")],
+    ));
+    let second = DomainEvent::OpeningHandDealt(OpeningHandDealt::new(
+        GameId::new("game-cached-read-append"),
+        PlayerId::new("player-1"),
+        vec![],
+    ));
+
+    store
+        .append("game-cached-read-append", std::slice::from_ref(&first))
+        .unwrap();
+    let first_read = store.get_events("game-cached-read-append").unwrap();
+    assert_eq!(first_read.len(), 1);
+
+    store
+        .append("game-cached-read-append", std::slice::from_ref(&second))
+        .unwrap();
+    let second_read = store.get_events("game-cached-read-append").unwrap();
+
+    assert_eq!(second_read.len(), 2);
+    assert!(matches!(second_read[0], DomainEvent::GameStarted(_)));
+    assert!(matches!(second_read[1], DomainEvent::OpeningHandDealt(_)));
+}
+
+#[test]
 fn projection_logs_events() {
     let projection = GameLogProjection::new();
 
