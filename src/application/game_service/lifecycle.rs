@@ -63,10 +63,11 @@ where
         game: &mut Game,
         cmd: &DealOpeningHandsCommand,
     ) -> Result<Vec<OpeningHandDealt>, DomainError> {
-        let events = game.deal_opening_hands(cmd)?;
-        self.persist_and_publish_event_batch(game.id().as_str(), &events)?;
-
-        Ok(events)
+        self.apply_persisted(
+            game,
+            |game| game.deal_opening_hands(cmd),
+            |events| events.iter().cloned().map(Into::into).collect(),
+        )
     }
 
     /// Performs a mulligan for a player.
@@ -79,10 +80,7 @@ where
         game: &mut Game,
         cmd: MulliganCommand,
     ) -> Result<MulliganTaken, DomainError> {
-        let event = game.mulligan(cmd)?;
-        self.persist_and_publish_event(game.id().as_str(), &event)?;
-
-        Ok(event)
+        self.apply_persisted_event(game, |game| game.mulligan(cmd))
     }
 
     /// Concedes an active game for one player.
@@ -91,9 +89,6 @@ where
     ///
     /// Returns an error if the command is invalid.
     pub fn concede(&self, game: &mut Game, cmd: ConcedeCommand) -> Result<GameEnded, DomainError> {
-        let event = game.concede(cmd)?;
-        self.persist_and_publish_event(game.id().as_str(), &event)?;
-
-        Ok(event)
+        self.apply_persisted_event(game, |game| game.concede(cmd))
     }
 }

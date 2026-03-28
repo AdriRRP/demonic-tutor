@@ -12,6 +12,7 @@ use crate::{
     domain::play::{
         errors::{DomainError, GameError},
         events::DomainEvent,
+        game::Game,
     },
 };
 
@@ -63,20 +64,31 @@ where
         self.persist_and_publish_events(game_id, &[event.clone().into()])
     }
 
-    fn persist_and_publish_event_batch<T>(
+    fn apply_persisted<T, F, M>(
         &self,
-        game_id: &str,
-        events: &[T],
-    ) -> Result<(), DomainError>
+        game: &mut Game,
+        apply: F,
+        map_events: M,
+    ) -> Result<T, DomainError>
+    where
+        F: FnOnce(&mut Game) -> Result<T, DomainError>,
+        M: FnOnce(&T) -> Vec<DomainEvent>,
+    {
+        let mut candidate = game.clone();
+        let outcome = apply(&mut candidate)?;
+        let domain_events = map_events(&outcome);
+        self.persist_and_publish_events(candidate.id().as_str(), &domain_events)?;
+        *game = candidate;
+
+        Ok(outcome)
+    }
+
+    fn apply_persisted_event<T, F>(&self, game: &mut Game, apply: F) -> Result<T, DomainError>
     where
         T: Clone + Into<DomainEvent>,
+        F: FnOnce(&mut Game) -> Result<T, DomainError>,
     {
-        if events.is_empty() {
-            return Ok(());
-        }
-
-        let domain_events = events.iter().cloned().map(Into::into).collect::<Vec<_>>();
-        self.persist_and_publish_events(game_id, &domain_events)
+        self.apply_persisted(game, apply, |event| vec![event.clone().into()])
     }
 
     pub(crate) fn load_persisted_events(

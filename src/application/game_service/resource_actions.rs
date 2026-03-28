@@ -57,10 +57,7 @@ where
         game: &mut Game,
         cmd: PlayLandCommand,
     ) -> Result<LandPlayed, DomainError> {
-        let event = game.play_land(cmd)?;
-        self.persist_and_publish_event(game.id().as_str(), &event)?;
-
-        Ok(event)
+        self.apply_persisted_event(game, |game| game.play_land(cmd))
     }
 
     /// Exiles a card.
@@ -73,10 +70,7 @@ where
         game: &mut Game,
         cmd: &ExileCardCommand,
     ) -> Result<CardMovedZone, DomainError> {
-        let zone_change = game.exile_card(cmd)?;
-        self.persist_and_publish_event(game.id().as_str(), &zone_change)?;
-
-        Ok(zone_change)
+        self.apply_persisted_event(game, |game| game.exile_card(cmd))
     }
 
     /// Resolves an explicit life effect from a caster onto a target player.
@@ -89,11 +83,11 @@ where
         game: &mut Game,
         cmd: AdjustPlayerLifeEffectCommand,
     ) -> Result<AdjustPlayerLifeEffectOutcome, DomainError> {
-        let outcome = game.adjust_player_life_effect(cmd)?;
-        let domain_events = domain_events_for_adjust_player_life_effect(&outcome);
-        self.persist_and_publish_events(game.id().as_str(), &domain_events)?;
-
-        Ok(outcome)
+        self.apply_persisted(
+            game,
+            |game| game.adjust_player_life_effect(cmd),
+            domain_events_for_adjust_player_life_effect,
+        )
     }
 
     /// Taps a land to add mana.
@@ -106,13 +100,15 @@ where
         game: &mut Game,
         cmd: TapLandCommand,
     ) -> Result<(LandTapped, ManaAdded), DomainError> {
-        let (land_event, mana_event) = game.tap_land(cmd)?;
-        let mut domain_events = DomainEvents::with(land_event.clone());
-        domain_events.push(mana_event.clone());
-        let domain_events = domain_events.into_vec();
-        self.persist_and_publish_events(game.id().as_str(), &domain_events)?;
-
-        Ok((land_event, mana_event))
+        self.apply_persisted(
+            game,
+            |game| game.tap_land(cmd),
+            |(land_event, mana_event)| {
+                let mut domain_events = DomainEvents::with(land_event.clone());
+                domain_events.push(mana_event.clone());
+                domain_events.into_vec()
+            },
+        )
     }
 }
 

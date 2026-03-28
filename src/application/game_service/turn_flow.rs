@@ -63,11 +63,11 @@ where
         game: &mut Game,
         cmd: AdvanceTurnCommand,
     ) -> Result<AdvanceTurnOutcome, DomainError> {
-        let outcome = game.advance_turn(cmd)?;
-        let domain_events = domain_events_for_advance_turn(&outcome);
-        self.persist_and_publish_events(game.id().as_str(), &domain_events)?;
-
-        Ok(outcome)
+        self.apply_persisted(
+            game,
+            |game| game.advance_turn(cmd),
+            domain_events_for_advance_turn,
+        )
     }
 
     /// Resolves an explicit draw effect from the active player onto a target player.
@@ -80,11 +80,11 @@ where
         game: &mut Game,
         cmd: &DrawCardsEffectCommand,
     ) -> Result<DrawCardsEffectOutcome, DomainError> {
-        let outcome = game.draw_cards_effect(cmd)?;
-        let domain_events = domain_events_for_draw_cards_effect(&outcome);
-        self.persist_and_publish_events(game.id().as_str(), &domain_events)?;
-
-        Ok(outcome)
+        self.apply_persisted(
+            game,
+            |game| game.draw_cards_effect(cmd),
+            domain_events_for_draw_cards_effect,
+        )
     }
 
     /// Discards one card from hand during cleanup-related turn flow.
@@ -97,11 +97,11 @@ where
         game: &mut Game,
         cmd: DiscardForCleanupCommand,
     ) -> Result<CardDiscarded, DomainError> {
-        let event = game.discard_for_cleanup(cmd)?;
-        let domain_events = domain_events_for_discard_for_cleanup(&event);
-        self.persist_and_publish_events(game.id().as_str(), &domain_events)?;
-
-        Ok(event)
+        self.apply_persisted(
+            game,
+            |game| game.discard_for_cleanup(cmd),
+            domain_events_for_discard_for_cleanup,
+        )
     }
 }
 

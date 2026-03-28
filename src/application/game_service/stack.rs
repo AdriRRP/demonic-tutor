@@ -312,11 +312,11 @@ where
         game: &mut Game,
         cmd: CastSpellCommand,
     ) -> Result<CastSpellOutcome, DomainError> {
-        let outcome = game.cast_spell(cmd)?;
-        let domain_events = domain_events_for_cast_spell(&outcome);
-        self.persist_and_publish_events(game.id().as_str(), &domain_events)?;
-
-        Ok(outcome)
+        self.apply_persisted(
+            game,
+            |game| game.cast_spell(cmd),
+            domain_events_for_cast_spell,
+        )
     }
 
     /// Activates a supported non-mana ability.
@@ -329,11 +329,11 @@ where
         game: &mut Game,
         cmd: ActivateAbilityCommand,
     ) -> Result<ActivateAbilityOutcome, DomainError> {
-        let outcome = game.activate_ability(cmd)?;
-        let domain_events = domain_events_for_activate_ability(&outcome);
-        self.persist_and_publish_events(game.id().as_str(), &domain_events)?;
-
-        Ok(outcome)
+        self.apply_persisted(
+            game,
+            |game| game.activate_ability(cmd),
+            domain_events_for_activate_ability,
+        )
     }
 
     /// Passes priority in an open priority window.
@@ -346,11 +346,11 @@ where
         game: &mut Game,
         cmd: PassPriorityCommand,
     ) -> Result<PassPriorityOutcome, DomainError> {
-        let outcome = game.pass_priority(cmd)?;
-        let domain_events = domain_events_for_pass_priority(&outcome);
-        self.persist_and_publish_events(game.id().as_str(), &domain_events)?;
-
-        Ok(outcome)
+        self.apply_persisted(
+            game,
+            |game| game.pass_priority(cmd),
+            domain_events_for_pass_priority,
+        )
     }
 
     /// Resolves a pending optional effect choice.
@@ -363,11 +363,11 @@ where
         game: &mut Game,
         cmd: ResolveOptionalEffectCommand,
     ) -> Result<ResolveOptionalEffectOutcome, DomainError> {
-        let outcome = game.resolve_optional_effect(cmd)?;
-        let domain_events = domain_events_for_resolve_optional_effect(&outcome);
-        self.persist_and_publish_events(game.id().as_str(), &domain_events)?;
-
-        Ok(outcome)
+        self.apply_persisted(
+            game,
+            |game| game.resolve_optional_effect(cmd),
+            domain_events_for_resolve_optional_effect,
+        )
     }
 
     /// Resolves a pending hand-choice effect.
@@ -380,11 +380,11 @@ where
         game: &mut Game,
         cmd: ResolvePendingHandChoiceCommand,
     ) -> Result<ResolvePendingHandChoiceOutcome, DomainError> {
-        let outcome = game.resolve_pending_hand_choice(cmd)?;
-        let domain_events = domain_events_for_resolve_pending_hand_choice(&outcome);
-        self.persist_and_publish_events(game.id().as_str(), &domain_events)?;
-
-        Ok(outcome)
+        self.apply_persisted(
+            game,
+            |game| game.resolve_pending_hand_choice(cmd),
+            domain_events_for_resolve_pending_hand_choice,
+        )
     }
 
     /// Resolves a pending scry decision.
@@ -397,11 +397,11 @@ where
         game: &mut Game,
         cmd: ResolvePendingScryCommand,
     ) -> Result<ResolvePendingScryOutcome, DomainError> {
-        let outcome = game.resolve_pending_scry(cmd)?;
-        let domain_events = domain_events_for_resolve_pending_scry(&outcome);
-        self.persist_and_publish_events(game.id().as_str(), &domain_events)?;
-
-        Ok(outcome)
+        self.apply_persisted(
+            game,
+            |game| game.resolve_pending_scry(cmd),
+            domain_events_for_resolve_pending_scry,
+        )
     }
 
     /// Resolves a pending surveil decision.
@@ -414,10 +414,10 @@ where
         game: &mut Game,
         cmd: ResolvePendingSurveilCommand,
     ) -> Result<ResolvePendingSurveilOutcome, DomainError> {
-        let outcome = game.resolve_pending_surveil(cmd)?;
-        let domain_events = domain_events_for_resolve_pending_surveil(&outcome);
-        self.persist_and_publish_events(game.id().as_str(), &domain_events)?;
-
-        Ok(outcome)
+        self.apply_persisted(
+            game,
+            |game| game.resolve_pending_surveil(cmd),
+            domain_events_for_resolve_pending_surveil,
+        )
     }
 }

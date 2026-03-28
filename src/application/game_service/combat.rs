@@ -66,10 +66,11 @@ where
         game: &mut Game,
         cmd: DeclareAttackersCommand,
     ) -> Result<DeclareAttackersOutcome, DomainError> {
-        let outcome = game.declare_attackers(cmd)?;
-        let domain_events = domain_events_for_declare_attackers(&outcome);
-        self.persist_and_publish_events(game.id().as_str(), &domain_events)?;
-        Ok(outcome)
+        self.apply_persisted(
+            game,
+            |game| game.declare_attackers(cmd),
+            domain_events_for_declare_attackers,
+        )
     }
 
     /// Declares blocking creatures.
@@ -82,10 +83,7 @@ where
         game: &mut Game,
         cmd: DeclareBlockersCommand,
     ) -> Result<BlockersDeclared, DomainError> {
-        let event = game.declare_blockers(cmd)?;
-        self.persist_and_publish_event(game.id().as_str(), &event)?;
-
-        Ok(event)
+        self.apply_persisted_event(game, |game| game.declare_blockers(cmd))
     }
 
     /// Resolves combat damage.
@@ -98,10 +96,10 @@ where
         game: &mut Game,
         cmd: ResolveCombatDamageCommand,
     ) -> Result<ResolveCombatDamageOutcome, DomainError> {
-        let outcome = game.resolve_combat_damage(cmd)?;
-        let domain_events = domain_events_for_resolve_combat_damage(&outcome);
-        self.persist_and_publish_events(game.id().as_str(), &domain_events)?;
-
-        Ok(outcome)
+        self.apply_persisted(
+            game,
+            |game| game.resolve_combat_damage(cmd),
+            domain_events_for_resolve_combat_damage,
+        )
     }
 }
