@@ -15,6 +15,7 @@ pub enum ModalSpellMode {
 pub enum SpellChoice {
     HandCard(CardInstanceId),
     ModalMode(ModalSpellMode),
+    SecondaryCreatureTarget(Option<CardInstanceId>),
 }
 
 #[derive(Debug, Clone)]

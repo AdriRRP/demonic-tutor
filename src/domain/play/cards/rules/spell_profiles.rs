@@ -72,6 +72,7 @@ pub enum SpellResolutionProfile {
         keywords: KeywordAbilitySet,
     },
     PutPlusOnePlusOneCounterOnTargetCreature,
+    DistributeTwoPlusOnePlusOneCountersAmongUpToTwoTargetCreatures,
     ReturnTargetCreatureCardFromGraveyardToHand,
     ReturnTargetInstantOrSorceryCardFromGraveyardToHand,
     ReanimateTargetCreatureCard,
@@ -254,6 +255,18 @@ impl SupportedSpellRules {
                 SingleTargetRule::any_creature_on_battlefield(),
             ),
             resolution: SpellResolutionProfile::PutPlusOnePlusOneCounterOnTargetCreature,
+        }
+    }
+
+    #[must_use]
+    pub const fn distribute_two_plus_one_plus_one_counters_among_up_to_two_target_creatures() -> Self
+    {
+        Self {
+            targeting: SpellTargetingProfile::ExactlyOne(
+                SingleTargetRule::any_creature_on_battlefield(),
+            ),
+            resolution:
+                SpellResolutionProfile::DistributeTwoPlusOnePlusOneCountersAmongUpToTwoTargetCreatures,
         }
     }
 
@@ -521,8 +534,18 @@ impl SupportedSpellRules {
     }
 
     #[must_use]
+    pub const fn requires_explicit_secondary_creature_choice(self) -> bool {
+        matches!(
+            self.resolution,
+            SpellResolutionProfile::DistributeTwoPlusOnePlusOneCountersAmongUpToTwoTargetCreatures
+        )
+    }
+
+    #[must_use]
     pub const fn requires_choice(self) -> bool {
-        self.requires_explicit_hand_card_choice() || self.requires_explicit_modal_choice()
+        self.requires_explicit_hand_card_choice()
+            || self.requires_explicit_modal_choice()
+            || self.requires_explicit_secondary_creature_choice()
     }
 }
 

@@ -558,6 +558,21 @@ fn spell_choice_request(
         });
     }
 
+    if rules.requires_explicit_secondary_creature_choice() {
+        return Some(PublicChoiceRequest::SpellSecondaryCreatureChoice {
+            player_id: player_id.clone(),
+            source_card_id: source_card_id.clone(),
+            creature_ids: spell_target_candidates(game, player_id, source_card_id)
+                .into_iter()
+                .filter_map(|candidate| match candidate {
+                    PublicChoiceCandidate::Card(card_id) => Some(card_id),
+                    PublicChoiceCandidate::Player(_) | PublicChoiceCandidate::StackSpell(_) => None,
+                })
+                .collect(),
+            allows_skipping: true,
+        });
+    }
+
     if rules.requires_explicit_modal_choice() {
         return Some(PublicChoiceRequest::SpellModalChoice {
             player_id: player_id.clone(),

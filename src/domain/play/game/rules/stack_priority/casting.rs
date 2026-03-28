@@ -138,6 +138,13 @@ struct PreparedStackSpellObject {
     spell: SpellOnStack,
 }
 
+struct SpellChoiceValidationContext<'a> {
+    players: &'a [crate::domain::play::game::Player],
+    card_locations: &'a crate::domain::play::game::AggregateCardLocationIndex,
+    stack: &'a StackZone,
+    caster_index: usize,
+}
+
 impl PreparedStackSpellObject {
     fn into_stack_object(self, number: u32, controller_index: usize) -> StackObject {
         StackObject::new(number, controller_index, StackObjectKind::Spell(self.spell))
@@ -263,12 +270,18 @@ fn prepare_stack_spell_object(
 }
 
 fn validate_spell_choice(
-    players: &[crate::domain::play::game::Player],
+    ctx: &SpellChoiceValidationContext<'_>,
     supported_spell_rules: SupportedSpellRules,
     card_id: &CardInstanceId,
     target: Option<&SpellTarget>,
     choice: Option<&SpellChoice>,
 ) -> Result<(), DomainError> {
+    let SpellChoiceValidationContext {
+        players,
+        card_locations,
+        stack,
+        caster_index,
+    } = *ctx;
     if supported_spell_rules.requires_explicit_hand_card_choice() {
         let Some(SpellChoice::HandCard(chosen_card_id)) = choice else {
             return Err(DomainError::Game(GameError::MissingSpellChoice(
@@ -299,6 +312,47 @@ fn validate_spell_choice(
                 card_id.clone(),
             )));
         };
+        return Ok(());
+    }
+
+    if supported_spell_rules.requires_explicit_secondary_creature_choice() {
+        let Some(SpellChoice::SecondaryCreatureTarget(chosen_target_id)) = choice else {
+            return Err(DomainError::Game(GameError::MissingSpellChoice(
+                card_id.clone(),
+            )));
+        };
+
+        let Some(SpellTarget::Creature(primary_target_id)) = target else {
+            return Err(DomainError::Game(GameError::InternalInvariantViolation(
+                "distributed counter spell choice requires a primary creature target".to_string(),
+            )));
+        };
+
+        if let Some(secondary_target_id) = chosen_target_id {
+            if secondary_target_id == primary_target_id {
+                return Err(DomainError::Game(GameError::InvalidCreatureTarget(
+                    secondary_target_id.clone(),
+                )));
+            }
+
+            match evaluate_target_legality(
+                TargetLegalityContext::Cast {
+                    players,
+                    card_locations,
+                    stack,
+                    actor_index: caster_index,
+                },
+                supported_spell_rules.targeting(),
+                Some(&SpellTarget::Creature(secondary_target_id.clone())),
+            ) {
+                SpellTargetLegality::Legal => {}
+                _ => {
+                    return Err(DomainError::Game(GameError::InvalidCreatureTarget(
+                        secondary_target_id.clone(),
+                    )))
+                }
+            }
+        }
     }
 
     Ok(())
@@ -306,6 +360,7 @@ fn validate_spell_choice(
 
 fn prepare_stack_choice(
     players: &[crate::domain::play::game::Player],
+    card_locations: &crate::domain::play::game::AggregateCardLocationIndex,
     supported_spell_rules: SupportedSpellRules,
     target: Option<&SpellTarget>,
     choice: Option<&SpellChoice>,
@@ -347,6 +402,34 @@ fn prepare_stack_choice(
             )));
         };
         return Ok(Some(StackSpellChoice::ModalMode(*mode)));
+    }
+
+    if supported_spell_rules.requires_explicit_secondary_creature_choice() {
+        let Some(SpellChoice::SecondaryCreatureTarget(chosen_target_id)) = choice else {
+            return Err(DomainError::Game(GameError::InternalInvariantViolation(
+                format!(
+                    "missing secondary-target spell choice during stack insertion for {supported_spell_rules:?}"
+                ),
+            )));
+        };
+
+        let stack_choice = if let Some(chosen_target_id) = chosen_target_id {
+            let location = card_locations.location(chosen_target_id).ok_or_else(|| {
+                DomainError::Game(GameError::InternalInvariantViolation(format!(
+                    "chosen secondary target {chosen_target_id} disappeared before stack insertion"
+                )))
+            })?;
+            Some(StackCardRef::new(
+                location.player_index(),
+                location.handle(),
+            ))
+        } else {
+            None
+        };
+
+        return Ok(Some(StackSpellChoice::SecondaryCreatureTarget(
+            stack_choice,
+        )));
     }
 
     Ok(None)
@@ -430,7 +513,19 @@ pub(crate) fn is_castable_candidate(
                 ),
                 Err(DomainError::Game(GameError::MissingSpellTarget(_)))
             )
-            && (validate_spell_choice(players, supported_spell_rules, card_id, None, None).is_ok()
+            && (validate_spell_choice(
+                &SpellChoiceValidationContext {
+                    players,
+                    card_locations,
+                    stack,
+                    caster_index: player_idx,
+                },
+                supported_spell_rules,
+                card_id,
+                None,
+                None,
+            )
+            .is_ok()
                 || missing_choice_is_allowed)
 }
 
@@ -502,7 +597,12 @@ pub fn cast_spell(
         target.as_ref(),
     )?;
     validate_spell_choice(
-        players,
+        &SpellChoiceValidationContext {
+            players,
+            card_locations,
+            stack,
+            caster_index: player_idx,
+        },
         supported_spell_rules,
         &card_id,
         target.as_ref(),
@@ -539,6 +639,7 @@ pub fn cast_spell(
         prepare_stack_target(players, card_locations, stack, target.as_ref())?;
     let prepared_stack_choice = prepare_stack_choice(
         players,
+        card_locations,
         supported_spell_rules,
         target.as_ref(),
         choice.as_ref(),

@@ -5,11 +5,12 @@
 use crate::support::{
     advance_to_player_first_main_satisfying_cleanup,
     choose_one_target_player_gain_or_lose_life_instant_card, close_empty_priority_window,
-    create_service, creature_card_with_keyword, etb_may_life_gain_creature_card, filled_library,
-    forest_card, loot_sorcery_card, player, player_deck, player_library,
-    resolve_top_stack_with_passes, scry_sorcery_card, setup_two_player_game, surveil_sorcery_card,
-    target_player_discards_chosen_card_sorcery_card, targeted_damage_instant_card,
-    targeted_opponent_damage_instant_card,
+    create_service, creature_card_with_keyword,
+    distribute_two_counters_among_up_to_two_target_creatures_sorcery_card,
+    etb_may_life_gain_creature_card, filled_library, forest_card, loot_sorcery_card, player,
+    player_deck, player_library, resolve_top_stack_with_passes, scry_sorcery_card,
+    setup_two_player_game, surveil_sorcery_card, target_player_discards_chosen_card_sorcery_card,
+    targeted_damage_instant_card, targeted_opponent_damage_instant_card,
 };
 use demonictutor::{
     choice_requests, CardDefinitionId, CardInstanceId, CastSpellCommand, DealOpeningHandsCommand,
@@ -32,6 +33,10 @@ fn first_main_game_with_choice_cards() -> Game {
                     2,
                 ),
                 target_player_discards_chosen_card_sorcery_card("p1-discard-choice", 0),
+                distribute_two_counters_among_up_to_two_target_creatures_sorcery_card(
+                    "p1-distribute-counters",
+                    0,
+                ),
                 forest_card("p1-forest-a"),
                 forest_card("p1-forest-b"),
                 forest_card("p1-forest-c"),
@@ -192,6 +197,27 @@ fn choice_requests_surface_explicit_hand_choice_for_discard_spells() {
             if player_id.as_str() == "p1"
                 && *source_card_id == discard_id
                 && !hand_card_ids.is_empty()
+    )));
+}
+
+#[test]
+fn choice_requests_surface_optional_secondary_target_choice_for_distributed_counter_spells() {
+    let game = first_main_game_with_choice_cards();
+    let spell_id = player(&game, "p1")
+        .hand_card_by_definition(&CardDefinitionId::new("p1-distribute-counters"))
+        .expect("distributed counter spell should be in hand")
+        .id()
+        .clone();
+
+    let requests = choice_requests(&game);
+
+    assert!(requests.iter().any(|request| matches!(
+        request,
+        PublicChoiceRequest::SpellSecondaryCreatureChoice { player_id, source_card_id, creature_ids, allows_skipping }
+            if player_id.as_str() == "p1"
+                && *source_card_id == spell_id
+                && creature_ids.is_empty()
+                && *allows_skipping
     )));
 }
 

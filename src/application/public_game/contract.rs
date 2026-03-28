@@ -230,6 +230,12 @@ pub enum PublicChoiceRequest {
         source_card_id: CardInstanceId,
         hand_card_ids: Vec<CardInstanceId>,
     },
+    SpellSecondaryCreatureChoice {
+        player_id: PlayerId,
+        source_card_id: CardInstanceId,
+        creature_ids: Vec<CardInstanceId>,
+        allows_skipping: bool,
+    },
     SpellModalChoice {
         player_id: PlayerId,
         source_card_id: CardInstanceId,

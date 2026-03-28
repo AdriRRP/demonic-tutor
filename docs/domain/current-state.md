@@ -21,7 +21,7 @@ Implemented capabilities include:
 - surfacing a public legal-action menu derived from the current supported actor and game state
 - deriving that public legal-action menu from read-only aggregate legality queries instead of speculative command probes
 - deriving current supported target-selection candidates and blocker options from canonical aggregate legality queries instead of application-local rule approximations
-- surfacing public choice requests for target selection, explicit hand-card choice, bounded modal spell choice, binary optional-effect decisions, and cleanup discard
+- surfacing public choice requests for target selection, explicit hand-card choice, bounded modal spell choice, bounded optional secondary-target spell choice, binary optional-effect decisions, and cleanup discard
 - returning a deterministic public command envelope with emitted events, updated snapshot, legal actions, and visible choice requests
 - projecting the attached creature id for the current supported Aura subset in the public battlefield snapshot
 - dealing opening hands
@@ -65,6 +65,7 @@ Implemented capabilities include:
 - resolving the first explicit `tap target creature` spell subset through the shared targeting and stack corridor
 - resolving the first explicit `untap target creature` spell subset through the shared targeting and stack corridor
 - resolving the first explicit `target creature can't block this turn` spell subset through the shared targeting and combat-legality corridor
+- resolving the first explicit bounded `distribute two +1/+1 counters among up to two target creatures` spell subset
 - resolving the first explicit keyworded creature-token creation subset for one supported token with one supported keyword
 - resolving the first explicit multi-token creation subset for one supported effect that creates multiple identical vanilla creature tokens
 - advancing turns
@@ -163,6 +164,7 @@ The domain currently includes:
 - the current spell-effect subset now also supports explicit `loot` and `rummage`, surfaced as pending hand-card choice prompts during resolution
 - the current library-manipulation subset now also supports explicit `scry 1`, surfaced as a controller-scoped pending top-card choice during resolution
 - the current library-and-graveyard value subset now also supports explicit `surveil 1`, surfaced as a controller-scoped pending top-card choice that can keep the card on top or move it to graveyard during resolution
+- the current counter-placement subset now also supports one bounded distribution profile that places two `+1/+1` counters among up to two chosen creature targets
 - the current attachment subset now supports `Enchant creature` Auras that target while cast, enter attached if the target stays legal on resolution, and are put into graveyard by SBA if they become unattached
 - the current attachment subset now also supports one explicit attached `+N/+N` Aura bonus profile while the Aura remains attached
 - the current attachment subset now also supports one explicit pacifism-style Aura profile that prevents the enchanted creature from attacking and blocking while attached

@@ -187,6 +187,16 @@ pub fn put_counter_on_target_creature_sorcery_card(name: &str, mana_cost: u32) -
         )
 }
 
+pub fn distribute_two_counters_among_up_to_two_target_creatures_sorcery_card(
+    name: &str,
+    mana_cost: u32,
+) -> LibraryCard {
+    LibraryCard::new(CardDefinitionId::new(name), CardType::Sorcery, mana_cost)
+        .with_supported_spell_rules(
+            SupportedSpellRules::distribute_two_plus_one_plus_one_counters_among_up_to_two_target_creatures(),
+        )
+}
+
 pub fn create_multiple_vanilla_creature_tokens_sorcery_card(
     name: &str,
     mana_cost: u32,

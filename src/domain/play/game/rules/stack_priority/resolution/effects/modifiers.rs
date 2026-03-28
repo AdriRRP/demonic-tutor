@@ -6,8 +6,15 @@ use super::shared::{
     SpellResolutionSideEffects,
 };
 use crate::domain::play::{
+    cards::SpellTargetingProfile,
     errors::DomainError,
-    game::{helpers, SpellTarget},
+    game::{
+        helpers,
+        rules::stack_priority::spell_effects::{
+            evaluate_target_legality, SpellTargetLegality, TargetLegalityContext,
+        },
+        SpellTarget,
+    },
     ids::CardInstanceId,
 };
 
@@ -122,6 +129,96 @@ pub(super) fn resolve_put_counter_on_target_creature_effect(
     if let SpellTarget::Creature(card_id) = target {
         if let Some(card) =
             helpers::battlefield_card_mut(context.players, context.card_locations, &card_id)
+        {
+            card.add_plus_one_plus_one_counters(1);
+        }
+    }
+
+    review_state_based_actions_after_effect(
+        context.game_id,
+        context.players,
+        context.terminal_state,
+        EffectOutcomeSeed {
+            card_exiled: None,
+            card_discarded: None,
+            zone_changes: Vec::new(),
+            life_changed: None,
+            creatures_died: Vec::new(),
+            moved_cards: Vec::new(),
+        },
+    )
+}
+
+fn legal_secondary_creature_target(context: &ResolutionContext<'_>) -> Option<CardInstanceId> {
+    let Some(crate::domain::play::game::model::StackSpellChoice::SecondaryCreatureTarget(
+        target_ref,
+    )) = context.choice
+    else {
+        return None;
+    };
+
+    let target_ref = target_ref?;
+
+    let card = context.players[target_ref.player_index()].card_by_handle(target_ref.handle())?;
+    let target_id = card.id().clone();
+
+    let legality = evaluate_target_legality(
+        TargetLegalityContext::Resolution {
+            players: context.players,
+            card_locations: context.card_locations,
+            stack: context.stack,
+            actor_index: context.controller_index,
+        },
+        SpellTargetingProfile::ExactlyOne(
+            crate::domain::play::cards::SingleTargetRule::any_creature_on_battlefield(),
+        ),
+        Some(&SpellTarget::Creature(target_id.clone())),
+    );
+
+    match legality {
+        SpellTargetLegality::Legal => Some(target_id),
+        SpellTargetLegality::IllegalTargetKind
+        | SpellTargetLegality::IllegalTargetRule
+        | SpellTargetLegality::MissingCreature(_)
+        | SpellTargetLegality::MissingPermanent(_)
+        | SpellTargetLegality::MissingPlayer(_)
+        | SpellTargetLegality::MissingGraveyardCard(_)
+        | SpellTargetLegality::MissingRequiredTarget
+        | SpellTargetLegality::MissingStackSpell(_)
+        | SpellTargetLegality::NoTargetRequired => None,
+    }
+}
+
+pub(super) fn resolve_distribute_two_counters_among_up_to_two_target_creatures_effect(
+    context: &mut ResolutionContext<'_>,
+) -> Result<SpellResolutionSideEffects, DomainError> {
+    let second_target_was_selected = matches!(
+        context.choice,
+        Some(crate::domain::play::game::model::StackSpellChoice::SecondaryCreatureTarget(Some(_),))
+    );
+    let primary_target = resolve_target_legality_for_effect(
+        context.players,
+        context.card_locations,
+        context.stack,
+        context.controller_index,
+        context.supported_spell_rules,
+        context.target,
+        "distributed counter spell resolved without a targeting profile",
+    )?;
+    let secondary_target = legal_secondary_creature_target(context);
+
+    if let Some(SpellTarget::Creature(card_id)) = primary_target.as_ref() {
+        let counters = if second_target_was_selected { 1 } else { 2 };
+        if let Some(card) =
+            helpers::battlefield_card_mut(context.players, context.card_locations, card_id)
+        {
+            card.add_plus_one_plus_one_counters(counters);
+        }
+    }
+
+    if let Some(card_id) = secondary_target.as_ref() {
+        if let Some(card) =
+            helpers::battlefield_card_mut(context.players, context.card_locations, card_id)
         {
             card.add_plus_one_plus_one_counters(1);
         }

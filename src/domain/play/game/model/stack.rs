@@ -48,6 +48,7 @@ pub enum StackTargetRef {
 pub enum StackSpellChoice {
     HandCard(StackCardRef),
     ModalMode(ModalSpellMode),
+    SecondaryCreatureTarget(Option<StackCardRef>),
 }
 
 impl StackTargetRef {
