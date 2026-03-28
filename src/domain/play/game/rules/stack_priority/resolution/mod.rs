@@ -21,8 +21,8 @@ use crate::domain::play::{
         TriggeredAbilityEffect, TriggeredAbilityEvent,
     },
     events::{
-        CardDiscarded, CardExiled, CreatureDied, GameEnded, LifeChanged, SpellCast,
-        SpellCastOutcome, StackTopResolved, TriggeredAbilityPutOnStack,
+        CardDiscarded, CardExiled, CardMovedZone, CreatureDied, GameEnded, LifeChanged, SpellCast,
+        SpellCastOutcome, StackTopResolved, TriggeredAbilityPutOnStack, ZoneType,
     },
     game::{
         model::{StackCardRef, StackObject, StackObjectKind, StackTargetRef, StackZone},
@@ -37,6 +37,7 @@ type ResolvedSpellOutcome = (
     Option<SpellCast>,
     Option<CardExiled>,
     Option<CardDiscarded>,
+    Vec<CardMovedZone>,
     Option<LifeChanged>,
     Vec<CreatureDied>,
     Vec<crate::domain::play::ids::CardInstanceId>,
@@ -460,18 +461,25 @@ fn resolve_spell_from_stack(
         mana_cost_paid,
         outcome,
     );
-    let (effect_card_exiled, card_discarded, life_changed, creatures_died, moved_cards, game_ended) =
-        apply_supported_spell_rules(self::effects::ResolutionContext::new(
-            game_id,
-            players,
-            card_locations,
-            terminal_state,
-            stack,
-            controller_index,
-            supported_spell_rules,
-            target.as_ref(),
-            choice,
-        ))?;
+    let (
+        effect_card_exiled,
+        card_discarded,
+        zone_changes,
+        life_changed,
+        creatures_died,
+        moved_cards,
+        game_ended,
+    ) = apply_supported_spell_rules(self::effects::ResolutionContext::new(
+        game_id,
+        players,
+        card_locations,
+        terminal_state,
+        stack,
+        controller_index,
+        supported_spell_rules,
+        target.as_ref(),
+        choice,
+    ))?;
     let card_exiled = effect_card_exiled.or(resolved_spell_card_exiled);
     triggered_abilities_put_on_stack.extend(enqueue_entered_battlefield_triggers_for_moved_cards(
         game_id,
@@ -492,6 +500,7 @@ fn resolve_spell_from_stack(
         Some(spell_cast),
         card_exiled,
         card_discarded,
+        zone_changes,
         life_changed,
         creatures_died,
         moved_cards,
@@ -574,6 +583,7 @@ fn resolve_activated_ability_from_stack(
         None,
         None,
         None,
+        Vec::new(),
         life_changed,
         creatures_died,
         Vec::new(),
@@ -607,7 +617,7 @@ fn resolve_triggered_ability_from_stack(
         source_card_id,
     );
 
-    let (life_changed, moved_cards) = match ability.effect() {
+    let (life_changed, zone_changes, moved_cards) = match ability.effect() {
         TriggeredAbilityEffect::GainLifeToController(amount)
         | TriggeredAbilityEffect::MayGainLifeToController(amount) => (
             Some(super::super::game_effects::adjust_player_life_by_index(
@@ -617,9 +627,10 @@ fn resolve_triggered_ability_from_stack(
                 amount.cast_signed(),
             )?),
             Vec::new(),
+            Vec::new(),
         ),
         TriggeredAbilityEffect::ReturnFirstInstantOrSorceryCardFromGraveyardToHand => {
-            let moved_cards = players[controller_index]
+            let moved_cards: Vec<_> = players[controller_index]
                 .first_instant_or_sorcery_graveyard_handle()
                 .and_then(|handle| {
                     let card_id = players[controller_index]
@@ -630,7 +641,20 @@ fn resolve_triggered_ability_from_stack(
                 })
                 .into_iter()
                 .collect();
-            (None, moved_cards)
+            let zone_changes = moved_cards
+                .iter()
+                .cloned()
+                .map(|card_id| {
+                    CardMovedZone::new(
+                        game_id.clone(),
+                        players[controller_index].id().clone(),
+                        card_id,
+                        ZoneType::Graveyard,
+                        ZoneType::Hand,
+                    )
+                })
+                .collect();
+            (None, zone_changes, moved_cards)
         }
     };
 
@@ -649,6 +673,7 @@ fn resolve_triggered_ability_from_stack(
         None,
         None,
         None,
+        zone_changes,
         life_changed,
         creatures_died,
         moved_cards,

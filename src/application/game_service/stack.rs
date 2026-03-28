@@ -11,7 +11,10 @@ use {
                 ResolvePendingScryCommand, ResolvePendingSurveilCommand,
             },
             errors::DomainError,
-            events::DomainEvent,
+            events::{
+                CardDiscarded, CardDrawn, CardExiled, CardMovedZone, CreatureDied, DomainEvent,
+                GameEnded, LifeChanged, SpellCast, StackTopResolved, TriggeredAbilityPutOnStack,
+            },
             game::{
                 ActivateAbilityOutcome, CastSpellOutcome, Game, PassPriorityOutcome,
                 ResolveOptionalEffectOutcome, ResolvePendingHandChoiceOutcome,
@@ -21,9 +24,46 @@ use {
     },
 };
 
+fn push_resolution_effect_events(
+    domain_events: &mut DomainEvents,
+    card_drawn: &[CardDrawn],
+    card_discarded: Option<&CardDiscarded>,
+    card_exiled: Option<&CardExiled>,
+    zone_changes: &[CardMovedZone],
+    life_changed: Option<&LifeChanged>,
+    creatures_died: &[CreatureDied],
+) {
+    domain_events.extend(card_drawn.iter().cloned());
+    domain_events.push_optional(card_discarded.cloned());
+    domain_events.push_optional(card_exiled.cloned());
+    domain_events.extend(zone_changes.iter().cloned());
+    domain_events.push_optional(life_changed.cloned());
+    domain_events.extend(creatures_died.iter().cloned());
+}
+
+fn push_resolution_close_events(
+    domain_events: &mut DomainEvents,
+    stack_top_resolved: Option<&StackTopResolved>,
+    spell_cast: Option<&SpellCast>,
+) {
+    domain_events.push_optional(stack_top_resolved.cloned());
+    domain_events.push_optional(spell_cast.cloned());
+}
+
+fn push_resolution_follow_up_events(
+    domain_events: &mut DomainEvents,
+    triggered_abilities_put_on_stack: &[TriggeredAbilityPutOnStack],
+    game_ended: Option<&GameEnded>,
+) {
+    domain_events.extend(triggered_abilities_put_on_stack.iter().cloned());
+    domain_events.push_optional(game_ended.cloned());
+}
+
 pub fn domain_events_for_activate_ability(outcome: &ActivateAbilityOutcome) -> Vec<DomainEvent> {
-    let mut domain_events = DomainEvents::with(outcome.activated_ability_put_on_stack.clone());
+    let mut domain_events = DomainEvents::default();
+    domain_events.extend(outcome.zone_changes.iter().cloned());
     domain_events.extend(outcome.creatures_died.iter().cloned());
+    domain_events.push(outcome.activated_ability_put_on_stack.clone());
     domain_events.into_vec()
 }
 
@@ -36,14 +76,31 @@ pub fn domain_events_for_pass_priority(outcome: &PassPriorityOutcome) -> Vec<Dom
     let draws_happen_before_resolution =
         !outcome.card_drawn.is_empty() && outcome.stack_top_resolved.is_some();
     if draws_happen_before_resolution {
-        domain_events.extend(outcome.card_drawn.iter().cloned());
+        push_resolution_effect_events(
+            &mut domain_events,
+            &outcome.card_drawn,
+            outcome.card_discarded.as_ref(),
+            outcome.card_exiled.as_ref(),
+            &outcome.zone_changes,
+            outcome.life_changed.as_ref(),
+            &outcome.creatures_died,
+        );
+    } else {
+        push_resolution_effect_events(
+            &mut domain_events,
+            &[],
+            outcome.card_discarded.as_ref(),
+            outcome.card_exiled.as_ref(),
+            &outcome.zone_changes,
+            outcome.life_changed.as_ref(),
+            &outcome.creatures_died,
+        );
     }
-    domain_events.push_optional(outcome.card_discarded.clone());
-    domain_events.push_optional(outcome.card_exiled.clone());
-    domain_events.push_optional(outcome.life_changed.clone());
-    domain_events.extend(outcome.creatures_died.iter().cloned());
-    domain_events.push_optional(outcome.stack_top_resolved.clone());
-    domain_events.push_optional(outcome.spell_cast.clone());
+    push_resolution_close_events(
+        &mut domain_events,
+        outcome.stack_top_resolved.as_ref(),
+        outcome.spell_cast.as_ref(),
+    );
     domain_events.extend(outcome.triggered_abilities_put_on_stack.iter().cloned());
     if !draws_happen_before_resolution {
         domain_events.extend(outcome.card_drawn.iter().cloned());
@@ -56,14 +113,25 @@ pub fn domain_events_for_resolve_optional_effect(
     outcome: &ResolveOptionalEffectOutcome,
 ) -> Vec<DomainEvent> {
     let mut domain_events = DomainEvents::default();
-    domain_events.push_optional(outcome.card_discarded.clone());
-    domain_events.push_optional(outcome.card_exiled.clone());
-    domain_events.push_optional(outcome.life_changed.clone());
-    domain_events.extend(outcome.creatures_died.iter().cloned());
-    domain_events.push_optional(outcome.stack_top_resolved.clone());
-    domain_events.push_optional(outcome.spell_cast.clone());
-    domain_events.extend(outcome.triggered_abilities_put_on_stack.iter().cloned());
-    domain_events.push_optional(outcome.game_ended.clone());
+    push_resolution_effect_events(
+        &mut domain_events,
+        &[],
+        outcome.card_discarded.as_ref(),
+        outcome.card_exiled.as_ref(),
+        &outcome.zone_changes,
+        outcome.life_changed.as_ref(),
+        &outcome.creatures_died,
+    );
+    push_resolution_close_events(
+        &mut domain_events,
+        outcome.stack_top_resolved.as_ref(),
+        outcome.spell_cast.as_ref(),
+    );
+    push_resolution_follow_up_events(
+        &mut domain_events,
+        &outcome.triggered_abilities_put_on_stack,
+        outcome.game_ended.as_ref(),
+    );
     domain_events.into_vec()
 }
 
@@ -71,13 +139,22 @@ pub fn domain_events_for_resolve_pending_hand_choice(
     outcome: &ResolvePendingHandChoiceOutcome,
 ) -> Vec<DomainEvent> {
     let mut domain_events = DomainEvents::default();
-    domain_events.push_optional(outcome.card_discarded.clone());
-    if !outcome.card_drawn.is_empty() {
-        domain_events.extend(outcome.card_drawn.iter().cloned());
-    }
-    domain_events.push_optional(outcome.stack_top_resolved.clone());
-    domain_events.push_optional(outcome.spell_cast.clone());
-    domain_events.push_optional(outcome.game_ended.clone());
+    push_resolution_effect_events(
+        &mut domain_events,
+        &[],
+        outcome.card_discarded.as_ref(),
+        None,
+        &outcome.zone_changes,
+        None,
+        &[],
+    );
+    domain_events.extend(outcome.card_drawn.iter().cloned());
+    push_resolution_close_events(
+        &mut domain_events,
+        outcome.stack_top_resolved.as_ref(),
+        outcome.spell_cast.as_ref(),
+    );
+    push_resolution_follow_up_events(&mut domain_events, &[], outcome.game_ended.as_ref());
     domain_events.into_vec()
 }
 
@@ -85,9 +162,21 @@ pub fn domain_events_for_resolve_pending_scry(
     outcome: &ResolvePendingScryOutcome,
 ) -> Vec<DomainEvent> {
     let mut domain_events = DomainEvents::default();
-    domain_events.push_optional(outcome.stack_top_resolved.clone());
-    domain_events.push_optional(outcome.spell_cast.clone());
-    domain_events.push_optional(outcome.game_ended.clone());
+    push_resolution_effect_events(
+        &mut domain_events,
+        &[],
+        None,
+        None,
+        &outcome.zone_changes,
+        None,
+        &[],
+    );
+    push_resolution_close_events(
+        &mut domain_events,
+        outcome.stack_top_resolved.as_ref(),
+        outcome.spell_cast.as_ref(),
+    );
+    push_resolution_follow_up_events(&mut domain_events, &[], outcome.game_ended.as_ref());
     domain_events.into_vec()
 }
 
@@ -95,10 +184,21 @@ pub fn domain_events_for_resolve_pending_surveil(
     outcome: &ResolvePendingSurveilOutcome,
 ) -> Vec<DomainEvent> {
     let mut domain_events = DomainEvents::default();
-    domain_events.extend(outcome.cards_moved_to_graveyard.iter().cloned());
-    domain_events.push_optional(outcome.stack_top_resolved.clone());
-    domain_events.push_optional(outcome.spell_cast.clone());
-    domain_events.push_optional(outcome.game_ended.clone());
+    push_resolution_effect_events(
+        &mut domain_events,
+        &[],
+        None,
+        None,
+        &outcome.zone_changes,
+        None,
+        &[],
+    );
+    push_resolution_close_events(
+        &mut domain_events,
+        outcome.stack_top_resolved.as_ref(),
+        outcome.spell_cast.as_ref(),
+    );
+    push_resolution_follow_up_events(&mut domain_events, &[], outcome.game_ended.as_ref());
     domain_events.into_vec()
 }
 

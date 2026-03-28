@@ -7,6 +7,7 @@ use super::shared::{
 };
 use crate::domain::play::{
     errors::DomainError,
+    events::{CardMovedZone, ZoneType},
     game::{rules::zones, SpellTarget},
     ids::{CardInstanceId, GameId},
 };
@@ -109,6 +110,22 @@ pub(super) fn resolve_return_target_creature_from_graveyard_effect(
         .collect(),
         _ => Vec::new(),
     };
+    let zone_changes = moved_cards
+        .iter()
+        .filter_map(|card_id| {
+            let owner_index = context
+                .players
+                .iter()
+                .position(|player| player.owns_card(card_id))?;
+            Some(CardMovedZone::new(
+                context.game_id.clone(),
+                context.players[owner_index].id().clone(),
+                card_id.clone(),
+                ZoneType::Graveyard,
+                ZoneType::Hand,
+            ))
+        })
+        .collect();
 
     review_state_based_actions_after_effect(
         context.game_id,
@@ -117,6 +134,7 @@ pub(super) fn resolve_return_target_creature_from_graveyard_effect(
         EffectOutcomeSeed {
             card_exiled: None,
             card_discarded: None,
+            zone_changes,
             life_changed: None,
             creatures_died: Vec::new(),
             moved_cards,
@@ -155,6 +173,22 @@ pub(super) fn resolve_reanimate_target_creature_effect(
         .collect(),
         _ => Vec::new(),
     };
+    let zone_changes = moved_cards
+        .iter()
+        .filter_map(|card_id| {
+            let destination_index = context
+                .players
+                .iter()
+                .position(|player| player.battlefield_card(card_id).is_some())?;
+            Some(CardMovedZone::new(
+                context.game_id.clone(),
+                context.players[destination_index].id().clone(),
+                card_id.clone(),
+                ZoneType::Graveyard,
+                ZoneType::Battlefield,
+            ))
+        })
+        .collect();
 
     review_state_based_actions_after_effect(
         context.game_id,
@@ -163,6 +197,7 @@ pub(super) fn resolve_reanimate_target_creature_effect(
         EffectOutcomeSeed {
             card_exiled: None,
             card_discarded: None,
+            zone_changes,
             life_changed: None,
             creatures_died: Vec::new(),
             moved_cards,
@@ -202,6 +237,22 @@ pub(super) fn resolve_return_target_instant_or_sorcery_from_graveyard_effect(
         }
         _ => Vec::new(),
     };
+    let zone_changes = moved_cards
+        .iter()
+        .filter_map(|card_id| {
+            let owner_index = context
+                .players
+                .iter()
+                .position(|player| player.owns_card(card_id))?;
+            Some(CardMovedZone::new(
+                context.game_id.clone(),
+                context.players[owner_index].id().clone(),
+                card_id.clone(),
+                ZoneType::Graveyard,
+                ZoneType::Hand,
+            ))
+        })
+        .collect();
 
     review_state_based_actions_after_effect(
         context.game_id,
@@ -210,6 +261,7 @@ pub(super) fn resolve_return_target_instant_or_sorcery_from_graveyard_effect(
         EffectOutcomeSeed {
             card_exiled: None,
             card_discarded: None,
+            zone_changes,
             life_changed: None,
             creatures_died: Vec::new(),
             moved_cards,
@@ -257,6 +309,7 @@ pub(super) fn resolve_exile_target_graveyard_card_effect(
         EffectOutcomeSeed {
             card_exiled,
             card_discarded: None,
+            zone_changes: Vec::new(),
             life_changed: None,
             creatures_died: Vec::new(),
             moved_cards: Vec::new(),
@@ -277,6 +330,19 @@ pub(super) fn resolve_mill_effect(
     let moved_cards = context.players[target_player_index]
         .mill_cards_to_graveyard(amount as usize)
         .unwrap_or_default();
+    let zone_changes = moved_cards
+        .iter()
+        .cloned()
+        .map(|card_id| {
+            CardMovedZone::new(
+                context.game_id.clone(),
+                context.players[target_player_index].id().clone(),
+                card_id,
+                ZoneType::Library,
+                ZoneType::Graveyard,
+            )
+        })
+        .collect();
 
     review_state_based_actions_after_effect(
         context.game_id,
@@ -285,6 +351,7 @@ pub(super) fn resolve_mill_effect(
         EffectOutcomeSeed {
             card_exiled: None,
             card_discarded: None,
+            zone_changes,
             life_changed: None,
             creatures_died: Vec::new(),
             moved_cards,

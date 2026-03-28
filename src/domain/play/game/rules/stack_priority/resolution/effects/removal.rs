@@ -7,7 +7,7 @@ use super::shared::{
 };
 use crate::domain::play::{
     errors::DomainError,
-    events::CreatureDied,
+    events::{CardMovedZone, CreatureDied, ZoneType},
     game::{helpers, rules::zones, SpellTarget},
     ids::{CardInstanceId, GameId},
 };
@@ -111,6 +111,7 @@ pub(super) fn resolve_destroy_target_creature_effect(
         EffectOutcomeSeed {
             card_exiled: None,
             card_discarded: None,
+            zone_changes: Vec::new(),
             life_changed: None,
             creatures_died,
             moved_cards: Vec::new(),
@@ -149,6 +150,22 @@ pub(super) fn resolve_destroy_target_artifact_or_enchantment_effect(
         | SpellTarget::GraveyardCard(_)
         | SpellTarget::StackObject(_) => Vec::new(),
     };
+    let zone_changes = moved_cards
+        .iter()
+        .filter_map(|card_id| {
+            let owner_index = context
+                .players
+                .iter()
+                .position(|player| player.owns_card(card_id))?;
+            Some(CardMovedZone::new(
+                context.game_id.clone(),
+                context.players[owner_index].id().clone(),
+                card_id.clone(),
+                ZoneType::Battlefield,
+                ZoneType::Graveyard,
+            ))
+        })
+        .collect();
 
     review_state_based_actions_after_effect(
         context.game_id,
@@ -157,6 +174,7 @@ pub(super) fn resolve_destroy_target_artifact_or_enchantment_effect(
         EffectOutcomeSeed {
             card_exiled: None,
             card_discarded: None,
+            zone_changes,
             life_changed: None,
             creatures_died: Vec::new(),
             moved_cards,
@@ -204,6 +222,7 @@ pub(super) fn resolve_exile_target_creature_effect(
         EffectOutcomeSeed {
             card_exiled,
             card_discarded: None,
+            zone_changes: Vec::new(),
             life_changed: None,
             creatures_died: Vec::new(),
             moved_cards: Vec::new(),

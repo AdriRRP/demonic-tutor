@@ -91,6 +91,7 @@ pub(super) fn resolve_pump_target_creature_effect(
         EffectOutcomeSeed {
             card_exiled: None,
             card_discarded: None,
+            zone_changes: Vec::new(),
             life_changed: None,
             creatures_died: Vec::new(),
             moved_cards: Vec::new(),
@@ -133,6 +134,7 @@ pub(super) fn resolve_put_counter_on_target_creature_effect(
         EffectOutcomeSeed {
             card_exiled: None,
             card_discarded: None,
+            zone_changes: Vec::new(),
             life_changed: None,
             creatures_died: Vec::new(),
             moved_cards: Vec::new(),
@@ -171,6 +173,7 @@ pub(super) fn resolve_tap_target_creature_effect(
         EffectOutcomeSeed {
             card_exiled: None,
             card_discarded: None,
+            zone_changes: Vec::new(),
             life_changed: None,
             creatures_died: Vec::new(),
             moved_cards: Vec::new(),
@@ -209,6 +212,7 @@ pub(super) fn resolve_untap_target_creature_effect(
         EffectOutcomeSeed {
             card_exiled: None,
             card_discarded: None,
+            zone_changes: Vec::new(),
             life_changed: None,
             creatures_died: Vec::new(),
             moved_cards: Vec::new(),
@@ -251,6 +255,7 @@ pub(super) fn resolve_cannot_block_target_creature_effect(
         EffectOutcomeSeed {
             card_exiled: None,
             card_discarded: None,
+            zone_changes: Vec::new(),
             life_changed: None,
             creatures_died: Vec::new(),
             moved_cards: Vec::new(),

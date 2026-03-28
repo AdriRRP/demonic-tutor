@@ -3,7 +3,7 @@
 use crate::domain::play::{
     commands::ResolvePendingSurveilCommand,
     errors::{DomainError, GameError},
-    events::{CardMovedToGraveyard, SpellCastOutcome, ZoneType},
+    events::{CardMovedZone, SpellCastOutcome, ZoneType},
     game::{PendingDecision, PriorityState},
 };
 
@@ -12,20 +12,21 @@ use super::{
     ResolvePendingSurveilOutcome, StackPriorityContext,
 };
 
-fn build_surveil_graveyard_events(
+fn build_surveil_zone_changes(
     game_id: &crate::domain::play::ids::GameId,
     player_id: &crate::domain::play::ids::PlayerId,
     moved_cards: &[crate::domain::play::ids::CardInstanceId],
-) -> Vec<CardMovedToGraveyard> {
+) -> Vec<CardMovedZone> {
     moved_cards
         .iter()
         .cloned()
         .map(|card_id| {
-            CardMovedToGraveyard::new(
+            CardMovedZone::new(
                 game_id.clone(),
                 player_id.clone(),
                 card_id,
                 ZoneType::Library,
+                ZoneType::Graveyard,
             )
         })
         .collect()
@@ -95,8 +96,8 @@ pub fn resolve_pending_surveil(
     } else {
         Vec::new()
     };
-    let cards_moved_to_graveyard = if move_to_graveyard {
-        build_surveil_graveyard_events(game_id, players[controller_index].id(), &moved_cards)
+    let zone_changes = if move_to_graveyard {
+        build_surveil_zone_changes(game_id, players[controller_index].id(), &moved_cards)
     } else {
         Vec::new()
     };
@@ -131,7 +132,7 @@ pub fn resolve_pending_surveil(
     Ok(ResolvePendingSurveilOutcome {
         stack_top_resolved: Some(stack_top_resolved),
         spell_cast: Some(spell_cast),
-        cards_moved_to_graveyard,
+        zone_changes,
         moved_cards,
         game_ended: None,
         priority_still_open: true,

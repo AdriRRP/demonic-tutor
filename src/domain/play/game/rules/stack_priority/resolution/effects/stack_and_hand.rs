@@ -7,7 +7,7 @@ use super::shared::{
 };
 use crate::domain::play::{
     errors::{DomainError, GameError},
-    events::{CardDiscarded, DiscardKind},
+    events::{CardDiscarded, CardMovedZone, DiscardKind, ZoneType},
     game::{helpers, model::StackObjectKind, rules::zones, SpellTarget},
     ids::{CardInstanceId, GameId},
 };
@@ -82,6 +82,22 @@ pub(super) fn resolve_return_target_permanent_to_hand_effect(
         | SpellTarget::GraveyardCard(_)
         | SpellTarget::StackObject(_) => Vec::new(),
     };
+    let zone_changes = moved_cards
+        .iter()
+        .filter_map(|card_id| {
+            let owner_index = context
+                .players
+                .iter()
+                .position(|player| player.owns_card(card_id))?;
+            Some(CardMovedZone::new(
+                context.game_id.clone(),
+                context.players[owner_index].id().clone(),
+                card_id.clone(),
+                ZoneType::Battlefield,
+                ZoneType::Hand,
+            ))
+        })
+        .collect();
 
     review_state_based_actions_after_effect(
         context.game_id,
@@ -90,6 +106,7 @@ pub(super) fn resolve_return_target_permanent_to_hand_effect(
         EffectOutcomeSeed {
             card_exiled: None,
             card_discarded: None,
+            zone_changes,
             life_changed: None,
             creatures_died: Vec::new(),
             moved_cards,
@@ -118,6 +135,7 @@ pub(super) fn resolve_counter_target_spell_effect(
     };
 
     let mut moved_cards = Vec::new();
+    let mut zone_changes = Vec::new();
     if let SpellTarget::StackObject(stack_object_id) = target {
         let object_number = stack_object_id.object_number().ok_or_else(|| {
             DomainError::Game(GameError::InternalInvariantViolation(format!(
@@ -142,9 +160,16 @@ pub(super) fn resolve_counter_target_spell_effect(
                     DomainError::Game(GameError::InternalInvariantViolation(format!(
                         "missing countered spell controller at player index {countered_controller_index}"
                     )))
-                })?;
+            })?;
             player.receive_graveyard_card(payload.into_card_instance());
-            moved_cards.push(countered_card_id);
+            moved_cards.push(countered_card_id.clone());
+            zone_changes.push(CardMovedZone::new(
+                context.game_id.clone(),
+                player.id().clone(),
+                countered_card_id,
+                ZoneType::Stack,
+                ZoneType::Graveyard,
+            ));
         }
     }
 
@@ -155,6 +180,7 @@ pub(super) fn resolve_counter_target_spell_effect(
         EffectOutcomeSeed {
             card_exiled: None,
             card_discarded: None,
+            zone_changes,
             life_changed: None,
             creatures_died: Vec::new(),
             moved_cards,
@@ -197,6 +223,18 @@ pub(super) fn resolve_target_player_discards_chosen_card_effect(
         }
         _ => (None, Vec::new()),
     };
+    let zone_changes = card_discarded
+        .as_ref()
+        .map(|event| {
+            vec![CardMovedZone::new(
+                context.game_id.clone(),
+                event.player_id.clone(),
+                event.card_id.clone(),
+                ZoneType::Hand,
+                ZoneType::Graveyard,
+            )]
+        })
+        .unwrap_or_default();
 
     review_state_based_actions_after_effect(
         context.game_id,
@@ -205,6 +243,7 @@ pub(super) fn resolve_target_player_discards_chosen_card_effect(
         EffectOutcomeSeed {
             card_exiled: None,
             card_discarded,
+            zone_changes,
             life_changed: None,
             creatures_died: Vec::new(),
             moved_cards,

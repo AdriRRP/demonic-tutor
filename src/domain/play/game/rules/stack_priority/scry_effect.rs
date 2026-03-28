@@ -108,6 +108,7 @@ pub fn resolve_pending_scry(
     Ok(ResolvePendingScryOutcome {
         stack_top_resolved: Some(stack_top_resolved),
         spell_cast: Some(spell_cast),
+        zone_changes: Vec::new(),
         moved_cards,
         game_ended: None,
         priority_still_open: true,

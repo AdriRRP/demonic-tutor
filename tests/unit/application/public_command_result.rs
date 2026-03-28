@@ -6,14 +6,15 @@ use crate::support::{
     advance_to_first_main_satisfying_cleanup, advance_to_player_first_main_satisfying_cleanup,
     create_service, etb_may_life_gain_creature_card, filled_library, first_hand_card_id,
     forest_card, loot_sorcery_card, player, player_deck, player_library, rummage_sorcery_card,
-    setup_two_player_game, surveil_sorcery_card, target_player_discards_chosen_card_sorcery_card,
+    sacrifice_life_gain_artifact_card, setup_two_player_game, surveil_sorcery_card,
+    target_player_discards_chosen_card_sorcery_card,
 };
 use demonictutor::{
-    public_command_result, CardDefinitionId, CastSpellCommand, DealOpeningHandsCommand,
-    DiscardKind, DomainEvent, GameId, PassPriorityCommand, PlayLandCommand, PlayerId,
-    PublicCommandStatus, PublicGameCommand, ResolveOptionalEffectCommand,
-    ResolvePendingHandChoiceCommand, ResolvePendingSurveilCommand, SpellChoice, SpellTarget,
-    StartGameCommand,
+    public_command_result, ActivateAbilityCommand, CardDefinitionId, CastSpellCommand,
+    DealOpeningHandsCommand, DiscardKind, DomainEvent, GameId, PassPriorityCommand,
+    PlayLandCommand, PlayerId, PublicCommandStatus, PublicGameCommand,
+    ResolveOptionalEffectCommand, ResolvePendingHandChoiceCommand, ResolvePendingSurveilCommand,
+    SpellChoice, SpellTarget, StartGameCommand,
 };
 
 fn game_in_first_main() -> (crate::support::TestService, demonictutor::Game) {
@@ -464,6 +465,7 @@ fn execute_public_command_preserves_loot_effect_event_order() {
         application.emitted_events.as_slice(),
         [
             DomainEvent::CardDiscarded(_),
+            DomainEvent::CardMovedZone(_),
             DomainEvent::StackTopResolved(_),
             DomainEvent::SpellCast(_),
         ]
@@ -486,6 +488,7 @@ fn execute_public_command_preserves_rummage_effect_event_order() {
         application.emitted_events.as_slice(),
         [
             DomainEvent::CardDiscarded(_),
+            DomainEvent::CardMovedZone(_),
             DomainEvent::CardDrawn(_),
             DomainEvent::StackTopResolved(_),
             DomainEvent::SpellCast(_),
@@ -569,10 +572,14 @@ fn execute_public_command_surfaces_card_discarded_from_pass_priority_resolution(
         [
             DomainEvent::PriorityPassed(_),
             DomainEvent::CardDiscarded(discarded),
+            DomainEvent::CardMovedZone(moved),
             DomainEvent::StackTopResolved(_),
             DomainEvent::SpellCast(_),
         ] if discarded.card_id == chosen_id
             && discarded.discard_kind == DiscardKind::SpellEffect
+            && moved.card_id == chosen_id
+            && moved.origin_zone.as_str() == "hand"
+            && moved.destination_zone.as_str() == "graveyard"
     ));
 }
 
@@ -633,10 +640,66 @@ fn execute_public_command_surfaces_surveil_graveyard_move_before_resolution_clos
     assert!(matches!(
         application.emitted_events.as_slice(),
         [
-            DomainEvent::CardMovedToGraveyard(moved),
+            DomainEvent::CardMovedZone(moved),
             DomainEvent::StackTopResolved(_),
             DomainEvent::SpellCast(_),
         ] if moved.card_id == looked_at_card_id
             && moved.player_id == PlayerId::new("p1")
+            && moved.origin_zone.as_str() == "library"
+            && moved.destination_zone.as_str() == "graveyard"
+    ));
+}
+
+#[test]
+fn execute_public_command_surfaces_zone_move_for_sacrifice_activation_cost() {
+    let (service, mut game) = setup_two_player_game(
+        "game-public-activate-sacrifice",
+        filled_library(
+            vec![sacrifice_life_gain_artifact_card("star-shard", 0, 2)],
+            10,
+        ),
+        filled_library(Vec::new(), 10),
+    );
+    advance_to_first_main_satisfying_cleanup(&service, &mut game);
+
+    let artifact_id = player(&game, "player-1")
+        .hand_card_by_definition(&CardDefinitionId::new("star-shard"))
+        .expect("sacrifice artifact should be in hand")
+        .id()
+        .clone();
+
+    service.execute_public_command(
+        &mut game,
+        PublicGameCommand::CastSpell(CastSpellCommand::new(
+            PlayerId::new("player-1"),
+            artifact_id.clone(),
+        )),
+    );
+    service.execute_public_command(
+        &mut game,
+        PublicGameCommand::PassPriority(PassPriorityCommand::new(PlayerId::new("player-1"))),
+    );
+    service.execute_public_command(
+        &mut game,
+        PublicGameCommand::PassPriority(PassPriorityCommand::new(PlayerId::new("player-2"))),
+    );
+
+    let application = service.execute_public_command(
+        &mut game,
+        PublicGameCommand::ActivateAbility(ActivateAbilityCommand::new(
+            PlayerId::new("player-1"),
+            artifact_id.clone(),
+        )),
+    );
+
+    assert!(matches!(
+        application.emitted_events.as_slice(),
+        [
+            DomainEvent::CardMovedZone(moved),
+            DomainEvent::ActivatedAbilityPutOnStack(_),
+        ] if moved.card_id == artifact_id
+            && moved.player_id == PlayerId::new("player-1")
+            && moved.origin_zone.as_str() == "battlefield"
+            && moved.destination_zone.as_str() == "graveyard"
     ));
 }

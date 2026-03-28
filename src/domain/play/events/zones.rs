@@ -4,6 +4,7 @@ use crate::domain::play::ids::{CardInstanceId, GameId, PlayerId};
 
 #[derive(Debug, Clone)]
 pub enum ZoneType {
+    Created,
     Library,
     Hand,
     Battlefield,
@@ -16,12 +17,41 @@ impl ZoneType {
     #[must_use]
     pub const fn as_str(&self) -> &'static str {
         match self {
+            Self::Created => "created",
             Self::Library => "library",
             Self::Hand => "hand",
             Self::Battlefield => "battlefield",
             Self::Graveyard => "graveyard",
             Self::Exile => "exile",
             Self::Stack => "stack",
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct CardMovedZone {
+    pub game_id: GameId,
+    pub player_id: PlayerId,
+    pub card_id: CardInstanceId,
+    pub origin_zone: ZoneType,
+    pub destination_zone: ZoneType,
+}
+
+impl CardMovedZone {
+    #[must_use]
+    pub const fn new(
+        game_id: GameId,
+        player_id: PlayerId,
+        card_id: CardInstanceId,
+        origin_zone: ZoneType,
+        destination_zone: ZoneType,
+    ) -> Self {
+        Self {
+            game_id,
+            player_id,
+            card_id,
+            origin_zone,
+            destination_zone,
         }
     }
 }
@@ -35,31 +65,6 @@ pub struct CardExiled {
 }
 
 impl CardExiled {
-    #[must_use]
-    pub const fn new(
-        game_id: GameId,
-        player_id: PlayerId,
-        card_id: CardInstanceId,
-        origin_zone: ZoneType,
-    ) -> Self {
-        Self {
-            game_id,
-            player_id,
-            card_id,
-            origin_zone,
-        }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct CardMovedToGraveyard {
-    pub game_id: GameId,
-    pub player_id: PlayerId,
-    pub card_id: CardInstanceId,
-    pub origin_zone: ZoneType,
-}
-
-impl CardMovedToGraveyard {
     #[must_use]
     pub const fn new(
         game_id: GameId,

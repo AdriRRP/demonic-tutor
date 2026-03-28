@@ -20,7 +20,7 @@ pub use stack_priority::{
 pub use turn_flow::{
     CardDiscarded, CardDrawn, DiscardKind, DrawKind, MulliganTaken, TurnProgressed,
 };
-pub use zones::{CardExiled, CardMovedToGraveyard, ZoneType};
+pub use zones::{CardExiled, CardMovedZone, ZoneType};
 
 macro_rules! impl_domain_event_from {
     ($event_type:ident, $variant:ident) => {
@@ -55,8 +55,8 @@ pub enum DomainEvent {
     BlockersDeclared(BlockersDeclared),
     CombatDamageResolved(CombatDamageResolved),
     CreatureDied(CreatureDied),
+    CardMovedZone(CardMovedZone),
     CardExiled(CardExiled),
-    CardMovedToGraveyard(CardMovedToGraveyard),
 }
 
 impl_domain_event_from!(GameStarted, GameStarted);
@@ -80,5 +80,5 @@ impl_domain_event_from!(AttackersDeclared, AttackersDeclared);
 impl_domain_event_from!(BlockersDeclared, BlockersDeclared);
 impl_domain_event_from!(CombatDamageResolved, CombatDamageResolved);
 impl_domain_event_from!(CreatureDied, CreatureDied);
+impl_domain_event_from!(CardMovedZone, CardMovedZone);
 impl_domain_event_from!(CardExiled, CardExiled);
-impl_domain_event_from!(CardMovedToGraveyard, CardMovedToGraveyard);

@@ -70,6 +70,7 @@ pub(super) fn resolve_targeted_player_life_effect(
         EffectOutcomeSeed {
             card_exiled: None,
             card_discarded: None,
+            zone_changes: Vec::new(),
             life_changed,
             creatures_died: Vec::new(),
             moved_cards: Vec::new(),
@@ -146,6 +147,7 @@ pub(super) fn resolve_damage_effect(
         EffectOutcomeSeed {
             card_exiled: None,
             card_discarded: None,
+            zone_changes: Vec::new(),
             life_changed,
             creatures_died: Vec::new(),
             moved_cards: Vec::new(),

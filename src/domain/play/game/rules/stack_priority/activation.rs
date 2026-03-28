@@ -7,7 +7,7 @@ use {
         commands::ActivateAbilityCommand,
         errors::{CardError, DomainError, GameError},
         events::ActivatedAbilityPutOnStack,
-        events::CreatureDied,
+        events::{CardMovedZone, CreatureDied, ZoneType},
         game::{
             helpers, invariants,
             model::{
@@ -28,6 +28,8 @@ struct PreparedActivationSource {
     card_type: CardType,
     loyalty: Option<u32>,
 }
+
+type ActivationCostOutcome = (Vec<CreatureDied>, Vec<CardMovedZone>, Vec<CardInstanceId>);
 
 fn prepare_activation_source(
     players: &[crate::domain::play::game::Player],
@@ -99,8 +101,9 @@ fn pay_activation_costs(
     source_handle: StackCardRef,
     source_loyalty: Option<u32>,
     ability: crate::domain::play::cards::ActivatedAbilityProfile,
-) -> Result<(Vec<CreatureDied>, Vec<CardInstanceId>), DomainError> {
+) -> Result<ActivationCostOutcome, DomainError> {
     let mut creatures_died = Vec::new();
+    let mut zone_changes = Vec::new();
     let mut moved_cards = Vec::new();
     if ability.loyalty_change().is_negative() {
         let available = source_loyalty.unwrap_or(0);
@@ -190,12 +193,19 @@ fn pay_activation_costs(
             source_handle.handle(),
         )?;
         moved_cards.push(source_card_id.clone());
+        zone_changes.push(CardMovedZone::new(
+            game_id.clone(),
+            owner_id.clone(),
+            source_card_id.clone(),
+            ZoneType::Battlefield,
+            ZoneType::Graveyard,
+        ));
         if matches!(source_type, CardType::Creature) {
             creatures_died.push(CreatureDied::new(game_id.clone(), owner_id, source_card_id));
         }
     }
 
-    Ok((creatures_died, moved_cards))
+    Ok((creatures_died, zone_changes, moved_cards))
 }
 
 fn prepare_ability_target(
@@ -448,7 +458,7 @@ pub fn activate_ability(
         }
     }
     let prepared_target = prepare_ability_target(players, card_locations, target.as_ref())?;
-    let (creatures_died, moved_cards) = pay_activation_costs(
+    let (creatures_died, zone_changes, moved_cards) = pay_activation_costs(
         players,
         game_id,
         card_locations,
@@ -482,6 +492,7 @@ pub fn activate_ability(
             crate::domain::play::ids::StackObjectId::for_stack_object(game_id, stack_object_number),
         ),
         creatures_died,
+        zone_changes,
         moved_cards,
     })
 }

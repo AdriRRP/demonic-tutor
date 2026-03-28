@@ -3,7 +3,7 @@
 use crate::domain::play::{
     commands::ResolvePendingHandChoiceCommand,
     errors::{DomainError, GameError},
-    events::{CardDiscarded, CardDrawn, DiscardKind, DrawKind, GameEnded},
+    events::{CardDiscarded, CardDrawn, CardMovedZone, DiscardKind, DrawKind, GameEnded, ZoneType},
     game::{model::PlayerCardZone, PendingDecision, PendingHandChoiceKind, PriorityState},
     ids::PlayerCardHandle,
 };
@@ -192,6 +192,18 @@ pub fn resolve_pending_hand_choice(
         chosen_card_id,
         DiscardKind::SpellEffect,
     ));
+    let zone_changes = card_discarded
+        .as_ref()
+        .map(|discarded| {
+            vec![CardMovedZone::new(
+                game_id.clone(),
+                controller_id.clone(),
+                discarded.card_id.clone(),
+                ZoneType::Hand,
+                ZoneType::Graveyard,
+            )]
+        })
+        .unwrap_or_default();
 
     let (card_drawn, game_ended) = match kind {
         PendingHandChoiceKind::Loot { .. } => (Vec::new(), None),
@@ -235,6 +247,7 @@ pub fn resolve_pending_hand_choice(
         spell_cast: Some(spell_cast),
         card_drawn,
         card_discarded,
+        zone_changes,
         moved_cards,
         game_ended,
         priority_still_open: priority.is_some(),

@@ -18,7 +18,7 @@ use super::super::{
 };
 use crate::domain::play::{
     events::{
-        ActivatedAbilityPutOnStack, CardDiscarded, CardDrawn, CardExiled, CardMovedToGraveyard,
+        ActivatedAbilityPutOnStack, CardDiscarded, CardDrawn, CardExiled, CardMovedZone,
         CreatureDied, GameEnded, LifeChanged, PriorityPassed, SpellCast, SpellPutOnStack,
         StackTopResolved, TriggeredAbilityPutOnStack,
     },
@@ -57,6 +57,7 @@ pub struct CastSpellOutcome {
 pub struct ActivateAbilityOutcome {
     pub activated_ability_put_on_stack: ActivatedAbilityPutOnStack,
     pub creatures_died: Vec<CreatureDied>,
+    pub zone_changes: Vec<CardMovedZone>,
     pub moved_cards: Vec<CardInstanceId>,
 }
 
@@ -69,6 +70,7 @@ pub struct PassPriorityOutcome {
     pub card_drawn: Vec<CardDrawn>,
     pub card_exiled: Option<CardExiled>,
     pub card_discarded: Option<CardDiscarded>,
+    pub zone_changes: Vec<CardMovedZone>,
     pub life_changed: Option<LifeChanged>,
     pub creatures_died: Vec<CreatureDied>,
     pub moved_cards: Vec<CardInstanceId>,
@@ -83,6 +85,7 @@ pub struct ResolveOptionalEffectOutcome {
     pub spell_cast: Option<SpellCast>,
     pub card_exiled: Option<CardExiled>,
     pub card_discarded: Option<CardDiscarded>,
+    pub zone_changes: Vec<CardMovedZone>,
     pub life_changed: Option<LifeChanged>,
     pub creatures_died: Vec<CreatureDied>,
     pub moved_cards: Vec<CardInstanceId>,
@@ -96,6 +99,7 @@ pub struct ResolvePendingHandChoiceOutcome {
     pub spell_cast: Option<SpellCast>,
     pub card_drawn: Vec<CardDrawn>,
     pub card_discarded: Option<CardDiscarded>,
+    pub zone_changes: Vec<CardMovedZone>,
     pub moved_cards: Vec<CardInstanceId>,
     pub game_ended: Option<GameEnded>,
     pub priority_still_open: bool,
@@ -105,6 +109,7 @@ pub struct ResolvePendingHandChoiceOutcome {
 pub struct ResolvePendingScryOutcome {
     pub stack_top_resolved: Option<StackTopResolved>,
     pub spell_cast: Option<SpellCast>,
+    pub zone_changes: Vec<CardMovedZone>,
     pub moved_cards: Vec<CardInstanceId>,
     pub game_ended: Option<GameEnded>,
     pub priority_still_open: bool,
@@ -114,7 +119,7 @@ pub struct ResolvePendingScryOutcome {
 pub struct ResolvePendingSurveilOutcome {
     pub stack_top_resolved: Option<StackTopResolved>,
     pub spell_cast: Option<SpellCast>,
-    pub cards_moved_to_graveyard: Vec<CardMovedToGraveyard>,
+    pub zone_changes: Vec<CardMovedZone>,
     pub moved_cards: Vec<CardInstanceId>,
     pub game_ended: Option<GameEnded>,
     pub priority_still_open: bool,

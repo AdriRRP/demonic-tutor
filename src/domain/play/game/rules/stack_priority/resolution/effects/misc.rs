@@ -7,6 +7,7 @@ use super::shared::{
 use crate::domain::play::{
     cards::{CardInstance, KeywordAbilitySet},
     errors::{DomainError, GameError},
+    events::{CardMovedZone, ZoneType},
     ids::{CardDefinitionId, CardInstanceId},
 };
 
@@ -24,6 +25,13 @@ pub(super) fn resolve_create_vanilla_creature_token_effect(
         EffectOutcomeSeed {
             card_exiled: None,
             card_discarded: None,
+            zone_changes: vec![CardMovedZone::new(
+                context.game_id.clone(),
+                context.players[context.controller_index].id().clone(),
+                token_id.clone(),
+                ZoneType::Created,
+                ZoneType::Battlefield,
+            )],
             life_changed: None,
             creatures_died: Vec::new(),
             moved_cards: vec![token_id],
@@ -40,6 +48,19 @@ pub(super) fn resolve_create_multiple_vanilla_creature_tokens_effect(
     let moved_cards = (0..count)
         .map(|_| create_vanilla_token(context, power, toughness))
         .collect::<Result<Vec<_>, _>>()?;
+    let zone_changes = moved_cards
+        .iter()
+        .cloned()
+        .map(|card_id| {
+            CardMovedZone::new(
+                context.game_id.clone(),
+                context.players[context.controller_index].id().clone(),
+                card_id,
+                ZoneType::Created,
+                ZoneType::Battlefield,
+            )
+        })
+        .collect();
 
     review_state_based_actions_after_effect(
         context.game_id,
@@ -48,6 +69,7 @@ pub(super) fn resolve_create_multiple_vanilla_creature_tokens_effect(
         EffectOutcomeSeed {
             card_exiled: None,
             card_discarded: None,
+            zone_changes,
             life_changed: None,
             creatures_died: Vec::new(),
             moved_cards,
@@ -106,6 +128,13 @@ pub(super) fn resolve_create_keyworded_creature_token_effect(
         EffectOutcomeSeed {
             card_exiled: None,
             card_discarded: None,
+            zone_changes: vec![CardMovedZone::new(
+                context.game_id.clone(),
+                context.players[context.controller_index].id().clone(),
+                token_id.clone(),
+                ZoneType::Created,
+                ZoneType::Battlefield,
+            )],
             life_changed: None,
             creatures_died: Vec::new(),
             moved_cards: vec![token_id],
