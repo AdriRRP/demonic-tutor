@@ -57,7 +57,9 @@ struct CachedPublicEventLog {
 impl PublicEventLogCache {
     fn get(&self, game_id: &str, access_tick: u64) -> Option<Arc<[PublicEventLogEntry]>> {
         let cached = self.entries.get(game_id)?;
-        cached.last_access_tick.store(access_tick, Ordering::Relaxed);
+        cached
+            .last_access_tick
+            .store(access_tick, Ordering::Relaxed);
         Some(Arc::clone(&cached.entries))
     }
 
@@ -216,7 +218,10 @@ where
         &self,
         game_id: &str,
     ) -> Result<Option<Arc<[PublicEventLogEntry]>>, DomainError> {
-        let access_tick = self.public_event_log_access_clock.fetch_add(1, Ordering::Relaxed) + 1;
+        let access_tick = self
+            .public_event_log_access_clock
+            .fetch_add(1, Ordering::Relaxed)
+            + 1;
         let cache = self
             .public_event_log_cache
             .read()
@@ -232,7 +237,10 @@ where
         entries: Arc<[PublicEventLogEntry]>,
         estimated_bytes: usize,
     ) -> Result<(), DomainError> {
-        let access_tick = self.public_event_log_access_clock.fetch_add(1, Ordering::Relaxed) + 1;
+        let access_tick = self
+            .public_event_log_access_clock
+            .fetch_add(1, Ordering::Relaxed)
+            + 1;
         let mut cache = self
             .public_event_log_cache
             .write()

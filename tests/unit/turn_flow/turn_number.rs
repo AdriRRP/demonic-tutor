@@ -44,7 +44,10 @@ fn advance_turn_emits_turn_progressed_event() {
 
     let mut bus = InMemoryEventBus::new();
     bus.subscribe(Arc::new(move |event: &DomainEvent| {
-        projection_clone.handle(event);
+        assert!(
+            projection_clone.handle(event).is_ok(),
+            "game log projection should accept bus events"
+        );
     }));
 
     let service = GameService::new(InMemoryEventStore::new(), bus);

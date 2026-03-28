@@ -22,9 +22,6 @@ pub enum GameLogProjectionError {
 }
 
 impl GameLogProjection {
-    const LOCK_POISONED_MESSAGE: &str =
-        "[internal invariant violation] game log projection lock poisoned";
-
     #[must_use]
     pub fn new() -> Self {
         Self {
@@ -205,14 +202,23 @@ impl GameLogProjection {
         )
     }
 
-    pub fn handle(&self, event: &DomainEvent) {
+    /// Appends one domain event to the textual projection.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`GameLogProjectionError::LockPoisoned`] when the projection lock
+    /// has been poisoned and the projection can no longer be updated safely.
+    pub fn handle(&self, event: &DomainEvent) -> Result<(), GameLogProjectionError> {
         let log_entry = Self::describe_event(event);
 
-        let mut state = self.logs.write().unwrap_or_else(|_| {
-            panic!("{}", Self::LOCK_POISONED_MESSAGE);
-        });
+        let mut state = self
+            .logs
+            .write()
+            .map_err(|_| GameLogProjectionError::LockPoisoned)?;
         state.entries.push(Arc::from(log_entry));
         state.snapshot = None;
+        drop(state);
+        Ok(())
     }
 }
 
@@ -242,13 +248,13 @@ mod tests {
             std::panic::panic_any("poison projection lock");
         });
 
-        let result = std::panic::catch_unwind(|| {
-            projection.handle(&DomainEvent::GameStarted(crate::domain::play::events::GameStarted::new(
+        let result = projection.handle(&DomainEvent::GameStarted(
+            crate::domain::play::events::GameStarted::new(
                 crate::domain::play::ids::GameId::new("poisoned"),
                 vec![crate::domain::play::ids::PlayerId::new("p1")],
-            )));
-        });
+            ),
+        ));
 
-        assert!(result.is_err(), "poisoned handle should panic explicitly");
+        assert_eq!(result, Err(GameLogProjectionError::LockPoisoned));
     }
 }

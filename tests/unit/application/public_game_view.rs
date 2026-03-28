@@ -68,7 +68,12 @@ fn game_view_projects_public_state_without_hidden_hand_contents() {
         PublicPlayableSubsetVersion::V1
     );
     assert_eq!(view.phase, Phase::Setup);
-    assert_eq!(view.active_player_id.as_ref().map(|id| id.as_str()), Some("p1"));
+    assert_eq!(
+        view.active_player_id
+            .as_ref()
+            .map(demonictutor::PlayerId::as_str),
+        Some("p1")
+    );
     assert_eq!(view.players.len(), 2);
 
     let p1 = view
@@ -82,7 +87,6 @@ fn game_view_projects_public_state_without_hidden_hand_contents() {
     assert!(p1.graveyard.is_empty());
     assert!(p1.exile.is_empty());
 }
-
 
 #[test]
 fn game_view_projects_battlefield_cards_after_land_is_played() {

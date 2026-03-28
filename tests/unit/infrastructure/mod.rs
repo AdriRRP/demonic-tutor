@@ -136,7 +136,7 @@ fn projection_logs_events() {
         vec![PlayerId::new("player-1"), PlayerId::new("player-2")],
     ));
 
-    projection.handle(&event);
+    assert!(projection.handle(&event).is_ok());
 
     let logs = projection.logs().unwrap();
     assert_eq!(logs.len(), 1);
@@ -148,10 +148,12 @@ fn projection_logs_events() {
 fn projection_logs_reuse_cached_snapshot_across_reads() {
     let projection = GameLogProjection::new();
 
-    projection.handle(&DomainEvent::GameStarted(GameStarted::new(
-        GameId::new("game-1"),
-        vec![PlayerId::new("player-1"), PlayerId::new("player-2")],
-    )));
+    assert!(projection
+        .handle(&DomainEvent::GameStarted(GameStarted::new(
+            GameId::new("game-1"),
+            vec![PlayerId::new("player-1"), PlayerId::new("player-2")],
+        )))
+        .is_ok());
 
     let first = projection.logs().unwrap();
     let second = projection.logs().unwrap();
@@ -163,52 +165,66 @@ fn projection_logs_reuse_cached_snapshot_across_reads() {
 fn projection_logs_multiple_events() {
     let projection = GameLogProjection::new();
 
-    projection.handle(&DomainEvent::GameStarted(GameStarted::new(
-        GameId::new("game-1"),
-        vec![PlayerId::new("player-1"), PlayerId::new("player-2")],
-    )));
+    assert!(projection
+        .handle(&DomainEvent::GameStarted(GameStarted::new(
+            GameId::new("game-1"),
+            vec![PlayerId::new("player-1"), PlayerId::new("player-2")],
+        )))
+        .is_ok());
 
-    projection.handle(&DomainEvent::OpeningHandDealt(OpeningHandDealt::new(
-        GameId::new("game-1"),
-        PlayerId::new("player-1"),
-        vec![],
-    )));
+    assert!(projection
+        .handle(&DomainEvent::OpeningHandDealt(OpeningHandDealt::new(
+            GameId::new("game-1"),
+            PlayerId::new("player-1"),
+            vec![],
+        )))
+        .is_ok());
 
-    projection.handle(&DomainEvent::LandPlayed(LandPlayed::new(
-        GameId::new("game-1"),
-        PlayerId::new("player-1"),
-        CardInstanceId::new("card-1"),
-    )));
+    assert!(projection
+        .handle(&DomainEvent::LandPlayed(LandPlayed::new(
+            GameId::new("game-1"),
+            PlayerId::new("player-1"),
+            CardInstanceId::new("card-1"),
+        )))
+        .is_ok());
 
-    projection.handle(&DomainEvent::TurnProgressed(TurnProgressed::new(
-        GameId::new("game-1"),
-        PlayerId::new("player-2"),
-        1,
-        2,
-        demonictutor::Phase::EndStep,
-        demonictutor::Phase::Untap,
-    )));
+    assert!(projection
+        .handle(&DomainEvent::TurnProgressed(TurnProgressed::new(
+            GameId::new("game-1"),
+            PlayerId::new("player-2"),
+            1,
+            2,
+            demonictutor::Phase::EndStep,
+            demonictutor::Phase::Untap,
+        )))
+        .is_ok());
 
-    projection.handle(&DomainEvent::CardDrawn(CardDrawn::new(
-        GameId::new("game-1"),
-        PlayerId::new("player-2"),
-        CardInstanceId::new("card-2"),
-        DrawKind::TurnStep,
-    )));
+    assert!(projection
+        .handle(&DomainEvent::CardDrawn(CardDrawn::new(
+            GameId::new("game-1"),
+            PlayerId::new("player-2"),
+            CardInstanceId::new("card-2"),
+            DrawKind::TurnStep,
+        )))
+        .is_ok());
 
-    projection.handle(&DomainEvent::MulliganTaken(MulliganTaken::new(
-        GameId::new("game-1"),
-        PlayerId::new("player-1"),
-    )));
+    assert!(projection
+        .handle(&DomainEvent::MulliganTaken(MulliganTaken::new(
+            GameId::new("game-1"),
+            PlayerId::new("player-1"),
+        )))
+        .is_ok());
 
-    projection.handle(&DomainEvent::SpellCast(SpellCast::new(
-        GameId::new("game-1"),
-        PlayerId::new("player-1"),
-        CardInstanceId::new("card-3"),
-        CardType::Creature,
-        3,
-        SpellCastOutcome::EnteredBattlefield,
-    )));
+    assert!(projection
+        .handle(&DomainEvent::SpellCast(SpellCast::new(
+            GameId::new("game-1"),
+            PlayerId::new("player-1"),
+            CardInstanceId::new("card-3"),
+            CardType::Creature,
+            3,
+            SpellCastOutcome::EnteredBattlefield,
+        )))
+        .is_ok());
 
     let logs = projection.logs().unwrap();
     assert_eq!(logs.len(), 7);
@@ -226,11 +242,13 @@ fn projection_logs_multiple_events() {
 fn projection_logs_creature_died_events() {
     let projection = GameLogProjection::new();
 
-    projection.handle(&DomainEvent::CreatureDied(CreatureDied::new(
-        GameId::new("game-1"),
-        PlayerId::new("player-2"),
-        CardInstanceId::new("card-7"),
-    )));
+    assert!(projection
+        .handle(&DomainEvent::CreatureDied(CreatureDied::new(
+            GameId::new("game-1"),
+            PlayerId::new("player-2"),
+            CardInstanceId::new("card-7"),
+        )))
+        .is_ok());
 
     let logs = projection.logs().unwrap();
     assert_eq!(logs.len(), 1);
@@ -243,12 +261,14 @@ fn projection_logs_creature_died_events() {
 fn projection_logs_card_discarded_events() {
     let projection = GameLogProjection::new();
 
-    projection.handle(&DomainEvent::CardDiscarded(CardDiscarded::new(
-        GameId::new("game-1"),
-        PlayerId::new("player-1"),
-        CardInstanceId::new("card-9"),
-        DiscardKind::CleanupHandSize,
-    )));
+    assert!(projection
+        .handle(&DomainEvent::CardDiscarded(CardDiscarded::new(
+            GameId::new("game-1"),
+            PlayerId::new("player-1"),
+            CardInstanceId::new("card-9"),
+            DiscardKind::CleanupHandSize,
+        )))
+        .is_ok());
 
     let logs = projection.logs().unwrap();
     assert_eq!(logs.len(), 1);
@@ -262,12 +282,14 @@ fn projection_logs_card_discarded_events() {
 fn projection_logs_game_ended_events() {
     let projection = GameLogProjection::new();
 
-    projection.handle(&DomainEvent::GameEnded(GameEnded::new(
-        GameId::new("game-1"),
-        PlayerId::new("player-2"),
-        PlayerId::new("player-1"),
-        GameEndReason::EmptyLibraryDraw,
-    )));
+    assert!(projection
+        .handle(&DomainEvent::GameEnded(GameEnded::new(
+            GameId::new("game-1"),
+            PlayerId::new("player-2"),
+            PlayerId::new("player-1"),
+            GameEndReason::EmptyLibraryDraw,
+        )))
+        .is_ok());
 
     let logs = projection.logs().unwrap();
     assert_eq!(logs.len(), 1);
@@ -280,10 +302,12 @@ fn projection_logs_game_ended_events() {
 fn projection_logs_drawn_game_end_events() {
     let projection = GameLogProjection::new();
 
-    projection.handle(&DomainEvent::GameEnded(GameEnded::draw(
-        GameId::new("game-1"),
-        GameEndReason::SimultaneousZeroLife,
-    )));
+    assert!(projection
+        .handle(&DomainEvent::GameEnded(GameEnded::draw(
+            GameId::new("game-1"),
+            GameEndReason::SimultaneousZeroLife,
+        )))
+        .is_ok());
 
     let logs = projection.logs().unwrap();
     assert_eq!(logs.len(), 1);
