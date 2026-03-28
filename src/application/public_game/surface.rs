@@ -289,7 +289,7 @@ fn phase_surface_state(game: &Game) -> PublicSurfaceState {
     PublicSurfaceState::with_choice_requests(actions, choice_requests)
 }
 
-pub(super) fn public_surface_state(game: &Game) -> PublicSurfaceState {
+pub(super) fn public_surface_state(game: &Game, viewer_id: &PlayerId) -> PublicSurfaceState {
     if game.is_over() {
         return PublicSurfaceState::default();
     }
@@ -302,24 +302,31 @@ pub(super) fn public_surface_state(game: &Game) -> PublicSurfaceState {
     });
     append_concede_actions(game, &mut state.legal_actions);
     state
+        .legal_actions
+        .retain(|action| legal_action_player_id(action) == viewer_id);
+    state
+        .choice_requests
+        .retain(|request| choice_request_player_id(request) == viewer_id);
+    state
 }
 
 #[must_use]
-pub fn legal_actions(game: &Game) -> Vec<PublicLegalAction> {
-    public_surface_state(game).legal_actions
+pub fn legal_actions(game: &Game, viewer_id: &PlayerId) -> Vec<PublicLegalAction> {
+    public_surface_state(game, viewer_id).legal_actions
 }
 
 #[must_use]
-pub fn choice_requests(game: &Game) -> Vec<PublicChoiceRequest> {
-    public_surface_state(game).choice_requests
+pub fn choice_requests(game: &Game, viewer_id: &PlayerId) -> Vec<PublicChoiceRequest> {
+    public_surface_state(game, viewer_id).choice_requests
 }
 
 #[must_use]
 pub fn public_command_result(
     game: &Game,
     application: PublicCommandApplication,
+    viewer_id: &PlayerId,
 ) -> PublicCommandResult {
-    let surface = public_surface_state(game);
+    let surface = public_surface_state(game, viewer_id);
 
     PublicCommandResult {
         status: application.status,
@@ -891,6 +898,41 @@ fn append_concede_actions(game: &Game, legal_actions: &mut Vec<PublicLegalAction
         _ => std::cmp::Ordering::Equal,
     });
     legal_actions.extend(concede_actions);
+}
+
+const fn legal_action_player_id(action: &PublicLegalAction) -> &PlayerId {
+    match action {
+        PublicLegalAction::Concede { player_id }
+        | PublicLegalAction::ResolvePendingScry { player_id }
+        | PublicLegalAction::ResolvePendingSurveil { player_id }
+        | PublicLegalAction::ResolvePendingHandChoice { player_id }
+        | PublicLegalAction::ResolveOptionalEffect { player_id }
+        | PublicLegalAction::PassPriority { player_id }
+        | PublicLegalAction::PlayLand { player_id, .. }
+        | PublicLegalAction::TapManaSource { player_id, .. }
+        | PublicLegalAction::CastSpell { player_id, .. }
+        | PublicLegalAction::ActivateAbility { player_id, .. }
+        | PublicLegalAction::DeclareAttackers { player_id, .. }
+        | PublicLegalAction::DeclareBlockers { player_id, .. }
+        | PublicLegalAction::ResolveCombatDamage { player_id }
+        | PublicLegalAction::AdvanceTurn { player_id }
+        | PublicLegalAction::DiscardForCleanup { player_id, .. } => player_id,
+    }
+}
+
+const fn choice_request_player_id(request: &PublicChoiceRequest) -> &PlayerId {
+    match request {
+        PublicChoiceRequest::PendingScry { player_id, .. }
+        | PublicChoiceRequest::PendingSurveil { player_id, .. }
+        | PublicChoiceRequest::PendingHandChoice { player_id, .. }
+        | PublicChoiceRequest::OptionalEffectDecision { player_id, .. }
+        | PublicChoiceRequest::SpellTarget { player_id, .. }
+        | PublicChoiceRequest::SpellChoice { player_id, .. }
+        | PublicChoiceRequest::SpellSecondaryCreatureChoice { player_id, .. }
+        | PublicChoiceRequest::SpellModalChoice { player_id, .. }
+        | PublicChoiceRequest::AbilityTarget { player_id, .. }
+        | PublicChoiceRequest::CleanupDiscard { player_id, .. } => player_id,
+    }
 }
 
 fn sort_choice_requests(choice_requests: &mut [PublicChoiceRequest]) {

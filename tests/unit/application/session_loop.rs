@@ -121,10 +121,13 @@ fn seeded_public_game_setup_is_deterministic_for_the_same_seed() {
     let setup = seeded_setup("game-seeded-setup-a", 42);
 
     let (game_a, result_a) = service
-        .start_seeded_public_game(setup.clone())
+        .start_seeded_public_game(setup.clone(), &PlayerId::new("player-1"))
         .expect("seeded setup should succeed");
     let (game_b, result_b) = service
-        .start_seeded_public_game(setup.with_game_id(GameId::new("game-seeded-setup-b")))
+        .start_seeded_public_game(
+            setup.with_game_id(GameId::new("game-seeded-setup-b")),
+            &PlayerId::new("player-2"),
+        )
         .expect("same seeded setup should succeed again");
 
     assert!(matches!(
@@ -164,14 +167,14 @@ fn seeded_public_rematch_reuses_setup_with_a_new_game_id() {
     let service = create_service();
     let setup = seeded_setup("game-seeded-rematch-original", 7);
     let (original_game, _) = service
-        .start_seeded_public_game(setup.clone())
+        .start_seeded_public_game(setup.clone(), &PlayerId::new("player-1"))
         .expect("seeded setup should succeed");
 
     let (rematch_game, rematch_result) = service
-        .rematch_seeded_public_game(PublicRematchCommand::new(
-            GameId::new("game-seeded-rematch-new"),
-            setup,
-        ))
+        .rematch_seeded_public_game(
+            PublicRematchCommand::new(GameId::new("game-seeded-rematch-new"), setup),
+            &PlayerId::new("player-2"),
+        )
         .expect("seeded rematch should succeed");
 
     assert_ne!(original_game.id(), rematch_game.id());
@@ -198,7 +201,7 @@ fn seeded_public_game_setup_does_not_persist_partial_start_when_opening_hands_fa
     let service = create_service();
     let setup = invalid_seeded_setup("game-seeded-invalid-setup", 9);
 
-    let result = service.start_seeded_public_game(setup);
+    let result = service.start_seeded_public_game(setup, &PlayerId::new("player-1"));
 
     assert!(matches!(
         result,
@@ -231,7 +234,7 @@ fn concede_public_command_ends_the_game_with_conceded_reason() {
         &mut game,
         PublicGameCommand::Concede(demonictutor::ConcedeCommand::new(PlayerId::new("player-1"))),
     );
-    let result = public_command_result(&game, application);
+    let result = public_command_result(&game, application, &PlayerId::new("player-1"));
 
     assert!(matches!(result.status, PublicCommandStatus::Applied));
     assert!(matches!(

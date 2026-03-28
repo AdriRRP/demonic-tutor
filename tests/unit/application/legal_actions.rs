@@ -68,7 +68,7 @@ fn game_with_first_main_priority() -> Game {
 fn legal_actions_surface_priority_holder_options_in_first_main() {
     let game = game_with_first_main_priority();
 
-    let actions = legal_actions(&game);
+    let actions = legal_actions(&game, &PlayerId::new("p1"));
 
     assert!(actions.iter().any(|action| matches!(
         action,
@@ -142,7 +142,7 @@ fn legal_actions_surface_cleanup_discard_when_hand_is_too_large() {
     advance_to_player_phase_satisfying_cleanup(&service, &mut game, "p1", Phase::EndStep);
     close_empty_priority_window(&service, &mut game);
 
-    let actions = legal_actions(&game);
+    let actions = legal_actions(&game, &PlayerId::new("p1"));
     let expected_hand_size = player(&game, "p1").hand_size();
     assert!(actions.iter().any(|action| matches!(
         action,
@@ -219,7 +219,7 @@ fn legal_actions_do_not_offer_pacified_creature_as_blocker_option() {
         .expect("attacker should be declared");
     close_empty_priority_window(&service, &mut game);
 
-    let actions = legal_actions(&game);
+    let actions = legal_actions(&game, &PlayerId::new("player-2"));
 
     assert!(actions.iter().any(|action| matches!(
         action,
@@ -292,7 +292,7 @@ fn legal_actions_do_not_offer_single_blocker_option_against_menace() {
         .expect("menace attacker should be declared");
     close_empty_priority_window(&service, &mut game);
 
-    let actions = legal_actions(&game);
+    let actions = legal_actions(&game, &PlayerId::new("player-2"));
 
     assert!(actions.iter().any(|action| matches!(
         action,
@@ -300,4 +300,16 @@ fn legal_actions_do_not_offer_single_blocker_option_against_menace() {
             if player_id.as_str() == "player-2"
                 && blocker_options.iter().all(|option| option.blocker_id != blocker_id)
     )));
+}
+
+#[test]
+fn legal_actions_hide_priority_holder_private_options_from_other_viewers() {
+    let game = game_with_first_main_priority();
+
+    let actions = legal_actions(&game, &PlayerId::new("p2"));
+
+    assert!(matches!(
+        actions.as_slice(),
+        [PublicLegalAction::Concede { player_id }] if player_id.as_str() == "p2"
+    ));
 }

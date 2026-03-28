@@ -88,7 +88,7 @@ fn choice_requests_surface_target_candidates_for_supported_targeted_spells() {
         .id()
         .clone();
 
-    let requests = choice_requests(&game);
+    let requests = choice_requests(&game, &PlayerId::new("p1"));
 
     assert!(requests.iter().any(|request| matches!(
         request,
@@ -147,7 +147,7 @@ fn choice_requests_do_not_surface_illegal_hexproof_targets() {
         .id()
         .clone();
 
-    let requests = choice_requests(&game);
+    let requests = choice_requests(&game, &PlayerId::new("player-1"));
 
     assert!(requests.iter().any(|request| matches!(
         request,
@@ -167,7 +167,7 @@ fn choice_requests_surface_modal_modes_for_supported_choose_one_spells() {
         .id()
         .clone();
 
-    let requests = choice_requests(&game);
+    let requests = choice_requests(&game, &PlayerId::new("p1"));
 
     assert!(requests.iter().any(|request| matches!(
         request,
@@ -190,7 +190,7 @@ fn choice_requests_surface_explicit_hand_choice_for_discard_spells() {
         .id()
         .clone();
 
-    let requests = choice_requests(&game);
+    let requests = choice_requests(&game, &PlayerId::new("p1"));
 
     assert!(requests.iter().any(|request| matches!(
         request,
@@ -210,7 +210,7 @@ fn choice_requests_surface_optional_secondary_target_choice_for_distributed_coun
         .id()
         .clone();
 
-    let requests = choice_requests(&game);
+    let requests = choice_requests(&game, &PlayerId::new("p1"));
 
     assert!(requests.iter().any(|request| matches!(
         request,
@@ -276,7 +276,7 @@ fn choice_requests_surface_target_candidates_in_stable_public_order() {
         .id()
         .clone();
 
-    let requests = choice_requests(&game);
+    let requests = choice_requests(&game, &PlayerId::new("player-1"));
     let candidate_ids = requests
         .iter()
         .find_map(|request| match request {
@@ -366,7 +366,7 @@ fn choice_requests_surface_cleanup_discard_as_pending_choice() {
     );
     close_empty_priority_window(&service, &mut game);
 
-    let requests = choice_requests(&game);
+    let requests = choice_requests(&game, &PlayerId::new("p1"));
 
     assert!(requests.iter().any(|request| matches!(
         request,
@@ -416,7 +416,7 @@ fn choice_requests_surface_pending_optional_effect_decisions() {
             .expect("second pass should progress toward optional decision");
     }
 
-    let requests = choice_requests(&game);
+    let requests = choice_requests(&game, &PlayerId::new("player-1"));
 
     assert!(requests.iter().any(|request| matches!(
         request,
@@ -494,7 +494,7 @@ fn choice_requests_surface_pending_hand_choice_for_loot_resolution() {
         PublicGameCommand::PassPriority(PassPriorityCommand::new(PlayerId::new("p2"))),
     );
 
-    let requests = choice_requests(&game);
+    let requests = choice_requests(&game, &PlayerId::new("p1"));
 
     assert!(requests.iter().any(|request| matches!(
         request,
@@ -572,7 +572,7 @@ fn choice_requests_surface_pending_scry_for_supported_scry_spell() {
         PublicGameCommand::PassPriority(PassPriorityCommand::new(PlayerId::new("p2"))),
     );
 
-    let requests = choice_requests(&game);
+    let requests = choice_requests(&game, &PlayerId::new("p1"));
 
     assert!(requests.iter().any(|request| matches!(
         request,
@@ -654,7 +654,7 @@ fn choice_requests_surface_pending_surveil_for_supported_surveil_spell() {
         PublicGameCommand::PassPriority(PassPriorityCommand::new(PlayerId::new("p2"))),
     );
 
-    let requests = choice_requests(&game);
+    let requests = choice_requests(&game, &PlayerId::new("p1"));
 
     assert!(requests.iter().any(|request| matches!(
         request,
@@ -667,4 +667,85 @@ fn choice_requests_surface_pending_surveil_for_supported_surveil_spell() {
                     PublicSurveilChoice::MoveToGraveyard,
                 ]
     )));
+}
+
+#[test]
+fn choice_requests_hide_private_spell_choice_requests_from_other_viewers() {
+    let game = first_main_game_with_choice_cards();
+
+    let requests = choice_requests(&game, &PlayerId::new("p2"));
+
+    assert!(requests.is_empty());
+}
+
+#[test]
+fn choice_requests_hide_pending_surveil_private_cards_from_other_viewers() {
+    let service = create_service();
+    let libraries = vec![
+        player_library(
+            "p1",
+            vec![
+                surveil_sorcery_card("p1-surveil", 0, 1),
+                forest_card("p1-a"),
+                forest_card("p1-b"),
+                forest_card("p1-c"),
+                forest_card("p1-d"),
+                forest_card("p1-e"),
+                forest_card("p1-f"),
+                forest_card("p1-top-card"),
+                forest_card("p1-next-card"),
+                forest_card("p1-pad"),
+            ],
+        ),
+        player_library(
+            "p2",
+            vec![
+                forest_card("p2-a"),
+                forest_card("p2-b"),
+                forest_card("p2-c"),
+                forest_card("p2-d"),
+                forest_card("p2-e"),
+                forest_card("p2-f"),
+                forest_card("p2-g"),
+                forest_card("p2-h"),
+                forest_card("p2-i"),
+                forest_card("p2-j"),
+            ],
+        ),
+    ];
+    let decks = vec![player_deck("p1", "d1"), player_deck("p2", "d2")];
+
+    let (mut game, _) = service
+        .start_game(StartGameCommand::new(
+            GameId::new("game-pending-surveil-hidden"),
+            decks,
+        ))
+        .expect("game should start");
+    service
+        .deal_opening_hands(&mut game, &DealOpeningHandsCommand::new(libraries))
+        .expect("opening hands should be dealt");
+    advance_to_player_first_main_satisfying_cleanup(&service, &mut game, "p1");
+
+    let surveil_id = player(&game, "p1")
+        .hand_card_by_definition(&CardDefinitionId::new("p1-surveil"))
+        .expect("surveil spell should be in hand")
+        .id()
+        .clone();
+
+    service.execute_public_command(
+        &mut game,
+        PublicGameCommand::CastSpell(CastSpellCommand::new(PlayerId::new("p1"), surveil_id)),
+    );
+    service.execute_public_command(
+        &mut game,
+        PublicGameCommand::PassPriority(PassPriorityCommand::new(PlayerId::new("p1"))),
+    );
+    service.execute_public_command(
+        &mut game,
+        PublicGameCommand::PassPriority(PassPriorityCommand::new(PlayerId::new("p2"))),
+    );
+
+    let requests = choice_requests(&game, &PlayerId::new("p2"));
+
+    assert!(requests.is_empty());
 }

@@ -46,7 +46,7 @@ fn game_service_public_event_log_returns_persisted_public_timeline() {
             land_id.clone(),
         )),
     );
-    let result = public_command_result(&game, application);
+    let result = public_command_result(&game, application, &PlayerId::new("player-1"));
     assert!(matches!(result.status, PublicCommandStatus::Applied));
 
     let log_result = service.public_event_log(&GameId::new("game-public-event-log"));

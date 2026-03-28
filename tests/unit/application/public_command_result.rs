@@ -616,7 +616,7 @@ fn execute_public_command_returns_applied_status_events_and_next_snapshot() {
         &mut game,
         PublicGameCommand::PlayLand(PlayLandCommand::new(PlayerId::new("p1"), land_id.clone())),
     );
-    let result = public_command_result(&game, application);
+    let result = public_command_result(&game, application, &PlayerId::new("p1"));
 
     assert!(matches!(result.status, PublicCommandStatus::Applied));
     assert!(!result.emitted_events.is_empty());
@@ -638,7 +638,7 @@ fn execute_public_command_returns_rejected_status_and_preserves_follow_up_contra
         &mut game,
         PublicGameCommand::PlayLand(PlayLandCommand::new(PlayerId::new("p2"), land_id)),
     );
-    let result = public_command_result(&game, application);
+    let result = public_command_result(&game, application, &PlayerId::new("p1"));
 
     match result.status {
         PublicCommandStatus::Rejected(rejection) => {

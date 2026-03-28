@@ -28,7 +28,7 @@ use crate::{
         errors::DomainError,
         events::DomainEvent,
         game::Game,
-        ids::GameId,
+        ids::{GameId, PlayerId},
     },
 };
 
@@ -53,6 +53,7 @@ where
     pub fn start_seeded_public_game(
         &self,
         setup: PublicSeededGameSetup,
+        viewer_id: &PlayerId,
     ) -> Result<(Game, PublicGameSessionStart), DomainError> {
         let PublicSeededGameSetup {
             game_id,
@@ -67,7 +68,7 @@ where
         let emitted_events = std::iter::once(game_started.into())
             .chain(opening_hands.into_iter().map(Into::into))
             .collect();
-        let session = public_game_session_start(&game, emitted_events);
+        let session = public_game_session_start(&game, emitted_events, viewer_id);
 
         Ok((game, session))
     }
@@ -80,8 +81,9 @@ where
     pub fn rematch_seeded_public_game(
         &self,
         cmd: PublicRematchCommand,
+        viewer_id: &PlayerId,
     ) -> Result<(Game, PublicGameSessionStart), DomainError> {
-        self.start_seeded_public_game(cmd.original_setup.with_game_id(cmd.game_id))
+        self.start_seeded_public_game(cmd.original_setup.with_game_id(cmd.game_id), viewer_id)
     }
 
     /// Returns the persisted public event log for one game in deterministic sequence order.
@@ -203,8 +205,9 @@ fn seeded_start_inputs(
 fn public_game_session_start(
     game: &Game,
     emitted_events: Vec<DomainEvent>,
+    viewer_id: &PlayerId,
 ) -> PublicGameSessionStart {
-    let (legal_actions, choice_requests) = public_surface_state(game).into_parts();
+    let (legal_actions, choice_requests) = public_surface_state(game, viewer_id).into_parts();
 
     PublicGameSessionStart {
         emitted_events: public_events(emitted_events),
