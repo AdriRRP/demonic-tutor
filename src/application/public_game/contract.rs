@@ -254,7 +254,7 @@ pub enum PublicChoiceRequest {
         source_card_id: CardInstanceId,
         candidates: Vec<PublicChoiceCandidate>,
     },
-    SpellChoiceUnavailable {
+    SpellChoiceInvariantViolation {
         player_id: PlayerId,
         source_card_id: CardInstanceId,
     },

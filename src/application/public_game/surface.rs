@@ -989,7 +989,7 @@ fn spell_choice_request(
     if rules.requires_explicit_hand_card_choice() {
         return Some(
             opponent_hand_choice_candidates(game.players(), player.id()).map_or_else(
-                || PublicChoiceRequest::SpellChoiceUnavailable {
+                || PublicChoiceRequest::SpellChoiceInvariantViolation {
                     player_id: player.id().clone(),
                     source_card_id: source_card_id.clone(),
                 },
@@ -1314,7 +1314,7 @@ fn choice_request_sort_key(request: &PublicChoiceRequest) -> (u8, &str, &str) {
             source_card_id,
             ..
         } => (10, player_id.as_str(), source_card_id.as_str()),
-        PublicChoiceRequest::SpellChoiceUnavailable {
+        PublicChoiceRequest::SpellChoiceInvariantViolation {
             player_id,
             source_card_id,
         } => (11, player_id.as_str(), source_card_id.as_str()),
@@ -1672,6 +1672,86 @@ mod tests {
         assert!(matches!(
             request,
             Some(PublicChoiceRequest::SpellSecondaryCreatureChoiceUnavailable {
+                player_id,
+                source_card_id,
+            }) if player_id.as_str() == "p1" && source_card_id == spell_id
+        ));
+    }
+
+    #[test]
+    fn spell_choice_request_surfaces_opponent_lookup_as_invariant_violation() {
+        let start = crate::domain::play::game::Game::start(StartGameCommand::new(
+            GameId::new("game-discard-choice-source"),
+            vec![
+                PlayerDeck::new(PlayerId::new("p1"), DeckId::new("d1")),
+                PlayerDeck::new(PlayerId::new("p2"), DeckId::new("d2")),
+            ],
+        ));
+        assert!(start.is_ok(), "game should start");
+        let Some((mut game, _)) = start.ok() else {
+            return;
+        };
+
+        let libraries = vec![
+            PlayerLibrary::new(
+                PlayerId::new("p1"),
+                vec![
+                    LibraryCard::new(CardDefinitionId::new("discard-choice"), CardType::Sorcery, 0)
+                        .with_supported_spell_rules(
+                            SupportedSpellRules::target_player_discards_chosen_card(),
+                        ),
+                    LibraryCard::land(CardDefinitionId::new("p1-forest-a"), ManaColor::Green),
+                    LibraryCard::land(CardDefinitionId::new("p1-forest-b"), ManaColor::Green),
+                    LibraryCard::land(CardDefinitionId::new("p1-forest-c"), ManaColor::Green),
+                    LibraryCard::land(CardDefinitionId::new("p1-forest-d"), ManaColor::Green),
+                    LibraryCard::land(CardDefinitionId::new("p1-forest-e"), ManaColor::Green),
+                    LibraryCard::land(CardDefinitionId::new("p1-forest-f"), ManaColor::Green),
+                    LibraryCard::land(CardDefinitionId::new("p1-forest-g"), ManaColor::Green),
+                ],
+            ),
+            PlayerLibrary::new(
+                PlayerId::new("p2"),
+                vec![
+                    LibraryCard::land(CardDefinitionId::new("p2-forest-a"), ManaColor::Green),
+                    LibraryCard::land(CardDefinitionId::new("p2-forest-b"), ManaColor::Green),
+                    LibraryCard::land(CardDefinitionId::new("p2-forest-c"), ManaColor::Green),
+                    LibraryCard::land(CardDefinitionId::new("p2-forest-d"), ManaColor::Green),
+                    LibraryCard::land(CardDefinitionId::new("p2-forest-e"), ManaColor::Green),
+                    LibraryCard::land(CardDefinitionId::new("p2-forest-f"), ManaColor::Green),
+                    LibraryCard::land(CardDefinitionId::new("p2-forest-g"), ManaColor::Green),
+                ],
+            ),
+        ];
+        let dealt = game.deal_opening_hands(&DealOpeningHandsCommand::new(libraries));
+        assert!(dealt.is_ok(), "opening hands should be dealt");
+
+        let Some(player) = game.players().first() else {
+            panic!("p1 should exist");
+        };
+        let Some(spell_id) = player
+            .hand_card_by_definition(&CardDefinitionId::new("discard-choice"))
+            .map(|card| card.id().clone())
+        else {
+            panic!("discard choice spell should be in opening hand");
+        };
+
+        let unrelated_start = crate::domain::play::game::Game::start(StartGameCommand::new(
+            GameId::new("game-unrelated-players"),
+            vec![
+                PlayerDeck::new(PlayerId::new("x1"), DeckId::new("dx1")),
+                PlayerDeck::new(PlayerId::new("x2"), DeckId::new("dx2")),
+            ],
+        ));
+        assert!(unrelated_start.is_ok(), "unrelated game should start");
+        let Some((unrelated_game, _)) = unrelated_start.ok() else {
+            return;
+        };
+
+        let request = spell_choice_request(&unrelated_game, player, &spell_id, Some(&[]));
+
+        assert!(matches!(
+            request,
+            Some(PublicChoiceRequest::SpellChoiceInvariantViolation {
                 player_id,
                 source_card_id,
             }) if player_id.as_str() == "p1" && source_card_id == spell_id
