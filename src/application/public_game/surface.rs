@@ -26,6 +26,11 @@ pub(super) struct PublicSurfaceState {
     choice_requests: Vec<PublicChoiceRequest>,
 }
 
+pub(super) struct PublicEventLogProjection {
+    pub entries: Arc<[PublicEventLogEntry]>,
+    pub estimated_bytes: usize,
+}
+
 impl PublicSurfaceState {
     fn with_choice_requests(
         legal_actions: Vec<PublicLegalAction>,
@@ -477,16 +482,31 @@ where
     I: IntoIterator,
     I::Item: Borrow<DomainEvent>,
 {
-    Arc::from(
-        events
-            .into_iter()
-            .zip(1_u64..)
-            .map(|(event, sequence)| PublicEventLogEntry {
+    public_event_log_projection(events).entries
+}
+
+pub(super) fn public_event_log_projection<I>(events: I) -> PublicEventLogProjection
+where
+    I: IntoIterator,
+    I::Item: Borrow<DomainEvent>,
+{
+    let mut estimated_bytes = 0;
+    let entries = events
+        .into_iter()
+        .zip(1_u64..)
+        .map(|(event, sequence)| {
+            estimated_bytes += std::mem::size_of::<PublicEventLogEntry>();
+            PublicEventLogEntry {
                 sequence,
                 event: public_event(event.borrow()),
-            })
-            .collect::<Vec<_>>(),
-    )
+            }
+        })
+        .collect::<Vec<_>>();
+
+    PublicEventLogProjection {
+        entries: Arc::from(entries),
+        estimated_bytes,
+    }
 }
 
 pub(super) fn public_events<I>(events: I) -> Vec<PublicEvent>

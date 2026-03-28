@@ -34,8 +34,7 @@ use crate::{
 };
 
 use super::{
-    public_event_log,
-    surface::{public_events, public_surface_state},
+    surface::{public_event_log_projection, public_events, public_surface_state},
     PublicCommandApplication, PublicCommandRejection, PublicCommandStatus, PublicEventLogEntry,
     PublicGameCommand, PublicGameSessionStart, PublicRematchCommand, PublicSeededGameSetup,
     PublicSeededPlayerSetup,
@@ -97,12 +96,17 @@ where
         game_id: &GameId,
     ) -> Result<Arc<[PublicEventLogEntry]>, DomainError> {
         let aggregate_id = game_id.to_string();
-        if let Some(cached) = self.cached_public_event_log(&aggregate_id) {
+        if let Some(cached) = self.cached_public_event_log(&aggregate_id)? {
             return Ok(cached);
         }
         let events = self.load_persisted_events(&aggregate_id)?;
-        let log = public_event_log(events.iter());
-        self.store_public_event_log_cache(&aggregate_id, Arc::clone(&log));
+        let projection = public_event_log_projection(events.iter());
+        let log = Arc::clone(&projection.entries);
+        self.store_public_event_log_cache(
+            &aggregate_id,
+            Arc::clone(&log),
+            projection.estimated_bytes,
+        )?;
 
         Ok(log)
     }
