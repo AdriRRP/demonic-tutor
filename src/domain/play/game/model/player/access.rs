@@ -40,6 +40,22 @@ impl Player {
             .flatten()
     }
 
+    fn visible_card_by_handle_in_zone_or_invariant(
+        &self,
+        handle: PlayerCardHandle,
+        zone: PlayerCardZone,
+    ) -> &CardInstance {
+        let Some(card) = self.card_by_handle_in_zone(handle, zone) else {
+            unreachable!(
+                "player {} has stale {:?} handle {:?} in a visible zone",
+                self.id(),
+                zone,
+                handle
+            );
+        };
+        card
+    }
+
     fn card_in_zone(
         &self,
         card_id: &CardInstanceId,
@@ -71,9 +87,11 @@ impl Player {
     #[must_use]
     pub fn top_library_card_id(&self) -> Option<CardInstanceId> {
         let handle = self.library.peek_one()?;
-        self.cards
-            .get_by_handle(handle)
-            .map(|card| card.id().clone())
+        Some(
+            self.visible_card_by_handle_in_zone_or_invariant(handle, PlayerCardZone::Library)
+                .id()
+                .clone(),
+        )
     }
 
     #[must_use]
@@ -153,7 +171,7 @@ impl Player {
     #[must_use]
     pub fn hand_card_at(&self, index: usize) -> Option<&CardInstance> {
         let handle = self.hand.handle_at(index)?;
-        self.cards.get_by_handle(handle)
+        Some(self.visible_card_by_handle_in_zone_or_invariant(handle, PlayerCardZone::Hand))
     }
 
     #[must_use]
@@ -179,7 +197,7 @@ impl Player {
     #[must_use]
     pub fn battlefield_card_at(&self, index: usize) -> Option<&CardInstance> {
         let handle = self.battlefield.handle_at(index)?;
-        self.cards.get_by_handle(handle)
+        Some(self.visible_card_by_handle_in_zone_or_invariant(handle, PlayerCardZone::Battlefield))
     }
 
     #[must_use]
@@ -190,7 +208,7 @@ impl Player {
     #[must_use]
     pub fn graveyard_card_at(&self, index: usize) -> Option<&CardInstance> {
         let handle = self.graveyard.handle_at(index)?;
-        self.cards.get_by_handle(handle)
+        Some(self.visible_card_by_handle_in_zone_or_invariant(handle, PlayerCardZone::Graveyard))
     }
 
     #[must_use]
@@ -201,7 +219,7 @@ impl Player {
     #[must_use]
     pub fn exile_card_at(&self, index: usize) -> Option<&CardInstance> {
         let handle = self.exile.handle_at(index)?;
-        self.cards.get_by_handle(handle)
+        Some(self.visible_card_by_handle_in_zone_or_invariant(handle, PlayerCardZone::Exile))
     }
 
     #[must_use]
@@ -211,7 +229,9 @@ impl Player {
     ) -> Option<&CardInstance> {
         self.hand
             .iter()
-            .filter_map(|handle| self.cards.get_by_handle(*handle))
+            .map(|handle| {
+                self.visible_card_by_handle_in_zone_or_invariant(*handle, PlayerCardZone::Hand)
+            })
             .find(|card| card.definition_id() == definition_id)
     }
 
@@ -219,7 +239,9 @@ impl Player {
     pub fn hand_card_ids(&self) -> Vec<CardInstanceId> {
         self.hand
             .iter()
-            .filter_map(|handle| self.cards.get_by_handle(*handle))
+            .map(|handle| {
+                self.visible_card_by_handle_in_zone_or_invariant(*handle, PlayerCardZone::Hand)
+            })
             .map(|card| card.id().clone())
             .collect()
     }
@@ -231,14 +253,31 @@ impl Player {
     ) -> Option<&CardInstance> {
         self.battlefield
             .iter()
-            .filter_map(|handle| self.cards.get_by_handle(*handle))
+            .map(|handle| {
+                self.visible_card_by_handle_in_zone_or_invariant(
+                    *handle,
+                    PlayerCardZone::Battlefield,
+                )
+            })
             .find(|card| card.definition_id() == definition_id)
     }
 
     pub fn battlefield_cards(&self) -> impl Iterator<Item = &CardInstance> {
-        self.battlefield
-            .iter()
-            .filter_map(|handle| self.cards.get_by_handle(*handle))
+        self.battlefield.iter().map(|handle| {
+            self.visible_card_by_handle_in_zone_or_invariant(*handle, PlayerCardZone::Battlefield)
+        })
+    }
+
+    pub fn graveyard_cards(&self) -> impl Iterator<Item = &CardInstance> {
+        self.graveyard.iter().map(|handle| {
+            self.visible_card_by_handle_in_zone_or_invariant(*handle, PlayerCardZone::Graveyard)
+        })
+    }
+
+    pub fn exile_cards(&self) -> impl Iterator<Item = &CardInstance> {
+        self.exile.iter().map(|handle| {
+            self.visible_card_by_handle_in_zone_or_invariant(*handle, PlayerCardZone::Exile)
+        })
     }
 
     pub(crate) fn owned_card_locations(
@@ -266,9 +305,10 @@ impl Player {
     }
 
     pub fn battlefield_card_ids(&self) -> impl Iterator<Item = &CardInstanceId> {
-        self.battlefield
-            .iter()
-            .filter_map(|handle| self.cards.get_by_handle(*handle).map(CardInstance::id))
+        self.battlefield.iter().map(|handle| {
+            self.visible_card_by_handle_in_zone_or_invariant(*handle, PlayerCardZone::Battlefield)
+                .id()
+        })
     }
 
     pub(crate) fn battlefield_handles(&self) -> impl Iterator<Item = PlayerCardHandle> + '_ {
@@ -277,13 +317,15 @@ impl Player {
 
     pub(crate) fn first_instant_or_sorcery_graveyard_handle(&self) -> Option<PlayerCardHandle> {
         self.graveyard.iter().copied().find(|handle| {
-            self.cards.get_by_handle(*handle).is_some_and(|card| {
-                matches!(
-                    card.card_type(),
-                    crate::domain::play::cards::CardType::Instant
-                        | crate::domain::play::cards::CardType::Sorcery
+            matches!(
+                self.visible_card_by_handle_in_zone_or_invariant(
+                    *handle,
+                    PlayerCardZone::Graveyard
                 )
-            })
+                .card_type(),
+                crate::domain::play::cards::CardType::Instant
+                    | crate::domain::play::cards::CardType::Sorcery
+            )
         })
     }
 
@@ -295,9 +337,14 @@ impl Player {
             let Some(handle) = self.battlefield.handle_at(index) else {
                 continue;
             };
-            if let Some(card) = self.cards.get_mut_by_handle(handle) {
-                f(card);
-            }
+            let Some(card) = self.cards.get_mut_by_handle(handle) else {
+                unreachable!(
+                    "player {} has stale battlefield handle {:?} in the mutable battlefield walk",
+                    self.id(),
+                    handle
+                );
+            };
+            f(card);
         }
     }
 

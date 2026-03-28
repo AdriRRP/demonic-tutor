@@ -781,18 +781,8 @@ fn player_view(
             .battlefield_cards()
             .map(battlefield_card_view)
             .collect(),
-        graveyard: player
-            .graveyard()
-            .iter()
-            .filter_map(|handle| player.card_by_handle(*handle))
-            .map(card_view)
-            .collect(),
-        exile: player
-            .exile()
-            .iter()
-            .filter_map(|handle| player.card_by_handle(*handle))
-            .map(card_view)
-            .collect(),
+        graveyard: player.graveyard_cards().map(card_view).collect(),
+        exile: player.exile_cards().map(card_view).collect(),
     }
 }
 
@@ -955,13 +945,7 @@ fn tappable_mana_source_ids(game: &Game, player: &Player) -> Vec<CardInstanceId>
 
 fn castable_cards(game: &Game, player: &Player) -> Vec<PublicCastableCard> {
     let mut candidates = player.hand_card_ids();
-    candidates.extend(
-        player
-            .graveyard()
-            .iter()
-            .filter_map(|handle| player.card_by_handle(*handle))
-            .map(|card| card.id().clone()),
-    );
+    candidates.extend(player.graveyard_cards().map(|card| card.id().clone()));
 
     candidates
         .into_iter()
