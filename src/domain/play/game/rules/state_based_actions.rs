@@ -217,8 +217,9 @@ pub fn check_state_based_actions(
         total_creatures_died.extend(creature_result.creatures_died);
         total_zone_changes.extend(creature_result.zone_changes);
 
+        let refreshed_locations = AggregateCardLocationIndex::from_players(players);
         let attached_aura_result =
-            review_attached_aura_state_based_actions(game_id, players, &current_locations)?;
+            review_attached_aura_state_based_actions(game_id, players, &refreshed_locations)?;
         if attached_aura_result.changed() {
             changes = true;
         }
