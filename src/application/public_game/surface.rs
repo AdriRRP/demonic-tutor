@@ -192,9 +192,11 @@ fn priority_surface_state(game: &Game, player_id: &PlayerId) -> PublicSurfaceSta
             choice_requests.push(PublicChoiceRequest::SpellTarget {
                 player_id: player_id.clone(),
                 source_card_id: source_card_id.clone(),
-                candidates: spell_target_candidates_by_card
-                    .remove(&source_card_id)
-                    .unwrap_or_default(),
+                candidates: take_required_choice_candidates(
+                    &mut spell_target_candidates_by_card,
+                    &source_card_id,
+                    "spell",
+                ),
             });
         }
         if castable.requires_choice {
@@ -217,9 +219,11 @@ fn priority_surface_state(game: &Game, player_id: &PlayerId) -> PublicSurfaceSta
             choice_requests.push(PublicChoiceRequest::AbilityTarget {
                 player_id: player_id.clone(),
                 source_card_id: source_card_id.clone(),
-                candidates: ability_target_candidates_by_card
-                    .remove(&source_card_id)
-                    .unwrap_or_default(),
+                candidates: take_required_choice_candidates(
+                    &mut ability_target_candidates_by_card,
+                    &source_card_id,
+                    "ability",
+                ),
             });
         }
     }
@@ -239,6 +243,18 @@ fn priority_surface_state(game: &Game, player_id: &PlayerId) -> PublicSurfaceSta
     }
 
     PublicSurfaceState::with_choice_requests(actions, choice_requests)
+}
+
+fn take_required_choice_candidates(
+    cache: &mut HashMap<CardInstanceId, Vec<PublicChoiceCandidate>>,
+    source_card_id: &CardInstanceId,
+    action_kind: &str,
+) -> Vec<PublicChoiceCandidate> {
+    cache.remove(source_card_id).unwrap_or_else(|| {
+        panic!(
+            "public {action_kind} target candidate cache missing for source card {source_card_id}"
+        )
+    })
 }
 
 fn spell_target_candidate_cache(
