@@ -13,20 +13,21 @@ use crate::domain::play::{
 };
 
 pub(super) fn return_permanent_to_owners_hand(
+    game_id: &GameId,
     players: &mut [crate::domain::play::game::Player],
     card_locations: &crate::domain::play::game::AggregateCardLocationIndex,
     target_id: &CardInstanceId,
-) -> Option<CardInstanceId> {
+) -> Option<CardMovedZone> {
     let location = card_locations.location(target_id)?;
     (location.zone() == crate::domain::play::game::PlayerCardZone::Battlefield).then_some(())?;
     zones::move_battlefield_handle_to_owner_hand_by_index(
+        game_id,
         players,
         card_locations,
         location.player_index(),
         location.handle(),
     )
-    .ok()?;
-    Some(target_id.clone())
+    .ok()
 }
 
 fn discard_chosen_hand_card(
@@ -71,33 +72,25 @@ pub(super) fn resolve_return_target_permanent_to_hand_effect(
         );
     };
 
-    let moved_cards = match target {
+    let mut moved_cards = Vec::new();
+    let mut zone_changes = Vec::new();
+    match target {
         SpellTarget::Permanent(card_id) => {
-            return_permanent_to_owners_hand(context.players, context.card_locations, &card_id)
-                .into_iter()
-                .collect()
+            if let Some(zone_change) = return_permanent_to_owners_hand(
+                context.game_id,
+                context.players,
+                context.card_locations,
+                &card_id,
+            ) {
+                moved_cards.push(card_id);
+                zone_changes.push(zone_change);
+            }
         }
         SpellTarget::Player(_)
         | SpellTarget::Creature(_)
         | SpellTarget::GraveyardCard(_)
-        | SpellTarget::StackObject(_) => Vec::new(),
-    };
-    let zone_changes = moved_cards
-        .iter()
-        .filter_map(|card_id| {
-            let owner_index = context
-                .players
-                .iter()
-                .position(|player| player.owns_card(card_id))?;
-            Some(CardMovedZone::new(
-                context.game_id.clone(),
-                context.players[owner_index].id().clone(),
-                card_id.clone(),
-                ZoneType::Battlefield,
-                ZoneType::Hand,
-            ))
-        })
-        .collect();
+        | SpellTarget::StackObject(_) => {}
+    }
 
     review_state_based_actions_after_effect(
         context.game_id,

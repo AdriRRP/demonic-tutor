@@ -96,13 +96,36 @@ fn detach_aura_effects(
     )
 }
 
+fn battlefield_departure_destination(
+    players: &[Player],
+    controller_index: usize,
+    handle: PlayerCardHandle,
+    destination_zone: ZoneType,
+) -> Result<ZoneType, DomainError> {
+    let card = players[controller_index].card_by_handle(handle).ok_or_else(|| {
+        DomainError::Game(GameError::InternalInvariantViolation(format!(
+            "missing card handle {} during battlefield departure",
+            handle.index()
+        )))
+    })?;
+
+    if card.is_token() {
+        return Ok(ZoneType::Created);
+    }
+
+    Ok(destination_zone)
+}
+
 pub(crate) fn move_battlefield_handle_to_owner_graveyard_by_index(
+    game_id: &GameId,
     players: &mut [Player],
     card_locations: &AggregateCardLocationIndex,
     controller_index: usize,
     handle: PlayerCardHandle,
-) -> Result<(PlayerId, CardInstanceId), DomainError> {
+) -> Result<CardMovedZone, DomainError> {
     let owner_index = owner_index_for_battlefield_handle(players, controller_index, handle)?;
+    let destination_zone =
+        battlefield_departure_destination(players, controller_index, handle, ZoneType::Graveyard)?;
     detach_aura_effects(players, card_locations, controller_index, handle)?;
     let card_id = players[controller_index]
         .card_by_handle(handle)
@@ -128,7 +151,13 @@ pub(crate) fn move_battlefield_handle_to_owner_graveyard_by_index(
                     card: card_id.clone(),
                 })
             })?;
-        return Ok((owner.id().clone(), card_id));
+        return Ok(CardMovedZone::new(
+            game_id.clone(),
+            owner.id().clone(),
+            card_id,
+            ZoneType::Battlefield,
+            destination_zone,
+        ));
     }
 
     let card = players[controller_index]
@@ -146,16 +175,25 @@ pub(crate) fn move_battlefield_handle_to_owner_graveyard_by_index(
     })?;
     let owner_id = owner.id().clone();
     owner.receive_graveyard_card(card);
-    Ok((owner_id, card_id))
+    Ok(CardMovedZone::new(
+        game_id.clone(),
+        owner_id,
+        card_id,
+        ZoneType::Battlefield,
+        destination_zone,
+    ))
 }
 
 pub(crate) fn move_battlefield_handle_to_owner_hand_by_index(
+    game_id: &GameId,
     players: &mut [Player],
     card_locations: &AggregateCardLocationIndex,
     controller_index: usize,
     handle: PlayerCardHandle,
-) -> Result<(PlayerId, CardInstanceId), DomainError> {
+) -> Result<CardMovedZone, DomainError> {
     let owner_index = owner_index_for_battlefield_handle(players, controller_index, handle)?;
+    let destination_zone =
+        battlefield_departure_destination(players, controller_index, handle, ZoneType::Hand)?;
     detach_aura_effects(players, card_locations, controller_index, handle)?;
     let card_id = players[controller_index]
         .card_by_handle(handle)
@@ -181,7 +219,13 @@ pub(crate) fn move_battlefield_handle_to_owner_hand_by_index(
                     card: card_id.clone(),
                 })
             })?;
-        return Ok((owner.id().clone(), card_id));
+        return Ok(CardMovedZone::new(
+            game_id.clone(),
+            owner.id().clone(),
+            card_id,
+            ZoneType::Battlefield,
+            destination_zone,
+        ));
     }
 
     let card = players[controller_index]
@@ -199,7 +243,13 @@ pub(crate) fn move_battlefield_handle_to_owner_hand_by_index(
     })?;
     let owner_id = owner.id().clone();
     owner.receive_hand_cards(vec![card]);
-    Ok((owner_id, card_id))
+    Ok(CardMovedZone::new(
+        game_id.clone(),
+        owner_id,
+        card_id,
+        ZoneType::Battlefield,
+        destination_zone,
+    ))
 }
 
 fn exile_card_from_player_zone_handle_by_index(
@@ -284,14 +334,37 @@ pub(crate) fn exile_card_from_battlefield_by_index(
     player_index: usize,
     card_id: &CardInstanceId,
 ) -> Result<CardMovedZone, DomainError> {
-    exile_card_from_player_zone_by_index(
-        game_id,
-        players,
-        player_index,
-        card_id,
+    let player = players.get_mut(player_index).ok_or_else(|| {
+        DomainError::Game(GameError::InternalInvariantViolation(format!(
+            "player index {player_index} must exist during zone transition"
+        )))
+    })?;
+    let player_id = player.id().clone();
+    let destination_zone = if player
+        .battlefield_card(card_id)
+        .is_some_and(crate::domain::play::cards::CardInstance::is_token)
+    {
+        ZoneType::Created
+    } else {
+        ZoneType::Exile
+    };
+
+    player
+        .move_battlefield_card_to_exile(card_id)
+        .ok_or_else(|| {
+            DomainError::Card(CardError::NotOnBattlefield {
+                player: player_id.clone(),
+                card: card_id.clone(),
+            })
+        })?;
+
+    Ok(CardMovedZone::new(
+        game_id.clone(),
+        player_id,
+        card_id.clone(),
         ZoneType::Battlefield,
-        Player::move_battlefield_card_to_exile,
-    )
+        destination_zone,
+    ))
 }
 
 /// Exiles a card from the battlefield using an already resolved internal handle.
@@ -307,6 +380,8 @@ pub(crate) fn exile_card_from_battlefield_handle_by_index(
     handle: PlayerCardHandle,
 ) -> Result<CardMovedZone, DomainError> {
     let owner_index = owner_index_for_battlefield_handle(players, player_index, handle)?;
+    let destination_zone =
+        battlefield_departure_destination(players, player_index, handle, ZoneType::Exile)?;
     remove_attached_aura_effects_for_battlefield_handle(
         players,
         card_locations,
@@ -343,7 +418,7 @@ pub(crate) fn exile_card_from_battlefield_handle_by_index(
             owner_id,
             card_id,
             ZoneType::Battlefield,
-            ZoneType::Exile,
+            destination_zone,
         ));
     }
 
@@ -368,7 +443,7 @@ pub(crate) fn exile_card_from_battlefield_handle_by_index(
         owner_id,
         card_id,
         ZoneType::Battlefield,
-        ZoneType::Exile,
+        destination_zone,
     ))
 }
 
@@ -497,5 +572,42 @@ mod tests {
         assert_eq!(event.zone_owner_id, PlayerId::new("p2"));
         assert!(players[0].battlefield_card(&card_id).is_none());
         assert!(players[1].exile_card(&card_id).is_some());
+    }
+
+    #[test]
+    fn exile_from_battlefield_reports_token_departure_to_created_zone() {
+        let game_id = GameId::new("game-token-exile-zone");
+        let mut players = vec![
+            Player::new(PlayerId::new("p1")),
+            Player::new(PlayerId::new("p2")),
+        ];
+        let token_id = CardInstanceId::new("token-bear");
+
+        assert!(players[0]
+            .receive_battlefield_card(CardInstance::new_vanilla_creature_token(
+                token_id.clone(),
+                CardDefinitionId::new("token-bear"),
+                1,
+                1,
+            ))
+            .is_some());
+        let handle = players[0]
+            .battlefield_handle(&token_id)
+            .expect("token should exist on battlefield");
+        let card_locations = AggregateCardLocationIndex::from_players(&players);
+
+        let event = exile_card_from_battlefield_handle_by_index(
+            &game_id,
+            &mut players,
+            &card_locations,
+            0,
+            handle,
+        )
+        .expect("token exile should succeed");
+
+        assert!(matches!(event.origin_zone, ZoneType::Battlefield));
+        assert!(matches!(event.destination_zone, ZoneType::Created));
+        assert!(players[0].battlefield_card(&token_id).is_none());
+        assert!(!players[0].owns_card(&token_id));
     }
 }

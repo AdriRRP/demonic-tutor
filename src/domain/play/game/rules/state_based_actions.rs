@@ -8,7 +8,7 @@ use {
         TerminalState,
     },
     crate::domain::play::{
-        events::{CardMovedZone, CreatureDied, GameEndReason, GameEnded, ZoneType},
+        events::{CardMovedZone, CreatureDied, GameEndReason, GameEnded},
         ids::GameId,
     },
 };
@@ -113,7 +113,8 @@ fn review_supported_creature_state_based_actions(
             .collect::<Vec<_>>();
 
         for handle in doomed_handles {
-            let (owner_id, card_id) = zones::move_battlefield_handle_to_owner_graveyard_by_index(
+            let zone_change = zones::move_battlefield_handle_to_owner_graveyard_by_index(
+                game_id,
                 players,
                 card_locations,
                 player_index,
@@ -121,16 +122,10 @@ fn review_supported_creature_state_based_actions(
             )?;
             creatures_died.push(CreatureDied::new(
                 game_id.clone(),
-                owner_id.clone(),
-                card_id.clone(),
+                zone_change.zone_owner_id.clone(),
+                zone_change.card_id.clone(),
             ));
-            zone_changes.push(CardMovedZone::new(
-                game_id.clone(),
-                owner_id,
-                card_id,
-                ZoneType::Battlefield,
-                ZoneType::Graveyard,
-            ));
+            zone_changes.push(zone_change);
         }
     }
 
@@ -169,19 +164,14 @@ fn review_attached_aura_state_based_actions(
             .collect::<Vec<_>>();
 
         for handle in doomed_handles {
-            let (owner_id, card_id) = zones::move_battlefield_handle_to_owner_graveyard_by_index(
+            let zone_change = zones::move_battlefield_handle_to_owner_graveyard_by_index(
+                game_id,
                 players,
                 card_locations,
                 player_index,
                 handle,
             )?;
-            zone_changes.push(CardMovedZone::new(
-                game_id.clone(),
-                owner_id,
-                card_id,
-                ZoneType::Battlefield,
-                ZoneType::Graveyard,
-            ));
+            zone_changes.push(zone_change);
         }
     }
 
@@ -382,5 +372,37 @@ mod tests {
                     && matches!(event.origin_zone, ZoneType::Battlefield)
                     && matches!(event.destination_zone, ZoneType::Graveyard))
         );
+    }
+
+    #[test]
+    fn token_that_dies_reports_departure_to_created_zone() {
+        let game_id = GameId::new("game-token-dies-zone-change");
+        let mut players = vec![Player::new(PlayerId::new("p1")), Player::new(PlayerId::new("p2"))];
+        let mut terminal_state = TerminalState::default();
+        let token_id = CardInstanceId::new("token-1");
+
+        assert!(players[0]
+            .receive_battlefield_card(CardInstance::new_vanilla_creature_token(
+                token_id.clone(),
+                CardDefinitionId::new("token-definition"),
+                1,
+                1,
+            ))
+            .is_some());
+        players[0]
+            .battlefield_card_mut(&token_id)
+            .expect("token should be on battlefield")
+            .add_damage(1);
+
+        let result =
+            check_state_based_actions(&game_id, &mut players, &mut terminal_state).unwrap();
+
+        assert!(
+            result.zone_changes.iter().any(|event| event.card_id == token_id
+                && matches!(event.origin_zone, ZoneType::Battlefield)
+                && matches!(event.destination_zone, ZoneType::Created))
+        );
+        assert!(players[0].battlefield_card(&token_id).is_none());
+        assert!(!players[0].owns_card(&token_id));
     }
 }

@@ -17,41 +17,47 @@ fn destroy_creature(
     players: &mut [crate::domain::play::game::Player],
     card_locations: &crate::domain::play::game::AggregateCardLocationIndex,
     target_id: &CardInstanceId,
-) -> Option<CreatureDied> {
+) -> Option<(CreatureDied, CardMovedZone)> {
     let target = helpers::battlefield_card_location(players, card_locations, target_id)?;
     if target.card().has_indestructible() {
         return None;
     }
     let handle = card_locations.location(target_id)?.handle();
-    let (owner_id, _) = zones::move_battlefield_handle_to_owner_graveyard_by_index(
+    let zone_change = zones::move_battlefield_handle_to_owner_graveyard_by_index(
+        game_id,
         players,
         card_locations,
         target.player_index(),
         handle,
     )
     .ok()?;
-    Some(CreatureDied::new(
-        game_id.clone(),
-        owner_id,
-        target_id.clone(),
+    Some((
+        CreatureDied::new(
+            game_id.clone(),
+            zone_change.zone_owner_id.clone(),
+            target_id.clone(),
+        ),
+        zone_change,
     ))
 }
 
 fn destroy_noncreature_permanent(
+    game_id: &GameId,
     players: &mut [crate::domain::play::game::Player],
     card_locations: &crate::domain::play::game::AggregateCardLocationIndex,
     target_id: &CardInstanceId,
-) -> Option<CardInstanceId> {
+) -> Option<(CardInstanceId, CardMovedZone)> {
     let location = card_locations.location(target_id)?;
     (location.zone() == crate::domain::play::game::PlayerCardZone::Battlefield).then_some(())?;
-    zones::move_battlefield_handle_to_owner_graveyard_by_index(
+    let zone_change = zones::move_battlefield_handle_to_owner_graveyard_by_index(
+        game_id,
         players,
         card_locations,
         location.player_index(),
         location.handle(),
     )
     .ok()?;
-    Some(target_id.clone())
+    Some((target_id.clone(), zone_change))
 }
 
 fn exile_creature_from_battlefield(
@@ -100,14 +106,16 @@ pub(super) fn resolve_destroy_target_creature_effect(
     };
 
     let mut creatures_died = Vec::new();
+    let mut zone_changes = Vec::new();
     if let SpellTarget::Creature(card_id) = target {
-        if let Some(creature_died) = destroy_creature(
+        if let Some((creature_died, zone_change)) = destroy_creature(
             context.game_id,
             context.players,
             context.card_locations,
             &card_id,
         ) {
             creatures_died.push(creature_died);
+            zone_changes.push(zone_change);
         }
     }
 
@@ -117,7 +125,7 @@ pub(super) fn resolve_destroy_target_creature_effect(
         context.terminal_state,
         EffectOutcomeSeed {
             card_discarded: None,
-            zone_changes: Vec::new(),
+            zone_changes,
             life_changed: None,
             creatures_died,
             moved_cards: Vec::new(),
@@ -145,33 +153,27 @@ pub(super) fn resolve_destroy_target_artifact_or_enchantment_effect(
         );
     };
 
-    let moved_cards = match target {
+    let mut moved_cards = Vec::new();
+    let mut zone_changes = Vec::new();
+    match target {
         SpellTarget::Permanent(card_id) => {
-            destroy_noncreature_permanent(context.players, context.card_locations, &card_id)
-                .into_iter()
-                .collect()
+            if let Some((moved_card, zone_change)) =
+                destroy_noncreature_permanent(
+                    context.game_id,
+                    context.players,
+                    context.card_locations,
+                    &card_id,
+                )
+            {
+                moved_cards.push(moved_card);
+                zone_changes.push(zone_change);
+            }
         }
         SpellTarget::Player(_)
         | SpellTarget::Creature(_)
         | SpellTarget::GraveyardCard(_)
-        | SpellTarget::StackObject(_) => Vec::new(),
-    };
-    let zone_changes = moved_cards
-        .iter()
-        .filter_map(|card_id| {
-            let owner_index = context
-                .players
-                .iter()
-                .position(|player| player.owns_card(card_id))?;
-            Some(CardMovedZone::new(
-                context.game_id.clone(),
-                context.players[owner_index].id().clone(),
-                card_id.clone(),
-                ZoneType::Battlefield,
-                ZoneType::Graveyard,
-            ))
-        })
-        .collect();
+        | SpellTarget::StackObject(_) => {}
+    }
 
     review_state_based_actions_after_effect(
         context.game_id,

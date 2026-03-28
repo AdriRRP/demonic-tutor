@@ -14,9 +14,7 @@ mod turn_flow;
 
 use crate::domain::play::{
     errors::{DomainError, GameError},
-    events::{
-        CardDiscarded, CardDrawn, CardMovedZone, CreatureDied, GameEndReason, LandPlayed, ZoneType,
-    },
+    events::{CardDiscarded, CardDrawn, CardMovedZone, GameEndReason, LandPlayed, ZoneType},
     ids::{CardInstanceId, GameId, PlayerId},
     phase::Phase,
 };
@@ -412,16 +410,6 @@ impl Game {
             event.card_id.clone(),
             ZoneType::Hand,
             ZoneType::Battlefield,
-        )
-    }
-
-    pub(crate) fn zone_change_for_creature_died(event: &CreatureDied) -> CardMovedZone {
-        CardMovedZone::new(
-            event.game_id.clone(),
-            event.player_id.clone(),
-            event.card_id.clone(),
-            ZoneType::Battlefield,
-            ZoneType::Graveyard,
         )
     }
 

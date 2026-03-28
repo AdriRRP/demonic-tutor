@@ -7,7 +7,7 @@ use {
         commands::ActivateAbilityCommand,
         errors::{CardError, DomainError, GameError},
         events::ActivatedAbilityPutOnStack,
-        events::{CardMovedZone, CreatureDied, ZoneType},
+        events::{CardMovedZone, CreatureDied},
         game::{
             helpers, invariants,
             model::{
@@ -185,21 +185,20 @@ fn pay_activation_costs(
                     card: source_card_id.clone(),
                 })
             })?;
-        let (owner_id, _) = zones::move_battlefield_handle_to_owner_graveyard_by_index(
+        let zone_change = zones::move_battlefield_handle_to_owner_graveyard_by_index(
+            game_id,
             players,
             card_locations,
             player_index,
             source_handle.handle(),
         )?;
-        zone_changes.push(CardMovedZone::new(
-            game_id.clone(),
-            owner_id.clone(),
-            source_card_id.clone(),
-            ZoneType::Battlefield,
-            ZoneType::Graveyard,
-        ));
+        zone_changes.push(zone_change.clone());
         if matches!(source_type, CardType::Creature) {
-            creatures_died.push(CreatureDied::new(game_id.clone(), owner_id, source_card_id));
+            creatures_died.push(CreatureDied::new(
+                game_id.clone(),
+                zone_change.zone_owner_id,
+                source_card_id,
+            ));
         }
     }
 
