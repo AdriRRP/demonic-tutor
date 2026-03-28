@@ -56,7 +56,6 @@ pub enum DomainEvent {
     CombatDamageResolved(CombatDamageResolved),
     CreatureDied(CreatureDied),
     CardMovedZone(CardMovedZone),
-    CardExiled(CardExiled),
 }
 
 impl_domain_event_from!(GameStarted, GameStarted);
@@ -81,4 +80,3 @@ impl_domain_event_from!(BlockersDeclared, BlockersDeclared);
 impl_domain_event_from!(CombatDamageResolved, CombatDamageResolved);
 impl_domain_event_from!(CreatureDied, CreatureDied);
 impl_domain_event_from!(CardMovedZone, CardMovedZone);
-impl_domain_event_from!(CardExiled, CardExiled);

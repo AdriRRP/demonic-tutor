@@ -171,7 +171,7 @@ In the current runtime, a creature with `Vigilance` still becomes an attacker no
 
 A keyword ability that lets a blocked attacker assign excess combat damage to the defending player.
 
-In the current runtime, `Trample` is supported only in the one-blocker combat model: lethal damage must be assigned to the blocker first, and only the excess reaches the defending player.
+In the current runtime, `Trample` is supported through the current ordered multi-blocker combat model: damage is assigned across blockers in declared order, lethal damage must be assigned forward first, and only the excess reaches the defending player.
 
 ---
 
