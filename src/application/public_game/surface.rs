@@ -56,7 +56,7 @@ pub fn game_view(game: &Game) -> PublicGameView {
         .stack()
         .objects()
         .iter()
-        .map(|object| stack_object_view(game, object))
+        .filter_map(|object| stack_object_view(game, object))
         .collect();
 
     PublicGameView {
@@ -621,9 +621,13 @@ fn keyword_list(card: &CardInstance) -> Vec<KeywordAbility> {
 fn stack_object_view(
     game: &Game,
     object: &crate::domain::play::game::StackObject,
-) -> PublicStackObjectView {
-    let controller_id = game.players()[object.controller_index()].id().clone();
-    match object.kind() {
+) -> Option<PublicStackObjectView> {
+    let controller_id = game
+        .players()
+        .get(object.controller_index())?
+        .id()
+        .clone();
+    Some(match object.kind() {
         StackObjectKind::Spell(spell) => PublicStackObjectView::Spell {
             number: object.number(),
             controller_id,
@@ -647,7 +651,7 @@ fn stack_object_view(
             controller_id,
             source_card_id: ability.source_card_id(),
         },
-    }
+    })
 }
 
 fn stack_target_view(
@@ -655,13 +659,17 @@ fn stack_target_view(
     target: crate::domain::play::game::model::StackTargetRef,
 ) -> Option<PublicStackTargetView> {
     match target {
-        crate::domain::play::game::model::StackTargetRef::Player(index) => Some(
-            PublicStackTargetView::Player(game.players()[index].id().clone()),
-        ),
+        crate::domain::play::game::model::StackTargetRef::Player(index) => game
+            .players()
+            .get(index)
+            .map(|player| PublicStackTargetView::Player(player.id().clone())),
         crate::domain::play::game::model::StackTargetRef::Creature(card_ref)
         | crate::domain::play::game::model::StackTargetRef::Permanent(card_ref)
         | crate::domain::play::game::model::StackTargetRef::GraveyardCard(card_ref) => {
-            let card = game.players()[card_ref.player_index()].card_by_handle(card_ref.handle())?;
+            let card = game
+                .players()
+                .get(card_ref.player_index())?
+                .card_by_handle(card_ref.handle())?;
             Some(PublicStackTargetView::Card(card.id().clone()))
         }
         crate::domain::play::game::model::StackTargetRef::StackSpell(number) => Some(
@@ -806,9 +814,10 @@ fn pending_optional_effect_request(game: &Game) -> Option<PublicChoiceRequest> {
         return None;
     };
     let stack_object = game.stack().object(*stack_object_number)?;
+    let player = game.players().get(*controller_index)?;
 
     Some(PublicChoiceRequest::OptionalEffectDecision {
-        player_id: game.players()[*controller_index].id().clone(),
+        player_id: player.id().clone(),
         source_card_id: stack_object.source_card_id(),
         options: vec![PublicBinaryChoice::Yes, PublicBinaryChoice::No],
     })
@@ -824,11 +833,12 @@ fn pending_hand_choice_request(game: &Game) -> Option<PublicChoiceRequest> {
         return None;
     };
     let stack_object = game.stack().object(*stack_object_number)?;
+    let player = game.players().get(*controller_index)?;
 
     Some(PublicChoiceRequest::PendingHandChoice {
-        player_id: game.players()[*controller_index].id().clone(),
+        player_id: player.id().clone(),
         source_card_id: stack_object.source_card_id(),
-        hand_card_ids: game.players()[*controller_index].hand_card_ids(),
+        hand_card_ids: player.hand_card_ids(),
     })
 }
 
@@ -842,10 +852,11 @@ fn pending_scry_request(game: &Game) -> Option<PublicChoiceRequest> {
         return None;
     };
     let stack_object = game.stack().object(*stack_object_number)?;
-    let top_card_id = game.players()[*controller_index].top_library_card_id()?;
+    let player = game.players().get(*controller_index)?;
+    let top_card_id = player.top_library_card_id()?;
 
     Some(PublicChoiceRequest::PendingScry {
-        player_id: game.players()[*controller_index].id().clone(),
+        player_id: player.id().clone(),
         source_card_id: stack_object.source_card_id(),
         looked_at_card_ids: vec![top_card_id],
         options: vec![PublicScryChoice::KeepOnTop, PublicScryChoice::MoveToBottom],
@@ -862,10 +873,11 @@ fn pending_surveil_request(game: &Game) -> Option<PublicChoiceRequest> {
         return None;
     };
     let stack_object = game.stack().object(*stack_object_number)?;
-    let top_card_id = game.players()[*controller_index].top_library_card_id()?;
+    let player = game.players().get(*controller_index)?;
+    let top_card_id = player.top_library_card_id()?;
 
     Some(PublicChoiceRequest::PendingSurveil {
-        player_id: game.players()[*controller_index].id().clone(),
+        player_id: player.id().clone(),
         source_card_id: stack_object.source_card_id(),
         looked_at_card_ids: vec![top_card_id],
         options: vec![
