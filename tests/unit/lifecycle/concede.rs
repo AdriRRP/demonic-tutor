@@ -25,6 +25,6 @@ fn concede_ends_an_active_game_even_with_priority_open() {
 
     assert!(game.is_over());
     assert_eq!(game_ended.reason, GameEndReason::Conceded);
-    assert_eq!(game_ended.loser_id, PlayerId::new("player-1"));
-    assert_eq!(game_ended.winner_id, PlayerId::new("player-2"));
+    assert_eq!(game_ended.loser_id, Some(PlayerId::new("player-1")));
+    assert_eq!(game_ended.winner_id, Some(PlayerId::new("player-2")));
 }

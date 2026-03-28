@@ -240,8 +240,8 @@ fn concede_public_command_ends_the_game_with_conceded_reason() {
     assert!(matches!(
         result.emitted_events.as_slice(),
         [PublicEvent::GameEnded(ended)] if ended.reason == GameEndReason::Conceded
-            && ended.loser_id == PlayerId::new("player-1")
-            && ended.winner_id == PlayerId::new("player-2")
+            && ended.loser_id == Some(PlayerId::new("player-1"))
+            && ended.winner_id == Some(PlayerId::new("player-2"))
     ));
     assert!(result.game.is_over);
     assert_eq!(result.game.end_reason, Some(GameEndReason::Conceded));

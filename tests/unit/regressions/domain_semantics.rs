@@ -426,14 +426,14 @@ fn unblocked_combat_damage_ends_the_game_when_it_reduces_a_player_to_zero_life()
         outcome
             .game_ended
             .as_ref()
-            .map(|event| event.loser_id.clone()),
+            .and_then(|event| event.loser_id.clone()),
         Some(PlayerId::new("player-2"))
     );
     assert_eq!(
         outcome
             .game_ended
             .as_ref()
-            .map(|event| event.winner_id.clone()),
+            .and_then(|event| event.winner_id.clone()),
         Some(PlayerId::new("player-1"))
     );
     assert!(game.is_over());

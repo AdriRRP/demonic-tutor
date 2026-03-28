@@ -144,14 +144,14 @@ fn draw_cards_effect_ends_the_game_when_the_library_runs_out_mid_effect() {
         outcome
             .game_ended
             .as_ref()
-            .map(|event| event.loser_id.clone()),
+            .and_then(|event| event.loser_id.clone()),
         Some(PlayerId::new("player-2"))
     );
     assert_eq!(
         outcome
             .game_ended
             .as_ref()
-            .map(|event| event.winner_id.clone()),
+            .and_then(|event| event.winner_id.clone()),
         Some(PlayerId::new("player-1"))
     );
     assert_eq!(
@@ -182,14 +182,14 @@ fn draw_cards_effect_ends_the_game_when_the_target_library_runs_out_mid_effect()
         outcome
             .game_ended
             .as_ref()
-            .map(|event| event.loser_id.clone()),
+            .and_then(|event| event.loser_id.clone()),
         Some(PlayerId::new("player-2"))
     );
     assert_eq!(
         outcome
             .game_ended
             .as_ref()
-            .map(|event| event.winner_id.clone()),
+            .and_then(|event| event.winner_id.clone()),
         Some(PlayerId::new("player-1"))
     );
     assert_eq!(

@@ -52,9 +52,22 @@ fn end_game_for_zero_life(
         return Ok(None);
     }
 
-    let Some(losing_player) = players.iter().find(|player| player.life() == 0) else {
+    let zero_life_players = players
+        .iter()
+        .filter(|player| player.life() == 0)
+        .collect::<Vec<_>>();
+
+    let Some(losing_player) = zero_life_players.first() else {
         return Ok(None);
     };
+
+    if zero_life_players.len() > 1 {
+        terminal_state.end_draw(GameEndReason::SimultaneousZeroLife);
+        return Ok(Some(GameEnded::draw(
+            game_id.clone(),
+            GameEndReason::SimultaneousZeroLife,
+        )));
+    }
 
     let losing_player_id = losing_player.id().clone();
     let winning_player = helpers::opposing_player_id(players, &losing_player_id)?;
@@ -227,6 +240,31 @@ mod tests {
         cards::{AttachmentProfile, CardDefinition, CardInstance, CardType},
         ids::{CardDefinitionId, CardInstanceId, PlayerId},
     };
+
+    #[test]
+    fn simultaneous_zero_life_ends_the_game_as_a_draw() {
+        let game_id = GameId::new("game-simultaneous-zero-life");
+        let mut players = vec![Player::new(PlayerId::new("p1")), Player::new(PlayerId::new("p2"))];
+        let mut terminal_state = TerminalState::active();
+        players[0].adjust_life(-20);
+        players[1].adjust_life(-20);
+
+        let result = check_state_based_actions(&game_id, &mut players, &mut terminal_state)
+            .expect("state-based actions should resolve");
+        let game_ended = result
+            .game_ended
+            .expect("simultaneous zero life should end the game");
+
+        assert_eq!(game_ended.reason, GameEndReason::SimultaneousZeroLife);
+        assert_eq!(game_ended.winner_id, None);
+        assert_eq!(game_ended.loser_id, None);
+        assert_eq!(terminal_state.winner(), None);
+        assert_eq!(terminal_state.loser(), None);
+        assert_eq!(
+            terminal_state.end_reason(),
+            Some(GameEndReason::SimultaneousZeroLife)
+        );
+    }
 
     #[test]
     fn lethal_damage_moves_foreign_owned_creature_to_owners_graveyard() {

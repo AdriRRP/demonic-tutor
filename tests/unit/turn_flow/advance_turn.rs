@@ -373,8 +373,8 @@ fn advance_turn_ends_the_game_when_the_active_player_cannot_draw() {
     };
     assert!(game_ended.is_some());
     let game_ended = game_ended.unwrap();
-    assert_eq!(game_ended.loser_id, PlayerId::new("player-1"));
-    assert_eq!(game_ended.winner_id, PlayerId::new("player-2"));
+    assert_eq!(game_ended.loser_id, Some(PlayerId::new("player-1")));
+    assert_eq!(game_ended.winner_id, Some(PlayerId::new("player-2")));
     assert_eq!(game_ended.reason, GameEndReason::EmptyLibraryDraw);
     assert!(game.is_over());
 }

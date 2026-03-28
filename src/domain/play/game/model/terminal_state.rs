@@ -44,4 +44,10 @@ impl TerminalState {
         self.loser = Some(loser);
         self.end_reason = Some(reason);
     }
+
+    pub fn end_draw(&mut self, reason: GameEndReason) {
+        self.winner = None;
+        self.loser = None;
+        self.end_reason = Some(reason);
+    }
 }

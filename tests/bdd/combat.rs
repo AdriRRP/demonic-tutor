@@ -173,8 +173,8 @@ fn bob_loses_the_game_due_to_zero_life(world: &mut GameplayWorld) {
         .last_game_ended
         .as_ref()
         .expect("combat should emit GameEnded");
-    assert_eq!(game_ended.loser_id, GameplayWorld::player_id("Bob"));
-    assert_eq!(game_ended.winner_id, GameplayWorld::player_id("Alice"));
+    assert_eq!(game_ended.loser_id, Some(GameplayWorld::player_id("Bob")));
+    assert_eq!(game_ended.winner_id, Some(GameplayWorld::player_id("Alice")));
     assert_eq!(world.player_life("Bob"), 0);
     assert!(world.game().is_over());
 }

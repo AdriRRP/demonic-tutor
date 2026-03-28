@@ -138,10 +138,12 @@ impl GameLogProjection {
     }
 
     fn log_game_ended(event: &crate::domain::play::events::GameEnded) -> String {
-        format!(
-            "Game ended: {} lost to {} via {:?}",
-            event.loser_id, event.winner_id, event.reason
-        )
+        match (&event.loser_id, &event.winner_id) {
+            (Some(loser_id), Some(winner_id)) => {
+                format!("Game ended: {loser_id} lost to {winner_id} via {:?}", event.reason)
+            }
+            _ => format!("Game ended in a draw via {:?}", event.reason),
+        }
     }
 
     fn log_turn_progressed(event: &crate::domain::play::events::TurnProgressed) -> String {

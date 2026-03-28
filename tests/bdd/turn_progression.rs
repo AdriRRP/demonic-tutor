@@ -109,6 +109,7 @@ fn the_game_emits_game_ended_with_reason(world: &mut GameplayWorld, reason: Stri
     let expected = match reason.as_str() {
         "EmptyLibraryDraw" => GameEndReason::EmptyLibraryDraw,
         "ZeroLife" => GameEndReason::ZeroLife,
+        "SimultaneousZeroLife" => GameEndReason::SimultaneousZeroLife,
         other => panic!("unsupported game-end reason in BDD suite: {other}"),
     };
 
@@ -125,7 +126,7 @@ fn player_loses_the_game(world: &mut GameplayWorld, player: String) {
         .last_game_ended
         .as_ref()
         .expect("expected a GameEnded event");
-    assert_eq!(event.loser_id, GameplayWorld::player_id(&player));
+    assert_eq!(event.loser_id, Some(GameplayWorld::player_id(&player)));
 }
 
 #[then(expr = "{word} wins the game")]
@@ -134,7 +135,7 @@ fn player_wins_the_game(world: &mut GameplayWorld, player: String) {
         .last_game_ended
         .as_ref()
         .expect("expected a GameEnded event");
-    assert_eq!(event.winner_id, GameplayWorld::player_id(&player));
+    assert_eq!(event.winner_id, Some(GameplayWorld::player_id(&player)));
 }
 
 #[then(expr = "{word} draws one card")]

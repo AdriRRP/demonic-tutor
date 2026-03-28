@@ -277,6 +277,7 @@ The `Game` aggregate currently guarantees:
 - cards cannot be drawn if not available
 - the game ends if a required draw cannot happen because the relevant library is empty
 - the game ends if a player's life total reaches 0
+- the game ends as a draw if both players reach 0 life simultaneously
 - creatures with 0 toughness die when the runtime performs its current zero-toughness check
 - card movements maintain zone consistency
 - end-of-turn cleanup discard must reduce the active player's hand to the maximum before the turn can advance
@@ -299,7 +300,7 @@ The aggregate root must enforce:
 - turn progression rules
 - phase progression rules
 - active-player-only automatic turn updates
-- terminal game tracking for empty-library draw and zero-life loss
+- terminal game tracking for empty-library draw, zero-life loss, and simultaneous-zero-life draw
 - ownership of stack and priority state
 - minimal priority-window legality for currently supported stack interactions
 - explicit spell-target validation for the currently supported targeted-spell subset

@@ -399,7 +399,7 @@ Events describe state transitions and are immutable.
 
 ## Game End
 
-A terminal match state in which the game has produced a winner, a loser, and an end reason.
+A terminal match state in which the game has produced an end reason and, when the ending is decisive, a winner and a loser.
 
 While the game is in a terminal state, normal gameplay actions are no longer legal.
 
@@ -411,6 +411,7 @@ To reach a terminal state as the losing player of the match.
 
 In the current DemonicTutor model, this happens when a player must draw from an empty library.
 In the current DemonicTutor model, this also happens when a player's life total reaches 0.
+If both players reach 0 life simultaneously, the current model ends the game as a draw instead of choosing an arbitrary loser.
 
 ---
 

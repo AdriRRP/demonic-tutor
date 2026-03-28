@@ -232,6 +232,21 @@ fn projection_logs_game_ended_events() {
 }
 
 #[test]
+fn projection_logs_drawn_game_end_events() {
+    let projection = GameLogProjection::new();
+
+    projection.handle(&DomainEvent::GameEnded(GameEnded::draw(
+        GameId::new("game-1"),
+        GameEndReason::SimultaneousZeroLife,
+    )));
+
+    let logs = projection.logs();
+    assert_eq!(logs.len(), 1);
+    assert!(logs[0].contains("draw"));
+    assert!(logs[0].contains("SimultaneousZeroLife"));
+}
+
+#[test]
 fn integration_event_store_and_bus() {
     let bus = InMemoryEventBus::new();
     let store = InMemoryEventStore::new();

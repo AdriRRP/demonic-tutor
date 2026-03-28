@@ -37,14 +37,15 @@ impl OpeningHandDealt {
 pub enum GameEndReason {
     EmptyLibraryDraw,
     ZeroLife,
+    SimultaneousZeroLife,
     Conceded,
 }
 
 #[derive(Debug, Clone)]
 pub struct GameEnded {
     pub game_id: GameId,
-    pub winner_id: PlayerId,
-    pub loser_id: PlayerId,
+    pub winner_id: Option<PlayerId>,
+    pub loser_id: Option<PlayerId>,
     pub reason: GameEndReason,
 }
 
@@ -58,8 +59,18 @@ impl GameEnded {
     ) -> Self {
         Self {
             game_id,
-            winner_id,
-            loser_id,
+            winner_id: Some(winner_id),
+            loser_id: Some(loser_id),
+            reason,
+        }
+    }
+
+    #[must_use]
+    pub const fn draw(game_id: GameId, reason: GameEndReason) -> Self {
+        Self {
+            game_id,
+            winner_id: None,
+            loser_id: None,
             reason,
         }
     }

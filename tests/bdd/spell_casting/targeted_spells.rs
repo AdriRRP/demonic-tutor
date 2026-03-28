@@ -388,7 +388,7 @@ fn the_game_ends_with_bob_losing(world: &mut GameplayWorld) {
         .last_game_ended
         .as_ref()
         .expect("expected game end event");
-    assert_eq!(event.loser_id, GameplayWorld::player_id("Bob"));
+    assert_eq!(event.loser_id, Some(GameplayWorld::player_id("Bob")));
 }
 
 #[then("casting fails because the spell target is missing")]

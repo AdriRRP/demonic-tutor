@@ -121,8 +121,8 @@ fn adjust_life_cannot_go_below_zero_and_ends_the_game() {
     let Some(game_ended) = outcome.game_ended else {
         return;
     };
-    assert_eq!(game_ended.loser_id, PlayerId::new("player-1"));
-    assert_eq!(game_ended.winner_id, PlayerId::new("player-2"));
+    assert_eq!(game_ended.loser_id, Some(PlayerId::new("player-1")));
+    assert_eq!(game_ended.winner_id, Some(PlayerId::new("player-2")));
     assert_eq!(game_ended.reason, GameEndReason::ZeroLife);
     assert_eq!(game.players()[0].life(), 0);
     assert!(game.is_over());

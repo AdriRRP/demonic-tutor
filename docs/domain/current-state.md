@@ -137,7 +137,7 @@ The domain currently includes:
 - summoning sickness for creatures (removed for the active player's creatures at turn start)
 - turn and phase progression
 - explicit draw effects as a simplified non-stack entrypoint, including multi-card targeted draw
-- terminal game state when a player loses by empty-library draw or zero life
+- terminal game state when a player loses by empty-library draw or zero life, and a drawn terminal state when both players reach zero life simultaneously
 - casting spells onto an aggregate-owned stack zone
 - public priority passing for the currently open minimal stack windows
 - the casting player retains priority immediately after a spell is put on the stack
@@ -385,7 +385,7 @@ The project currently includes:
 - type-safe library initialization data with a unified card shape and optional creature profile
 - domain events describing state transitions
 - composite turn progression events and draw events with explicit origin
-- explicit game-end events with reasons for terminal empty-library draw and zero life
+- explicit game-end events with reasons for terminal empty-library draw, zero life, and simultaneous zero life
 - shared life-change semantics reused by explicit targeted life effects and combat damage
 - shared review of currently supported state-based actions after relevant gameplay actions
 - aggregate-owned stack zone and priority state with minimal public stack behavior
