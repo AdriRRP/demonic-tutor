@@ -7,22 +7,36 @@ use {
 
 #[derive(Debug, Default)]
 pub struct GameLogProjection {
-    logs: RwLock<Arc<[String]>>,
+    logs: RwLock<GameLogState>,
+}
+
+#[derive(Debug, Default)]
+struct GameLogState {
+    entries: Vec<String>,
+    snapshot: Option<Arc<[String]>>,
 }
 
 impl GameLogProjection {
     #[must_use]
     pub fn new() -> Self {
         Self {
-            logs: RwLock::new(Arc::<[String]>::from(Vec::<String>::new())),
+            logs: RwLock::new(GameLogState::default()),
         }
     }
 
     #[must_use]
     pub fn logs(&self) -> Arc<[String]> {
         self.logs
-            .read()
-            .map(|logs| Arc::clone(&logs))
+            .write()
+            .map(|mut state| {
+                if let Some(snapshot) = &state.snapshot {
+                    return Arc::clone(snapshot);
+                }
+
+                let snapshot = Arc::<[String]>::from(state.entries.clone());
+                state.snapshot = Some(Arc::clone(&snapshot));
+                snapshot
+            })
             .unwrap_or_default()
     }
 
@@ -165,10 +179,9 @@ impl GameLogProjection {
     pub fn handle(&self, event: &DomainEvent) {
         let log_entry = Self::describe_event(event);
 
-        if let Ok(mut logs) = self.logs.write() {
-            let mut next_logs = logs.iter().cloned().collect::<Vec<_>>();
-            next_logs.push(log_entry);
-            *logs = Arc::from(next_logs);
+        if let Ok(mut state) = self.logs.write() {
+            state.entries.push(log_entry);
+            state.snapshot = None;
         }
     }
 }
