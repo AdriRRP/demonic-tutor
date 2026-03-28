@@ -199,3 +199,37 @@ fn game_service_public_event_log_evicts_oldest_cached_timelines() {
     );
     assert_eq!(reads.load(Ordering::SeqCst), 66);
 }
+
+#[test]
+fn game_service_public_event_log_evicts_large_cached_timelines_by_footprint() {
+    let reads = Arc::new(AtomicUsize::new(0));
+    let store = CountingEventStore {
+        events: Arc::from(
+            (0..5_000)
+                .map(|index| {
+                    DomainEvent::PriorityPassed(PriorityPassed {
+                        game_id: GameId::new(format!("game-public-event-log-bytes-{index}")),
+                        player_id: PlayerId::new("player-1"),
+                    })
+                })
+                .collect::<Vec<_>>(),
+        ),
+        reads: Arc::clone(&reads),
+    };
+    let service = GameService::new(store, InMemoryEventBus::new());
+
+    let first = service.public_event_log(&GameId::new("cached-large-game-0"));
+    assert!(first.is_ok(), "first large replay read should succeed");
+    assert_eq!(reads.load(Ordering::SeqCst), 1);
+
+    let second = service.public_event_log(&GameId::new("cached-large-game-1"));
+    assert!(second.is_ok(), "second large replay read should succeed");
+    assert_eq!(reads.load(Ordering::SeqCst), 2);
+
+    let reread_first = service.public_event_log(&GameId::new("cached-large-game-0"));
+    assert!(
+        reread_first.is_ok(),
+        "rereading an oversized cached timeline should succeed after eviction"
+    );
+    assert_eq!(reads.load(Ordering::SeqCst), 3);
+}

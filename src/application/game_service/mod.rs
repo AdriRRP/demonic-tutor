@@ -19,6 +19,7 @@ use crate::{
 };
 use std::{
     collections::{HashMap, VecDeque},
+    mem::size_of_val,
     sync::{Arc, RwLock},
 };
 
@@ -35,35 +36,75 @@ where
 }
 
 const PUBLIC_EVENT_LOG_CACHE_CAPACITY: usize = 64;
+const PUBLIC_EVENT_LOG_CACHE_MAX_BYTES: usize = 512 * 1024;
 
 #[derive(Debug, Default)]
 struct PublicEventLogCache {
-    entries: HashMap<String, Arc<[PublicEventLogEntry]>>,
+    entries: HashMap<String, CachedPublicEventLog>,
     recency: VecDeque<String>,
+    total_estimated_bytes: usize,
+}
+
+#[derive(Debug)]
+struct CachedPublicEventLog {
+    entries: Arc<[PublicEventLogEntry]>,
+    estimated_bytes: usize,
 }
 
 impl PublicEventLogCache {
     fn get(&self, game_id: &str) -> Option<Arc<[PublicEventLogEntry]>> {
-        self.entries.get(game_id).cloned()
+        self.entries
+            .get(game_id)
+            .map(|cached| Arc::clone(&cached.entries))
     }
 
     fn insert(&mut self, game_id: &str, entries: Arc<[PublicEventLogEntry]>) {
-        self.entries.insert(game_id.to_string(), entries);
+        let estimated_bytes = approximate_public_event_log_bytes(entries.as_ref());
+        if let Some(previous) = self.entries.insert(
+            game_id.to_string(),
+            CachedPublicEventLog {
+                entries,
+                estimated_bytes,
+            },
+        ) {
+            self.total_estimated_bytes = self
+                .total_estimated_bytes
+                .saturating_sub(previous.estimated_bytes);
+        }
+        self.total_estimated_bytes += estimated_bytes;
         self.recency.push_back(game_id.to_string());
 
-        while self.entries.len() > PUBLIC_EVENT_LOG_CACHE_CAPACITY {
+        while self.entries.len() > PUBLIC_EVENT_LOG_CACHE_CAPACITY
+            || self.total_estimated_bytes > PUBLIC_EVENT_LOG_CACHE_MAX_BYTES
+        {
             let Some(oldest) = self.recency.pop_front() else {
                 break;
             };
-            if self.entries.remove(&oldest).is_some() {
+            if let Some(evicted) = self.entries.remove(&oldest) {
+                self.total_estimated_bytes = self
+                    .total_estimated_bytes
+                    .saturating_sub(evicted.estimated_bytes);
                 break;
             }
         }
     }
 
     fn remove(&mut self, game_id: &str) {
-        self.entries.remove(game_id);
+        if let Some(removed) = self.entries.remove(game_id) {
+            self.total_estimated_bytes = self
+                .total_estimated_bytes
+                .saturating_sub(removed.estimated_bytes);
+        }
     }
+}
+
+fn approximate_public_event_log_bytes(entries: &[PublicEventLogEntry]) -> usize {
+    // Coarse byte budget: fixed slice storage plus a debug-text estimate of event payload growth.
+    size_of_val(entries)
+        + entries
+            .iter()
+            .map(|entry| format!("{:?}", entry.event).len())
+            .sum::<usize>()
 }
 
 impl<E, B> GameService<E, B>
