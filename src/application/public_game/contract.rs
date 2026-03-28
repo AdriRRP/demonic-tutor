@@ -384,12 +384,9 @@ impl PublicSeededGameSetup {
     }
 
     #[must_use]
-    pub fn with_game_id(&self, game_id: GameId) -> Self {
-        Self {
-            game_id,
-            players: self.players.clone(),
-            shuffle_seed: self.shuffle_seed,
-        }
+    pub fn with_game_id(mut self, game_id: GameId) -> Self {
+        self.game_id = game_id;
+        self
     }
 }
 
