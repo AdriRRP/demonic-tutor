@@ -1,6 +1,6 @@
 # Playable Horizon To A Limited Set
 
-This document defines the current proposal horizon from `v0.6.0` to an honestly playable limited subset.
+This document defines the current proposal horizon from `v0.7.0` to an honestly playable limited subset.
 
 It is intentionally explicit about both:
 
@@ -13,34 +13,22 @@ It does not claim full Magic support.
 
 The proposed horizon is:
 
-- `2` releases
-- `10` waves
-- `36` slices
+- `1` release
+- `4` waves
+- `14` slices
 
 The releases are:
 
-- `0.7.0` — stabilize the public gameplay contract and ship the first broad honest gameplay subset for UI work
 - `0.8.0` — finish the curated limited-set contract and harden the first actually playable product shell
 
 ## Planning Gates
 
 ### UI Start Gate
 
-UI work should begin after `0.7.0`.
+The UI-start gate was reached in `0.7.0`.
 
-At that point the project should have:
-
-- a stable public game snapshot
-- a stable legal-action surface
-- explicit prompt/choice projections
-- enough common card patterns that the UI is not designed around a toy subset
-
-This gate is now considered reached on `main`.
-
-That means the next planning horizon is no longer "what must exist before any UI work starts", but rather:
-
-- what should land before the UI has a richer limited-like card pool to exercise
-- what should still remain explicit and rejected while the first client is being built
+That means the live horizon is no longer about unlocking the first honest client contract.
+It is now about expanding that client against a richer, explicitly bounded curated card pool.
 
 ### Limited-Set Playable Gate
 
@@ -67,18 +55,6 @@ This horizon assumes the first playable set deliberately avoids the following fa
 If the curated set later needs those families, the roadmap must expand.
 
 ## Release Shape
-
-### `0.7.0`
-
-Goal:
-
-- make the engine stable enough for UI work
-- unlock the first broad enough gameplay subset that the UI can be built against the real engine contract
-
-Waves:
-
-- `6`
-- `22` slices
 
 ### `0.8.0`
 

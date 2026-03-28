@@ -7,6 +7,35 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ---
 
+## [0.7.0] - 2026-03-28
+
+### Added
+
+- **Public gameplay contract for UI work**: the engine now exposes a stable public game snapshot, canonical legal-action queries, visible choice requests, and deterministic public command envelopes for frontend clients
+- **Broader explicit choice corridors**: the current subset now supports `choose one`, `you may`, `loot`, `rummage`, `scry 1`, and `surveil 1` through surfaced pending decisions instead of hidden resolution shortcuts
+- **Attachment and static battlefield baseline**: the current subset now supports `Enchant creature` Auras, attached stat bonuses, pacifism-style attachment restrictions, and one explicit controller anthem profile
+- **Board-control utility for limited-style play**: the engine now supports `tap target creature`, `untap target creature`, `target creature can't block this turn`, and bounded defender-like attack restrictions
+- **Broader battlefield snowball/value patterns**: the current subset now supports keyworded tokens, multi-token creation, spell recursion to hand, one-shot cast-from-graveyard profiles with exile on resolution, and an explicit end-step spell-recursion trigger
+
+### Changed
+
+- **Owner/controller semantics hardened**: cards now preserve persistent ownership across the currently supported temporary battlefield-control transfers, so death, bounce, exile, and other zone exits route back to the owner's zones truthfully
+- **Public legality became canonical**: target candidates and blocker options are now derived from aggregate-owned read-only legality queries instead of speculative probes or duplicated application rules
+- **Stack event semantics were hardened**: pass-priority, optional choices, loot/rummage, scry, and surveil now emit a more truthful observable event order, including visible zone changes for supported deferred-resolution corridors
+- **Runtime internals were modularized further**: crowded runtime, player, public-surface, and spell-resolution hotspots were split into more focused modules to reduce cognitive load without widening aggregate boundaries
+- **Attachment and SBA internals were tightened**: Aura attach/detach and orphan cleanup now rely on the aggregate's indexed location lookup paths more consistently, with stricter invariant handling
+
+### Documentation
+
+- Synchronized canonical docs and slice history around the final `0.7.0` subset and its UI-start gate
+- Curated the live proposal backlog so only `0.8.0` work remains under `docs/slices/proposals/`
+- Kept runtime, aggregate, and release documentation aligned with the current event, ownership, and public-query semantics
+
+### Quality
+
+- Multiple elite-audit follow-up fixes were folded into the release before tagging
+- Strict repository validation remains clean through `./scripts/check-all.sh`
+
 ## [0.6.0] - 2026-03-25
 
 ### Added
