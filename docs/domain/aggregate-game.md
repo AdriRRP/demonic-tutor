@@ -228,7 +228,7 @@ The current model includes:
 - supported planeswalkers may now carry initial loyalty and explicit loyalty-ability profiles in the same aggregate-owned activation corridor
 - the stack and supported activated abilities prefer internal owner/handle references while public ids are materialized only for outward-facing events, errors, and inspection
 - explicit supported spell-effect profiles carried by card-face data rather than inferred from card-definition strings during resolution
-- explicit legal-target rules for the currently supported targeted-spell subset, currently covering players and creatures
+- explicit legal-target rules for the current supported targeted-spell subset, currently covering a small closed set of players, creatures, permanents, graveyard cards, and stack objects
 - spell-target and spell-resolution metadata can be projected into dedicated stack-borne spell snapshots instead of reusing full permanent runtime
 - non-mana activated abilities may ride the same aggregate-owned stack while mana abilities remain outside it, and the current activation-cost subset now includes tapping, explicit mana payment, and `sacrifice this source`
 - casting player retaining priority immediately after putting a spell on the stack
