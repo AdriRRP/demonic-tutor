@@ -281,10 +281,11 @@ where
         &self,
         game_id: &str,
     ) -> Option<Arc<[PublicEventLogEntry]>> {
-        self.public_event_log_cache
-            .read()
-            .ok()
-            .and_then(|cache| cache.get(game_id))
+        let cache = match self.public_event_log_cache.read() {
+            Ok(cache) => cache,
+            Err(poisoned) => poisoned.into_inner(),
+        };
+        cache.get(game_id)
     }
 
     pub(crate) fn store_public_event_log_cache(
@@ -292,14 +293,18 @@ where
         game_id: &str,
         entries: Arc<[PublicEventLogEntry]>,
     ) {
-        if let Ok(mut cache) = self.public_event_log_cache.write() {
-            cache.insert(game_id, entries);
-        }
+        let mut cache = match self.public_event_log_cache.write() {
+            Ok(cache) => cache,
+            Err(poisoned) => poisoned.into_inner(),
+        };
+        cache.insert(game_id, entries);
     }
 
     fn invalidate_public_event_log_cache(&self, game_id: &str) {
-        if let Ok(mut cache) = self.public_event_log_cache.write() {
-            cache.remove(game_id);
-        }
+        let mut cache = match self.public_event_log_cache.write() {
+            Ok(cache) => cache,
+            Err(poisoned) => poisoned.into_inner(),
+        };
+        cache.remove(game_id);
     }
 }
