@@ -1,7 +1,6 @@
 import { For, Match, Show, Switch, createMemo, createSignal, onMount } from "solid-js";
 import type { Component } from "solid-js";
 import type { JSX } from "solid-js";
-import type { WebDemoClient } from "./wasm/pkg/demonictutor_ui.js";
 import {
   createDemoClient,
   playLand,
@@ -9,6 +8,7 @@ import {
   resetDemo,
   stepDemo,
   tapManaSource,
+  type WebDemoClient,
 } from "./lib/runtime";
 import type { DemoBattlefieldCard, DemoCardView, DemoPlayerView, DemoState } from "./lib/types";
 
