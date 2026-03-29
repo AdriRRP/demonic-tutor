@@ -151,9 +151,7 @@ fn candidate_graveyard_card_targets(
         .filter(move |(player_index, _)| rule.allows(*player_index == actor_index))
         .flat_map(|(_, player)| {
             player
-                .graveyard()
-                .iter()
-                .filter_map(|handle| player.card_by_handle(*handle))
+                .graveyard_cards()
                 .map(|card| SpellTarget::GraveyardCard(card.id().clone()))
         })
         .collect()
