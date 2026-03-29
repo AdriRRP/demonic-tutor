@@ -166,6 +166,7 @@ Useful commands:
 
 ```bash
 ./scripts/check-all.sh
+cargo check --target wasm32-unknown-unknown
 cargo test --test unit
 cargo test --test bdd
 ```

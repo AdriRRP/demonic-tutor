@@ -21,6 +21,7 @@ Required checks:
 - `cargo fmt --check`
 - `cargo test`
 - `cargo clippy`
+- `cargo check --target wasm32-unknown-unknown`
 
 Full clippy configuration:
 
@@ -52,6 +53,18 @@ Quick validation:
 ```
 
 Code that fails these checks must not be merged.
+
+Before running the wasm compatibility check for the first time on a machine, install the target once:
+
+```bash
+rustup target add wasm32-unknown-unknown
+```
+
+The current portability support level is:
+
+- the crate must compile with `cargo check --target wasm32-unknown-unknown`
+- the runtime still relies on `std`
+- the project is not `no_std`-ready yet
 
 ---
 

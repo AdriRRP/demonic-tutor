@@ -12,6 +12,9 @@ authors = ["DemonicTutor Contributors"]
 [dependencies]
 rand = "0.10.0"
 
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+getrandom = { version = "0.4.2", features = ["wasm_js"] }
+
 [dev-dependencies]
 cucumber = "0.22.1"
 tokio = { version = "1.50.0", features = ["macros", "rt-multi-thread"] }

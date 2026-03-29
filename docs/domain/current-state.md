@@ -371,8 +371,14 @@ Infrastructure components include:
 - in-memory event store
 - in-memory event bus
 - projections for gameplay logs
+- crate validation that now includes `cargo check --target wasm32-unknown-unknown`
 
 Persistent infrastructure may be introduced in future iterations.
+
+The current portability boundary is:
+
+- the crate validates compilation for `wasm32-unknown-unknown`
+- the runtime still depends on `std` and is not `no_std`-ready
 
 ---
 

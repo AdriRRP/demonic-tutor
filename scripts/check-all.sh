@@ -31,6 +31,14 @@ cargo clippy --all-targets --all-features -- \
     -D warnings
 
 echo ""
+echo "=== Wasm Compatibility ==="
+if ! rustup target list --installed | grep -qx 'wasm32-unknown-unknown'; then
+    echo "error: missing rust target wasm32-unknown-unknown; run 'rustup target add wasm32-unknown-unknown'" >&2
+    exit 1
+fi
+cargo check --target wasm32-unknown-unknown
+
+echo ""
 echo "=== Security Audit ==="
 cargo audit
 
