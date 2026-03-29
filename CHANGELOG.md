@@ -7,6 +7,30 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ---
 
+## [0.8.0] - 2026-03-29
+
+### Added
+
+- **First honest curated limited shell**: the repository now freezes `playable_subset_version = v1`, publishes one canonical capability matrix plus deck-construction baseline for the first curated environment, and rejects curated card loads whose authored profiles exceed that supported subset
+- **Curated golden matchup closure**: the current playable horizon now includes white-blue tempo, black-red value/sacrifice, and green-white counters golden matchups that exercise the intended first best-of-one product shell
+- **Seeded public session bootstrapping**: the public application layer now supports deterministic seeded setup, rematch, replay log access, and a first real client-facing session bootstrap contract for the frozen subset
+
+### Changed
+
+- **Public runtime semantics were hardened aggressively**: observable zone changes now converge on one canonical language, cleanup/combat/resource corridors expose visible moves more truthfully, and public command envelopes stay aligned with the persisted replay stream
+- **Read-side and replay hot paths were tightened**: priority snapshots, target caches, public event-log projection, and related read paths now avoid several redundant scans, clones, and cache misses that showed up in the final embed-grade audit passes
+- **Release-horizon truth is now explicit**: the `0.8.0` planning backlog is closed, proposal wave directories are gone from the live backlog, and the repository now treats the first curated limited shell as a shipped historical milestone rather than an open proposal
+
+### Documentation
+
+- Synchronized canonical docs, runtime explanations, implemented slice history, README-level summaries, and release-horizon notes with the final `0.8.0` subset
+- Added implemented slice records for the final public-surface hot-path cleanup and graveyard-target hardening work that landed during release closure
+
+### Quality
+
+- Multiple hypercritical elite/embed-grade audit follow-ups were folded into the release before tagging
+- Strict repository validation remains clean through `./scripts/check-all.sh`
+
 ## [0.7.0] - 2026-03-28
 
 ### Added

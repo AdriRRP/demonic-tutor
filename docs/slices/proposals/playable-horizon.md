@@ -17,7 +17,7 @@ The proposed horizon is:
 - `0` waves
 - `0` slices
 
-The current horizon is closed for the `v0.8.0` release cut.
+The current horizon was closed by the `v0.8.0` release.
 
 ## Planning Gates
 

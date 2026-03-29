@@ -16,11 +16,11 @@ The current planning gate has been reached:
 
 ## Release Status
 
-`0.8.0` is now the closed release horizon on `main`.
+The `0.8.0` horizon is now closed and released from `main`.
 
 That means:
 
-- the first deliberately constrained curated limited shell is now honestly implemented and ready to ship
+- the first deliberately constrained curated limited shell is now honestly implemented and released from `main`
 - the proposal backlog in this directory should remain empty until a new post-`0.8.0` release horizon is proposed
 - closed `0.8.0` wave directories should not remain in the live backlog
 
