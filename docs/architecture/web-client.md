@@ -136,9 +136,15 @@ Its job today is to provide:
 
 - one shared Rust-owned game session embedded in the browser
 - two viewer-scoped seats over that same session
+- a viewport-fitted SPA arena with portrait and landscape layouts
+- a battlefield-first layout with a clear top/bottom duel split
+- a collapsible bottom hand fan that can be dragged onto the battlefield for simple legal plays
+- zone anchors that stay visible on the table and open focused browsers for graveyard/library reads
 - a handoff-first hot-seat flow where only one private hand is opened at a time
+- card inspection modals so cards stay the main affordance rather than surrounding lists
 - prompts placed near the seat zone they affect instead of inside a generic debug rail
 - a battlefield-first combat lane for attackers and blockers
+- modal replay/debug surfaces that stay discreet without turning the table into a dashboard
 - real command execution for lands, mana, creature casting, combat, cleanup, and replay inspection
 
 It is still intentionally early-stage UI:

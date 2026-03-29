@@ -1,4 +1,4 @@
-import { For, Match, Show, Switch } from "solid-js";
+import { For, Match, Show, Switch, createEffect, createSignal } from "solid-js";
 import type { Component } from "solid-js";
 import { GameCard } from "./cards/game-card";
 import {
@@ -47,24 +47,134 @@ interface TableArenaProps {
   onRun: (operation: (current: WebArenaClient) => ArenaState) => void;
 }
 
+type ZoneBrowserState = {
+  playerId: string;
+  zone: "library" | "graveyard";
+} | null;
+
+interface BattlefieldCardActionOption {
+  label: string;
+  tone?: "primary" | "default";
+  run: () => void;
+}
+
+interface InspectCardState {
+  definitionId: string;
+  cardType: string;
+  zoneLabel: string;
+  manaCost?: number | null | undefined;
+  power?: number | null | undefined;
+  toughness?: number | null | undefined;
+  loyalty?: number | null | undefined;
+  keywords: string[];
+  token?: boolean | undefined;
+  tapped?: boolean | undefined;
+  summoningSickness?: boolean | undefined;
+  attacking?: boolean | undefined;
+  blocking?: boolean | undefined;
+  note?: string | undefined;
+}
+
 export const TableArena: Component<TableArenaProps> = (props) => {
-  const bottomViewer = () => props.state.viewers[0];
-  const topViewer = () => props.state.viewers[1] ?? props.state.viewers[0];
-  const handoffViewer = () =>
-    props.state.viewers.find((viewer) => viewer.player_id === props.pendingHandoffPlayerId);
+  const liveViewer = () =>
+    props.state.viewers.find((viewer) => viewer.player_id === props.revealedSeatId) ??
+    props.state.viewers.find((viewer) => viewer.is_priority_holder) ??
+    props.state.viewers.find((viewer) => viewer.is_active) ??
+    props.state.viewers[0];
+  const bottomViewer = () => liveViewer();
+  const topViewer = () =>
+    props.state.viewers.find((viewer) => viewer.player_id !== bottomViewer()?.player_id) ??
+    bottomViewer();
+  const [handTrayOpen, setHandTrayOpen] = createSignal(true);
+  const [zonesOpen, setZonesOpen] = createSignal(true);
+  const [sidebarOpen, setSidebarOpen] = createSignal(false);
+  const [zoneBrowser, setZoneBrowser] = createSignal<ZoneBrowserState>(null);
+  const [inspectedCard, setInspectedCard] = createSignal<InspectCardState | null>(null);
+  const [draggedCardId, setDraggedCardId] = createSignal<string | null>(null);
+  const zoneBrowserPlayer = () => {
+    const browser = zoneBrowser();
+    if (!browser) {
+      return undefined;
+    }
+
+    return findPlayer(props.state.game, browser.playerId);
+  };
+
+  const playDraggedCard = (viewer: ArenaViewerState, cardId: string) => {
+    const playLandIds = new Set(findAction(viewer, "PlayLand")?.card_ids ?? []);
+    const castAction = findAction(viewer, "CastSpell");
+    const castableIds = new Set(castAction?.card_ids ?? []);
+    const handCard = viewer.hand.find((card) => card.card_id === cardId);
+
+    if (playLandIds.has(cardId)) {
+      props.onRun((current) => playLand(current, viewer.player_id, cardId));
+      return;
+    }
+
+    if (
+      castableIds.has(cardId) &&
+      handCard &&
+      !handCard.requires_target &&
+      !handCard.requires_choice
+    ) {
+      props.onRun((current) => castSpell(current, viewer.player_id, cardId));
+    }
+  };
 
   return (
     <div class="table-shell">
-      <header class="table-header">
-        <div class="table-brand">
-          <p class="eyebrow">DemonicTutor Duel Arena</p>
-          <h1>Hot-seat tabletop on a real Rust engine.</h1>
-          <p class="table-copy">
-            One shared deterministic game, two viewer-scoped seats, and a board-first layout made to
-            pressure-test real play instead of mock flows.
-          </p>
+      <header class="arena-cockpit panel">
+        <div class="arena-brand">
+          <p class="eyebrow">DemonicTutor</p>
+          <h1>Duel Arena</h1>
         </div>
-        <div class="table-header-actions">
+        <div class="arena-cockpit-status">
+          <StatusBadge label="Turn" value={String(props.state.game.turn_number)} tone="ember" />
+          <StatusBadge label="Phase" value={formatPhase(props.state.game.phase)} tone="night" />
+          <StatusBadge
+            label="Active"
+            value={shortPlayerTag(props.state.game.active_player_id)}
+            tone="forest"
+          />
+          <StatusBadge
+            label="Priority"
+            value={shortPlayerTag(props.state.game.priority_holder)}
+            tone="night"
+          />
+        </div>
+        <div class="arena-cockpit-actions">
+          <Show when={liveViewer()}>
+            {(viewer) => (
+              <div class="active-seat-chip">
+                <span class="label">Seat</span>
+                <strong>{shortPlayerTag(viewer().player_id)}</strong>
+              </div>
+            )}
+          </Show>
+          <button
+            class="hero-button hero-button-ghost mini-button"
+            onClick={() => {
+              setHandTrayOpen((open) => !open);
+            }}
+          >
+            {handTrayOpen() ? "Hand" : "Hand"}
+          </button>
+          <button
+            class="hero-button hero-button-ghost mini-button"
+            onClick={() => {
+              setZonesOpen((open) => !open);
+            }}
+          >
+            Zones
+          </button>
+          <button
+            class="hero-button hero-button-ghost mini-button"
+            onClick={() => {
+              setSidebarOpen((open) => !open);
+            }}
+          >
+            Log
+          </button>
           <button
             class="hero-button"
             onClick={() => {
@@ -84,6 +194,23 @@ export const TableArena: Component<TableArenaProps> = (props) => {
             "handoff-pending": Boolean(props.pendingHandoffPlayerId),
           }}
         >
+          <Show when={props.state.game.stack.length > 0}>
+            <aside class="table-stack-overlay">
+              <div class="table-stack-well">
+                <div class="table-well-head">
+                  <div>
+                    <p class="label">Stack</p>
+                    <h2>Resolve lane</h2>
+                  </div>
+                  <span class="chip chip-night">
+                    {`${String(props.state.game.stack.length)} objects`}
+                  </span>
+                </div>
+                <StackView stack={props.state.game.stack} />
+              </div>
+            </aside>
+          </Show>
+
           <Show when={topViewer()}>
             {(viewer) => (
               <SeatPanel
@@ -94,64 +221,29 @@ export const TableArena: Component<TableArenaProps> = (props) => {
                 onSetBlockerAssignment={props.onSetBlockerAssignment}
                 onToggleAttackerSelection={props.onToggleAttackerSelection}
                 onToggleSeatPrivacy={props.onToggleSeatPrivacy}
+                onToggleZones={() => {
+                  setZonesOpen((open) => !open);
+                }}
+                onInspectCard={setInspectedCard}
+                onOpenZoneBrowser={setZoneBrowser}
+                onDragHandCard={setDraggedCardId}
                 orientation="top"
                 revealed={props.state.game.is_over || props.revealedSeatId === viewer().player_id}
                 selectedAttackers={props.selectedAttackers}
                 viewer={viewer()}
+                draggedHandCardId={draggedCardId()}
+                zonesOpen={zonesOpen()}
               />
             )}
           </Show>
 
           <section class="table-centerline">
-            <div class="table-phase-pill">
-              <span class="table-phase-turn">Turn {props.state.game.turn_number}</span>
-              <strong>{formatPhase(props.state.game.phase)}</strong>
-            </div>
-
-            <div class="table-meta-strip">
-              <StatusBadge
-                label="Active"
-                value={props.state.game.active_player_id ?? "n/a"}
-                tone="ember"
-              />
-              <StatusBadge
-                label="Priority"
-                value={props.state.game.priority_holder ?? "closed"}
-                tone="night"
-              />
-              <StatusBadge
-                label="Pending pass"
-                value={
-                  props.state.game.priority_has_pending_pass === null
-                    ? "n/a"
-                    : props.state.game.priority_has_pending_pass
-                      ? "yes"
-                      : "no"
-                }
-                tone="forest"
-              />
-              <Show when={props.state.game.is_over}>
-                <StatusBadge
-                  label="Winner"
-                  value={props.state.game.winner_id ?? "draw"}
-                  tone="ember"
-                />
-              </Show>
-            </div>
-
-            <div class="table-stack-well">
-              <div class="table-well-head">
-                <div>
-                  <p class="label">Stack</p>
-                  <h2>Center lane</h2>
-                </div>
-                <span class="chip chip-night">
-                  {props.state.game.stack.length > 0
-                    ? `${String(props.state.game.stack.length)} objects`
-                    : "empty"}
-                </span>
-              </div>
-              <StackView stack={props.state.game.stack} />
+            <div class="battlefield-divider">
+              <span class="battlefield-divider-mark">
+                <Show when={props.state.game.is_over} fallback={"VS"}>
+                  {shortPlayerTag(props.state.game.winner_id)}
+                </Show>
+              </span>
             </div>
           </section>
 
@@ -165,53 +257,68 @@ export const TableArena: Component<TableArenaProps> = (props) => {
                 onSetBlockerAssignment={props.onSetBlockerAssignment}
                 onToggleAttackerSelection={props.onToggleAttackerSelection}
                 onToggleSeatPrivacy={props.onToggleSeatPrivacy}
+                onToggleHandTray={() => {
+                  setHandTrayOpen((open) => !open);
+                }}
+                onToggleZones={() => {
+                  setZonesOpen((open) => !open);
+                }}
+                onInspectCard={setInspectedCard}
+                onOpenZoneBrowser={setZoneBrowser}
+                onDragHandCard={setDraggedCardId}
+                onBattlefieldDropCard={(cardId) => {
+                  playDraggedCard(viewer(), cardId);
+                }}
                 orientation="bottom"
                 revealed={props.state.game.is_over || props.revealedSeatId === viewer().player_id}
                 selectedAttackers={props.selectedAttackers}
                 viewer={viewer()}
+                handTrayOpen={handTrayOpen()}
+                draggedHandCardId={draggedCardId()}
+                zonesOpen={zonesOpen()}
               />
             )}
           </Show>
-
-          <Show when={!props.state.game.is_over && handoffViewer()}>
-            {(viewer) => (
-              <div class="handoff-overlay">
-                <div class="handoff-card">
-                  <p class="eyebrow">Hot-seat handoff</p>
-                  <h2>Pass the table to {viewer().player_id}</h2>
-                  <p class="table-copy handoff-copy">
-                    Private hand information is shielded until the next player takes the seat and
-                    reopens their tray.
-                  </p>
-                  <button
-                    class="hero-button"
-                    onClick={() => {
-                      props.onToggleSeatPrivacy(viewer().player_id);
-                    }}
-                  >
-                    Take seat
-                  </button>
-                </div>
-              </div>
-            )}
-          </Show>
         </section>
+      </div>
 
-        <aside class="table-sidebar">
-          <section class="panel sidebar-panel">
-            <div class="panel-head">
+      <Show when={sidebarOpen()}>
+        <div
+          class="table-modal-backdrop"
+          onClick={() => {
+            setSidebarOpen(false);
+          }}
+        >
+          <aside
+            class="table-sidebar panel open"
+            onClick={(event) => {
+              event.stopPropagation();
+            }}
+          >
+            <div class="table-sidebar-head">
               <div>
-                <p class="eyebrow sidebar-eyebrow">Session</p>
-                <h2>Duel state</h2>
+                <p class="eyebrow sidebar-eyebrow">Replay</p>
+                <h2>Match log</h2>
               </div>
-              <span class="chip">Game {props.state.game.game_id}</span>
+              <div class="chip-row">
+                <span class="chip">Game {props.state.game.game_id}</span>
+                <button
+                  class="hero-button hero-button-ghost mini-button"
+                  onClick={() => {
+                    setSidebarOpen(false);
+                  }}
+                >
+                  Close
+                </button>
+              </div>
             </div>
+
             <div class="sidebar-stat-grid">
               <SidebarMetric label="Subset" value={props.state.game.playable_subset_version} />
               <SidebarMetric label="Phase" value={formatPhase(props.state.game.phase)} />
               <SidebarMetric
                 label="Priority"
-                value={props.state.game.priority_holder ?? "closed"}
+                value={shortPlayerTag(props.state.game.priority_holder)}
               />
               <SidebarMetric label="Game over" value={props.state.game.is_over ? "yes" : "no"} />
             </div>
@@ -237,19 +344,158 @@ export const TableArena: Component<TableArenaProps> = (props) => {
                 </div>
               )}
             </Show>
-          </section>
 
-          <section class="panel sidebar-panel">
-            <div class="panel-head">
-              <div>
-                <p class="eyebrow sidebar-eyebrow">Replay</p>
-                <h2>Public timeline</h2>
-              </div>
-            </div>
             <Timeline entries={props.state.event_log} />
-          </section>
-        </aside>
-      </div>
+          </aside>
+        </div>
+      </Show>
+
+      <Show when={zoneBrowser()}>
+        {(browser) => (
+          <div
+            class="table-modal-backdrop"
+            onClick={() => {
+              setZoneBrowser(null);
+            }}
+          >
+            <aside
+              class="table-sidebar panel open zone-browser-modal"
+              onClick={(event) => {
+                event.stopPropagation();
+              }}
+            >
+              <div class="table-sidebar-head">
+                <div>
+                  <p class="eyebrow sidebar-eyebrow">Zone browser</p>
+                  <h2>
+                    {shortPlayerTag(browser().playerId)} · {browser().zone}
+                  </h2>
+                </div>
+                <button
+                  class="hero-button hero-button-ghost mini-button"
+                  onClick={() => {
+                    setZoneBrowser(null);
+                  }}
+                >
+                  Close
+                </button>
+              </div>
+
+              <Show when={browser().zone === "library"}>
+                <div class="zone-browser-empty">
+                  <p class="label">Library</p>
+                  <strong>{String(zoneBrowserPlayer()?.library_count ?? 0)} cards remaining</strong>
+                  <p class="muted">
+                    Library contents stay hidden. Use this browser to confirm counts without
+                    covering the battlefield.
+                  </p>
+                </div>
+              </Show>
+
+              <Show when={browser().zone === "graveyard"}>
+                <div class="zone-browser-grid">
+                  <For each={zoneBrowserPlayer()?.graveyard ?? []}>
+                    {(card) => (
+                      <button
+                        class="zone-browser-card"
+                        onClick={() => {
+                          setInspectedCard(inspectFromZoneCard(card, "graveyard"));
+                        }}
+                      >
+                        <span>{card.definition_id}</span>
+                        <small>{card.card_type}</small>
+                      </button>
+                    )}
+                  </For>
+                </div>
+                <Show when={(zoneBrowserPlayer()?.graveyard.length ?? 0) === 0}>
+                  <p class="muted">Graveyard empty.</p>
+                </Show>
+              </Show>
+            </aside>
+          </div>
+        )}
+      </Show>
+
+      <Show when={inspectedCard()}>
+        {(card) => (
+          <div
+            class="table-modal-backdrop"
+            onClick={() => {
+              setInspectedCard(null);
+            }}
+          >
+            <aside
+              class="table-sidebar panel open card-inspect-modal"
+              onClick={(event) => {
+                event.stopPropagation();
+              }}
+            >
+              <div class="table-sidebar-head">
+                <div>
+                  <p class="eyebrow sidebar-eyebrow">Card inspect</p>
+                  <h2>{card().definitionId}</h2>
+                </div>
+                <button
+                  class="hero-button hero-button-ghost mini-button"
+                  onClick={() => {
+                    setInspectedCard(null);
+                  }}
+                >
+                  Close
+                </button>
+              </div>
+
+              <div class="card-inspect-layout">
+                <div class="card-inspect-surface">
+                  <GameCard
+                    attacking={card().attacking}
+                    blocking={card().blocking}
+                    cardType={card().cardType}
+                    definitionId={card().definitionId}
+                    keywords={card().keywords}
+                    loyalty={card().loyalty}
+                    manaCost={card().manaCost}
+                    mode="battlefield"
+                    power={card().power}
+                    summoningSickness={card().summoningSickness}
+                    tapped={card().tapped}
+                    token={card().token}
+                    toughness={card().toughness}
+                  />
+                </div>
+
+                <div class="card-inspect-details">
+                  <SidebarMetric label="Zone" value={card().zoneLabel} />
+                  <SidebarMetric label="Type" value={card().cardType} />
+                  <Show when={card().power !== undefined && card().power !== null}>
+                    <SidebarMetric
+                      label="Power / Toughness"
+                      value={`${String(card().power)}/${String(card().toughness ?? 0)}`}
+                    />
+                  </Show>
+                  <Show when={card().loyalty !== undefined && card().loyalty !== null}>
+                    <SidebarMetric label="Loyalty" value={String(card().loyalty)} />
+                  </Show>
+                  <Show when={card().manaCost !== undefined && card().manaCost !== null}>
+                    <SidebarMetric label="Mana" value={String(card().manaCost)} />
+                  </Show>
+                  <Show when={card().keywords.length > 0}>
+                    <div class="chip-row">
+                      <For each={card().keywords}>
+                        {(keyword) => <span class="chip">{keyword}</span>}
+                      </For>
+                    </div>
+                  </Show>
+                  <Show when={card().note}>
+                    <p class="support-note">{card().note}</p>
+                  </Show>
+                </div>
+              </div>
+            </aside>
+          </div>
+        )}
+      </Show>
     </div>
   );
 };
@@ -260,12 +506,21 @@ const SeatPanel: Component<{
   orientation: "top" | "bottom";
   revealed: boolean;
   needsHandoff: boolean;
+  handTrayOpen?: boolean;
   selectedAttackers: string[];
   blockerAssignments: Record<string, string>;
   onToggleSeatPrivacy: (playerId: string) => void;
   onToggleAttackerSelection: (cardId: string) => void;
   onSetBlockerAssignment: (blockerId: string, attackerId: string) => void;
+  onToggleHandTray?: () => void;
+  onToggleZones: () => void;
+  onOpenZoneBrowser: (state: ZoneBrowserState) => void;
+  onInspectCard: (card: InspectCardState | null) => void;
+  onDragHandCard: (cardId: string | null) => void;
+  onBattlefieldDropCard?: (cardId: string) => void;
   onRun: (operation: (current: WebArenaClient) => ArenaState) => void;
+  zonesOpen: boolean;
+  draggedHandCardId: string | null;
 }> = (props) => {
   const viewerPlayer = () => findPlayer(props.game, props.viewer.player_id);
   const playLandAction = () => findAction(props.viewer, "PlayLand");
@@ -298,16 +553,170 @@ const SeatPanel: Component<{
         ),
     );
   const blockerTargets = () => uniqueAttackerIds(declareBlockersAction());
+  const attackerCandidateIds = () => new Set(declareAttackersAction()?.card_ids ?? []);
   const battlefieldConsoleVisible = () =>
-    tapManaSourceIds().size > 0 ||
-    activateAbilityIds().size > 0 ||
-    Boolean(declareAttackersAction()) ||
-    Boolean(declareBlockersAction());
+    Boolean(declareAttackersAction()) || Boolean(declareBlockersAction());
   const blockerSummary = () =>
     Object.entries(props.blockerAssignments).map(([blockerId, attackerId]) => ({
       blockerId,
       attackerId,
     }));
+  const showPrivateTray = () => props.orientation === "bottom";
+  const [handOrder, setHandOrder] = createSignal<string[]>([]);
+  const [focusedHandCardId, setFocusedHandCardId] = createSignal<string | null>(null);
+  const [battlefieldOrder, setBattlefieldOrder] = createSignal<string[]>([]);
+  const [draggedBattlefieldCardId, setDraggedBattlefieldCardId] = createSignal<string | null>(null);
+  const [battlefieldActionMenuCardId, setBattlefieldActionMenuCardId] = createSignal<string | null>(
+    null,
+  );
+
+  createEffect(() => {
+    const nextIds = props.viewer.hand.map((card) => card.card_id);
+    setHandOrder((previous) => {
+      const retained = previous.filter((cardId) => nextIds.includes(cardId));
+      const appended = nextIds.filter((cardId) => !retained.includes(cardId));
+      return [...retained, ...appended];
+    });
+  });
+
+  const orderedHand = () => {
+    const cardsById = new Map(props.viewer.hand.map((card) => [card.card_id, card]));
+    return handOrder()
+      .map((cardId) => cardsById.get(cardId))
+      .filter((card): card is ArenaHandCard => card !== undefined);
+  };
+
+  createEffect(() => {
+    const nextIds = viewerPlayer()?.battlefield.map((card) => card.card_id) ?? [];
+    setBattlefieldOrder((previous) => {
+      const retained = previous.filter((cardId) => nextIds.includes(cardId));
+      const appended = nextIds.filter((cardId) => !retained.includes(cardId));
+      return [...retained, ...appended];
+    });
+  });
+
+  const orderedBattlefield = () => {
+    const cardsById = new Map(
+      (viewerPlayer()?.battlefield ?? []).map((card) => [card.card_id, card]),
+    );
+    return battlefieldOrder()
+      .map((cardId) => cardsById.get(cardId))
+      .filter((card): card is ArenaBattlefieldCard => card !== undefined);
+  };
+
+  createEffect(() => {
+    const hand = orderedHand();
+    if (hand.length === 0) {
+      setFocusedHandCardId(null);
+      return;
+    }
+
+    const focusedCardId = focusedHandCardId();
+    if (focusedCardId && hand.some((card) => card.card_id === focusedCardId)) {
+      return;
+    }
+
+    setFocusedHandCardId(null);
+  });
+
+  createEffect(() => {
+    const openCardId = battlefieldActionMenuCardId();
+    if (!openCardId) {
+      return;
+    }
+
+    const battlefield = orderedBattlefield();
+    if (!battlefield.some((card) => card.card_id === openCardId)) {
+      setBattlefieldActionMenuCardId(null);
+    }
+  });
+
+  createEffect(() => {
+    if (props.orientation !== "bottom") {
+      return;
+    }
+
+    if (!props.handTrayOpen || !props.revealed) {
+      setFocusedHandCardId(null);
+    }
+  });
+
+  const moveHandCard = (draggedCardId: string, targetCardId: string) => {
+    setHandOrder((previous) => reorderCardIds(previous, draggedCardId, targetCardId));
+  };
+
+  const moveBattlefieldCard = (draggedCardId: string, targetCardId: string) => {
+    setBattlefieldOrder((previous) => reorderCardIds(previous, draggedCardId, targetCardId));
+  };
+
+  const battlefieldCardActions = (card: ArenaBattlefieldCard): BattlefieldCardActionOption[] => {
+    const actions: BattlefieldCardActionOption[] = [];
+
+    if (tapManaSourceIds().has(card.card_id)) {
+      actions.push({
+        label: "Tap for mana",
+        tone: "primary",
+        run: () => {
+          const playerId = props.viewer.player_id;
+          props.onRun((current) => tapManaSource(current, playerId, card.card_id));
+        },
+      });
+    }
+
+    if (activateAbilityIds().has(card.card_id)) {
+      actions.push({
+        label: "Activate ability",
+        tone: "primary",
+        run: () => {
+          const playerId = props.viewer.player_id;
+          props.onRun((current) => activateAbility(current, playerId, card.card_id));
+        },
+      });
+    }
+
+    if (attackerCandidateIds().has(card.card_id)) {
+      actions.push({
+        label: props.selectedAttackers.includes(card.card_id)
+          ? "Remove attacker"
+          : "Declare attacker",
+        run: () => {
+          props.onToggleAttackerSelection(card.card_id);
+        },
+      });
+    }
+
+    return actions;
+  };
+
+  const handleBattlefieldCardAction = (card: ArenaBattlefieldCard) => {
+    const actions = battlefieldCardActions(card);
+
+    if (actions.length === 0) {
+      return;
+    }
+
+    if (actions.length === 1) {
+      setBattlefieldActionMenuCardId(null);
+      actions[0]?.run();
+      return;
+    }
+
+    setBattlefieldActionMenuCardId((current) => (current === card.card_id ? null : card.card_id));
+  };
+
+  const canDropDraggedCard = () =>
+    props.orientation === "bottom" &&
+    Boolean(props.draggedHandCardId) &&
+    props.revealed &&
+    Boolean(
+      props.viewer.hand.find((card) => card.card_id === props.draggedHandCardId) &&
+      (playLandIds().has(props.draggedHandCardId ?? "") ||
+        (castSpellIds().has(props.draggedHandCardId ?? "") &&
+          !props.viewer.hand.find((card) => card.card_id === props.draggedHandCardId)
+            ?.requires_choice &&
+          !props.viewer.hand.find((card) => card.card_id === props.draggedHandCardId)
+            ?.requires_target)),
+    );
 
   return (
     <section
@@ -316,17 +725,25 @@ const SeatPanel: Component<{
         [`seat-${props.orientation}`]: true,
         active: props.viewer.is_active,
         priority: props.viewer.is_priority_holder,
+        "has-spotlight": spotlightPrompts().length > 0 || unsupportedPrompts().length > 0,
+        "tray-open": props.orientation === "bottom" && Boolean(props.handTrayOpen),
+        "tray-closed": props.orientation === "bottom" && !props.handTrayOpen,
       }}
     >
       <header class="seat-banner">
-        <div class="seat-banner-copy">
-          <p class="seat-title">{props.viewer.player_id}</p>
+        <div class="seat-identity">
+          <div class="seat-banner-copy">
+            <p class="seat-role">{props.orientation === "top" ? "Opponent" : "You"}</p>
+            <p class="seat-title">{props.viewer.player_id}</p>
+          </div>
           <Show when={viewerPlayer()}>
             {(player) => (
-              <p class="seat-summary">
-                Life {player().life} · hand {player().hand_count} · mana {player().mana_total} ·
-                library {player().library_count}
-              </p>
+              <div class="seat-summary">
+                <span class="seat-summary-pill">Life {player().life}</span>
+                <span class="seat-summary-pill">Hand {player().hand_count}</span>
+                <span class="seat-summary-pill">Mana {player().mana_total}</span>
+                <span class="seat-summary-pill">Deck {player().library_count}</span>
+              </div>
             )}
           </Show>
         </div>
@@ -378,44 +795,229 @@ const SeatPanel: Component<{
       <Show when={viewerPlayer()}>
         {(player) => (
           <div class="seat-zones">
-            <div class="zone-pocket">
-              <p class="label">Graveyard</p>
-              <CompactZone
-                cards={player().graveyard}
-                emptyLabel="No graveyard cards"
-                title={`${String(player().graveyard.length)} cards`}
-              />
-            </div>
+            <section
+              classList={{
+                "battlefield-lane": true,
+                "drop-ready": canDropDraggedCard(),
+              }}
+              onClick={() => {
+                setBattlefieldActionMenuCardId(null);
+              }}
+              onDragOver={(event) => {
+                if (!canDropDraggedCard()) {
+                  return;
+                }
 
-            <section class="battlefield-lane">
+                event.preventDefault();
+              }}
+              onDrop={(event) => {
+                if (!canDropDraggedCard()) {
+                  return;
+                }
+
+                event.preventDefault();
+                const cardId = props.draggedHandCardId;
+                if (cardId) {
+                  props.onBattlefieldDropCard?.(cardId);
+                }
+                props.onDragHandCard(null);
+              }}
+            >
               <div class="zone-head">
                 <div>
-                  <p class="label">Battlefield</p>
-                  <h3>Board presence</h3>
+                  <p class="label">
+                    {props.orientation === "top" ? "Opponent battlefield" : "Your battlefield"}
+                  </p>
+                  <h3>{props.orientation === "top" ? "Opponent" : "You"}</h3>
                 </div>
-                <span class="chip">{String(player().battlefield.length)} permanents</span>
+                <div class="chip-row">
+                  <span class="chip">{String(player().battlefield.length)} in play</span>
+                  <button
+                    class="chip chip-toggle"
+                    onClick={() => {
+                      props.onToggleZones();
+                    }}
+                  >
+                    {props.zonesOpen ? "Hide" : "Zones"}
+                  </button>
+                </div>
               </div>
+
+              <Show when={props.orientation === "bottom"}>
+                <div class="lane-quick-actions">
+                  <Show when={passPriorityAction()}>
+                    <button
+                      class="action-button action-button-primary"
+                      onClick={() => {
+                        const playerId = props.viewer.player_id;
+                        props.onRun((current) => passPriority(current, playerId));
+                      }}
+                    >
+                      Pass
+                    </button>
+                  </Show>
+                  <Show when={advanceTurnAction()}>
+                    <button
+                      class="action-button action-button-primary"
+                      onClick={() => {
+                        props.onRun(advanceTurn);
+                      }}
+                    >
+                      Next
+                    </button>
+                  </Show>
+                  <Show when={resolveCombatDamageAction()}>
+                    <button
+                      class="action-button action-button-primary"
+                      onClick={() => {
+                        const playerId = props.viewer.player_id;
+                        props.onRun((current) => resolveCombatDamage(current, playerId));
+                      }}
+                    >
+                      Damage
+                    </button>
+                  </Show>
+                  <button
+                    class="action-button"
+                    onClick={() => {
+                      props.onToggleHandTray?.();
+                    }}
+                  >
+                    {props.handTrayOpen ? "Hide hand" : "Show hand"}
+                  </button>
+                  <button
+                    class="action-button"
+                    onClick={() => {
+                      props.onToggleSeatPrivacy(props.viewer.player_id);
+                    }}
+                  >
+                    {props.revealed ? "Mask" : props.needsHandoff ? "Take seat" : "Reveal"}
+                  </button>
+                  <Show when={concedeAction()}>
+                    <button
+                      class="action-button"
+                      onClick={() => {
+                        const playerId = props.viewer.player_id;
+                        props.onRun((current) => concede(current, playerId));
+                      }}
+                    >
+                      Concede
+                    </button>
+                  </Show>
+                </div>
+              </Show>
+
               <Show
                 when={player().battlefield.length > 0}
                 fallback={<p class="muted">Nothing on the battlefield yet.</p>}
               >
                 <div class="battlefield-strip">
-                  <For each={player().battlefield}>
+                  <For each={orderedBattlefield()}>
                     {(card) => (
-                      <GameCard
-                        attacking={card.attacking}
-                        blocking={card.blocking}
-                        cardType={card.card_type}
-                        definitionId={card.definition_id}
-                        keywords={card.keywords}
-                        loyalty={card.loyalty}
-                        mode="battlefield"
-                        power={card.power}
-                        summoningSickness={card.summoning_sickness}
-                        tapped={card.tapped}
-                        token={card.token}
-                        toughness={card.toughness}
-                      />
+                      <div
+                        class="battlefield-card-shell"
+                        draggable
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          if (props.orientation !== "bottom") {
+                            return;
+                          }
+
+                          handleBattlefieldCardAction(card);
+                        }}
+                        onDragEnd={() => {
+                          setDraggedBattlefieldCardId(null);
+                        }}
+                        onDragOver={(event) => {
+                          if (!draggedBattlefieldCardId()) {
+                            return;
+                          }
+
+                          event.preventDefault();
+                          if (event.dataTransfer) {
+                            event.dataTransfer.dropEffect = "move";
+                          }
+                        }}
+                        onDragStart={(event) => {
+                          setDraggedBattlefieldCardId(card.card_id);
+                          if (event.dataTransfer) {
+                            event.dataTransfer.setData("text/plain", card.card_id);
+                            event.dataTransfer.effectAllowed = "move";
+                          }
+                        }}
+                        onDrop={(event) => {
+                          const draggedCardId = draggedBattlefieldCardId();
+                          if (!draggedCardId) {
+                            return;
+                          }
+
+                          event.preventDefault();
+                          moveBattlefieldCard(draggedCardId, card.card_id);
+                          setDraggedBattlefieldCardId(null);
+                        }}
+                      >
+                        <GameCard
+                          attacking={card.attacking}
+                          blocking={card.blocking}
+                          cardType={card.card_type}
+                          definitionId={card.definition_id}
+                          highlighted={
+                            tapManaSourceIds().has(card.card_id) ||
+                            activateAbilityIds().has(card.card_id) ||
+                            attackerCandidateIds().has(card.card_id)
+                          }
+                          interactive
+                          keywords={card.keywords}
+                          loyalty={card.loyalty}
+                          mode="battlefield"
+                          onClick={() => {
+                            if (props.orientation !== "bottom") {
+                              return;
+                            }
+
+                            handleBattlefieldCardAction(card);
+                          }}
+                          onInspect={() => {
+                            props.onInspectCard(inspectFromBattlefieldCard(card));
+                          }}
+                          power={card.power}
+                          summoningSickness={card.summoning_sickness}
+                          tapped={card.tapped}
+                          token={card.token}
+                          toughness={card.toughness}
+                        />
+                        <Show
+                          when={
+                            props.orientation === "bottom" &&
+                            battlefieldActionMenuCardId() === card.card_id &&
+                            battlefieldCardActions(card).length > 1
+                          }
+                        >
+                          <div
+                            class="battlefield-card-popover"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                            }}
+                          >
+                            <For each={battlefieldCardActions(card)}>
+                              {(action) => (
+                                <button
+                                  classList={{
+                                    "action-button": true,
+                                    "action-button-primary": action.tone === "primary",
+                                  }}
+                                  onClick={() => {
+                                    action.run();
+                                    setBattlefieldActionMenuCardId(null);
+                                  }}
+                                >
+                                  {action.label}
+                                </button>
+                              )}
+                            </For>
+                          </div>
+                        </Show>
+                      </div>
                     )}
                   </For>
                 </div>
@@ -423,41 +1025,6 @@ const SeatPanel: Component<{
 
               <Show when={battlefieldConsoleVisible()}>
                 <div class="battlefield-console">
-                  <Show when={Boolean(tapManaSourceAction() ?? activateAbilityAction())}>
-                    <section class="battlefield-console-panel">
-                      <div class="panel-head seat-module-head">
-                        <div>
-                          <p class="label">Board tools</p>
-                          <h3>Mana and abilities</h3>
-                        </div>
-                      </div>
-
-                      <Show when={tapManaSourceAction()}>
-                        <ActionList
-                          title="Tap mana"
-                          items={tapManaSourceAction()?.card_ids ?? []}
-                          labelFor={(cardId) => battlefieldCardLabel(props.game, cardId)}
-                          onPress={(cardId) => {
-                            const playerId = props.viewer.player_id;
-                            props.onRun((current) => tapManaSource(current, playerId, cardId));
-                          }}
-                        />
-                      </Show>
-
-                      <Show when={activateAbilityAction()}>
-                        <ActionList
-                          title="Activate ability"
-                          items={activateAbilityAction()?.card_ids ?? []}
-                          labelFor={(cardId) => battlefieldCardLabel(props.game, cardId)}
-                          onPress={(cardId) => {
-                            const playerId = props.viewer.player_id;
-                            props.onRun((current) => activateAbility(current, playerId, cardId));
-                          }}
-                        />
-                      </Show>
-                    </section>
-                  </Show>
-
                   <Show when={declareAttackersAction()}>
                     <article class="combat-stage">
                       <div class="panel-head seat-module-head">
@@ -600,205 +1167,244 @@ const SeatPanel: Component<{
               </Show>
             </section>
 
-            <div class="zone-pocket">
-              <p class="label">Exile</p>
-              <CompactZone
-                cards={player().exile}
-                emptyLabel="Nothing in exile"
-                title={`${String(player().exile.length)} cards`}
-              />
-            </div>
+            <aside classList={{ "zone-rail": true, collapsed: !props.zonesOpen }}>
+              <div class="zone-rail-content">
+                <button
+                  class="zone-portal-button"
+                  onClick={() => {
+                    props.onOpenZoneBrowser({
+                      playerId: props.viewer.player_id,
+                      zone: "library",
+                    });
+                  }}
+                >
+                  <ZoneCounter
+                    count={player().library_count}
+                    highlight={props.viewer.is_active}
+                    label="Library"
+                  />
+                </button>
+                <button
+                  class="zone-portal-button"
+                  onClick={() => {
+                    props.onOpenZoneBrowser({
+                      playerId: props.viewer.player_id,
+                      zone: "graveyard",
+                    });
+                  }}
+                >
+                  <div class="zone-pocket">
+                    <p class="label">Graveyard</p>
+                    <strong>{String(player().graveyard.length)}</strong>
+                    <p class="zone-pocket-copy">
+                      {player().graveyard[0]?.definition_id ?? "Open browser"}
+                    </p>
+                  </div>
+                </button>
+              </div>
+            </aside>
           </div>
         )}
       </Show>
 
-      <section class="seat-ops">
-        <div class="seat-command-bar">
-          <Show when={passPriorityAction()}>
-            <button
-              class="hero-button seat-button"
-              onClick={() => {
-                const playerId = props.viewer.player_id;
-                props.onRun((current) => passPriority(current, playerId));
-              }}
-            >
-              Pass priority
-            </button>
-          </Show>
-          <Show when={advanceTurnAction()}>
-            <button
-              class="hero-button seat-button"
-              onClick={() => {
-                props.onRun(advanceTurn);
-              }}
-            >
-              Advance turn
-            </button>
-          </Show>
-          <Show when={resolveCombatDamageAction()}>
-            <button
-              class="hero-button seat-button"
-              onClick={() => {
-                const playerId = props.viewer.player_id;
-                props.onRun((current) => resolveCombatDamage(current, playerId));
-              }}
-            >
-              Resolve combat
-            </button>
-          </Show>
-          <Show when={concedeAction()}>
-            <button
-              class="hero-button hero-button-ghost seat-button"
-              onClick={() => {
-                const playerId = props.viewer.player_id;
-                props.onRun((current) => concede(current, playerId));
-              }}
-            >
-              Concede
-            </button>
-          </Show>
-        </div>
+      <Show when={showPrivateTray()}>
+        <section class="seat-ops">
+          <section
+            classList={{
+              "hand-drawer": true,
+              collapsed: !props.handTrayOpen,
+            }}
+          >
+            <div class="hand-drawer-body">
+              <Show when={handPrompt()}>
+                {(prompt) => (
+                  <SupportedPrompt
+                    hand={props.viewer.hand}
+                    onRun={props.onRun}
+                    playerId={props.viewer.player_id}
+                    prompt={prompt()}
+                    variant="private"
+                  />
+                )}
+              </Show>
 
-        <div class="seat-ops-grid">
-          <section class="seat-module hand-module">
-            <div class="panel-head seat-module-head">
-              <div>
-                <p class="label">Private hand</p>
-                <h3>Seat tray</h3>
-              </div>
-              <button
-                class="hero-button hero-button-ghost mini-button"
-                onClick={() => {
-                  props.onToggleSeatPrivacy(props.viewer.player_id);
-                }}
+              <Show
+                when={props.revealed}
+                fallback={
+                  <div class="seat-privacy-guard">
+                    <p class="muted">
+                      {props.needsHandoff
+                        ? "Take the seat to reveal this hand."
+                        : "Hand hidden. Reveal it when you want to play from hand."}
+                    </p>
+                    <button
+                      class="hero-button"
+                      onClick={() => {
+                        props.onToggleSeatPrivacy(props.viewer.player_id);
+                      }}
+                    >
+                      {props.needsHandoff ? "Take seat" : "Reveal hand"}
+                    </button>
+                  </div>
+                }
               >
-                {props.revealed ? "Shield hand" : props.needsHandoff ? "Take seat" : "Reveal hand"}
-              </button>
+                <div class="hand-fan hand-fan-floating">
+                  <For each={orderedHand()}>
+                    {(card, index) => (
+                      <div
+                        classList={{
+                          "card-drag-shell": true,
+                          "hand-card-shell": true,
+                          focused: focusedHandCardId() === card.card_id,
+                        }}
+                        draggable={props.revealed}
+                        onDragOver={(event) => {
+                          if (!props.revealed || !props.draggedHandCardId) {
+                            return;
+                          }
+
+                          event.preventDefault();
+                          if (event.dataTransfer) {
+                            event.dataTransfer.dropEffect = "move";
+                          }
+                        }}
+                        onDragEnd={() => {
+                          props.onDragHandCard(null);
+                        }}
+                        onDrop={(event) => {
+                          if (!props.draggedHandCardId) {
+                            return;
+                          }
+
+                          event.preventDefault();
+                          moveHandCard(props.draggedHandCardId, card.card_id);
+                          props.onDragHandCard(null);
+                        }}
+                        onDragStart={(event) => {
+                          props.onDragHandCard(card.card_id);
+                          if (event.dataTransfer) {
+                            event.dataTransfer.setData("text/plain", card.card_id);
+                            event.dataTransfer.effectAllowed = "move";
+                          }
+                        }}
+                        style={handCardShellStyle(
+                          index(),
+                          orderedHand().length,
+                          !props.handTrayOpen,
+                          focusedHandCardId() === card.card_id,
+                        )}
+                      >
+                        <GameCard
+                          actions={
+                            <>
+                              <Show when={playLandIds().has(card.card_id)}>
+                                <button
+                                  class="action-button"
+                                  onClick={() => {
+                                    const playerId = props.viewer.player_id;
+                                    const cardId = card.card_id;
+                                    props.onRun((current) => playLand(current, playerId, cardId));
+                                  }}
+                                >
+                                  Play land
+                                </button>
+                              </Show>
+                              <Show when={castSpellIds().has(card.card_id)}>
+                                <button
+                                  class="action-button"
+                                  disabled={card.requires_target || card.requires_choice}
+                                  onClick={() => {
+                                    const playerId = props.viewer.player_id;
+                                    const cardId = card.card_id;
+                                    props.onRun((current) => castSpell(current, playerId, cardId));
+                                  }}
+                                >
+                                  {card.requires_target || card.requires_choice
+                                    ? "Target UI soon"
+                                    : "Cast"}
+                                </button>
+                              </Show>
+                              <Show when={discardForCleanupIds().has(card.card_id)}>
+                                <button
+                                  class="action-button"
+                                  onClick={() => {
+                                    const playerId = props.viewer.player_id;
+                                    const cardId = card.card_id;
+                                    props.onRun((current) =>
+                                      discardForCleanup(current, playerId, cardId),
+                                    );
+                                  }}
+                                >
+                                  Discard
+                                </button>
+                              </Show>
+                            </>
+                          }
+                          activatedAbility={card.has_activated_ability}
+                          cardType={card.card_type}
+                          definitionId={card.definition_id}
+                          fanCount={props.viewer.hand.length}
+                          highlighted={
+                            playLandIds().has(card.card_id) ||
+                            castSpellIds().has(card.card_id) ||
+                            discardForCleanupIds().has(card.card_id)
+                          }
+                          index={index()}
+                          interactive
+                          keywords={card.keywords}
+                          loyalty={card.loyalty}
+                          manaCost={card.mana_cost}
+                          mode="hand"
+                          onInspect={() => {
+                            setFocusedHandCardId(card.card_id);
+                            props.onInspectCard(inspectFromHandCard(card));
+                          }}
+                          openPriority={card.can_cast_in_open_priority}
+                          ownTurnPriority={card.can_cast_in_open_priority_during_own_turn}
+                          power={card.power}
+                          toughness={card.toughness}
+                        />
+                      </div>
+                    )}
+                  </For>
+                </div>
+              </Show>
+
+              <Show when={unsupportedPrompts().length > 0}>
+                <details class="unsupported-drawer">
+                  <summary class="debug-drawer-summary seat-drawer-summary">
+                    <div>
+                      <p class="label">Seat read</p>
+                      <h3>Tactical notes</h3>
+                    </div>
+                    <span class="chip chip-night">debug</span>
+                  </summary>
+
+                  <p class="support-note">{seatSupportCopy(props.viewer, props.needsHandoff)}</p>
+
+                  <div class="unsupported-list">
+                    <For each={unsupportedPrompts()}>
+                      {(prompt) => (
+                        <article class="unsupported-item">
+                          <strong>{prompt.kind}</strong>
+                          <p>{prompt.summary}</p>
+                          <Show when={prompt.item_ids.length > 0}>
+                            <div class="chip-row">
+                              <For each={prompt.item_ids}>
+                                {(itemId) => <span class="chip">{itemId}</span>}
+                              </For>
+                            </div>
+                          </Show>
+                        </article>
+                      )}
+                    </For>
+                  </div>
+                </details>
+              </Show>
             </div>
-
-            <Show when={handPrompt()}>
-              {(prompt) => (
-                <SupportedPrompt
-                  hand={props.viewer.hand}
-                  onRun={props.onRun}
-                  playerId={props.viewer.player_id}
-                  prompt={prompt()}
-                  variant="private"
-                />
-              )}
-            </Show>
-
-            <Show
-              when={props.revealed}
-              fallback={
-                <p class="muted">
-                  {props.needsHandoff
-                    ? "Hand shielded until this player takes the seat."
-                    : "Hand shielded while the seat is being passed."}
-                </p>
-              }
-            >
-              <div class="hand-fan">
-                <For each={props.viewer.hand}>
-                  {(card, index) => (
-                    <GameCard
-                      actions={
-                        <>
-                          <Show when={playLandIds().has(card.card_id)}>
-                            <button
-                              class="action-button"
-                              onClick={() => {
-                                const playerId = props.viewer.player_id;
-                                const cardId = card.card_id;
-                                props.onRun((current) => playLand(current, playerId, cardId));
-                              }}
-                            >
-                              Play land
-                            </button>
-                          </Show>
-                          <Show when={castSpellIds().has(card.card_id)}>
-                            <button
-                              class="action-button"
-                              disabled={card.requires_target || card.requires_choice}
-                              onClick={() => {
-                                const playerId = props.viewer.player_id;
-                                const cardId = card.card_id;
-                                props.onRun((current) => castSpell(current, playerId, cardId));
-                              }}
-                            >
-                              {card.requires_target || card.requires_choice
-                                ? "Cast UI pending"
-                                : "Cast spell"}
-                            </button>
-                          </Show>
-                          <Show when={discardForCleanupIds().has(card.card_id)}>
-                            <button
-                              class="action-button"
-                              onClick={() => {
-                                const playerId = props.viewer.player_id;
-                                const cardId = card.card_id;
-                                props.onRun((current) =>
-                                  discardForCleanup(current, playerId, cardId),
-                                );
-                              }}
-                            >
-                              Discard
-                            </button>
-                          </Show>
-                        </>
-                      }
-                      activatedAbility={card.has_activated_ability}
-                      cardType={card.card_type}
-                      definitionId={card.definition_id}
-                      fanCount={props.viewer.hand.length}
-                      index={index()}
-                      keywords={card.keywords}
-                      loyalty={card.loyalty}
-                      manaCost={card.mana_cost}
-                      mode="hand"
-                      openPriority={card.can_cast_in_open_priority}
-                      ownTurnPriority={card.can_cast_in_open_priority_during_own_turn}
-                      power={card.power}
-                      toughness={card.toughness}
-                    />
-                  )}
-                </For>
-              </div>
-            </Show>
           </section>
-
-          <section class="seat-module support-module">
-            <div class="panel-head seat-module-head">
-              <div>
-                <p class="label">Seat read</p>
-                <h3>Tactical notes</h3>
-              </div>
-            </div>
-
-            <p class="support-note">{seatSupportCopy(props.viewer, props.needsHandoff)}</p>
-
-            <Show when={unsupportedPrompts().length > 0}>
-              <div class="unsupported-list">
-                <For each={unsupportedPrompts()}>
-                  {(prompt) => (
-                    <article class="unsupported-item">
-                      <strong>{prompt.kind}</strong>
-                      <p>{prompt.summary}</p>
-                      <Show when={prompt.item_ids.length > 0}>
-                        <div class="chip-row">
-                          <For each={prompt.item_ids}>
-                            {(itemId) => <span class="chip">{itemId}</span>}
-                          </For>
-                        </div>
-                      </Show>
-                    </article>
-                  )}
-                </For>
-              </div>
-            </Show>
-          </section>
-        </div>
-      </section>
+        </section>
+      </Show>
     </section>
   );
 };
@@ -808,6 +1414,17 @@ const SidebarMetric: Component<{ label: string; value: string }> = (props) => (
     <p class="label">{props.label}</p>
     <p class="value">{props.value}</p>
   </div>
+);
+
+const ZoneCounter: Component<{
+  label: string;
+  count: number;
+  highlight?: boolean;
+}> = (props) => (
+  <article classList={{ "zone-counter": true, highlight: Boolean(props.highlight) }}>
+    <p class="label">{props.label}</p>
+    <strong>{String(props.count)}</strong>
+  </article>
 );
 
 const StatusBadge: Component<{
@@ -927,53 +1544,6 @@ const SupportedPrompt: Component<{
   );
 };
 
-const ActionList: Component<{
-  title: string;
-  items: string[];
-  labelFor: (itemId: string) => string;
-  onPress: (itemId: string) => void;
-}> = (props) => (
-  <article class="action-cluster">
-    <p class="label">{props.title}</p>
-    <div class="action-list">
-      <For each={props.items}>
-        {(itemId) => (
-          <button
-            class="action-button"
-            onClick={() => {
-              props.onPress(itemId);
-            }}
-          >
-            {props.labelFor(itemId)}
-          </button>
-        )}
-      </For>
-    </div>
-  </article>
-);
-
-const CompactZone: Component<{
-  title: string;
-  cards: ArenaCardView[];
-  emptyLabel: string;
-}> = (props) => (
-  <>
-    <p class="label">{props.title}</p>
-    <Show when={props.cards.length > 0} fallback={<p class="muted">{props.emptyLabel}</p>}>
-      <ul class="compact-list">
-        <For each={props.cards}>
-          {(card) => (
-            <li>
-              <span>{card.definition_id}</span>
-              <span>{card.card_type}</span>
-            </li>
-          )}
-        </For>
-      </ul>
-    </Show>
-  </>
-);
-
 const StackView: Component<{ stack: ArenaStackObject[] }> = (props) => (
   <div class="stack-list">
     <Show when={props.stack.length > 0} fallback={<p class="muted">Stack empty.</p>}>
@@ -1058,6 +1628,50 @@ function formatCardLabel(
   return `${definitionId} · ${cardType}`;
 }
 
+function inspectFromHandCard(card: ArenaHandCard): InspectCardState {
+  return {
+    definitionId: card.definition_id,
+    cardType: card.card_type,
+    zoneLabel: "Hand",
+    manaCost: card.mana_cost,
+    power: card.power,
+    toughness: card.toughness,
+    loyalty: card.loyalty,
+    keywords: card.keywords,
+    note:
+      card.requires_target || card.requires_choice
+        ? "This card still needs a dedicated target or choice flow before battlefield drop-casting."
+        : "You can cast or play this card directly from the hand tray, or drag it onto your battlefield when legal.",
+  };
+}
+
+function inspectFromBattlefieldCard(card: ArenaBattlefieldCard): InspectCardState {
+  return {
+    definitionId: card.definition_id,
+    cardType: card.card_type,
+    zoneLabel: "Battlefield",
+    power: card.power,
+    toughness: card.toughness,
+    loyalty: card.loyalty,
+    keywords: card.keywords,
+    token: card.token,
+    tapped: card.tapped,
+    summoningSickness: card.summoning_sickness,
+    attacking: card.attacking,
+    blocking: card.blocking,
+    note: card.attached_to ? `Attached to ${card.attached_to}` : undefined,
+  };
+}
+
+function inspectFromZoneCard(card: ArenaCardView, zoneLabel: string): InspectCardState {
+  return {
+    definitionId: card.definition_id,
+    cardType: card.card_type,
+    zoneLabel,
+    keywords: [],
+  };
+}
+
 function blockerAssignmentsToArray(assignments: Record<string, string>): BlockerAssignmentInput[] {
   return Object.entries(assignments).map(([blocker_id, attacker_id]) => ({
     blocker_id,
@@ -1091,4 +1705,61 @@ function seatSupportCopy(viewer: ArenaViewerState, needsHandoff: boolean): strin
 
 function formatPhase(phase: string): string {
   return phase.replace(/([A-Z])/g, " $1").trim();
+}
+
+function shortPlayerTag(playerId: string | null | undefined): string {
+  if (!playerId) {
+    return "n/a";
+  }
+
+  const digits = playerId.match(/\d+/g)?.join("");
+  if (digits) {
+    return `P${digits}`;
+  }
+
+  return playerId.length > 6 ? playerId.slice(0, 6) : playerId;
+}
+
+function reorderCardIds(cardIds: string[], draggedCardId: string, targetCardId: string): string[] {
+  if (draggedCardId === targetCardId) {
+    return cardIds;
+  }
+
+  const next = [...cardIds];
+  const draggedIndex = next.indexOf(draggedCardId);
+  const targetIndex = next.indexOf(targetCardId);
+
+  if (draggedIndex === -1 || targetIndex === -1) {
+    return next;
+  }
+
+  next.splice(draggedIndex, 1);
+  next.splice(targetIndex, 0, draggedCardId);
+  return next;
+}
+
+function handCardShellStyle(
+  index: number,
+  total: number,
+  collapsed: boolean,
+  focused: boolean,
+): Record<string, string> {
+  const midpoint = (total - 1) / 2;
+  const offset = index - midpoint;
+  const spread = total >= 8 ? 58 : total >= 6 ? 66 : 74;
+  const x = offset * spread;
+  const y = (collapsed ? 154 : 142) + Math.min(Math.abs(offset) * 4, 12);
+  const angle = offset * 4.25;
+  const depth = focused ? total + 12 : index + 1;
+  const focusLift = 0;
+  const hoverLift = collapsed ? -18 : -24;
+
+  return {
+    "--hand-x": `${String(x)}px`,
+    "--hand-y": `${String(y)}px`,
+    "--hand-angle": `${String(angle)}deg`,
+    "--hand-depth": String(depth),
+    "--hand-focus-y": `${String(focusLift)}px`,
+    "--hand-hover-y": `${String(hoverLift)}px`,
+  };
 }

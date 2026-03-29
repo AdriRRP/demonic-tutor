@@ -4,28 +4,40 @@ import type { Component, JSX } from "solid-js";
 interface GameCardProps {
   definitionId: string;
   cardType: string;
-  manaCost?: number | null;
-  power?: number | null;
-  toughness?: number | null;
-  loyalty?: number | null;
-  keywords?: string[];
+  manaCost?: number | null | undefined;
+  power?: number | null | undefined;
+  toughness?: number | null | undefined;
+  loyalty?: number | null | undefined;
+  keywords?: string[] | undefined;
   mode: "hand" | "battlefield";
-  index?: number;
-  fanCount?: number;
-  tapped?: boolean;
-  summoningSickness?: boolean;
-  attacking?: boolean;
-  blocking?: boolean;
-  token?: boolean;
-  openPriority?: boolean;
-  ownTurnPriority?: boolean;
-  activatedAbility?: boolean;
-  actions?: JSX.Element;
+  index?: number | undefined;
+  fanCount?: number | undefined;
+  tapped?: boolean | undefined;
+  summoningSickness?: boolean | undefined;
+  attacking?: boolean | undefined;
+  blocking?: boolean | undefined;
+  token?: boolean | undefined;
+  openPriority?: boolean | undefined;
+  ownTurnPriority?: boolean | undefined;
+  activatedAbility?: boolean | undefined;
+  actions?: JSX.Element | undefined;
+  interactive?: boolean | undefined;
+  highlighted?: boolean | undefined;
+  onClick?:
+    | ((event: MouseEvent & { currentTarget: HTMLElement; target: Element }) => void)
+    | undefined;
+  onInspect?:
+    | ((event: MouseEvent & { currentTarget: HTMLElement; target: Element }) => void)
+    | undefined;
 }
 
 export const GameCard: Component<GameCardProps> = (props) => {
   const keywords = () => props.keywords ?? [];
   const cardTone = () => toneForCardType(props.cardType);
+  const handleInspect = (event: MouseEvent & { currentTarget: HTMLElement; target: Element }) => {
+    event.stopPropagation();
+    props.onInspect?.(event);
+  };
   const frameStyle = () => {
     if (props.mode !== "hand") {
       return undefined;
@@ -44,91 +56,123 @@ export const GameCard: Component<GameCardProps> = (props) => {
 
   return (
     <article
+      data-card-tone={cardTone()}
       classList={{
         "game-card": true,
         [`tone-${cardTone()}`]: true,
         "mode-hand": props.mode === "hand",
         "mode-battlefield": props.mode === "battlefield",
+        interactive: Boolean(props.interactive),
+        inspectable: Boolean(props.onInspect),
+        highlighted: Boolean(props.highlighted),
         tapped: Boolean(props.tapped),
+      }}
+      onClick={(event) => {
+        props.onClick?.(event);
       }}
       style={frameStyle()}
     >
       <div class="game-card-skin">
-        <div class="game-card-crest" />
-        <div class="game-card-head">
-          <div>
-            <p class="game-card-type">{labelForCardType(props.cardType)}</p>
+        <div
+          classList={{
+            "game-card-head": true,
+            inspectable: Boolean(props.onInspect),
+          }}
+          onClick={handleInspect}
+        >
+          <div class="game-card-title-block">
             <h4>{props.definitionId}</h4>
+            <p class="game-card-type">{labelForCardType(props.cardType)}</p>
           </div>
           <Show when={props.manaCost !== undefined && props.manaCost !== null}>
             <span class="game-card-cost">{props.manaCost}</span>
           </Show>
         </div>
 
-        <div class="game-card-statuses">
-          <Show when={props.token}>
-            <span class="chip">Token</span>
-          </Show>
-          <Show when={props.tapped}>
-            <span class="chip chip-night">Tapped</span>
-          </Show>
-          <Show when={props.summoningSickness}>
-            <span class="chip">Summoning sick</span>
-          </Show>
-          <Show when={props.attacking}>
-            <span class="chip chip-ember">Attacking</span>
-          </Show>
-          <Show when={props.blocking}>
-            <span class="chip chip-forest">Blocking</span>
-          </Show>
-          <Show when={props.openPriority}>
-            <span class="chip chip-night">Open priority</span>
-          </Show>
-          <Show when={props.ownTurnPriority}>
-            <span class="chip chip-night">Own-turn priority</span>
-          </Show>
-          <Show when={props.activatedAbility}>
-            <span class="chip chip-forest">Ability</span>
-          </Show>
+        <div
+          classList={{
+            "game-card-artbox": true,
+            inspectable: Boolean(props.onInspect),
+          }}
+          onClick={handleInspect}
+        >
+          <div class="game-card-art-placeholder" />
+          <div class="game-card-statuses">
+            <Show when={props.token}>
+              <span class="chip">Token</span>
+            </Show>
+            <Show when={props.tapped && props.mode === "battlefield"}>
+              <span class="chip chip-night">Tapped</span>
+            </Show>
+            <Show when={props.summoningSickness && props.mode === "battlefield"}>
+              <span class="chip">Summoning sick</span>
+            </Show>
+            <Show when={props.attacking && props.mode === "battlefield"}>
+              <span class="chip chip-ember">Attacking</span>
+            </Show>
+            <Show when={props.blocking && props.mode === "battlefield"}>
+              <span class="chip chip-forest">Blocking</span>
+            </Show>
+            <Show when={props.openPriority && props.mode === "hand"}>
+              <span class="chip chip-night">Open priority</span>
+            </Show>
+            <Show when={props.ownTurnPriority && props.mode === "hand"}>
+              <span class="chip chip-night">Own-turn priority</span>
+            </Show>
+            <Show when={props.activatedAbility}>
+              <span class="chip chip-forest">Ability</span>
+            </Show>
+          </div>
         </div>
 
-        <div class="game-card-body">
-          <Show when={keywords().length > 0}>
-            <div class="game-card-keywords">
-              <For each={keywords()}>
-                {(keyword) => <span class="game-keyword">{keyword}</span>}
-              </For>
-            </div>
-          </Show>
-          <p class="game-card-line">{props.cardType}</p>
-        </div>
+        <div class="game-card-textbox">
+          <div class="game-card-body">
+            <Show when={keywords().length > 0}>
+              <div class="game-card-keywords">
+                <For each={keywords()}>
+                  {(keyword) => <span class="game-keyword">{keyword}</span>}
+                </For>
+              </div>
+            </Show>
+            <Show when={props.mode === "battlefield"}>
+              <p class="game-card-line">{props.cardType}</p>
+            </Show>
+          </div>
 
-        <div class="game-card-footer">
-          <Show when={props.loyalty !== undefined && props.loyalty !== null}>
-            <div class="card-stat-block">
-              <span>Loyalty</span>
-              <strong>{props.loyalty}</strong>
-            </div>
-          </Show>
-          <Show
-            when={
-              props.power !== undefined &&
-              props.power !== null &&
-              props.toughness !== undefined &&
-              props.toughness !== null
-            }
-          >
-            <div class="card-stat-block combat">
-              <span>Power / Toughness</span>
-              <strong>
-                {props.power}/{props.toughness}
-              </strong>
-            </div>
-          </Show>
+          <div class="game-card-footer">
+            <Show when={props.loyalty !== undefined && props.loyalty !== null}>
+              <div class="card-stat-block">
+                <span>Loyalty</span>
+                <strong>{props.loyalty}</strong>
+              </div>
+            </Show>
+            <Show
+              when={
+                props.power !== undefined &&
+                props.power !== null &&
+                props.toughness !== undefined &&
+                props.toughness !== null
+              }
+            >
+              <div class="card-stat-block combat">
+                <span>Power / Toughness</span>
+                <strong>
+                  {props.power}/{props.toughness}
+                </strong>
+              </div>
+            </Show>
+          </div>
         </div>
 
         <Show when={props.actions}>
-          <div class="game-card-actions">{props.actions}</div>
+          <div
+            class="game-card-actions"
+            onClick={(event) => {
+              event.stopPropagation();
+            }}
+          >
+            {props.actions}
+          </div>
         </Show>
       </div>
     </article>

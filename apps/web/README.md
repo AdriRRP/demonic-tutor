@@ -71,13 +71,18 @@ It currently provides:
 
 - one shared wasm-backed game session
 - two viewer-scoped seats over that same Rust-owned state
-- a central play surface with top/bottom seats and a secondary replay sidebar
+- a viewport-fitted SPA arena with dedicated landscape and portrait layouts
+- a battlefield-first play surface with a clear opponent/player split
+- a collapsible bottom hand fan that can be dragged onto the battlefield for simple legal plays
+- visible library and graveyard anchors that open zone browsers instead of permanently occupying the table
+- card inspection modals so the card itself is now the primary interaction object
+- a modal replay log instead of a persistent sidebar dashboard
 - explicit pass-the-device handoff, with only one private hand open at a time
 - prompts and choices anchored near the seat area they belong to
 - a more spatial combat lane for attackers and blockers
 - real command execution for land play, mana, simple casting, combat, cleanup, and replay
 
-It is still an early arena rather than a polished shipped client, but the UI now prioritizes feeling like a real table before adding richer motion or deeper spell UX.
+It is still an early arena rather than a polished shipped client, but the UI now prioritizes a card-first premium table feel before adding richer motion or deeper spell UX.
 
 ## Guardrails
 

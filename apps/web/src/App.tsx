@@ -22,7 +22,8 @@ const App: Component = () => {
     try {
       const nextClient = await createArenaClient();
       const nextState = readState(nextClient);
-      const nextSeatPrivacy = deriveSeatPrivacy(nextState, null);
+      const initialFocus = focusPlayerId(nextState);
+      const nextSeatPrivacy = deriveSeatPrivacy(nextState, initialFocus);
       setClient(nextClient);
       setState(nextState);
       setRevealedSeatId(nextSeatPrivacy.revealedSeatId);
