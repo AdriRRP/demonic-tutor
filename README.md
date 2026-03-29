@@ -97,6 +97,8 @@ The project is organized around a single implemented bounded context, `play`.
   orchestration between commands, aggregate calls, event persistence, and event publication
 - `src/infrastructure/`
   in-memory event store, event bus, and projections
+- `apps/web/`
+  a Solid + Vite web shell that embeds the real Rust engine through WebAssembly
 - `docs/domain/`
   canonical domain truth
 - `docs/architecture/`
@@ -169,6 +171,9 @@ Useful commands:
 cargo check --target wasm32-unknown-unknown
 cargo test --test unit
 cargo test --test bdd
+cd apps/web && npm install
+cd apps/web && npm run dev
+cd apps/web && npm run build
 ```
 
 The authoritative development guidance lives in [`docs/development/development.md`](docs/development/development.md).

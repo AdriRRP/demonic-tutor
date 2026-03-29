@@ -31,6 +31,14 @@ pub(super) struct PublicEventLogProjection {
     pub estimated_bytes: usize,
 }
 
+#[derive(Clone, Copy)]
+struct SurfacePlayers<'a> {
+    active_player: Option<&'a Player>,
+    defending_player: Option<&'a Player>,
+    viewer_player: Option<&'a Player>,
+    viewer_opponent: Option<&'a Player>,
+}
+
 impl PublicSurfaceState {
     fn with_choice_requests(
         legal_actions: Vec<PublicLegalAction>,
@@ -45,6 +53,23 @@ impl PublicSurfaceState {
 
     pub(super) fn into_parts(self) -> (Vec<PublicLegalAction>, Vec<PublicChoiceRequest>) {
         (self.legal_actions, self.choice_requests)
+    }
+}
+
+impl<'a> SurfacePlayers<'a> {
+    fn resolve(game: &'a Game, viewer_id: &PlayerId) -> Self {
+        let players = game.players();
+        let active_player = players.get(game.active_player_index_value());
+        let defending_player = active_player.and_then(|player| other_player(players, player.id()));
+        let viewer_player = find_player(players, viewer_id);
+        let viewer_opponent = viewer_player.and_then(|player| other_player(players, player.id()));
+
+        Self {
+            active_player,
+            defending_player,
+            viewer_player,
+            viewer_opponent,
+        }
     }
 }
 
@@ -176,7 +201,11 @@ fn unavailable_phase_surface(viewer_id: &PlayerId, phase: Phase) -> PublicSurfac
     )
 }
 
-fn priority_surface_state(game: &Game, player: &Player) -> PublicSurfaceState {
+fn priority_surface_state(
+    game: &Game,
+    player: &Player,
+    opponent: Option<&Player>,
+) -> PublicSurfaceState {
     let player_id = player.id();
 
     let playable_land_ids = playable_land_ids(game, player);
@@ -220,8 +249,8 @@ fn priority_surface_state(game: &Game, player: &Player) -> PublicSurfaceState {
 
         if castable.requires_choice {
             if let Some(request) = spell_choice_request(
-                game,
                 player,
+                opponent,
                 &castable.card_id,
                 cached_target_candidates.as_deref(),
             ) {
@@ -327,10 +356,14 @@ fn ability_target_candidate_cache(
         .collect()
 }
 
-fn phase_surface_state(game: &Game, viewer_id: &PlayerId) -> PublicSurfaceState {
+fn phase_surface_state(
+    game: &Game,
+    viewer_id: &PlayerId,
+    players: SurfacePlayers<'_>,
+) -> PublicSurfaceState {
     let mut actions = Vec::new();
     let mut choice_requests = Vec::new();
-    let Some(active_player) = active_player(game) else {
+    let Some(active_player) = players.active_player else {
         return unavailable_phase_surface(viewer_id, *game.phase());
     };
 
@@ -345,7 +378,7 @@ fn phase_surface_state(game: &Game, viewer_id: &PlayerId) -> PublicSurfaceState 
             });
         }
         Phase::DeclareBlockers => {
-            let Some(defending_player) = defending_player(game, active_player) else {
+            let Some(defending_player) = players.defending_player else {
                 return unavailable_phase_surface(viewer_id, *game.phase());
             };
             if defending_player.id() != viewer_id {
@@ -411,16 +444,17 @@ pub(super) fn public_surface_state(game: &Game, viewer_id: &PlayerId) -> PublicS
         return PublicSurfaceState::default();
     }
 
+    let players = SurfacePlayers::resolve(game, viewer_id);
     let mut state = game.pending_decision().map_or_else(
         || {
             game.priority().map_or_else(
-                || phase_surface_state(game, viewer_id),
+                || phase_surface_state(game, viewer_id, players),
                 |priority| {
                     let current_holder = priority.current_holder();
                     if current_holder == viewer_id {
-                        player_by_id(game, current_holder).map_or_else(
+                        players.viewer_player.map_or_else(
                             || unavailable_priority_surface(viewer_id),
-                            |player| priority_surface_state(game, player),
+                            |player| priority_surface_state(game, player, players.viewer_opponent),
                         )
                     } else {
                         PublicSurfaceState::default()
@@ -912,22 +946,6 @@ fn stack_target_view(
     }
 }
 
-fn player_by_id<'a>(game: &'a Game, player_id: &PlayerId) -> Option<&'a Player> {
-    let players = game.players();
-    match players {
-        [first, second] => {
-            if first.id() == player_id {
-                Some(first)
-            } else if second.id() == player_id {
-                Some(second)
-            } else {
-                None
-            }
-        }
-        _ => players.iter().find(|player| player.id() == player_id),
-    }
-}
-
 fn playable_land_ids(game: &Game, player: &Player) -> Vec<CardInstanceId> {
     player
         .hand_card_ids()
@@ -972,8 +990,8 @@ fn castable_card(
 }
 
 fn spell_choice_request(
-    game: &Game,
     player: &Player,
+    opponent: Option<&Player>,
     source_card_id: &CardInstanceId,
     cached_target_candidates: Option<&[PublicChoiceCandidate]>,
 ) -> Option<PublicChoiceRequest> {
@@ -983,19 +1001,17 @@ fn spell_choice_request(
     let rules = card.supported_spell_rules();
 
     if rules.requires_explicit_hand_card_choice() {
-        return Some(
-            opponent_hand_choice_candidates(game.players(), player.id()).map_or_else(
-                || PublicChoiceRequest::SpellChoiceInvariantViolation {
-                    player_id: player.id().clone(),
-                    source_card_id: source_card_id.clone(),
-                },
-                |hand_card_ids| PublicChoiceRequest::SpellChoice {
-                    player_id: player.id().clone(),
-                    source_card_id: source_card_id.clone(),
-                    hand_card_ids,
-                },
-            ),
-        );
+        return Some(opponent.map_or_else(
+            || PublicChoiceRequest::SpellChoiceInvariantViolation {
+                player_id: player.id().clone(),
+                source_card_id: source_card_id.clone(),
+            },
+            |opponent| PublicChoiceRequest::SpellChoice {
+                player_id: player.id().clone(),
+                source_card_id: source_card_id.clone(),
+                hand_card_ids: opponent.hand_card_ids(),
+            },
+        ));
     }
 
     if rules.requires_explicit_secondary_creature_choice() {
@@ -1185,51 +1201,40 @@ fn ability_target_candidates(
     candidates
 }
 
-fn opponent_hand_choice_candidates(
-    players: &[Player],
-    actor_id: &PlayerId,
-) -> Option<Vec<CardInstanceId>> {
+fn find_player<'a>(players: &'a [Player], player_id: &PlayerId) -> Option<&'a Player> {
     match players {
         [first, second] => {
-            if first.id() == actor_id {
-                Some(second.hand_card_ids())
-            } else if second.id() == actor_id {
-                Some(first.hand_card_ids())
+            if first.id() == player_id {
+                Some(first)
+            } else if second.id() == player_id {
+                Some(second)
             } else {
                 None
             }
         }
-        _ => players
-            .iter()
-            .find(|player| player.id() != actor_id)
-            .map(Player::hand_card_ids),
+        _ => players.iter().find(|player| player.id() == player_id),
     }
 }
 
-fn active_player(game: &Game) -> Option<&Player> {
-    game.players().get(game.active_player_index_value())
-}
-
-fn active_player_id_for_public_view(game: &Game) -> Option<PlayerId> {
-    active_player(game).map(|player| player.id().clone())
-}
-
-fn defending_player<'a>(game: &'a Game, active_player: &Player) -> Option<&'a Player> {
-    let players = game.players();
+fn other_player<'a>(players: &'a [Player], player_id: &PlayerId) -> Option<&'a Player> {
     match players {
         [first, second] => {
-            if first.id() == active_player.id() {
+            if first.id() == player_id {
                 Some(second)
-            } else if second.id() == active_player.id() {
+            } else if second.id() == player_id {
                 Some(first)
             } else {
                 None
             }
         }
-        _ => players
-            .iter()
-            .find(|player| player.id() != active_player.id()),
+        _ => players.iter().find(|player| player.id() != player_id),
     }
+}
+
+fn active_player_id_for_public_view(game: &Game) -> Option<PlayerId> {
+    game.players()
+        .get(game.active_player_index_value())
+        .map(|player| player.id().clone())
 }
 
 fn public_choice_candidate(
@@ -1664,7 +1669,7 @@ mod tests {
             return;
         };
 
-        let request = spell_choice_request(&game, player, &spell_id, None);
+        let request = spell_choice_request(player, None, &spell_id, None);
 
         assert!(matches!(
             request,
@@ -1734,19 +1739,7 @@ mod tests {
             return;
         };
 
-        let unrelated_start = crate::domain::play::game::Game::start(StartGameCommand::new(
-            GameId::new("game-unrelated-players"),
-            vec![
-                PlayerDeck::new(PlayerId::new("x1"), DeckId::new("dx1")),
-                PlayerDeck::new(PlayerId::new("x2"), DeckId::new("dx2")),
-            ],
-        ));
-        assert!(unrelated_start.is_ok(), "unrelated game should start");
-        let Some((unrelated_game, _)) = unrelated_start.ok() else {
-            return;
-        };
-
-        let request = spell_choice_request(&unrelated_game, player, &spell_id, Some(&[]));
+        let request = spell_choice_request(player, None, &spell_id, Some(&[]));
 
         assert!(matches!(
             request,

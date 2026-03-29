@@ -70,6 +70,10 @@ Responsibilities:
 - displaying statistics and projections
 - triggering commands
 
+The current repository now includes a first browser-facing shell in `apps/web/`.
+It is a thin Solid/Vite client that consumes the public gameplay contract through
+WebAssembly and keeps gameplay rules inside the Rust application/domain layers.
+
 The UI layer must **not contain business logic**.
 
 It communicates with the application layer through explicit commands.

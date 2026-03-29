@@ -33,3 +33,9 @@ llvm-cov/
 
 # Tooling
 .opencode/
+
+# Web UI
+apps/web/node_modules/
+apps/web/dist/
+apps/web/src/wasm/pkg/
+apps/web/tsconfig.tsbuildinfo

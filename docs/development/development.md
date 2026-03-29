@@ -54,6 +54,17 @@ Quick validation:
 
 Code that fails these checks must not be merged.
 
+For the current web shell under `apps/web/`, also validate:
+
+```bash
+cd apps/web
+npm install
+npm run build
+```
+
+The web build regenerates the wasm package from the Rust crate through `wasm-pack`
+before bundling the Solid/Vite client.
+
 Before running the wasm compatibility check for the first time on a machine, install the target once:
 
 ```bash
@@ -66,6 +77,7 @@ The current portability support level is:
 - the domain core now centralizes its alloc-friendly shared ownership and hash collections behind one portability module
 - application and infrastructure still rely on `std`
 - the project is not `no_std`-ready yet
+- the current browser UI lives in `apps/web` and consumes the public gameplay contract through a wasm adapter rather than duplicating gameplay logic in TypeScript
 
 ---
 
