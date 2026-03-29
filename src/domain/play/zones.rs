@@ -1,9 +1,11 @@
 //! Supports domain play zones.
 
 use {
-    crate::domain::play::ids::PlayerCardHandle,
+    crate::domain::play::{
+        ids::PlayerCardHandle,
+        support::{HashMap, VecDeque},
+    },
     rand::seq::SliceRandom,
-    std::collections::{HashMap, VecDeque},
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]

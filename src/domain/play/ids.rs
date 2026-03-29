@@ -1,11 +1,13 @@
 //! Supports stable play ids with compact shared text storage.
 
-use std::{
-    fmt,
-    hash::{Hash, Hasher},
-    mem::size_of,
-    ops::Deref,
-    sync::Arc,
+use {
+    crate::domain::play::support::Arc,
+    core::{
+        fmt,
+        hash::{Hash, Hasher},
+        mem::size_of,
+        ops::Deref,
+    },
 };
 
 const INLINE_ID_CAPACITY: usize = 22;
@@ -34,7 +36,7 @@ impl InlineIdStr {
     fn as_str(&self) -> &str {
         let bytes = &self.bytes[..usize::from(self.len)];
         // `InlineIdStr` is built only from valid UTF-8 `&str` inputs.
-        unsafe { std::str::from_utf8_unchecked(bytes) }
+        unsafe { core::str::from_utf8_unchecked(bytes) }
     }
 }
 

@@ -8,8 +8,8 @@ use {
         errors::{CardError, DomainError, GameError},
         events::BlockersDeclared,
         ids::{CardInstanceId, GameId},
+        support::{HashMap, HashSet},
     },
-    std::collections::{HashMap, HashSet},
 };
 
 #[derive(Debug, Clone, Copy)]

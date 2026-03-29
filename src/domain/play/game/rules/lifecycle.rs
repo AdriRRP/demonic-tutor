@@ -16,8 +16,8 @@ use {
         events::{GameEndReason, GameEnded, GameStarted, MulliganTaken, OpeningHandDealt},
         ids::{CardInstanceId, GameId, PlayerId},
         phase::Phase,
+        support::HashSet,
     },
-    std::collections::HashSet,
 };
 
 type RuntimeLibrary = (PlayerId, Vec<CardInstance>);

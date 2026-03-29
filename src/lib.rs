@@ -1,5 +1,7 @@
 //! Supports the `DemonicTutor` library crate.
 
+extern crate alloc;
+
 pub mod application;
 pub mod domain;
 pub mod infrastructure;

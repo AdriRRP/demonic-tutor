@@ -1,9 +1,10 @@
 //! Supports game model player.
 
-use {
-    crate::domain::play::cards::{CardInstance, ManaColor, ManaCost, SpellPayload},
-    crate::domain::play::ids::{CardDefinitionId, CardInstanceId, PlayerCardHandle, PlayerId},
-    crate::domain::play::zones::{Battlefield, Exile, Graveyard, Hand, Library},
+use crate::domain::play::{
+    cards::{CardInstance, ManaColor, ManaCost, SpellPayload},
+    ids::{CardDefinitionId, CardInstanceId, PlayerCardHandle, PlayerId},
+    support::HashMap,
+    zones::{Battlefield, Exile, Graveyard, Hand, Library},
 };
 
 const DEFAULT_STARTING_LIFE: u32 = 20;
@@ -163,7 +164,7 @@ struct PlayerOwnedCard {
 struct PlayerCardArena {
     cards: Vec<Option<PlayerOwnedCard>>,
     free_slots: Vec<usize>,
-    public_index: std::collections::HashMap<CardInstanceId, PlayerCardHandle>,
+    public_index: HashMap<CardInstanceId, PlayerCardHandle>,
 }
 
 impl PlayerCardArena {

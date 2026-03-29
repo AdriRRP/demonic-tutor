@@ -2,8 +2,10 @@
 
 use {
     super::{Player, PlayerCardZone},
-    crate::domain::play::ids::{CardInstanceId, PlayerCardHandle},
-    std::collections::HashMap,
+    crate::domain::play::{
+        ids::{CardInstanceId, PlayerCardHandle},
+        support::HashMap,
+    },
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

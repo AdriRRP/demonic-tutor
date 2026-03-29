@@ -378,7 +378,9 @@ Persistent infrastructure may be introduced in future iterations.
 The current portability boundary is:
 
 - the crate validates compilation for `wasm32-unknown-unknown`
-- the runtime still depends on `std` and is not `no_std`-ready
+- the domain core now routes its shared ownership and hash collections through one alloc-friendly portability module
+- application and infrastructure still depend on `std`
+- the project is not `no_std`-ready
 
 ---
 

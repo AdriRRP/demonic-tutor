@@ -10,6 +10,7 @@ use crate::domain::play::{
         evaluate_target_legality, supported_spell_rules, SpellTargetLegality, TargetLegalityContext,
     },
     ids::{CardInstanceId, PlayerId, StackObjectId},
+    support::HashMap,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -360,26 +361,25 @@ impl Game {
             .filter(|card| card.is_attacking())
             .map(|card| card.id().clone())
             .collect();
-        let legal_blockers_by_attacker: std::collections::HashMap<_, Vec<CardInstanceId>> =
-            attacker_ids
-                .iter()
-                .map(|attacker_id| {
-                    let blocker_ids = defending_player
-                        .battlefield_card_ids()
-                        .filter(|blocker_id| {
-                            rules::combat::can_block_attacker_candidate(
-                                &self.players,
-                                self.active_player_index,
-                                player_id,
-                                blocker_id,
-                                attacker_id,
-                            )
-                        })
-                        .cloned()
-                        .collect::<Vec<_>>();
-                    (attacker_id.clone(), blocker_ids)
-                })
-                .collect();
+        let legal_blockers_by_attacker: HashMap<_, Vec<CardInstanceId>> = attacker_ids
+            .iter()
+            .map(|attacker_id| {
+                let blocker_ids = defending_player
+                    .battlefield_card_ids()
+                    .filter(|blocker_id| {
+                        rules::combat::can_block_attacker_candidate(
+                            &self.players,
+                            self.active_player_index,
+                            player_id,
+                            blocker_id,
+                            attacker_id,
+                        )
+                    })
+                    .cloned()
+                    .collect::<Vec<_>>();
+                (attacker_id.clone(), blocker_ids)
+            })
+            .collect();
         let public_attacker_ids: Vec<_> = attacker_ids
             .into_iter()
             .filter(|attacker_id| {

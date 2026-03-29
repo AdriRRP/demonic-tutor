@@ -112,6 +112,12 @@ It does **not** mean the public ids became unstable.
 
 The public strings are still the reviewable identity at boundaries.
 
+One portability nuance now matters too:
+
+- the domain core centralizes alloc-friendly shared ownership and hash collections behind a small support module
+- that keeps future `no_std` work local to one boundary instead of scattering `std::sync` and `std::collections` through gameplay rules
+- this is preparation for a future split, not a claim that the whole crate already runs without `std`
+
 ---
 
 # Abstraction 2: Player-Owned Card Arena

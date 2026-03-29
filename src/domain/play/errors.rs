@@ -1,9 +1,12 @@
 //! Supports domain play errors.
 
-use crate::domain::play::{
-    cards::{CastingPermissionProfile, CastingRule},
-    ids::{CardDefinitionId, CardInstanceId, PlayerId, StackObjectId},
-    phase::Phase,
+use {
+    crate::domain::play::{
+        cards::{CastingPermissionProfile, CastingRule},
+        ids::{CardDefinitionId, CardInstanceId, PlayerId, StackObjectId},
+        phase::Phase,
+    },
+    core::{error::Error, fmt},
 };
 
 #[derive(Debug, PartialEq, Eq)]
@@ -180,8 +183,8 @@ pub enum PlayerError {
     TooManyPlayers { actual: usize },
 }
 
-impl std::fmt::Display for DomainError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for DomainError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Game(e) => write!(f, "{e}"),
             Self::Card(e) => write!(f, "{e}"),
@@ -191,9 +194,9 @@ impl std::fmt::Display for DomainError {
     }
 }
 
-impl std::fmt::Display for GameError {
+impl fmt::Display for GameError {
     #[allow(clippy::too_many_lines)]
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::NotYourTurn { current, requested } => {
                 write!(f, "not {requested}'s turn, it's {current}'s turn")
@@ -354,10 +357,10 @@ impl std::fmt::Display for GameError {
 }
 
 fn write_player_library_error(
-    f: &mut std::fmt::Formatter<'_>,
+    f: &mut fmt::Formatter<'_>,
     adjective: &str,
     pid: &PlayerId,
-) -> std::fmt::Result {
+) -> fmt::Result {
     write!(
         f,
         "{adjective} opening-hand library for player {}",
@@ -366,10 +369,10 @@ fn write_player_library_error(
 }
 
 fn write_casting_permission_error(
-    f: &mut std::fmt::Formatter<'_>,
+    f: &mut fmt::Formatter<'_>,
     card: &CardInstanceId,
     permission: CastingPermissionProfile,
-) -> std::fmt::Result {
+) -> fmt::Result {
     if permission.supports(CastingRule::OpenPriorityWindow) {
         write!(
             f,
@@ -393,8 +396,8 @@ fn write_casting_permission_error(
     }
 }
 
-impl std::fmt::Display for CardError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for CardError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::NotInHand { player, card } => {
                 write!(f, "card {card} not in hand of player {player}")
@@ -453,8 +456,8 @@ impl std::fmt::Display for CardError {
     }
 }
 
-impl std::fmt::Display for PhaseError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for PhaseError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::InvalidForLand => write!(f, "cannot play land in current phase"),
             Self::InvalidForPlayingCard { phase } => {
@@ -481,8 +484,8 @@ impl std::fmt::Display for PhaseError {
     }
 }
 
-impl std::fmt::Display for PlayerError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for PlayerError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::NotEnoughPlayers { actual } => {
                 write!(f, "not enough players: expected at least 2, got {actual}")
@@ -494,7 +497,7 @@ impl std::fmt::Display for PlayerError {
     }
 }
 
-impl std::error::Error for DomainError {}
+impl Error for DomainError {}
 
 impl From<GameError> for DomainError {
     fn from(e: GameError) -> Self {

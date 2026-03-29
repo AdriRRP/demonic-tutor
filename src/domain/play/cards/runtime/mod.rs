@@ -13,8 +13,10 @@ use {
         CastingPermissionProfile, CastingRule, ControllerStaticEffectProfile, KeywordAbility,
         KeywordAbilitySet, ManaCost, SupportedSpellRules, TriggeredAbilityProfile,
     },
-    crate::domain::play::ids::{CardDefinitionId, CardInstanceId, PlayerCardHandle, PlayerId},
-    std::sync::Arc,
+    crate::domain::play::{
+        ids::{CardDefinitionId, CardInstanceId, PlayerCardHandle, PlayerId},
+        support::Arc,
+    },
 };
 
 const CREATURE_FLAG_SUMMONING_SICKNESS: u8 = 1 << 0;

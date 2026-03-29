@@ -63,7 +63,8 @@ rustup target add wasm32-unknown-unknown
 The current portability support level is:
 
 - the crate must compile with `cargo check --target wasm32-unknown-unknown`
-- the runtime still relies on `std`
+- the domain core now centralizes its alloc-friendly shared ownership and hash collections behind one portability module
+- application and infrastructure still rely on `std`
 - the project is not `no_std`-ready yet
 
 ---

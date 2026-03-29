@@ -26,8 +26,8 @@ use crate::domain::play::{
         LifeChanged, TriggeredAbilityPutOnStack,
     },
     ids::{CardInstanceId, GameId},
+    support::HashMap,
 };
-use std::collections::HashMap;
 
 struct CreatureDamageAssignment {
     target: CardInstanceId,

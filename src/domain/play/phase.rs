@@ -1,5 +1,7 @@
 //! Supports domain play phase.
 
+use core::fmt;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Phase {
     Setup,
@@ -16,8 +18,8 @@ pub enum Phase {
     EndStep,
 }
 
-impl std::fmt::Display for Phase {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for Phase {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Setup => write!(f, "Setup"),
             Self::Untap => write!(f, "Untap"),
