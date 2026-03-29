@@ -136,7 +136,9 @@ Its job today is to provide:
 
 - one shared Rust-owned game session embedded in the browser
 - two viewer-scoped seats over that same session
-- a small private-hand overlay per seat for hot-seat play
+- a handoff-first hot-seat flow where only one private hand is opened at a time
+- prompts placed near the seat zone they affect instead of inside a generic debug rail
+- a battlefield-first combat lane for attackers and blockers
 - real command execution for lands, mana, creature casting, combat, cleanup, and replay inspection
 
 It is still intentionally early-stage UI:

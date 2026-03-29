@@ -72,7 +72,9 @@ It currently provides:
 - one shared wasm-backed game session
 - two viewer-scoped seats over that same Rust-owned state
 - a central play surface with top/bottom seats and a secondary replay sidebar
-- private hand reveal per seat for pass-the-device play
+- explicit pass-the-device handoff, with only one private hand open at a time
+- prompts and choices anchored near the seat area they belong to
+- a more spatial combat lane for attackers and blockers
 - real command execution for land play, mana, simple casting, combat, cleanup, and replay
 
 It is still an early arena rather than a polished shipped client, but the UI now prioritizes feeling like a real table before adding richer motion or deeper spell UX.

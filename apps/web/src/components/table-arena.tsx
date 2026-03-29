@@ -37,10 +37,11 @@ import type {
 
 interface TableArenaProps {
   state: ArenaState;
-  revealedHands: Record<string, boolean>;
+  revealedSeatId: string | null;
+  pendingHandoffPlayerId: string | null;
   selectedAttackers: string[];
   blockerAssignments: Record<string, string>;
-  onToggleHandReveal: (playerId: string) => void;
+  onToggleSeatPrivacy: (playerId: string) => void;
   onToggleAttackerSelection: (cardId: string) => void;
   onSetBlockerAssignment: (blockerId: string, attackerId: string) => void;
   onRun: (operation: (current: WebArenaClient) => ArenaState) => void;
@@ -49,6 +50,8 @@ interface TableArenaProps {
 export const TableArena: Component<TableArenaProps> = (props) => {
   const bottomViewer = () => props.state.viewers[0];
   const topViewer = () => props.state.viewers[1] ?? props.state.viewers[0];
+  const handoffViewer = () =>
+    props.state.viewers.find((viewer) => viewer.player_id === props.pendingHandoffPlayerId);
 
   return (
     <div class="table-shell">
@@ -74,18 +77,25 @@ export const TableArena: Component<TableArenaProps> = (props) => {
       </header>
 
       <div class="table-layout">
-        <section class="duel-table panel">
+        <section
+          classList={{
+            "duel-table": true,
+            panel: true,
+            "handoff-pending": Boolean(props.pendingHandoffPlayerId),
+          }}
+        >
           <Show when={topViewer()}>
             {(viewer) => (
               <SeatPanel
                 blockerAssignments={props.blockerAssignments}
                 game={props.state.game}
+                needsHandoff={props.pendingHandoffPlayerId === viewer().player_id}
                 onRun={props.onRun}
                 onSetBlockerAssignment={props.onSetBlockerAssignment}
                 onToggleAttackerSelection={props.onToggleAttackerSelection}
-                onToggleHandReveal={props.onToggleHandReveal}
+                onToggleSeatPrivacy={props.onToggleSeatPrivacy}
                 orientation="top"
-                revealed={Boolean(props.revealedHands[viewer().player_id])}
+                revealed={props.state.game.is_over || props.revealedSeatId === viewer().player_id}
                 selectedAttackers={props.selectedAttackers}
                 viewer={viewer()}
               />
@@ -150,15 +160,39 @@ export const TableArena: Component<TableArenaProps> = (props) => {
               <SeatPanel
                 blockerAssignments={props.blockerAssignments}
                 game={props.state.game}
+                needsHandoff={props.pendingHandoffPlayerId === viewer().player_id}
                 onRun={props.onRun}
                 onSetBlockerAssignment={props.onSetBlockerAssignment}
                 onToggleAttackerSelection={props.onToggleAttackerSelection}
-                onToggleHandReveal={props.onToggleHandReveal}
+                onToggleSeatPrivacy={props.onToggleSeatPrivacy}
                 orientation="bottom"
-                revealed={Boolean(props.revealedHands[viewer().player_id])}
+                revealed={props.state.game.is_over || props.revealedSeatId === viewer().player_id}
                 selectedAttackers={props.selectedAttackers}
                 viewer={viewer()}
               />
+            )}
+          </Show>
+
+          <Show when={!props.state.game.is_over && handoffViewer()}>
+            {(viewer) => (
+              <div class="handoff-overlay">
+                <div class="handoff-card">
+                  <p class="eyebrow">Hot-seat handoff</p>
+                  <h2>Pass the table to {viewer().player_id}</h2>
+                  <p class="table-copy handoff-copy">
+                    Private hand information is shielded until the next player takes the seat and
+                    reopens their tray.
+                  </p>
+                  <button
+                    class="hero-button"
+                    onClick={() => {
+                      props.onToggleSeatPrivacy(viewer().player_id);
+                    }}
+                  >
+                    Take seat
+                  </button>
+                </div>
+              </div>
             )}
           </Show>
         </section>
@@ -225,9 +259,10 @@ const SeatPanel: Component<{
   game: ArenaGameView;
   orientation: "top" | "bottom";
   revealed: boolean;
+  needsHandoff: boolean;
   selectedAttackers: string[];
   blockerAssignments: Record<string, string>;
-  onToggleHandReveal: (playerId: string) => void;
+  onToggleSeatPrivacy: (playerId: string) => void;
   onToggleAttackerSelection: (cardId: string) => void;
   onSetBlockerAssignment: (blockerId: string, attackerId: string) => void;
   onRun: (operation: (current: WebArenaClient) => ArenaState) => void;
@@ -249,11 +284,11 @@ const SeatPanel: Component<{
   const tapManaSourceIds = () => new Set(tapManaSourceAction()?.card_ids ?? []);
   const activateAbilityIds = () => new Set(activateAbilityAction()?.card_ids ?? []);
   const discardForCleanupIds = () => new Set(discardForCleanupAction()?.card_ids ?? []);
-  const supportedPrompts = () =>
+  const handPrompt = () =>
+    props.viewer.choice_requests.find((prompt) => prompt.kind === "PendingHandChoice");
+  const spotlightPrompts = () =>
     props.viewer.choice_requests.filter((prompt) =>
-      ["PendingScry", "PendingSurveil", "PendingHandChoice", "OptionalEffectDecision"].includes(
-        prompt.kind,
-      ),
+      ["PendingScry", "PendingSurveil", "OptionalEffectDecision"].includes(prompt.kind),
     );
   const unsupportedPrompts = () =>
     props.viewer.choice_requests.filter(
@@ -262,6 +297,17 @@ const SeatPanel: Component<{
           prompt.kind,
         ),
     );
+  const blockerTargets = () => uniqueAttackerIds(declareBlockersAction());
+  const battlefieldConsoleVisible = () =>
+    tapManaSourceIds().size > 0 ||
+    activateAbilityIds().size > 0 ||
+    Boolean(declareAttackersAction()) ||
+    Boolean(declareBlockersAction());
+  const blockerSummary = () =>
+    Object.entries(props.blockerAssignments).map(([blockerId, attackerId]) => ({
+      blockerId,
+      attackerId,
+    }));
 
   return (
     <section
@@ -291,8 +337,43 @@ const SeatPanel: Component<{
           <Show when={props.viewer.is_priority_holder}>
             <span class="chip chip-night">Priority</span>
           </Show>
+          <Show when={props.needsHandoff}>
+            <span class="chip chip-forest">Ready to take seat</span>
+          </Show>
         </div>
       </header>
+
+      <Show when={spotlightPrompts().length > 0 || unsupportedPrompts().length > 0}>
+        <section class="seat-spotlight-strip">
+          <For each={spotlightPrompts()}>
+            {(prompt) => (
+              <SupportedPrompt
+                hand={props.viewer.hand}
+                onRun={props.onRun}
+                playerId={props.viewer.player_id}
+                prompt={prompt}
+                variant="spotlight"
+              />
+            )}
+          </For>
+
+          <For each={unsupportedPrompts()}>
+            {(prompt) => (
+              <article class="unsupported-item unsupported-spotlight">
+                <strong>{prompt.kind}</strong>
+                <p>{prompt.summary}</p>
+                <Show when={prompt.item_ids.length > 0}>
+                  <div class="chip-row">
+                    <For each={prompt.item_ids}>
+                      {(itemId) => <span class="chip">{itemId}</span>}
+                    </For>
+                  </div>
+                </Show>
+              </article>
+            )}
+          </For>
+        </section>
+      </Show>
 
       <Show when={viewerPlayer()}>
         {(player) => (
@@ -337,6 +418,184 @@ const SeatPanel: Component<{
                       />
                     )}
                   </For>
+                </div>
+              </Show>
+
+              <Show when={battlefieldConsoleVisible()}>
+                <div class="battlefield-console">
+                  <Show when={Boolean(tapManaSourceAction() ?? activateAbilityAction())}>
+                    <section class="battlefield-console-panel">
+                      <div class="panel-head seat-module-head">
+                        <div>
+                          <p class="label">Board tools</p>
+                          <h3>Mana and abilities</h3>
+                        </div>
+                      </div>
+
+                      <Show when={tapManaSourceAction()}>
+                        <ActionList
+                          title="Tap mana"
+                          items={tapManaSourceAction()?.card_ids ?? []}
+                          labelFor={(cardId) => battlefieldCardLabel(props.game, cardId)}
+                          onPress={(cardId) => {
+                            const playerId = props.viewer.player_id;
+                            props.onRun((current) => tapManaSource(current, playerId, cardId));
+                          }}
+                        />
+                      </Show>
+
+                      <Show when={activateAbilityAction()}>
+                        <ActionList
+                          title="Activate ability"
+                          items={activateAbilityAction()?.card_ids ?? []}
+                          labelFor={(cardId) => battlefieldCardLabel(props.game, cardId)}
+                          onPress={(cardId) => {
+                            const playerId = props.viewer.player_id;
+                            props.onRun((current) => activateAbility(current, playerId, cardId));
+                          }}
+                        />
+                      </Show>
+                    </section>
+                  </Show>
+
+                  <Show when={declareAttackersAction()}>
+                    <article class="combat-stage">
+                      <div class="panel-head seat-module-head">
+                        <div>
+                          <p class="label">Combat lane</p>
+                          <h3>Choose attackers</h3>
+                        </div>
+                      </div>
+                      <div class="combat-pieces">
+                        <For each={declareAttackersAction()?.card_ids ?? []}>
+                          {(cardId) => (
+                            <button
+                              classList={{
+                                chip: true,
+                                "chip-toggle": true,
+                                "combat-toggle": true,
+                                selected: props.selectedAttackers.includes(cardId),
+                              }}
+                              onClick={() => {
+                                props.onToggleAttackerSelection(cardId);
+                              }}
+                            >
+                              {battlefieldCardLabel(props.game, cardId)}
+                            </button>
+                          )}
+                        </For>
+                      </div>
+
+                      <Show when={props.selectedAttackers.length > 0}>
+                        <div class="combat-preview">
+                          <p class="label">Committed attackers</p>
+                          <div class="chip-row">
+                            <For each={props.selectedAttackers}>
+                              {(cardId) => (
+                                <span class="chip chip-ember">
+                                  {battlefieldCardLabel(props.game, cardId)}
+                                </span>
+                              )}
+                            </For>
+                          </div>
+                        </div>
+                      </Show>
+
+                      <button
+                        class="hero-button seat-button"
+                        onClick={() => {
+                          const playerId = props.viewer.player_id;
+                          const attackerIds = [...props.selectedAttackers];
+                          props.onRun((current) =>
+                            declareAttackers(current, playerId, attackerIds),
+                          );
+                        }}
+                      >
+                        Commit attackers
+                      </button>
+                    </article>
+                  </Show>
+
+                  <Show when={declareBlockersAction()}>
+                    <article class="combat-stage">
+                      <div class="panel-head seat-module-head">
+                        <div>
+                          <p class="label">Combat lane</p>
+                          <h3>Assign blockers</h3>
+                        </div>
+                      </div>
+
+                      <Show when={blockerTargets().length > 0}>
+                        <div class="combat-preview">
+                          <p class="label">Incoming attackers</p>
+                          <div class="chip-row">
+                            <For each={blockerTargets()}>
+                              {(attackerId) => (
+                                <span class="chip chip-ember">
+                                  {battlefieldCardLabel(props.game, attackerId)}
+                                </span>
+                              )}
+                            </For>
+                          </div>
+                        </div>
+                      </Show>
+
+                      <div class="blocker-grid">
+                        <For each={declareBlockersAction()?.blocker_options ?? []}>
+                          {(option) => (
+                            <label class="blocker-select">
+                              <span>{battlefieldCardLabel(props.game, option.blocker_id)}</span>
+                              <select
+                                onInput={(event) => {
+                                  props.onSetBlockerAssignment(
+                                    option.blocker_id,
+                                    event.currentTarget.value,
+                                  );
+                                }}
+                                value={props.blockerAssignments[option.blocker_id] ?? ""}
+                              >
+                                <option value="">No block</option>
+                                <For each={option.attacker_ids}>
+                                  {(attackerId) => (
+                                    <option value={attackerId}>
+                                      {battlefieldCardLabel(props.game, attackerId)}
+                                    </option>
+                                  )}
+                                </For>
+                              </select>
+                            </label>
+                          )}
+                        </For>
+                      </div>
+
+                      <Show when={blockerSummary().length > 0}>
+                        <div class="combat-preview">
+                          <p class="label">Current blocks</p>
+                          <div class="chip-row">
+                            <For each={blockerSummary()}>
+                              {(assignment) => (
+                                <span class="chip chip-forest">
+                                  {battlefieldCardLabel(props.game, assignment.blockerId)} on{" "}
+                                  {battlefieldCardLabel(props.game, assignment.attackerId)}
+                                </span>
+                              )}
+                            </For>
+                          </div>
+                        </div>
+                      </Show>
+
+                      <button
+                        class="hero-button seat-button"
+                        onClick={() => {
+                          const playerId = props.viewer.player_id;
+                          const assignments = blockerAssignmentsToArray(props.blockerAssignments);
+                          props.onRun((current) => declareBlockers(current, playerId, assignments));
+                        }}
+                      >
+                        Commit blockers
+                      </button>
+                    </article>
+                  </Show>
                 </div>
               </Show>
             </section>
@@ -410,16 +669,34 @@ const SeatPanel: Component<{
               <button
                 class="hero-button hero-button-ghost mini-button"
                 onClick={() => {
-                  props.onToggleHandReveal(props.viewer.player_id);
+                  props.onToggleSeatPrivacy(props.viewer.player_id);
                 }}
               >
-                {props.revealed ? "Hide hand" : "Reveal hand"}
+                {props.revealed ? "Shield hand" : props.needsHandoff ? "Take seat" : "Reveal hand"}
               </button>
             </div>
 
+            <Show when={handPrompt()}>
+              {(prompt) => (
+                <SupportedPrompt
+                  hand={props.viewer.hand}
+                  onRun={props.onRun}
+                  playerId={props.viewer.player_id}
+                  prompt={prompt()}
+                  variant="private"
+                />
+              )}
+            </Show>
+
             <Show
               when={props.revealed}
-              fallback={<p class="muted">Hand hidden while the seat is being passed.</p>}
+              fallback={
+                <p class="muted">
+                  {props.needsHandoff
+                    ? "Hand shielded until this player takes the seat."
+                    : "Hand shielded while the seat is being passed."}
+                </p>
+              }
             >
               <div class="hand-fan">
                 <For each={props.viewer.hand}>
@@ -490,162 +767,15 @@ const SeatPanel: Component<{
             </Show>
           </section>
 
-          <section class="seat-module control-module">
+          <section class="seat-module support-module">
             <div class="panel-head seat-module-head">
               <div>
-                <p class="label">Controls</p>
-                <h3>Action rail</h3>
+                <p class="label">Seat read</p>
+                <h3>Tactical notes</h3>
               </div>
             </div>
 
-            <Show when={tapManaSourceAction()}>
-              <ActionList
-                title="Tap mana"
-                items={tapManaSourceAction()?.card_ids ?? []}
-                labelFor={(cardId) => battlefieldCardLabel(props.game, cardId)}
-                onPress={(cardId) => {
-                  const playerId = props.viewer.player_id;
-                  props.onRun((current) => tapManaSource(current, playerId, cardId));
-                }}
-              />
-            </Show>
-
-            <Show when={activateAbilityAction()}>
-              <ActionList
-                title="Activate ability"
-                items={activateAbilityAction()?.card_ids ?? []}
-                labelFor={(cardId) => battlefieldCardLabel(props.game, cardId)}
-                onPress={(cardId) => {
-                  const playerId = props.viewer.player_id;
-                  props.onRun((current) => activateAbility(current, playerId, cardId));
-                }}
-              />
-            </Show>
-
-            <Show when={declareAttackersAction()}>
-              <article class="combat-planner">
-                <div class="panel-head seat-module-head">
-                  <div>
-                    <p class="label">Combat</p>
-                    <h3>Declare attackers</h3>
-                  </div>
-                </div>
-                <div class="chip-row">
-                  <For each={declareAttackersAction()?.card_ids ?? []}>
-                    {(cardId) => (
-                      <button
-                        classList={{
-                          chip: true,
-                          "chip-toggle": true,
-                          selected: props.selectedAttackers.includes(cardId),
-                        }}
-                        onClick={() => {
-                          props.onToggleAttackerSelection(cardId);
-                        }}
-                      >
-                        {battlefieldCardLabel(props.game, cardId)}
-                      </button>
-                    )}
-                  </For>
-                </div>
-                <button
-                  class="hero-button seat-button"
-                  onClick={() => {
-                    const playerId = props.viewer.player_id;
-                    const attackerIds = [...props.selectedAttackers];
-                    props.onRun((current) => declareAttackers(current, playerId, attackerIds));
-                  }}
-                >
-                  Submit attackers
-                </button>
-              </article>
-            </Show>
-
-            <Show when={declareBlockersAction()}>
-              <article class="combat-planner">
-                <div class="panel-head seat-module-head">
-                  <div>
-                    <p class="label">Combat</p>
-                    <h3>Declare blockers</h3>
-                  </div>
-                </div>
-                <div class="blocker-grid">
-                  <For each={declareBlockersAction()?.blocker_options ?? []}>
-                    {(option) => (
-                      <label class="blocker-select">
-                        <span>{battlefieldCardLabel(props.game, option.blocker_id)}</span>
-                        <select
-                          onInput={(event) => {
-                            props.onSetBlockerAssignment(
-                              option.blocker_id,
-                              event.currentTarget.value,
-                            );
-                          }}
-                          value={props.blockerAssignments[option.blocker_id] ?? ""}
-                        >
-                          <option value="">No block</option>
-                          <For each={option.attacker_ids}>
-                            {(attackerId) => (
-                              <option value={attackerId}>
-                                {battlefieldCardLabel(props.game, attackerId)}
-                              </option>
-                            )}
-                          </For>
-                        </select>
-                      </label>
-                    )}
-                  </For>
-                </div>
-                <button
-                  class="hero-button seat-button"
-                  onClick={() => {
-                    const playerId = props.viewer.player_id;
-                    const assignments = blockerAssignmentsToArray(props.blockerAssignments);
-                    props.onRun((current) => declareBlockers(current, playerId, assignments));
-                  }}
-                >
-                  Submit blockers
-                </button>
-              </article>
-            </Show>
-
-            <Show
-              when={
-                !tapManaSourceIds().size &&
-                !activateAbilityIds().size &&
-                !declareAttackersAction() &&
-                !declareBlockersAction()
-              }
-            >
-              <p class="muted">No battlefield controls for this seat right now.</p>
-            </Show>
-          </section>
-
-          <section class="seat-module prompt-module">
-            <div class="panel-head seat-module-head">
-              <div>
-                <p class="label">Prompts</p>
-                <h3>Viewer surface</h3>
-              </div>
-            </div>
-
-            <Show
-              when={supportedPrompts().length > 0}
-              fallback={<p class="muted">No active prompt.</p>}
-            >
-              <div class="prompt-list">
-                <For each={supportedPrompts()}>
-                  {(prompt) => (
-                    <SupportedPrompt
-                      hand={props.viewer.hand}
-                      onRun={props.onRun}
-                      playerId={props.viewer.player_id}
-                      prompt={prompt}
-                    />
-                  )}
-                </For>
-              </div>
-            </Show>
+            <p class="support-note">{seatSupportCopy(props.viewer, props.needsHandoff)}</p>
 
             <Show when={unsupportedPrompts().length > 0}>
               <div class="unsupported-list">
@@ -695,10 +825,13 @@ const SupportedPrompt: Component<{
   prompt: ArenaChoicePrompt;
   playerId: string;
   hand: ArenaHandCard[];
+  variant?: "default" | "private" | "spotlight";
   onRun: (operation: (current: WebArenaClient) => ArenaState) => void;
 }> = (props) => {
+  const variant = () => props.variant ?? "default";
+
   return (
-    <article class="prompt-item">
+    <article classList={{ "prompt-item": true, [`prompt-${variant()}`]: true }}>
       <strong>{props.prompt.kind}</strong>
       <p>{props.prompt.summary}</p>
 
@@ -930,6 +1063,30 @@ function blockerAssignmentsToArray(assignments: Record<string, string>): Blocker
     blocker_id,
     attacker_id,
   }));
+}
+
+function uniqueAttackerIds(action: ArenaLegalAction | undefined): string[] {
+  if (!action) {
+    return [];
+  }
+
+  return Array.from(new Set(action.blocker_options.flatMap((option) => option.attacker_ids)));
+}
+
+function seatSupportCopy(viewer: ArenaViewerState, needsHandoff: boolean): string {
+  if (needsHandoff) {
+    return "This seat is up next. Pass the device, reveal the hand, and continue from the live viewer-scoped surface.";
+  }
+
+  if (viewer.is_priority_holder) {
+    return "Priority lives here right now. The hand tray and battlefield console are the fastest paths to keep the duel flowing.";
+  }
+
+  if (viewer.is_active) {
+    return "This seat owns the turn, even if interaction is paused somewhere else in the priority loop.";
+  }
+
+  return "This seat is currently observing. Public zones stay live, but private information remains shielded until the hand is reopened.";
 }
 
 function formatPhase(phase: string): string {

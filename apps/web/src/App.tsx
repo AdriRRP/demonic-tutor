@@ -9,7 +9,8 @@ const App: Component = () => {
   const [state, setState] = createSignal<ArenaState | null>(null);
   const [error, setError] = createSignal<string | null>(null);
   const [loading, setLoading] = createSignal(true);
-  const [revealedHands, setRevealedHands] = createSignal<Record<string, boolean>>({});
+  const [revealedSeatId, setRevealedSeatId] = createSignal<string | null>(null);
+  const [pendingHandoffPlayerId, setPendingHandoffPlayerId] = createSignal<string | null>(null);
   const [selectedAttackers, setSelectedAttackers] = createSignal<string[]>([]);
   const [blockerAssignments, setBlockerAssignments] = createSignal<Record<string, string>>({});
 
@@ -21,9 +22,11 @@ const App: Component = () => {
     try {
       const nextClient = await createArenaClient();
       const nextState = readState(nextClient);
+      const nextSeatPrivacy = deriveSeatPrivacy(nextState, null);
       setClient(nextClient);
       setState(nextState);
-      setRevealedHands(revealPattern(nextState));
+      setRevealedSeatId(nextSeatPrivacy.revealedSeatId);
+      setPendingHandoffPlayerId(nextSeatPrivacy.pendingHandoffPlayerId);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -39,8 +42,10 @@ const App: Component = () => {
 
     try {
       const nextState = operation(current);
+      const nextSeatPrivacy = deriveSeatPrivacy(nextState, revealedSeatId());
       setState(nextState);
-      setRevealedHands(revealPattern(nextState));
+      setRevealedSeatId(nextSeatPrivacy.revealedSeatId);
+      setPendingHandoffPlayerId(nextSeatPrivacy.pendingHandoffPlayerId);
       setSelectedAttackers([]);
       setBlockerAssignments({});
       setError(null);
@@ -49,11 +54,18 @@ const App: Component = () => {
     }
   };
 
-  const toggleHandReveal = (playerId: string) => {
-    setRevealedHands((current) => ({
-      ...current,
-      [playerId]: !current[playerId],
-    }));
+  const toggleSeatPrivacy = (playerId: string) => {
+    if (state()?.game.is_over) {
+      return;
+    }
+
+    if (revealedSeatId() === playerId) {
+      setRevealedSeatId(null);
+      return;
+    }
+
+    setRevealedSeatId(playerId);
+    setPendingHandoffPlayerId(null);
   };
 
   const toggleAttackerSelection = (cardId: string) => {
@@ -106,11 +118,12 @@ const App: Component = () => {
           {(resolved) => (
             <TableArena
               blockerAssignments={blockerAssignments()}
+              onToggleSeatPrivacy={toggleSeatPrivacy}
               onRun={run}
               onSetBlockerAssignment={setBlockerAssignment}
               onToggleAttackerSelection={toggleAttackerSelection}
-              onToggleHandReveal={toggleHandReveal}
-              revealedHands={revealedHands()}
+              pendingHandoffPlayerId={pendingHandoffPlayerId()}
+              revealedSeatId={revealedSeatId()}
               selectedAttackers={selectedAttackers()}
               state={resolved()}
             />
@@ -121,17 +134,55 @@ const App: Component = () => {
   );
 };
 
-function revealPattern(state: ArenaState): Record<string, boolean> {
+function deriveSeatPrivacy(
+  state: ArenaState,
+  currentRevealedSeatId: string | null,
+): { revealedSeatId: string | null; pendingHandoffPlayerId: string | null } {
+  const nextFocus = focusPlayerId(state);
+
   if (state.game.is_over) {
-    return Object.fromEntries(state.viewers.map((viewer) => [viewer.player_id, true]));
+    return { revealedSeatId: null, pendingHandoffPlayerId: null };
   }
 
-  return Object.fromEntries(
-    state.viewers.map((viewer) => [
-      viewer.player_id,
-      viewer.player_id === state.game.active_player_id,
-    ]),
-  );
+  if (!nextFocus) {
+    return {
+      revealedSeatId: currentRevealedSeatId,
+      pendingHandoffPlayerId: null,
+    };
+  }
+
+  if (currentRevealedSeatId === nextFocus) {
+    return {
+      revealedSeatId: currentRevealedSeatId,
+      pendingHandoffPlayerId: null,
+    };
+  }
+
+  return {
+    revealedSeatId: null,
+    pendingHandoffPlayerId: nextFocus,
+  };
+}
+
+function focusPlayerId(state: ArenaState): string | null {
+  if (state.game.is_over) {
+    return null;
+  }
+
+  const promptOwner = state.viewers.find((viewer) => viewer.choice_requests.length > 0)?.player_id;
+  if (promptOwner) {
+    return promptOwner;
+  }
+
+  if (state.game.priority_holder) {
+    return state.game.priority_holder;
+  }
+
+  if (state.game.active_player_id) {
+    return state.game.active_player_id;
+  }
+
+  return state.viewers[0]?.player_id ?? null;
 }
 
 export default App;

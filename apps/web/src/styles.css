@@ -213,10 +213,20 @@ button {
 }
 
 .duel-table {
+  position: relative;
   padding: 18px;
   background:
     radial-gradient(circle at top, rgba(118, 178, 143, 0.16), transparent 28%),
     linear-gradient(180deg, rgba(16, 37, 32, 0.98), rgba(14, 25, 22, 0.98));
+}
+
+.duel-table.handoff-pending::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 28px;
+  background: rgba(6, 10, 10, 0.26);
+  pointer-events: none;
 }
 
 .table-sidebar {
@@ -407,6 +417,12 @@ button {
   margin: 4px 0 0;
 }
 
+.seat-spotlight-strip {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
 .seat-zones {
   display: grid;
   gap: 16px;
@@ -447,6 +463,20 @@ button {
   align-items: stretch;
 }
 
+.battlefield-console {
+  display: grid;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.battlefield-console-panel,
+.combat-stage {
+  padding: 16px;
+  border-radius: 22px;
+  border: 1px solid var(--edge);
+  background: rgba(248, 240, 223, 0.05);
+}
+
 .seat-ops {
   display: grid;
   gap: 14px;
@@ -466,7 +496,7 @@ button {
 .seat-ops-grid {
   display: grid;
   gap: 16px;
-  grid-template-columns: minmax(0, 1.45fr) minmax(280px, 1fr) minmax(260px, 0.9fr);
+  grid-template-columns: minmax(0, 1.6fr) minmax(300px, 0.95fr);
 }
 
 .seat-module {
@@ -485,6 +515,16 @@ button {
   justify-content: center;
   align-items: flex-end;
   padding: 18px 10px 8px;
+}
+
+.support-module {
+  align-content: start;
+}
+
+.support-note {
+  margin: 0 0 16px;
+  color: var(--ink-soft);
+  line-height: 1.6;
 }
 
 .game-card {
@@ -758,6 +798,25 @@ button {
   margin-top: 14px;
 }
 
+.combat-pieces {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.combat-toggle {
+  min-height: 40px;
+  padding-inline: 14px;
+}
+
+.combat-preview {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(244, 223, 182, 0.1);
+  background: rgba(248, 240, 223, 0.04);
+}
+
 .combat-planner,
 .unsupported-item,
 .prompt-item,
@@ -768,6 +827,20 @@ button {
   border: 1px solid var(--edge);
   padding: 14px;
   background: rgba(248, 240, 223, 0.05);
+}
+
+.prompt-private {
+  margin-bottom: 14px;
+  background:
+    linear-gradient(180deg, rgba(248, 240, 223, 0.08), rgba(248, 240, 223, 0.04)),
+    rgba(248, 240, 223, 0.05);
+}
+
+.prompt-spotlight,
+.unsupported-spotlight {
+  background:
+    linear-gradient(180deg, rgba(248, 240, 223, 0.08), rgba(248, 240, 223, 0.03)),
+    rgba(11, 18, 17, 0.6);
 }
 
 .blocker-grid,
@@ -831,6 +904,36 @@ button {
   color: #efb07c;
   font-size: 0.8rem;
   font-weight: 700;
+}
+
+.handoff-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.handoff-card {
+  width: min(30rem, 100%);
+  padding: 24px;
+  border-radius: 28px;
+  border: 1px solid rgba(244, 223, 182, 0.18);
+  background:
+    linear-gradient(180deg, rgba(19, 27, 25, 0.96), rgba(11, 17, 16, 0.98)), rgba(11, 17, 16, 0.98);
+  box-shadow: var(--shadow-xl);
+}
+
+.handoff-card h2 {
+  margin: 0;
+  font-family: "Iowan Old Style", "Baskerville", "Palatino Linotype", serif;
+  font-size: clamp(1.8rem, 3vw, 2.5rem);
+  letter-spacing: -0.02em;
+}
+
+.handoff-copy {
+  margin-bottom: 20px;
 }
 
 @media (max-width: 1380px) {
