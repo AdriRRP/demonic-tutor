@@ -10,9 +10,16 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
+    "exactOptionalPropertyTypes": true,
     "jsx": "preserve",
     "jsxImportSource": "solid-js",
     "strict": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
+    "noUncheckedIndexedAccess": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "verbatimModuleSyntax": true,
     "types": ["vite/client"]
   },
   "include": ["src"]

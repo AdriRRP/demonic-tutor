@@ -27,8 +27,7 @@ body,
 
 body {
   margin: 0;
-  font-family:
-    "Avenir Next", "Segoe UI Variable", "Trebuchet MS", sans-serif;
+  font-family: "Avenir Next", "Segoe UI Variable", "Trebuchet MS", sans-serif;
   color: var(--ink);
   background:
     radial-gradient(circle at top, rgba(255, 240, 207, 0.82), transparent 38%),
@@ -90,8 +89,7 @@ button {
 .hero-copy h1,
 .panel h2,
 .zone-head h3 {
-  font-family:
-    "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif;
+  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif;
   letter-spacing: -0.02em;
 }
 
@@ -161,8 +159,7 @@ button {
   border-radius: 28px;
   padding: 20px;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.18)),
-    var(--paper);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.18)), var(--paper);
   box-shadow: var(--shadow);
   backdrop-filter: blur(10px);
 }
@@ -178,8 +175,7 @@ button {
 
 .player-panel.viewer {
   background:
-    linear-gradient(180deg, rgba(53, 101, 75, 0.08), rgba(255, 255, 255, 0.24)),
-    var(--paper-strong);
+    linear-gradient(180deg, rgba(53, 101, 75, 0.08), rgba(255, 255, 255, 0.24)), var(--paper-strong);
 }
 
 .panel-head {
@@ -259,8 +255,7 @@ button {
   gap: 10px;
   padding: 14px;
   border-radius: 18px;
-  background:
-    linear-gradient(160deg, rgba(255, 255, 255, 0.82), rgba(245, 231, 210, 0.76));
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.82), rgba(245, 231, 210, 0.76));
   border: 1px solid rgba(69, 46, 31, 0.09);
 }
 
@@ -312,8 +307,7 @@ button {
 
 .action-panel {
   background:
-    linear-gradient(180deg, rgba(184, 79, 43, 0.08), rgba(255, 255, 255, 0.2)),
-    var(--paper);
+    linear-gradient(180deg, rgba(184, 79, 43, 0.08), rgba(255, 255, 255, 0.2)), var(--paper);
 }
 
 .action-cluster + .action-cluster,

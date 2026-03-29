@@ -39,12 +39,28 @@ fi
 cargo check --target wasm32-unknown-unknown
 
 echo ""
+echo "=== Web Frontend ==="
+if ! command -v npm >/dev/null 2>&1; then
+    echo "error: missing npm; install Node.js to run web checks" >&2
+    exit 1
+fi
+if [ ! -d apps/web/node_modules ]; then
+    echo "error: missing apps/web/node_modules; run 'cd apps/web && npm install'" >&2
+    exit 1
+fi
+npm --prefix apps/web run format:check
+npm --prefix apps/web run lint
+npm --prefix apps/web run build
+
+echo ""
 echo "=== Security Audit ==="
 cargo audit
+npm --prefix apps/web run audit
 
 echo ""
 echo "=== Dependency Update Check ==="
 ./scripts/deps.sh
+npm --prefix apps/web run deps:check
 
 echo ""
 echo "=== All checks passed ==="

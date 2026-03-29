@@ -1,5 +1,6 @@
 import { For, Match, Show, Switch, createMemo, createSignal, onMount } from "solid-js";
 import type { Component } from "solid-js";
+import type { JSX } from "solid-js";
 import type { WebDemoClient } from "./wasm/pkg/demonictutor_ui.js";
 import {
   createDemoClient,
@@ -9,13 +10,7 @@ import {
   stepDemo,
   tapManaSource,
 } from "./lib/runtime";
-import type {
-  DemoBattlefieldCard,
-  DemoCardView,
-  DemoLegalAction,
-  DemoPlayerView,
-  DemoState,
-} from "./lib/types";
+import type { DemoBattlefieldCard, DemoCardView, DemoPlayerView, DemoState } from "./lib/types";
 
 const App: Component = () => {
   const [client, setClient] = createSignal<WebDemoClient | null>(null);
@@ -23,16 +18,18 @@ const App: Component = () => {
   const [error, setError] = createSignal<string | null>(null);
   const [loading, setLoading] = createSignal(true);
 
-  onMount(async () => {
-    try {
-      const nextClient = await createDemoClient();
-      setClient(nextClient);
-      setState(readState(nextClient));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setLoading(false);
-    }
+  onMount(() => {
+    void (async () => {
+      try {
+        const nextClient = await createDemoClient();
+        setClient(nextClient);
+        setState(readState(nextClient));
+      } catch (err) {
+        setError(err instanceof Error ? err.message : String(err));
+      } finally {
+        setLoading(false);
+      }
+    })();
   });
 
   const legalActions = createMemo(() => state()?.legal_actions ?? []);
@@ -69,16 +66,26 @@ const App: Component = () => {
           <p class="eyebrow">DemonicTutor Web Lab</p>
           <h1>Rust engine. Wasm bridge. First playable board shell.</h1>
           <p class="lede">
-            This UI is already reading a real public session from the engine, not a
-            fabricated frontend-only mock. The first slice focuses on snapshot fluency,
-            timeline visibility, and a small command corridor.
+            This UI is already reading a real public session from the engine, not a fabricated
+            frontend-only mock. The first slice focuses on snapshot fluency, timeline visibility,
+            and a small command corridor.
           </p>
         </div>
         <div class="hero-actions">
-          <button class="hero-button" onClick={() => run(resetDemo)}>
+          <button
+            class="hero-button"
+            onClick={() => {
+              run(resetDemo);
+            }}
+          >
             Reset demo
           </button>
-          <button class="hero-button hero-button-ghost" onClick={() => run(stepDemo)}>
+          <button
+            class="hero-button hero-button-ghost"
+            onClick={() => {
+              run(stepDemo);
+            }}
+          >
             Step demo
           </button>
         </div>
@@ -146,10 +153,7 @@ const App: Component = () => {
               <section class="board">
                 <For each={resolved().game.players}>
                   {(player) => (
-                    <PlayerPanel
-                      player={player}
-                      isViewer={player.player_id === "player-1"}
-                    />
+                    <PlayerPanel player={player} isViewer={player.player_id === "player-1"} />
                   )}
                 </For>
               </section>
@@ -167,7 +171,9 @@ const App: Component = () => {
                         title="Play land"
                         subtitle={action().summary}
                         cardIds={action().card_ids}
-                        onPress={(cardId) => run((current) => playLand(current, cardId))}
+                        onPress={(cardId) => {
+                          run((current) => playLand(current, cardId));
+                        }}
                       />
                     )}
                   </Show>
@@ -178,7 +184,9 @@ const App: Component = () => {
                         title="Tap mana source"
                         subtitle={action().summary}
                         cardIds={action().card_ids}
-                        onPress={(cardId) => run((current) => tapManaSource(current, cardId))}
+                        onPress={(cardId) => {
+                          run((current) => tapManaSource(current, cardId));
+                        }}
                       />
                     )}
                   </Show>
@@ -232,7 +240,9 @@ const App: Component = () => {
                 <section class="panel">
                   <div class="panel-head">
                     <h2>Stack + replay</h2>
-                    <p>The event stream and stack are already coming from persisted public state.</p>
+                    <p>
+                      The event stream and stack are already coming from persisted public state.
+                    </p>
                   </div>
                   <StackView stack={resolved().game.stack} />
                   <Timeline entries={resolved().event_log} />
@@ -275,18 +285,19 @@ const PlayerPanel: Component<{ player: DemoPlayerView; isViewer: boolean }> = (p
           fallback={<p class="muted">No permanents yet.</p>}
         >
           <div class="card-grid">
-            <For each={props.player.battlefield}>
-              {(card) => <BattlefieldCard card={card} />}
-            </For>
+            <For each={props.player.battlefield}>{(card) => <BattlefieldCard card={card} />}</For>
           </div>
         </Show>
       </ZonePanel>
 
-      <ZonePanel title={`Graveyard (${props.player.graveyard.length})`} emptyMessage="Empty">
+      <ZonePanel
+        title={"Graveyard (" + String(props.player.graveyard.length) + ")"}
+        emptyMessage="Empty"
+      >
         <CompactCardList cards={props.player.graveyard} />
       </ZonePanel>
 
-      <ZonePanel title={`Exile (${props.player.exile.length})`} emptyMessage="Empty">
+      <ZonePanel title={"Exile (" + String(props.player.exile.length) + ")"} emptyMessage="Empty">
         <CompactCardList cards={props.player.exile} />
       </ZonePanel>
     </div>
@@ -296,7 +307,7 @@ const PlayerPanel: Component<{ player: DemoPlayerView; isViewer: boolean }> = (p
 const ZonePanel: Component<{
   title: string;
   emptyMessage: string;
-  children: import("solid-js").JSX.Element;
+  children: JSX.Element;
 }> = (props) => (
   <article class="zone-panel">
     <div class="zone-head">
@@ -366,7 +377,12 @@ const ActionCluster: Component<{
     <div class="action-list">
       <For each={props.cardIds}>
         {(cardId) => (
-          <button class="action-button" onClick={() => props.onPress(cardId)}>
+          <button
+            class="action-button"
+            onClick={() => {
+              props.onPress(cardId);
+            }}
+          >
             {cardId}
           </button>
         )}

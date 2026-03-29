@@ -175,8 +175,12 @@ cargo check --target wasm32-unknown-unknown
 cargo test --test unit
 cargo test --test bdd
 cd apps/web && npm install
+cd apps/web && npm run format:check
+cd apps/web && npm run lint
 cd apps/web && npm run dev
 cd apps/web && npm run build
+cd apps/web && npm run audit
+cd apps/web && npm run deps:check
 ```
 
 The authoritative development guidance lives in [`docs/development/development.md`](docs/development/development.md).

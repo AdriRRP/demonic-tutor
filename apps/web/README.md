@@ -43,6 +43,24 @@ npm run build
 
 The web scripts regenerate the wasm package from the repository root crate before bundling.
 
+Quality commands:
+
+```bash
+cd apps/web
+npm run format
+npm run format:check
+npm run lint
+npm run typecheck
+npm run build
+npm run check
+npm run audit
+npm run deps:check
+```
+
+`deps:check` only fails when the installed frontend dependencies are behind the exact versions pinned in `package.json`. Newer releases are reported for Dependabot to handle without leaving CI permanently red.
+
+The repository CI now treats these frontend checks as first-class quality gates, and Dependabot also tracks `apps/web` dependencies directly.
+
 ## Current Scope
 
 Today this app is a first integration shell.

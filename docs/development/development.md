@@ -59,13 +59,26 @@ For the current web shell under `apps/web/`, also validate:
 ```bash
 cd apps/web
 npm install
+npm run format:check
+npm run lint
 npm run build
+npm run audit
+npm run deps:check
 ```
 
 The web build regenerates the wasm package from the Rust crate through `wasm-pack`
 before bundling the Solid/Vite client.
 
 Client-specific Rust glue for browser builds belongs under `src/interfaces/web/`.
+
+The repository expects the browser client to follow the same discipline as the Rust code:
+
+- exact dependency versions
+- deterministic formatting through Prettier
+- strict static analysis through ESLint + type-aware `typescript-eslint`
+- dependency freshness checks that fail only when installed packages drift behind the pinned manifest
+- dependency freshness and vulnerability scanning in GitHub Actions
+- Dependabot updates for `apps/web`
 
 Before running the wasm compatibility check for the first time on a machine, install the target once:
 
