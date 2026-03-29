@@ -9,6 +9,8 @@ This directory keeps the repository's slice history and planning backlog grouped
 - `proposals/`
   live planning backlog, grouped by implementation wave
 
+`proposals/` may be intentionally empty between release horizons.
+
 ## Reading Guidance
 
 - use canonical docs for current repository truth

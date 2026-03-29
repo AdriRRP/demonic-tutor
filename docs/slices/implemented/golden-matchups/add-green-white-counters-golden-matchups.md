@@ -22,4 +22,4 @@ The project now includes executable golden-matchup coverage for the green-white 
 
 ## Why it matters
 
-This closes the second archetype-style golden matchup in `0.8.0 wave 3` and shows that the current counters, tokens, anthem, and combat-growth slices compose into playable board development.
+This closed the second archetype-style golden matchup in `0.8.0 wave 3` and showed that the current counters, tokens, anthem, and combat-growth slices compose into playable board development.

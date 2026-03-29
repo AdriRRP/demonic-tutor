@@ -13,10 +13,14 @@ Introduce keyword abilities as creature-level modifiers that affect combat inter
 This slice is the logical next step after the combat foundation because:
 
 1. the combat system already supports declaring attackers and blockers
-2. the single-blocker-per-attacker limit is already modeled
+2. the combat baseline at the time of this slice still modeled only one blocker per attacker
 3. flying is the most common keyword ability and fundamentally changes combat
 4. the domain model can represent a small closed set of supported keyword abilities without introducing a generic rules engine
 5. future keyword slices (trample, first strike, double strike, menace, lifelink, hexproof, indestructible) will follow the same pattern
+
+This slice is historical in one important way:
+
+- later combat slices widened blocker support beyond that original single-blocker baseline
 
 ---
 

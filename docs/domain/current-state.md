@@ -183,6 +183,7 @@ The domain currently includes:
 - the current authoring boundary now classifies supported curated-set cards through one explicit limited-set profile catalog keyed by base card family plus the currently allowed authored subprofiles
 - pending stack-time player choices are now modeled through one closed aggregate concept instead of parallel pending fields
 - aggregate location lookups and compact battlefield refs now name the current player-arena index explicitly instead of calling that carrier position an owner index
+- public and legality read paths for visible zones now prefer semantic card iterators (`hand_cards`, `battlefield_cards`, `graveyard_cards`, `exile_cards`) over raw zone-handle walks so visible-zone desynchronization fails explicitly instead of shrinking the observed state silently
 - the current spell-effect subset now also supports explicit `loot` and `rummage`, surfaced as pending hand-card choice prompts during resolution
 - the current library-manipulation subset now also supports explicit `scry 1`, surfaced as a controller-scoped pending top-card choice during resolution
 - the current library-and-graveyard value subset now also supports explicit `surveil 1`, surfaced as a controller-scoped pending top-card choice that can keep the card on top or move it to graveyard during resolution

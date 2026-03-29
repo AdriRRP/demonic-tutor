@@ -17,7 +17,7 @@ What was still missing was one explicit, versioned statement saying: this is the
 
 - `PublicGameView` now exposes `playable_subset_version = V1`
 - canonical docs now describe `v1` as the frozen playable subset contract
-- the live proposal backlog is cleaned so `0.8.0 wave 4` closes honestly after this freeze
+- this freeze provided the contract boundary that allowed `0.8.0 wave 4` to close honestly before the final `0.8.0` release curation
 
 ## Notes
 

@@ -20,6 +20,16 @@ Implemented slice docs are grouped by capability so the directory stays navigabl
   stack, casting, responses, flash-like support, and priority-window spell corridors
 - `abilities/`
   explicit activated abilities and stack-free mana-ability boundaries
+- `application/`
+  public gameplay contract, replay helpers, seeded sessions, and UI-facing hardening slices
+- `attachments/`
+  supported Aura targeting, attachment legality, and attachment-driven static restrictions
+- `cards/`
+  supported card-face/runtime authoring shapes and curated-card profile work
+- `effects/`
+  bounded spell-effect families that do not fit better under one narrower gameplay area
+- `golden-matchups/`
+  executable curated gameplay corridors that prove the current limited subset composes into real games
 - `targeting/`
   target legality and the currently supported targeted-spell families
 - `combat/`

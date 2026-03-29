@@ -62,23 +62,19 @@ DemonicTutor is a Rust-first, client-oriented laboratory for modeling, playing, 
 
 ## Current state
 
-The current runtime supports a meaningful minimal playtest loop, including:
+The current runtime supports a deliberately constrained but honestly playable limited shell, including:
 
-- two-player game setup with opening hands and simplified London mulligan
-- full phase progression:
+- two-player setup with opening hands, simplified London mulligan, deterministic seeded bootstrapping, and rematch support
+- a stable public gameplay contract for clients:
+  snapshot, legal actions, choice requests, deterministic command envelopes, and persisted replay log
+- full explicit phase progression:
   `Setup -> Untap -> Upkeep -> Draw -> FirstMain -> BeginningOfCombat -> DeclareAttackers -> DeclareBlockers -> CombatDamage -> EndOfCombat -> SecondMain -> EndStep`
-- land play, land tapping, mana payment, and cleanup discard
-- spell casting through a canonical `CastSpell` action
-- minimal stack and priority support with explicit stack objects and public `PassPriority`
-- empty priority windows in the currently supported turn and combat moments
-- active-player instant casting, non-active instant responses, and self-stacking in the supported windows
-- sorcery-speed spells for the active player in empty main-phase windows
-- minimal targeted instant support against players and creatures
-- combat with explicit subphases, attacker/blocker declaration, damage resolution, and single-blocker-per-attacker simplification
-- keyword abilities `Flying` and `Reach` for blocking legality
-- player-owned `Exile` zone
-- shared automatic consequences for zero life, empty-library draw, lethal damage, zero toughness, and cleanup damage removal
-- in-memory event store, event bus, gameplay log projection, and executable BDD coverage
+- stack and priority support for the current bounded subset:
+  spells, public `PassPriority`, non-mana activated abilities, triggered abilities, and supported loyalty abilities
+- combat with explicit subphases, multiple blockers in declared order, ordered damage assignment, and the current supported combat-keyword subset
+- bounded targeted effects, Auras, anthem-style static bonuses, tokens, `+1/+1` counters, graveyard recursion, loot/rummage, scry, and surveil
+- curated-set authoring validation plus executable golden matchups for the first playable archetypes
+- replay-friendly events, in-memory infrastructure, and executable BDD coverage
 
 For the authoritative snapshot, read [`docs/domain/current-state.md`](docs/domain/current-state.md).
 

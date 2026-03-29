@@ -137,6 +137,7 @@ Current implementation:
 
 The battlefield currently models only a minimal subset of permanent state.
 The runtime does not currently promise stable battlefield ordering.
+Read-side and legality queries should prefer semantic battlefield iterators over direct handle walks.
 
 ---
 

@@ -2,6 +2,8 @@
 
 SingleBlockerPerAttacker
 
+Status: historical
+
 ---
 
 ## Goal
@@ -88,4 +90,4 @@ The repository already supports declaring blockers and resolving combat damage, 
 
 ## Rules Support Statement
 
-DemonicTutor currently supports only single-blocker assignments per attacker. Multiple blockers remain out of scope until attacker-side damage assignment order is modeled.
+At the time of this slice, DemonicTutor supported only single-blocker assignments per attacker. Later combat slices superseded that baseline with multi-blocker assignments and ordered damage assignment.

@@ -277,6 +277,11 @@ The current structure removes both problems from the common path while keeping s
 
 It also trims or rebuilds the visible-position support structure when sparse history grows too much, so the zone does not keep paying forever for long-dead positions.
 
+One practical consequence matters for humans reading the code:
+
+- read paths should prefer semantic iterators such as `hand_cards()`, `battlefield_cards()`, `graveyard_cards()`, and `exile_cards()`
+- raw handle walks over visible zones are now treated as an internal storage detail, not the canonical read-side API
+
 ## Current Limit
 
 This is a strong practical structure for the current subset, but it is still a bespoke ordered-zone carrier, not a general-purpose sequence library.

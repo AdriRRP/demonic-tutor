@@ -75,7 +75,12 @@ Slices are the main unit of incremental change in DemonicTutor.
 - [`docs/slices/implemented/README.md`](slices/implemented/README.md)
   implemented and historical slices grouped by capability
 - [`docs/slices/proposals/README.md`](slices/proposals/README.md)
-  live proposal backlog grouped by wave
+  live proposal backlog grouped by wave, which may be intentionally empty between release horizons
+
+## 5. Historical release notes
+
+- [`docs/releases/`](releases/)
+  curated release summaries for shipped versions
 
 Read slices when you want to understand:
 
@@ -85,12 +90,12 @@ Read slices when you want to understand:
 
 Do not use a slice doc as canonical truth if canonical docs already describe the live model more directly.
 
-## 5. Development guidance
+## 6. Development guidance
 
 - [`docs/development/development.md`](development/development.md)
   coding standards, validation commands, refactor discipline, and runtime representation guidance
 
-## 6. Agent-facing context
+## 7. Agent-facing context
 
 These live outside `docs/`, but they are part of the documentation system and matter for navigation:
 

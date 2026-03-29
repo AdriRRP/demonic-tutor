@@ -1,6 +1,6 @@
 # Playable Horizon To A Limited Set
 
-This document defines the current proposal horizon from `v0.7.0` to an honestly playable limited subset.
+This document records the now-closed proposal horizon that ran from `v0.7.0` to the first honestly playable limited subset.
 
 It is intentionally explicit about both:
 
@@ -17,7 +17,7 @@ The proposed horizon is:
 - `0` waves
 - `0` slices
 
-The current horizon is closed.
+The current horizon is closed for the `v0.8.0` release cut.
 
 ## Planning Gates
 
@@ -30,7 +30,7 @@ It is now about expanding that client against a richer, explicitly bounded curat
 
 ### Limited-Set Playable Gate
 
-The first honest "limited set playable" milestone is now `0.8.0`.
+The first honest "limited set playable" milestone was reached in `0.8.0`.
 
 That release now has:
 
