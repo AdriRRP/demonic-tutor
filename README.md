@@ -95,6 +95,8 @@ The project is organized around a single implemented bounded context, `play`.
   the gameplay core, with the `Game` aggregate as the central consistency boundary
 - `src/application/`
   orchestration between commands, aggregate calls, event persistence, and event publication
+- `src/interfaces/`
+  thin external adapters, currently the browser-facing wasm bridge
 - `src/infrastructure/`
   in-memory event store, event bus, and projections
 - `apps/web/`
@@ -114,6 +116,7 @@ For the architectural picture, start with:
 
 - [`docs/domain/aggregate-game.md`](docs/domain/aggregate-game.md)
 - [`docs/architecture/system-overview.md`](docs/architecture/system-overview.md)
+- [`docs/architecture/web-client.md`](docs/architecture/web-client.md)
 - [`docs/architecture/vertical-slices.md`](docs/architecture/vertical-slices.md)
 
 ## Source of truth
@@ -177,6 +180,8 @@ cd apps/web && npm run build
 ```
 
 The authoritative development guidance lives in [`docs/development/development.md`](docs/development/development.md).
+
+For the browser client specifically, also read [`apps/web/README.md`](apps/web/README.md).
 
 ## Documentation map
 

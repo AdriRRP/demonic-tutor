@@ -46,6 +46,8 @@ These files explain how the system is organized and how it should evolve.
   internal organization of the `Game` aggregate
 - [`docs/architecture/agent-architecture.md`](architecture/agent-architecture.md)
   agent-assistance model and documentation precedence
+- [`docs/architecture/web-client.md`](architecture/web-client.md)
+  browser client boundary, wasm adapter, and monorepo client structure
 - [`docs/architecture/gherkin-features.md`](architecture/gherkin-features.md)
   conventions for feature files
 - [`docs/architecture/slice-template.md`](architecture/slice-template.md)

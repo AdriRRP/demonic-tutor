@@ -43,6 +43,8 @@ The architecture separates responsibilities into several conceptual layers.
 ```
 UI
 ↓
+Interface Adapters
+↓
 Application Layer
 ↓
 Domain Core
@@ -76,7 +78,28 @@ WebAssembly and keeps gameplay rules inside the Rust application/domain layers.
 
 The UI layer must **not contain business logic**.
 
-It communicates with the application layer through explicit commands.
+It communicates with the application layer through explicit interface adapters.
+
+---
+
+## Interface Adapter Layer
+
+The interface adapter layer bridges external clients into the internal public gameplay contract.
+
+Responsibilities:
+
+- exposing client-safe entrypoints
+- translating transport or host-specific payloads
+- serializing public snapshots and command results
+- keeping client integration code out of domain and application modules
+
+The current browser adapter lives in:
+
+- `src/interfaces/web/`
+
+This layer is intentionally thin.
+
+It may depend on the application layer, but it must not own gameplay rules.
 
 ---
 
@@ -95,6 +118,12 @@ Responsibilities:
 The application layer may internally split public command handlers and event-adapter helpers by domain capability while keeping a small public service facade.
 
 This layer acts as the boundary between the UI and the domain model.
+
+The current public client-facing contract remains concentrated in:
+
+- `src/application/public_game/`
+
+Browser-specific glue belongs in `src/interfaces/`, not in that contract module.
 
 ---
 

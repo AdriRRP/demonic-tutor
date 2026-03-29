@@ -5,6 +5,8 @@ extern crate alloc;
 pub mod application;
 pub mod domain;
 pub mod infrastructure;
+#[cfg(target_arch = "wasm32")]
+pub mod interfaces;
 
 pub use application::{
     choice_requests, game_view, legal_actions, public_command_result, public_event_log,
@@ -20,6 +22,8 @@ pub use application::{
 pub use application::{EventBus, EventStore, GameService};
 
 pub use infrastructure::{GameLogProjection, InMemoryEventBus, InMemoryEventStore};
+#[cfg(target_arch = "wasm32")]
+pub use interfaces::web::WebDemoClient;
 
 pub use domain::play::{
     cards::{

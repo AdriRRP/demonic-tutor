@@ -65,6 +65,8 @@ npm run build
 The web build regenerates the wasm package from the Rust crate through `wasm-pack`
 before bundling the Solid/Vite client.
 
+Client-specific Rust glue for browser builds belongs under `src/interfaces/web/`.
+
 Before running the wasm compatibility check for the first time on a machine, install the target once:
 
 ```bash
@@ -157,6 +159,7 @@ In particular:
 * the domain core must not depend on **UI, storage or network concerns**
 * aggregates enforce **domain invariants**
 * infrastructure must remain **separate from domain logic**
+* interface adapters belong in `src/interfaces/` rather than leaking into application or domain modules
 * the public domain model should prefer **canonical game semantics** over convenience APIs
 * duplicate commands or events representing the same real-world concept should be removed once the canonical form is clear
 * broad semantic refactors should close with repository curation so code, canonical docs, ADRs, and agent guidance agree before commit or release
