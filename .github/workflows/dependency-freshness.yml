@@ -1,0 +1,47 @@
+name: Dependency Freshness
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+  NODE_VERSION: '22'
+
+concurrency:
+  group: dependency-freshness-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  rust-deps:
+    name: Rust Dependency Freshness
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: taiki-e/install-action@cargo-outdated
+      - name: Check for outdated direct Rust dependencies
+        run: |
+          cargo outdated --depth 1 --exit-code 1 || {
+            echo "ERROR: There are outdated direct Rust dependencies."
+            exit 1
+          }
+
+  web-deps:
+    name: Web Dependency Freshness
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+      - name: Install web dependencies
+        run: npm ci
+      - name: Check frontend dependency freshness
+        run: npm run deps:check

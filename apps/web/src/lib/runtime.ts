@@ -2,6 +2,7 @@ import init, { WebDemoClient as WasmWebDemoClient } from "../wasm/pkg/demonictut
 import type { DemoState } from "./types";
 
 let runtimePromise: Promise<unknown> | undefined;
+const initWasmRuntime = init as () => Promise<void>;
 
 export interface WebDemoClient {
   state(): unknown;
@@ -11,8 +12,12 @@ export interface WebDemoClient {
   tap_mana_source(cardId: string): unknown;
 }
 
+type WebDemoClientConstructor = new () => WebDemoClient;
+
+const WasmWebDemoClientConstructor = WasmWebDemoClient as unknown as WebDemoClientConstructor;
+
 async function ensureRuntime(): Promise<void> {
-  runtimePromise ??= init();
+  runtimePromise ??= initWasmRuntime();
   await runtimePromise;
 }
 
@@ -22,7 +27,7 @@ function coerceDemoState(value: unknown): DemoState {
 
 export async function createDemoClient(): Promise<WebDemoClient> {
   await ensureRuntime();
-  return new WasmWebDemoClient();
+  return new WasmWebDemoClientConstructor();
 }
 
 export function readState(client: WebDemoClient): DemoState {
