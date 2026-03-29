@@ -54,7 +54,7 @@ Quick validation:
 
 Code that fails these checks must not be merged.
 
-For the current web shell under `apps/web/`, also validate:
+For the current web client under `apps/web/`, also validate:
 
 ```bash
 cd apps/web

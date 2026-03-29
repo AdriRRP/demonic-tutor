@@ -130,16 +130,20 @@ The architectural decision behind this is recorded in:
 
 # Current Scope
 
-The current `apps/web` client is still a first integration shell, not the final play surface.
+The current `apps/web` client is now a playable two-player hot-seat arena.
 
-Its job today is to prove:
+Its job today is to provide:
 
-- browser embedding of the engine
-- command round-tripping
-- rendering of public snapshot data
-- replay/timeline projection
+- one shared Rust-owned game session embedded in the browser
+- two viewer-scoped seats over that same session
+- a small private-hand overlay per seat for hot-seat play
+- real command execution for lands, mana, creature casting, combat, cleanup, and replay inspection
 
-The next major client slice is expected to be a two-player hot-seat arena for generating real play logs and testing interaction corridors more aggressively.
+It is still intentionally early-stage UI:
+
+- focused on generating trustworthy play logs
+- optimized for interaction coverage over polish
+- not yet a networked multiplayer client
 
 ---
 

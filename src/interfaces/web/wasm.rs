@@ -1,19 +1,30 @@
-//! Exposes a minimal wasm-facing public gameplay demo adapter.
+//! Exposes a playable wasm-facing two-player duel arena adapter.
 
-use {serde::Serialize, wasm_bindgen::prelude::*};
+use {
+    serde::{Deserialize, Serialize},
+    wasm_bindgen::prelude::*,
+};
 
 use crate::{
     application::{
         choice_requests, game_view, legal_actions, GameService, PublicBattlefieldCardView,
-        PublicCardView, PublicChoiceRequest, PublicCommandApplication, PublicCommandStatus,
-        PublicEvent, PublicEventLogEntry, PublicGameCommand, PublicGameView, PublicLegalAction,
-        PublicPlayableSubsetVersion, PublicPlayerView, PublicSeededGameSetup,
+        PublicCardView, PublicChoiceCandidate, PublicChoiceRequest, PublicCommandApplication,
+        PublicCommandStatus, PublicEvent, PublicEventLogEntry, PublicGameCommand, PublicGameView,
+        PublicLegalAction, PublicPlayableSubsetVersion, PublicPlayerView, PublicSeededGameSetup,
         PublicSeededPlayerSetup, PublicStackObjectView, PublicStackTargetView,
     },
     domain::play::{
-        commands::{
-            AdvanceTurnCommand, LibraryCard, PassPriorityCommand, PlayLandCommand, TapLandCommand,
+        cards::{
+            ActivatedAbilityProfile, CardInstance, CardType, CastingRule, KeywordAbility, ManaColor,
         },
+        commands::{
+            ActivateAbilityCommand, AdvanceTurnCommand, CastSpellCommand, ConcedeCommand,
+            DeclareAttackersCommand, DeclareBlockersCommand, DiscardForCleanupCommand, LibraryCard,
+            PassPriorityCommand, PlayLandCommand, ResolveCombatDamageCommand,
+            ResolveOptionalEffectCommand, ResolvePendingHandChoiceCommand,
+            ResolvePendingScryCommand, ResolvePendingSurveilCommand, TapLandCommand,
+        },
+        game::{Game, Player},
         ids::{CardDefinitionId, CardInstanceId, DeckId, GameId, PlayerId},
         phase::Phase,
     },
@@ -21,20 +32,29 @@ use crate::{
 };
 
 #[wasm_bindgen]
-pub struct WebDemoClient {
+pub struct WebArenaClient {
     service: GameService<InMemoryEventStore, InMemoryEventBus>,
-    game: crate::domain::play::game::Game,
-    viewer_id: PlayerId,
-    demo_setup: PublicSeededGameSetup,
+    game: Game,
+    duel_setup: PublicSeededGameSetup,
+    viewer_ids: Vec<PlayerId>,
 }
 
 #[derive(Serialize)]
-struct WebDemoState {
+struct WebArenaState {
     game: WebGameView,
-    legal_actions: Vec<WebLegalAction>,
-    choice_requests: Vec<WebChoicePrompt>,
+    viewers: Vec<WebViewerState>,
     event_log: Vec<WebTimelineEntry>,
     last_command: Option<WebCommandFeedback>,
+}
+
+#[derive(Serialize)]
+struct WebViewerState {
+    player_id: String,
+    is_active: bool,
+    is_priority_holder: bool,
+    hand: Vec<WebHandCard>,
+    legal_actions: Vec<WebLegalAction>,
+    choice_requests: Vec<WebChoicePrompt>,
 }
 
 #[derive(Serialize)]
@@ -75,6 +95,23 @@ struct WebCardView {
 }
 
 #[derive(Serialize)]
+struct WebHandCard {
+    card_id: String,
+    definition_id: String,
+    card_type: String,
+    mana_cost: u32,
+    power: Option<u32>,
+    toughness: Option<u32>,
+    loyalty: Option<u32>,
+    keywords: Vec<String>,
+    requires_target: bool,
+    requires_choice: bool,
+    has_activated_ability: bool,
+    can_cast_in_open_priority: bool,
+    can_cast_in_open_priority_during_own_turn: bool,
+}
+
+#[derive(Serialize)]
 struct WebBattlefieldCard {
     card_id: String,
     definition_id: String,
@@ -108,6 +145,13 @@ struct WebLegalAction {
     player_id: String,
     summary: String,
     card_ids: Vec<String>,
+    blocker_options: Vec<WebBlockerOption>,
+}
+
+#[derive(Serialize)]
+struct WebBlockerOption {
+    blocker_id: String,
+    attacker_ids: Vec<String>,
 }
 
 #[derive(Serialize)]
@@ -117,6 +161,7 @@ struct WebChoicePrompt {
     source_card_id: Option<String>,
     summary: String,
     item_ids: Vec<String>,
+    options: Vec<String>,
 }
 
 #[derive(Serialize)]
@@ -132,23 +177,37 @@ struct WebCommandFeedback {
     emitted_events: Vec<String>,
 }
 
+#[derive(Deserialize)]
+struct WebBlockerAssignmentInput {
+    blocker_id: String,
+    attacker_id: String,
+}
+
 #[wasm_bindgen]
-impl WebDemoClient {
+impl WebArenaClient {
     #[wasm_bindgen(constructor)]
-    pub fn new() -> Result<WebDemoClient, JsValue> {
+    pub fn new() -> Result<WebArenaClient, JsValue> {
         let service = GameService::new(InMemoryEventStore::new(), InMemoryEventBus::new());
-        let viewer_id = PlayerId::new("player-1");
-        let demo_setup = demo_setup();
+        let duel_setup = duel_setup();
+        let viewer_ids = duel_setup
+            .players
+            .iter()
+            .map(|player| player.player_id.clone())
+            .collect::<Vec<_>>();
+        let initial_viewer = viewer_ids
+            .first()
+            .cloned()
+            .ok_or_else(|| JsValue::from_str("duel setup must include at least one player"))?;
         let (mut game, _) = service
-            .start_seeded_public_game(demo_setup.clone(), &viewer_id)
+            .start_seeded_public_game(duel_setup.clone(), &initial_viewer)
             .map_err(domain_error_to_js)?;
-        advance_demo_to_first_main(&service, &mut game)?;
+        advance_to_first_main(&service, &mut game)?;
 
         Ok(Self {
             service,
             game,
-            viewer_id,
-            demo_setup,
+            duel_setup,
+            viewer_ids,
         })
     }
 
@@ -157,42 +216,172 @@ impl WebDemoClient {
     }
 
     pub fn reset(&mut self) -> Result<JsValue, JsValue> {
+        let initial_viewer = self
+            .viewer_ids
+            .first()
+            .cloned()
+            .ok_or_else(|| JsValue::from_str("duel setup must include at least one player"))?;
         let (mut game, _) = self
             .service
-            .start_seeded_public_game(self.demo_setup.clone(), &self.viewer_id)
+            .start_seeded_public_game(self.duel_setup.clone(), &initial_viewer)
             .map_err(domain_error_to_js)?;
-        advance_demo_to_first_main(&self.service, &mut game)?;
+        advance_to_first_main(&self.service, &mut game)?;
         self.game = game;
         self.project_state(None)
     }
 
-    pub fn step_demo(&mut self) -> Result<JsValue, JsValue> {
-        let command = if let Some(priority) = self.game.priority() {
-            PublicGameCommand::PassPriority(PassPriorityCommand::new(
-                priority.current_holder().clone(),
-            ))
-        } else {
-            PublicGameCommand::AdvanceTurn(AdvanceTurnCommand::new())
-        };
-        self.apply_command(command)
+    pub fn pass_priority(&mut self, player_id: &str) -> Result<JsValue, JsValue> {
+        self.apply_command(PublicGameCommand::PassPriority(PassPriorityCommand::new(
+            PlayerId::new(player_id),
+        )))
     }
 
-    pub fn play_land(&mut self, card_id: &str) -> Result<JsValue, JsValue> {
+    pub fn advance_turn(&mut self) -> Result<JsValue, JsValue> {
+        self.apply_command(PublicGameCommand::AdvanceTurn(AdvanceTurnCommand::new()))
+    }
+
+    pub fn concede(&mut self, player_id: &str) -> Result<JsValue, JsValue> {
+        self.apply_command(PublicGameCommand::Concede(ConcedeCommand::new(
+            PlayerId::new(player_id),
+        )))
+    }
+
+    pub fn play_land(&mut self, player_id: &str, card_id: &str) -> Result<JsValue, JsValue> {
         self.apply_command(PublicGameCommand::PlayLand(PlayLandCommand::new(
-            self.viewer_id.clone(),
+            PlayerId::new(player_id),
             CardInstanceId::new(card_id),
         )))
     }
 
-    pub fn tap_mana_source(&mut self, card_id: &str) -> Result<JsValue, JsValue> {
+    pub fn tap_mana_source(&mut self, player_id: &str, card_id: &str) -> Result<JsValue, JsValue> {
         self.apply_command(PublicGameCommand::TapLand(TapLandCommand::new(
-            self.viewer_id.clone(),
+            PlayerId::new(player_id),
             CardInstanceId::new(card_id),
         )))
+    }
+
+    pub fn cast_spell(&mut self, player_id: &str, card_id: &str) -> Result<JsValue, JsValue> {
+        self.apply_command(PublicGameCommand::CastSpell(CastSpellCommand::new(
+            PlayerId::new(player_id),
+            CardInstanceId::new(card_id),
+        )))
+    }
+
+    pub fn activate_ability(
+        &mut self,
+        player_id: &str,
+        source_card_id: &str,
+    ) -> Result<JsValue, JsValue> {
+        self.apply_command(PublicGameCommand::ActivateAbility(
+            ActivateAbilityCommand::new(
+                PlayerId::new(player_id),
+                CardInstanceId::new(source_card_id),
+            ),
+        ))
+    }
+
+    pub fn declare_attackers(
+        &mut self,
+        player_id: &str,
+        attacker_ids: JsValue,
+    ) -> Result<JsValue, JsValue> {
+        let attacker_ids = serde_wasm_bindgen::from_value::<Vec<String>>(attacker_ids)
+            .map_err(|err| JsValue::from_str(&format!("failed to decode attacker ids: {err}")))?;
+        self.apply_command(PublicGameCommand::DeclareAttackers(
+            DeclareAttackersCommand::new(
+                PlayerId::new(player_id),
+                attacker_ids.into_iter().map(CardInstanceId::new).collect(),
+            ),
+        ))
+    }
+
+    pub fn declare_blockers(
+        &mut self,
+        player_id: &str,
+        blocker_assignments: JsValue,
+    ) -> Result<JsValue, JsValue> {
+        let blocker_assignments =
+            serde_wasm_bindgen::from_value::<Vec<WebBlockerAssignmentInput>>(blocker_assignments)
+                .map_err(|err| {
+                JsValue::from_str(&format!("failed to decode blocker assignments: {err}"))
+            })?;
+        self.apply_command(PublicGameCommand::DeclareBlockers(
+            DeclareBlockersCommand::new(
+                PlayerId::new(player_id),
+                blocker_assignments
+                    .into_iter()
+                    .map(|assignment| {
+                        (
+                            CardInstanceId::new(assignment.blocker_id),
+                            CardInstanceId::new(assignment.attacker_id),
+                        )
+                    })
+                    .collect(),
+            ),
+        ))
+    }
+
+    pub fn resolve_combat_damage(&mut self, player_id: &str) -> Result<JsValue, JsValue> {
+        self.apply_command(PublicGameCommand::ResolveCombatDamage(
+            ResolveCombatDamageCommand::new(PlayerId::new(player_id)),
+        ))
+    }
+
+    pub fn discard_for_cleanup(
+        &mut self,
+        player_id: &str,
+        card_id: &str,
+    ) -> Result<JsValue, JsValue> {
+        self.apply_command(PublicGameCommand::DiscardForCleanup(
+            DiscardForCleanupCommand::new(PlayerId::new(player_id), CardInstanceId::new(card_id)),
+        ))
+    }
+
+    pub fn resolve_optional_effect(
+        &mut self,
+        player_id: &str,
+        accept: bool,
+    ) -> Result<JsValue, JsValue> {
+        self.apply_command(PublicGameCommand::ResolveOptionalEffect(
+            ResolveOptionalEffectCommand::new(PlayerId::new(player_id), accept),
+        ))
+    }
+
+    pub fn resolve_pending_hand_choice(
+        &mut self,
+        player_id: &str,
+        card_id: &str,
+    ) -> Result<JsValue, JsValue> {
+        self.apply_command(PublicGameCommand::ResolvePendingHandChoice(
+            ResolvePendingHandChoiceCommand::new(
+                PlayerId::new(player_id),
+                CardInstanceId::new(card_id),
+            ),
+        ))
+    }
+
+    pub fn resolve_pending_scry(
+        &mut self,
+        player_id: &str,
+        move_to_bottom: bool,
+    ) -> Result<JsValue, JsValue> {
+        self.apply_command(PublicGameCommand::ResolvePendingScry(
+            ResolvePendingScryCommand::new(PlayerId::new(player_id), move_to_bottom),
+        ))
+    }
+
+    pub fn resolve_pending_surveil(
+        &mut self,
+        player_id: &str,
+        move_to_graveyard: bool,
+    ) -> Result<JsValue, JsValue> {
+        self.apply_command(PublicGameCommand::ResolvePendingSurveil(
+            ResolvePendingSurveilCommand::new(PlayerId::new(player_id), move_to_graveyard),
+        ))
     }
 }
 
-impl WebDemoClient {
+impl WebArenaClient {
     fn apply_command(&mut self, command: PublicGameCommand) -> Result<JsValue, JsValue> {
         let application = self.service.execute_public_command(&mut self.game, command);
         let feedback = web_command_feedback(&application);
@@ -201,27 +390,58 @@ impl WebDemoClient {
 
     fn project_state(&self, last_command: Option<WebCommandFeedback>) -> Result<JsValue, JsValue> {
         let game = game_view(&self.game);
-        let legal_actions = legal_actions(&self.game, &self.viewer_id);
-        let choice_requests = choice_requests(&self.game, &self.viewer_id);
         let event_log = self
             .service
             .public_event_log(self.game.id())
             .map_err(domain_error_to_js)?;
+        let viewers = self
+            .viewer_ids
+            .iter()
+            .map(|viewer_id| self.web_viewer_state(viewer_id))
+            .collect::<Result<Vec<_>, _>>()?;
 
-        serde_wasm_bindgen::to_value(&WebDemoState {
+        serde_wasm_bindgen::to_value(&WebArenaState {
             game: web_game_view(&game),
-            legal_actions: legal_actions.iter().map(web_legal_action).collect(),
-            choice_requests: choice_requests.iter().map(web_choice_prompt).collect(),
+            viewers,
             event_log: event_log.iter().map(web_timeline_entry).collect(),
             last_command,
         })
-        .map_err(|err| JsValue::from_str(&format!("failed to serialize web demo state: {err}")))
+        .map_err(|err| {
+            JsValue::from_str(&format!("failed to serialize web duel arena state: {err}"))
+        })
+    }
+
+    fn web_viewer_state(&self, viewer_id: &PlayerId) -> Result<WebViewerState, JsValue> {
+        let player = player_by_id(&self.game, viewer_id).ok_or_else(|| {
+            JsValue::from_str(&format!(
+                "viewer {} is missing from the in-memory duel state",
+                viewer_id.as_str()
+            ))
+        })?;
+
+        Ok(WebViewerState {
+            player_id: id_string(viewer_id),
+            is_active: self.game.active_player() == viewer_id,
+            is_priority_holder: self
+                .game
+                .priority()
+                .is_some_and(|priority| priority.current_holder() == viewer_id),
+            hand: player.hand_cards().map(web_hand_card).collect(),
+            legal_actions: legal_actions(&self.game, viewer_id)
+                .iter()
+                .map(web_legal_action)
+                .collect(),
+            choice_requests: choice_requests(&self.game, viewer_id)
+                .iter()
+                .map(web_choice_prompt)
+                .collect(),
+        })
     }
 }
 
-fn advance_demo_to_first_main(
+fn advance_to_first_main(
     service: &GameService<InMemoryEventStore, InMemoryEventBus>,
-    game: &mut crate::domain::play::game::Game,
+    game: &mut Game,
 ) -> Result<(), JsValue> {
     for _ in 0..32 {
         if *game.phase() == Phase::FirstMain && game.priority().is_some() {
@@ -244,46 +464,72 @@ fn advance_demo_to_first_main(
 
         if let PublicCommandStatus::Rejected(rejection) = application.status {
             return Err(JsValue::from_str(&format!(
-                "failed to prepare wasm demo state: {}",
+                "failed to prepare duel arena state: {}",
                 rejection.message
             )));
         }
     }
 
     Err(JsValue::from_str(
-        "failed to prepare wasm demo state before reaching FirstMain",
+        "failed to prepare duel arena state before reaching FirstMain",
     ))
 }
 
-fn demo_setup() -> PublicSeededGameSetup {
+fn duel_setup() -> PublicSeededGameSetup {
     PublicSeededGameSetup::new(
-        GameId::new("web-demo-game"),
+        GameId::new("web-duel-arena"),
         vec![
             PublicSeededPlayerSetup::new(
                 PlayerId::new("player-1"),
                 DeckId::new("deck-1"),
-                land_library("p1"),
+                duel_library("p1"),
             ),
             PublicSeededPlayerSetup::new(
                 PlayerId::new("player-2"),
                 DeckId::new("deck-2"),
-                land_library("p2"),
+                duel_library("p2"),
             ),
         ],
-        7,
+        11,
     )
 }
 
-fn land_library(prefix: &str) -> Vec<LibraryCard> {
-    ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l"]
-        .into_iter()
-        .map(|suffix| {
-            LibraryCard::land(
-                CardDefinitionId::new(format!("{prefix}-forest-{suffix}")),
-                crate::domain::play::cards::ManaColor::Green,
-            )
-        })
-        .collect()
+fn duel_library(prefix: &str) -> Vec<LibraryCard> {
+    vec![
+        basic_forest(),
+        basic_forest(),
+        basic_forest(),
+        basic_forest(),
+        basic_forest(),
+        basic_forest(),
+        LibraryCard::creature(CardDefinitionId::new("duel-scout"), 1, 2, 1),
+        LibraryCard::creature(CardDefinitionId::new("duel-bear"), 2, 2, 2),
+        LibraryCard::creature(CardDefinitionId::new("duel-warden"), 2, 1, 4),
+        LibraryCard::creature(CardDefinitionId::new("duel-brute"), 3, 3, 3),
+        LibraryCard::creature(
+            CardDefinitionId::new(format!("{prefix}-duel-flash-sprinter")),
+            2,
+            2,
+            1,
+        )
+        .with_casting_rule(CastingRule::OpenPriorityWindow),
+        LibraryCard::new(
+            CardDefinitionId::new(format!("{prefix}-duel-relic")),
+            CardType::Artifact,
+            1,
+        )
+        .with_activated_ability(ActivatedAbilityProfile::tap_to_gain_life_to_controller(1)),
+    ]
+}
+
+fn basic_forest() -> LibraryCard {
+    LibraryCard::land(CardDefinitionId::new("forest"), ManaColor::Green)
+}
+
+fn player_by_id<'a>(game: &'a Game, player_id: &PlayerId) -> Option<&'a Player> {
+    game.players()
+        .iter()
+        .find(|player| player.id() == player_id)
 }
 
 fn web_game_view(game: &PublicGameView) -> WebGameView {
@@ -336,6 +582,61 @@ fn web_card_view(card: &PublicCardView) -> WebCardView {
         definition_id: id_string(&card.definition_id),
         card_type: format!("{:?}", card.card_type),
     }
+}
+
+fn web_hand_card(card: &CardInstance) -> WebHandCard {
+    let casting_permission = card.casting_permission_profile();
+    let supported_spell_rules = card.supported_spell_rules();
+    let (power, toughness) = card
+        .creature_stats()
+        .map_or((None, None), |(power, toughness)| {
+            (Some(power), Some(toughness))
+        });
+
+    WebHandCard {
+        card_id: id_string(card.id()),
+        definition_id: id_string(card.definition_id()),
+        card_type: format!("{:?}", card.card_type()),
+        mana_cost: card.mana_cost(),
+        power,
+        toughness,
+        loyalty: card.loyalty(),
+        keywords: hand_card_keywords(card),
+        requires_target: supported_spell_rules.targeting().requires_target(),
+        requires_choice: supported_spell_rules.requires_choice(),
+        has_activated_ability: card.activated_ability().is_some(),
+        can_cast_in_open_priority: casting_permission
+            .is_some_and(|permission| permission.supports(CastingRule::OpenPriorityWindow)),
+        can_cast_in_open_priority_during_own_turn: casting_permission.is_some_and(|permission| {
+            permission.supports(CastingRule::OpenPriorityWindowDuringOwnTurn)
+        }),
+    }
+}
+
+fn hand_card_keywords(card: &CardInstance) -> Vec<String> {
+    all_keyword_abilities()
+        .into_iter()
+        .filter(|ability| card.has_keyword(*ability))
+        .map(|ability| format!("{ability:?}"))
+        .collect()
+}
+
+fn all_keyword_abilities() -> [KeywordAbility; 13] {
+    [
+        KeywordAbility::Flying,
+        KeywordAbility::Reach,
+        KeywordAbility::Haste,
+        KeywordAbility::Vigilance,
+        KeywordAbility::Trample,
+        KeywordAbility::FirstStrike,
+        KeywordAbility::Deathtouch,
+        KeywordAbility::DoubleStrike,
+        KeywordAbility::Lifelink,
+        KeywordAbility::Menace,
+        KeywordAbility::Hexproof,
+        KeywordAbility::Indestructible,
+        KeywordAbility::Defender,
+    ]
 }
 
 fn web_battlefield_card(card: &PublicBattlefieldCardView) -> WebBattlefieldCard {
@@ -435,36 +736,42 @@ fn web_legal_action(action: &PublicLegalAction) -> WebLegalAction {
             player_id: id_string(player_id),
             summary: "Concede the game".to_string(),
             card_ids: Vec::new(),
+            blocker_options: Vec::new(),
         },
         PublicLegalAction::ResolvePendingScry { player_id } => WebLegalAction {
             kind: "ResolvePendingScry".to_string(),
             player_id: id_string(player_id),
             summary: "Resolve pending scry".to_string(),
             card_ids: Vec::new(),
+            blocker_options: Vec::new(),
         },
         PublicLegalAction::ResolvePendingSurveil { player_id } => WebLegalAction {
             kind: "ResolvePendingSurveil".to_string(),
             player_id: id_string(player_id),
             summary: "Resolve pending surveil".to_string(),
             card_ids: Vec::new(),
+            blocker_options: Vec::new(),
         },
         PublicLegalAction::ResolvePendingHandChoice { player_id } => WebLegalAction {
             kind: "ResolvePendingHandChoice".to_string(),
             player_id: id_string(player_id),
             summary: "Resolve pending hand choice".to_string(),
             card_ids: Vec::new(),
+            blocker_options: Vec::new(),
         },
         PublicLegalAction::ResolveOptionalEffect { player_id } => WebLegalAction {
             kind: "ResolveOptionalEffect".to_string(),
             player_id: id_string(player_id),
             summary: "Resolve optional effect".to_string(),
             card_ids: Vec::new(),
+            blocker_options: Vec::new(),
         },
         PublicLegalAction::PassPriority { player_id } => WebLegalAction {
             kind: "PassPriority".to_string(),
             player_id: id_string(player_id),
             summary: "Pass priority".to_string(),
             card_ids: Vec::new(),
+            blocker_options: Vec::new(),
         },
         PublicLegalAction::PlayLand {
             player_id,
@@ -474,6 +781,7 @@ fn web_legal_action(action: &PublicLegalAction) -> WebLegalAction {
             player_id: id_string(player_id),
             summary: "Play a land".to_string(),
             card_ids: playable_land_ids.iter().map(id_string).collect(),
+            blocker_options: Vec::new(),
         },
         PublicLegalAction::TapManaSource {
             player_id,
@@ -483,6 +791,7 @@ fn web_legal_action(action: &PublicLegalAction) -> WebLegalAction {
             player_id: id_string(player_id),
             summary: "Tap a mana source".to_string(),
             card_ids: mana_source_ids.iter().map(id_string).collect(),
+            blocker_options: Vec::new(),
         },
         PublicLegalAction::CastSpell {
             player_id,
@@ -495,6 +804,7 @@ fn web_legal_action(action: &PublicLegalAction) -> WebLegalAction {
                 .iter()
                 .map(|card| id_string(&card.card_id))
                 .collect(),
+            blocker_options: Vec::new(),
         },
         PublicLegalAction::ActivateAbility {
             player_id,
@@ -507,6 +817,7 @@ fn web_legal_action(action: &PublicLegalAction) -> WebLegalAction {
                 .iter()
                 .map(|card| id_string(&card.card_id))
                 .collect(),
+            blocker_options: Vec::new(),
         },
         PublicLegalAction::DeclareAttackers {
             player_id,
@@ -516,6 +827,7 @@ fn web_legal_action(action: &PublicLegalAction) -> WebLegalAction {
             player_id: id_string(player_id),
             summary: "Declare attackers".to_string(),
             card_ids: attacker_ids.iter().map(id_string).collect(),
+            blocker_options: Vec::new(),
         },
         PublicLegalAction::DeclareBlockers {
             player_id,
@@ -526,18 +838,27 @@ fn web_legal_action(action: &PublicLegalAction) -> WebLegalAction {
             player_id: id_string(player_id),
             summary: format!("Declare blockers across {} options", blocker_options.len()),
             card_ids: attacker_ids.iter().map(id_string).collect(),
+            blocker_options: blocker_options
+                .iter()
+                .map(|option| WebBlockerOption {
+                    blocker_id: id_string(&option.blocker_id),
+                    attacker_ids: option.attacker_ids.iter().map(id_string).collect(),
+                })
+                .collect(),
         },
         PublicLegalAction::ResolveCombatDamage { player_id } => WebLegalAction {
             kind: "ResolveCombatDamage".to_string(),
             player_id: id_string(player_id),
             summary: "Resolve combat damage".to_string(),
             card_ids: Vec::new(),
+            blocker_options: Vec::new(),
         },
         PublicLegalAction::AdvanceTurn { player_id } => WebLegalAction {
             kind: "AdvanceTurn".to_string(),
             player_id: id_string(player_id),
             summary: "Advance turn".to_string(),
             card_ids: Vec::new(),
+            blocker_options: Vec::new(),
         },
         PublicLegalAction::DiscardForCleanup {
             player_id,
@@ -547,6 +868,7 @@ fn web_legal_action(action: &PublicLegalAction) -> WebLegalAction {
             player_id: id_string(player_id),
             summary: "Discard for cleanup".to_string(),
             card_ids: card_ids.iter().map(id_string).collect(),
+            blocker_options: Vec::new(),
         },
     }
 }
@@ -559,6 +881,7 @@ fn web_choice_prompt(request: &PublicChoiceRequest) -> WebChoicePrompt {
             source_card_id: None,
             summary: format!("Phase {phase:?} is unavailable"),
             item_ids: Vec::new(),
+            options: Vec::new(),
         },
         PublicChoiceRequest::PriorityUnavailable { player_id } => WebChoicePrompt {
             kind: "PriorityUnavailable".to_string(),
@@ -566,6 +889,7 @@ fn web_choice_prompt(request: &PublicChoiceRequest) -> WebChoicePrompt {
             source_card_id: None,
             summary: "Priority surface unavailable".to_string(),
             item_ids: Vec::new(),
+            options: Vec::new(),
         },
         PublicChoiceRequest::PendingDecisionUnavailable {
             player_id,
@@ -576,6 +900,7 @@ fn web_choice_prompt(request: &PublicChoiceRequest) -> WebChoicePrompt {
             source_card_id: None,
             summary: format!("Pending decision {decision:?} unavailable"),
             item_ids: Vec::new(),
+            options: Vec::new(),
         },
         PublicChoiceRequest::PendingScry {
             player_id,
@@ -588,6 +913,7 @@ fn web_choice_prompt(request: &PublicChoiceRequest) -> WebChoicePrompt {
             source_card_id: Some(id_string(source_card_id)),
             summary: "Resolve scry".to_string(),
             item_ids: looked_at_card_ids.iter().map(id_string).collect(),
+            options: vec!["KeepOnTop".to_string(), "MoveToBottom".to_string()],
         },
         PublicChoiceRequest::PendingSurveil {
             player_id,
@@ -600,6 +926,7 @@ fn web_choice_prompt(request: &PublicChoiceRequest) -> WebChoicePrompt {
             source_card_id: Some(id_string(source_card_id)),
             summary: "Resolve surveil".to_string(),
             item_ids: looked_at_card_ids.iter().map(id_string).collect(),
+            options: vec!["KeepOnTop".to_string(), "MoveToGraveyard".to_string()],
         },
         PublicChoiceRequest::PendingHandChoice {
             player_id,
@@ -611,6 +938,7 @@ fn web_choice_prompt(request: &PublicChoiceRequest) -> WebChoicePrompt {
             source_card_id: Some(id_string(source_card_id)),
             summary: "Choose a hand card".to_string(),
             item_ids: hand_card_ids.iter().map(id_string).collect(),
+            options: Vec::new(),
         },
         PublicChoiceRequest::OptionalEffectDecision {
             player_id,
@@ -622,6 +950,7 @@ fn web_choice_prompt(request: &PublicChoiceRequest) -> WebChoicePrompt {
             source_card_id: Some(id_string(source_card_id)),
             summary: "Choose yes or no".to_string(),
             item_ids: Vec::new(),
+            options: vec!["Yes".to_string(), "No".to_string()],
         },
         PublicChoiceRequest::SpellTarget {
             player_id,
@@ -632,7 +961,8 @@ fn web_choice_prompt(request: &PublicChoiceRequest) -> WebChoicePrompt {
             player_id: id_string(player_id),
             source_card_id: Some(id_string(source_card_id)),
             summary: "Choose a spell target".to_string(),
-            item_ids: candidates.iter().map(web_choice_candidate_label).collect(),
+            item_ids: candidates.iter().map(web_choice_candidate_id).collect(),
+            options: Vec::new(),
         },
         PublicChoiceRequest::SpellChoiceInvariantViolation {
             player_id,
@@ -643,6 +973,7 @@ fn web_choice_prompt(request: &PublicChoiceRequest) -> WebChoicePrompt {
             source_card_id: Some(id_string(source_card_id)),
             summary: "Spell choice lookup failed".to_string(),
             item_ids: Vec::new(),
+            options: Vec::new(),
         },
         PublicChoiceRequest::SpellChoice {
             player_id,
@@ -654,6 +985,7 @@ fn web_choice_prompt(request: &PublicChoiceRequest) -> WebChoicePrompt {
             source_card_id: Some(id_string(source_card_id)),
             summary: "Choose a card from hand".to_string(),
             item_ids: hand_card_ids.iter().map(id_string).collect(),
+            options: Vec::new(),
         },
         PublicChoiceRequest::SpellSecondaryCreatureChoiceUnavailable {
             player_id,
@@ -664,18 +996,22 @@ fn web_choice_prompt(request: &PublicChoiceRequest) -> WebChoicePrompt {
             source_card_id: Some(id_string(source_card_id)),
             summary: "Secondary creature choice unavailable".to_string(),
             item_ids: Vec::new(),
+            options: Vec::new(),
         },
         PublicChoiceRequest::SpellSecondaryCreatureChoice {
             player_id,
             source_card_id,
             creature_ids,
-            ..
+            allows_skipping,
         } => WebChoicePrompt {
             kind: "SpellSecondaryCreatureChoice".to_string(),
             player_id: id_string(player_id),
             source_card_id: Some(id_string(source_card_id)),
             summary: "Choose secondary creature targets".to_string(),
             item_ids: creature_ids.iter().map(id_string).collect(),
+            options: allows_skipping
+                .then_some(vec!["Skip".to_string()])
+                .unwrap_or_default(),
         },
         PublicChoiceRequest::SpellModalChoice {
             player_id,
@@ -686,7 +1022,8 @@ fn web_choice_prompt(request: &PublicChoiceRequest) -> WebChoicePrompt {
             player_id: id_string(player_id),
             source_card_id: Some(id_string(source_card_id)),
             summary: "Choose a spell mode".to_string(),
-            item_ids: modes.iter().map(|mode| format!("{mode:?}")).collect(),
+            item_ids: Vec::new(),
+            options: modes.iter().map(|mode| format!("{mode:?}")).collect(),
         },
         PublicChoiceRequest::AbilityTarget {
             player_id,
@@ -697,7 +1034,8 @@ fn web_choice_prompt(request: &PublicChoiceRequest) -> WebChoicePrompt {
             player_id: id_string(player_id),
             source_card_id: Some(id_string(source_card_id)),
             summary: "Choose an ability target".to_string(),
-            item_ids: candidates.iter().map(web_choice_candidate_label).collect(),
+            item_ids: candidates.iter().map(web_choice_candidate_id).collect(),
+            options: Vec::new(),
         },
         PublicChoiceRequest::CleanupDiscard {
             player_id,
@@ -708,21 +1046,16 @@ fn web_choice_prompt(request: &PublicChoiceRequest) -> WebChoicePrompt {
             source_card_id: None,
             summary: "Discard down to hand size".to_string(),
             item_ids: hand_card_ids.iter().map(id_string).collect(),
+            options: Vec::new(),
         },
     }
 }
 
-fn web_choice_candidate_label(candidate: &crate::application::PublicChoiceCandidate) -> String {
+fn web_choice_candidate_id(candidate: &PublicChoiceCandidate) -> String {
     match candidate {
-        crate::application::PublicChoiceCandidate::Player(player_id) => {
-            format!("Player {}", player_id.as_str())
-        }
-        crate::application::PublicChoiceCandidate::Card(card_id) => {
-            format!("Card {}", card_id.as_str())
-        }
-        crate::application::PublicChoiceCandidate::StackSpell(stack_object_id) => {
-            format!("Stack {}", stack_object_id.as_str())
-        }
+        PublicChoiceCandidate::Player(player_id) => id_string(player_id),
+        PublicChoiceCandidate::Card(card_id) => id_string(card_id),
+        PublicChoiceCandidate::StackSpell(stack_object_id) => id_string(stack_object_id),
     }
 }
 

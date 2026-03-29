@@ -1,4 +1,4 @@
-# apps/web — DemonicTutor browser shell
+# apps/web — DemonicTutor duel arena
 
 This directory contains the current browser-facing client for DemonicTutor.
 
@@ -63,16 +63,16 @@ The repository CI now treats these frontend checks as first-class quality gates,
 
 ## Current Scope
 
-Today this app is a first integration shell.
+Today this app is a playable two-player hot-seat arena.
 
-It proves:
+It currently provides:
 
-- browser embedding of the Rust engine
-- public snapshot rendering
-- legal-action and choice-request projection
-- replay/timeline rendering
+- one shared wasm-backed game session
+- two viewer-scoped seats over that same Rust-owned state
+- private hand reveal per seat for pass-the-device play
+- real command execution for land play, mana, simple casting, combat, cleanup, and replay
 
-The next major slice is expected to be a playable two-player hot-seat arena for generating real logs and exercising more gameplay interactions from the UI.
+It is still a debugging-forward arena rather than a polished shipped client.
 
 ## Guardrails
 

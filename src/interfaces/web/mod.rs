@@ -2,4 +2,4 @@
 
 mod wasm;
 
-pub use wasm::WebDemoClient;
+pub use wasm::WebArenaClient;

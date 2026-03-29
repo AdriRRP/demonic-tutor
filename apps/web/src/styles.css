@@ -73,7 +73,8 @@ button {
 }
 
 .hero,
-.dashboard {
+.dashboard,
+.arena-dashboard {
   position: relative;
   z-index: 1;
 }
@@ -143,9 +144,20 @@ button {
   gap: 18px;
 }
 
+.arena-dashboard {
+  display: grid;
+  gap: 18px;
+}
+
 .board {
   display: grid;
   gap: 18px;
+}
+
+.viewer-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .sidebar {
@@ -176,6 +188,18 @@ button {
 .player-panel.viewer {
   background:
     linear-gradient(180deg, rgba(53, 101, 75, 0.08), rgba(255, 255, 255, 0.24)), var(--paper-strong);
+}
+
+.viewer-seat.active {
+  border-color: rgba(184, 79, 43, 0.34);
+  background:
+    linear-gradient(180deg, rgba(184, 79, 43, 0.08), rgba(255, 255, 255, 0.26)), var(--paper-strong);
+}
+
+.viewer-seat.priority {
+  box-shadow:
+    var(--shadow),
+    inset 0 0 0 1px rgba(45, 63, 82, 0.15);
 }
 
 .panel-head {
@@ -244,6 +268,45 @@ button {
   border: 1px solid rgba(69, 46, 31, 0.08);
 }
 
+.seat-toolbar,
+.card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.seat-section + .seat-section {
+  margin-top: 22px;
+}
+
+.seat-button,
+.mini-button {
+  box-shadow: none;
+}
+
+.seat-button {
+  padding: 12px 16px;
+}
+
+.mini-button {
+  padding: 10px 14px;
+}
+
+.hand-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.hand-card {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 18px;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.85), rgba(242, 231, 210, 0.82));
+  border: 1px solid rgba(69, 46, 31, 0.1);
+}
+
 .card-grid {
   display: grid;
   gap: 12px;
@@ -289,6 +352,30 @@ button {
   font-size: 0.82rem;
 }
 
+.chip-ember {
+  background: rgba(184, 79, 43, 0.12);
+  color: var(--ember);
+}
+
+.chip-forest {
+  background: rgba(53, 101, 75, 0.14);
+  color: var(--forest);
+}
+
+.chip-night {
+  background: rgba(45, 63, 82, 0.14);
+  color: var(--night);
+}
+
+.chip-toggle {
+  border: none;
+}
+
+.chip-toggle.selected {
+  background: rgba(184, 79, 43, 0.18);
+  color: var(--ember);
+}
+
 .compact-list {
   display: grid;
   gap: 8px;
@@ -325,6 +412,45 @@ button {
   text-align: left;
 }
 
+.action-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+.combat-planner + .combat-planner,
+.action-cluster + .combat-planner,
+.combat-planner + .action-cluster {
+  margin-top: 18px;
+}
+
+.blocker-grid,
+.compact-zones {
+  display: grid;
+  gap: 12px;
+}
+
+.compact-zones {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.blocker-select {
+  display: grid;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.56);
+  border: 1px solid rgba(69, 46, 31, 0.08);
+}
+
+.blocker-select select {
+  width: 100%;
+  border: 1px solid rgba(69, 46, 31, 0.12);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.88);
+  color: var(--ink);
+}
+
 .unsupported-list,
 .prompt-list,
 .stack-list,
@@ -356,9 +482,11 @@ button {
 
 @media (max-width: 1100px) {
   .hero,
+  .viewer-grid,
   .sidebar,
   .zone-grid,
-  .status-grid {
+  .status-grid,
+  .compact-zones {
     grid-template-columns: 1fr;
   }
 

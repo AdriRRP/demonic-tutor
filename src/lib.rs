@@ -23,7 +23,7 @@ pub use application::{EventBus, EventStore, GameService};
 
 pub use infrastructure::{GameLogProjection, InMemoryEventBus, InMemoryEventStore};
 #[cfg(target_arch = "wasm32")]
-pub use interfaces::web::WebDemoClient;
+pub use interfaces::web::WebArenaClient;
 
 pub use domain::play::{
     cards::{

@@ -1,10 +1,26 @@
-export interface DemoCardView {
+export interface ArenaCardView {
   card_id: string;
   definition_id: string;
   card_type: string;
 }
 
-export interface DemoBattlefieldCard extends DemoCardView {
+export interface ArenaHandCard {
+  card_id: string;
+  definition_id: string;
+  card_type: string;
+  mana_cost: number;
+  power: number | null;
+  toughness: number | null;
+  loyalty: number | null;
+  keywords: string[];
+  requires_target: boolean;
+  requires_choice: boolean;
+  has_activated_ability: boolean;
+  can_cast_in_open_priority: boolean;
+  can_cast_in_open_priority_during_own_turn: boolean;
+}
+
+export interface ArenaBattlefieldCard extends ArenaCardView {
   tapped: boolean;
   token: boolean;
   attached_to: string | null;
@@ -17,19 +33,19 @@ export interface DemoBattlefieldCard extends DemoCardView {
   keywords: string[];
 }
 
-export interface DemoPlayerView {
+export interface ArenaPlayerView {
   player_id: string;
   is_active: boolean;
   life: number;
   mana_total: number;
   hand_count: number;
   library_count: number;
-  battlefield: DemoBattlefieldCard[];
-  graveyard: DemoCardView[];
-  exile: DemoCardView[];
+  battlefield: ArenaBattlefieldCard[];
+  graveyard: ArenaCardView[];
+  exile: ArenaCardView[];
 }
 
-export interface DemoStackObject {
+export interface ArenaStackObject {
   number: number;
   kind: string;
   controller_id: string | null;
@@ -39,33 +55,40 @@ export interface DemoStackObject {
   requires_choice: boolean;
 }
 
-export interface DemoLegalAction {
+export interface ArenaBlockerOption {
+  blocker_id: string;
+  attacker_ids: string[];
+}
+
+export interface ArenaLegalAction {
   kind: string;
   player_id: string;
   summary: string;
   card_ids: string[];
+  blocker_options: ArenaBlockerOption[];
 }
 
-export interface DemoChoicePrompt {
+export interface ArenaChoicePrompt {
   kind: string;
   player_id: string;
   source_card_id: string | null;
   summary: string;
   item_ids: string[];
+  options: string[];
 }
 
-export interface DemoTimelineEntry {
+export interface ArenaTimelineEntry {
   sequence: number;
   label: string;
 }
 
-export interface DemoCommandFeedback {
+export interface ArenaCommandFeedback {
   applied: boolean;
   message: string;
   emitted_events: string[];
 }
 
-export interface DemoGameView {
+export interface ArenaGameView {
   game_id: string;
   playable_subset_version: string;
   active_player_id: string | null;
@@ -77,14 +100,27 @@ export interface DemoGameView {
   winner_id: string | null;
   loser_id: string | null;
   end_reason: string | null;
-  players: DemoPlayerView[];
-  stack: DemoStackObject[];
+  players: ArenaPlayerView[];
+  stack: ArenaStackObject[];
 }
 
-export interface DemoState {
-  game: DemoGameView;
-  legal_actions: DemoLegalAction[];
-  choice_requests: DemoChoicePrompt[];
-  event_log: DemoTimelineEntry[];
-  last_command: DemoCommandFeedback | null;
+export interface ArenaViewerState {
+  player_id: string;
+  is_active: boolean;
+  is_priority_holder: boolean;
+  hand: ArenaHandCard[];
+  legal_actions: ArenaLegalAction[];
+  choice_requests: ArenaChoicePrompt[];
+}
+
+export interface ArenaState {
+  game: ArenaGameView;
+  viewers: ArenaViewerState[];
+  event_log: ArenaTimelineEntry[];
+  last_command: ArenaCommandFeedback | null;
+}
+
+export interface BlockerAssignmentInput {
+  blocker_id: string;
+  attacker_id: string;
 }
