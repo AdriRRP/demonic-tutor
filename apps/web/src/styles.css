@@ -444,6 +444,7 @@ button {
 
 .battlefield-strip {
   padding-top: 10px;
+  align-items: stretch;
 }
 
 .seat-ops {
@@ -481,54 +482,218 @@ button {
 }
 
 .hand-fan {
-  padding-top: 8px;
+  justify-content: center;
+  align-items: flex-end;
+  padding: 18px 10px 8px;
 }
 
-.hand-table-card {
-  min-width: 180px;
-}
-
-.table-card {
-  width: 180px;
-  min-height: 208px;
+.game-card {
+  width: 188px;
+  min-height: 260px;
   flex: 0 0 auto;
-  border-radius: 20px;
+  position: relative;
+  border-radius: 22px;
   box-shadow: var(--shadow-card);
 }
 
-.table-card-frame {
+.game-card-skin {
+  position: relative;
   display: grid;
-  gap: 12px;
+  gap: 14px;
   height: 100%;
-  padding: 14px;
-  border-radius: 20px;
-  border: 1px solid rgba(86, 52, 31, 0.18);
+  padding: 16px;
+  border-radius: 22px;
+  overflow: hidden;
+  border: 1px solid rgba(86, 52, 31, 0.2);
   background:
-    linear-gradient(180deg, rgba(255, 251, 243, 0.96), rgba(228, 211, 184, 0.96)), var(--paper);
+    linear-gradient(180deg, rgba(255, 251, 243, 0.98), rgba(226, 207, 180, 0.97)), var(--paper);
   color: #2b1b12;
 }
 
-.table-card-head {
+.game-card-crest {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 4px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.35), rgba(0, 0, 0, 0.08));
+}
+
+.game-card-head {
   display: flex;
   justify-content: space-between;
   gap: 10px;
   align-items: flex-start;
 }
 
-.table-card-head span {
-  color: rgba(43, 27, 18, 0.72);
-  font-size: 0.86rem;
+.game-card-head h4 {
+  margin: 4px 0 0;
+  font-size: 1.05rem;
+  line-height: 1.08;
 }
 
-.table-card-body {
+.game-card-type {
+  margin: 0;
+  color: rgba(43, 27, 18, 0.66);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.game-card-cost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 1px solid rgba(39, 23, 16, 0.16);
+  background: rgba(255, 255, 255, 0.76);
+  font-weight: 800;
+  font-size: 0.95rem;
+}
+
+.game-card-statuses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 28px;
+}
+
+.game-card-body {
   display: grid;
-  gap: 10px;
+  gap: 12px;
   align-content: start;
+  min-height: 74px;
 }
 
-.battlefield-card.tapped {
-  filter: saturate(0.86);
-  transform: translateY(8px);
+.game-card-keywords {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.game-keyword {
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: rgba(39, 23, 16, 0.08);
+  color: rgba(43, 27, 18, 0.82);
+  font-size: 0.76rem;
+}
+
+.game-card-line {
+  margin: 0;
+  color: rgba(43, 27, 18, 0.74);
+  line-height: 1.4;
+}
+
+.game-card-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: flex-end;
+  margin-top: auto;
+}
+
+.card-stat-block {
+  display: grid;
+  gap: 2px;
+}
+
+.card-stat-block span {
+  color: rgba(43, 27, 18, 0.62);
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.card-stat-block strong {
+  font-size: 1rem;
+}
+
+.card-stat-block.combat {
+  margin-left: auto;
+  padding: 8px 10px;
+  border-radius: 14px;
+  background: rgba(39, 23, 16, 0.08);
+}
+
+.game-card-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.game-card-actions .action-button {
+  width: 100%;
+}
+
+.mode-hand {
+  z-index: 1;
+}
+
+.mode-hand:hover {
+  z-index: 3;
+}
+
+.mode-battlefield {
+  min-height: 230px;
+}
+
+.game-card.tapped {
+  transform: rotate(90deg) translateY(16px);
+  transform-origin: center center;
+}
+
+.tone-land .game-card-crest {
+  background: linear-gradient(90deg, #5a7d59, #93b276);
+}
+
+.tone-creature .game-card-crest {
+  background: linear-gradient(90deg, #8b4f35, #d89a5d);
+}
+
+.tone-artifact .game-card-crest {
+  background: linear-gradient(90deg, #7b8797, #b6c1cf);
+}
+
+.tone-enchantment .game-card-crest {
+  background: linear-gradient(90deg, #8a63a6, #d3b5ef);
+}
+
+.tone-planeswalker .game-card-crest {
+  background: linear-gradient(90deg, #a44333, #f0a06c);
+}
+
+.tone-spell .game-card-crest {
+  background: linear-gradient(90deg, #44729d, #93c0e8);
+}
+
+.tone-land .game-card-skin {
+  background:
+    linear-gradient(180deg, rgba(252, 249, 239, 0.98), rgba(214, 223, 198, 0.97)), var(--paper);
+}
+
+.tone-creature .game-card-skin {
+  background:
+    linear-gradient(180deg, rgba(255, 249, 241, 0.98), rgba(233, 207, 174, 0.97)), var(--paper);
+}
+
+.tone-artifact .game-card-skin {
+  background:
+    linear-gradient(180deg, rgba(251, 252, 254, 0.98), rgba(212, 220, 230, 0.96)), var(--paper);
+}
+
+.tone-enchantment .game-card-skin {
+  background:
+    linear-gradient(180deg, rgba(252, 247, 255, 0.98), rgba(223, 207, 239, 0.97)), var(--paper);
+}
+
+.tone-planeswalker .game-card-skin {
+  background:
+    linear-gradient(180deg, rgba(255, 248, 243, 0.98), rgba(233, 199, 179, 0.97)), var(--paper);
+}
+
+.tone-spell .game-card-skin {
+  background:
+    linear-gradient(180deg, rgba(248, 252, 255, 0.98), rgba(202, 220, 239, 0.97)), var(--paper);
 }
 
 .chip-row,
@@ -707,8 +872,8 @@ button {
     border-radius: 22px;
   }
 
-  .table-card {
+  .game-card {
     width: 160px;
-    min-height: 196px;
+    min-height: 236px;
   }
 }

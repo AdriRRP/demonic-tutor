@@ -1,5 +1,6 @@
 import { For, Match, Show, Switch } from "solid-js";
 import type { Component } from "solid-js";
+import { GameCard } from "./cards/game-card";
 import {
   activateAbility,
   advanceTurn,
@@ -318,7 +319,24 @@ const SeatPanel: Component<{
                 fallback={<p class="muted">Nothing on the battlefield yet.</p>}
               >
                 <div class="battlefield-strip">
-                  <For each={player().battlefield}>{(card) => <BattlefieldCard card={card} />}</For>
+                  <For each={player().battlefield}>
+                    {(card) => (
+                      <GameCard
+                        attacking={card.attacking}
+                        blocking={card.blocking}
+                        cardType={card.card_type}
+                        definitionId={card.definition_id}
+                        keywords={card.keywords}
+                        loyalty={card.loyalty}
+                        mode="battlefield"
+                        power={card.power}
+                        summoningSickness={card.summoning_sickness}
+                        tapped={card.tapped}
+                        token={card.token}
+                        toughness={card.toughness}
+                      />
+                    )}
+                  </For>
                 </div>
               </Show>
             </section>
@@ -405,41 +423,10 @@ const SeatPanel: Component<{
             >
               <div class="hand-fan">
                 <For each={props.viewer.hand}>
-                  {(card) => (
-                    <article class="table-card hand-table-card">
-                      <div class="table-card-frame">
-                        <div class="table-card-head">
-                          <strong>{card.definition_id}</strong>
-                          <span>{card.card_type}</span>
-                        </div>
-                        <div class="table-card-body">
-                          <div class="chip-row">
-                            <span class="chip">Cost {card.mana_cost}</span>
-                            <Show when={card.power !== null && card.toughness !== null}>
-                              <span class="chip">
-                                {card.power}/{card.toughness}
-                              </span>
-                            </Show>
-                            <Show when={card.loyalty !== null}>
-                              <span class="chip">Loyalty {card.loyalty}</span>
-                            </Show>
-                          </div>
-                          <div class="chip-row">
-                            <For each={card.keywords}>
-                              {(keyword) => <span class="chip">{keyword}</span>}
-                            </For>
-                            <Show when={card.can_cast_in_open_priority}>
-                              <span class="chip chip-night">Open priority</span>
-                            </Show>
-                            <Show when={card.can_cast_in_open_priority_during_own_turn}>
-                              <span class="chip chip-night">Own-turn priority</span>
-                            </Show>
-                            <Show when={card.has_activated_ability}>
-                              <span class="chip chip-forest">Ability</span>
-                            </Show>
-                          </div>
-                        </div>
-                        <div class="card-actions">
+                  {(card, index) => (
+                    <GameCard
+                      actions={
+                        <>
                           <Show when={playLandIds().has(card.card_id)}>
                             <button
                               class="action-button"
@@ -481,9 +468,22 @@ const SeatPanel: Component<{
                               Discard
                             </button>
                           </Show>
-                        </div>
-                      </div>
-                    </article>
+                        </>
+                      }
+                      activatedAbility={card.has_activated_ability}
+                      cardType={card.card_type}
+                      definitionId={card.definition_id}
+                      fanCount={props.viewer.hand.length}
+                      index={index()}
+                      keywords={card.keywords}
+                      loyalty={card.loyalty}
+                      manaCost={card.mana_cost}
+                      mode="hand"
+                      openPriority={card.can_cast_in_open_priority}
+                      ownTurnPriority={card.can_cast_in_open_priority_during_own_turn}
+                      power={card.power}
+                      toughness={card.toughness}
+                    />
                   )}
                 </For>
               </div>
@@ -815,47 +815,6 @@ const ActionList: Component<{
           </button>
         )}
       </For>
-    </div>
-  </article>
-);
-
-const BattlefieldCard: Component<{ card: ArenaBattlefieldCard }> = (props) => (
-  <article classList={{ "table-card": true, "battlefield-card": true, tapped: props.card.tapped }}>
-    <div class="table-card-frame">
-      <div class="table-card-head">
-        <strong>{props.card.definition_id}</strong>
-        <span>{props.card.card_type}</span>
-      </div>
-      <div class="table-card-body">
-        <div class="chip-row">
-          <Show when={props.card.power !== null && props.card.toughness !== null}>
-            <span class="chip">
-              {props.card.power}/{props.card.toughness}
-            </span>
-          </Show>
-          <Show when={props.card.loyalty !== null}>
-            <span class="chip">Loyalty {props.card.loyalty}</span>
-          </Show>
-          <Show when={props.card.token}>
-            <span class="chip">Token</span>
-          </Show>
-        </div>
-        <div class="chip-row">
-          <Show when={props.card.tapped}>
-            <span class="chip chip-night">Tapped</span>
-          </Show>
-          <Show when={props.card.summoning_sickness}>
-            <span class="chip">Summoning sick</span>
-          </Show>
-          <Show when={props.card.attacking}>
-            <span class="chip chip-ember">Attacking</span>
-          </Show>
-          <Show when={props.card.blocking}>
-            <span class="chip chip-forest">Blocking</span>
-          </Show>
-          <For each={props.card.keywords}>{(keyword) => <span class="chip">{keyword}</span>}</For>
-        </div>
-      </div>
     </div>
   </article>
 );
