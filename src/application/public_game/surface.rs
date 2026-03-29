@@ -378,13 +378,14 @@ fn phase_surface_state(game: &Game, viewer_id: &PlayerId) -> PublicSurfaceState 
                 return PublicSurfaceState::default();
             }
             if active_player.hand_size() > 7 {
+                let hand_card_ids = active_player.hand_card_ids();
                 actions.push(PublicLegalAction::DiscardForCleanup {
                     player_id: active_player.id().clone(),
-                    card_ids: active_player.hand_card_ids(),
+                    card_ids: hand_card_ids.clone(),
                 });
                 choice_requests.push(PublicChoiceRequest::CleanupDiscard {
                     player_id: active_player.id().clone(),
-                    hand_card_ids: active_player.hand_card_ids(),
+                    hand_card_ids,
                 });
             } else {
                 actions.push(PublicLegalAction::AdvanceTurn {
@@ -944,24 +945,19 @@ fn tappable_mana_source_ids(game: &Game, player: &Player) -> Vec<CardInstanceId>
 }
 
 fn castable_cards(game: &Game, player: &Player) -> Vec<PublicCastableCard> {
-    let mut candidates = player.hand_card_ids();
-    candidates.extend(player.graveyard_cards().map(|card| card.id().clone()));
-
-    candidates
-        .into_iter()
-        .filter_map(|card_id| castable_card(game, player, &card_id))
+    player
+        .hand_cards()
+        .chain(player.graveyard_cards())
+        .filter_map(|card| castable_card(game, player.id(), card))
         .collect()
 }
 
 fn castable_card(
     game: &Game,
-    player: &Player,
-    card_id: &CardInstanceId,
+    player_id: &PlayerId,
+    card: &CardInstance,
 ) -> Option<PublicCastableCard> {
-    let card = player
-        .hand_card(card_id)
-        .or_else(|| player.graveyard_card(card_id))?;
-    if game.castable_card(player.id(), card_id) {
+    if game.castable_card(player_id, card.id()) {
         let rules = card.supported_spell_rules();
         Some(PublicCastableCard {
             card_id: card.id().clone(),
@@ -1123,19 +1119,18 @@ fn pending_surveil_request(game: &Game) -> Option<PublicChoiceRequest> {
 
 fn activatable_cards(game: &Game, player: &Player) -> Vec<PublicActivatableCard> {
     player
-        .battlefield_card_ids()
-        .filter_map(|card_id| activatable_card(game, player, card_id))
+        .battlefield_cards()
+        .filter_map(|card| activatable_card(game, player.id(), card))
         .collect()
 }
 
 fn activatable_card(
     game: &Game,
-    player: &Player,
-    card_id: &CardInstanceId,
+    player_id: &PlayerId,
+    card: &CardInstance,
 ) -> Option<PublicActivatableCard> {
-    let card = player.battlefield_card(card_id)?;
     let ability = card.activated_ability()?;
-    if game.activatable_card(player.id(), card_id) {
+    if game.activatable_card(player_id, card.id()) {
         Some(PublicActivatableCard {
             card_id: card.id().clone(),
             definition_id: card.definition_id().clone(),

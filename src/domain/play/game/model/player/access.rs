@@ -249,23 +249,19 @@ impl Player {
         &self,
         definition_id: &CardDefinitionId,
     ) -> Option<&CardInstance> {
-        self.hand
-            .iter()
-            .map(|handle| {
-                self.visible_card_by_handle_in_zone_or_invariant(*handle, PlayerCardZone::Hand)
-            })
+        self.hand_cards()
             .find(|card| card.definition_id() == definition_id)
+    }
+
+    pub fn hand_cards(&self) -> impl Iterator<Item = &CardInstance> {
+        self.hand.iter().map(|handle| {
+            self.visible_card_by_handle_in_zone_or_invariant(*handle, PlayerCardZone::Hand)
+        })
     }
 
     #[must_use]
     pub fn hand_card_ids(&self) -> Vec<CardInstanceId> {
-        self.hand
-            .iter()
-            .map(|handle| {
-                self.visible_card_by_handle_in_zone_or_invariant(*handle, PlayerCardZone::Hand)
-            })
-            .map(|card| card.id().clone())
-            .collect()
+        self.hand_cards().map(|card| card.id().clone()).collect()
     }
 
     #[must_use]
