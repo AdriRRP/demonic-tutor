@@ -57,22 +57,25 @@ npm run audit
 npm run deps:check
 ```
 
+`npm run check` is the frontend quality gate used by CI: format, strict lint, production build, `npm audit`, and dependency freshness against the pinned manifest.
+
 `deps:check` only fails when the installed frontend dependencies are behind the exact versions pinned in `package.json`. Newer releases are reported for Dependabot to handle without leaving CI permanently red.
 
 The repository CI now treats these frontend checks as first-class quality gates, and Dependabot also tracks `apps/web` dependencies directly.
 
 ## Current Scope
 
-Today this app is a playable two-player hot-seat arena.
+Today this app is a playable two-player hot-seat arena with a board-first tabletop presentation.
 
 It currently provides:
 
 - one shared wasm-backed game session
 - two viewer-scoped seats over that same Rust-owned state
+- a central play surface with top/bottom seats and a secondary replay sidebar
 - private hand reveal per seat for pass-the-device play
 - real command execution for land play, mana, simple casting, combat, cleanup, and replay
 
-It is still a debugging-forward arena rather than a polished shipped client.
+It is still an early arena rather than a polished shipped client, but the UI now prioritizes feeling like a real table before adding richer motion or deeper spell UX.
 
 ## Guardrails
 

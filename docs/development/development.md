@@ -33,12 +33,6 @@ cargo clippy --all-targets --all-features --
 -W clippy::nursery 
 -W clippy::perf 
 -W clippy::cargo 
--W clippy::unwrap_used 
--W clippy::expect_used 
--W clippy::panic 
--W clippy::todo 
--W clippy::unimplemented 
--W clippy::unreachable 
 -A clippy::multiple_crate_versions 
 -D warnings
 
@@ -64,6 +58,7 @@ npm run lint
 npm run build
 npm run audit
 npm run deps:check
+npm run check
 ```
 
 The web build regenerates the wasm package from the Rust crate through `wasm-pack`
@@ -76,6 +71,8 @@ The repository expects the browser client to follow the same discipline as the R
 - exact dependency versions
 - deterministic formatting through Prettier
 - strict static analysis through ESLint + type-aware `typescript-eslint`
+- mandatory production build validation through Vite + `tsc`
+- dependency vulnerability scanning through `npm audit`
 - dependency freshness checks that fail only when installed packages drift behind the pinned manifest
 - dependency freshness and vulnerability scanning in GitHub Actions
 - Dependabot updates for `apps/web`

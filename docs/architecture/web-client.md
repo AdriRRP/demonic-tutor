@@ -130,7 +130,7 @@ The architectural decision behind this is recorded in:
 
 # Current Scope
 
-The current `apps/web` client is now a playable two-player hot-seat arena.
+The current `apps/web` client is now a playable two-player hot-seat arena with a board-first tabletop layout.
 
 Its job today is to provide:
 
@@ -142,7 +142,8 @@ Its job today is to provide:
 It is still intentionally early-stage UI:
 
 - focused on generating trustworthy play logs
-- optimized for interaction coverage over polish
+- centered on a shared table surface rather than debug panels
+- optimized for interaction coverage before deep motion/polish work
 - not yet a networked multiplayer client
 
 ---

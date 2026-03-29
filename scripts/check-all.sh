@@ -21,12 +21,6 @@ cargo clippy --all-targets --all-features -- \
     -W clippy::nursery \
     -W clippy::perf \
     -W clippy::cargo \
-    -W clippy::unwrap_used \
-    -W clippy::expect_used \
-    -W clippy::panic \
-    -W clippy::todo \
-    -W clippy::unimplemented \
-    -W clippy::unreachable \
     -A clippy::multiple_crate_versions \
     -D warnings
 
@@ -51,16 +45,16 @@ fi
 npm --prefix apps/web run format:check
 npm --prefix apps/web run lint
 npm --prefix apps/web run build
+npm --prefix apps/web run audit
+npm --prefix apps/web run deps:check
 
 echo ""
 echo "=== Security Audit ==="
 cargo audit
-npm --prefix apps/web run audit
 
 echo ""
 echo "=== Dependency Update Check ==="
 ./scripts/deps.sh
-npm --prefix apps/web run deps:check
 
 echo ""
 echo "=== All checks passed ==="

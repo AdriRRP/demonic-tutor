@@ -3,20 +3,16 @@ name: Security
 on:
   push:
     branches: [main]
-    paths:
-      - '**/Cargo.toml'
-      - '**/Cargo.lock'
-      - 'apps/web/package.json'
-      - 'apps/web/package-lock.json'
-      - '.github/workflows/security.yml'
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - '.agents/**'
   pull_request:
     branches: [main]
-    paths:
-      - '**/Cargo.toml'
-      - '**/Cargo.lock'
-      - 'apps/web/package.json'
-      - 'apps/web/package-lock.json'
-      - '.github/workflows/security.yml'
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - '.agents/**'
   schedule:
     - cron: '0 0 * * 0'  # Weekly
 
@@ -24,15 +20,22 @@ env:
   CARGO_TERM_COLOR: always
   NODE_VERSION: '22'
 
+concurrency:
+  group: security-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   security-audit:
-    name: Security Audit
+    name: Rust Security Audit
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: rustsec/audit-check@v2.0.0
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Install cargo-audit
+        uses: taiki-e/install-action@cargo-audit
+      - name: Audit Rust dependencies
+        run: cargo audit
 
   web-security-audit:
     name: Web Security Audit
@@ -50,7 +53,7 @@ jobs:
       - name: Install web dependencies
         run: npm ci
       - name: Audit web dependencies
-        run: npm audit --audit-level=moderate
+        run: npm run audit
 
   dependency-review:
     name: Dependency Review

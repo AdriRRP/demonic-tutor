@@ -100,7 +100,7 @@ The project is organized around a single implemented bounded context, `play`.
 - `src/infrastructure/`
   in-memory event store, event bus, and projections
 - `apps/web/`
-  a Solid + Vite hot-seat duel arena that embeds the real Rust engine through WebAssembly
+  a Solid + Vite hot-seat duel arena with a board-first tabletop layout that embeds the real Rust engine through WebAssembly
 - `docs/domain/`
   canonical domain truth
 - `docs/architecture/`
