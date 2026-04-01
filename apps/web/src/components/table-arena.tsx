@@ -59,6 +59,7 @@ interface BattlefieldCardActionOption {
 }
 
 interface InspectCardState {
+  sourceCardId?: string | undefined;
   definitionId: string;
   cardType: string;
   zoneLabel: string;
@@ -227,6 +228,7 @@ export const TableArena: Component<TableArenaProps> = (props) => {
                 onInspectCard={setInspectedCard}
                 onOpenZoneBrowser={setZoneBrowser}
                 onDragHandCard={setDraggedCardId}
+                inspectedCardId={inspectedCard()?.sourceCardId ?? null}
                 orientation="top"
                 revealed={props.state.game.is_over || props.revealedSeatId === viewer().player_id}
                 selectedAttackers={props.selectedAttackers}
@@ -269,6 +271,7 @@ export const TableArena: Component<TableArenaProps> = (props) => {
                 onBattlefieldDropCard={(cardId) => {
                   playDraggedCard(viewer(), cardId);
                 }}
+                inspectedCardId={inspectedCard()?.sourceCardId ?? null}
                 orientation="bottom"
                 revealed={props.state.game.is_over || props.revealedSeatId === viewer().player_id}
                 selectedAttackers={props.selectedAttackers}
@@ -459,7 +462,7 @@ export const TableArena: Component<TableArenaProps> = (props) => {
                     mode="battlefield"
                     power={card().power}
                     summoningSickness={card().summoningSickness}
-                    tapped={card().tapped}
+                    tapped={false}
                     token={card().token}
                     toughness={card().toughness}
                   />
@@ -477,7 +480,13 @@ export const TableArena: Component<TableArenaProps> = (props) => {
                   <Show when={card().loyalty !== undefined && card().loyalty !== null}>
                     <SidebarMetric label="Loyalty" value={String(card().loyalty)} />
                   </Show>
-                  <Show when={card().manaCost !== undefined && card().manaCost !== null}>
+                  <Show
+                    when={
+                      card().manaCost !== undefined &&
+                      card().manaCost !== null &&
+                      !card().cardType.toLowerCase().includes("land")
+                    }
+                  >
                     <SidebarMetric label="Mana" value={String(card().manaCost)} />
                   </Show>
                   <Show when={card().keywords.length > 0}>
@@ -521,6 +530,7 @@ const SeatPanel: Component<{
   onRun: (operation: (current: WebArenaClient) => ArenaState) => void;
   zonesOpen: boolean;
   draggedHandCardId: string | null;
+  inspectedCardId: string | null;
 }> = (props) => {
   const viewerPlayer = () => findPlayer(props.game, props.viewer.player_id);
   const playLandAction = () => findAction(props.viewer, "PlayLand");
@@ -647,6 +657,12 @@ const SeatPanel: Component<{
 
   const moveBattlefieldCard = (draggedCardId: string, targetCardId: string) => {
     setBattlefieldOrder((previous) => reorderCardIds(previous, draggedCardId, targetCardId));
+  };
+
+  const openInspectCard = (card: InspectCardState) => {
+    setFocusedHandCardId(null);
+    setBattlefieldActionMenuCardId(null);
+    props.onInspectCard(card);
   };
 
   const battlefieldCardActions = (card: ArenaBattlefieldCard): BattlefieldCardActionOption[] => {
@@ -915,7 +931,12 @@ const SeatPanel: Component<{
                   <For each={orderedBattlefield()}>
                     {(card) => (
                       <div
-                        class="battlefield-card-shell"
+                        classList={{
+                          "battlefield-card-shell": true,
+                          selected:
+                            battlefieldActionMenuCardId() === card.card_id ||
+                            props.inspectedCardId === card.card_id,
+                        }}
                         draggable
                         onClick={(event) => {
                           event.stopPropagation();
@@ -978,9 +999,13 @@ const SeatPanel: Component<{
                             handleBattlefieldCardAction(card);
                           }}
                           onInspect={() => {
-                            props.onInspectCard(inspectFromBattlefieldCard(card));
+                            openInspectCard(inspectFromBattlefieldCard(card));
                           }}
                           power={card.power}
+                          selected={
+                            battlefieldActionMenuCardId() === card.card_id ||
+                            props.inspectedCardId === card.card_id
+                          }
                           summoningSickness={card.summoning_sickness}
                           tapped={card.tapped}
                           token={card.token}
@@ -1248,7 +1273,12 @@ const SeatPanel: Component<{
                   </div>
                 }
               >
-                <div class="hand-fan hand-fan-floating">
+                <div
+                  class="hand-fan hand-fan-floating"
+                  onMouseLeave={() => {
+                    setFocusedHandCardId(null);
+                  }}
+                >
                   <For each={orderedHand()}>
                     {(card, index) => (
                       <div
@@ -1256,6 +1286,7 @@ const SeatPanel: Component<{
                           "card-drag-shell": true,
                           "hand-card-shell": true,
                           focused: focusedHandCardId() === card.card_id,
+                          selected: props.inspectedCardId === card.card_id,
                         }}
                         draggable={props.revealed}
                         onDragOver={(event) => {
@@ -1286,6 +1317,12 @@ const SeatPanel: Component<{
                             event.dataTransfer.setData("text/plain", card.card_id);
                             event.dataTransfer.effectAllowed = "move";
                           }
+                        }}
+                        onFocusIn={() => {
+                          setFocusedHandCardId(card.card_id);
+                        }}
+                        onMouseEnter={() => {
+                          setFocusedHandCardId(card.card_id);
                         }}
                         style={handCardShellStyle(
                           index(),
@@ -1356,12 +1393,15 @@ const SeatPanel: Component<{
                           manaCost={card.mana_cost}
                           mode="hand"
                           onInspect={() => {
-                            setFocusedHandCardId(card.card_id);
-                            props.onInspectCard(inspectFromHandCard(card));
+                            openInspectCard(inspectFromHandCard(card));
                           }}
                           openPriority={card.can_cast_in_open_priority}
                           ownTurnPriority={card.can_cast_in_open_priority_during_own_turn}
                           power={card.power}
+                          selected={
+                            focusedHandCardId() === card.card_id ||
+                            props.inspectedCardId === card.card_id
+                          }
                           toughness={card.toughness}
                         />
                       </div>
@@ -1630,6 +1670,7 @@ function formatCardLabel(
 
 function inspectFromHandCard(card: ArenaHandCard): InspectCardState {
   return {
+    sourceCardId: card.card_id,
     definitionId: card.definition_id,
     cardType: card.card_type,
     zoneLabel: "Hand",
@@ -1647,6 +1688,7 @@ function inspectFromHandCard(card: ArenaHandCard): InspectCardState {
 
 function inspectFromBattlefieldCard(card: ArenaBattlefieldCard): InspectCardState {
   return {
+    sourceCardId: card.card_id,
     definitionId: card.definition_id,
     cardType: card.card_type,
     zoneLabel: "Battlefield",

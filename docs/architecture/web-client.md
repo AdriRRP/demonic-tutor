@@ -139,6 +139,7 @@ Its job today is to provide:
 - a viewport-fitted SPA arena with portrait and landscape layouts
 - a battlefield-first layout with a clear top/bottom duel split
 - a seat-level plasma highlight that shows which side currently owns priority
+- a shared selected-card highlight spanning hand focus, inspection, and battlefield action focus
 - a collapsible bottom hand fan that can be dragged onto the battlefield for simple legal plays
 - zone anchors that stay visible on the table and open focused browsers for graveyard/library reads
 - a handoff-first hot-seat flow where only one private hand is opened at a time

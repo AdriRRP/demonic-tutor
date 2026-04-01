@@ -74,6 +74,7 @@ It currently provides:
 - a viewport-fitted SPA arena with dedicated landscape and portrait layouts
 - a battlefield-first play surface with a clear opponent/player split
 - a seat-level plasma highlight that shows which side currently owns priority
+- a selected-card highlight shared across hand hover, inspect detail, and battlefield action focus
 - a collapsible bottom hand fan that can be dragged onto the battlefield for simple legal plays
 - visible library and graveyard anchors that open zone browsers instead of permanently occupying the table
 - card inspection modals so the card itself is now the primary interaction object

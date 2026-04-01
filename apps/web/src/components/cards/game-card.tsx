@@ -23,6 +23,7 @@ interface GameCardProps {
   actions?: JSX.Element | undefined;
   interactive?: boolean | undefined;
   highlighted?: boolean | undefined;
+  selected?: boolean | undefined;
   onClick?:
     | ((event: MouseEvent & { currentTarget: HTMLElement; target: Element }) => void)
     | undefined;
@@ -34,6 +35,10 @@ interface GameCardProps {
 export const GameCard: Component<GameCardProps> = (props) => {
   const keywords = () => props.keywords ?? [];
   const cardTone = () => toneForCardType(props.cardType);
+  const showsManaCost = () =>
+    props.manaCost !== undefined &&
+    props.manaCost !== null &&
+    !props.cardType.toLowerCase().includes("land");
   const handleInspect = (event: MouseEvent & { currentTarget: HTMLElement; target: Element }) => {
     event.stopPropagation();
     props.onInspect?.(event);
@@ -65,6 +70,7 @@ export const GameCard: Component<GameCardProps> = (props) => {
         interactive: Boolean(props.interactive),
         inspectable: Boolean(props.onInspect),
         highlighted: Boolean(props.highlighted),
+        selected: Boolean(props.selected),
         tapped: Boolean(props.tapped),
       }}
       onClick={(event) => {
@@ -82,9 +88,8 @@ export const GameCard: Component<GameCardProps> = (props) => {
         >
           <div class="game-card-title-block">
             <h4>{props.definitionId}</h4>
-            <p class="game-card-type">{labelForCardType(props.cardType)}</p>
           </div>
-          <Show when={props.manaCost !== undefined && props.manaCost !== null}>
+          <Show when={showsManaCost()}>
             <span class="game-card-cost">{props.manaCost}</span>
           </Show>
         </div>
@@ -123,6 +128,10 @@ export const GameCard: Component<GameCardProps> = (props) => {
               <span class="chip chip-forest">Ability</span>
             </Show>
           </div>
+        </div>
+
+        <div class="game-card-type-line">
+          <p class="game-card-type-bar">{formatCardTypeLine(props.cardType)}</p>
         </div>
 
         <div class="game-card-textbox">
@@ -201,24 +210,6 @@ function toneForCardType(cardType: string): string {
   return "creature";
 }
 
-function labelForCardType(cardType: string): string {
-  const normalized = cardType.toLowerCase();
-
-  if (normalized.includes("planeswalker")) {
-    return "Planeswalker";
-  }
-  if (normalized.includes("artifact")) {
-    return "Artifact";
-  }
-  if (normalized.includes("enchantment")) {
-    return "Enchantment";
-  }
-  if (normalized.includes("instant") || normalized.includes("sorcery")) {
-    return "Spell";
-  }
-  if (normalized.includes("land")) {
-    return "Land";
-  }
-
-  return "Creature";
+function formatCardTypeLine(cardType: string): string {
+  return cardType.replace(/([a-z])([A-Z])/g, "$1 $2");
 }
