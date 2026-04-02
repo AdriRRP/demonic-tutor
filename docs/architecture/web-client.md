@@ -109,6 +109,20 @@ This keeps one authoritative runtime.
 
 There is no duplicated “frontend engine”.
 
+When the local duel room bridge is active across two same-origin browser windows, the flow becomes:
+
+```text
+Peer Solid UI event
+-> local BroadcastChannel request
+-> host window wasm adapter call
+-> public command execution
+-> aggregate mutation + persistence
+-> host broadcasts updated public snapshot
+-> both windows render from the shared host-owned state
+```
+
+That local transport still keeps one authoritative runtime.
+
 ---
 
 # Monorepo Decision
@@ -130,11 +144,13 @@ The architectural decision behind this is recorded in:
 
 # Current Scope
 
-The current `apps/web` client is now a playable two-player hot-seat arena with a board-first tabletop layout.
+The current `apps/web` client is now a playable two-player arena that supports both hot-seat and same-origin two-window local duel rooms.
 
 Its job today is to provide:
 
 - one shared Rust-owned game session embedded in the browser
+- one same-origin `BroadcastChannel` bridge so a second browser window can join that session without a backend
+- a host-authoritative browser room where only one window owns the wasm-backed engine at a time
 - two viewer-scoped seats over that same session
 - a viewport-fitted SPA arena with portrait and landscape layouts
 - a battlefield-first layout with a clear top/bottom duel split
@@ -147,13 +163,18 @@ Its job today is to provide:
 - a battlefield-first combat lane for attackers and blockers
 - modal replay/debug surfaces that stay discreet without turning the table into a dashboard
 - real command execution for lands, mana, creature casting, combat, cleanup, and replay inspection
+- a fallback back to hot-seat when no second local browser window is connected
 
 It is still intentionally early-stage UI:
 
 - focused on generating trustworthy play logs
 - centered on a shared table surface rather than debug panels
 - optimized for interaction coverage before deep motion/polish work
-- not yet a networked multiplayer client
+- not yet a secure remote multiplayer client
+
+Important constraint:
+
+- the two-window room is designed for a trusted same-origin local setup; it does not treat private hands as secure against browser-side inspection
 
 ---
 

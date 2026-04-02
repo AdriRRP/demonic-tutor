@@ -1,6 +1,7 @@
 import { For, Match, Show, Switch, createEffect, createSignal } from "solid-js";
 import type { Component } from "solid-js";
 import { GameCard } from "./cards/game-card";
+import type { ArenaSessionInfo } from "../lib/session";
 import {
   activateAbility,
   advanceTurn,
@@ -18,7 +19,7 @@ import {
   resolvePendingScry,
   resolvePendingSurveil,
   tapManaSource,
-  type WebArenaClient,
+  type ArenaCommandTarget,
 } from "../lib/runtime";
 import type {
   ArenaBattlefieldCard,
@@ -36,7 +37,9 @@ import type {
 } from "../lib/types";
 
 interface TableArenaProps {
+  onCopyInviteLink?: (() => void) | undefined;
   state: ArenaState;
+  sessionInfo: ArenaSessionInfo | null;
   revealedSeatId: string | null;
   pendingHandoffPlayerId: string | null;
   selectedAttackers: string[];
@@ -44,7 +47,7 @@ interface TableArenaProps {
   onToggleSeatPrivacy: (playerId: string) => void;
   onToggleAttackerSelection: (cardId: string) => void;
   onSetBlockerAssignment: (blockerId: string, attackerId: string) => void;
-  onRun: (operation: (current: WebArenaClient) => ArenaState) => void;
+  onRun: (operation: (current: ArenaCommandTarget) => Promise<ArenaState>) => void;
 }
 
 type ZoneBrowserState = {
@@ -144,6 +147,32 @@ export const TableArena: Component<TableArenaProps> = (props) => {
           />
         </div>
         <div class="arena-cockpit-actions">
+          <Show when={props.sessionInfo}>
+            {(sessionInfo) => (
+              <>
+                <div class="active-seat-chip">
+                  <span class="label">Mode</span>
+                  <strong>{formatSessionRole(sessionInfo().role)}</strong>
+                </div>
+                <div class="active-seat-chip">
+                  <span class="label">Room</span>
+                  <strong>{shortRoomCode(sessionInfo().roomId)}</strong>
+                </div>
+                <Show
+                  when={props.onCopyInviteLink && sessionInfo().transport === "broadcast-channel"}
+                >
+                  <button
+                    class="hero-button hero-button-ghost mini-button"
+                    onClick={() => {
+                      props.onCopyInviteLink?.();
+                    }}
+                  >
+                    Copy link
+                  </button>
+                </Show>
+              </>
+            )}
+          </Show>
           <Show when={liveViewer()}>
             {(viewer) => (
               <div class="active-seat-chip">
@@ -527,7 +556,7 @@ const SeatPanel: Component<{
   onInspectCard: (card: InspectCardState | null) => void;
   onDragHandCard: (cardId: string | null) => void;
   onBattlefieldDropCard?: (cardId: string) => void;
-  onRun: (operation: (current: WebArenaClient) => ArenaState) => void;
+  onRun: (operation: (current: ArenaCommandTarget) => Promise<ArenaState>) => void;
   zonesOpen: boolean;
   draggedHandCardId: string | null;
   inspectedCardId: string | null;
@@ -1483,7 +1512,7 @@ const SupportedPrompt: Component<{
   playerId: string;
   hand: ArenaHandCard[];
   variant?: "default" | "private" | "spotlight";
-  onRun: (operation: (current: WebArenaClient) => ArenaState) => void;
+  onRun: (operation: (current: ArenaCommandTarget) => Promise<ArenaState>) => void;
 }> = (props) => {
   const variant = () => props.variant ?? "default";
 
@@ -1760,6 +1789,17 @@ function shortPlayerTag(playerId: string | null | undefined): string {
   }
 
   return playerId.length > 6 ? playerId.slice(0, 6) : playerId;
+}
+
+function shortRoomCode(roomId: string): string {
+  return roomId
+    .replace(/^duel-/, "")
+    .slice(0, 6)
+    .toUpperCase();
+}
+
+function formatSessionRole(role: ArenaSessionInfo["role"]): string {
+  return role === "peer" ? "Peer" : "Host";
 }
 
 function reorderCardIds(cardIds: string[], draggedCardId: string, targetCardId: string): string[] {

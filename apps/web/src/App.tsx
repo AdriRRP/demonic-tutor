@@ -1,11 +1,13 @@
-import { Match, Switch, createSignal, onMount } from "solid-js";
+import { Match, Switch, createSignal, onCleanup, onMount, untrack } from "solid-js";
 import type { Component } from "solid-js";
 import { TableArena } from "./components/table-arena";
-import { createArenaClient, readState, resetArena, type WebArenaClient } from "./lib/runtime";
+import { createArenaSession, type ArenaSession, type ArenaSessionInfo } from "./lib/session";
+import { readState, resetArena, type ArenaCommandTarget } from "./lib/runtime";
 import type { ArenaState } from "./lib/types";
 
 const App: Component = () => {
-  const [client, setClient] = createSignal<WebArenaClient | null>(null);
+  const [session, setSession] = createSignal<ArenaSession | null>(null);
+  const [sessionInfo, setSessionInfo] = createSignal<ArenaSessionInfo | null>(null);
   const [state, setState] = createSignal<ArenaState | null>(null);
   const [error, setError] = createSignal<string | null>(null);
   const [loading, setLoading] = createSignal(true);
@@ -13,18 +15,48 @@ const App: Component = () => {
   const [pendingHandoffPlayerId, setPendingHandoffPlayerId] = createSignal<string | null>(null);
   const [selectedAttackers, setSelectedAttackers] = createSignal<string[]>([]);
   const [blockerAssignments, setBlockerAssignments] = createSignal<Record<string, string>>({});
+  let unsubscribeSession: (() => void) | undefined;
 
   onMount(() => {
     void loadArena();
   });
 
+  onCleanup(() => {
+    unsubscribeSession?.();
+    session()?.destroy();
+  });
+
   async function loadArena(): Promise<void> {
     try {
-      const nextClient = await createArenaClient();
-      const nextState = readState(nextClient);
-      const initialFocus = focusPlayerId(nextState);
-      const nextSeatPrivacy = deriveSeatPrivacy(nextState, initialFocus);
-      setClient(nextClient);
+      unsubscribeSession?.();
+      session()?.destroy();
+      setLoading(true);
+      setError(null);
+
+      const nextSession = await createArenaSession();
+      const nextState = await readState(nextSession);
+      const nextInfo = nextSession.info();
+      const nextSeatPrivacy = deriveSeatPrivacy(
+        nextState,
+        nextInfo.localSeatId ?? focusPlayerId(nextState),
+        nextInfo,
+      );
+
+      unsubscribeSession = nextSession.subscribe((incomingState) => {
+        const incomingInfo = nextSession.info();
+        const incomingSeatPrivacy = deriveSeatPrivacy(
+          incomingState,
+          untrack(revealedSeatId),
+          incomingInfo,
+        );
+        setSessionInfo(incomingInfo);
+        setState(incomingState);
+        setRevealedSeatId(incomingSeatPrivacy.revealedSeatId);
+        setPendingHandoffPlayerId(incomingSeatPrivacy.pendingHandoffPlayerId);
+      });
+
+      setSession(nextSession);
+      setSessionInfo(nextInfo);
       setState(nextState);
       setRevealedSeatId(nextSeatPrivacy.revealedSeatId);
       setPendingHandoffPlayerId(nextSeatPrivacy.pendingHandoffPlayerId);
@@ -35,28 +67,43 @@ const App: Component = () => {
     }
   }
 
-  const run = (operation: (current: WebArenaClient) => ArenaState) => {
-    const current = client();
+  const run = (operation: (current: ArenaCommandTarget) => Promise<ArenaState>) => {
+    const current = session();
     if (!current) {
       return;
     }
 
-    try {
-      const nextState = operation(current);
-      const nextSeatPrivacy = deriveSeatPrivacy(nextState, revealedSeatId());
-      setState(nextState);
-      setRevealedSeatId(nextSeatPrivacy.revealedSeatId);
-      setPendingHandoffPlayerId(nextSeatPrivacy.pendingHandoffPlayerId);
-      setSelectedAttackers([]);
-      setBlockerAssignments({});
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    }
+    void (async () => {
+      try {
+        const nextState = await operation(current);
+        const nextInfo = current.info();
+        const nextSeatPrivacy = deriveSeatPrivacy(nextState, revealedSeatId(), nextInfo);
+        setSessionInfo(nextInfo);
+        setState(nextState);
+        setRevealedSeatId(nextSeatPrivacy.revealedSeatId);
+        setPendingHandoffPlayerId(nextSeatPrivacy.pendingHandoffPlayerId);
+        setSelectedAttackers([]);
+        setBlockerAssignments({});
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : String(err));
+      }
+    })();
   };
 
   const toggleSeatPrivacy = (playerId: string) => {
     if (state()?.game.is_over) {
+      return;
+    }
+
+    const localSeatId = sessionInfo()?.localSeatId ?? null;
+    if (localSeatId) {
+      if (playerId !== localSeatId) {
+        return;
+      }
+
+      setRevealedSeatId((current) => (current === localSeatId ? null : localSeatId));
+      setPendingHandoffPlayerId(null);
       return;
     }
 
@@ -90,6 +137,18 @@ const App: Component = () => {
     });
   };
 
+  const copyInviteLink = () => {
+    const inviteUrl = sessionInfo()?.inviteUrl ?? window.location.href;
+    void (async () => {
+      try {
+        await navigator.clipboard.writeText(inviteUrl);
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Could not copy the duel room link.");
+      }
+    })();
+  };
+
   return (
     <main class="shell">
       <div class="playmat-halo playmat-halo-top" />
@@ -108,7 +167,12 @@ const App: Component = () => {
             <button
               class="hero-button"
               onClick={() => {
-                run(resetArena);
+                if (session()) {
+                  run(resetArena);
+                  return;
+                }
+
+                void loadArena();
               }}
             >
               Retry duel reset
@@ -119,6 +183,7 @@ const App: Component = () => {
           {(resolved) => (
             <TableArena
               blockerAssignments={blockerAssignments()}
+              onCopyInviteLink={copyInviteLink}
               onToggleSeatPrivacy={toggleSeatPrivacy}
               onRun={run}
               onSetBlockerAssignment={setBlockerAssignment}
@@ -126,6 +191,7 @@ const App: Component = () => {
               pendingHandoffPlayerId={pendingHandoffPlayerId()}
               revealedSeatId={revealedSeatId()}
               selectedAttackers={selectedAttackers()}
+              sessionInfo={sessionInfo()}
               state={resolved()}
             />
           )}
@@ -138,7 +204,15 @@ const App: Component = () => {
 function deriveSeatPrivacy(
   state: ArenaState,
   currentRevealedSeatId: string | null,
+  sessionInfo: ArenaSessionInfo | null = null,
 ): { revealedSeatId: string | null; pendingHandoffPlayerId: string | null } {
+  if (sessionInfo?.localSeatId) {
+    return {
+      revealedSeatId: currentRevealedSeatId === null ? null : sessionInfo.localSeatId,
+      pendingHandoffPlayerId: null,
+    };
+  }
+
   const nextFocus = focusPlayerId(state);
 
   if (state.game.is_over) {

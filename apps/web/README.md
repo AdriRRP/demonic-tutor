@@ -65,11 +65,13 @@ The repository CI now treats these frontend checks as first-class quality gates,
 
 ## Current Scope
 
-Today this app is a playable two-player hot-seat arena with a board-first tabletop presentation.
+Today this app is a playable two-player arena with a board-first tabletop presentation, supporting both hot-seat and a same-origin local duel room across two browser windows.
 
 It currently provides:
 
 - one shared wasm-backed game session
+- one same-origin `BroadcastChannel` bridge so a second browser window can join the same duel without a backend
+- a host-authoritative local room model where one window owns the Rust runtime and the peer window sends public commands to it
 - two viewer-scoped seats over that same Rust-owned state
 - a viewport-fitted SPA arena with dedicated landscape and portrait layouts
 - a battlefield-first play surface with a clear opponent/player split
@@ -82,8 +84,29 @@ It currently provides:
 - prompts and choices anchored near the seat area they belong to
 - a more spatial combat lane for attackers and blockers
 - real command execution for land play, mana, simple casting, combat, cleanup, and replay
+- an automatic fallback to hot-seat behavior while no second browser window is attached to the room
 
 It is still an early arena rather than a polished shipped client, but the UI now prioritizes a card-first premium table feel before adding richer motion or deeper spell UX.
+
+## Local Two-Window Multiplayer
+
+The current multiplayer slice is intentionally narrow:
+
+- it is local and same-origin only
+- it does not require a backend
+- it depends on duplicating or sharing the same room URL between two browser windows
+- the host window must remain open because it owns the wasm-backed authoritative runtime
+
+Practical flow:
+
+1. open the app in one browser window
+2. copy the room link from the cockpit
+3. open that same link in a second browser window
+4. the first window becomes the host and the second becomes the peer
+
+Honesty note:
+
+- this is not hidden-information-safe remote multiplayer yet; both same-origin windows still live in a trusted local environment
 
 ## Guardrails
 

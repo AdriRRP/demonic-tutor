@@ -4,27 +4,31 @@ import type { ArenaState, BlockerAssignmentInput } from "./types";
 let runtimePromise: Promise<unknown> | undefined;
 const initWasmRuntime = init as () => Promise<void>;
 
-export interface WebArenaClient {
-  state(): unknown;
-  reset(): unknown;
-  pass_priority(playerId: string): unknown;
-  advance_turn(): unknown;
-  concede(playerId: string): unknown;
-  play_land(playerId: string, cardId: string): unknown;
-  tap_mana_source(playerId: string, cardId: string): unknown;
-  cast_spell(playerId: string, cardId: string): unknown;
-  activate_ability(playerId: string, cardId: string): unknown;
-  declare_attackers(playerId: string, attackerIds: string[]): unknown;
-  declare_blockers(playerId: string, assignments: BlockerAssignmentInput[]): unknown;
-  resolve_combat_damage(playerId: string): unknown;
-  discard_for_cleanup(playerId: string, cardId: string): unknown;
-  resolve_optional_effect(playerId: string, accept: boolean): unknown;
-  resolve_pending_hand_choice(playerId: string, cardId: string): unknown;
-  resolve_pending_scry(playerId: string, moveToBottom: boolean): unknown;
-  resolve_pending_surveil(playerId: string, moveToGraveyard: boolean): unknown;
+type MaybePromise<T> = Promise<T> | T;
+
+export interface ArenaCommandTarget {
+  state(): MaybePromise<unknown>;
+  reset(): MaybePromise<unknown>;
+  pass_priority(playerId: string): MaybePromise<unknown>;
+  advance_turn(): MaybePromise<unknown>;
+  concede(playerId: string): MaybePromise<unknown>;
+  play_land(playerId: string, cardId: string): MaybePromise<unknown>;
+  tap_mana_source(playerId: string, cardId: string): MaybePromise<unknown>;
+  cast_spell(playerId: string, cardId: string): MaybePromise<unknown>;
+  activate_ability(playerId: string, cardId: string): MaybePromise<unknown>;
+  declare_attackers(playerId: string, attackerIds: string[]): MaybePromise<unknown>;
+  declare_blockers(playerId: string, assignments: BlockerAssignmentInput[]): MaybePromise<unknown>;
+  resolve_combat_damage(playerId: string): MaybePromise<unknown>;
+  discard_for_cleanup(playerId: string, cardId: string): MaybePromise<unknown>;
+  resolve_optional_effect(playerId: string, accept: boolean): MaybePromise<unknown>;
+  resolve_pending_hand_choice(playerId: string, cardId: string): MaybePromise<unknown>;
+  resolve_pending_scry(playerId: string, moveToBottom: boolean): MaybePromise<unknown>;
+  resolve_pending_surveil(playerId: string, moveToGraveyard: boolean): MaybePromise<unknown>;
 }
 
-type WebArenaClientConstructor = new () => WebArenaClient;
+export type WebArenaClient = ArenaCommandTarget;
+
+type WebArenaClientConstructor = new () => ArenaCommandTarget;
 
 const WasmWebArenaClientConstructor = WasmWebArenaClient as unknown as WebArenaClientConstructor;
 
@@ -37,111 +41,134 @@ function coerceArenaState(value: unknown): ArenaState {
   return value as ArenaState;
 }
 
-export async function createArenaClient(): Promise<WebArenaClient> {
+function isPromiseLike<T>(value: MaybePromise<T>): value is Promise<T> {
+  return typeof value === "object" && value !== null && "then" in value;
+}
+
+async function resolveArenaState(value: MaybePromise<unknown>): Promise<ArenaState> {
+  const resolvedValue = isPromiseLike(value) ? await value : value;
+  return coerceArenaState(resolvedValue);
+}
+
+export async function createArenaClient(): Promise<ArenaCommandTarget> {
   await ensureRuntime();
   return new WasmWebArenaClientConstructor();
 }
 
-export function readState(client: WebArenaClient): ArenaState {
-  return coerceArenaState(client.state());
+export async function readState(client: ArenaCommandTarget): Promise<ArenaState> {
+  return resolveArenaState(client.state());
 }
 
-export function resetArena(client: WebArenaClient): ArenaState {
-  return coerceArenaState(client.reset());
+export async function resetArena(client: ArenaCommandTarget): Promise<ArenaState> {
+  return resolveArenaState(client.reset());
 }
 
-export function passPriority(client: WebArenaClient, playerId: string): ArenaState {
-  return coerceArenaState(client.pass_priority(playerId));
+export async function passPriority(
+  client: ArenaCommandTarget,
+  playerId: string,
+): Promise<ArenaState> {
+  return resolveArenaState(client.pass_priority(playerId));
 }
 
-export function advanceTurn(client: WebArenaClient): ArenaState {
-  return coerceArenaState(client.advance_turn());
+export async function advanceTurn(client: ArenaCommandTarget): Promise<ArenaState> {
+  return resolveArenaState(client.advance_turn());
 }
 
-export function concede(client: WebArenaClient, playerId: string): ArenaState {
-  return coerceArenaState(client.concede(playerId));
+export async function concede(client: ArenaCommandTarget, playerId: string): Promise<ArenaState> {
+  return resolveArenaState(client.concede(playerId));
 }
 
-export function playLand(client: WebArenaClient, playerId: string, cardId: string): ArenaState {
-  return coerceArenaState(client.play_land(playerId, cardId));
-}
-
-export function tapManaSource(
-  client: WebArenaClient,
+export async function playLand(
+  client: ArenaCommandTarget,
   playerId: string,
   cardId: string,
-): ArenaState {
-  return coerceArenaState(client.tap_mana_source(playerId, cardId));
+): Promise<ArenaState> {
+  return resolveArenaState(client.play_land(playerId, cardId));
 }
 
-export function castSpell(client: WebArenaClient, playerId: string, cardId: string): ArenaState {
-  return coerceArenaState(client.cast_spell(playerId, cardId));
-}
-
-export function activateAbility(
-  client: WebArenaClient,
+export async function tapManaSource(
+  client: ArenaCommandTarget,
   playerId: string,
   cardId: string,
-): ArenaState {
-  return coerceArenaState(client.activate_ability(playerId, cardId));
+): Promise<ArenaState> {
+  return resolveArenaState(client.tap_mana_source(playerId, cardId));
 }
 
-export function declareAttackers(
-  client: WebArenaClient,
+export async function castSpell(
+  client: ArenaCommandTarget,
+  playerId: string,
+  cardId: string,
+): Promise<ArenaState> {
+  return resolveArenaState(client.cast_spell(playerId, cardId));
+}
+
+export async function activateAbility(
+  client: ArenaCommandTarget,
+  playerId: string,
+  cardId: string,
+): Promise<ArenaState> {
+  return resolveArenaState(client.activate_ability(playerId, cardId));
+}
+
+export async function declareAttackers(
+  client: ArenaCommandTarget,
   playerId: string,
   attackerIds: string[],
-): ArenaState {
-  return coerceArenaState(client.declare_attackers(playerId, attackerIds));
+): Promise<ArenaState> {
+  return resolveArenaState(client.declare_attackers(playerId, attackerIds));
 }
 
-export function declareBlockers(
-  client: WebArenaClient,
+export async function declareBlockers(
+  client: ArenaCommandTarget,
   playerId: string,
   assignments: BlockerAssignmentInput[],
-): ArenaState {
-  return coerceArenaState(client.declare_blockers(playerId, assignments));
+): Promise<ArenaState> {
+  return resolveArenaState(client.declare_blockers(playerId, assignments));
 }
 
-export function resolveCombatDamage(client: WebArenaClient, playerId: string): ArenaState {
-  return coerceArenaState(client.resolve_combat_damage(playerId));
+export async function resolveCombatDamage(
+  client: ArenaCommandTarget,
+  playerId: string,
+): Promise<ArenaState> {
+  return resolveArenaState(client.resolve_combat_damage(playerId));
 }
 
-export function discardForCleanup(
-  client: WebArenaClient,
+export async function discardForCleanup(
+  client: ArenaCommandTarget,
   playerId: string,
   cardId: string,
-): ArenaState {
-  return coerceArenaState(client.discard_for_cleanup(playerId, cardId));
+): Promise<ArenaState> {
+  return resolveArenaState(client.discard_for_cleanup(playerId, cardId));
 }
 
-export function resolveOptionalEffect(
-  client: WebArenaClient,
+export async function resolveOptionalEffect(
+  client: ArenaCommandTarget,
   playerId: string,
   accept: boolean,
-): ArenaState {
-  return coerceArenaState(client.resolve_optional_effect(playerId, accept));
+): Promise<ArenaState> {
+  return resolveArenaState(client.resolve_optional_effect(playerId, accept));
 }
 
-export function resolvePendingHandChoice(
-  client: WebArenaClient,
+export async function resolvePendingHandChoice(
+  client: ArenaCommandTarget,
   playerId: string,
   cardId: string,
-): ArenaState {
-  return coerceArenaState(client.resolve_pending_hand_choice(playerId, cardId));
+): Promise<ArenaState> {
+  return resolveArenaState(client.resolve_pending_hand_choice(playerId, cardId));
 }
 
-export function resolvePendingScry(
-  client: WebArenaClient,
+export async function resolvePendingScry(
+  client: ArenaCommandTarget,
   playerId: string,
   moveToBottom: boolean,
-): ArenaState {
-  return coerceArenaState(client.resolve_pending_scry(playerId, moveToBottom));
+): Promise<ArenaState> {
+  return resolveArenaState(client.resolve_pending_scry(playerId, moveToBottom));
 }
 
-export function resolvePendingSurveil(
-  client: WebArenaClient,
+export async function resolvePendingSurveil(
+  client: ArenaCommandTarget,
   playerId: string,
   moveToGraveyard: boolean,
-): ArenaState {
-  return coerceArenaState(client.resolve_pending_surveil(playerId, moveToGraveyard));
+): Promise<ArenaState> {
+  return resolveArenaState(client.resolve_pending_surveil(playerId, moveToGraveyard));
 }

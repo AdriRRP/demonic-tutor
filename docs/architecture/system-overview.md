@@ -74,9 +74,10 @@ Responsibilities:
 
 The current repository now includes a browser-facing duel arena in `apps/web/`.
 It is a thin Solid/Vite client that consumes the public gameplay contract through
-WebAssembly, renders a board-first tabletop layout with two viewer-scoped hot-seat
-positions, adds a small private-hand overlay per seat, and keeps gameplay rules
-inside the Rust application/domain layers.
+WebAssembly, renders a board-first tabletop layout with two viewer-scoped seats,
+adds a small private-hand overlay per seat, can bridge one duel room across two
+same-origin browser windows through a host-authoritative local transport, and
+keeps gameplay rules inside the Rust application/domain layers.
 
 The UI layer must **not contain business logic**.
 
