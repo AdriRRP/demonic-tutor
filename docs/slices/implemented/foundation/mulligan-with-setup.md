@@ -27,8 +27,8 @@ The current implementation removed the Setup phase, but Magic requires a pre-gam
 ### Mulligan Sequence
 1. Starting player decides: take mulligan or keep hand
 2. If mulligan: shuffle hand back into library, draw new hand (7 cards)
-3. Continue to next player in turn order
-4. Repeat until all players keep hands
+3. After mulligan, that same player keeps the new hand because the current slice supports only one mulligan per player
+4. Continue to the next player in turn order
 5. After all players keep, proceed to Untap phase
 
 > **Simplification**: Current implementation allows only one mulligan per player (not London Mulligan with multiple mulligans per round)
@@ -65,7 +65,7 @@ The current implementation removed the Setup phase, but Magic requires a pre-gam
 - Scry 1 after mulligan (future)
 - Partial Paris Mulligan rules
 - Priority during mulligan
-- Interactive mulligan UI
+- General-purpose keep/mulligan commands in the shared public client contract
 - Multiple mulligan types beyond London
 
 ---
@@ -119,9 +119,8 @@ This behavior belongs to the `Game` aggregate because:
 
 - mulligan succeeds in Setup phase
 - mulligan fails outside Setup phase
-- mulligan reduces hand size by 1
-- multiple mulligans work in sequence
-- all players get chance to mulligan in order
+- one mulligan maximum is enforced per player
+- starting player decides first and the next player decides after that opening hand is locked
 - game proceeds to Untap after all keep
 
 ---

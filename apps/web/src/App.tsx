@@ -1,5 +1,6 @@
-import { Match, Switch, createSignal, onCleanup, onMount, untrack } from "solid-js";
+import { Match, Show, Switch, createSignal, onCleanup, onMount, untrack } from "solid-js";
 import type { Component } from "solid-js";
+import { PregameModal } from "./components/pregame-modal";
 import { TableArena } from "./components/table-arena";
 import { createArenaSession, type ArenaSession, type ArenaSessionInfo } from "./lib/session";
 import { readState, resetArena, type ArenaCommandTarget } from "./lib/runtime";
@@ -181,19 +182,32 @@ const App: Component = () => {
         </Match>
         <Match when={state()}>
           {(resolved) => (
-            <TableArena
-              blockerAssignments={blockerAssignments()}
-              onCopyInviteLink={copyInviteLink}
-              onToggleSeatPrivacy={toggleSeatPrivacy}
-              onRun={run}
-              onSetBlockerAssignment={setBlockerAssignment}
-              onToggleAttackerSelection={toggleAttackerSelection}
-              pendingHandoffPlayerId={pendingHandoffPlayerId()}
-              revealedSeatId={revealedSeatId()}
-              selectedAttackers={selectedAttackers()}
-              sessionInfo={sessionInfo()}
-              state={resolved()}
-            />
+            <>
+              <TableArena
+                blockerAssignments={blockerAssignments()}
+                onCopyInviteLink={copyInviteLink}
+                onToggleSeatPrivacy={toggleSeatPrivacy}
+                onRun={run}
+                onSetBlockerAssignment={setBlockerAssignment}
+                onToggleAttackerSelection={toggleAttackerSelection}
+                pendingHandoffPlayerId={pendingHandoffPlayerId()}
+                revealedSeatId={revealedSeatId()}
+                selectedAttackers={selectedAttackers()}
+                sessionInfo={sessionInfo()}
+                state={resolved()}
+              />
+              <Show when={resolved().pregame}>
+                {(pregame) => (
+                  <PregameModal
+                    onRun={run}
+                    onToggleSeatPrivacy={toggleSeatPrivacy}
+                    revealedSeatId={revealedSeatId()}
+                    sessionInfo={sessionInfo()}
+                    state={pregame()}
+                  />
+                )}
+              </Show>
+            </>
           )}
         </Match>
       </Switch>
@@ -242,6 +256,10 @@ function deriveSeatPrivacy(
 function focusPlayerId(state: ArenaState): string | null {
   if (state.game.is_over) {
     return null;
+  }
+
+  if (state.pregame?.current_player_id) {
+    return state.pregame.current_player_id;
   }
 
   const promptOwner = state.viewers.find((viewer) => viewer.choice_requests.length > 0)?.player_id;

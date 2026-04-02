@@ -88,6 +88,22 @@ export interface ArenaCommandFeedback {
   emitted_events: string[];
 }
 
+export interface ArenaPregamePlayerState {
+  player_id: string;
+  hand_count: number;
+  is_starting_player: boolean;
+  is_current: boolean;
+  mulligan_used: boolean;
+  kept: boolean;
+  can_mulligan: boolean;
+}
+
+export interface ArenaPregameState {
+  starting_player_id: string;
+  current_player_id: string;
+  players: ArenaPregamePlayerState[];
+}
+
 export interface ArenaGameView {
   game_id: string;
   playable_subset_version: string;
@@ -117,6 +133,7 @@ export interface ArenaState {
   game: ArenaGameView;
   viewers: ArenaViewerState[];
   event_log: ArenaTimelineEntry[];
+  pregame: ArenaPregameState | null;
   last_command: ArenaCommandFeedback | null;
 }
 

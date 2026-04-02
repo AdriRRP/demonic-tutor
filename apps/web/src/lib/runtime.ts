@@ -9,6 +9,8 @@ type MaybePromise<T> = Promise<T> | T;
 export interface ArenaCommandTarget {
   state(): MaybePromise<unknown>;
   reset(): MaybePromise<unknown>;
+  keep_opening_hand(playerId: string): MaybePromise<unknown>;
+  take_mulligan(playerId: string): MaybePromise<unknown>;
   pass_priority(playerId: string): MaybePromise<unknown>;
   advance_turn(): MaybePromise<unknown>;
   concede(playerId: string): MaybePromise<unknown>;
@@ -61,6 +63,20 @@ export async function readState(client: ArenaCommandTarget): Promise<ArenaState>
 
 export async function resetArena(client: ArenaCommandTarget): Promise<ArenaState> {
   return resolveArenaState(client.reset());
+}
+
+export async function keepOpeningHand(
+  client: ArenaCommandTarget,
+  playerId: string,
+): Promise<ArenaState> {
+  return resolveArenaState(client.keep_opening_hand(playerId));
+}
+
+export async function takeMulligan(
+  client: ArenaCommandTarget,
+  playerId: string,
+): Promise<ArenaState> {
+  return resolveArenaState(client.take_mulligan(playerId));
 }
 
 export async function passPriority(

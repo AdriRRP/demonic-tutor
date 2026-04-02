@@ -88,6 +88,14 @@ The adapter may compose:
 
 But it should not become a second application layer.
 
+For the current duel arena, the adapter also owns a narrow browser-only pregame controller:
+
+- it chooses the starting player at random for each new local duel
+- it orchestrates the simplified opening-hand keep/mulligan sequence already supported by the engine
+- it advances the game into the normal public gameplay surface only after both players have kept
+
+That orchestration stays here because the broader public client contract still does not expose generic keep/mulligan commands.
+
 If browser-facing concerns grow, they should still stay in `src/interfaces/web/` rather than leaking back into the domain or into `src/application/public_game/`.
 
 ---
@@ -151,6 +159,7 @@ Its job today is to provide:
 - one shared Rust-owned game session embedded in the browser
 - one same-origin `BroadcastChannel` bridge so a second browser window can join that session without a backend
 - a host-authoritative browser room where only one window owns the wasm-backed engine at a time
+- an opening-hand modal that picks the starting player randomly and runs the current simplified mulligan setup flow before the first turn
 - two viewer-scoped seats over that same session
 - a viewport-fitted SPA arena with portrait and landscape layouts
 - a battlefield-first layout with a clear top/bottom duel split

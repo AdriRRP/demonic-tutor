@@ -7,6 +7,7 @@ import {
   declareAttackers,
   declareBlockers,
   discardForCleanup,
+  keepOpeningHand,
   passPriority,
   playLand,
   readState,
@@ -16,6 +17,7 @@ import {
   resolvePendingHandChoice,
   resolvePendingScry,
   resolvePendingSurveil,
+  takeMulligan,
   tapManaSource,
   type ArenaCommandTarget,
 } from "./runtime";
@@ -50,6 +52,8 @@ interface StateSyncMessage {
 
 type ArenaCommandRequest =
   | { kind: "reset" }
+  | { kind: "keep_opening_hand"; playerId: string }
+  | { kind: "take_mulligan"; playerId: string }
   | { kind: "pass_priority"; playerId: string }
   | { kind: "advance_turn" }
   | { kind: "concede"; playerId: string }
@@ -268,6 +272,14 @@ class HostArenaSession implements ArenaSession {
 
   public reset(): Promise<ArenaState> {
     return this.applyLocalCommand(() => resetArena(this.client));
+  }
+
+  public keep_opening_hand(playerId: string): Promise<ArenaState> {
+    return this.applyLocalCommand(() => keepOpeningHand(this.client, playerId));
+  }
+
+  public take_mulligan(playerId: string): Promise<ArenaState> {
+    return this.applyLocalCommand(() => takeMulligan(this.client, playerId));
   }
 
   public pass_priority(playerId: string): Promise<ArenaState> {
@@ -512,6 +524,14 @@ class PeerArenaSession implements ArenaSession {
     return this.sendCommand({ kind: "reset" });
   }
 
+  public keep_opening_hand(playerId: string): Promise<ArenaState> {
+    return this.sendCommand({ kind: "keep_opening_hand", playerId });
+  }
+
+  public take_mulligan(playerId: string): Promise<ArenaState> {
+    return this.sendCommand({ kind: "take_mulligan", playerId });
+  }
+
   public pass_priority(playerId: string): Promise<ArenaState> {
     return this.sendCommand({ kind: "pass_priority", playerId });
   }
@@ -684,6 +704,10 @@ async function runRequestedCommand(
   switch (command.kind) {
     case "reset":
       return resetArena(target);
+    case "keep_opening_hand":
+      return keepOpeningHand(target, command.playerId);
+    case "take_mulligan":
+      return takeMulligan(target, command.playerId);
     case "pass_priority":
       return passPriority(target, command.playerId);
     case "advance_turn":
