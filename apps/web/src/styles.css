@@ -491,77 +491,6 @@ button {
   width: min(46rem, calc(100vw - 32px));
 }
 
-.pregame-modal {
-  width: min(42rem, calc(100vw - 32px));
-  max-height: min(82dvh, 40rem);
-}
-
-.pregame-lead,
-.pregame-seat-card,
-.pregame-decision-card {
-  padding: 14px;
-  border: 1px solid var(--edge);
-  border-radius: 18px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)),
-    rgba(8, 14, 24, 0.72);
-}
-
-.pregame-lead {
-  display: grid;
-  gap: 8px;
-}
-
-.pregame-lead p,
-.pregame-decision-card h3,
-.pregame-seat-card h3 {
-  margin: 0;
-}
-
-.pregame-player-grid {
-  display: grid;
-  gap: 10px;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.pregame-seat-card {
-  display: grid;
-  gap: 10px;
-}
-
-.pregame-seat-card.current {
-  border-color: rgba(240, 179, 93, 0.32);
-  box-shadow: 0 0 0 1px rgba(240, 179, 93, 0.12);
-}
-
-.pregame-seat-card.kept {
-  border-color: rgba(88, 216, 208, 0.28);
-}
-
-.pregame-seat-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.pregame-seat-stats {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.pregame-decision-card {
-  display: grid;
-  gap: 12px;
-}
-
-.pregame-action-row {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
 .zone-browser-empty {
   display: grid;
   gap: 10px;
@@ -2130,10 +2059,6 @@ button {
 @media (max-width: 1180px) {
   .arena-cockpit-status,
   .sidebar-stat-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .pregame-player-grid {
     grid-template-columns: 1fr;
   }
 }
