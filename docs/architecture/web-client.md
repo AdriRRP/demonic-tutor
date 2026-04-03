@@ -151,7 +151,7 @@ Its job today is to provide:
 - one shared Rust-owned game session embedded in the browser
 - one same-origin `BroadcastChannel` bridge so a second browser window can join that session without a backend
 - a host-authoritative browser room where only one window owns the wasm-backed engine at a time
-- an opening-hand modal that picks the starting player randomly and runs the current simplified mulligan setup flow before the first turn
+- a generated duel HUD that renders the phase loop, active player, priority holder, and compact seat stats through CSS/SVG primitives instead of text-heavy badges
 - two viewer-scoped seats over that same session
 - a viewport-fitted SPA arena with portrait and landscape layouts
 - a battlefield-first layout with a clear top/bottom duel split

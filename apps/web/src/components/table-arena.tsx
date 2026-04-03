@@ -128,90 +128,113 @@ export const TableArena: Component<TableArenaProps> = (props) => {
   return (
     <div class="table-shell">
       <header class="arena-cockpit panel">
-        <div class="arena-brand">
-          <p class="eyebrow">DemonicTutor</p>
-          <h1>Duel Arena</h1>
+        <div class="arena-brand-cluster">
+          <div class="arena-brand">
+            <p class="eyebrow">DemonicTutor</p>
+            <h1>Duel Arena</h1>
+          </div>
+          <div class="arena-brand-meta">
+            <Show when={props.sessionInfo}>
+              {(sessionInfo) => (
+                <>
+                  <MetaRune
+                    icon="room"
+                    title={`Room ${shortRoomCode(sessionInfo().roomId)}`}
+                    value={shortRoomCode(sessionInfo().roomId)}
+                  />
+                  <MetaRune
+                    icon={sessionInfo().role === "peer" ? "peer" : "host"}
+                    title={formatSessionRole(sessionInfo().role)}
+                    value={formatSessionRole(sessionInfo().role)}
+                  />
+                </>
+              )}
+            </Show>
+          </div>
         </div>
-        <div class="arena-cockpit-status">
-          <StatusBadge label="Turn" value={String(props.state.game.turn_number)} tone="ember" />
-          <StatusBadge label="Phase" value={formatPhase(props.state.game.phase)} tone="night" />
-          <StatusBadge
-            label="Active"
-            value={shortPlayerTag(props.state.game.active_player_id)}
-            tone="forest"
-          />
-          <StatusBadge
-            label="Priority"
-            value={shortPlayerTag(props.state.game.priority_holder)}
-            tone="night"
-          />
+
+        <div class="arena-cockpit-hud">
+          <TurnRune turnNumber={props.state.game.turn_number} />
+          <PhaseTrack currentPhase={props.state.game.phase} />
+          <div class="arena-seat-signals">
+            <SeatStateGlyph
+              icon="active"
+              playerId={props.state.game.active_player_id}
+              title="Active player"
+              tone="ember"
+            />
+            <SeatStateGlyph
+              icon="priority"
+              playerId={props.state.game.priority_holder}
+              title="Priority holder"
+              tone="night"
+            />
+          </div>
         </div>
+
         <div class="arena-cockpit-actions">
-          <Show when={props.sessionInfo}>
-            {(sessionInfo) => (
-              <>
-                <div class="active-seat-chip">
-                  <span class="label">Mode</span>
-                  <strong>{formatSessionRole(sessionInfo().role)}</strong>
-                </div>
-                <div class="active-seat-chip">
-                  <span class="label">Room</span>
-                  <strong>{shortRoomCode(sessionInfo().roomId)}</strong>
-                </div>
-                <Show
-                  when={props.onCopyInviteLink && sessionInfo().transport === "broadcast-channel"}
-                >
-                  <button
-                    class="hero-button hero-button-ghost mini-button"
-                    onClick={() => {
-                      props.onCopyInviteLink?.();
-                    }}
-                  >
-                    Copy link
-                  </button>
-                </Show>
-              </>
-            )}
-          </Show>
           <Show when={liveViewer()}>
             {(viewer) => (
-              <div class="active-seat-chip">
-                <span class="label">Seat</span>
-                <strong>{shortPlayerTag(viewer().player_id)}</strong>
-              </div>
+              <MetaRune
+                icon="seat"
+                title={`Local seat ${shortPlayerTag(viewer().player_id)}`}
+                value={shortPlayerTag(viewer().player_id)}
+              />
             )}
           </Show>
+          <Show
+            when={props.onCopyInviteLink && props.sessionInfo?.transport === "broadcast-channel"}
+          >
+            <button
+              aria-label="Copy duel room link"
+              class="hero-button hero-button-ghost mini-button rune-button"
+              title="Copy duel room link"
+              onClick={() => {
+                props.onCopyInviteLink?.();
+              }}
+            >
+              <HudIcon icon="room" />
+            </button>
+          </Show>
           <button
-            class="hero-button hero-button-ghost mini-button"
+            aria-label="Toggle hand tray"
+            class="hero-button hero-button-ghost mini-button rune-button"
+            title="Toggle hand tray"
             onClick={() => {
               setHandTrayOpen((open) => !open);
             }}
           >
-            {handTrayOpen() ? "Hand" : "Hand"}
+            <HudIcon icon="hand" />
           </button>
           <button
-            class="hero-button hero-button-ghost mini-button"
+            aria-label="Toggle zone rail"
+            class="hero-button hero-button-ghost mini-button rune-button"
+            title="Toggle zone rail"
             onClick={() => {
               setZonesOpen((open) => !open);
             }}
           >
-            Zones
+            <HudIcon icon="zones" />
           </button>
           <button
-            class="hero-button hero-button-ghost mini-button"
+            aria-label="Open replay log"
+            class="hero-button hero-button-ghost mini-button rune-button"
+            title="Open replay log"
             onClick={() => {
               setSidebarOpen((open) => !open);
             }}
           >
-            Log
+            <HudIcon icon="log" />
           </button>
           <button
-            class="hero-button"
+            aria-label="Reset duel"
+            class="hero-button rune-button"
+            title="Reset duel"
             onClick={() => {
               props.onRun(resetArena);
             }}
           >
-            Reset duel
+            <HudIcon icon="reset" />
           </button>
         </div>
       </header>
@@ -784,23 +807,26 @@ const SeatPanel: Component<{
           <Show when={viewerPlayer()}>
             {(player) => (
               <div class="seat-summary">
-                <span class="seat-summary-pill">Life {player().life}</span>
-                <span class="seat-summary-pill">Hand {player().hand_count}</span>
-                <span class="seat-summary-pill">Mana {player().mana_total}</span>
-                <span class="seat-summary-pill">Deck {player().library_count}</span>
+                <SeatStatPill icon="life" title="Life total" value={String(player().life)} />
+                <SeatStatPill
+                  icon="hand"
+                  title="Cards in hand"
+                  value={String(player().hand_count)}
+                />
+                <SeatStatPill icon="mana" title="Mana pool" value={String(player().mana_total)} />
               </div>
             )}
           </Show>
         </div>
-        <div class="chip-row">
+        <div class="seat-sigil-row">
           <Show when={props.viewer.is_active}>
-            <span class="chip chip-ember">Active</span>
+            <SeatStateGlyph icon="active" title="Active player" tone="ember" />
           </Show>
           <Show when={props.viewer.is_priority_holder}>
-            <span class="chip chip-night">Priority</span>
+            <SeatStateGlyph icon="priority" title="Priority holder" tone="night" />
           </Show>
           <Show when={props.needsHandoff}>
-            <span class="chip chip-forest">Ready to take seat</span>
+            <SeatStateGlyph icon="seat" title="Ready to take seat" tone="forest" />
           </Show>
         </div>
       </header>
@@ -869,21 +895,20 @@ const SeatPanel: Component<{
               }}
             >
               <div class="zone-head">
-                <div>
-                  <p class="label">
-                    {props.orientation === "top" ? "Opponent battlefield" : "Your battlefield"}
-                  </p>
-                  <h3>{props.orientation === "top" ? "Opponent" : "You"}</h3>
+                <div class="battlefield-headline">
+                  <HudIcon icon="battlefield" />
+                  <strong>{String(player().battlefield.length)}</strong>
                 </div>
                 <div class="chip-row">
-                  <span class="chip">{String(player().battlefield.length)} in play</span>
                   <button
-                    class="chip chip-toggle"
+                    aria-label={props.zonesOpen ? "Hide zones" : "Show zones"}
+                    class="chip chip-toggle zone-toggle-chip"
+                    title={props.zonesOpen ? "Hide zones" : "Show zones"}
                     onClick={() => {
                       props.onToggleZones();
                     }}
                   >
-                    {props.zonesOpen ? "Hide" : "Zones"}
+                    <HudIcon icon="zones" />
                   </button>
                 </div>
               </div>
@@ -954,7 +979,11 @@ const SeatPanel: Component<{
 
               <Show
                 when={player().battlefield.length > 0}
-                fallback={<p class="muted">Nothing on the battlefield yet.</p>}
+                fallback={
+                  <div class="battlefield-empty-state" aria-label="Battlefield empty">
+                    <span class="battlefield-empty-rune">◌</span>
+                  </div>
+                }
               >
                 <div class="battlefield-strip">
                   <For each={orderedBattlefield()}>
@@ -1496,16 +1525,189 @@ const ZoneCounter: Component<{
   </article>
 );
 
-const StatusBadge: Component<{
-  label: string;
+const SeatStatPill: Component<{
+  icon: HudIconName;
+  title: string;
   value: string;
-  tone: "ember" | "forest" | "night";
 }> = (props) => (
-  <article classList={{ "status-badge": true, [`status-${props.tone}`]: true }}>
-    <p>{props.label}</p>
+  <article class="seat-stat-pill" title={props.title}>
+    <HudIcon icon={props.icon} />
     <strong>{props.value}</strong>
   </article>
 );
+
+const MetaRune: Component<{
+  icon: HudIconName;
+  title: string;
+  value: string;
+}> = (props) => (
+  <article class="meta-rune" title={props.title}>
+    <HudIcon icon={props.icon} />
+    <strong>{props.value}</strong>
+  </article>
+);
+
+const TurnRune: Component<{ turnNumber: number }> = (props) => (
+  <article class="turn-rune" title={`Turn ${String(props.turnNumber)}`}>
+    <span class="turn-rune-mark">↻</span>
+    <strong>{String(props.turnNumber)}</strong>
+  </article>
+);
+
+const SeatStateGlyph: Component<{
+  icon: "active" | "priority" | "seat";
+  playerId?: string | null | undefined;
+  title: string;
+  tone: "ember" | "forest" | "night";
+}> = (props) => (
+  <article
+    classList={{ "seat-state-glyph": true, [`tone-${props.tone}`]: true }}
+    title={`${props.title}${props.playerId ? ` · ${shortPlayerTag(props.playerId)}` : ""}`}
+  >
+    <HudIcon icon={props.icon} />
+    <Show when={props.playerId}>
+      <strong>{shortPlayerTag(props.playerId)}</strong>
+    </Show>
+  </article>
+);
+
+const PhaseTrack: Component<{ currentPhase: string }> = (props) => {
+  const currentIndex = () => PHASE_NODES.findIndex((node) => node.phase === props.currentPhase);
+
+  return (
+    <div class="phase-track" role="list" aria-label="Current phase track">
+      <For each={PHASE_NODES}>
+        {(node, index) => (
+          <div
+            classList={{
+              "phase-node": true,
+              current: node.phase === props.currentPhase,
+              complete: currentIndex() >= index(),
+            }}
+            role="listitem"
+            title={node.label}
+          >
+            <span class="phase-node-glyph" aria-hidden="true">
+              {node.glyph}
+            </span>
+          </div>
+        )}
+      </For>
+    </div>
+  );
+};
+
+type HudIconName =
+  | "active"
+  | "battlefield"
+  | "hand"
+  | "host"
+  | "life"
+  | "log"
+  | "mana"
+  | "peer"
+  | "priority"
+  | "reset"
+  | "room"
+  | "seat"
+  | "zones";
+
+const HudIcon: Component<{ icon: HudIconName }> = (props) => (
+  <svg aria-hidden="true" class="hud-icon" viewBox="0 0 24 24">
+    <Switch fallback={<circle cx="12" cy="12" r="5" />}>
+      <Match when={props.icon === "life"}>
+        <path d="M12 20.5C7 16.7 4 13.8 4 9.8A3.8 3.8 0 0 1 7.9 6c1.6 0 3.1.8 4.1 2.1A5 5 0 0 1 16.1 6 3.8 3.8 0 0 1 20 9.8c0 4-3 6.9-8 10.7Z" />
+      </Match>
+      <Match when={props.icon === "hand"}>
+        <path d="M7 20c-1.3 0-2.3-1-2.3-2.2v-5.1c0-.7.5-1.2 1.1-1.2.7 0 1.2.5 1.2 1.2V9.4c0-.7.5-1.2 1.1-1.2.7 0 1.2.5 1.2 1.2V7.9c0-.7.5-1.2 1.1-1.2.7 0 1.2.5 1.2 1.2v1c0-.6.5-1.1 1.1-1.1s1.1.5 1.1 1.1v1.2c0-.5.4-.9.9-.9s.9.4.9.9v4.8c0 3-2 5.1-5.1 5.1H7Z" />
+      </Match>
+      <Match when={props.icon === "mana"}>
+        <path d="M12 3.2c3.2 3.7 5 6.6 5 9.1A5 5 0 1 1 7 12.3c0-2.5 1.8-5.4 5-9.1Z" />
+      </Match>
+      <Match when={props.icon === "room"}>
+        <path
+          d="M8 7.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5Zm8 4a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5ZM10.4 9.8h3.2m-3 6 2.8-1.6"
+          fill="none"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-width="2"
+        />
+      </Match>
+      <Match when={props.icon === "host"}>
+        <path d="M12 3.5 6.5 7v5.5c0 3.2 2.2 6 5.5 8 3.3-2 5.5-4.8 5.5-8V7L12 3.5Zm0 5.2 1.4 2.9 3.1.5-2.2 2.2.5 3.2-2.8-1.5-2.8 1.5.5-3.2-2.2-2.2 3.1-.5L12 8.7Z" />
+      </Match>
+      <Match when={props.icon === "peer"}>
+        <path d="M8 7.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5Zm8 4a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5Z" />
+      </Match>
+      <Match when={props.icon === "active"}>
+        <path d="m12 4 1.9 4 4.4.5-3.3 3 1 4.4-4-2.2-4 2.2 1-4.4-3.3-3 4.4-.5L12 4Z" />
+      </Match>
+      <Match when={props.icon === "priority"}>
+        <path d="M12 3.5 14 9l5.5 1-4 3.4 1 5.1-4.5-2.8-4.5 2.8 1-5.1-4-3.4L10 9l2-5.5Z" />
+      </Match>
+      <Match when={props.icon === "zones"}>
+        <path
+          d="M7 6.5h9.5a1.5 1.5 0 0 1 1.5 1.5v8.5a1.5 1.5 0 0 1-1.5 1.5H7A1.5 1.5 0 0 1 5.5 16.5V8A1.5 1.5 0 0 1 7 6.5Zm-2-2h9.5"
+          fill="none"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-width="2"
+        />
+      </Match>
+      <Match when={props.icon === "log"}>
+        <path
+          d="M7 7h10M7 12h10M7 17h7"
+          fill="none"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-width="2"
+        />
+      </Match>
+      <Match when={props.icon === "reset"}>
+        <path
+          d="M18 8V4m0 0h-4m4 0-3.2 3.2A7 7 0 1 0 19 12"
+          fill="none"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+        />
+      </Match>
+      <Match when={props.icon === "seat"}>
+        <path
+          d="M12 4.5a3.4 3.4 0 1 1 0 6.8 3.4 3.4 0 0 1 0-6.8ZM6 18.5c1.1-2.6 3.2-3.9 6-3.9s4.9 1.3 6 3.9"
+          fill="none"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-width="2"
+        />
+      </Match>
+      <Match when={props.icon === "battlefield"}>
+        <path
+          d="m6 17 6-10 6 10M8.4 13h7.2"
+          fill="none"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+        />
+      </Match>
+    </Switch>
+  </svg>
+);
+
+const PHASE_NODES = [
+  { phase: "Upkeep", glyph: "✶", label: "Upkeep" },
+  { phase: "Draw", glyph: "↓", label: "Draw" },
+  { phase: "FirstMain", glyph: "◈", label: "First Main" },
+  { phase: "BeginningOfCombat", glyph: "⚔", label: "Beginning of Combat" },
+  { phase: "DeclareAttackers", glyph: "➶", label: "Declare Attackers" },
+  { phase: "DeclareBlockers", glyph: "⛨", label: "Declare Blockers" },
+  { phase: "CombatDamage", glyph: "✹", label: "Combat Damage" },
+  { phase: "EndOfCombat", glyph: "◌", label: "End of Combat" },
+  { phase: "SecondMain", glyph: "◈", label: "Second Main" },
+  { phase: "EndStep", glyph: "☾", label: "End Step" },
+] as const;
 
 const SupportedPrompt: Component<{
   prompt: ArenaChoicePrompt;

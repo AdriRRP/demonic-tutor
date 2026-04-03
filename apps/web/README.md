@@ -72,6 +72,7 @@ It currently provides:
 - one shared wasm-backed game session
 - one same-origin `BroadcastChannel` bridge so a second browser window can join the same duel without a backend
 - a host-authoritative local room model where one window owns the Rust runtime and the peer window sends public commands to it
+- a generated duel HUD with a graphical phase track, icon-led seat signals, and compact stat pips instead of the earlier text-heavy cockpit
 - two viewer-scoped seats over that same Rust-owned state
 - a viewport-fitted SPA arena with dedicated landscape and portrait layouts
 - a battlefield-first play surface with a clear opponent/player split
