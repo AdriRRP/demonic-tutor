@@ -77,10 +77,10 @@ It currently provides:
 - a viewport-fitted SPA arena with dedicated landscape and portrait layouts
 - a battlefield-first play surface with a clear opponent/player split
 - a selected-card highlight shared across hand hover, inspect detail, and battlefield action focus
-- a hidden opponent hand fan rendered with generated card backs instead of text counters
+- a hidden opponent hand fan rendered with classic-inspired generated card backs instead of text counters
 - a collapsible bottom hand fan that can be dragged onto the battlefield for simple legal plays
 - a locally rearrangeable battlefield so permanents already in play can be positioned freely inside the owning seat
-- generated card piles for library, graveyard, and exile using CSS-built backs and compact face-up zone tops
+- generated card piles for library, graveyard, and exile using classic-inspired CSS-built backs and compact face-up zone tops
 - focused zone browsers that open on demand instead of permanently occupying the table
 - card inspection modals so the card itself is now the primary interaction object
 - a modal replay log instead of a persistent sidebar dashboard
