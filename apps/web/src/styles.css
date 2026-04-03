@@ -58,7 +58,7 @@ button {
   overflow: hidden;
   height: 100dvh;
   min-height: 640px;
-  padding: 10px;
+  padding: 8px;
 }
 
 .playmat-halo {
@@ -153,19 +153,19 @@ button {
   position: relative;
   z-index: 1;
   display: grid;
-  gap: 6px;
+  gap: 4px;
   height: 100%;
   min-height: 0;
-  grid-template-rows: clamp(48px, 7.5dvh, 68px) minmax(0, 1fr);
+  grid-template-rows: clamp(44px, 6.6dvh, 58px) minmax(0, 1fr);
 }
 
 .arena-cockpit {
   display: grid;
-  gap: 8px;
+  gap: 6px;
   grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.4fr) auto;
   align-items: center;
   min-height: 0;
-  padding: 5px 10px;
+  padding: 4px 8px;
   border-radius: 18px;
 }
 
@@ -405,11 +405,11 @@ button {
 .duel-table {
   position: relative;
   display: grid;
-  gap: 6px;
+  gap: 4px;
   grid-template-rows: minmax(0, 0.8fr) 12px minmax(0, 1.2fr);
   height: 100%;
   min-height: 0;
-  padding: 8px 10px 10px;
+  padding: 6px 8px 8px;
   overflow: hidden;
   background:
     radial-gradient(circle at 20% 50%, rgba(217, 91, 113, 0.14), transparent 18%),
@@ -806,7 +806,7 @@ button {
   position: absolute;
   top: 0;
   left: 0;
-  right: 102px;
+  right: 96px;
   z-index: 4;
   display: flex;
   justify-content: space-between;
@@ -859,7 +859,7 @@ button {
   position: absolute;
   top: 28px;
   left: 0;
-  right: 102px;
+  right: 96px;
   z-index: 4;
   display: grid;
   gap: 10px;
@@ -869,6 +869,37 @@ button {
   max-height: 38%;
   overflow: auto;
   padding-right: 4px;
+}
+
+.opponent-hand-fan {
+  position: absolute;
+  top: 28px;
+  left: 50%;
+  z-index: 3;
+  width: min(34rem, calc(100% - 14rem));
+  height: 0;
+  pointer-events: none;
+  transform: translateX(-50%);
+}
+
+.opponent-hand-card-shell {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  z-index: var(--hidden-hand-depth, 1);
+  transform-origin: center top;
+  transform: translateX(calc(-50% + var(--hidden-hand-x, 0px)))
+    translateY(calc(-72px + var(--hidden-hand-y, 0px))) rotate(var(--hidden-hand-angle, 0deg));
+}
+
+.opponent-hand-card-shell .card-back {
+  width: 70px;
+  height: 98px;
+  opacity: 0.96;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 225, 177, 0.06),
+    inset 0 0 0 3px rgba(35, 17, 11, 0.38),
+    0 12px 26px rgba(5, 8, 14, 0.26);
 }
 
 .seat-zones {
@@ -881,11 +912,19 @@ button {
   min-height: 0;
   height: 100%;
   padding-top: 26px;
-  padding-right: 102px;
+  padding-right: 96px;
 }
 
 .seat-panel.has-spotlight .seat-zones {
   padding-top: 84px;
+}
+
+.seat-top .seat-zones {
+  padding-top: 58px;
+}
+
+.seat-top.has-spotlight .seat-zones {
+  padding-top: 104px;
 }
 
 .zone-rail {
@@ -893,7 +932,7 @@ button {
   top: 0;
   right: 0;
   bottom: 0;
-  width: 94px;
+  width: 88px;
   overflow: visible;
   transition:
     opacity 180ms ease,
@@ -909,13 +948,25 @@ button {
 
 .zone-rail-content {
   position: absolute;
-  top: 50%;
+  top: 0;
   right: 0;
   display: grid;
-  gap: 10px;
-  width: 94px;
-  align-content: center;
-  transform: translateY(-50%);
+  gap: 8px;
+  width: 88px;
+  align-content: start;
+  padding-block: 2px;
+}
+
+.seat-top .zone-rail-content {
+  top: 0;
+  bottom: auto;
+  align-content: start;
+}
+
+.seat-bottom .zone-rail-content {
+  top: auto;
+  bottom: 0;
+  align-content: end;
 }
 
 .battlefield-lane,
@@ -927,7 +978,7 @@ button {
   display: grid;
   gap: 6px;
   justify-items: center;
-  width: 94px;
+  width: 88px;
   padding: 0;
   border: 0;
   background: transparent;
@@ -937,8 +988,8 @@ button {
 
 .card-pile-stack {
   position: relative;
-  width: 84px;
-  height: 118px;
+  width: 78px;
+  height: 108px;
 }
 
 .card-pile-layer,
@@ -996,8 +1047,8 @@ button {
   gap: 6px;
   align-items: center;
   justify-content: center;
-  min-width: 54px;
-  padding: 2px 8px;
+  min-width: 50px;
+  padding: 2px 7px;
   border: 1px solid rgba(91, 120, 173, 0.18);
   border-radius: 999px;
   background:
@@ -1006,19 +1057,19 @@ button {
     inset 0 1px 0 rgba(255, 255, 255, 0.06),
     0 8px 20px rgba(4, 8, 14, 0.24);
   color: rgba(227, 234, 255, 0.88);
-  font-size: 0.62rem;
+  font-size: 0.58rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
 .card-pile-glyph {
   color: rgba(214, 180, 128, 0.76);
-  font-size: 0.72rem;
+  font-size: 0.66rem;
   line-height: 1;
 }
 
 .card-pile-meta strong {
-  font-size: 0.76rem;
+  font-size: 0.72rem;
   line-height: 1;
 }
 
@@ -1194,7 +1245,8 @@ button {
 
 .seat-top .battlefield-lane {
   justify-content: flex-start;
-  padding-bottom: 4px;
+  padding-top: 8px;
+  padding-bottom: 2px;
 }
 
 .seat-bottom .battlefield-lane {
@@ -1286,7 +1338,7 @@ button {
   gap: 6px;
   position: absolute;
   left: 0;
-  right: 100px;
+  right: 94px;
   bottom: 0;
   z-index: 3;
   padding: 4px 0 0;
@@ -1299,7 +1351,7 @@ button {
   align-items: flex-end;
   position: absolute;
   left: 0;
-  right: 100px;
+  right: 94px;
   bottom: 34px;
   z-index: 2;
 }
@@ -1326,7 +1378,7 @@ button {
 .seat-ops {
   position: fixed;
   left: 16px;
-  right: 112px;
+  right: 104px;
   bottom: 0;
   z-index: 18;
   display: grid;
@@ -2390,7 +2442,16 @@ button {
   }
 
   .seat-zones {
-    padding-right: 88px;
+    padding-right: 84px;
+  }
+
+  .opponent-hand-fan {
+    width: min(26rem, calc(100% - 10rem));
+  }
+
+  .opponent-hand-card-shell .card-back {
+    width: 62px;
+    height: 88px;
   }
 
   .battlefield-strip {
@@ -2419,7 +2480,7 @@ button {
   .battlefield-console,
   .lane-quick-actions,
   .seat-ops {
-    right: 92px;
+    right: 86px;
   }
 
   .table-stack-well {
@@ -2502,6 +2563,21 @@ button {
 
   .seat-zones {
     padding-right: 0;
+  }
+
+  .seat-top .seat-zones,
+  .seat-top.has-spotlight .seat-zones {
+    padding-top: 44px;
+  }
+
+  .opponent-hand-fan {
+    top: 42px;
+    width: min(20rem, calc(100% - 6rem));
+  }
+
+  .opponent-hand-card-shell .card-back {
+    width: 54px;
+    height: 76px;
   }
 
   .zone-rail {

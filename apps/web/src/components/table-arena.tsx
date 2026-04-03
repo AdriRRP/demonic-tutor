@@ -1,6 +1,7 @@
 import { For, Match, Show, Switch, createEffect, createSignal } from "solid-js";
 import type { Component } from "solid-js";
 import { GameCard } from "./cards/game-card";
+import { CardBack } from "./cards/card-back";
 import { CardPile } from "./cards/card-pile";
 import type { ArenaSessionInfo } from "../lib/session";
 import {
@@ -639,6 +640,8 @@ const SeatPanel: Component<{
   const attackerCandidateIds = () => new Set(declareAttackersAction()?.card_ids ?? []);
   const battlefieldConsoleVisible = () =>
     Boolean(declareAttackersAction()) || Boolean(declareBlockersAction());
+  const hiddenOpponentHandCount = () =>
+    props.orientation === "top" ? (viewerPlayer()?.hand_count ?? 0) : 0;
   const blockerSummary = () =>
     Object.entries(props.blockerAssignments).map(([blockerId, attackerId]) => ({
       blockerId,
@@ -882,6 +885,24 @@ const SeatPanel: Component<{
             )}
           </For>
         </section>
+      </Show>
+
+      <Show when={hiddenOpponentHandCount() > 0}>
+        <div
+          aria-label={`${String(hiddenOpponentHandCount())} cards in opponent hand`}
+          class="opponent-hand-fan"
+        >
+          <For each={hiddenHandSlots(hiddenOpponentHandCount())}>
+            {(_, index) => (
+              <div
+                class="opponent-hand-card-shell"
+                style={hiddenHandCardShellStyle(index(), hiddenOpponentHandCount())}
+              >
+                <CardBack variant="hidden-hand" />
+              </div>
+            )}
+          </For>
+        </div>
       </Show>
 
       <Show when={viewerPlayer()}>
@@ -2010,6 +2031,24 @@ function shortPlayerTag(playerId: string | null | undefined): string {
   }
 
   return playerId.length > 6 ? playerId.slice(0, 6) : playerId;
+}
+
+function hiddenHandSlots(count: number): number[] {
+  return Array.from({ length: count }, (_, index) => index);
+}
+
+function hiddenHandCardShellStyle(index: number, count: number): Record<string, string> {
+  const spread = Math.min(26, Math.max(14, 140 / Math.max(count, 2)));
+  const midpoint = (count - 1) / 2;
+  const offset = index - midpoint;
+  const verticalOffset = Math.abs(offset) * 4;
+
+  return {
+    "--hidden-hand-x": `${String(offset * spread)}px`,
+    "--hidden-hand-angle": `${String(offset * 4.2)}deg`,
+    "--hidden-hand-y": `${String(verticalOffset)}px`,
+    "--hidden-hand-depth": String(index + 1),
+  };
 }
 
 function shortRoomCode(roomId: string): string {
