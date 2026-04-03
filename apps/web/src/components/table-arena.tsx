@@ -83,6 +83,11 @@ interface InspectCardState {
   note?: string | undefined;
 }
 
+interface BattlefieldLayoutPoint {
+  x: number;
+  y: number;
+}
+
 export const TableArena: Component<TableArenaProps> = (props) => {
   const liveViewer = () =>
     props.state.viewers.find((viewer) => viewer.player_id === props.revealedSeatId) ??
@@ -651,10 +656,14 @@ const SeatPanel: Component<{
   const [handOrder, setHandOrder] = createSignal<string[]>([]);
   const [focusedHandCardId, setFocusedHandCardId] = createSignal<string | null>(null);
   const [battlefieldOrder, setBattlefieldOrder] = createSignal<string[]>([]);
+  const [battlefieldPositions, setBattlefieldPositions] = createSignal<
+    Record<string, BattlefieldLayoutPoint>
+  >({});
   const [draggedBattlefieldCardId, setDraggedBattlefieldCardId] = createSignal<string | null>(null);
   const [battlefieldActionMenuCardId, setBattlefieldActionMenuCardId] = createSignal<string | null>(
     null,
   );
+  let battlefieldSurfaceRef: HTMLDivElement | undefined;
 
   createEffect(() => {
     const nextIds = props.viewer.hand.map((card) => card.card_id);
@@ -689,6 +698,21 @@ const SeatPanel: Component<{
       .map((cardId) => cardsById.get(cardId))
       .filter((card): card is ArenaBattlefieldCard => card !== undefined);
   };
+
+  createEffect(() => {
+    const cards = orderedBattlefield();
+    setBattlefieldPositions((previous) => {
+      const next: Record<string, BattlefieldLayoutPoint> = {};
+
+      cards.forEach((card, index) => {
+        next[card.card_id] =
+          previous[card.card_id] ??
+          defaultBattlefieldPosition(index, cards.length, props.orientation);
+      });
+
+      return next;
+    });
+  });
 
   createEffect(() => {
     const hand = orderedHand();
@@ -729,10 +753,6 @@ const SeatPanel: Component<{
 
   const moveHandCard = (draggedCardId: string, targetCardId: string) => {
     setHandOrder((previous) => reorderCardIds(previous, draggedCardId, targetCardId));
-  };
-
-  const moveBattlefieldCard = (draggedCardId: string, targetCardId: string) => {
-    setBattlefieldOrder((previous) => reorderCardIds(previous, draggedCardId, targetCardId));
   };
 
   const openInspectCard = (card: InspectCardState) => {
@@ -809,6 +829,26 @@ const SeatPanel: Component<{
           !props.viewer.hand.find((card) => card.card_id === props.draggedHandCardId)
             ?.requires_target)),
     );
+
+  const repositionBattlefieldCard = (cardId: string, clientX: number, clientY: number) => {
+    const surface = battlefieldSurfaceRef;
+    if (!surface) {
+      return;
+    }
+
+    const rect = surface.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) {
+      return;
+    }
+
+    const nextX = clamp((clientX - rect.left) / rect.width, 0.08, 0.92);
+    const nextY = clamp((clientY - rect.top) / rect.height, 0.14, 0.88);
+
+    setBattlefieldPositions((previous) => ({
+      ...previous,
+      [cardId]: { x: nextX, y: nextY },
+    }));
+  };
 
   return (
     <section
@@ -1019,25 +1059,55 @@ const SeatPanel: Component<{
                 </div>
               </Show>
 
-              <Show
-                when={player().battlefield.length > 0}
-                fallback={
-                  <div class="battlefield-empty-state" aria-label="Battlefield empty">
-                    <span class="battlefield-empty-rune">◌</span>
-                  </div>
-                }
+              <div
+                class="battlefield-surface"
+                ref={battlefieldSurfaceRef}
+                onDragOver={(event) => {
+                  if (!props.draggedHandCardId && !draggedBattlefieldCardId()) {
+                    return;
+                  }
+
+                  event.preventDefault();
+                  if (event.dataTransfer) {
+                    event.dataTransfer.dropEffect = props.draggedHandCardId ? "copy" : "move";
+                  }
+                }}
+                onDrop={(event) => {
+                  event.preventDefault();
+
+                  const draggedHandCardId = props.draggedHandCardId;
+                  if (draggedHandCardId) {
+                    props.onBattlefieldDropCard?.(draggedHandCardId);
+                    props.onDragHandCard(null);
+                  }
+
+                  const draggedBattlefieldCard = draggedBattlefieldCardId();
+                  if (draggedBattlefieldCard) {
+                    repositionBattlefieldCard(draggedBattlefieldCard, event.clientX, event.clientY);
+                    setDraggedBattlefieldCardId(null);
+                  }
+                }}
               >
-                <div class="battlefield-strip">
+                <Show
+                  when={player().battlefield.length > 0}
+                  fallback={
+                    <div class="battlefield-empty-state" aria-label="Battlefield empty">
+                      <span class="battlefield-empty-rune">◌</span>
+                    </div>
+                  }
+                >
                   <For each={orderedBattlefield()}>
-                    {(card) => (
+                    {(card, index) => (
                       <div
                         classList={{
                           "battlefield-card-shell": true,
+                          draggable: props.orientation === "bottom",
+                          dragging: draggedBattlefieldCardId() === card.card_id,
                           selected:
                             battlefieldActionMenuCardId() === card.card_id ||
                             props.inspectedCardId === card.card_id,
                         }}
-                        draggable
+                        draggable={props.orientation === "bottom"}
                         onClick={(event) => {
                           event.stopPropagation();
                           if (props.orientation !== "bottom") {
@@ -1049,33 +1119,25 @@ const SeatPanel: Component<{
                         onDragEnd={() => {
                           setDraggedBattlefieldCardId(null);
                         }}
-                        onDragOver={(event) => {
-                          if (!draggedBattlefieldCardId()) {
+                        onDragStart={(event) => {
+                          if (props.orientation !== "bottom") {
                             return;
                           }
 
-                          event.preventDefault();
-                          if (event.dataTransfer) {
-                            event.dataTransfer.dropEffect = "move";
-                          }
-                        }}
-                        onDragStart={(event) => {
                           setDraggedBattlefieldCardId(card.card_id);
                           if (event.dataTransfer) {
                             event.dataTransfer.setData("text/plain", card.card_id);
                             event.dataTransfer.effectAllowed = "move";
                           }
                         }}
-                        onDrop={(event) => {
-                          const draggedCardId = draggedBattlefieldCardId();
-                          if (!draggedCardId) {
-                            return;
-                          }
-
-                          event.preventDefault();
-                          moveBattlefieldCard(draggedCardId, card.card_id);
-                          setDraggedBattlefieldCardId(null);
-                        }}
+                        style={battlefieldCardShellStyle(
+                          battlefieldPositions()[card.card_id] ??
+                            defaultBattlefieldPosition(
+                              index(),
+                              orderedBattlefield().length,
+                              props.orientation,
+                            ),
+                        )}
                       >
                         <GameCard
                           attacking={card.attacking}
@@ -1145,8 +1207,8 @@ const SeatPanel: Component<{
                       </div>
                     )}
                   </For>
-                </div>
-              </Show>
+                </Show>
+              </div>
 
               <Show when={battlefieldConsoleVisible()}>
                 <div class="battlefield-console">
@@ -2051,6 +2113,35 @@ function hiddenHandCardShellStyle(index: number, count: number): Record<string, 
   };
 }
 
+function defaultBattlefieldPosition(
+  index: number,
+  count: number,
+  orientation: "top" | "bottom",
+): BattlefieldLayoutPoint {
+  const rowCapacity = 6;
+  const row = Math.floor(index / rowCapacity);
+  const cardsInRow = Math.min(rowCapacity, count - row * rowCapacity);
+  const column = index % rowCapacity;
+  const midpoint = (cardsInRow - 1) / 2;
+  const horizontalSpread = 0.12;
+  const x = clamp(0.5 + (column - midpoint) * horizontalSpread, 0.16, 0.84);
+  const verticalBase = orientation === "top" ? 0.34 : 0.66;
+  const verticalStep = 0.17;
+  const y =
+    orientation === "top"
+      ? clamp(verticalBase + row * verticalStep, 0.22, 0.78)
+      : clamp(verticalBase - row * verticalStep, 0.22, 0.82);
+
+  return { x, y };
+}
+
+function battlefieldCardShellStyle(position: BattlefieldLayoutPoint): Record<string, string> {
+  return {
+    left: `${String(position.x * 100)}%`,
+    top: `${String(position.y * 100)}%`,
+  };
+}
+
 function shortRoomCode(roomId: string): string {
   return roomId
     .replace(/^duel-/, "")
@@ -2078,6 +2169,10 @@ function reorderCardIds(cardIds: string[], draggedCardId: string, targetCardId: 
   next.splice(draggedIndex, 1);
   next.splice(targetIndex, 0, draggedCardId);
   return next;
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max);
 }
 
 function handCardShellStyle(

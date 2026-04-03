@@ -158,6 +158,7 @@ Its job today is to provide:
 - a shared selected-card highlight spanning hand focus, inspection, and battlefield action focus
 - a hidden opponent hand fan built from generated card backs so rival hand size reads as physical cards instead of a lone counter
 - a collapsible bottom hand fan that can be dragged onto the battlefield for simple legal plays
+- a locally rearrangeable battlefield where permanents already on the table can be dragged to presentation-only positions inside the owning seat
 - generated zone piles for library, graveyard, and exile using CSS-built card backs and compact face-up tops
 - focused zone browsers that stay on demand instead of keeping textual zone panels on the table
 - a handoff-first hot-seat flow where only one private hand is opened at a time
@@ -174,6 +175,7 @@ It is still intentionally early-stage UI:
 - centered on a shared table surface rather than debug panels
 - optimized for interaction coverage before deep motion/polish work
 - not yet a secure remote multiplayer client
+- still keeping free battlefield layout local to each browser window until a dedicated sync slice lands
 
 Important constraint:
 

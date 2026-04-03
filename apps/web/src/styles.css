@@ -1259,7 +1259,6 @@ button {
   padding-bottom: clamp(18px, 2.8dvh, 32px);
 }
 
-.battlefield-strip,
 .hand-fan {
   display: flex;
   gap: 6px;
@@ -1268,30 +1267,26 @@ button {
   scrollbar-width: none;
 }
 
-.battlefield-strip::-webkit-scrollbar,
 .hand-fan::-webkit-scrollbar,
 .timeline::-webkit-scrollbar,
 .stack-list::-webkit-scrollbar {
   display: none;
 }
 
-.battlefield-strip {
+.battlefield-surface {
+  position: relative;
   flex: 1;
   min-height: 0;
-  padding: 14px 0 0;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  align-content: center;
+  width: 100%;
   overflow: visible;
-  gap: 5px;
 }
 
 .battlefield-empty-state {
   display: grid;
   place-items: center;
-  flex: 1;
-  min-height: 0;
+  position: absolute;
+  inset: 0;
+  min-height: 100%;
 }
 
 .battlefield-empty-rune {
@@ -1301,9 +1296,14 @@ button {
 }
 
 .battlefield-card-shell {
-  position: relative;
-  flex: 0 0 auto;
-  transition: transform 160ms ease;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transition:
+    transform 160ms ease,
+    filter 160ms ease;
+  transform: translate(-50%, -50%);
+  touch-action: none;
 }
 
 .battlefield-card-shell:hover {
@@ -1312,7 +1312,16 @@ button {
 
 .battlefield-card-shell.selected {
   z-index: 6;
-  transform: translateY(-4px);
+  transform: translate(-50%, calc(-50% - 4px));
+}
+
+.battlefield-card-shell.draggable {
+  cursor: grab;
+}
+
+.battlefield-card-shell.dragging {
+  opacity: 0.78;
+  filter: saturate(0.88);
 }
 
 .card-drag-shell {
@@ -1919,9 +1928,9 @@ button {
 }
 
 .mode-battlefield {
-  min-height: 142px;
-  width: 104px;
-  height: 142px;
+  min-height: 128px;
+  width: 92px;
+  height: 128px;
 }
 
 .mode-battlefield .game-card-head {
@@ -1947,7 +1956,7 @@ button {
 }
 
 .mode-battlefield .game-card-artbox {
-  min-height: 60px;
+  min-height: 54px;
 }
 
 .mode-battlefield .game-card-type-line {
@@ -1970,7 +1979,7 @@ button {
 }
 
 .mode-battlefield .card-stat-block.combat strong {
-  font-size: 0.66rem;
+  font-size: 0.62rem;
 }
 
 .mode-battlefield .game-card-keywords,
