@@ -78,7 +78,8 @@ It currently provides:
 - a battlefield-first play surface with a clear opponent/player split
 - a selected-card highlight shared across hand hover, inspect detail, and battlefield action focus
 - a collapsible bottom hand fan that can be dragged onto the battlefield for simple legal plays
-- visible library and graveyard anchors that open zone browsers instead of permanently occupying the table
+- generated card piles for library, graveyard, and exile using CSS-built backs and compact face-up zone tops
+- focused zone browsers that open on demand instead of permanently occupying the table
 - card inspection modals so the card itself is now the primary interaction object
 - a modal replay log instead of a persistent sidebar dashboard
 - explicit pass-the-device handoff, with only one private hand open at a time

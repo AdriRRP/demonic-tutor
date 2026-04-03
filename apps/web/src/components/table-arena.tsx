@@ -1,6 +1,7 @@
 import { For, Match, Show, Switch, createEffect, createSignal } from "solid-js";
 import type { Component } from "solid-js";
 import { GameCard } from "./cards/game-card";
+import { CardPile } from "./cards/card-pile";
 import type { ArenaSessionInfo } from "../lib/session";
 import {
   activateAbility,
@@ -50,9 +51,11 @@ interface TableArenaProps {
   onRun: (operation: (current: ArenaCommandTarget) => Promise<ArenaState>) => void;
 }
 
+type ZoneKind = "library" | "graveyard" | "exile";
+
 type ZoneBrowserState = {
   playerId: string;
-  zone: "library" | "graveyard";
+  zone: ZoneKind;
 } | null;
 
 interface BattlefieldCardActionOption {
@@ -102,6 +105,22 @@ export const TableArena: Component<TableArenaProps> = (props) => {
     }
 
     return findPlayer(props.state.game, browser.playerId);
+  };
+  const zoneBrowserCards = () => {
+    const browser = zoneBrowser();
+    const player = zoneBrowserPlayer();
+    if (!browser || !player) {
+      return [];
+    }
+
+    switch (browser.zone) {
+      case "graveyard":
+        return player.graveyard;
+      case "exile":
+        return player.exile;
+      case "library":
+        return [];
+    }
   };
 
   const playDraggedCard = (viewer: ArenaViewerState, cardId: string) => {
@@ -423,7 +442,7 @@ export const TableArena: Component<TableArenaProps> = (props) => {
                 <div>
                   <p class="eyebrow sidebar-eyebrow">Zone browser</p>
                   <h2>
-                    {shortPlayerTag(browser().playerId)} · {browser().zone}
+                    {shortPlayerTag(browser().playerId)} · {formatZoneLabel(browser().zone)}
                   </h2>
                 </div>
                 <button
@@ -447,14 +466,16 @@ export const TableArena: Component<TableArenaProps> = (props) => {
                 </div>
               </Show>
 
-              <Show when={browser().zone === "graveyard"}>
+              <Show when={browser().zone === "graveyard" || browser().zone === "exile"}>
                 <div class="zone-browser-grid">
-                  <For each={zoneBrowserPlayer()?.graveyard ?? []}>
+                  <For each={zoneBrowserCards()}>
                     {(card) => (
                       <button
                         class="zone-browser-card"
                         onClick={() => {
-                          setInspectedCard(inspectFromZoneCard(card, "graveyard"));
+                          setInspectedCard(
+                            inspectFromZoneCard(card, formatZoneLabel(browser().zone)),
+                          );
                         }}
                       >
                         <span>{card.definition_id}</span>
@@ -463,8 +484,8 @@ export const TableArena: Component<TableArenaProps> = (props) => {
                     )}
                   </For>
                 </div>
-                <Show when={(zoneBrowserPlayer()?.graveyard.length ?? 0) === 0}>
-                  <p class="muted">Graveyard empty.</p>
+                <Show when={zoneBrowserCards().length === 0}>
+                  <p class="muted">{formatZoneLabel(browser().zone)} empty.</p>
                 </Show>
               </Show>
             </aside>
@@ -1252,38 +1273,39 @@ const SeatPanel: Component<{
 
             <aside classList={{ "zone-rail": true, collapsed: !props.zonesOpen }}>
               <div class="zone-rail-content">
-                <button
-                  class="zone-portal-button"
+                <CardPile
+                  count={player().library_count}
+                  highlight={props.viewer.is_active}
+                  kind="library"
                   onClick={() => {
                     props.onOpenZoneBrowser({
                       playerId: props.viewer.player_id,
                       zone: "library",
                     });
                   }}
-                >
-                  <ZoneCounter
-                    count={player().library_count}
-                    highlight={props.viewer.is_active}
-                    label="Library"
-                  />
-                </button>
-                <button
-                  class="zone-portal-button"
+                />
+                <CardPile
+                  count={player().graveyard.length}
+                  kind="graveyard"
                   onClick={() => {
                     props.onOpenZoneBrowser({
                       playerId: props.viewer.player_id,
                       zone: "graveyard",
                     });
                   }}
-                >
-                  <div class="zone-pocket">
-                    <p class="label">Graveyard</p>
-                    <strong>{String(player().graveyard.length)}</strong>
-                    <p class="zone-pocket-copy">
-                      {player().graveyard[0]?.definition_id ?? "Open browser"}
-                    </p>
-                  </div>
-                </button>
+                  topCard={topZoneCard(player().graveyard)}
+                />
+                <CardPile
+                  count={player().exile.length}
+                  kind="exile"
+                  onClick={() => {
+                    props.onOpenZoneBrowser({
+                      playerId: props.viewer.player_id,
+                      zone: "exile",
+                    });
+                  }}
+                  topCard={topZoneCard(player().exile)}
+                />
               </div>
             </aside>
           </div>
@@ -1512,17 +1534,6 @@ const SidebarMetric: Component<{ label: string; value: string }> = (props) => (
     <p class="label">{props.label}</p>
     <p class="value">{props.value}</p>
   </div>
-);
-
-const ZoneCounter: Component<{
-  label: string;
-  count: number;
-  highlight?: boolean;
-}> = (props) => (
-  <article classList={{ "zone-counter": true, highlight: Boolean(props.highlight) }}>
-    <p class="label">{props.label}</p>
-    <strong>{String(props.count)}</strong>
-  </article>
 );
 
 const SeatStatPill: Component<{
@@ -1945,6 +1956,10 @@ function inspectFromZoneCard(card: ArenaCardView, zoneLabel: string): InspectCar
   };
 }
 
+function topZoneCard(cards: ArenaCardView[]): ArenaCardView | undefined {
+  return cards.at(-1);
+}
+
 function blockerAssignmentsToArray(assignments: Record<string, string>): BlockerAssignmentInput[] {
   return Object.entries(assignments).map(([blocker_id, attacker_id]) => ({
     blocker_id,
@@ -1978,6 +1993,10 @@ function seatSupportCopy(viewer: ArenaViewerState, needsHandoff: boolean): strin
 
 function formatPhase(phase: string): string {
   return phase.replace(/([A-Z])/g, " $1").trim();
+}
+
+function formatZoneLabel(zone: ZoneKind): string {
+  return zone.charAt(0).toUpperCase() + zone.slice(1);
 }
 
 function shortPlayerTag(playerId: string | null | undefined): string {

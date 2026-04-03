@@ -157,7 +157,8 @@ Its job today is to provide:
 - a battlefield-first layout with a clear top/bottom duel split
 - a shared selected-card highlight spanning hand focus, inspection, and battlefield action focus
 - a collapsible bottom hand fan that can be dragged onto the battlefield for simple legal plays
-- zone anchors that stay visible on the table and open focused browsers for graveyard/library reads
+- generated zone piles for library, graveyard, and exile using CSS-built card backs and compact face-up tops
+- focused zone browsers that stay on demand instead of keeping textual zone panels on the table
 - a handoff-first hot-seat flow where only one private hand is opened at a time
 - card inspection modals so cards stay the main affordance rather than surrounding lists
 - prompts placed near the seat zone they affect instead of inside a generic debug rail

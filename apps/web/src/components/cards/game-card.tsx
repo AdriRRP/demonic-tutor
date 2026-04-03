@@ -9,7 +9,7 @@ interface GameCardProps {
   toughness?: number | null | undefined;
   loyalty?: number | null | undefined;
   keywords?: string[] | undefined;
-  mode: "hand" | "battlefield";
+  mode: "hand" | "battlefield" | "zone";
   index?: number | undefined;
   fanCount?: number | undefined;
   tapped?: boolean | undefined;

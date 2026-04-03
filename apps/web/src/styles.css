@@ -806,7 +806,7 @@ button {
   position: absolute;
   top: 0;
   left: 0;
-  right: 84px;
+  right: 102px;
   z-index: 4;
   display: flex;
   justify-content: space-between;
@@ -859,7 +859,7 @@ button {
   position: absolute;
   top: 28px;
   left: 0;
-  right: 84px;
+  right: 102px;
   z-index: 4;
   display: grid;
   gap: 10px;
@@ -881,7 +881,7 @@ button {
   min-height: 0;
   height: 100%;
   padding-top: 26px;
-  padding-right: 84px;
+  padding-right: 102px;
 }
 
 .seat-panel.has-spotlight .seat-zones {
@@ -893,7 +893,7 @@ button {
   top: 0;
   right: 0;
   bottom: 0;
-  width: 76px;
+  width: 94px;
   overflow: visible;
   transition:
     opacity 180ms ease,
@@ -912,65 +912,265 @@ button {
   top: 50%;
   right: 0;
   display: grid;
-  gap: 8px;
-  width: 76px;
+  gap: 10px;
+  width: 94px;
   align-content: center;
   transform: translateY(-50%);
 }
 
-.zone-pocket,
 .battlefield-lane,
 .seat-module {
   padding: 8px;
 }
 
-.zone-pocket {
-  min-height: 0;
-  border: 1px solid var(--edge);
-  border-radius: 18px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015)),
-    rgba(7, 14, 24, 0.8);
-}
-
-.zone-pocket strong {
-  font-size: 1rem;
-  line-height: 1;
-}
-
-.zone-pocket-copy {
-  margin: 6px 0 0;
-  color: var(--ink-soft);
-  font-size: 0.56rem;
-  line-height: 1.25;
-}
-
-.zone-pocket-secondary {
-  opacity: 0.86;
-}
-
-.zone-counter {
+.card-pile {
   display: grid;
-  gap: 4px;
-  align-content: center;
+  gap: 6px;
   justify-items: center;
-  min-height: 68px;
-  padding: 6px;
-  border: 1px solid var(--edge);
-  border-radius: 16px;
+  width: 94px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.card-pile-stack {
+  position: relative;
+  width: 84px;
+  height: 118px;
+}
+
+.card-pile-layer,
+.card-pile-card {
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+}
+
+.card-pile-layer {
+  border: 1px solid rgba(13, 19, 31, 0.68);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.02)),
-    rgba(255, 255, 255, 0.03);
-  text-align: center;
+    linear-gradient(180deg, rgba(12, 19, 31, 0.66), rgba(6, 12, 22, 0.9)), rgba(6, 10, 18, 0.92);
+  box-shadow: 0 12px 26px rgba(5, 8, 14, 0.26);
 }
 
-.zone-counter.highlight {
-  box-shadow: inset 0 0 0 1px rgba(121, 165, 255, 0.22);
+.card-pile-layer.layer-back {
+  transform: translate(8px, -6px) rotate(4deg);
+  opacity: 0.42;
 }
 
-.zone-counter strong {
-  font-size: 0.96rem;
+.card-pile-layer.layer-mid {
+  transform: translate(4px, -3px) rotate(2.2deg);
+  opacity: 0.56;
+}
+
+.card-pile-layer.layer-front {
+  transform: translate(0, 0) rotate(0deg);
+  opacity: 0.72;
+}
+
+.card-pile-card {
+  z-index: 2;
+}
+
+.card-pile.kind-library .card-pile-layer {
+  background:
+    linear-gradient(180deg, rgba(20, 32, 54, 0.82), rgba(7, 13, 25, 0.92)), rgba(6, 10, 18, 0.94);
+}
+
+.card-pile.kind-graveyard .card-pile-layer,
+.card-pile.kind-exile .card-pile-layer {
+  background:
+    linear-gradient(180deg, rgba(34, 24, 21, 0.56), rgba(11, 11, 18, 0.88)), rgba(10, 12, 18, 0.92);
+}
+
+.card-pile.highlight .card-pile-layer.layer-front {
+  box-shadow:
+    0 12px 28px rgba(5, 8, 14, 0.34),
+    0 0 0 1px rgba(121, 165, 255, 0.2);
+}
+
+.card-pile-meta {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+  min-width: 54px;
+  padding: 2px 8px;
+  border: 1px solid rgba(91, 120, 173, 0.18);
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, rgba(14, 22, 36, 0.94), rgba(8, 13, 24, 0.98)), rgba(8, 13, 24, 0.96);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 8px 20px rgba(4, 8, 14, 0.24);
+  color: rgba(227, 234, 255, 0.88);
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.card-pile-glyph {
+  color: rgba(214, 180, 128, 0.76);
+  font-size: 0.72rem;
   line-height: 1;
+}
+
+.card-pile-meta strong {
+  font-size: 0.76rem;
+  line-height: 1;
+}
+
+.card-back {
+  width: 100%;
+  height: 100%;
+  padding: 4px;
+  border: 1px solid rgba(27, 16, 9, 0.9);
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 18% 18%, rgba(255, 235, 199, 0.12), transparent 16%),
+    radial-gradient(circle at 78% 82%, rgba(17, 31, 64, 0.12), transparent 18%),
+    linear-gradient(180deg, #8b6037 0%, #5f351d 52%, #341a10 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 225, 177, 0.08),
+    inset 0 0 0 3px rgba(35, 17, 11, 0.5),
+    0 12px 28px rgba(5, 8, 14, 0.34);
+}
+
+.card-back.variant-hidden-hand {
+  transform: rotate(var(--hand-angle, 0deg));
+  transform-origin: center bottom;
+}
+
+.card-back.variant-exile {
+  background:
+    radial-gradient(circle at 18% 18%, rgba(255, 225, 199, 0.12), transparent 16%),
+    radial-gradient(circle at 78% 82%, rgba(121, 165, 255, 0.12), transparent 18%),
+    linear-gradient(180deg, #5f4c7c 0%, #2f2446 52%, #191021 100%);
+}
+
+.card-back.variant-graveyard {
+  background:
+    radial-gradient(circle at 18% 18%, rgba(255, 218, 190, 0.08), transparent 16%),
+    radial-gradient(circle at 78% 82%, rgba(36, 66, 92, 0.12), transparent 18%),
+    linear-gradient(180deg, #4f4d56 0%, #252734 52%, #161821 100%);
+}
+
+.card-back-frame {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  padding: 7px;
+  border: 1px solid rgba(242, 219, 170, 0.16);
+  border-radius: 10px;
+  background:
+    linear-gradient(180deg, rgba(18, 12, 8, 0.12), rgba(255, 255, 255, 0.03)),
+    linear-gradient(180deg, rgba(97, 57, 31, 0.22), rgba(26, 16, 11, 0.16));
+  box-shadow: inset 0 0 0 1px rgba(13, 8, 5, 0.6);
+}
+
+.card-back-oval {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  border: 2px solid rgba(116, 169, 255, 0.54);
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(197, 120, 56, 0.94), rgba(84, 44, 27, 0.95)),
+    linear-gradient(180deg, rgba(244, 194, 104, 0.12), rgba(37, 20, 13, 0.04));
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 217, 152, 0.12),
+    inset 0 22px 28px rgba(255, 212, 155, 0.05);
+}
+
+.card-back-sigil {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+}
+
+.card-back-sigil-ring,
+.card-back-sigil-core {
+  position: absolute;
+  border-radius: 999px;
+}
+
+.card-back-sigil-ring {
+  inset: 0;
+  border: 2px solid rgba(132, 178, 255, 0.78);
+  box-shadow:
+    0 0 0 1px rgba(37, 16, 10, 0.34),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+.card-back-sigil-core {
+  inset: 11px;
+  background:
+    radial-gradient(circle at 34% 30%, rgba(176, 225, 255, 0.98), rgba(95, 136, 236, 0.88)),
+    rgba(96, 132, 218, 0.9);
+  box-shadow:
+    0 0 14px rgba(121, 165, 255, 0.32),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+}
+
+.card-back-gems {
+  position: absolute;
+  inset: 0;
+}
+
+.card-back-gems span {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.92), rgba(200, 80, 42, 0.96)),
+    rgba(200, 80, 42, 0.94);
+  box-shadow: 0 0 0 1px rgba(16, 10, 7, 0.42);
+}
+
+.card-back-gems span:nth-child(1) {
+  top: 13px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.card-back-gems span:nth-child(2) {
+  top: 28px;
+  right: 18px;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.92), rgba(86, 134, 236, 0.96)),
+    rgba(86, 134, 236, 0.94);
+}
+
+.card-back-gems span:nth-child(3) {
+  bottom: 18px;
+  right: 24px;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.92), rgba(36, 168, 106, 0.96)),
+    rgba(36, 168, 106, 0.94);
+}
+
+.card-back-gems span:nth-child(4) {
+  bottom: 18px;
+  left: 24px;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.92), rgba(206, 189, 107, 0.96)),
+    rgba(206, 189, 107, 0.94);
+}
+
+.card-back-gems span:nth-child(5) {
+  top: 28px;
+  left: 18px;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.92), rgba(62, 61, 78, 0.96)),
+    rgba(62, 61, 78, 0.94);
 }
 
 .battlefield-lane {
@@ -1086,7 +1286,7 @@ button {
   gap: 6px;
   position: absolute;
   left: 0;
-  right: 82px;
+  right: 100px;
   bottom: 0;
   z-index: 3;
   padding: 4px 0 0;
@@ -1099,7 +1299,7 @@ button {
   align-items: flex-end;
   position: absolute;
   left: 0;
-  right: 82px;
+  right: 100px;
   bottom: 34px;
   z-index: 2;
 }
@@ -1737,6 +1937,74 @@ button {
   font-size: 0.42rem;
 }
 
+.mode-zone {
+  width: 84px;
+  min-height: 118px;
+  height: 118px;
+}
+
+.mode-zone .game-card-skin {
+  gap: 4px;
+  padding: 5px;
+  border-radius: 14px;
+}
+
+.mode-zone .game-card-head {
+  min-height: 20px;
+  padding: 3px 22px 3px 4px;
+}
+
+.mode-zone .game-card-head h4 {
+  font-size: 0.53rem;
+}
+
+.mode-zone .game-card-cost {
+  top: 2px;
+  right: 3px;
+  width: 17px;
+  min-width: 17px;
+  height: 17px;
+  font-size: 0.52rem;
+}
+
+.mode-zone .game-card-artbox {
+  min-height: 54px;
+}
+
+.mode-zone .game-card-type-line {
+  min-height: 12px;
+  padding: 0 4px;
+}
+
+.mode-zone .game-card-type-bar {
+  font-size: 0.36rem;
+}
+
+.mode-zone .game-card-textbox {
+  padding: 3px;
+  gap: 3px;
+}
+
+.mode-zone .game-card-keywords,
+.mode-zone .game-card-line,
+.mode-zone .game-card-actions,
+.mode-zone .game-card-statuses {
+  display: none;
+}
+
+.mode-zone .game-card-footer {
+  min-height: 0;
+}
+
+.mode-zone .card-stat-block.combat {
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+.mode-zone .card-stat-block.combat strong {
+  font-size: 0.6rem;
+}
+
 .mode-battlefield.interactive:hover {
   transform: translateY(-6px);
 }
@@ -2122,16 +2390,7 @@ button {
   }
 
   .seat-zones {
-    padding-right: 72px;
-  }
-
-  .zone-counter {
-    min-height: 64px;
-    padding: 8px;
-  }
-
-  .zone-counter strong {
-    font-size: 1rem;
+    padding-right: 88px;
   }
 
   .battlefield-strip {
@@ -2160,7 +2419,7 @@ button {
   .battlefield-console,
   .lane-quick-actions,
   .seat-ops {
-    right: 74px;
+    right: 92px;
   }
 
   .table-stack-well {
@@ -2260,7 +2519,8 @@ button {
     right: auto;
     width: 100%;
     transform: none;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    justify-items: center;
   }
 
   .battlefield-console,
