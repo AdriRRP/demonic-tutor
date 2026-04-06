@@ -1061,7 +1061,9 @@ const SeatPanel: Component<{
 
               <div
                 class="battlefield-surface"
-                ref={battlefieldSurfaceRef}
+                ref={(element) => {
+                  battlefieldSurfaceRef = element;
+                }}
                 onDragOver={(event) => {
                   if (!props.draggedHandCardId && !draggedBattlefieldCardId()) {
                     return;

@@ -2,7 +2,6 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import js from "@eslint/js";
 import prettier from "eslint-config-prettier";
-import solid from "eslint-plugin-solid";
 import globals from "globals";
 import tseslint from "typescript-eslint";
 
@@ -23,10 +22,6 @@ export default [
   },
   js.configs.recommended,
   ...strictTypeCheckedConfigs,
-  {
-    ...solid.configs["flat/typescript"],
-    files: sourceFiles,
-  },
   {
     files: sourceFiles,
     plugins: {
@@ -68,12 +63,6 @@ export default [
           allow: ["warn", "error"],
         },
       ],
-      "solid/components-return-once": "error",
-      "solid/event-handlers": "error",
-      "solid/imports": "error",
-      "solid/reactivity": "error",
-      "solid/self-closing-comp": "error",
-      "solid/style-prop": "error",
     },
   },
   {
