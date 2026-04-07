@@ -80,7 +80,10 @@ same-origin browser windows through a host-authoritative local transport, and
 keeps gameplay rules inside the Rust application/domain layers. The current
 remote WebRTC path now also treats transient transport loss as a browser-session
 concern, surfacing reconnecting state and resynchronizing the peer from a fresh
-authoritative public snapshot when the channel recovers.
+authoritative public snapshot when the channel recovers. When the authoritative
+host disappears, that same browser-session layer now ends the remote duel
+honestly and leaves the last known remote table as a read-only view until the
+user starts a new paired or local session.
 
 The UI layer must **not contain business logic**.
 

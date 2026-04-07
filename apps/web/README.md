@@ -78,6 +78,7 @@ It currently provides:
 - explicit one-seat-per-device remote ownership, with both browsers rejecting cross-seat command attempts before they reach the host runtime
 - viewer-scoped WebRTC payloads so the peer only receives its own hand and prompts in clear while the opposing viewer stays redacted
 - reconnect-aware WebRTC pairing state plus fresh authoritative resync when the remote channel recovers after a transient interruption
+- an honest ended-remote-session overlay when the host disappears, with a clean path back to pairing or a fresh local duel
 - a generated duel HUD with a graphical phase track and compact stat pips instead of the earlier text-heavy cockpit
 - two viewer-scoped seats over that same Rust-owned state
 - a viewport-fitted SPA arena with dedicated landscape and portrait layouts
@@ -113,8 +114,8 @@ The current remote multiplayer baseline is still intentionally narrow:
 
 It is still not the final remote product shape:
 
-- reconnect and host-loss handling are still future slices
 - the authoritative host still sees the full runtime and therefore remains a trusted participant, not a hostile-client-secure server
+- the signaling story is still manual rather than product-grade
 
 ## Local Two-Window Multiplayer
 

@@ -17,8 +17,8 @@ to:
 The remaining proposed horizon is:
 
 - `1` release horizon
-- `1` active proposal wave
-- `1` active proposal slice
+- `0` active proposal waves
+- `0` active proposal slices
 
 The target milestone is:
 
@@ -75,18 +75,16 @@ Wave 3 is now fully implemented through:
 
 That means remote browser sessions are now bound to one seat each, and the current `WebRTC` peer path only receives its own hand and prompt surfaces in clear.
 
-## Active Wave Plan
-
-### Wave 4 — Resilience
-
-Goal:
-
-- make remote sessions robust enough for real playtesting and honest failure handling
-
-Slices:
+Wave 4 is now fully implemented through:
 
 - [detect-transport-loss-and-resync-the-remote-peer.md](../implemented/application/detect-transport-loss-and-resync-the-remote-peer.md)
-- [end-remote-duels-honestly-when-the-host-disappears.md](wave-4-resilience/end-remote-duels-honestly-when-the-host-disappears.md)
+- [end-remote-duels-honestly-when-the-host-disappears.md](../implemented/application/end-remote-duels-honestly-when-the-host-disappears.md)
+
+That means transient transport loss now surfaces as reconnecting state with authoritative resync, and terminal host loss now ends the remote duel honestly instead of leaving a zombie peer session.
+
+## Active Wave Plan
+
+There are currently no active proposal waves in this horizon.
 
 ## Out Of Scope For This Horizon
 

@@ -29,6 +29,7 @@ const App: Component = () => {
   const [remotePairingModalOpen, setRemotePairingModalOpen] = createSignal(false);
   const [remotePairingState, setRemotePairingState] = createSignal<RemotePairingState | null>(null);
   const [remotePairingSupported, setRemotePairingSupported] = createSignal(false);
+  const [remoteSessionEndedReason, setRemoteSessionEndedReason] = createSignal<string | null>(null);
   let remotePairingController: RemotePairingController | null = null;
   let activeRemotePeerTransportId: string | null = null;
   let attachedRemoteHostTransportId: string | null = null;
@@ -97,6 +98,24 @@ const App: Component = () => {
     }
   });
 
+  createEffect(() => {
+    const pairing = remotePairingState();
+    const currentSessionInfo = sessionInfo();
+
+    if (
+      currentSessionInfo?.role === "peer" &&
+      pairing?.role === "peer" &&
+      pairing.phase === "failed"
+    ) {
+      setRemoteSessionEndedReason(pairing.error ?? pairing.statusLabel);
+      return;
+    }
+
+    if (pairing?.connected || currentSessionInfo?.role !== "peer") {
+      setRemoteSessionEndedReason(null);
+    }
+  });
+
   async function loadArena(): Promise<void> {
     try {
       activeRemotePeerTransportId = null;
@@ -104,6 +123,7 @@ const App: Component = () => {
       session()?.destroy();
       setLoading(true);
       setError(null);
+      setRemoteSessionEndedReason(null);
 
       const nextSession = await createArenaSession();
       const nextState = await readState(nextSession);
@@ -132,6 +152,7 @@ const App: Component = () => {
       session()?.destroy();
       setLoading(true);
       setError(null);
+      setRemoteSessionEndedReason(null);
 
       const roomId =
         sessionInfo()?.roomId ?? new URL(window.location.href).searchParams.get("duel") ?? "remote";
@@ -164,6 +185,10 @@ const App: Component = () => {
   const run = (operation: (current: ArenaCommandTarget) => Promise<ArenaState>) => {
     const current = session();
     if (!current) {
+      return;
+    }
+
+    if (remoteSessionEndedReason() !== null) {
       return;
     }
 
@@ -243,6 +268,17 @@ const App: Component = () => {
     remotePairingController?.reset();
   };
 
+  const reopenRemotePairing = (): void => {
+    remotePairingController?.reset();
+    setRemotePairingModalOpen(true);
+  };
+
+  const returnToLocalDuel = (): void => {
+    remotePairingController?.reset();
+    setRemotePairingModalOpen(false);
+    void loadArena();
+  };
+
   return (
     <main class="shell">
       <div class="playmat-halo playmat-halo-top" />
@@ -309,6 +345,41 @@ const App: Component = () => {
           state={remotePairingState()}
           supported={remotePairingSupported()}
         />
+      </Show>
+
+      <Show when={remoteSessionEndedReason()}>
+        {(reason) => (
+          <div class="table-modal-backdrop">
+            <aside class="table-sidebar panel open remote-session-ended-modal">
+              <div class="table-sidebar-head remote-pairing-head">
+                <div>
+                  <p class="eyebrow sidebar-eyebrow">Remote duel ended</p>
+                  <h2>Authoritative host lost</h2>
+                </div>
+              </div>
+              <p class="remote-pairing-note">
+                The remote duel cannot continue because the authoritative host browser is no longer
+                reachable.
+              </p>
+              <div class="remote-pairing-error">
+                <p class="label">Connection status</p>
+                <strong>{reason()}</strong>
+              </div>
+              <div class="remote-pairing-field-actions">
+                <button class="hero-button" type="button" onClick={reopenRemotePairing}>
+                  Pair again
+                </button>
+                <button
+                  class="hero-button hero-button-ghost"
+                  type="button"
+                  onClick={returnToLocalDuel}
+                >
+                  Reset to local duel
+                </button>
+              </div>
+            </aside>
+          </div>
+        )}
       </Show>
     </main>
   );
