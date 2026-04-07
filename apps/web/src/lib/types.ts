@@ -1,7 +1,17 @@
+export interface ArenaManaCost {
+  generic: number;
+  white: number;
+  blue: number;
+  black: number;
+  red: number;
+  green: number;
+}
+
 export interface ArenaCardView {
   card_id: string;
   definition_id: string;
   card_type: string;
+  mana_cost: ArenaManaCost;
 }
 
 export interface ArenaHandCard {
@@ -9,6 +19,7 @@ export interface ArenaHandCard {
   definition_id: string;
   card_type: string;
   mana_cost: number;
+  mana_cost_profile: ArenaManaCost;
   power: number | null;
   toughness: number | null;
   loyalty: number | null;
@@ -21,6 +32,7 @@ export interface ArenaHandCard {
 }
 
 export interface ArenaBattlefieldCard extends ArenaCardView {
+  mana_cost: ArenaManaCost;
   tapped: boolean;
   token: boolean;
   attached_to: string | null;
@@ -33,11 +45,21 @@ export interface ArenaBattlefieldCard extends ArenaCardView {
   keywords: string[];
 }
 
+export interface ArenaManaPool {
+  colorless: number;
+  white: number;
+  blue: number;
+  black: number;
+  red: number;
+  green: number;
+}
+
 export interface ArenaPlayerView {
   player_id: string;
   is_active: boolean;
   life: number;
   mana_total: number;
+  mana_pool: ArenaManaPool;
   hand_count: number;
   library_count: number;
   battlefield: ArenaBattlefieldCard[];
@@ -50,6 +72,7 @@ export interface ArenaStackObject {
   kind: string;
   controller_id: string | null;
   source_card_id: string | null;
+  definition_id: string | null;
   card_type: string | null;
   target: string | null;
   requires_choice: boolean;

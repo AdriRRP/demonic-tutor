@@ -58,6 +58,7 @@ export const CardPile: Component<CardPileProps> = (props) => {
               <GameCard
                 cardType={props.topCard.card_type}
                 definitionId={props.topCard.definition_id}
+                manaCostProfile={props.topCard.mana_cost}
                 mode="zone"
               />
             ) : (

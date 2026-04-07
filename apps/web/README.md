@@ -77,10 +77,12 @@ It currently provides:
 - a viewport-fitted SPA arena with dedicated landscape and portrait layouts
 - a battlefield-first play surface with a clear opponent/player split
 - a dedicated left rail that now owns player identity, life, hand count, and the local `Pass / Concede` actions
+- a draggable mana-pool dock beside each avatar that appears only when mana exists and breaks the pool down by color, including colorless
 - a priority halo around the speaking player's avatar so turn conversation stays legible without reintroducing textual badges
 - a selected-card highlight shared across hand hover, inspect detail, and battlefield action focus
 - a hidden opponent hand fan rendered with simplified classic-inspired generated card backs instead of text counters
 - a local bottom hand fan that can be dragged onto the battlefield for simple legal plays
+- zone-aware face-up card rendering so battlefield and stack previews read as header-plus-fullart, while hand and inspect cards keep the fuller classic layout with mana symbols
 - a locally rearrangeable battlefield so permanents already in play can be positioned freely inside the owning seat
 - generated card piles for library, graveyard, and exile using simplified classic-inspired CSS-built backs and compact face-up zone tops
 - a stack dock that only appears when the stack has objects and opens a dedicated modal for detailed resolution reading

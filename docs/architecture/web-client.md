@@ -158,9 +158,11 @@ Its job today is to provide:
 - a shared selected-card highlight spanning hand focus, inspection, and battlefield action focus
 - a hidden opponent hand fan built from simplified classic-inspired generated card backs so rival hand size reads as physical cards instead of a lone counter
 - a local bottom hand fan that can be dragged onto the battlefield for simple legal plays
+- zone-aware face-up card rendering where battlefield and stack previews stay header-plus-fullart, while hand and inspect surfaces keep the fuller classic layout with mana symbols
 - a locally rearrangeable battlefield where permanents already on the table can be dragged to presentation-only positions inside the owning seat
 - generated zone piles for library, graveyard, and exile using simplified classic-inspired CSS-built card backs and compact face-up tops
 - a left player rail that centralizes identity, life, hand count, and primary local actions instead of repeating that chrome inside the battlefield
+- a draggable mana-pool dock beside each seat avatar that only appears when mana exists and exposes the pool by color, including colorless
 - a priority halo around the active speaker's avatar so priority is readable from the rail without bringing back badge-heavy status UI
 - a contextual stack dock that stays invisible until stack objects exist and then opens a dedicated modal for detailed resolution inspection
 - focused zone browsers that stay on demand instead of keeping textual zone panels on the table

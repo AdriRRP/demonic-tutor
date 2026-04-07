@@ -80,6 +80,7 @@ struct WebPlayerView {
     is_active: bool,
     life: u32,
     mana_total: u32,
+    mana_pool: WebManaPoolView,
     hand_count: usize,
     library_count: usize,
     battlefield: Vec<WebBattlefieldCard>,
@@ -88,10 +89,31 @@ struct WebPlayerView {
 }
 
 #[derive(Serialize)]
+struct WebManaPoolView {
+    colorless: u32,
+    white: u32,
+    blue: u32,
+    black: u32,
+    red: u32,
+    green: u32,
+}
+
+#[derive(Serialize)]
+struct WebManaCostView {
+    generic: u32,
+    white: u32,
+    blue: u32,
+    black: u32,
+    red: u32,
+    green: u32,
+}
+
+#[derive(Serialize)]
 struct WebCardView {
     card_id: String,
     definition_id: String,
     card_type: String,
+    mana_cost: WebManaCostView,
 }
 
 #[derive(Serialize)]
@@ -100,6 +122,7 @@ struct WebHandCard {
     definition_id: String,
     card_type: String,
     mana_cost: u32,
+    mana_cost_profile: WebManaCostView,
     power: Option<u32>,
     toughness: Option<u32>,
     loyalty: Option<u32>,
@@ -116,6 +139,7 @@ struct WebBattlefieldCard {
     card_id: String,
     definition_id: String,
     card_type: String,
+    mana_cost: WebManaCostView,
     tapped: bool,
     token: bool,
     attached_to: Option<String>,
@@ -134,6 +158,7 @@ struct WebStackObject {
     kind: String,
     controller_id: Option<String>,
     source_card_id: Option<String>,
+    definition_id: Option<String>,
     card_type: Option<String>,
     target: Option<String>,
     requires_choice: bool,
@@ -564,6 +589,14 @@ fn web_player_view(player: &PublicPlayerView) -> WebPlayerView {
         is_active: player.is_active,
         life: player.life,
         mana_total: player.mana_total,
+        mana_pool: WebManaPoolView {
+            colorless: player.mana_pool.colorless,
+            white: player.mana_pool.white,
+            blue: player.mana_pool.blue,
+            black: player.mana_pool.black,
+            red: player.mana_pool.red,
+            green: player.mana_pool.green,
+        },
         hand_count: player.hand_count,
         library_count: player.library_count,
         battlefield: player
@@ -581,6 +614,7 @@ fn web_card_view(card: &PublicCardView) -> WebCardView {
         card_id: id_string(&card.card_id),
         definition_id: id_string(&card.definition_id),
         card_type: format!("{:?}", card.card_type),
+        mana_cost: web_public_mana_cost_view(&card.mana_cost),
     }
 }
 
@@ -598,6 +632,7 @@ fn web_hand_card(card: &CardInstance) -> WebHandCard {
         definition_id: id_string(card.definition_id()),
         card_type: format!("{:?}", card.card_type()),
         mana_cost: card.mana_cost(),
+        mana_cost_profile: web_runtime_mana_cost_view(card.mana_cost_profile()),
         power,
         toughness,
         loyalty: card.loyalty(),
@@ -644,6 +679,7 @@ fn web_battlefield_card(card: &PublicBattlefieldCardView) -> WebBattlefieldCard 
         card_id: id_string(&card.card_id),
         definition_id: id_string(&card.definition_id),
         card_type: format!("{:?}", card.card_type),
+        mana_cost: web_public_mana_cost_view(&card.mana_cost),
         tapped: card.permanent_state.tapped,
         token: card.permanent_state.token,
         attached_to: card.attached_to.as_ref().map(id_string),
@@ -668,6 +704,7 @@ fn web_stack_object(object: &PublicStackObjectView) -> WebStackObject {
             kind: "Unavailable".to_string(),
             controller_id: None,
             source_card_id: None,
+            definition_id: None,
             card_type: None,
             target: None,
             requires_choice: false,
@@ -676,6 +713,7 @@ fn web_stack_object(object: &PublicStackObjectView) -> WebStackObject {
             number,
             controller_id,
             source_card_id,
+            definition_id,
             card_type,
             target,
             requires_choice,
@@ -684,6 +722,7 @@ fn web_stack_object(object: &PublicStackObjectView) -> WebStackObject {
             kind: "Spell".to_string(),
             controller_id: Some(id_string(controller_id)),
             source_card_id: Some(id_string(source_card_id)),
+            definition_id: Some(id_string(definition_id)),
             card_type: Some(format!("{card_type:?}")),
             target: target.as_ref().map(web_stack_target_label),
             requires_choice: *requires_choice,
@@ -692,13 +731,16 @@ fn web_stack_object(object: &PublicStackObjectView) -> WebStackObject {
             number,
             controller_id,
             source_card_id,
+            definition_id,
+            card_type,
             target,
         } => WebStackObject {
             number: *number,
             kind: "ActivatedAbility".to_string(),
             controller_id: Some(id_string(controller_id)),
             source_card_id: Some(id_string(source_card_id)),
-            card_type: None,
+            definition_id: definition_id.as_ref().map(id_string),
+            card_type: card_type.map(|card_type| format!("{card_type:?}")),
             target: target.as_ref().map(web_stack_target_label),
             requires_choice: false,
         },
@@ -706,15 +748,42 @@ fn web_stack_object(object: &PublicStackObjectView) -> WebStackObject {
             number,
             controller_id,
             source_card_id,
+            definition_id,
+            card_type,
         } => WebStackObject {
             number: *number,
             kind: "TriggeredAbility".to_string(),
             controller_id: Some(id_string(controller_id)),
             source_card_id: Some(id_string(source_card_id)),
-            card_type: None,
+            definition_id: definition_id.as_ref().map(id_string),
+            card_type: card_type.map(|card_type| format!("{card_type:?}")),
             target: None,
             requires_choice: false,
         },
+    }
+}
+
+fn web_public_mana_cost_view(mana_cost: &crate::application::PublicManaCostView) -> WebManaCostView {
+    WebManaCostView {
+        generic: mana_cost.generic,
+        white: mana_cost.white,
+        blue: mana_cost.blue,
+        black: mana_cost.black,
+        red: mana_cost.red,
+        green: mana_cost.green,
+    }
+}
+
+fn web_runtime_mana_cost_view(
+    mana_cost: crate::domain::play::cards::ManaCost,
+) -> WebManaCostView {
+    WebManaCostView {
+        generic: mana_cost.generic_requirement(),
+        white: mana_cost.white_requirement(),
+        blue: mana_cost.blue_requirement(),
+        black: mana_cost.black_requirement(),
+        red: mana_cost.red_requirement(),
+        green: mana_cost.green_requirement(),
     }
 }
 

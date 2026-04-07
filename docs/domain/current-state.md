@@ -24,6 +24,7 @@ Implemented capabilities include:
 
 - starting a two-player game
 - projecting a stable public game snapshot for clients, including phase, priority, stack, battlefield, graveyard, exile, and hand counts
+- projecting decomposed mana-cost profiles for visible public cards so browser clients can render mana symbols without image assets
 - surfacing a public legal-action menu derived from the current supported actor and game state
 - deriving that public legal-action menu from read-only aggregate legality queries instead of speculative command probes
 - surfacing explicit concede actions for active games in the public legal-action menu
@@ -111,6 +112,7 @@ The domain currently includes:
 - player-owned zone carriers keyed by card id, with ordered library/hand/graveyard/exile views and intentionally unordered battlefield removal semantics
 - runtime identity inside the aggregate now prefers numeric-core ids, player indices, and player-owned card handles over public string ids
 - public `CardInstanceId` and `PlayerId` values are now treated primarily as readable boundary identities for commands, events, and tests
+- visible public card projections now include decomposed mana-cost profiles for battlefield, graveyard, and exile cards
 - mana production from lands
 - explicit activated mana-ability profiles for the currently supported mana-producing permanents
 - the current supported non-mana tap-ability corridor using the same priority and stack model as other stack interactions, including no-target `Tap: you gain life` and targeted `Tap: target player gains life`

@@ -12,8 +12,8 @@ pub use public_game::{
     PublicCardView, PublicCastableCard, PublicChoiceCandidate, PublicChoiceRequest,
     PublicCommandApplication, PublicCommandRejection, PublicCommandResult, PublicCommandStatus,
     PublicEvent, PublicEventLogEntry, PublicGameCommand, PublicGameSessionStart, PublicGameView,
-    PublicLegalAction, PublicModalSpellChoice, PublicOpeningHandDealt, PublicPendingDecisionKind,
-    PublicPlayableSubsetVersion, PublicPlayerView, PublicPriorityView, PublicRematchCommand,
-    PublicScryChoice, PublicSeededGameSetup, PublicSeededPlayerSetup, PublicStackObjectView,
-    PublicStackTargetView, PublicSurveilChoice,
+    PublicLegalAction, PublicManaCostView, PublicModalSpellChoice, PublicOpeningHandDealt,
+    PublicPendingDecisionKind, PublicPlayableSubsetVersion, PublicPlayerView, PublicPriorityView,
+    PublicRematchCommand, PublicScryChoice, PublicSeededGameSetup, PublicSeededPlayerSetup,
+    PublicStackObjectView, PublicStackTargetView, PublicSurveilChoice,
 };

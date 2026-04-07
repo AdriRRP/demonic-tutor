@@ -30,6 +30,8 @@ import type {
   ArenaGameView,
   ArenaHandCard,
   ArenaLegalAction,
+  ArenaManaCost,
+  ArenaManaPool,
   ArenaPlayerView,
   ArenaStackObject,
   ArenaState,
@@ -68,6 +70,7 @@ interface InspectCardState {
   cardType: string;
   zoneLabel: string;
   manaCost?: number | null | undefined;
+  manaCostProfile?: ArenaManaCost | undefined;
   power?: number | null | undefined;
   toughness?: number | null | undefined;
   loyalty?: number | null | undefined;
@@ -81,6 +84,11 @@ interface InspectCardState {
 }
 
 interface BattlefieldLayoutPoint {
+  x: number;
+  y: number;
+}
+
+interface FloatingDockPosition {
   x: number;
   y: number;
 }
@@ -260,6 +268,8 @@ export const TableArena: Component<TableArenaProps> = (props) => {
                   <RailSeatCard
                     handCount={player().hand_count}
                     life={player().life}
+                    manaTotal={player().mana_total}
+                    manaPool={player().mana_pool}
                     name={formatPlayerDisplayName(player().player_id)}
                     orientation="top"
                     playerId={player().player_id}
@@ -328,6 +338,8 @@ export const TableArena: Component<TableArenaProps> = (props) => {
                     }
                     handCount={player().hand_count}
                     life={player().life}
+                    manaTotal={player().mana_total}
+                    manaPool={player().mana_pool}
                     name={formatPlayerDisplayName(player().player_id)}
                     orientation="bottom"
                     playerId={player().player_id}
@@ -617,7 +629,8 @@ export const TableArena: Component<TableArenaProps> = (props) => {
                     keywords={card().keywords}
                     loyalty={card().loyalty}
                     manaCost={card().manaCost}
-                    mode="battlefield"
+                    manaCostProfile={card().manaCostProfile}
+                    mode="detail"
                     power={card().power}
                     summoningSickness={card().summoningSickness}
                     tapped={false}
@@ -640,12 +653,15 @@ export const TableArena: Component<TableArenaProps> = (props) => {
                   </Show>
                   <Show
                     when={
-                      card().manaCost !== undefined &&
-                      card().manaCost !== null &&
+                      (card().manaCostProfile !== undefined ||
+                        (card().manaCost !== undefined && card().manaCost !== null)) &&
                       !card().cardType.toLowerCase().includes("land")
                     }
                   >
-                    <SidebarMetric label="Mana" value={String(card().manaCost)} />
+                    <SidebarMetric
+                      label="Mana"
+                      value={formatManaCostSummary(card().manaCostProfile, card().manaCost)}
+                    />
                   </Show>
                   <Show when={card().keywords.length > 0}>
                     <div class="chip-row">
@@ -736,6 +752,7 @@ const SeatPanel: Component<{
   );
   let battlefieldSurfaceRef: HTMLDivElement | undefined;
   let battlefieldLaneRef: HTMLElement | undefined;
+  let handFanRef: HTMLDivElement | undefined;
   let clearHandPointerTracking: (() => void) | undefined;
 
   createEffect(() => {
@@ -816,6 +833,40 @@ const SeatPanel: Component<{
 
   const moveHandCard = (draggedCardId: string, targetCardId: string) => {
     setHandOrder((previous) => reorderCardIds(previous, draggedCardId, targetCardId));
+  };
+
+  const resolveFocusedHandCardId = (clientX: number): string | null => {
+    const hand = orderedHand();
+    const handFan = handFanRef;
+
+    if (hand.length === 0 || !handFan) {
+      return null;
+    }
+
+    const rect = handFan.getBoundingClientRect();
+    if (rect.width <= 0) {
+      return hand[0]?.card_id ?? null;
+    }
+
+    const midpoint = (hand.length - 1) / 2;
+    const spread = hand.length >= 8 ? 58 : hand.length >= 6 ? 66 : 74;
+    const localX = clientX - (rect.left + rect.width / 2);
+
+    let nearestCardId = hand[0]?.card_id ?? null;
+    let nearestDistance = Number.POSITIVE_INFINITY;
+
+    hand.forEach((card, index) => {
+      const offset = index - midpoint;
+      const cardX = offset * spread;
+      const distance = Math.abs(localX - cardX);
+
+      if (distance < nearestDistance) {
+        nearestCardId = card.card_id;
+        nearestDistance = distance;
+      }
+    });
+
+    return nearestCardId;
   };
 
   const openInspectCard = (card: InspectCardState) => {
@@ -1233,6 +1284,7 @@ const SeatPanel: Component<{
                           interactive
                           keywords={card.keywords}
                           loyalty={card.loyalty}
+                          manaCostProfile={card.mana_cost}
                           mode="battlefield"
                           onClick={() => {
                             if (props.orientation !== "bottom") {
@@ -1534,6 +1586,16 @@ const SeatPanel: Component<{
               </Show>
               <div
                 class="hand-fan hand-fan-floating"
+                ref={(element) => {
+                  handFanRef = element;
+                }}
+                onMouseMove={(event) => {
+                  if (handPointerDrag()?.active) {
+                    return;
+                  }
+
+                  setFocusedHandCardId(resolveFocusedHandCardId(event.clientX));
+                }}
                 onMouseLeave={() => {
                   setFocusedHandCardId(null);
                 }}
@@ -1633,6 +1695,7 @@ const SeatPanel: Component<{
                         keywords={card.keywords}
                         loyalty={card.loyalty}
                         manaCost={card.mana_cost}
+                        manaCostProfile={card.mana_cost_profile}
                         mode="hand"
                         onInspect={() => {
                           openInspectCard(inspectFromHandCard(card));
@@ -1700,6 +1763,8 @@ const SidebarMetric: Component<{ label: string; value: string }> = (props) => (
 const RailSeatCard: Component<{
   life: number;
   handCount: number;
+  manaTotal: number;
+  manaPool: ArenaManaPool;
   name: string;
   orientation: "top" | "bottom";
   playerId: string;
@@ -1718,20 +1783,173 @@ const RailSeatCard: Component<{
       <RailSeatCounter kind="hand" value={props.handCount} />
     </div>
 
-    <article
-      class="rail-seat-avatar-card"
-      title={props.priority ? `${props.playerId} has priority` : props.playerId}
-    >
-      <div class="rail-seat-avatar-surface">
-        <SeatAvatarGlyph orientation={props.orientation} />
-      </div>
-      <div class="rail-seat-nameplate">{props.name}</div>
-    </article>
+    <div class="rail-seat-avatar-wrap">
+      <article
+        class="rail-seat-avatar-card"
+        title={props.priority ? `${props.playerId} has priority` : props.playerId}
+      >
+        <div class="rail-seat-avatar-surface">
+          <SeatAvatarGlyph orientation={props.orientation} />
+        </div>
+        <div class="rail-seat-nameplate">{props.name}</div>
+      </article>
+
+      <Show when={props.manaTotal > 0}>
+        <ManaPoolDock manaPool={props.manaPool} orientation={props.orientation} />
+      </Show>
+    </div>
 
     <Show when={props.actions}>
       <div class="rail-seat-actions">{props.actions}</div>
     </Show>
   </section>
+);
+
+const MANA_POOL_ORDER: {
+  key: keyof ArenaManaPool;
+  label: string;
+}[] = [
+  { key: "white", label: "White mana" },
+  { key: "blue", label: "Blue mana" },
+  { key: "black", label: "Black mana" },
+  { key: "red", label: "Red mana" },
+  { key: "green", label: "Green mana" },
+  { key: "colorless", label: "Colorless mana" },
+];
+
+const ManaPoolDock: Component<{
+  manaPool: ArenaManaPool;
+  orientation: "top" | "bottom";
+}> = (props) => {
+  const [position, setPosition] = createSignal({ x: 0, y: 0 } satisfies FloatingDockPosition);
+  const [dragging, setDragging] = createSignal(false);
+  let clearPointerTracking: (() => void) | undefined;
+
+  const stopPointerTracking = () => {
+    clearPointerTracking?.();
+    clearPointerTracking = undefined;
+    setDragging(false);
+  };
+
+  const startPointerTracking = (event: PointerEvent & { currentTarget: HTMLDivElement }) => {
+    if (event.button !== 0) {
+      return;
+    }
+
+    event.preventDefault();
+    const startX = event.clientX;
+    const startY = event.clientY;
+    const startPosition = position();
+
+    const handlePointerMove = (moveEvent: PointerEvent) => {
+      setDragging(true);
+      setPosition({
+        x: startPosition.x + moveEvent.clientX - startX,
+        y: startPosition.y + moveEvent.clientY - startY,
+      });
+      moveEvent.preventDefault();
+    };
+
+    const finishPointerTracking = () => {
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", finishPointerTracking);
+      window.removeEventListener("pointercancel", finishPointerTracking);
+      clearPointerTracking = undefined;
+      setDragging(false);
+    };
+
+    clearPointerTracking = () => {
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", finishPointerTracking);
+      window.removeEventListener("pointercancel", finishPointerTracking);
+    };
+
+    window.addEventListener("pointermove", handlePointerMove, { passive: false });
+    window.addEventListener("pointerup", finishPointerTracking, { passive: false });
+    window.addEventListener("pointercancel", finishPointerTracking, { passive: false });
+  };
+
+  onCleanup(() => {
+    stopPointerTracking();
+  });
+
+  const manaEntries = () =>
+    MANA_POOL_ORDER.map((entry) => ({
+      ...entry,
+      value: props.manaPool[entry.key],
+    }));
+
+  return (
+    <div
+      classList={{
+        "mana-pool-dock": true,
+        [`orientation-${props.orientation}`]: true,
+        dragging: dragging(),
+      }}
+      style={{
+        "--mana-dock-x": `${String(position().x)}px`,
+        "--mana-dock-y": `${String(position().y)}px`,
+      }}
+      onPointerDown={startPointerTracking}
+    >
+      <div class="mana-pool-head">
+        <HudIcon icon="mana" />
+        <span>Mana pool</span>
+      </div>
+      <div class="mana-pool-body">
+        <div class="mana-pool-grid" role="list" aria-label="Mana pool by color">
+          <For each={manaEntries()}>
+            {(entry) => (
+              <div
+                classList={{
+                  "mana-pool-entry": true,
+                  empty: entry.value === 0,
+                }}
+                role="listitem"
+                title={entry.label}
+              >
+                <span
+                  aria-hidden="true"
+                  classList={{
+                    "mana-pool-gem": true,
+                    [`kind-${entry.key}`]: true,
+                  }}
+                >
+                  <ManaPoolGlyph kind={entry.key} />
+                </span>
+                <strong>{String(entry.value)}</strong>
+              </div>
+            )}
+          </For>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ManaPoolGlyph: Component<{ kind: keyof ArenaManaPool }> = (props) => (
+  <svg aria-hidden="true" class="mana-pool-glyph" viewBox="0 0 24 24">
+    <Switch>
+      <Match when={props.kind === "white"}>
+        <path d="M12 3.8 13.9 8l4.5-.4-3.4 2.9 1.1 4.3L12 12.4 7.9 14.8 9 10.5 5.6 7.6l4.5.4Z" />
+      </Match>
+      <Match when={props.kind === "blue"}>
+        <path d="M12 3.5c2.8 3.5 4.2 5.8 4.2 7.9a4.2 4.2 0 1 1-8.4 0c0-2.1 1.4-4.4 4.2-7.9Z" />
+      </Match>
+      <Match when={props.kind === "black"}>
+        <path d="M12 4.3c3.6 0 6.5 2.9 6.5 6.4 0 2.6-1.5 4.9-3.8 5.9l.9 3.1-2.7-1.7-.9 2.5-.9-2.5-2.7 1.7.9-3.1a6.4 6.4 0 0 1-3.8-5.9C5.5 7.2 8.4 4.3 12 4.3Z" />
+      </Match>
+      <Match when={props.kind === "red"}>
+        <path d="M12.8 3.7c2.2 2.7 3.4 4.7 3.4 6.8 0 3.2-2.3 5.8-5.6 6.7 1-1 1.7-2.4 1.7-4 0-1.5-.6-2.9-1.5-3.9 1.1-.3 2-1.3 2-2.5 0-1-.3-2-.9-3.1Z" />
+      </Match>
+      <Match when={props.kind === "green"}>
+        <path d="M17.4 5.1c-5.1.3-9.1 3.4-10.2 8.8-.4 2 1 4 3.1 4.3 4.9.6 8.5-3.7 8.1-9.3-.1-1.4-.4-2.7-1-3.8ZM9.8 15.9c1.2-2.8 3.3-5 6.5-6.4-2 1.7-3.5 3.9-4.6 6.5Z" />
+      </Match>
+      <Match when={props.kind === "colorless"}>
+        <path d="m12 4.2 6.4 3.7v7.3L12 18.8l-6.4-3.6V7.9Z" />
+      </Match>
+    </Switch>
+  </svg>
 );
 
 const MetaRune: Component<{
@@ -1814,26 +2032,46 @@ const SeatAvatarGlyph: Component<{ orientation: "top" | "bottom" }> = (props) =>
 
 const StackDock: Component<{ count: number; topObject: ArenaStackObject | undefined }> = (
   props,
-) => (
-  <div class="stack-dock-frame">
-    <div class="stack-dock-head">
-      <div class="stack-dock-rune" aria-hidden="true">
-        ✦
+) => {
+  const previewCard = () => {
+    const object = props.topObject;
+    if (!object?.definition_id || !object.card_type) {
+      return null;
+    }
+
+    return {
+      cardType: object.card_type,
+      definitionId: object.definition_id,
+    };
+  };
+
+  return (
+    <div class="stack-dock-frame">
+      <div class="stack-dock-head">
+        <div class="stack-dock-rune" aria-hidden="true">
+          ✦
+        </div>
+        <span class="stack-dock-count">{String(props.count)}</span>
       </div>
-      <span class="stack-dock-count">{String(props.count)}</span>
+      <div class="stack-dock-body" aria-hidden="true">
+        <span class="stack-dock-layer layer-back" />
+        <span class="stack-dock-layer layer-mid" />
+        <span class="stack-dock-layer layer-front" />
+        <Show when={previewCard()} fallback={<span class="stack-dock-sigil">⟡</span>}>
+          {(card) => (
+            <div class="stack-dock-card">
+              <GameCard cardType={card().cardType} definitionId={card().definitionId} mode="zone" />
+            </div>
+          )}
+        </Show>
+      </div>
+      <div class="stack-dock-caption">
+        <p>Stack</p>
+        <strong>{formatStackObjectKind(props.topObject?.kind)}</strong>
+      </div>
     </div>
-    <div class="stack-dock-body" aria-hidden="true">
-      <span class="stack-dock-layer layer-back" />
-      <span class="stack-dock-layer layer-mid" />
-      <span class="stack-dock-layer layer-front" />
-      <span class="stack-dock-sigil">⟡</span>
-    </div>
-    <div class="stack-dock-caption">
-      <p>Stack</p>
-      <strong>{props.topObject?.kind ?? "Object"}</strong>
-    </div>
-  </div>
-);
+  );
+};
 
 const TurnRune: Component<{ turnNumber: number }> = (props) => (
   <article class="turn-rune" title={`Turn ${String(props.turnNumber)}`}>
@@ -2085,7 +2323,7 @@ const StackView: Component<{ stack: ArenaStackObject[] }> = (props) => (
         {(object) => (
           <article class="stack-item">
             <strong>
-              #{object.number} · {object.kind}
+              #{object.number} · {formatStackObjectKind(object.kind)}
             </strong>
             <p>
               {object.source_card_id ?? "unknown source"} ·{" "}
@@ -2116,6 +2354,23 @@ const Timeline: Component<{ entries: ArenaTimelineEntry[] }> = (props) => (
 
 function findAction(viewer: ArenaViewerState, kind: string): ArenaLegalAction | undefined {
   return viewer.legal_actions.find((action) => action.kind === kind);
+}
+
+function formatStackObjectKind(kind: string | undefined): string {
+  switch (kind) {
+    case undefined:
+      return "Object";
+    case "Spell":
+      return "Spell";
+    case "ActivatedAbility":
+      return "Activated ability";
+    case "TriggeredAbility":
+      return "Triggered ability";
+    case "Unavailable":
+      return "Unavailable";
+    default:
+      return kind;
+  }
 }
 
 function findPlayer(game: ArenaGameView, playerId: string): ArenaPlayerView | undefined {
@@ -2169,6 +2424,7 @@ function inspectFromHandCard(card: ArenaHandCard): InspectCardState {
     cardType: card.card_type,
     zoneLabel: "Hand",
     manaCost: card.mana_cost,
+    manaCostProfile: card.mana_cost_profile,
     power: card.power,
     toughness: card.toughness,
     loyalty: card.loyalty,
@@ -2186,6 +2442,7 @@ function inspectFromBattlefieldCard(card: ArenaBattlefieldCard): InspectCardStat
     definitionId: card.definition_id,
     cardType: card.card_type,
     zoneLabel: "Battlefield",
+    manaCostProfile: card.mana_cost,
     power: card.power,
     toughness: card.toughness,
     loyalty: card.loyalty,
@@ -2204,12 +2461,39 @@ function inspectFromZoneCard(card: ArenaCardView, zoneLabel: string): InspectCar
     definitionId: card.definition_id,
     cardType: card.card_type,
     zoneLabel,
+    manaCostProfile: card.mana_cost,
     keywords: [],
   };
 }
 
 function topZoneCard(cards: ArenaCardView[]): ArenaCardView | undefined {
   return cards.at(-1);
+}
+
+function formatManaCostSummary(
+  manaCostProfile: ArenaManaCost | undefined,
+  manaCost: number | null | undefined,
+): string {
+  if (manaCostProfile) {
+    const symbols = [
+      ...(manaCostProfile.generic > 0 ? [String(manaCostProfile.generic)] : []),
+      ...repeatManaLabel("W", manaCostProfile.white),
+      ...repeatManaLabel("U", manaCostProfile.blue),
+      ...repeatManaLabel("B", manaCostProfile.black),
+      ...repeatManaLabel("R", manaCostProfile.red),
+      ...repeatManaLabel("G", manaCostProfile.green),
+    ];
+
+    if (symbols.length > 0) {
+      return symbols.join(" ");
+    }
+  }
+
+  return String(manaCost ?? 0);
+}
+
+function repeatManaLabel(symbol: string, amount: number): string[] {
+  return Array.from({ length: amount }, () => symbol);
 }
 
 function blockerAssignmentsToArray(assignments: Record<string, string>): BlockerAssignmentInput[] {

@@ -1,15 +1,16 @@
 //! Projects aggregate state into the shared public game snapshot.
 
 use crate::domain::play::{
-    cards::{CardInstance, KeywordAbility},
+    cards::{CardInstance, KeywordAbility, ManaCost},
     game::{Game, Player, StackObjectKind},
     ids::{PlayerId, StackObjectId},
 };
 
 use super::super::{
     PublicBattlefieldCardView, PublicCardView, PublicCombatStateView, PublicGameView,
-    PublicPermanentStateView, PublicPlayableSubsetVersion, PublicPlayerView, PublicPriorityView,
-    PublicStackObjectView, PublicStackTargetView,
+    PublicManaCostView, PublicManaPoolView, PublicPermanentStateView,
+    PublicPlayableSubsetVersion, PublicPlayerView, PublicPriorityView, PublicStackObjectView,
+    PublicStackTargetView,
 };
 
 #[must_use]
@@ -57,6 +58,7 @@ fn player_view(
         is_active: active_player_id.is_some_and(|active_player_id| player.id() == active_player_id),
         life: player.life(),
         mana_total: player.mana(),
+        mana_pool: mana_pool_view(player),
         hand_count: player.hand_size(),
         library_count: player.library_size(),
         battlefield: player
@@ -68,11 +70,25 @@ fn player_view(
     }
 }
 
+fn mana_pool_view(player: &Player) -> PublicManaPoolView {
+    let mana_pool = player.mana_pool();
+
+    PublicManaPoolView {
+        colorless: mana_pool.generic(),
+        white: mana_pool.white(),
+        blue: mana_pool.blue(),
+        black: mana_pool.black(),
+        red: mana_pool.red(),
+        green: mana_pool.green(),
+    }
+}
+
 fn card_view(card: &CardInstance) -> PublicCardView {
     PublicCardView {
         card_id: card.id().clone(),
         definition_id: card.definition_id().clone(),
         card_type: *card.card_type(),
+        mana_cost: mana_cost_view(card.mana_cost_profile()),
     }
 }
 
@@ -81,6 +97,7 @@ fn battlefield_card_view(card: &CardInstance) -> PublicBattlefieldCardView {
         card_id: card.id().clone(),
         definition_id: card.definition_id().clone(),
         card_type: *card.card_type(),
+        mana_cost: mana_cost_view(card.mana_cost_profile()),
         permanent_state: PublicPermanentStateView {
             tapped: card.is_tapped(),
             token: card.is_token(),
@@ -95,6 +112,17 @@ fn battlefield_card_view(card: &CardInstance) -> PublicBattlefieldCardView {
             blocking: card.is_blocking(),
         },
         keywords: keyword_list(card),
+    }
+}
+
+fn mana_cost_view(mana_cost: ManaCost) -> PublicManaCostView {
+    PublicManaCostView {
+        generic: mana_cost.generic_requirement(),
+        white: mana_cost.white_requirement(),
+        blue: mana_cost.blue_requirement(),
+        black: mana_cost.black_requirement(),
+        red: mana_cost.red_requirement(),
+        green: mana_cost.green_requirement(),
     }
 }
 
@@ -145,26 +173,51 @@ fn stack_object_view(
             number: object.number(),
             controller_id,
             source_card_id: spell.source_card_id().clone(),
+            definition_id: spell.payload().definition_id().clone(),
             card_type: *spell.card_type(),
             target: spell
                 .target()
                 .map(|target| stack_target_view(game, *target)),
             requires_choice: spell.choice().is_some(),
         },
-        StackObjectKind::ActivatedAbility(ability) => PublicStackObjectView::ActivatedAbility {
-            number: object.number(),
-            controller_id,
-            source_card_id: ability.source_card_id(),
-            target: ability
-                .target()
-                .map(|target| stack_target_view(game, *target)),
-        },
-        StackObjectKind::TriggeredAbility(ability) => PublicStackObjectView::TriggeredAbility {
-            number: object.number(),
-            controller_id,
-            source_card_id: ability.source_card_id(),
-        },
+        StackObjectKind::ActivatedAbility(ability) => {
+            let source_card_id = ability.source_card_id();
+            let source_card = stack_source_card(game, &source_card_id);
+
+            PublicStackObjectView::ActivatedAbility {
+                number: object.number(),
+                controller_id,
+                source_card_id,
+                definition_id: source_card.map(|card| card.definition_id().clone()),
+                card_type: source_card.map(|card| *card.card_type()),
+                target: ability
+                    .target()
+                    .map(|target| stack_target_view(game, *target)),
+            }
+        }
+        StackObjectKind::TriggeredAbility(ability) => {
+            let source_card_id = ability.source_card_id();
+            let source_card = stack_source_card(game, &source_card_id);
+
+            PublicStackObjectView::TriggeredAbility {
+                number: object.number(),
+                controller_id,
+                source_card_id,
+                definition_id: source_card.map(|card| card.definition_id().clone()),
+                card_type: source_card.map(|card| *card.card_type()),
+            }
+        }
     }
+}
+
+fn stack_source_card<'a>(
+    game: &'a Game,
+    source_card_id: &crate::domain::play::ids::CardInstanceId,
+) -> Option<&'a CardInstance> {
+    game.players().iter().find_map(|player| {
+        let handle = player.resolve_public_card_handle(source_card_id)?;
+        player.card_by_handle(handle)
+    })
 }
 
 fn stack_target_view(

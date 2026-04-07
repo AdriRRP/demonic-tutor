@@ -31,6 +31,7 @@ pub struct PublicCardView {
     pub card_id: CardInstanceId,
     pub definition_id: CardDefinitionId,
     pub card_type: CardType,
+    pub mana_cost: PublicManaCostView,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -38,6 +39,7 @@ pub struct PublicBattlefieldCardView {
     pub card_id: CardInstanceId,
     pub definition_id: CardDefinitionId,
     pub card_type: CardType,
+    pub mana_cost: PublicManaCostView,
     pub permanent_state: PublicPermanentStateView,
     pub attached_to: Option<CardInstanceId>,
     pub power: Option<u32>,
@@ -66,11 +68,32 @@ pub struct PublicPlayerView {
     pub is_active: bool,
     pub life: u32,
     pub mana_total: u32,
+    pub mana_pool: PublicManaPoolView,
     pub hand_count: usize,
     pub library_count: usize,
     pub battlefield: Vec<PublicBattlefieldCardView>,
     pub graveyard: Vec<PublicCardView>,
     pub exile: Vec<PublicCardView>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PublicManaPoolView {
+    pub colorless: u32,
+    pub white: u32,
+    pub blue: u32,
+    pub black: u32,
+    pub red: u32,
+    pub green: u32,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PublicManaCostView {
+    pub generic: u32,
+    pub white: u32,
+    pub blue: u32,
+    pub black: u32,
+    pub red: u32,
+    pub green: u32,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -95,6 +118,7 @@ pub enum PublicStackObjectView {
         number: u32,
         controller_id: PlayerId,
         source_card_id: CardInstanceId,
+        definition_id: CardDefinitionId,
         card_type: CardType,
         target: Option<PublicStackTargetView>,
         requires_choice: bool,
@@ -103,12 +127,16 @@ pub enum PublicStackObjectView {
         number: u32,
         controller_id: PlayerId,
         source_card_id: CardInstanceId,
+        definition_id: Option<CardDefinitionId>,
+        card_type: Option<CardType>,
         target: Option<PublicStackTargetView>,
     },
     TriggeredAbility {
         number: u32,
         controller_id: PlayerId,
         source_card_id: CardInstanceId,
+        definition_id: Option<CardDefinitionId>,
+        card_type: Option<CardType>,
     },
 }
 
