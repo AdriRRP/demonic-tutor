@@ -8,9 +8,8 @@ use crate::domain::play::{
 
 use super::super::{
     PublicBattlefieldCardView, PublicCardView, PublicCombatStateView, PublicGameView,
-    PublicManaCostView, PublicManaPoolView, PublicPermanentStateView,
-    PublicPlayableSubsetVersion, PublicPlayerView, PublicPriorityView, PublicStackObjectView,
-    PublicStackTargetView,
+    PublicManaCostView, PublicManaPoolView, PublicPermanentStateView, PublicPlayableSubsetVersion,
+    PublicPlayerView, PublicPriorityView, PublicStackObjectView, PublicStackTargetView,
 };
 
 #[must_use]
@@ -70,7 +69,7 @@ fn player_view(
     }
 }
 
-fn mana_pool_view(player: &Player) -> PublicManaPoolView {
+const fn mana_pool_view(player: &Player) -> PublicManaPoolView {
     let mana_pool = player.mana_pool();
 
     PublicManaPoolView {
@@ -115,7 +114,7 @@ fn battlefield_card_view(card: &CardInstance) -> PublicBattlefieldCardView {
     }
 }
 
-fn mana_cost_view(mana_cost: ManaCost) -> PublicManaCostView {
+const fn mana_cost_view(mana_cost: ManaCost) -> PublicManaCostView {
     PublicManaCostView {
         generic: mana_cost.generic_requirement(),
         white: mana_cost.white_requirement(),

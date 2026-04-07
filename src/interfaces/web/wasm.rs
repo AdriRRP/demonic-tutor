@@ -763,7 +763,9 @@ fn web_stack_object(object: &PublicStackObjectView) -> WebStackObject {
     }
 }
 
-fn web_public_mana_cost_view(mana_cost: &crate::application::PublicManaCostView) -> WebManaCostView {
+fn web_public_mana_cost_view(
+    mana_cost: &crate::application::PublicManaCostView,
+) -> WebManaCostView {
     WebManaCostView {
         generic: mana_cost.generic,
         white: mana_cost.white,
@@ -774,9 +776,7 @@ fn web_public_mana_cost_view(mana_cost: &crate::application::PublicManaCostView)
     }
 }
 
-fn web_runtime_mana_cost_view(
-    mana_cost: crate::domain::play::cards::ManaCost,
-) -> WebManaCostView {
+fn web_runtime_mana_cost_view(mana_cost: crate::domain::play::cards::ManaCost) -> WebManaCostView {
     WebManaCostView {
         generic: mana_cost.generic_requirement(),
         white: mana_cost.white_requirement(),
