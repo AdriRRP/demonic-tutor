@@ -88,6 +88,7 @@ interface CommandResponseErrorMessage {
   requestId: string;
   ok: false;
   error: string;
+  state: ArenaState | null;
 }
 
 type CommandResponseMessage = CommandResponseSuccessMessage | CommandResponseErrorMessage;
@@ -155,8 +156,17 @@ export function attachRemoteCommandRelay(
   transport: RemotePairingTransport,
 ): () => void {
   const instanceId = `remote-host-${createSessionId()}`;
+  const unsubscribeSession = session.subscribe((nextState) => {
+    transport.send(
+      JSON.stringify({
+        from: instanceId,
+        state: nextState,
+        type: "state-sync",
+      } satisfies StateSyncMessage),
+    );
+  });
 
-  return transport.subscribe((payload) => {
+  const unsubscribeTransport = transport.subscribe((payload) => {
     const message = parseTransportPayload(payload);
     if (!message || message.from === instanceId) {
       return;
@@ -175,6 +185,11 @@ export function attachRemoteCommandRelay(
         break;
     }
   });
+
+  return () => {
+    unsubscribeSession();
+    unsubscribeTransport();
+  };
 }
 
 export async function createArenaSession(): Promise<ArenaSession> {
@@ -444,6 +459,7 @@ class HostArenaSession implements ArenaSession {
         from: this.instanceId,
         ok: false,
         requestId: message.requestId,
+        state: this.stateCache,
         type: "command-response",
       } satisfies CommandResponseErrorMessage);
     }
@@ -485,6 +501,11 @@ class PeerArenaSession implements ArenaSession {
         this.notifyListeners(message.state);
         pendingRequest.resolve(message.state);
       } else {
+        if (message.state !== null) {
+          this.stateCache = message.state;
+          this.infoState.localSeatId = seatForRole(message.state, "peer");
+          this.notifyListeners(message.state);
+        }
         pendingRequest.reject(new Error(message.error));
       }
     }
@@ -709,6 +730,9 @@ class RemotePeerArenaSession implements ArenaSession {
         this.commitState(message.state);
         pendingRequest.resolve(message.state);
       } else {
+        if (message.state !== null) {
+          this.commitState(message.state);
+        }
         pendingRequest.reject(new Error(message.error));
       }
     });
@@ -1057,6 +1081,7 @@ async function respondToRemoteCommand(
         from: instanceId,
         ok: false,
         requestId: message.requestId,
+        state: await readState(session),
         type: "command-response",
       } satisfies CommandResponseErrorMessage),
     );
@@ -1146,6 +1171,7 @@ function coerceSessionMessage(value: unknown): SessionMessage | null {
         from: value.from,
         ok: false,
         requestId: value.requestId,
+        state: "state" in value ? (value.state as ArenaState | null) : null,
         type: "command-response",
       };
     default:

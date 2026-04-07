@@ -135,9 +135,7 @@ Host browser opens pairing modal
 
 That path currently proves transport only.
 
-The current Wave 2 entry slice now extends that path so the remote peer can issue public gameplay commands through the host-owned runtime.
-
-It still does not yet broadcast every authoritative snapshot or replay update back across devices after host-side changes that did not originate from the peer.
+The current Wave 2 implementation extends that path so the remote peer can issue public gameplay commands through the host-owned runtime and receive authoritative public state back after host-side changes.
 
 ---
 
@@ -169,6 +167,7 @@ Its job today is to provide:
 - a host-authoritative browser room where only one window owns the wasm-backed engine at a time
 - a manual remote-pairing modal that can establish a direct WebRTC browser-to-browser data channel without a backend game service
 - a first host-authoritative remote command relay so the paired peer can drive the existing public command set through the host runtime
+- authoritative public snapshot broadcast back to the paired peer so both browsers converge from the host-owned state instead of local reconstruction
 - a generated duel HUD that renders the phase loop and compact seat stats through CSS/SVG primitives instead of text-heavy badges
 - two viewer-scoped seats over that same session
 - a viewport-fitted SPA arena with portrait and landscape layouts
@@ -196,8 +195,7 @@ It is still intentionally early-stage UI:
 - centered on a shared table surface rather than debug panels
 - optimized for interaction coverage before deep motion/polish work
 - not yet a secure remote multiplayer client
-- not yet a remotely playable WebRTC client because command relay and snapshot broadcast remain future slices
-- not yet a fully converged remotely playable WebRTC client because passive authoritative snapshot broadcast remains a future slice
+- not yet a one-seat-per-device remote client because seat ownership and private-view scoping still remain future slices
 - still keeping free battlefield layout local to each browser window until a dedicated sync slice lands
 
 Important constraint:

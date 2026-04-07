@@ -7,8 +7,8 @@ This directory contains the live proposal backlog when a new release horizon is 
 The current planning horizon for first honest remote play across two devices is:
 
 - `1` release horizon
-- `3` active proposal waves
-- `5` active proposal slices
+- `2` active proposal waves
+- `4` active proposal slices
 
 The previous playable-limited gate remains reached:
 
@@ -31,6 +31,5 @@ See:
 
 ## Active Proposal Waves
 
-- [wave-2-authoritative-transport/](wave-2-authoritative-transport/)
 - [wave-3-remote-seat-views/](wave-3-remote-seat-views/)
 - [wave-4-resilience/](wave-4-resilience/)

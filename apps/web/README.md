@@ -74,6 +74,7 @@ It currently provides:
 - a host-authoritative local room model where one window owns the Rust runtime and the peer window sends public commands to it
 - a manual remote-pairing modal that can establish a direct WebRTC data channel between two browsers through copy-pasted offer/answer payloads
 - a first host-authoritative WebRTC command relay so the paired peer can issue the existing public commands through the host browser runtime
+- authoritative public state broadcast back to the paired peer so both browsers converge from the same host-owned state
 - a generated duel HUD with a graphical phase track and compact stat pips instead of the earlier text-heavy cockpit
 - two viewer-scoped seats over that same Rust-owned state
 - a viewport-fitted SPA arena with dedicated landscape and portrait layouts
@@ -99,15 +100,18 @@ It is still an early arena rather than a polished shipped client, but the UI now
 
 ## Remote Pairing Foundation
 
-The first remote multiplayer slice now exists, but it is intentionally narrow:
+The current remote multiplayer baseline is still intentionally narrow:
 
 - it establishes browser-to-browser transport only
 - it now also relays the peer's public gameplay commands through the authoritative host
 - it uses manual WebRTC signaling through a pairing modal
-- it does not yet passively broadcast every authoritative state change back across devices
+- it now also broadcasts authoritative public state back from the host to the peer
 - it remains honest about transport state (`idle`, `connecting`, `connected`, `failed`)
 
-That means the current truly playable multiplayer path is still the same-origin two-window local room.
+It is still not the final remote product shape:
+
+- seat ownership and private-view scoping across devices are still future slices
+- reconnect and host-loss handling are still future slices
 
 ## Local Two-Window Multiplayer
 
