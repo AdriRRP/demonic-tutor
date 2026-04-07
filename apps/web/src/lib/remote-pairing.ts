@@ -19,14 +19,19 @@ export interface RemotePairingState {
 
 type RemotePairingListener = (state: RemotePairingState) => void;
 
+export interface RemotePairingTransport {
+  id: string;
+  role: Exclude<RemotePairingRole, null>;
+  send(payload: string): void;
+  subscribe(listener: RemoteTransportListener): () => void;
+}
+
+type RemoteTransportListener = (payload: string) => void;
+
 interface SignalEnvelope {
   sdp: string;
   type: "answer" | "offer";
   version: 1;
-}
-
-interface DataChannelEnvelope {
-  type: "hello";
 }
 
 const DEFAULT_PAIRING_STATE: RemotePairingState = {
@@ -52,6 +57,7 @@ export interface RemotePairingController {
   reset(): void;
   snapshot(): RemotePairingState;
   subscribe(listener: RemotePairingListener): () => void;
+  transport(): RemotePairingTransport | null;
 }
 
 export function createRemotePairingController(): RemotePairingController {
@@ -60,9 +66,11 @@ export function createRemotePairingController(): RemotePairingController {
 
 class WebRtcPairingController implements RemotePairingController {
   private readonly listeners = new Set<RemotePairingListener>();
+  private readonly transportListeners = new Set<RemoteTransportListener>();
   private channel: RTCDataChannel | null = null;
   private connection: RTCPeerConnection | null = null;
   private state: RemotePairingState = { ...DEFAULT_PAIRING_STATE };
+  private transportId: string | null = null;
 
   public snapshot(): RemotePairingState {
     return { ...this.state };
@@ -74,6 +82,40 @@ class WebRtcPairingController implements RemotePairingController {
 
     return () => {
       this.listeners.delete(listener);
+    };
+  }
+
+  public transport(): RemotePairingTransport | null {
+    const role = this.state.role;
+    const channel = this.channel;
+    const transportId = this.transportId;
+
+    if (
+      role === null ||
+      channel === null ||
+      transportId === null ||
+      !this.state.connected ||
+      channel.readyState !== "open"
+    ) {
+      return null;
+    }
+
+    return {
+      id: transportId,
+      role,
+      send: (payload: string) => {
+        if (this.channel?.readyState !== "open") {
+          throw new Error("Remote duel transport is not connected.");
+        }
+
+        this.channel.send(payload);
+      },
+      subscribe: (listener: RemoteTransportListener) => {
+        this.transportListeners.add(listener);
+        return () => {
+          this.transportListeners.delete(listener);
+        };
+      },
     };
   }
 
@@ -151,6 +193,7 @@ class WebRtcPairingController implements RemotePairingController {
 
     this.connection?.close();
     this.connection = null;
+    this.transportId = null;
 
     this.setState({ ...DEFAULT_PAIRING_STATE });
   }
@@ -163,6 +206,7 @@ class WebRtcPairingController implements RemotePairingController {
   private initializeConnection(role: Exclude<RemotePairingRole, null>): RTCPeerConnection {
     const connection = new RTCPeerConnection({ iceServers: REMOTE_ICE_SERVERS });
     this.connection = connection;
+    this.transportId = createRemotePairingId();
 
     connection.addEventListener("connectionstatechange", () => {
       switch (connection.connectionState) {
@@ -245,7 +289,16 @@ class WebRtcPairingController implements RemotePairingController {
         phase: "connected",
         statusLabel: "Remote duel channel connected.",
       });
-      channel.send(JSON.stringify({ type: "hello" } satisfies DataChannelEnvelope));
+    });
+
+    channel.addEventListener("message", (event) => {
+      if (typeof event.data !== "string") {
+        return;
+      }
+
+      for (const listener of this.transportListeners) {
+        listener(event.data);
+      }
     });
 
     channel.addEventListener("close", () => {
@@ -279,6 +332,14 @@ class WebRtcPairingController implements RemotePairingController {
       listener(snapshot);
     }
   }
+}
+
+function createRemotePairingId(): string {
+  if ("randomUUID" in window.crypto) {
+    return window.crypto.randomUUID();
+  }
+
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
 async function waitForIceGatheringComplete(connection: RTCPeerConnection): Promise<void> {

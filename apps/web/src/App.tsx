@@ -1,4 +1,4 @@
-import { Match, Show, Switch, createSignal, onCleanup, onMount } from "solid-js";
+import { Match, Show, Switch, createEffect, createSignal, onCleanup, onMount } from "solid-js";
 import type { Component } from "solid-js";
 import { RemotePairingModal } from "./components/remote-pairing-modal";
 import { TableArena } from "./components/table-arena";
@@ -6,8 +6,15 @@ import {
   createRemotePairingController,
   type RemotePairingController,
   type RemotePairingState,
+  type RemotePairingTransport,
 } from "./lib/remote-pairing";
-import { createArenaSession, type ArenaSession, type ArenaSessionInfo } from "./lib/session";
+import {
+  attachRemoteCommandRelay,
+  createArenaSession,
+  createRemotePeerSession,
+  type ArenaSession,
+  type ArenaSessionInfo,
+} from "./lib/session";
 import { readState, resetArena, type ArenaCommandTarget } from "./lib/runtime";
 import type { ArenaState } from "./lib/types";
 
@@ -23,6 +30,9 @@ const App: Component = () => {
   const [remotePairingState, setRemotePairingState] = createSignal<RemotePairingState | null>(null);
   const [remotePairingSupported, setRemotePairingSupported] = createSignal(false);
   let remotePairingController: RemotePairingController | null = null;
+  let activeRemotePeerTransportId: string | null = null;
+  let attachedRemoteHostTransportId: string | null = null;
+  let detachRemoteCommandRelay: (() => void) | undefined;
   let unsubscribeSession: (() => void) | undefined;
   let unsubscribeRemotePairing: (() => void) | undefined;
 
@@ -41,12 +51,55 @@ const App: Component = () => {
   onCleanup(() => {
     unsubscribeSession?.();
     unsubscribeRemotePairing?.();
+    detachRemoteCommandRelay?.();
     remotePairingController?.destroy();
     session()?.destroy();
   });
 
+  createEffect(() => {
+    const pairing = remotePairingState();
+    const transport = remotePairingController?.transport() ?? null;
+    const currentSession = session();
+
+    if (!pairing || !transport) {
+      if (attachedRemoteHostTransportId !== null) {
+        detachRemoteCommandRelay?.();
+        detachRemoteCommandRelay = undefined;
+        attachedRemoteHostTransportId = null;
+      }
+      return;
+    }
+
+    if (pairing.role === "host") {
+      if (currentSession?.info().role !== "host") {
+        return;
+      }
+
+      if (attachedRemoteHostTransportId === transport.id) {
+        return;
+      }
+
+      detachRemoteCommandRelay?.();
+      detachRemoteCommandRelay = attachRemoteCommandRelay(currentSession, transport);
+      attachedRemoteHostTransportId = transport.id;
+      return;
+    }
+
+    if (attachedRemoteHostTransportId !== null) {
+      detachRemoteCommandRelay?.();
+      detachRemoteCommandRelay = undefined;
+      attachedRemoteHostTransportId = null;
+    }
+
+    if (pairing.role === "peer" && activeRemotePeerTransportId !== transport.id) {
+      activeRemotePeerTransportId = transport.id;
+      void loadRemotePeerArena(transport);
+    }
+  });
+
   async function loadArena(): Promise<void> {
     try {
+      activeRemotePeerTransportId = null;
       unsubscribeSession?.();
       session()?.destroy();
       setLoading(true);
@@ -65,6 +118,42 @@ const App: Component = () => {
       setSession(nextSession);
       setSessionInfo(nextInfo);
       setState(nextState);
+    } catch (err) {
+      activeRemotePeerTransportId = null;
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function loadRemotePeerArena(transport: RemotePairingTransport): Promise<void> {
+    try {
+      unsubscribeSession?.();
+      session()?.destroy();
+      setLoading(true);
+      setError(null);
+
+      const roomId =
+        sessionInfo()?.roomId ?? new URL(window.location.href).searchParams.get("duel") ?? "remote";
+      const nextSession = await createRemotePeerSession({
+        inviteUrl: window.location.href,
+        roomId,
+        transport,
+      });
+      const nextState = await readState(nextSession);
+      const nextInfo = nextSession.info();
+
+      unsubscribeSession = nextSession.subscribe((incomingState) => {
+        const incomingInfo = nextSession.info();
+        setSessionInfo(incomingInfo);
+        setState(incomingState);
+      });
+
+      setSession(nextSession);
+      setSessionInfo(nextInfo);
+      setState(nextState);
+      setSelectedAttackers([]);
+      setBlockerAssignments({});
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {

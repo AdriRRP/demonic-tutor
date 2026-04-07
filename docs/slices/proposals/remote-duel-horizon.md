@@ -18,7 +18,7 @@ The remaining proposed horizon is:
 
 - `1` release horizon
 - `3` active proposal waves
-- `6` active proposal slices
+- `5` active proposal slices
 
 The target milestone is:
 
@@ -61,6 +61,12 @@ Wave 1 is now implemented through:
 
 That foundation proves browser-to-browser transport setup without yet claiming remote gameplay relay.
 
+The first slice of Wave 2 is also now implemented through:
+
+- [relay-public-commands-to-the-authoritative-host-over-webrtc.md](../implemented/application/relay-public-commands-to-the-authoritative-host-over-webrtc.md)
+
+That means the remote peer can now issue existing public gameplay commands through the authoritative host, but passive authoritative state broadcast still remains the next open slice.
+
 ## Active Wave Plan
 
 ### Wave 2 — Authoritative Transport
@@ -71,7 +77,6 @@ Goal:
 
 Slices:
 
-- [relay-public-commands-to-the-authoritative-host-over-webrtc.md](wave-2-authoritative-transport/relay-public-commands-to-the-authoritative-host-over-webrtc.md)
 - [broadcast-authoritative-public-state-back-to-the-peer.md](wave-2-authoritative-transport/broadcast-authoritative-public-state-back-to-the-peer.md)
 
 ### Wave 3 — Remote Seat Views

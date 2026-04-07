@@ -135,7 +135,9 @@ Host browser opens pairing modal
 
 That path currently proves transport only.
 
-It does not yet relay authoritative gameplay commands or snapshots across devices.
+The current Wave 2 entry slice now extends that path so the remote peer can issue public gameplay commands through the host-owned runtime.
+
+It still does not yet broadcast every authoritative snapshot or replay update back across devices after host-side changes that did not originate from the peer.
 
 ---
 
@@ -166,6 +168,7 @@ Its job today is to provide:
 - one same-origin `BroadcastChannel` bridge so a second browser window can join that session without a backend
 - a host-authoritative browser room where only one window owns the wasm-backed engine at a time
 - a manual remote-pairing modal that can establish a direct WebRTC browser-to-browser data channel without a backend game service
+- a first host-authoritative remote command relay so the paired peer can drive the existing public command set through the host runtime
 - a generated duel HUD that renders the phase loop and compact seat stats through CSS/SVG primitives instead of text-heavy badges
 - two viewer-scoped seats over that same session
 - a viewport-fitted SPA arena with portrait and landscape layouts
@@ -194,6 +197,7 @@ It is still intentionally early-stage UI:
 - optimized for interaction coverage before deep motion/polish work
 - not yet a secure remote multiplayer client
 - not yet a remotely playable WebRTC client because command relay and snapshot broadcast remain future slices
+- not yet a fully converged remotely playable WebRTC client because passive authoritative snapshot broadcast remains a future slice
 - still keeping free battlefield layout local to each browser window until a dedicated sync slice lands
 
 Important constraint:

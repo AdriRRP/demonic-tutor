@@ -1,3 +1,4 @@
+import type { RemotePairingTransport } from "./remote-pairing";
 import {
   activateAbility,
   advanceTurn,
@@ -30,7 +31,7 @@ const REQUEST_TIMEOUT_MS = 4_000;
 type SessionListener = (state: ArenaState) => void;
 
 type ArenaSessionRole = "host" | "peer";
-type ArenaSessionTransport = "broadcast-channel" | "embedded";
+type ArenaSessionTransport = "broadcast-channel" | "embedded" | "webrtc";
 
 interface HelloMessage {
   type: "hello";
@@ -128,6 +129,52 @@ export interface ArenaSession extends ArenaCommandTarget {
   destroy(): void;
   info(): ArenaSessionInfo;
   subscribe(listener: SessionListener): () => void;
+}
+
+export async function createRemotePeerSession({
+  inviteUrl,
+  roomId,
+  transport,
+}: {
+  inviteUrl: string;
+  roomId: string;
+  transport: RemotePairingTransport;
+}): Promise<ArenaSession> {
+  const session = new RemotePeerArenaSession({
+    inviteUrl,
+    roomId,
+    transport,
+  });
+
+  await session.state();
+  return session;
+}
+
+export function attachRemoteCommandRelay(
+  session: ArenaSession,
+  transport: RemotePairingTransport,
+): () => void {
+  const instanceId = `remote-host-${createSessionId()}`;
+
+  return transport.subscribe((payload) => {
+    const message = parseTransportPayload(payload);
+    if (!message || message.from === instanceId) {
+      return;
+    }
+
+    switch (message.type) {
+      case "hello":
+        void sendRemoteStateSync(session, transport, instanceId);
+        break;
+      case "command-request":
+        void respondToRemoteCommand(session, transport, instanceId, message);
+        break;
+      case "goodbye":
+      case "state-sync":
+      case "command-response":
+        break;
+    }
+  });
 }
 
 export async function createArenaSession(): Promise<ArenaSession> {
@@ -601,6 +648,220 @@ class PeerArenaSession implements ArenaSession {
   }
 }
 
+class RemotePeerArenaSession implements ArenaSession {
+  private readonly infoState: ArenaSessionInfo;
+  private readonly instanceId: string;
+  private readonly listeners = new Set<SessionListener>();
+  private readonly pendingRequests = new Map<string, PendingRequest>();
+  private readonly transport: RemotePairingTransport;
+  private readonly unsubscribeTransport: () => void;
+  private initialStatePromise: Promise<ArenaState>;
+  private resolveInitialState!: (state: ArenaState) => void;
+  private rejectInitialState!: (reason?: unknown) => void;
+  private stateCache: ArenaState | null = null;
+
+  constructor({
+    inviteUrl,
+    roomId,
+    transport,
+  }: {
+    inviteUrl: string;
+    roomId: string;
+    transport: RemotePairingTransport;
+  }) {
+    this.transport = transport;
+    this.instanceId = `remote-peer-${createSessionId()}`;
+    this.infoState = {
+      inviteUrl,
+      localSeatId: null,
+      role: "peer",
+      roomId,
+      transport: "webrtc",
+    };
+    this.initialStatePromise = new Promise<ArenaState>((resolve, reject) => {
+      this.resolveInitialState = resolve;
+      this.rejectInitialState = reject;
+    });
+    this.unsubscribeTransport = this.transport.subscribe((payload) => {
+      const message = parseTransportPayload(payload);
+      if (!message) {
+        return;
+      }
+
+      if (message.type === "state-sync") {
+        this.commitState(message.state);
+        return;
+      }
+
+      if (message.type !== "command-response") {
+        return;
+      }
+
+      const pendingRequest = this.pendingRequests.get(message.requestId);
+      if (!pendingRequest) {
+        return;
+      }
+
+      this.pendingRequests.delete(message.requestId);
+      window.clearTimeout(pendingRequest.timeoutId);
+
+      if (message.ok) {
+        this.commitState(message.state);
+        pendingRequest.resolve(message.state);
+      } else {
+        pendingRequest.reject(new Error(message.error));
+      }
+    });
+
+    this.transport.send(
+      JSON.stringify({
+        from: this.instanceId,
+        type: "hello",
+      } satisfies HelloMessage),
+    );
+  }
+
+  public subscribe(listener: SessionListener): () => void {
+    this.listeners.add(listener);
+    return () => {
+      this.listeners.delete(listener);
+    };
+  }
+
+  public info(): ArenaSessionInfo {
+    return { ...this.infoState };
+  }
+
+  public destroy(): void {
+    for (const pendingRequest of this.pendingRequests.values()) {
+      window.clearTimeout(pendingRequest.timeoutId);
+      pendingRequest.reject(new Error("Remote peer session destroyed"));
+    }
+    this.pendingRequests.clear();
+    this.rejectInitialState(new Error("Remote peer session destroyed"));
+    try {
+      this.transport.send(
+        JSON.stringify({
+          from: this.instanceId,
+          type: "goodbye",
+        } satisfies GoodbyeMessage),
+      );
+    } catch {
+      // Ignore teardown transport failures; resilience is handled by later slices.
+    }
+    this.unsubscribeTransport();
+  }
+
+  public state(): Promise<ArenaState> {
+    if (this.stateCache !== null) {
+      return Promise.resolve(this.stateCache);
+    }
+
+    return this.initialStatePromise;
+  }
+
+  public reset(): Promise<ArenaState> {
+    return this.sendCommand({ kind: "reset" });
+  }
+
+  public pass_priority(playerId: string): Promise<ArenaState> {
+    return this.sendCommand({ kind: "pass_priority", playerId });
+  }
+
+  public advance_turn(): Promise<ArenaState> {
+    return this.sendCommand({ kind: "advance_turn" });
+  }
+
+  public concede(playerId: string): Promise<ArenaState> {
+    return this.sendCommand({ kind: "concede", playerId });
+  }
+
+  public play_land(playerId: string, cardId: string): Promise<ArenaState> {
+    return this.sendCommand({ kind: "play_land", playerId, cardId });
+  }
+
+  public tap_mana_source(playerId: string, cardId: string): Promise<ArenaState> {
+    return this.sendCommand({ kind: "tap_mana_source", playerId, cardId });
+  }
+
+  public cast_spell(playerId: string, cardId: string): Promise<ArenaState> {
+    return this.sendCommand({ kind: "cast_spell", playerId, cardId });
+  }
+
+  public activate_ability(playerId: string, cardId: string): Promise<ArenaState> {
+    return this.sendCommand({ kind: "activate_ability", playerId, cardId });
+  }
+
+  public declare_attackers(playerId: string, attackerIds: string[]): Promise<ArenaState> {
+    return this.sendCommand({ kind: "declare_attackers", attackerIds, playerId });
+  }
+
+  public declare_blockers(
+    playerId: string,
+    assignments: BlockerAssignmentInput[],
+  ): Promise<ArenaState> {
+    return this.sendCommand({ assignments, kind: "declare_blockers", playerId });
+  }
+
+  public resolve_combat_damage(playerId: string): Promise<ArenaState> {
+    return this.sendCommand({ kind: "resolve_combat_damage", playerId });
+  }
+
+  public discard_for_cleanup(playerId: string, cardId: string): Promise<ArenaState> {
+    return this.sendCommand({ kind: "discard_for_cleanup", playerId, cardId });
+  }
+
+  public resolve_optional_effect(playerId: string, accept: boolean): Promise<ArenaState> {
+    return this.sendCommand({ accept, kind: "resolve_optional_effect", playerId });
+  }
+
+  public resolve_pending_hand_choice(playerId: string, cardId: string): Promise<ArenaState> {
+    return this.sendCommand({ cardId, kind: "resolve_pending_hand_choice", playerId });
+  }
+
+  public resolve_pending_scry(playerId: string, moveToBottom: boolean): Promise<ArenaState> {
+    return this.sendCommand({ kind: "resolve_pending_scry", moveToBottom, playerId });
+  }
+
+  public resolve_pending_surveil(playerId: string, moveToGraveyard: boolean): Promise<ArenaState> {
+    return this.sendCommand({ kind: "resolve_pending_surveil", moveToGraveyard, playerId });
+  }
+
+  private commitState(nextState: ArenaState): void {
+    this.stateCache = nextState;
+    this.infoState.localSeatId = seatForRole(nextState, "peer");
+    this.resolveInitialState(nextState);
+    this.notifyListeners(nextState);
+  }
+
+  private notifyListeners(nextState: ArenaState): void {
+    for (const listener of this.listeners) {
+      listener(nextState);
+    }
+  }
+
+  private sendCommand(command: ArenaCommandRequest): Promise<ArenaState> {
+    const requestId = createSessionId();
+
+    return new Promise<ArenaState>((resolve, reject) => {
+      const timeoutId = window.setTimeout(() => {
+        this.pendingRequests.delete(requestId);
+        reject(new Error("The remote host did not respond in time."));
+      }, REQUEST_TIMEOUT_MS);
+
+      this.pendingRequests.set(requestId, { reject, resolve, timeoutId });
+      this.transport.send(
+        JSON.stringify({
+          command,
+          from: this.instanceId,
+          requestId,
+          type: "command-request",
+        } satisfies CommandRequestMessage),
+      );
+    });
+  }
+}
+
 async function createEmbeddedSession(roomId: string, inviteUrl: string): Promise<ArenaSession> {
   const client = await createArenaClient();
   const initialState = await readState(client);
@@ -747,6 +1008,59 @@ function createSessionId(): string {
 
 function formatSessionError(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
+}
+
+function parseTransportPayload(payload: string): SessionMessage | null {
+  try {
+    return coerceSessionMessage(JSON.parse(payload) as unknown);
+  } catch {
+    return null;
+  }
+}
+
+async function sendRemoteStateSync(
+  session: ArenaSession,
+  transport: RemotePairingTransport,
+  instanceId: string,
+): Promise<void> {
+  const state = await readState(session);
+  transport.send(
+    JSON.stringify({
+      from: instanceId,
+      state,
+      type: "state-sync",
+    } satisfies StateSyncMessage),
+  );
+}
+
+async function respondToRemoteCommand(
+  session: ArenaSession,
+  transport: RemotePairingTransport,
+  instanceId: string,
+  message: CommandRequestMessage,
+): Promise<void> {
+  try {
+    const nextState = await runRequestedCommand(session, message.command);
+    transport.send(
+      JSON.stringify({
+        from: instanceId,
+        ok: true,
+        requestId: message.requestId,
+        state: nextState,
+        type: "command-response",
+      } satisfies CommandResponseSuccessMessage),
+    );
+  } catch (error) {
+    transport.send(
+      JSON.stringify({
+        error: formatSessionError(error),
+        from: instanceId,
+        ok: false,
+        requestId: message.requestId,
+        type: "command-response",
+      } satisfies CommandResponseErrorMessage),
+    );
+  }
 }
 
 function samePeerSet(left: Set<string>, right: Set<string>): boolean {
