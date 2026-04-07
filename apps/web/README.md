@@ -65,30 +65,31 @@ The repository CI now treats these frontend checks as first-class quality gates,
 
 ## Current Scope
 
-Today this app is a playable two-player arena with a board-first tabletop presentation, supporting both hot-seat and a same-origin local duel room across two browser windows.
+Today this app is a playable two-player arena with a board-first tabletop presentation, oriented around one local seat per browser instance and a same-origin local duel room across two browser windows.
 
 It currently provides:
 
 - one shared wasm-backed game session
 - one same-origin `BroadcastChannel` bridge so a second browser window can join the same duel without a backend
 - a host-authoritative local room model where one window owns the Rust runtime and the peer window sends public commands to it
-- a generated duel HUD with a graphical phase track, icon-led seat signals, and compact stat pips instead of the earlier text-heavy cockpit
+- a generated duel HUD with a graphical phase track and compact stat pips instead of the earlier text-heavy cockpit
 - two viewer-scoped seats over that same Rust-owned state
 - a viewport-fitted SPA arena with dedicated landscape and portrait layouts
 - a battlefield-first play surface with a clear opponent/player split
+- a dedicated left rail that now owns player identity, life, hand count, and the local `Pass / Concede` actions
+- a priority halo around the speaking player's avatar so turn conversation stays legible without reintroducing textual badges
 - a selected-card highlight shared across hand hover, inspect detail, and battlefield action focus
 - a hidden opponent hand fan rendered with simplified classic-inspired generated card backs instead of text counters
-- a collapsible bottom hand fan that can be dragged onto the battlefield for simple legal plays
+- a local bottom hand fan that can be dragged onto the battlefield for simple legal plays
 - a locally rearrangeable battlefield so permanents already in play can be positioned freely inside the owning seat
 - generated card piles for library, graveyard, and exile using simplified classic-inspired CSS-built backs and compact face-up zone tops
+- a stack dock that only appears when the stack has objects and opens a dedicated modal for detailed resolution reading
 - focused zone browsers that open on demand instead of permanently occupying the table
 - card inspection modals so the card itself is now the primary interaction object
 - a modal replay log instead of a persistent sidebar dashboard
-- explicit pass-the-device handoff, with only one private hand open at a time
 - prompts and choices anchored near the seat area they belong to
 - a more spatial combat lane for attackers and blockers
 - real command execution for land play, mana, simple casting, combat, cleanup, and replay
-- an automatic fallback to hot-seat behavior while no second browser window is attached to the room
 
 It is still an early arena rather than a polished shipped client, but the UI now prioritizes a card-first premium table feel before adding richer motion or deeper spell UX.
 

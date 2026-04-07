@@ -144,30 +144,31 @@ The architectural decision behind this is recorded in:
 
 # Current Scope
 
-The current `apps/web` client is now a playable two-player arena that supports both hot-seat and same-origin two-window local duel rooms.
+The current `apps/web` client is now a playable two-player arena that supports one local seat per browser instance plus same-origin two-window local duel rooms.
 
 Its job today is to provide:
 
 - one shared Rust-owned game session embedded in the browser
 - one same-origin `BroadcastChannel` bridge so a second browser window can join that session without a backend
 - a host-authoritative browser room where only one window owns the wasm-backed engine at a time
-- a generated duel HUD that renders the phase loop, active player, priority holder, and compact seat stats through CSS/SVG primitives instead of text-heavy badges
+- a generated duel HUD that renders the phase loop and compact seat stats through CSS/SVG primitives instead of text-heavy badges
 - two viewer-scoped seats over that same session
 - a viewport-fitted SPA arena with portrait and landscape layouts
 - a battlefield-first layout with a clear top/bottom duel split
 - a shared selected-card highlight spanning hand focus, inspection, and battlefield action focus
 - a hidden opponent hand fan built from simplified classic-inspired generated card backs so rival hand size reads as physical cards instead of a lone counter
-- a collapsible bottom hand fan that can be dragged onto the battlefield for simple legal plays
+- a local bottom hand fan that can be dragged onto the battlefield for simple legal plays
 - a locally rearrangeable battlefield where permanents already on the table can be dragged to presentation-only positions inside the owning seat
 - generated zone piles for library, graveyard, and exile using simplified classic-inspired CSS-built card backs and compact face-up tops
+- a left player rail that centralizes identity, life, hand count, and primary local actions instead of repeating that chrome inside the battlefield
+- a priority halo around the active speaker's avatar so priority is readable from the rail without bringing back badge-heavy status UI
+- a contextual stack dock that stays invisible until stack objects exist and then opens a dedicated modal for detailed resolution inspection
 - focused zone browsers that stay on demand instead of keeping textual zone panels on the table
-- a handoff-first hot-seat flow where only one private hand is opened at a time
 - card inspection modals so cards stay the main affordance rather than surrounding lists
 - prompts placed near the seat zone they affect instead of inside a generic debug rail
 - a battlefield-first combat lane for attackers and blockers
 - modal replay/debug surfaces that stay discreet without turning the table into a dashboard
 - real command execution for lands, mana, creature casting, combat, cleanup, and replay inspection
-- a fallback back to hot-seat when no second local browser window is connected
 
 It is still intentionally early-stage UI:
 

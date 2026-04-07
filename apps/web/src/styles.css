@@ -171,8 +171,7 @@ button {
 
 .arena-brand-cluster,
 .arena-brand-meta,
-.arena-cockpit-hud,
-.arena-seat-signals {
+.arena-cockpit-hud {
   display: flex;
   align-items: center;
 }
@@ -182,8 +181,7 @@ button {
   min-width: 0;
 }
 
-.arena-brand-meta,
-.arena-seat-signals {
+.arena-brand-meta {
   gap: 6px;
 }
 
@@ -248,7 +246,6 @@ button {
 }
 
 .meta-rune,
-.seat-state-glyph,
 .seat-stat-pill,
 .turn-rune,
 .rune-button {
@@ -261,7 +258,6 @@ button {
 }
 
 .meta-rune,
-.seat-state-glyph,
 .seat-stat-pill,
 .turn-rune {
   padding: 0 10px;
@@ -272,7 +268,6 @@ button {
 }
 
 .meta-rune strong,
-.seat-state-glyph strong,
 .seat-stat-pill strong,
 .turn-rune strong {
   font-size: 0.7rem;
@@ -352,27 +347,6 @@ button {
   line-height: 1;
 }
 
-.seat-state-glyph {
-  min-width: 32px;
-  padding-inline: 9px;
-  color: rgba(233, 239, 255, 0.82);
-}
-
-.seat-state-glyph.tone-ember {
-  border-color: rgba(240, 179, 93, 0.24);
-  box-shadow: inset 0 0 0 1px rgba(240, 179, 93, 0.14);
-}
-
-.seat-state-glyph.tone-night {
-  border-color: rgba(121, 165, 255, 0.24);
-  box-shadow: inset 0 0 0 1px rgba(121, 165, 255, 0.14);
-}
-
-.seat-state-glyph.tone-forest {
-  border-color: rgba(88, 216, 208, 0.24);
-  box-shadow: inset 0 0 0 1px rgba(88, 216, 208, 0.14);
-}
-
 .seat-stat-pill {
   min-height: 22px;
   padding: 0 8px;
@@ -385,7 +359,6 @@ button {
 }
 
 .seat-stat-pill .hud-icon,
-.seat-state-glyph .hud-icon,
 .meta-rune .hud-icon {
   width: 14px;
   height: 14px;
@@ -400,6 +373,454 @@ button {
   position: relative;
   height: 100%;
   min-height: 0;
+}
+
+.duel-side-rail {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  bottom: 8px;
+  z-index: 5;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 12px;
+  width: 132px;
+  min-height: 0;
+  padding: 2px 0;
+}
+
+.duel-side-rail-slot {
+  display: flex;
+  min-height: 0;
+}
+
+.duel-side-rail-slot-top {
+  align-items: flex-start;
+}
+
+.duel-side-rail-slot-stack {
+  justify-content: center;
+  align-items: center;
+}
+
+.duel-side-rail-slot-bottom {
+  align-items: flex-end;
+}
+
+.rail-seat-card {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+}
+
+.rail-seat-stats {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.rail-seat-counter {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 48px;
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(121, 165, 255, 0.16);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)),
+    rgba(8, 13, 24, 0.92);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 12px 22px rgba(4, 8, 14, 0.24);
+}
+
+.rail-seat-counter.kind-life {
+  border-color: rgba(236, 120, 148, 0.28);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 12px 22px rgba(4, 8, 14, 0.24),
+    0 0 14px rgba(217, 91, 113, 0.14);
+}
+
+.rail-seat-counter.kind-hand {
+  border-color: rgba(246, 211, 133, 0.26);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 12px 22px rgba(4, 8, 14, 0.24),
+    0 0 14px rgba(240, 179, 93, 0.12);
+}
+
+.rail-seat-counter strong {
+  font-size: 0.82rem;
+  line-height: 1;
+  letter-spacing: 0.03em;
+}
+
+.rail-counter-glyph {
+  width: 15px;
+  height: 15px;
+  fill: currentColor;
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.16));
+}
+
+.rail-seat-counter.kind-life .rail-counter-glyph {
+  color: #ff9cb0;
+}
+
+.rail-seat-counter.kind-hand .rail-counter-glyph {
+  color: #f6d385;
+}
+
+.rail-seat-avatar-card {
+  position: relative;
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 8px 8px;
+  border: 1px solid rgba(121, 165, 255, 0.16);
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015)),
+    rgba(8, 13, 24, 0.94);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 18px 40px rgba(3, 7, 12, 0.28);
+  overflow: visible;
+}
+
+.rail-seat-avatar-surface {
+  display: grid;
+  place-items: center;
+  min-height: 110px;
+  border-radius: 18px;
+  border: 1px solid rgba(121, 165, 255, 0.1);
+  background:
+    radial-gradient(circle at 50% 16%, rgba(255, 255, 255, 0.08), transparent 18%),
+    linear-gradient(180deg, rgba(16, 26, 45, 0.96), rgba(7, 11, 20, 0.98)), rgba(8, 12, 22, 0.96);
+  overflow: hidden;
+}
+
+.rail-seat-card.has-priority .rail-seat-avatar-card {
+  border-color: rgba(247, 249, 255, 0.62);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 18px 40px rgba(3, 7, 12, 0.28),
+    0 0 34px rgba(121, 165, 255, 0.34),
+    0 0 56px rgba(255, 244, 221, 0.24);
+}
+
+.rail-seat-card.has-priority .rail-seat-avatar-card::before {
+  content: "";
+  position: absolute;
+  inset: -8px;
+  border-radius: 28px;
+  border: 1.5px solid rgba(248, 251, 255, 0.42);
+  background:
+    radial-gradient(circle at 50% 14%, rgba(255, 255, 255, 0.22), transparent 38%),
+    radial-gradient(circle at 50% 78%, rgba(121, 165, 255, 0.12), transparent 42%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(121, 165, 255, 0.05));
+  box-shadow:
+    0 0 28px rgba(121, 165, 255, 0.3),
+    0 0 50px rgba(255, 242, 214, 0.18),
+    0 0 72px rgba(255, 255, 255, 0.1);
+  opacity: 1;
+  pointer-events: none;
+  animation: rail-priority-pulse 1800ms ease-in-out infinite;
+}
+
+.rail-seat-card.has-priority .rail-seat-avatar-surface {
+  border-color: rgba(236, 243, 255, 0.4);
+  background:
+    radial-gradient(circle at 50% 14%, rgba(255, 255, 255, 0.24), transparent 18%),
+    radial-gradient(circle at 50% 72%, rgba(121, 165, 255, 0.2), transparent 28%),
+    linear-gradient(180deg, rgba(16, 26, 45, 0.96), rgba(7, 11, 20, 0.98)), rgba(8, 12, 22, 0.96);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.1),
+    inset 0 0 28px rgba(255, 255, 255, 0.05),
+    0 0 34px rgba(121, 165, 255, 0.24);
+}
+
+.rail-seat-card.has-priority .rail-seat-nameplate {
+  border-color: rgba(245, 228, 196, 0.42);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 0 24px rgba(121, 165, 255, 0.14);
+}
+
+.seat-avatar-glyph {
+  width: 92px;
+  height: 92px;
+}
+
+.seat-avatar-ring {
+  fill: none;
+  stroke: rgba(255, 244, 221, 0.16);
+  stroke-width: 4;
+}
+
+.seat-avatar-crest {
+  fill: rgba(29, 20, 16, 0.58);
+}
+
+.seat-avatar-eye {
+  fill: rgba(255, 247, 232, 0.92);
+}
+
+.seat-avatar-rune {
+  fill: rgba(255, 235, 204, 0.18);
+  stroke: rgba(255, 240, 214, 0.26);
+  stroke-width: 2;
+}
+
+@keyframes rail-priority-pulse {
+  0%,
+  100% {
+    opacity: 0.76;
+    transform: scale(0.992);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.022);
+  }
+}
+
+@keyframes active-turn-fog-breathe {
+  0%,
+  100% {
+    opacity: 0.78;
+    transform: scale(0.996);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.004);
+  }
+}
+
+@keyframes active-turn-ambient-shift {
+  0%,
+  100% {
+    opacity: 0.42;
+    transform: scale(0.997);
+  }
+
+  50% {
+    opacity: 0.56;
+    transform: scale(1.004);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rail-seat-card.has-priority .rail-seat-avatar-card::before {
+    animation: none;
+  }
+
+  .seat-panel.is-active-turn::before,
+  .seat-panel.is-active-turn::after {
+    animation: none;
+  }
+}
+
+.rail-seat-nameplate {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(236, 184, 128, 0.18);
+  background:
+    linear-gradient(180deg, rgba(255, 228, 196, 0.12), rgba(255, 228, 196, 0.05)),
+    rgba(39, 25, 21, 0.82);
+  color: rgba(255, 232, 204, 0.92);
+  font-family: "Trajan Pro 3", "Iowan Old Style", "Baskerville", serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.rail-seat-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.rail-seat-action {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(121, 165, 255, 0.16);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.015)),
+    rgba(8, 13, 24, 0.9);
+  color: #edf3ff;
+  font-weight: 700;
+  box-shadow: 0 12px 24px rgba(4, 8, 14, 0.22);
+}
+
+.rail-seat-action-primary {
+  border-color: rgba(240, 179, 93, 0.22);
+  background: linear-gradient(135deg, #f7ca7a 0%, #d88c43 100%);
+  color: #1f160f;
+}
+
+.rail-seat-action-danger {
+  border-color: rgba(217, 91, 113, 0.22);
+  background:
+    linear-gradient(135deg, rgba(255, 182, 193, 0.14), rgba(217, 91, 113, 0.18)),
+    rgba(26, 13, 20, 0.92);
+  color: #ffd7df;
+}
+
+.rail-seat-action-icon {
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.rail-stack-dock {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+}
+
+.stack-dock-frame {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 10px;
+  border: 1px solid rgba(121, 165, 255, 0.16);
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgba(36, 18, 33, 0.92), rgba(8, 12, 23, 0.96)), rgba(9, 14, 25, 0.96);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 18px 36px rgba(4, 8, 14, 0.24);
+}
+
+.stack-dock-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.stack-dock-rune,
+.stack-dock-count {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+}
+
+.stack-dock-rune {
+  border: 1px solid rgba(121, 165, 255, 0.16);
+  background: rgba(255, 255, 255, 0.04);
+  color: #f6d385;
+  font-size: 0.86rem;
+  box-shadow: 0 0 16px rgba(240, 179, 93, 0.12);
+}
+
+.stack-dock-count {
+  border: 1px solid rgba(217, 91, 113, 0.18);
+  background: rgba(23, 16, 28, 0.82);
+  color: #f5f1ff;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.stack-dock-body {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 130px;
+  border-radius: 20px;
+  border: 1px solid rgba(121, 165, 255, 0.12);
+  background:
+    radial-gradient(circle at 50% 18%, rgba(255, 255, 255, 0.08), transparent 20%),
+    linear-gradient(180deg, rgba(20, 16, 35, 0.72), rgba(8, 11, 20, 0.92)), rgba(10, 14, 24, 0.92);
+  overflow: hidden;
+}
+
+.stack-dock-layer,
+.stack-dock-sigil {
+  position: absolute;
+}
+
+.stack-dock-layer {
+  width: 68px;
+  height: 96px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 225, 177, 0.08);
+  background:
+    linear-gradient(180deg, rgba(121, 165, 255, 0.12), rgba(121, 165, 255, 0.04)),
+    rgba(16, 20, 34, 0.94);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.03),
+    0 18px 28px rgba(4, 8, 14, 0.22);
+}
+
+.stack-dock-layer.layer-back {
+  transform: translate(10px, -6px) rotate(8deg);
+  opacity: 0.38;
+}
+
+.stack-dock-layer.layer-mid {
+  transform: translate(4px, -2px) rotate(4deg);
+  opacity: 0.6;
+}
+
+.stack-dock-layer.layer-front {
+  opacity: 0.86;
+}
+
+.stack-dock-sigil {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255, 241, 207, 0.34), transparent 52%),
+    rgba(20, 12, 32, 0.42);
+  color: #9fbeff;
+  font-size: 1.15rem;
+  box-shadow:
+    0 0 18px rgba(121, 165, 255, 0.18),
+    inset 0 0 18px rgba(240, 179, 93, 0.08);
+}
+
+.stack-dock-caption {
+  display: grid;
+  gap: 3px;
+  justify-items: center;
+  text-align: center;
+}
+
+.stack-dock-caption p,
+.stack-dock-caption strong {
+  margin: 0;
+}
+
+.stack-dock-caption p {
+  color: #d6b480;
+  font-size: 0.52rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.stack-dock-caption strong {
+  font-size: 0.72rem;
+  line-height: 1.1;
 }
 
 .duel-table {
@@ -455,13 +876,40 @@ button {
   pointer-events: none;
 }
 
-.duel-table.handoff-pending::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 28px;
-  background: rgba(4, 7, 13, 0.32);
-  pointer-events: none;
+.stack-modal {
+  gap: 16px;
+}
+
+.stack-modal-hero {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 16px;
+  border: 1px solid rgba(121, 165, 255, 0.12);
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgba(121, 165, 255, 0.08), rgba(255, 255, 255, 0.02)),
+    rgba(8, 13, 24, 0.78);
+}
+
+.stack-modal-hero strong,
+.stack-modal-hero p {
+  margin: 0;
+}
+
+.stack-modal-rune {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border: 1px solid rgba(240, 179, 93, 0.2);
+  background:
+    radial-gradient(circle at 50% 50%, rgba(240, 179, 93, 0.18), transparent 62%),
+    rgba(19, 14, 24, 0.9);
+  color: #f6d385;
+  font-size: 1.2rem;
+  box-shadow: 0 0 22px rgba(240, 179, 93, 0.12);
 }
 
 .table-centerline {
@@ -782,12 +1230,60 @@ button {
   background: transparent;
 }
 
-.seat-panel.active {
-  box-shadow: none;
+.seat-panel.is-active-turn::before {
+  content: "";
+  position: absolute;
+  inset: 4px 6px 6px;
+  z-index: 0;
+  border-radius: 30px;
+  background:
+    radial-gradient(circle at 12% 18%, rgba(255, 255, 255, 0.34), transparent 18%),
+    radial-gradient(circle at 86% 18%, rgba(121, 165, 255, 0.42), transparent 22%),
+    radial-gradient(circle at 18% 82%, rgba(88, 216, 208, 0.36), transparent 22%),
+    radial-gradient(circle at 84% 80%, rgba(255, 244, 221, 0.3), transparent 20%),
+    radial-gradient(circle at 50% 18%, rgba(121, 165, 255, 0.28), transparent 30%),
+    radial-gradient(circle at 50% 82%, rgba(88, 216, 208, 0.22), transparent 28%),
+    radial-gradient(circle at 50% 50%, rgba(121, 165, 255, 0.16), transparent 48%);
+  filter: blur(18px);
+  opacity: 1;
+  animation: active-turn-fog-breathe 2200ms ease-in-out infinite;
+  pointer-events: none;
 }
 
-.seat-panel.priority {
-  box-shadow: none;
+.seat-panel.is-active-turn::after {
+  content: "";
+  position: absolute;
+  inset: 10px 12px 12px;
+  z-index: 0;
+  border-radius: 32px;
+  background:
+    radial-gradient(circle at 16% 22%, rgba(255, 255, 255, 0.28), transparent 14%),
+    radial-gradient(circle at 82% 24%, rgba(121, 165, 255, 0.36), transparent 16%),
+    radial-gradient(circle at 24% 76%, rgba(88, 216, 208, 0.3), transparent 16%),
+    radial-gradient(circle at 78% 78%, rgba(255, 244, 221, 0.22), transparent 14%),
+    radial-gradient(circle at 50% 50%, rgba(121, 165, 255, 0.26), transparent 44%),
+    radial-gradient(circle at 50% 52%, rgba(255, 255, 255, 0.1), transparent 56%),
+    linear-gradient(
+      180deg,
+      rgba(121, 165, 255, 0.28),
+      rgba(121, 165, 255, 0.12) 18%,
+      rgba(121, 165, 255, 0.04) 34%,
+      rgba(88, 216, 208, 0.04) 66%,
+      rgba(88, 216, 208, 0.14) 82%,
+      rgba(88, 216, 208, 0.26)
+    );
+  box-shadow:
+    inset 0 0 160px rgba(121, 165, 255, 0.14),
+    inset 0 0 130px rgba(88, 216, 208, 0.1);
+  filter: blur(20px);
+  opacity: 1;
+  animation: active-turn-ambient-shift 2400ms ease-in-out infinite;
+  pointer-events: none;
+}
+
+.seat-panel > * {
+  position: relative;
+  z-index: 1;
 }
 
 .seat-top {
@@ -873,12 +1369,13 @@ button {
 
 .opponent-hand-fan {
   position: absolute;
-  top: 28px;
+  top: 4px;
   left: 50%;
   z-index: 3;
-  width: min(34rem, calc(100% - 14rem));
-  height: 0;
+  width: min(72rem, calc(100% - 14rem));
+  height: 72px;
   pointer-events: none;
+  overflow: visible;
   transform: translateX(-50%);
 }
 
@@ -888,13 +1385,25 @@ button {
   left: 50%;
   z-index: var(--hidden-hand-depth, 1);
   transform-origin: center top;
+  pointer-events: auto;
+  transition:
+    transform 180ms ease,
+    filter 180ms ease;
   transform: translateX(calc(-50% + var(--hidden-hand-x, 0px)))
-    translateY(calc(-72px + var(--hidden-hand-y, 0px))) rotate(var(--hidden-hand-angle, 0deg));
+    translateY(var(--hidden-hand-y, -186px)) rotate(var(--hidden-hand-angle, 0deg));
+}
+
+.opponent-hand-card-shell:hover {
+  filter: brightness(1.04) saturate(1.03);
+  transform: translateX(
+      calc(-50% + var(--hidden-hand-x, 0px) + var(--hidden-hand-hover-shift, 0px))
+    )
+    translateY(var(--hidden-hand-y, -186px)) rotate(var(--hidden-hand-angle, 0deg));
 }
 
 .opponent-hand-card-shell .card-back {
-  width: 70px;
-  height: 98px;
+  width: 152px;
+  height: 224px;
   opacity: 0.96;
   box-shadow:
     inset 0 0 0 1px rgba(255, 225, 177, 0.06),
@@ -911,31 +1420,36 @@ button {
   align-items: stretch;
   min-height: 0;
   height: 100%;
-  padding-top: 26px;
-  padding-right: 98px;
+  padding-top: 8px;
+  padding-left: 144px;
+  padding-right: 112px;
 }
 
 .seat-panel.has-spotlight .seat-zones {
-  padding-top: 84px;
+  padding-top: 68px;
 }
 
 .seat-top .seat-zones {
-  padding-top: 58px;
+  padding-top: 40px;
 }
 
 .seat-top.has-spotlight .seat-zones {
-  padding-top: 104px;
+  padding-top: 86px;
+}
+
+.seat-spotlight-strip {
+  left: 144px;
 }
 
 .zone-rail {
   position: absolute;
   top: 0;
-  right: 0;
+  right: 2px;
   bottom: 0;
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  width: 88px;
+  width: 94px;
   overflow: visible;
   transition:
     opacity 180ms ease,
@@ -952,11 +1466,14 @@ button {
 .zone-rail-content {
   position: relative;
   display: grid;
-  gap: 10px;
-  width: 88px;
-  align-content: center;
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+  gap: 0;
+  width: 94px;
+  height: 100%;
+  align-content: stretch;
+  align-items: center;
   justify-items: center;
-  padding-block: 2px;
+  padding-block: 8px;
 }
 
 .battlefield-lane,
@@ -966,9 +1483,11 @@ button {
 
 .card-pile {
   display: grid;
-  gap: 6px;
   justify-items: center;
-  width: 88px;
+  align-items: center;
+  width: 86px;
+  height: 100%;
+  min-height: 0;
   padding: 0;
   border: 0;
   background: transparent;
@@ -980,6 +1499,11 @@ button {
   position: relative;
   width: 78px;
   height: 108px;
+}
+
+.card-pile-visual {
+  position: absolute;
+  inset: 0;
 }
 
 .card-pile-layer,
@@ -997,12 +1521,12 @@ button {
 }
 
 .card-pile-layer.layer-back {
-  transform: translate(8px, -6px) rotate(4deg);
+  transform: translate(6px, -5px) rotate(3.2deg);
   opacity: 0.42;
 }
 
 .card-pile-layer.layer-mid {
-  transform: translate(4px, -3px) rotate(2.2deg);
+  transform: translate(3px, -2px) rotate(1.8deg);
   opacity: 0.56;
 }
 
@@ -1013,6 +1537,146 @@ button {
 
 .card-pile-card {
   z-index: 2;
+}
+
+.card-pile-empty {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  border-radius: 14px;
+}
+
+.card-pile-empty-frame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 225, 177, 0.08);
+  background:
+    radial-gradient(circle at 50% 20%, rgba(255, 255, 255, 0.08), transparent 24%),
+    linear-gradient(180deg, rgba(14, 18, 28, 0.42), rgba(7, 10, 17, 0.72)), rgba(6, 10, 18, 0.82);
+  box-shadow:
+    inset 0 0 0 1px rgba(14, 20, 31, 0.58),
+    inset 0 0 18px rgba(0, 0, 0, 0.18);
+}
+
+.card-pile-empty-sigil {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  opacity: 0.48;
+}
+
+.card-pile-empty.kind-graveyard .card-pile-empty-frame {
+  background:
+    radial-gradient(circle at 50% 26%, rgba(231, 238, 255, 0.08), transparent 18%),
+    linear-gradient(180deg, rgba(34, 37, 48, 0.34), rgba(10, 12, 18, 0.8)), rgba(8, 11, 18, 0.84);
+}
+
+.card-pile-empty.kind-graveyard .card-pile-empty-sigil {
+  width: 36px;
+  height: 56px;
+  bottom: 8px;
+  border-radius: 18px 18px 8px 8px;
+  background:
+    linear-gradient(180deg, rgba(214, 221, 238, 0.42), rgba(133, 145, 169, 0.26)),
+    rgba(95, 105, 126, 0.18);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 8px 18px rgba(0, 0, 0, 0.14);
+}
+
+.card-pile-empty.kind-graveyard .card-pile-empty-sigil::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 9px;
+  width: 2px;
+  height: 16px;
+  border-radius: 999px;
+  background: rgba(238, 243, 255, 0.48);
+  transform: translateX(-50%);
+}
+
+.card-pile-empty.kind-graveyard .card-pile-empty-sigil::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 14px;
+  width: 12px;
+  height: 2px;
+  border-radius: 999px;
+  background: rgba(238, 243, 255, 0.48);
+  transform: translateX(-50%);
+}
+
+.card-pile-empty.kind-exile .card-pile-empty-frame {
+  background:
+    radial-gradient(circle at 50% 22%, rgba(215, 224, 255, 0.18), transparent 22%),
+    radial-gradient(circle at 50% 50%, rgba(122, 106, 214, 0.1), transparent 46%),
+    linear-gradient(180deg, rgba(28, 16, 44, 0.34), rgba(7, 7, 14, 0.84)), rgba(8, 8, 16, 0.88);
+}
+
+.card-pile-empty.kind-exile .card-pile-empty-sigil {
+  position: absolute;
+  top: 38%;
+  left: 50%;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  opacity: 0.8;
+  transform: translate(-50%, -50%);
+  background:
+    radial-gradient(
+      circle at 50% 50%,
+      rgba(255, 252, 244, 0.95) 0 10%,
+      rgba(214, 228, 255, 0.86) 11%,
+      rgba(130, 183, 255, 0.52) 23%,
+      transparent 36%
+    ),
+    radial-gradient(
+      ellipse at 50% 50%,
+      rgba(175, 149, 255, 0.34) 26%,
+      rgba(102, 97, 214, 0.22) 46%,
+      transparent 70%
+    ),
+    conic-gradient(
+      from 12deg,
+      rgba(0, 0, 0, 0) 0deg 28deg,
+      rgba(196, 188, 255, 0.22) 28deg 46deg,
+      rgba(0, 0, 0, 0) 46deg 146deg,
+      rgba(149, 173, 255, 0.18) 146deg 165deg,
+      rgba(0, 0, 0, 0) 165deg 360deg
+    );
+  box-shadow:
+    0 0 24px rgba(120, 112, 255, 0.26),
+    0 0 12px rgba(183, 188, 255, 0.16);
+}
+
+.card-pile-empty.kind-exile .card-pile-empty-sigil::before {
+  content: "";
+  position: absolute;
+  inset: -5px;
+  border-radius: 999px;
+  border: 1px solid rgba(198, 194, 255, 0.22);
+  opacity: 0.84;
+  box-shadow:
+    0 0 8px rgba(171, 182, 255, 0.16),
+    inset 0 0 10px rgba(141, 129, 255, 0.08);
+}
+
+.card-pile-empty.kind-exile .card-pile-empty-sigil::after {
+  content: "";
+  position: absolute;
+  inset: -12px;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.18) 0 3%, transparent 4%),
+    radial-gradient(circle at 24% 34%, rgba(203, 212, 255, 0.2) 0 1.8%, transparent 2.2%),
+    radial-gradient(circle at 76% 28%, rgba(193, 176, 255, 0.18) 0 1.6%, transparent 2%),
+    radial-gradient(circle at 64% 78%, rgba(165, 188, 255, 0.14) 0 1.5%, transparent 1.9%);
+  opacity: 0.72;
 }
 
 .card-pile.kind-library .card-pile-layer {
@@ -1032,7 +1696,10 @@ button {
     0 0 0 1px rgba(121, 165, 255, 0.2);
 }
 
-.card-pile-meta {
+.card-pile-counter {
+  position: absolute;
+  left: 50%;
+  bottom: 8px;
   display: inline-flex;
   gap: 6px;
   align-items: center;
@@ -1050,15 +1717,22 @@ button {
   font-size: 0.58rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
+  transform: translateX(-50%);
+  z-index: 4;
 }
 
-.card-pile-glyph {
+.seat-top .card-pile-counter {
+  top: 8px;
+  bottom: auto;
+}
+
+.card-pile-counter-glyph {
   color: rgba(214, 180, 128, 0.76);
   font-size: 0.66rem;
   line-height: 1;
 }
 
-.card-pile-meta strong {
+.card-pile-counter strong {
   font-size: 0.72rem;
   line-height: 1;
 }
@@ -1068,6 +1742,9 @@ button {
   --back-rim-soft: rgba(102, 123, 206, 0.26);
   --back-oval-top: #b9773e;
   --back-oval-bottom: #8a552c;
+  --back-oval-width: 71%;
+  --back-oval-height: 73%;
+  --back-oval-margin-top: 10px;
   --back-frame-light: #816142;
   --back-frame-mid: #5a3b27;
   --back-frame-dark: #26170f;
@@ -1091,6 +1768,9 @@ button {
 }
 
 .card-back.variant-hidden-hand {
+  --back-oval-width: 80%;
+  --back-oval-height: 82%;
+  --back-oval-margin-top: 4px;
   transform: rotate(var(--hand-angle, 0deg));
   transform-origin: center bottom;
 }
@@ -1173,30 +1853,30 @@ button {
 }
 
 .card-back-corner-tl {
-  top: 7px;
-  left: 7px;
+  top: 5px;
+  left: 5px;
 }
 
 .card-back-corner-tr {
-  top: 7px;
-  right: 7px;
+  top: 5px;
+  right: 5px;
 }
 
 .card-back-corner-bl {
-  bottom: 17px;
-  left: 7px;
+  bottom: 5px;
+  left: 5px;
 }
 
 .card-back-corner-br {
-  bottom: 17px;
-  right: 7px;
+  bottom: 5px;
+  right: 5px;
 }
 
 .card-back-oval {
   position: relative;
-  width: 80%;
-  height: 82%;
-  margin: 4px auto 0;
+  width: var(--back-oval-width);
+  height: var(--back-oval-height);
+  margin: var(--back-oval-margin-top) auto 0;
   border: 2px solid var(--back-rim);
   border-radius: 999px;
   background:
@@ -1228,41 +1908,48 @@ button {
 }
 
 .card-back-gems span:nth-child(1) {
-  top: 28%;
+  top: 31%;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%);
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.98), rgba(236, 222, 170, 0.98)),
+    rgba(236, 222, 170, 0.96);
 }
 
 .card-back-gems span:nth-child(2) {
   top: 42%;
-  right: 31%;
+  left: 65.2%;
+  transform: translate(-50%, -50%);
   background:
     radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.92), rgba(86, 134, 236, 0.96)),
     rgba(86, 134, 236, 0.94);
 }
 
 .card-back-gems span:nth-child(3) {
-  bottom: 34%;
-  right: 38%;
+  top: 56.4%;
+  left: 61.7%;
+  transform: translate(-50%, -50%);
   background:
-    radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.92), rgba(36, 168, 106, 0.96)),
-    rgba(36, 168, 106, 0.94);
+    radial-gradient(circle at 30% 30%, rgba(166, 164, 178, 0.96), rgba(62, 61, 78, 0.98)),
+    rgba(62, 61, 78, 0.96);
 }
 
 .card-back-gems span:nth-child(4) {
-  bottom: 34%;
-  left: 38%;
+  top: 56.4%;
+  left: 38.3%;
+  transform: translate(-50%, -50%);
   background:
-    radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.92), rgba(206, 189, 107, 0.96)),
-    rgba(206, 189, 107, 0.94);
+    radial-gradient(circle at 30% 30%, rgba(255, 219, 192, 0.94), rgba(200, 80, 42, 0.98)),
+    rgba(200, 80, 42, 0.96);
 }
 
 .card-back-gems span:nth-child(5) {
   top: 42%;
-  left: 31%;
+  left: 34.8%;
+  transform: translate(-50%, -50%);
   background:
-    radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.92), rgba(62, 61, 78, 0.96)),
-    rgba(62, 61, 78, 0.94);
+    radial-gradient(circle at 30% 30%, rgba(214, 244, 214, 0.94), rgba(36, 168, 106, 0.98)),
+    rgba(36, 168, 106, 0.96);
 }
 
 .card-back-plaque {
@@ -1306,13 +1993,19 @@ button {
   padding-bottom: 2px;
 }
 
+.seat-top .opponent-hand-card-shell .card-back {
+  transform: rotate(180deg);
+  transform-origin: center center;
+}
+
+.seat-top .card-pile-visual {
+  transform: rotate(180deg);
+  transform-origin: center center;
+}
+
 .seat-bottom .battlefield-lane {
   justify-content: flex-end;
   padding-top: 4px;
-  padding-bottom: clamp(18px, 2.8dvh, 32px);
-}
-
-.seat-bottom.tray-open .battlefield-lane {
   padding-bottom: clamp(18px, 2.8dvh, 32px);
 }
 
@@ -1344,6 +2037,7 @@ button {
   position: absolute;
   inset: 0;
   min-height: 100%;
+  pointer-events: none;
 }
 
 .battlefield-empty-rune {
@@ -1363,6 +2057,10 @@ button {
   touch-action: none;
 }
 
+.seat-top .battlefield-card-shell {
+  transform: translate(-50%, -50%) rotate(180deg);
+}
+
 .battlefield-card-shell:hover {
   z-index: 4;
 }
@@ -1370,6 +2068,10 @@ button {
 .battlefield-card-shell.selected {
   z-index: 6;
   transform: translate(-50%, calc(-50% - 4px));
+}
+
+.seat-top .battlefield-card-shell.selected {
+  transform: translate(-50%, calc(-50% - 4px)) rotate(180deg);
 }
 
 .battlefield-card-shell.draggable {
@@ -1386,16 +2088,53 @@ button {
   bottom: 0;
   left: 50%;
   z-index: var(--hand-depth, 1);
+  cursor: grab;
   transform-origin: center bottom;
   transform: translateX(calc(-50% + var(--hand-x, 0px))) translateY(var(--hand-y, 0px));
   transition:
     transform 180ms ease,
     filter 180ms ease;
+  user-select: none;
+  -webkit-user-drag: element;
+  -webkit-user-select: none;
+  touch-action: none;
   pointer-events: auto;
+}
+
+.card-drag-shell * {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.card-drag-shell .game-card {
+  cursor: inherit;
+  -webkit-user-drag: element;
 }
 
 .hand-card-shell {
   margin-left: 0;
+}
+
+.hand-card-shell.dragging {
+  position: fixed;
+  left: var(--pointer-drag-x, 50%);
+  top: var(--pointer-drag-y, 50%);
+  bottom: auto;
+  z-index: 40;
+  opacity: 1;
+  pointer-events: none;
+  filter: drop-shadow(0 18px 36px rgba(4, 8, 14, 0.34));
+  transform: translate(-50%, -50%) scale(1.08) !important;
+  transition: none;
+}
+
+.hand-card-shell.dragging .game-card {
+  cursor: grabbing;
+}
+
+.hand-card-shell.dragging .mode-hand {
+  filter: saturate(1.04) brightness(1.02);
+  transform: rotate(0deg) !important;
 }
 
 .lane-quick-actions {
@@ -1403,7 +2142,7 @@ button {
   flex-wrap: wrap;
   gap: 6px;
   position: absolute;
-  left: 0;
+  left: 144px;
   right: 94px;
   bottom: 0;
   z-index: 3;
@@ -1416,7 +2155,7 @@ button {
   gap: 6px;
   align-items: flex-end;
   position: absolute;
-  left: 0;
+  left: 144px;
   right: 94px;
   bottom: 34px;
   z-index: 2;
@@ -1453,14 +2192,6 @@ button {
   overflow: visible;
 }
 
-.seat-bottom.tray-open .seat-ops {
-  bottom: 0;
-}
-
-.seat-bottom.tray-closed .seat-ops {
-  bottom: 0;
-}
-
 .seat-module {
   border: 1px solid var(--edge);
   border-radius: 24px;
@@ -1480,26 +2211,8 @@ button {
   gap: 2px;
   max-height: none;
   overflow: visible;
-  overflow: visible;
   padding-top: 0;
   opacity: 1;
-  transform: translateY(0);
-  transition:
-    max-height 240ms ease,
-    transform 220ms ease,
-    margin-top 220ms ease;
-}
-
-.hand-drawer.collapsed .hand-drawer-body {
-  max-height: none;
-  margin-top: 0;
-  transform: translateY(0);
-}
-
-.hand-drawer.collapsed .seat-privacy-guard,
-.hand-drawer.collapsed .unsupported-drawer,
-.hand-drawer.collapsed .prompt-private {
-  display: none;
 }
 
 .seat-button {
@@ -1528,11 +2241,6 @@ button {
   padding-inline: 0;
 }
 
-.hand-drawer.collapsed .hand-fan {
-  min-height: 0;
-  height: 0;
-}
-
 .support-module {
   align-content: start;
   padding-top: 0;
@@ -1543,25 +2251,6 @@ button {
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.03);
   overflow: hidden;
-}
-
-.seat-privacy-guard {
-  display: grid;
-  gap: 12px;
-  place-items: center;
-  min-height: 9rem;
-  padding: 16px;
-  border: 1px dashed rgba(121, 165, 255, 0.22);
-  border-radius: 22px;
-  background:
-    linear-gradient(180deg, rgba(121, 165, 255, 0.06), rgba(255, 255, 255, 0.02)),
-    rgba(255, 255, 255, 0.02);
-  text-align: center;
-}
-
-.seat-privacy-guard .muted {
-  margin: 0;
-  max-width: 22rem;
 }
 
 .seat-drawer-summary {
@@ -2127,6 +2816,10 @@ button {
   transform: translateY(-6px);
 }
 
+.seat-top .mode-battlefield.interactive:hover {
+  transform: translateY(6px);
+}
+
 .game-card.tapped {
   transform: rotate(90deg) translateY(6px);
   transform-origin: center center;
@@ -2429,37 +3122,6 @@ button {
   font-weight: 700;
 }
 
-.handoff-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 4;
-  display: grid;
-  place-items: center;
-  padding: 24px;
-}
-
-.handoff-card {
-  width: min(30rem, 100%);
-  padding: 24px;
-  border: 1px solid rgba(240, 179, 93, 0.2);
-  border-radius: 28px;
-  background:
-    linear-gradient(180deg, rgba(14, 22, 38, 0.98), rgba(8, 14, 24, 0.99)), var(--surface-strong);
-  box-shadow: var(--shadow-xl);
-}
-
-.handoff-card h2 {
-  margin: 0;
-  font-family: "Trajan Pro 3", "Iowan Old Style", "Baskerville", serif;
-  font-size: clamp(1.8rem, 3vw, 2.5rem);
-  letter-spacing: -0.02em;
-  text-transform: uppercase;
-}
-
-.handoff-copy {
-  margin-bottom: 20px;
-}
-
 .zone-portal-button {
   display: block;
   padding: 0;
@@ -2499,6 +3161,26 @@ button {
     grid-template-rows: minmax(0, 1fr) auto minmax(0, 1fr);
   }
 
+  .table-layout {
+    gap: 0;
+  }
+
+  .duel-side-rail {
+    top: 10px;
+    left: 10px;
+    bottom: 10px;
+    width: 112px;
+  }
+
+  .rail-seat-avatar-surface {
+    min-height: 98px;
+  }
+
+  .seat-avatar-glyph {
+    width: 82px;
+    height: 82px;
+  }
+
   .table-stack-overlay {
     top: auto;
     left: 10px;
@@ -2508,16 +3190,17 @@ button {
   }
 
   .seat-zones {
-    padding-right: 84px;
+    padding-right: 96px;
   }
 
   .opponent-hand-fan {
-    width: min(26rem, calc(100% - 10rem));
+    top: 8px;
+    width: min(48rem, calc(100% - 10rem));
   }
 
   .opponent-hand-card-shell .card-back {
-    width: 62px;
-    height: 88px;
+    width: 100px;
+    height: 160px;
   }
 
   .battlefield-strip {
@@ -2595,6 +3278,61 @@ button {
 }
 
 @media (max-width: 760px) {
+  .table-layout {
+    gap: 0;
+  }
+
+  .duel-side-rail {
+    top: 8px;
+    left: 8px;
+    bottom: 8px;
+    width: 96px;
+  }
+
+  .rail-seat-stats {
+    gap: 6px;
+  }
+
+  .rail-seat-counter {
+    min-width: 40px;
+    min-height: 26px;
+    padding: 0 8px;
+  }
+
+  .rail-seat-counter strong {
+    font-size: 0.72rem;
+  }
+
+  .rail-counter-glyph {
+    width: 13px;
+    height: 13px;
+  }
+
+  .rail-seat-avatar-surface {
+    min-height: 88px;
+  }
+
+  .seat-avatar-glyph {
+    width: 72px;
+    height: 72px;
+  }
+
+  .rail-seat-nameplate {
+    min-height: 24px;
+    font-size: 0.58rem;
+    padding: 0 8px;
+  }
+
+  .rail-seat-action {
+    min-height: 30px;
+    padding: 0 8px;
+    font-size: 0.72rem;
+  }
+
+  .stack-dock-body {
+    height: 110px;
+  }
+
   .seat-banner {
     align-items: flex-start;
     flex-direction: column;
@@ -2628,6 +3366,7 @@ button {
   }
 
   .seat-zones {
+    padding-left: 104px;
     padding-right: 0;
   }
 
@@ -2636,14 +3375,21 @@ button {
     padding-top: 44px;
   }
 
+  .seat-spotlight-strip,
+  .lane-quick-actions,
+  .battlefield-console {
+    left: 104px;
+  }
+
   .opponent-hand-fan {
-    top: 42px;
-    width: min(20rem, calc(100% - 6rem));
+    top: 10px;
+    width: min(32rem, calc(100% - 6rem));
+    height: 54px;
   }
 
   .opponent-hand-card-shell .card-back {
-    width: 54px;
-    height: 76px;
+    width: 100px;
+    height: 160px;
   }
 
   .zone-rail {

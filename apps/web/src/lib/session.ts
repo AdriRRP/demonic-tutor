@@ -230,7 +230,7 @@ class HostArenaSession implements ArenaSession {
     this.client = client;
     this.infoState = {
       inviteUrl,
-      localSeatId: null,
+      localSeatId: seatForRole(initialState, "host"),
       role: "host",
       roomId,
       transport,
@@ -349,8 +349,7 @@ class HostArenaSession implements ArenaSession {
   }
 
   private refreshLocalSeatId(): void {
-    this.infoState.localSeatId =
-      this.remotePeerIds.size > 0 ? seatForRole(this.stateCache, "host") : null;
+    this.infoState.localSeatId = seatForRole(this.stateCache, "host");
   }
 
   private setRemotePeers(peerIds: Set<string>): void {

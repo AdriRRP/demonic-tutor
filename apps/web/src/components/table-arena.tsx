@@ -1,5 +1,5 @@
-import { For, Match, Show, Switch, createEffect, createSignal } from "solid-js";
-import type { Component } from "solid-js";
+import { For, Match, Show, Switch, createEffect, createSignal, onCleanup, untrack } from "solid-js";
+import type { Component, JSX } from "solid-js";
 import { GameCard } from "./cards/game-card";
 import { CardBack } from "./cards/card-back";
 import { CardPile } from "./cards/card-pile";
@@ -42,11 +42,8 @@ interface TableArenaProps {
   onCopyInviteLink?: (() => void) | undefined;
   state: ArenaState;
   sessionInfo: ArenaSessionInfo | null;
-  revealedSeatId: string | null;
-  pendingHandoffPlayerId: string | null;
   selectedAttackers: string[];
   blockerAssignments: Record<string, string>;
-  onToggleSeatPrivacy: (playerId: string) => void;
   onToggleAttackerSelection: (cardId: string) => void;
   onSetBlockerAssignment: (blockerId: string, attackerId: string) => void;
   onRun: (operation: (current: ArenaCommandTarget) => Promise<ArenaState>) => void;
@@ -88,22 +85,35 @@ interface BattlefieldLayoutPoint {
   y: number;
 }
 
+interface HandPointerDragState {
+  active: boolean;
+  cardId: string;
+  clientX: number;
+  clientY: number;
+}
+
 export const TableArena: Component<TableArenaProps> = (props) => {
-  const liveViewer = () =>
-    props.state.viewers.find((viewer) => viewer.player_id === props.revealedSeatId) ??
-    props.state.viewers.find((viewer) => viewer.is_priority_holder) ??
-    props.state.viewers.find((viewer) => viewer.is_active) ??
+  const bottomViewer = () =>
+    props.state.viewers.find((viewer) => viewer.player_id === props.sessionInfo?.localSeatId) ??
     props.state.viewers[0];
-  const bottomViewer = () => liveViewer();
   const topViewer = () =>
     props.state.viewers.find((viewer) => viewer.player_id !== bottomViewer()?.player_id) ??
     bottomViewer();
-  const [handTrayOpen, setHandTrayOpen] = createSignal(true);
-  const [zonesOpen, setZonesOpen] = createSignal(true);
+  const bottomPlayer = () => findPlayer(props.state.game, bottomViewer()?.player_id ?? "");
+  const topPlayer = () => findPlayer(props.state.game, topViewer()?.player_id ?? "");
+  const bottomPassAction = () => {
+    const viewer = bottomViewer();
+    return viewer ? findAction(viewer, "PassPriority") : undefined;
+  };
+  const bottomConcedeAction = () => {
+    const viewer = bottomViewer();
+    return viewer ? findAction(viewer, "Concede") : undefined;
+  };
   const [sidebarOpen, setSidebarOpen] = createSignal(false);
   const [zoneBrowser, setZoneBrowser] = createSignal<ZoneBrowserState>(null);
   const [inspectedCard, setInspectedCard] = createSignal<InspectCardState | null>(null);
   const [draggedCardId, setDraggedCardId] = createSignal<string | null>(null);
+  const [stackModalOpen, setStackModalOpen] = createSignal(false);
   const zoneBrowserPlayer = () => {
     const browser = zoneBrowser();
     if (!browser) {
@@ -150,6 +160,12 @@ export const TableArena: Component<TableArenaProps> = (props) => {
     }
   };
 
+  createEffect(() => {
+    if (props.state.game.stack.length === 0) {
+      setStackModalOpen(false);
+    }
+  });
+
   return (
     <div class="table-shell">
       <header class="arena-cockpit panel">
@@ -181,24 +197,10 @@ export const TableArena: Component<TableArenaProps> = (props) => {
         <div class="arena-cockpit-hud">
           <TurnRune turnNumber={props.state.game.turn_number} />
           <PhaseTrack currentPhase={props.state.game.phase} />
-          <div class="arena-seat-signals">
-            <SeatStateGlyph
-              icon="active"
-              playerId={props.state.game.active_player_id}
-              title="Active player"
-              tone="ember"
-            />
-            <SeatStateGlyph
-              icon="priority"
-              playerId={props.state.game.priority_holder}
-              title="Priority holder"
-              tone="night"
-            />
-          </div>
         </div>
 
         <div class="arena-cockpit-actions">
-          <Show when={liveViewer()}>
+          <Show when={bottomViewer()}>
             {(viewer) => (
               <MetaRune
                 icon="seat"
@@ -221,26 +223,6 @@ export const TableArena: Component<TableArenaProps> = (props) => {
               <HudIcon icon="room" />
             </button>
           </Show>
-          <button
-            aria-label="Toggle hand tray"
-            class="hero-button hero-button-ghost mini-button rune-button"
-            title="Toggle hand tray"
-            onClick={() => {
-              setHandTrayOpen((open) => !open);
-            }}
-          >
-            <HudIcon icon="hand" />
-          </button>
-          <button
-            aria-label="Toggle zone rail"
-            class="hero-button hero-button-ghost mini-button rune-button"
-            title="Toggle zone rail"
-            onClick={() => {
-              setZonesOpen((open) => !open);
-            }}
-          >
-            <HudIcon icon="zones" />
-          </button>
           <button
             aria-label="Open replay log"
             class="hero-button hero-button-ghost mini-button rune-button"
@@ -269,49 +251,109 @@ export const TableArena: Component<TableArenaProps> = (props) => {
           classList={{
             "duel-table": true,
             panel: true,
-            "handoff-pending": Boolean(props.pendingHandoffPlayerId),
           }}
         >
-          <Show when={props.state.game.stack.length > 0}>
-            <aside class="table-stack-overlay">
-              <div class="table-stack-well">
-                <div class="table-well-head">
-                  <div>
-                    <p class="label">Stack</p>
-                    <h2>Resolve lane</h2>
-                  </div>
-                  <span class="chip chip-night">
-                    {`${String(props.state.game.stack.length)} objects`}
-                  </span>
-                </div>
-                <StackView stack={props.state.game.stack} />
-              </div>
-            </aside>
-          </Show>
+          <aside class="duel-side-rail">
+            <div class="duel-side-rail-slot duel-side-rail-slot-top">
+              <Show when={topViewer() && topPlayer()}>
+                {(player) => (
+                  <RailSeatCard
+                    handCount={player().hand_count}
+                    life={player().life}
+                    name={formatPlayerDisplayName(player().player_id)}
+                    orientation="top"
+                    playerId={player().player_id}
+                    priority={topViewer()?.is_priority_holder ?? false}
+                  />
+                )}
+              </Show>
+            </div>
+
+            <div class="duel-side-rail-slot duel-side-rail-slot-stack">
+              <Show when={props.state.game.stack.length > 0}>
+                <button
+                  aria-label={`Open stack with ${String(props.state.game.stack.length)} objects`}
+                  class="rail-stack-dock"
+                  title="Open stack"
+                  type="button"
+                  onClick={() => {
+                    setStackModalOpen(true);
+                  }}
+                >
+                  <StackDock
+                    count={props.state.game.stack.length}
+                    topObject={props.state.game.stack.at(-1)}
+                  />
+                </button>
+              </Show>
+            </div>
+
+            <div class="duel-side-rail-slot duel-side-rail-slot-bottom">
+              <Show when={bottomViewer() && bottomPlayer()}>
+                {(player) => (
+                  <RailSeatCard
+                    actions={
+                      <>
+                        <Show when={bottomConcedeAction()}>
+                          <button
+                            class="rail-seat-action rail-seat-action-danger"
+                            type="button"
+                            onClick={() => {
+                              const playerId = player().player_id;
+                              props.onRun((current) => concede(current, playerId));
+                            }}
+                          >
+                            <span class="rail-seat-action-icon" aria-hidden="true">
+                              ⦸
+                            </span>
+                            <span>Concede</span>
+                          </button>
+                        </Show>
+                        <Show when={bottomPassAction()}>
+                          <button
+                            class="rail-seat-action rail-seat-action-primary"
+                            type="button"
+                            onClick={() => {
+                              const playerId = player().player_id;
+                              props.onRun((current) => passPriority(current, playerId));
+                            }}
+                          >
+                            <span class="rail-seat-action-icon" aria-hidden="true">
+                              ⇢
+                            </span>
+                            <span>Pass</span>
+                          </button>
+                        </Show>
+                      </>
+                    }
+                    handCount={player().hand_count}
+                    life={player().life}
+                    name={formatPlayerDisplayName(player().player_id)}
+                    orientation="bottom"
+                    playerId={player().player_id}
+                    priority={bottomViewer()?.is_priority_holder ?? false}
+                  />
+                )}
+              </Show>
+            </div>
+          </aside>
 
           <Show when={topViewer()}>
             {(viewer) => (
               <SeatPanel
                 blockerAssignments={props.blockerAssignments}
                 game={props.state.game}
-                needsHandoff={props.pendingHandoffPlayerId === viewer().player_id}
                 onRun={props.onRun}
                 onSetBlockerAssignment={props.onSetBlockerAssignment}
                 onToggleAttackerSelection={props.onToggleAttackerSelection}
-                onToggleSeatPrivacy={props.onToggleSeatPrivacy}
-                onToggleZones={() => {
-                  setZonesOpen((open) => !open);
-                }}
                 onInspectCard={setInspectedCard}
                 onOpenZoneBrowser={setZoneBrowser}
                 onDragHandCard={setDraggedCardId}
                 inspectedCardId={inspectedCard()?.sourceCardId ?? null}
                 orientation="top"
-                revealed={props.state.game.is_over || props.revealedSeatId === viewer().player_id}
                 selectedAttackers={props.selectedAttackers}
                 viewer={viewer()}
                 draggedHandCardId={draggedCardId()}
-                zonesOpen={zonesOpen()}
               />
             )}
           </Show>
@@ -331,17 +373,9 @@ export const TableArena: Component<TableArenaProps> = (props) => {
               <SeatPanel
                 blockerAssignments={props.blockerAssignments}
                 game={props.state.game}
-                needsHandoff={props.pendingHandoffPlayerId === viewer().player_id}
                 onRun={props.onRun}
                 onSetBlockerAssignment={props.onSetBlockerAssignment}
                 onToggleAttackerSelection={props.onToggleAttackerSelection}
-                onToggleSeatPrivacy={props.onToggleSeatPrivacy}
-                onToggleHandTray={() => {
-                  setHandTrayOpen((open) => !open);
-                }}
-                onToggleZones={() => {
-                  setZonesOpen((open) => !open);
-                }}
                 onInspectCard={setInspectedCard}
                 onOpenZoneBrowser={setZoneBrowser}
                 onDragHandCard={setDraggedCardId}
@@ -350,12 +384,9 @@ export const TableArena: Component<TableArenaProps> = (props) => {
                 }}
                 inspectedCardId={inspectedCard()?.sourceCardId ?? null}
                 orientation="bottom"
-                revealed={props.state.game.is_over || props.revealedSeatId === viewer().player_id}
                 selectedAttackers={props.selectedAttackers}
                 viewer={viewer()}
-                handTrayOpen={handTrayOpen()}
                 draggedHandCardId={draggedCardId()}
-                zonesOpen={zonesOpen()}
               />
             )}
           </Show>
@@ -396,10 +427,6 @@ export const TableArena: Component<TableArenaProps> = (props) => {
             <div class="sidebar-stat-grid">
               <SidebarMetric label="Subset" value={props.state.game.playable_subset_version} />
               <SidebarMetric label="Phase" value={formatPhase(props.state.game.phase)} />
-              <SidebarMetric
-                label="Priority"
-                value={shortPlayerTag(props.state.game.priority_holder)}
-              />
               <SidebarMetric label="Game over" value={props.state.game.is_over ? "yes" : "no"} />
             </div>
 
@@ -499,6 +526,58 @@ export const TableArena: Component<TableArenaProps> = (props) => {
         )}
       </Show>
 
+      <Show when={stackModalOpen()}>
+        <div
+          class="table-modal-backdrop"
+          onClick={() => {
+            setStackModalOpen(false);
+          }}
+        >
+          <aside
+            class="table-sidebar panel open stack-modal"
+            onClick={(event) => {
+              event.stopPropagation();
+            }}
+          >
+            <div class="table-sidebar-head">
+              <div>
+                <p class="eyebrow sidebar-eyebrow">Stack</p>
+                <h2>Resolve lane</h2>
+              </div>
+              <div class="chip-row">
+                <span class="chip chip-night">
+                  {`${String(props.state.game.stack.length)} objects`}
+                </span>
+                <button
+                  class="hero-button hero-button-ghost mini-button"
+                  onClick={() => {
+                    setStackModalOpen(false);
+                  }}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+
+            <div class="stack-modal-hero">
+              <div class="stack-modal-rune" aria-hidden="true">
+                ✦
+              </div>
+              <div>
+                <p class="label">Current stack</p>
+                <strong>Last in, first out</strong>
+                <p class="muted">
+                  Open priority objects appear here in resolution order without covering the
+                  battlefield.
+                </p>
+              </div>
+            </div>
+
+            <StackView stack={props.state.game.stack} />
+          </aside>
+        </div>
+      </Show>
+
       <Show when={inspectedCard()}>
         {(card) => (
           <div
@@ -592,22 +671,15 @@ const SeatPanel: Component<{
   viewer: ArenaViewerState;
   game: ArenaGameView;
   orientation: "top" | "bottom";
-  revealed: boolean;
-  needsHandoff: boolean;
-  handTrayOpen?: boolean;
   selectedAttackers: string[];
   blockerAssignments: Record<string, string>;
-  onToggleSeatPrivacy: (playerId: string) => void;
   onToggleAttackerSelection: (cardId: string) => void;
   onSetBlockerAssignment: (blockerId: string, attackerId: string) => void;
-  onToggleHandTray?: () => void;
-  onToggleZones: () => void;
   onOpenZoneBrowser: (state: ZoneBrowserState) => void;
   onInspectCard: (card: InspectCardState | null) => void;
   onDragHandCard: (cardId: string | null) => void;
   onBattlefieldDropCard?: (cardId: string) => void;
   onRun: (operation: (current: ArenaCommandTarget) => Promise<ArenaState>) => void;
-  zonesOpen: boolean;
   draggedHandCardId: string | null;
   inspectedCardId: string | null;
 }> = (props) => {
@@ -621,8 +693,6 @@ const SeatPanel: Component<{
   const resolveCombatDamageAction = () => findAction(props.viewer, "ResolveCombatDamage");
   const advanceTurnAction = () => findAction(props.viewer, "AdvanceTurn");
   const discardForCleanupAction = () => findAction(props.viewer, "DiscardForCleanup");
-  const passPriorityAction = () => findAction(props.viewer, "PassPriority");
-  const concedeAction = () => findAction(props.viewer, "Concede");
   const playLandIds = () => new Set(playLandAction()?.card_ids ?? []);
   const castSpellIds = () => new Set(castSpellAction()?.card_ids ?? []);
   const tapManaSourceIds = () => new Set(tapManaSourceAction()?.card_ids ?? []);
@@ -660,10 +730,13 @@ const SeatPanel: Component<{
     Record<string, BattlefieldLayoutPoint>
   >({});
   const [draggedBattlefieldCardId, setDraggedBattlefieldCardId] = createSignal<string | null>(null);
+  const [handPointerDrag, setHandPointerDrag] = createSignal<HandPointerDragState | null>(null);
   const [battlefieldActionMenuCardId, setBattlefieldActionMenuCardId] = createSignal<string | null>(
     null,
   );
   let battlefieldSurfaceRef: HTMLDivElement | undefined;
+  let battlefieldLaneRef: HTMLElement | undefined;
+  let clearHandPointerTracking: (() => void) | undefined;
 
   createEffect(() => {
     const nextIds = props.viewer.hand.map((card) => card.card_id);
@@ -741,16 +814,6 @@ const SeatPanel: Component<{
     }
   });
 
-  createEffect(() => {
-    if (props.orientation !== "bottom") {
-      return;
-    }
-
-    if (!props.handTrayOpen || !props.revealed) {
-      setFocusedHandCardId(null);
-    }
-  });
-
   const moveHandCard = (draggedCardId: string, targetCardId: string) => {
     setHandOrder((previous) => reorderCardIds(previous, draggedCardId, targetCardId));
   };
@@ -816,19 +879,111 @@ const SeatPanel: Component<{
     setBattlefieldActionMenuCardId((current) => (current === card.card_id ? null : card.card_id));
   };
 
-  const canDropDraggedCard = () =>
+  const canDropDraggedCard = () => canDropHandCard(props.draggedHandCardId);
+
+  const canDropHandCard = (cardId: string | null) =>
     props.orientation === "bottom" &&
-    Boolean(props.draggedHandCardId) &&
-    props.revealed &&
+    Boolean(cardId) &&
     Boolean(
-      props.viewer.hand.find((card) => card.card_id === props.draggedHandCardId) &&
-      (playLandIds().has(props.draggedHandCardId ?? "") ||
-        (castSpellIds().has(props.draggedHandCardId ?? "") &&
-          !props.viewer.hand.find((card) => card.card_id === props.draggedHandCardId)
-            ?.requires_choice &&
-          !props.viewer.hand.find((card) => card.card_id === props.draggedHandCardId)
-            ?.requires_target)),
+      props.viewer.hand.find((card) => card.card_id === cardId) &&
+      (playLandIds().has(cardId ?? "") ||
+        (castSpellIds().has(cardId ?? "") &&
+          !props.viewer.hand.find((card) => card.card_id === cardId)?.requires_choice &&
+          !props.viewer.hand.find((card) => card.card_id === cardId)?.requires_target)),
     );
+
+  const dropDraggedHandCard = () => {
+    if (!canDropDraggedCard()) {
+      return;
+    }
+
+    const cardId = props.draggedHandCardId;
+    if (cardId) {
+      props.onBattlefieldDropCard?.(cardId);
+    }
+    props.onDragHandCard(null);
+  };
+
+  const stopHandPointerDrag = () => {
+    clearHandPointerTracking?.();
+    clearHandPointerTracking = undefined;
+    setHandPointerDrag(null);
+    props.onDragHandCard(null);
+  };
+
+  const startHandPointerTracking = (cardId: string, startX: number, startY: number) => {
+    if (props.orientation !== "bottom") {
+      return;
+    }
+
+    stopHandPointerDrag();
+
+    const activationThreshold = 10;
+    let active = false;
+
+    const removeHandPointerListeners = () => {
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", finishPointerDrag);
+      window.removeEventListener("pointercancel", finishPointerDrag);
+    };
+
+    const handlePointerMove = (event: PointerEvent) => {
+      const distance = Math.hypot(event.clientX - startX, event.clientY - startY);
+      if (!active && distance < activationThreshold) {
+        return;
+      }
+
+      if (!active) {
+        active = true;
+        setFocusedHandCardId(null);
+        props.onDragHandCard(cardId);
+      }
+
+      setHandPointerDrag({
+        active: true,
+        cardId,
+        clientX: event.clientX,
+        clientY: event.clientY,
+      });
+
+      event.preventDefault();
+    };
+
+    const finishPointerDrag = (event: PointerEvent) => {
+      removeHandPointerListeners();
+      clearHandPointerTracking = undefined;
+
+      if (active) {
+        const target = document.elementFromPoint(event.clientX, event.clientY);
+        const inBattlefield =
+          Boolean(target && battlefieldSurfaceRef?.contains(target)) ||
+          Boolean(target && battlefieldLaneRef?.contains(target));
+
+        if (inBattlefield && untrack(() => canDropHandCard(cardId))) {
+          props.onBattlefieldDropCard?.(cardId);
+        } else {
+          const handTarget = target?.closest("[data-hand-card-id]");
+          const targetCardId = handTarget?.getAttribute("data-hand-card-id");
+          if (targetCardId) {
+            moveHandCard(cardId, targetCardId);
+          }
+        }
+      }
+
+      setHandPointerDrag(null);
+      props.onDragHandCard(null);
+    };
+
+    clearHandPointerTracking = removeHandPointerListeners;
+
+    window.addEventListener("pointermove", handlePointerMove, { passive: false });
+    window.addEventListener("pointerup", finishPointerDrag, { passive: false });
+    window.addEventListener("pointercancel", finishPointerDrag, { passive: false });
+  };
+
+  onCleanup(() => {
+    stopHandPointerDrag();
+  });
 
   const repositionBattlefieldCard = (cardId: string, clientX: number, clientY: number) => {
     const surface = battlefieldSurfaceRef;
@@ -855,46 +1010,10 @@ const SeatPanel: Component<{
       classList={{
         "seat-panel": true,
         [`seat-${props.orientation}`]: true,
-        active: props.viewer.is_active,
-        priority: props.viewer.is_priority_holder,
+        "is-active-turn": props.viewer.is_active,
         "has-spotlight": spotlightPrompts().length > 0 || unsupportedPrompts().length > 0,
-        "tray-open": props.orientation === "bottom" && Boolean(props.handTrayOpen),
-        "tray-closed": props.orientation === "bottom" && !props.handTrayOpen,
       }}
     >
-      <header class="seat-banner">
-        <div class="seat-identity">
-          <div class="seat-banner-copy">
-            <p class="seat-role">{props.orientation === "top" ? "Opponent" : "You"}</p>
-            <p class="seat-title">{props.viewer.player_id}</p>
-          </div>
-          <Show when={viewerPlayer()}>
-            {(player) => (
-              <div class="seat-summary">
-                <SeatStatPill icon="life" title="Life total" value={String(player().life)} />
-                <SeatStatPill
-                  icon="hand"
-                  title="Cards in hand"
-                  value={String(player().hand_count)}
-                />
-                <SeatStatPill icon="mana" title="Mana pool" value={String(player().mana_total)} />
-              </div>
-            )}
-          </Show>
-        </div>
-        <div class="seat-sigil-row">
-          <Show when={props.viewer.is_active}>
-            <SeatStateGlyph icon="active" title="Active player" tone="ember" />
-          </Show>
-          <Show when={props.viewer.is_priority_holder}>
-            <SeatStateGlyph icon="priority" title="Priority holder" tone="night" />
-          </Show>
-          <Show when={props.needsHandoff}>
-            <SeatStateGlyph icon="seat" title="Ready to take seat" tone="forest" />
-          </Show>
-        </div>
-      </header>
-
       <Show when={spotlightPrompts().length > 0 || unsupportedPrompts().length > 0}>
         <section class="seat-spotlight-strip">
           <For each={spotlightPrompts()}>
@@ -947,8 +1066,31 @@ const SeatPanel: Component<{
 
       <Show when={viewerPlayer()}>
         {(player) => (
-          <div class="seat-zones">
+          <div
+            class="seat-zones"
+            onDragOver={(event) => {
+              if (!canDropDraggedCard()) {
+                return;
+              }
+
+              event.preventDefault();
+              if (event.dataTransfer) {
+                event.dataTransfer.dropEffect = "copy";
+              }
+            }}
+            onDrop={(event) => {
+              if (!canDropDraggedCard()) {
+                return;
+              }
+
+              event.preventDefault();
+              dropDraggedHandCard();
+            }}
+          >
             <section
+              ref={(element) => {
+                battlefieldLaneRef = element;
+              }}
               classList={{
                 "battlefield-lane": true,
                 "drop-ready": canDropDraggedCard(),
@@ -969,45 +1111,11 @@ const SeatPanel: Component<{
                 }
 
                 event.preventDefault();
-                const cardId = props.draggedHandCardId;
-                if (cardId) {
-                  props.onBattlefieldDropCard?.(cardId);
-                }
-                props.onDragHandCard(null);
+                dropDraggedHandCard();
               }}
             >
-              <div class="zone-head">
-                <div class="battlefield-headline">
-                  <HudIcon icon="battlefield" />
-                  <strong>{String(player().battlefield.length)}</strong>
-                </div>
-                <div class="chip-row">
-                  <button
-                    aria-label={props.zonesOpen ? "Hide zones" : "Show zones"}
-                    class="chip chip-toggle zone-toggle-chip"
-                    title={props.zonesOpen ? "Hide zones" : "Show zones"}
-                    onClick={() => {
-                      props.onToggleZones();
-                    }}
-                  >
-                    <HudIcon icon="zones" />
-                  </button>
-                </div>
-              </div>
-
               <Show when={props.orientation === "bottom"}>
                 <div class="lane-quick-actions">
-                  <Show when={passPriorityAction()}>
-                    <button
-                      class="action-button action-button-primary"
-                      onClick={() => {
-                        const playerId = props.viewer.player_id;
-                        props.onRun((current) => passPriority(current, playerId));
-                      }}
-                    >
-                      Pass
-                    </button>
-                  </Show>
                   <Show when={advanceTurnAction()}>
                     <button
                       class="action-button action-button-primary"
@@ -1027,33 +1135,6 @@ const SeatPanel: Component<{
                       }}
                     >
                       Damage
-                    </button>
-                  </Show>
-                  <button
-                    class="action-button"
-                    onClick={() => {
-                      props.onToggleHandTray?.();
-                    }}
-                  >
-                    {props.handTrayOpen ? "Hide hand" : "Show hand"}
-                  </button>
-                  <button
-                    class="action-button"
-                    onClick={() => {
-                      props.onToggleSeatPrivacy(props.viewer.player_id);
-                    }}
-                  >
-                    {props.revealed ? "Mask" : props.needsHandoff ? "Take seat" : "Reveal"}
-                  </button>
-                  <Show when={concedeAction()}>
-                    <button
-                      class="action-button"
-                      onClick={() => {
-                        const playerId = props.viewer.player_id;
-                        props.onRun((current) => concede(current, playerId));
-                      }}
-                    >
-                      Concede
                     </button>
                   </Show>
                 </div>
@@ -1077,10 +1158,8 @@ const SeatPanel: Component<{
                 onDrop={(event) => {
                   event.preventDefault();
 
-                  const draggedHandCardId = props.draggedHandCardId;
-                  if (draggedHandCardId) {
-                    props.onBattlefieldDropCard?.(draggedHandCardId);
-                    props.onDragHandCard(null);
+                  if (props.draggedHandCardId) {
+                    dropDraggedHandCard();
                   }
 
                   const draggedBattlefieldCard = draggedBattlefieldCardId();
@@ -1356,41 +1435,82 @@ const SeatPanel: Component<{
               </Show>
             </section>
 
-            <aside classList={{ "zone-rail": true, collapsed: !props.zonesOpen }}>
+            <aside class="zone-rail">
               <div class="zone-rail-content">
-                <CardPile
-                  count={player().library_count}
-                  highlight={props.viewer.is_active}
-                  kind="library"
-                  onClick={() => {
-                    props.onOpenZoneBrowser({
-                      playerId: props.viewer.player_id,
-                      zone: "library",
-                    });
-                  }}
-                />
-                <CardPile
-                  count={player().graveyard.length}
-                  kind="graveyard"
-                  onClick={() => {
-                    props.onOpenZoneBrowser({
-                      playerId: props.viewer.player_id,
-                      zone: "graveyard",
-                    });
-                  }}
-                  topCard={topZoneCard(player().graveyard)}
-                />
-                <CardPile
-                  count={player().exile.length}
-                  kind="exile"
-                  onClick={() => {
-                    props.onOpenZoneBrowser({
-                      playerId: props.viewer.player_id,
-                      zone: "exile",
-                    });
-                  }}
-                  topCard={topZoneCard(player().exile)}
-                />
+                <Show
+                  when={props.orientation === "top"}
+                  fallback={
+                    <>
+                      <CardPile
+                        count={player().library_count}
+                        kind="library"
+                        onClick={() => {
+                          props.onOpenZoneBrowser({
+                            playerId: props.viewer.player_id,
+                            zone: "library",
+                          });
+                        }}
+                      />
+                      <CardPile
+                        count={player().graveyard.length}
+                        kind="graveyard"
+                        onClick={() => {
+                          props.onOpenZoneBrowser({
+                            playerId: props.viewer.player_id,
+                            zone: "graveyard",
+                          });
+                        }}
+                        topCard={topZoneCard(player().graveyard)}
+                      />
+                      <CardPile
+                        count={player().exile.length}
+                        kind="exile"
+                        onClick={() => {
+                          props.onOpenZoneBrowser({
+                            playerId: props.viewer.player_id,
+                            zone: "exile",
+                          });
+                        }}
+                        topCard={topZoneCard(player().exile)}
+                      />
+                    </>
+                  }
+                >
+                  <>
+                    <CardPile
+                      count={player().exile.length}
+                      kind="exile"
+                      onClick={() => {
+                        props.onOpenZoneBrowser({
+                          playerId: props.viewer.player_id,
+                          zone: "exile",
+                        });
+                      }}
+                      topCard={topZoneCard(player().exile)}
+                    />
+                    <CardPile
+                      count={player().graveyard.length}
+                      kind="graveyard"
+                      onClick={() => {
+                        props.onOpenZoneBrowser({
+                          playerId: props.viewer.player_id,
+                          zone: "graveyard",
+                        });
+                      }}
+                      topCard={topZoneCard(player().graveyard)}
+                    />
+                    <CardPile
+                      count={player().library_count}
+                      kind="library"
+                      onClick={() => {
+                        props.onOpenZoneBrowser({
+                          playerId: props.viewer.player_id,
+                          zone: "library",
+                        });
+                      }}
+                    />
+                  </>
+                </Show>
               </div>
             </aside>
           </div>
@@ -1399,12 +1519,7 @@ const SeatPanel: Component<{
 
       <Show when={showPrivateTray()}>
         <section class="seat-ops">
-          <section
-            classList={{
-              "hand-drawer": true,
-              collapsed: !props.handTrayOpen,
-            }}
-          >
+          <section class="hand-drawer">
             <div class="hand-drawer-body">
               <Show when={handPrompt()}>
                 {(prompt) => (
@@ -1417,163 +1532,124 @@ const SeatPanel: Component<{
                   />
                 )}
               </Show>
-
-              <Show
-                when={props.revealed}
-                fallback={
-                  <div class="seat-privacy-guard">
-                    <p class="muted">
-                      {props.needsHandoff
-                        ? "Take the seat to reveal this hand."
-                        : "Hand hidden. Reveal it when you want to play from hand."}
-                    </p>
-                    <button
-                      class="hero-button"
-                      onClick={() => {
-                        props.onToggleSeatPrivacy(props.viewer.player_id);
-                      }}
-                    >
-                      {props.needsHandoff ? "Take seat" : "Reveal hand"}
-                    </button>
-                  </div>
-                }
+              <div
+                class="hand-fan hand-fan-floating"
+                onMouseLeave={() => {
+                  setFocusedHandCardId(null);
+                }}
               >
-                <div
-                  class="hand-fan hand-fan-floating"
-                  onMouseLeave={() => {
-                    setFocusedHandCardId(null);
-                  }}
-                >
-                  <For each={orderedHand()}>
-                    {(card, index) => (
-                      <div
-                        classList={{
-                          "card-drag-shell": true,
-                          "hand-card-shell": true,
-                          focused: focusedHandCardId() === card.card_id,
-                          selected: props.inspectedCardId === card.card_id,
-                        }}
-                        draggable={props.revealed}
-                        onDragOver={(event) => {
-                          if (!props.revealed || !props.draggedHandCardId) {
-                            return;
-                          }
+                <For each={orderedHand()}>
+                  {(card, index) => (
+                    <div
+                      data-hand-card-id={card.card_id}
+                      classList={{
+                        "card-drag-shell": true,
+                        "hand-card-shell": true,
+                        dragging:
+                          handPointerDrag()?.active && handPointerDrag()?.cardId === card.card_id,
+                        focused: focusedHandCardId() === card.card_id,
+                        selected: props.inspectedCardId === card.card_id,
+                      }}
+                      onPointerDown={(event) => {
+                        if (event.button !== 0) {
+                          return;
+                        }
 
-                          event.preventDefault();
-                          if (event.dataTransfer) {
-                            event.dataTransfer.dropEffect = "move";
-                          }
+                        startHandPointerTracking(card.card_id, event.clientX, event.clientY);
+                      }}
+                      onFocusIn={() => {
+                        setFocusedHandCardId(card.card_id);
+                      }}
+                      onMouseEnter={() => {
+                        setFocusedHandCardId(card.card_id);
+                      }}
+                      style={handCardShellStyle(
+                        index(),
+                        orderedHand().length,
+                        false,
+                        focusedHandCardId() === card.card_id,
+                        handPointerDrag()?.active && handPointerDrag()?.cardId === card.card_id
+                          ? handPointerDrag()
+                          : null,
+                      )}
+                    >
+                      <GameCard
+                        actions={
+                          <>
+                            <Show when={playLandIds().has(card.card_id)}>
+                              <button
+                                class="action-button"
+                                onClick={() => {
+                                  const playerId = props.viewer.player_id;
+                                  const cardId = card.card_id;
+                                  props.onRun((current) => playLand(current, playerId, cardId));
+                                }}
+                              >
+                                Play land
+                              </button>
+                            </Show>
+                            <Show when={castSpellIds().has(card.card_id)}>
+                              <button
+                                class="action-button"
+                                disabled={card.requires_target || card.requires_choice}
+                                onClick={() => {
+                                  const playerId = props.viewer.player_id;
+                                  const cardId = card.card_id;
+                                  props.onRun((current) => castSpell(current, playerId, cardId));
+                                }}
+                              >
+                                {card.requires_target || card.requires_choice
+                                  ? "Target UI soon"
+                                  : "Cast"}
+                              </button>
+                            </Show>
+                            <Show when={discardForCleanupIds().has(card.card_id)}>
+                              <button
+                                class="action-button"
+                                onClick={() => {
+                                  const playerId = props.viewer.player_id;
+                                  const cardId = card.card_id;
+                                  props.onRun((current) =>
+                                    discardForCleanup(current, playerId, cardId),
+                                  );
+                                }}
+                              >
+                                Discard
+                              </button>
+                            </Show>
+                          </>
+                        }
+                        activatedAbility={card.has_activated_ability}
+                        cardType={card.card_type}
+                        definitionId={card.definition_id}
+                        fanCount={props.viewer.hand.length}
+                        highlighted={
+                          playLandIds().has(card.card_id) ||
+                          castSpellIds().has(card.card_id) ||
+                          discardForCleanupIds().has(card.card_id)
+                        }
+                        index={index()}
+                        interactive
+                        keywords={card.keywords}
+                        loyalty={card.loyalty}
+                        manaCost={card.mana_cost}
+                        mode="hand"
+                        onInspect={() => {
+                          openInspectCard(inspectFromHandCard(card));
                         }}
-                        onDragEnd={() => {
-                          props.onDragHandCard(null);
-                        }}
-                        onDrop={(event) => {
-                          if (!props.draggedHandCardId) {
-                            return;
-                          }
-
-                          event.preventDefault();
-                          moveHandCard(props.draggedHandCardId, card.card_id);
-                          props.onDragHandCard(null);
-                        }}
-                        onDragStart={(event) => {
-                          props.onDragHandCard(card.card_id);
-                          if (event.dataTransfer) {
-                            event.dataTransfer.setData("text/plain", card.card_id);
-                            event.dataTransfer.effectAllowed = "move";
-                          }
-                        }}
-                        onFocusIn={() => {
-                          setFocusedHandCardId(card.card_id);
-                        }}
-                        onMouseEnter={() => {
-                          setFocusedHandCardId(card.card_id);
-                        }}
-                        style={handCardShellStyle(
-                          index(),
-                          orderedHand().length,
-                          !props.handTrayOpen,
-                          focusedHandCardId() === card.card_id,
-                        )}
-                      >
-                        <GameCard
-                          actions={
-                            <>
-                              <Show when={playLandIds().has(card.card_id)}>
-                                <button
-                                  class="action-button"
-                                  onClick={() => {
-                                    const playerId = props.viewer.player_id;
-                                    const cardId = card.card_id;
-                                    props.onRun((current) => playLand(current, playerId, cardId));
-                                  }}
-                                >
-                                  Play land
-                                </button>
-                              </Show>
-                              <Show when={castSpellIds().has(card.card_id)}>
-                                <button
-                                  class="action-button"
-                                  disabled={card.requires_target || card.requires_choice}
-                                  onClick={() => {
-                                    const playerId = props.viewer.player_id;
-                                    const cardId = card.card_id;
-                                    props.onRun((current) => castSpell(current, playerId, cardId));
-                                  }}
-                                >
-                                  {card.requires_target || card.requires_choice
-                                    ? "Target UI soon"
-                                    : "Cast"}
-                                </button>
-                              </Show>
-                              <Show when={discardForCleanupIds().has(card.card_id)}>
-                                <button
-                                  class="action-button"
-                                  onClick={() => {
-                                    const playerId = props.viewer.player_id;
-                                    const cardId = card.card_id;
-                                    props.onRun((current) =>
-                                      discardForCleanup(current, playerId, cardId),
-                                    );
-                                  }}
-                                >
-                                  Discard
-                                </button>
-                              </Show>
-                            </>
-                          }
-                          activatedAbility={card.has_activated_ability}
-                          cardType={card.card_type}
-                          definitionId={card.definition_id}
-                          fanCount={props.viewer.hand.length}
-                          highlighted={
-                            playLandIds().has(card.card_id) ||
-                            castSpellIds().has(card.card_id) ||
-                            discardForCleanupIds().has(card.card_id)
-                          }
-                          index={index()}
-                          interactive
-                          keywords={card.keywords}
-                          loyalty={card.loyalty}
-                          manaCost={card.mana_cost}
-                          mode="hand"
-                          onInspect={() => {
-                            openInspectCard(inspectFromHandCard(card));
-                          }}
-                          openPriority={card.can_cast_in_open_priority}
-                          ownTurnPriority={card.can_cast_in_open_priority_during_own_turn}
-                          power={card.power}
-                          selected={
-                            focusedHandCardId() === card.card_id ||
-                            props.inspectedCardId === card.card_id
-                          }
-                          toughness={card.toughness}
-                        />
-                      </div>
-                    )}
-                  </For>
-                </div>
-              </Show>
+                        openPriority={card.can_cast_in_open_priority}
+                        ownTurnPriority={card.can_cast_in_open_priority_during_own_turn}
+                        power={card.power}
+                        selected={
+                          focusedHandCardId() === card.card_id ||
+                          props.inspectedCardId === card.card_id
+                        }
+                        toughness={card.toughness}
+                      />
+                    </div>
+                  )}
+                </For>
+              </div>
 
               <Show when={unsupportedPrompts().length > 0}>
                 <details class="unsupported-drawer">
@@ -1585,7 +1661,7 @@ const SeatPanel: Component<{
                     <span class="chip chip-night">debug</span>
                   </summary>
 
-                  <p class="support-note">{seatSupportCopy(props.viewer, props.needsHandoff)}</p>
+                  <p class="support-note">{seatSupportCopy()}</p>
 
                   <div class="unsupported-list">
                     <For each={unsupportedPrompts()}>
@@ -1621,15 +1697,41 @@ const SidebarMetric: Component<{ label: string; value: string }> = (props) => (
   </div>
 );
 
-const SeatStatPill: Component<{
-  icon: HudIconName;
-  title: string;
-  value: string;
+const RailSeatCard: Component<{
+  life: number;
+  handCount: number;
+  name: string;
+  orientation: "top" | "bottom";
+  playerId: string;
+  priority: boolean;
+  actions?: JSX.Element;
 }> = (props) => (
-  <article class="seat-stat-pill" title={props.title}>
-    <HudIcon icon={props.icon} />
-    <strong>{props.value}</strong>
-  </article>
+  <section
+    classList={{
+      "rail-seat-card": true,
+      [`orientation-${props.orientation}`]: true,
+      "has-priority": props.priority,
+    }}
+  >
+    <div class="rail-seat-stats" role="list">
+      <RailSeatCounter kind="life" value={props.life} />
+      <RailSeatCounter kind="hand" value={props.handCount} />
+    </div>
+
+    <article
+      class="rail-seat-avatar-card"
+      title={props.priority ? `${props.playerId} has priority` : props.playerId}
+    >
+      <div class="rail-seat-avatar-surface">
+        <SeatAvatarGlyph orientation={props.orientation} />
+      </div>
+      <div class="rail-seat-nameplate">{props.name}</div>
+    </article>
+
+    <Show when={props.actions}>
+      <div class="rail-seat-actions">{props.actions}</div>
+    </Show>
+  </section>
 );
 
 const MetaRune: Component<{
@@ -1643,27 +1745,100 @@ const MetaRune: Component<{
   </article>
 );
 
+const RailSeatCounter: Component<{ kind: "life" | "hand"; value: number }> = (props) => (
+  <article
+    classList={{
+      "rail-seat-counter": true,
+      [`kind-${props.kind}`]: true,
+    }}
+    title={props.kind === "life" ? "Life total" : "Cards in hand"}
+  >
+    <RailCounterGlyph kind={props.kind} />
+    <strong>{String(props.value)}</strong>
+  </article>
+);
+
+const RailCounterGlyph: Component<{ kind: "life" | "hand" }> = (props) => (
+  <svg aria-hidden="true" class="rail-counter-glyph" viewBox="0 0 24 24">
+    <Switch>
+      <Match when={props.kind === "life"}>
+        <path d="M12 21.2 4.9 14.4A4.7 4.7 0 0 1 4 8.6C5 6.4 7.8 5.5 10 6.5c.8.4 1.5 1 2 1.8.5-.8 1.2-1.4 2-1.8 2.2-1 5-.1 6 2.1.9 1.9.5 4.2-1 5.8Z" />
+      </Match>
+      <Match when={props.kind === "hand"}>
+        <path d="M7.2 18.5c-1.4 0-2.5-1-2.7-2.4l-.6-4.8c-.1-.7.4-1.3 1.1-1.4.7-.1 1.3.4 1.4 1.1l.2 1.3-.6-4.8c-.1-.7.4-1.3 1.1-1.4.7-.1 1.3.4 1.4 1.1l.6 4.4-.5-4.1c-.1-.7.4-1.3 1.1-1.4.7-.1 1.3.4 1.4 1.1l.5 4-.3-2.5c-.1-.7.4-1.3 1.1-1.4.7-.1 1.3.4 1.4 1.1l.5 4.2c.3 2.6-1.5 5-4.1 5.3l-5 .6Z" />
+      </Match>
+    </Switch>
+  </svg>
+);
+
+const SeatAvatarGlyph: Component<{ orientation: "top" | "bottom" }> = (props) => (
+  <svg aria-hidden="true" class="seat-avatar-glyph" viewBox="0 0 120 120">
+    <defs>
+      <radialGradient id={`avatar-core-${props.orientation}`} cx="50%" cy="34%" r="62%">
+        <stop offset="0%" stop-color="rgba(255,255,255,0.92)" />
+        <stop offset="32%" stop-color={props.orientation === "top" ? "#8dd8ff" : "#ffdd9a"} />
+        <stop offset="100%" stop-color={props.orientation === "top" ? "#355d90" : "#7f4b2d"} />
+      </radialGradient>
+      <linearGradient id={`avatar-ring-${props.orientation}`} x1="0%" x2="100%">
+        <stop offset="0%" stop-color={props.orientation === "top" ? "#87beff" : "#ffcf82"} />
+        <stop offset="100%" stop-color={props.orientation === "top" ? "#4b79d6" : "#d77f3b"} />
+      </linearGradient>
+    </defs>
+    <circle class="seat-avatar-ring" cx="60" cy="60" r="44" />
+    <circle cx="60" cy="58" r="34" fill={`url(#avatar-core-${props.orientation})`} opacity="0.9" />
+    <path
+      class="seat-avatar-crest"
+      d="M60 28c10 0 18 8.6 18 19.2 0 4.7-1.6 8.7-4.8 12.8L67 67.5H53L46.8 60c-3.2-4.1-4.8-8.1-4.8-12.8C42 36.6 50 28 60 28Z"
+    />
+    <path
+      class="seat-avatar-horns"
+      d="M47 34 35 28l7 16m31-10 12-6-7 16"
+      fill="none"
+      stroke={`url(#avatar-ring-${props.orientation})`}
+      stroke-linecap="round"
+      stroke-width="4"
+    />
+    <circle class="seat-avatar-eye" cx="52" cy="48" r="3" />
+    <circle class="seat-avatar-eye" cx="68" cy="48" r="3" />
+    <path
+      class="seat-avatar-smile"
+      d="M49 58c3.6 3.8 7.3 5.6 11 5.6 3.8 0 7.5-1.8 11-5.6"
+      fill="none"
+      stroke="rgba(19, 12, 9, 0.72)"
+      stroke-linecap="round"
+      stroke-width="3.6"
+    />
+    <circle class="seat-avatar-rune" cx="60" cy="82" r="8" />
+  </svg>
+);
+
+const StackDock: Component<{ count: number; topObject: ArenaStackObject | undefined }> = (
+  props,
+) => (
+  <div class="stack-dock-frame">
+    <div class="stack-dock-head">
+      <div class="stack-dock-rune" aria-hidden="true">
+        ✦
+      </div>
+      <span class="stack-dock-count">{String(props.count)}</span>
+    </div>
+    <div class="stack-dock-body" aria-hidden="true">
+      <span class="stack-dock-layer layer-back" />
+      <span class="stack-dock-layer layer-mid" />
+      <span class="stack-dock-layer layer-front" />
+      <span class="stack-dock-sigil">⟡</span>
+    </div>
+    <div class="stack-dock-caption">
+      <p>Stack</p>
+      <strong>{props.topObject?.kind ?? "Object"}</strong>
+    </div>
+  </div>
+);
+
 const TurnRune: Component<{ turnNumber: number }> = (props) => (
   <article class="turn-rune" title={`Turn ${String(props.turnNumber)}`}>
     <span class="turn-rune-mark">↻</span>
     <strong>{String(props.turnNumber)}</strong>
-  </article>
-);
-
-const SeatStateGlyph: Component<{
-  icon: "active" | "priority" | "seat";
-  playerId?: string | null | undefined;
-  title: string;
-  tone: "ember" | "forest" | "night";
-}> = (props) => (
-  <article
-    classList={{ "seat-state-glyph": true, [`tone-${props.tone}`]: true }}
-    title={`${props.title}${props.playerId ? ` · ${shortPlayerTag(props.playerId)}` : ""}`}
-  >
-    <HudIcon icon={props.icon} />
-    <Show when={props.playerId}>
-      <strong>{shortPlayerTag(props.playerId)}</strong>
-    </Show>
   </article>
 );
 
@@ -1694,7 +1869,6 @@ const PhaseTrack: Component<{ currentPhase: string }> = (props) => {
 };
 
 type HudIconName =
-  | "active"
   | "battlefield"
   | "hand"
   | "host"
@@ -1702,7 +1876,6 @@ type HudIconName =
   | "log"
   | "mana"
   | "peer"
-  | "priority"
   | "reset"
   | "room"
   | "seat"
@@ -1734,12 +1907,6 @@ const HudIcon: Component<{ icon: HudIconName }> = (props) => (
       </Match>
       <Match when={props.icon === "peer"}>
         <path d="M8 7.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5Zm8 4a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5Z" />
-      </Match>
-      <Match when={props.icon === "active"}>
-        <path d="m12 4 1.9 4 4.4.5-3.3 3 1 4.4-4-2.2-4 2.2 1-4.4-3.3-3 4.4-.5L12 4Z" />
-      </Match>
-      <Match when={props.icon === "priority"}>
-        <path d="M12 3.5 14 9l5.5 1-4 3.4 1 5.1-4.5-2.8-4.5 2.8 1-5.1-4-3.4L10 9l2-5.5Z" />
       </Match>
       <Match when={props.icon === "zones"}>
         <path
@@ -2060,20 +2227,8 @@ function uniqueAttackerIds(action: ArenaLegalAction | undefined): string[] {
   return Array.from(new Set(action.blocker_options.flatMap((option) => option.attacker_ids)));
 }
 
-function seatSupportCopy(viewer: ArenaViewerState, needsHandoff: boolean): string {
-  if (needsHandoff) {
-    return "This seat is up next. Pass the device, reveal the hand, and continue from the live viewer-scoped surface.";
-  }
-
-  if (viewer.is_priority_holder) {
-    return "Priority lives here right now. The hand tray and battlefield console are the fastest paths to keep the duel flowing.";
-  }
-
-  if (viewer.is_active) {
-    return "This seat owns the turn, even if interaction is paused somewhere else in the priority loop.";
-  }
-
-  return "This seat is currently observing. Public zones stay live, but private information remains shielded until the hand is reopened.";
+function seatSupportCopy(): string {
+  return "This seat is your local duel surface. Public zones stay live while private information remains scoped to your own instance.";
 }
 
 function formatPhase(phase: string): string {
@@ -2097,19 +2252,30 @@ function shortPlayerTag(playerId: string | null | undefined): string {
   return playerId.length > 6 ? playerId.slice(0, 6) : playerId;
 }
 
+function formatPlayerDisplayName(playerId: string): string {
+  const digits = playerId.match(/\d+/g)?.join("");
+  if (digits) {
+    return `Player ${digits}`;
+  }
+
+  return playerId.replace(/[-_]+/g, " ").replace(/\b\w/g, (value) => value.toUpperCase());
+}
+
 function hiddenHandSlots(count: number): number[] {
   return Array.from({ length: count }, (_, index) => index);
 }
 
 function hiddenHandCardShellStyle(index: number, count: number): Record<string, string> {
-  const spread = Math.min(26, Math.max(14, 140 / Math.max(count, 2)));
+  const spread = count >= 8 ? 58 : count >= 6 ? 66 : 74;
   const midpoint = (count - 1) / 2;
   const offset = index - midpoint;
-  const verticalOffset = Math.abs(offset) * 4;
+  const verticalOffset = -186 + Math.min(Math.abs(offset) * 4, 12);
+  const hoverOffset = offset === 0 ? 0 : Math.sign(offset) * 8;
 
   return {
     "--hidden-hand-x": `${String(offset * spread)}px`,
-    "--hidden-hand-angle": `${String(offset * 4.2)}deg`,
+    "--hidden-hand-hover-shift": `${String(hoverOffset)}px`,
+    "--hidden-hand-angle": `${String(offset * -4.25)}deg`,
     "--hidden-hand-y": `${String(verticalOffset)}px`,
     "--hidden-hand-depth": String(index + 1),
   };
@@ -2182,6 +2348,7 @@ function handCardShellStyle(
   total: number,
   collapsed: boolean,
   focused: boolean,
+  pointerDrag: HandPointerDragState | null,
 ): Record<string, string> {
   const midpoint = (total - 1) / 2;
   const offset = index - midpoint;
@@ -2193,7 +2360,7 @@ function handCardShellStyle(
   const focusLift = 0;
   const hoverLift = collapsed ? -18 : -24;
 
-  return {
+  const style: Record<string, string> = {
     "--hand-x": `${String(x)}px`,
     "--hand-y": `${String(y)}px`,
     "--hand-angle": `${String(angle)}deg`,
@@ -2201,4 +2368,11 @@ function handCardShellStyle(
     "--hand-focus-y": `${String(focusLift)}px`,
     "--hand-hover-y": `${String(hoverLift)}px`,
   };
+
+  if (pointerDrag?.active) {
+    style["--pointer-drag-x"] = `${String(pointerDrag.clientX)}px`;
+    style["--pointer-drag-y"] = `${String(pointerDrag.clientY)}px`;
+  }
+
+  return style;
 }

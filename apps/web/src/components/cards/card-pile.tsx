@@ -13,6 +13,8 @@ interface CardPileProps {
 
 export const CardPile: Component<CardPileProps> = (props) => {
   const title = () => `${formatPileLabel(props.kind)} · ${String(props.count)}`;
+  const showsEmptyState = () =>
+    props.kind !== "library" && props.count === 0 && props.topCard === undefined;
   const kindGlyph = () => {
     switch (props.kind) {
       case "library":
@@ -38,30 +40,38 @@ export const CardPile: Component<CardPileProps> = (props) => {
       }}
     >
       <div class="card-pile-stack">
-        <div class="card-pile-layer layer-back" />
-        <div class="card-pile-layer layer-mid" />
-        <div class="card-pile-layer layer-front" />
+        <div class="card-pile-visual">
+          <div class="card-pile-layer layer-back" />
+          <div class="card-pile-layer layer-mid" />
+          <div class="card-pile-layer layer-front" />
 
-        <div class="card-pile-card">
-          {props.kind === "library" ? (
-            <CardBack variant="library" />
-          ) : props.topCard ? (
-            <GameCard
-              cardType={props.topCard.card_type}
-              definitionId={props.topCard.definition_id}
-              mode="zone"
-            />
-          ) : (
-            <CardBack variant={props.kind} />
-          )}
+          <div class="card-pile-card">
+            {props.kind === "library" ? (
+              <CardBack variant="library" />
+            ) : showsEmptyState() ? (
+              <div classList={{ "card-pile-empty": true, [`kind-${props.kind}`]: true }}>
+                <div class="card-pile-empty-frame">
+                  <div class="card-pile-empty-sigil" />
+                </div>
+              </div>
+            ) : props.topCard ? (
+              <GameCard
+                cardType={props.topCard.card_type}
+                definitionId={props.topCard.definition_id}
+                mode="zone"
+              />
+            ) : (
+              <CardBack variant={props.kind} />
+            )}
+          </div>
         </div>
-      </div>
 
-      <div class="card-pile-meta">
-        <span class="card-pile-glyph" aria-hidden="true">
-          {kindGlyph()}
-        </span>
-        <strong>{String(props.count)}</strong>
+        <div class="card-pile-counter">
+          <span class="card-pile-counter-glyph" aria-hidden="true">
+            {kindGlyph()}
+          </span>
+          <strong>{String(props.count)}</strong>
+        </div>
       </div>
     </button>
   );
