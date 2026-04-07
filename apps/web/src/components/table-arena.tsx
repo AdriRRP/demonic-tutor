@@ -3,6 +3,7 @@ import type { Component, JSX } from "solid-js";
 import { GameCard } from "./cards/game-card";
 import { CardBack } from "./cards/card-back";
 import { CardPile } from "./cards/card-pile";
+import type { RemotePairingState } from "../lib/remote-pairing";
 import type { ArenaSessionInfo } from "../lib/session";
 import {
   activateAbility,
@@ -42,6 +43,8 @@ import type {
 
 interface TableArenaProps {
   onCopyInviteLink?: (() => void) | undefined;
+  onOpenRemotePairing?: (() => void) | undefined;
+  remotePairingState?: RemotePairingState | null | undefined;
   state: ArenaState;
   sessionInfo: ArenaSessionInfo | null;
   selectedAttackers: string[];
@@ -229,6 +232,24 @@ export const TableArena: Component<TableArenaProps> = (props) => {
               }}
             >
               <HudIcon icon="room" />
+            </button>
+          </Show>
+          <Show when={props.onOpenRemotePairing}>
+            <button
+              aria-label="Open remote pairing"
+              classList={{
+                "hero-button": true,
+                "hero-button-ghost": true,
+                "mini-button": true,
+                "rune-button": true,
+                "pairing-button-live": Boolean(props.remotePairingState?.connected),
+              }}
+              title={props.remotePairingState?.statusLabel ?? "Open remote pairing"}
+              onClick={() => {
+                props.onOpenRemotePairing?.();
+              }}
+            >
+              <HudIcon icon="pair" />
             </button>
           </Show>
           <button
@@ -2113,6 +2134,7 @@ type HudIconName =
   | "life"
   | "log"
   | "mana"
+  | "pair"
   | "peer"
   | "reset"
   | "room"
@@ -2145,6 +2167,16 @@ const HudIcon: Component<{ icon: HudIconName }> = (props) => (
       </Match>
       <Match when={props.icon === "peer"}>
         <path d="M8 7.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5Zm8 4a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5Z" />
+      </Match>
+      <Match when={props.icon === "pair"}>
+        <path
+          d="M8.5 8.5h3m1 0h3m-7.7 7.1L10 13.4m4-2.8 2.2-2.2M5.6 12a2.4 2.4 0 1 1 0-4.8 2.4 2.4 0 0 1 0 4.8Zm12.8 4.8a2.4 2.4 0 1 1 0-4.8 2.4 2.4 0 0 1 0 4.8Z"
+          fill="none"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+        />
       </Match>
       <Match when={props.icon === "zones"}>
         <path

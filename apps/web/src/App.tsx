@@ -1,6 +1,12 @@
-import { Match, Switch, createSignal, onCleanup, onMount } from "solid-js";
+import { Match, Show, Switch, createSignal, onCleanup, onMount } from "solid-js";
 import type { Component } from "solid-js";
+import { RemotePairingModal } from "./components/remote-pairing-modal";
 import { TableArena } from "./components/table-arena";
+import {
+  createRemotePairingController,
+  type RemotePairingController,
+  type RemotePairingState,
+} from "./lib/remote-pairing";
 import { createArenaSession, type ArenaSession, type ArenaSessionInfo } from "./lib/session";
 import { readState, resetArena, type ArenaCommandTarget } from "./lib/runtime";
 import type { ArenaState } from "./lib/types";
@@ -13,14 +19,29 @@ const App: Component = () => {
   const [loading, setLoading] = createSignal(true);
   const [selectedAttackers, setSelectedAttackers] = createSignal<string[]>([]);
   const [blockerAssignments, setBlockerAssignments] = createSignal<Record<string, string>>({});
+  const [remotePairingModalOpen, setRemotePairingModalOpen] = createSignal(false);
+  const [remotePairingState, setRemotePairingState] = createSignal<RemotePairingState | null>(null);
+  const [remotePairingSupported, setRemotePairingSupported] = createSignal(false);
+  let remotePairingController: RemotePairingController | null = null;
   let unsubscribeSession: (() => void) | undefined;
+  let unsubscribeRemotePairing: (() => void) | undefined;
 
   onMount(() => {
+    if (typeof RTCPeerConnection !== "undefined") {
+      remotePairingController = createRemotePairingController();
+      unsubscribeRemotePairing = remotePairingController.subscribe((stateSnapshot) => {
+        setRemotePairingState(stateSnapshot);
+      });
+      setRemotePairingSupported(true);
+    }
+
     void loadArena();
   });
 
   onCleanup(() => {
     unsubscribeSession?.();
+    unsubscribeRemotePairing?.();
+    remotePairingController?.destroy();
     session()?.destroy();
   });
 
@@ -105,6 +126,34 @@ const App: Component = () => {
     })();
   };
 
+  const beginRemoteHosting = async (): Promise<void> => {
+    if (!remotePairingController) {
+      throw new Error("This browser does not support remote pairing.");
+    }
+
+    await remotePairingController.beginHosting();
+  };
+
+  const acceptRemoteOffer = async (offerPayload: string): Promise<void> => {
+    if (!remotePairingController) {
+      throw new Error("This browser does not support remote pairing.");
+    }
+
+    await remotePairingController.acceptOfferAndCreateAnswer(offerPayload);
+  };
+
+  const applyRemoteAnswer = async (answerPayload: string): Promise<void> => {
+    if (!remotePairingController) {
+      throw new Error("This browser does not support remote pairing.");
+    }
+
+    await remotePairingController.applyAnswer(answerPayload);
+  };
+
+  const resetRemotePairing = (): void => {
+    remotePairingController?.reset();
+  };
+
   return (
     <main class="shell">
       <div class="playmat-halo playmat-halo-top" />
@@ -140,9 +189,17 @@ const App: Component = () => {
             <TableArena
               blockerAssignments={blockerAssignments()}
               onCopyInviteLink={copyInviteLink}
+              onOpenRemotePairing={
+                remotePairingSupported()
+                  ? () => {
+                      setRemotePairingModalOpen(true);
+                    }
+                  : undefined
+              }
               onRun={run}
               onSetBlockerAssignment={setBlockerAssignment}
               onToggleAttackerSelection={toggleAttackerSelection}
+              remotePairingState={remotePairingState()}
               selectedAttackers={selectedAttackers()}
               sessionInfo={sessionInfo()}
               state={resolved()}
@@ -150,6 +207,20 @@ const App: Component = () => {
           )}
         </Match>
       </Switch>
+
+      <Show when={remotePairingModalOpen()}>
+        <RemotePairingModal
+          onAcceptOffer={acceptRemoteOffer}
+          onApplyAnswer={applyRemoteAnswer}
+          onBeginHosting={beginRemoteHosting}
+          onClose={() => {
+            setRemotePairingModalOpen(false);
+          }}
+          onReset={resetRemotePairing}
+          state={remotePairingState()}
+          supported={remotePairingSupported()}
+        />
+      </Show>
     </main>
   );
 };

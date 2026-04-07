@@ -1,6 +1,6 @@
 # Remote Duel Horizon
 
-This document records the current post-`0.8.0` proposal horizon for first honest two-device play.
+This document records the current post-`0.8.0` proposal horizon for first honest two-device play after the manual remote-pairing foundation landed.
 
 It does not claim secure internet-scale multiplayer.
 
@@ -14,11 +14,11 @@ to:
 
 ## Target Horizon
 
-The proposed horizon is:
+The remaining proposed horizon is:
 
 - `1` release horizon
-- `4` waves
-- `8` slices
+- `3` active proposal waves
+- `6` active proposal slices
 
 The target milestone is:
 
@@ -52,18 +52,16 @@ The likely implementation seams are:
 
 The `Game` aggregate should not learn about `WebRTC`, peers, rooms, or browser authority.
 
-## Wave Plan
+## Implemented Foundation
 
-### Wave 1 — Remote Pairing
+Wave 1 is now implemented through:
 
-Goal:
+- [pair-two-browsers-with-manual-webrtc-signaling.md](../implemented/application/pair-two-browsers-with-manual-webrtc-signaling.md)
+- [present-remote-pairing-ui-for-browser-duels.md](../implemented/application/present-remote-pairing-ui-for-browser-duels.md)
 
-- establish a real browser-to-browser connection without introducing a backend game service
+That foundation proves browser-to-browser transport setup without yet claiming remote gameplay relay.
 
-Slices:
-
-- [pair-two-browsers-with-manual-webrtc-signaling.md](wave-1-remote-pairing/pair-two-browsers-with-manual-webrtc-signaling.md)
-- [present-remote-pairing-ui-for-browser-duels.md](wave-1-remote-pairing/present-remote-pairing-ui-for-browser-duels.md)
+## Active Wave Plan
 
 ### Wave 2 — Authoritative Transport
 

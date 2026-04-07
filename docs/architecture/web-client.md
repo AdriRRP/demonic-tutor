@@ -123,6 +123,20 @@ Peer Solid UI event
 
 That local transport still keeps one authoritative runtime.
 
+The current remote-pairing foundation adds one more browser-only path:
+
+```text
+Host browser opens pairing modal
+-> host generates WebRTC offer
+-> peer imports offer and generates answer
+-> host imports answer
+-> direct browser-to-browser DataChannel opens
+```
+
+That path currently proves transport only.
+
+It does not yet relay authoritative gameplay commands or snapshots across devices.
+
 ---
 
 # Monorepo Decision
@@ -151,6 +165,7 @@ Its job today is to provide:
 - one shared Rust-owned game session embedded in the browser
 - one same-origin `BroadcastChannel` bridge so a second browser window can join that session without a backend
 - a host-authoritative browser room where only one window owns the wasm-backed engine at a time
+- a manual remote-pairing modal that can establish a direct WebRTC browser-to-browser data channel without a backend game service
 - a generated duel HUD that renders the phase loop and compact seat stats through CSS/SVG primitives instead of text-heavy badges
 - two viewer-scoped seats over that same session
 - a viewport-fitted SPA arena with portrait and landscape layouts
@@ -178,6 +193,7 @@ It is still intentionally early-stage UI:
 - centered on a shared table surface rather than debug panels
 - optimized for interaction coverage before deep motion/polish work
 - not yet a secure remote multiplayer client
+- not yet a remotely playable WebRTC client because command relay and snapshot broadcast remain future slices
 - still keeping free battlefield layout local to each browser window until a dedicated sync slice lands
 
 Important constraint:

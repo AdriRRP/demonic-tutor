@@ -72,6 +72,7 @@ It currently provides:
 - one shared wasm-backed game session
 - one same-origin `BroadcastChannel` bridge so a second browser window can join the same duel without a backend
 - a host-authoritative local room model where one window owns the Rust runtime and the peer window sends public commands to it
+- a manual remote-pairing modal that can establish a direct WebRTC data channel between two browsers through copy-pasted offer/answer payloads
 - a generated duel HUD with a graphical phase track and compact stat pips instead of the earlier text-heavy cockpit
 - two viewer-scoped seats over that same Rust-owned state
 - a viewport-fitted SPA arena with dedicated landscape and portrait layouts
@@ -94,6 +95,17 @@ It currently provides:
 - real command execution for land play, mana, simple casting, combat, cleanup, and replay
 
 It is still an early arena rather than a polished shipped client, but the UI now prioritizes a card-first premium table feel before adding richer motion or deeper spell UX.
+
+## Remote Pairing Foundation
+
+The first remote multiplayer slice now exists, but it is intentionally narrow:
+
+- it establishes browser-to-browser transport only
+- it uses manual WebRTC signaling through a pairing modal
+- it does not yet relay gameplay commands or authoritative snapshots across devices
+- it remains honest about transport state (`idle`, `connecting`, `connected`, `failed`)
+
+That means the current truly playable multiplayer path is still the same-origin two-window local room.
 
 ## Local Two-Window Multiplayer
 

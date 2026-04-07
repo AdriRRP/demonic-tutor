@@ -149,6 +149,17 @@ button {
   padding: 0 11px;
 }
 
+.pairing-button-live {
+  border-color: rgba(111, 228, 173, 0.26);
+  background:
+    radial-gradient(circle at 50% 24%, rgba(111, 228, 173, 0.22), transparent 62%),
+    rgba(255, 255, 255, 0.08);
+  color: #dff9ef;
+  box-shadow:
+    0 0 18px rgba(111, 228, 173, 0.16),
+    inset 0 0 0 1px rgba(111, 228, 173, 0.1);
+}
+
 .table-shell {
   position: relative;
   z-index: 1;
@@ -1250,8 +1261,125 @@ button {
 }
 
 .zone-browser-modal,
-.card-inspect-modal {
+.card-inspect-modal,
+.remote-pairing-modal {
   width: min(46rem, calc(100vw - 32px));
+}
+
+.remote-pairing-modal {
+  gap: 14px;
+}
+
+.remote-pairing-head {
+  align-items: center;
+}
+
+.remote-pairing-note {
+  margin: 0;
+  color: var(--ink-soft);
+  line-height: 1.5;
+}
+
+.remote-pairing-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.remote-pairing-panel,
+.remote-pairing-status {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--edge);
+  border-radius: 20px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015)),
+    rgba(9, 15, 27, 0.82);
+}
+
+.remote-pairing-panel-head {
+  display: grid;
+  gap: 2px;
+}
+
+.remote-pairing-panel-head p,
+.remote-pairing-panel-head strong,
+.remote-pairing-status p,
+.remote-pairing-status strong {
+  margin: 0;
+}
+
+.remote-pairing-panel-head strong,
+.remote-pairing-status strong {
+  font-size: 1rem;
+}
+
+.remote-pairing-field {
+  display: grid;
+  gap: 6px;
+}
+
+.remote-pairing-field label {
+  color: rgba(235, 240, 255, 0.84);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.remote-pairing-textarea {
+  width: 100%;
+  min-height: 120px;
+  resize: vertical;
+  padding: 12px 13px;
+  border: 1px solid rgba(121, 165, 255, 0.16);
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.015)),
+    rgba(5, 9, 18, 0.92);
+  color: #eef3ff;
+  font: inherit;
+  line-height: 1.45;
+}
+
+.remote-pairing-textarea::placeholder {
+  color: rgba(155, 169, 197, 0.72);
+}
+
+.remote-pairing-textarea:focus {
+  outline: none;
+  border-color: rgba(121, 165, 255, 0.38);
+  box-shadow: 0 0 0 1px rgba(121, 165, 255, 0.16);
+}
+
+.remote-pairing-textarea.remote-pairing-output {
+  min-height: 148px;
+}
+
+.remote-pairing-field-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.remote-pairing-status {
+  gap: 8px;
+}
+
+.remote-pairing-status-copy {
+  display: grid;
+  gap: 4px;
+}
+
+.remote-pairing-status-copy p,
+.remote-pairing-status-copy strong,
+.remote-pairing-error {
+  margin: 0;
+}
+
+.remote-pairing-error {
+  color: #ffb4c1;
+  line-height: 1.45;
 }
 
 .zone-browser-empty {
@@ -3601,6 +3729,10 @@ button {
     width: min(100%, calc(100vw - 24px));
     max-height: min(82dvh, 42rem);
   }
+
+  .remote-pairing-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 1180px) {
@@ -3612,6 +3744,7 @@ button {
     order: 3;
   }
 
+  .remote-pairing-grid,
   .phase-track,
   .sidebar-stat-grid {
     grid-template-columns: 1fr;
