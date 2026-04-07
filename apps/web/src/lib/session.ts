@@ -444,6 +444,7 @@ class HostArenaSession implements ArenaSession {
 
   private async respondToCommand(message: CommandRequestMessage): Promise<void> {
     try {
+      assertCommandMatchesBoundSeat(message.command, seatForRole(this.stateCache, "peer"));
       const nextState = await runRequestedCommand(this.client, message.command);
       this.commitState(nextState);
       this.channel?.postMessage({
@@ -649,6 +650,7 @@ class PeerArenaSession implements ArenaSession {
   }
 
   private sendCommand(command: ArenaCommandRequest): Promise<ArenaState> {
+    assertCommandMatchesBoundSeat(command, this.infoState.localSeatId);
     const requestId = createSessionId();
 
     return new Promise<ArenaState>((resolve, reject) => {
@@ -865,6 +867,7 @@ class RemotePeerArenaSession implements ArenaSession {
   }
 
   private sendCommand(command: ArenaCommandRequest): Promise<ArenaState> {
+    assertCommandMatchesBoundSeat(command, this.infoState.localSeatId);
     const requestId = createSessionId();
 
     return new Promise<ArenaState>((resolve, reject) => {
@@ -1001,6 +1004,47 @@ async function runRequestedCommand(
   }
 }
 
+function assertCommandMatchesBoundSeat(
+  command: ArenaCommandRequest,
+  localSeatId: string | null,
+): void {
+  const commandSeatId = commandPlayerId(command);
+  if (commandSeatId === null) {
+    return;
+  }
+
+  if (localSeatId === null) {
+    throw new Error("This browser is not bound to a seat yet.");
+  }
+
+  if (commandSeatId !== localSeatId) {
+    throw new Error(`This browser is bound to ${localSeatId} and cannot act as ${commandSeatId}.`);
+  }
+}
+
+function commandPlayerId(command: ArenaCommandRequest): string | null {
+  switch (command.kind) {
+    case "reset":
+    case "advance_turn":
+      return null;
+    case "pass_priority":
+    case "concede":
+    case "play_land":
+    case "tap_mana_source":
+    case "cast_spell":
+    case "activate_ability":
+    case "declare_attackers":
+    case "declare_blockers":
+    case "resolve_combat_damage":
+    case "discard_for_cleanup":
+    case "resolve_optional_effect":
+    case "resolve_pending_hand_choice":
+    case "resolve_pending_scry":
+    case "resolve_pending_surveil":
+      return command.playerId;
+  }
+}
+
 function seatForRole(state: ArenaState, role: ArenaSessionRole): string | null {
   if (role === "peer") {
     return state.viewers[1]?.player_id ?? state.viewers[0]?.player_id ?? null;
@@ -1063,7 +1107,10 @@ async function respondToRemoteCommand(
   instanceId: string,
   message: CommandRequestMessage,
 ): Promise<void> {
+  const currentState = await readState(session);
+
   try {
+    assertCommandMatchesBoundSeat(message.command, seatForRole(currentState, "peer"));
     const nextState = await runRequestedCommand(session, message.command);
     transport.send(
       JSON.stringify({
@@ -1081,7 +1128,7 @@ async function respondToRemoteCommand(
         from: instanceId,
         ok: false,
         requestId: message.requestId,
-        state: await readState(session),
+        state: currentState,
         type: "command-response",
       } satisfies CommandResponseErrorMessage),
     );

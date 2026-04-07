@@ -18,7 +18,7 @@ The remaining proposed horizon is:
 
 - `1` release horizon
 - `2` active proposal waves
-- `4` active proposal slices
+- `3` active proposal slices
 
 The target milestone is:
 
@@ -78,7 +78,7 @@ Goal:
 
 Slices:
 
-- [bind-each-browser-instance-to-one-remote-seat.md](wave-3-remote-seat-views/bind-each-browser-instance-to-one-remote-seat.md)
+- [bind-each-browser-instance-to-one-remote-seat.md](../implemented/application/bind-each-browser-instance-to-one-remote-seat.md)
 - [scope-private-hands-and-prompts-to-the-local-remote-viewer.md](wave-3-remote-seat-views/scope-private-hands-and-prompts-to-the-local-remote-viewer.md)
 
 ### Wave 4 — Resilience

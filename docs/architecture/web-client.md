@@ -168,6 +168,7 @@ Its job today is to provide:
 - a manual remote-pairing modal that can establish a direct WebRTC browser-to-browser data channel without a backend game service
 - a first host-authoritative remote command relay so the paired peer can drive the existing public command set through the host runtime
 - authoritative public snapshot broadcast back to the paired peer so both browsers converge from the host-owned state instead of local reconstruction
+- explicit one-seat-per-device remote session ownership, with both the peer and the host rejecting cross-seat command attempts before they can reach the runtime
 - a generated duel HUD that renders the phase loop and compact seat stats through CSS/SVG primitives instead of text-heavy badges
 - two viewer-scoped seats over that same session
 - a viewport-fitted SPA arena with portrait and landscape layouts
@@ -195,7 +196,7 @@ It is still intentionally early-stage UI:
 - centered on a shared table surface rather than debug panels
 - optimized for interaction coverage before deep motion/polish work
 - not yet a secure remote multiplayer client
-- not yet a one-seat-per-device remote client because seat ownership and private-view scoping still remain future slices
+- not yet a fully private remote client because remote private-view scoping still remains a future slice
 - still keeping free battlefield layout local to each browser window until a dedicated sync slice lands
 
 Important constraint:
