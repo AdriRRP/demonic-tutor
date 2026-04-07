@@ -17,8 +17,8 @@ to:
 The remaining proposed horizon is:
 
 - `1` release horizon
-- `2` active proposal waves
-- `3` active proposal slices
+- `1` active proposal wave
+- `2` active proposal slices
 
 The target milestone is:
 
@@ -68,18 +68,14 @@ Wave 2 is now fully implemented through:
 
 That means the remote peer can now issue existing public gameplay commands through the authoritative host and stay converged with the host's authoritative public state without local rule reconstruction.
 
-## Active Wave Plan
-
-### Wave 3 — Remote Seat Views
-
-Goal:
-
-- turn the remote session into a true one-seat-per-device duel instead of a hot-seat derivative
-
-Slices:
+Wave 3 is now fully implemented through:
 
 - [bind-each-browser-instance-to-one-remote-seat.md](../implemented/application/bind-each-browser-instance-to-one-remote-seat.md)
-- [scope-private-hands-and-prompts-to-the-local-remote-viewer.md](wave-3-remote-seat-views/scope-private-hands-and-prompts-to-the-local-remote-viewer.md)
+- [scope-private-hands-and-prompts-to-the-local-remote-viewer.md](../implemented/application/scope-private-hands-and-prompts-to-the-local-remote-viewer.md)
+
+That means remote browser sessions are now bound to one seat each, and the current `WebRTC` peer path only receives its own hand and prompt surfaces in clear.
+
+## Active Wave Plan
 
 ### Wave 4 — Resilience
 

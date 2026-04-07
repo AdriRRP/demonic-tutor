@@ -35,6 +35,7 @@ Implemented capabilities include:
 - exposing deterministic public prompt ordering for the current supported simultaneous trigger batches, choice requests, and target candidate lists
 - exposing deterministic seeded game setup and rematch helpers for public session bootstrapping
 - broadcasting authoritative public snapshots and command feedback from a paired browser host back to a remote browser peer over the current manual WebRTC transport baseline
+- scoping remote WebRTC snapshots so the peer receives only its own hand and prompts in clear while the opposing viewer stays redacted in transport payloads
 - exposing `playable_subset_version = v1` in the public game view so clients can pin against the first frozen playable contract
 - projecting the attached creature id for the current supported Aura subset in the public battlefield snapshot
 - dealing opening hands

@@ -160,7 +160,7 @@ export function attachRemoteCommandRelay(
     transport.send(
       JSON.stringify({
         from: instanceId,
-        state: nextState,
+        state: projectRemotePeerState(nextState),
         type: "state-sync",
       } satisfies StateSyncMessage),
     );
@@ -1045,6 +1045,27 @@ function commandPlayerId(command: ArenaCommandRequest): string | null {
   }
 }
 
+function projectRemotePeerState(state: ArenaState): ArenaState {
+  const peerSeatId = seatForRole(state, "peer");
+  if (peerSeatId === null) {
+    return state;
+  }
+
+  return {
+    ...state,
+    viewers: state.viewers.map((viewer) =>
+      viewer.player_id === peerSeatId
+        ? viewer
+        : {
+            ...viewer,
+            choice_requests: [],
+            hand: [],
+            legal_actions: [],
+          },
+    ),
+  };
+}
+
 function seatForRole(state: ArenaState, role: ArenaSessionRole): string | null {
   if (role === "peer") {
     return state.viewers[1]?.player_id ?? state.viewers[0]?.player_id ?? null;
@@ -1095,7 +1116,7 @@ async function sendRemoteStateSync(
   transport.send(
     JSON.stringify({
       from: instanceId,
-      state,
+      state: projectRemotePeerState(state),
       type: "state-sync",
     } satisfies StateSyncMessage),
   );
@@ -1117,7 +1138,7 @@ async function respondToRemoteCommand(
         from: instanceId,
         ok: true,
         requestId: message.requestId,
-        state: nextState,
+        state: projectRemotePeerState(nextState),
         type: "command-response",
       } satisfies CommandResponseSuccessMessage),
     );
@@ -1128,7 +1149,7 @@ async function respondToRemoteCommand(
         from: instanceId,
         ok: false,
         requestId: message.requestId,
-        state: currentState,
+        state: projectRemotePeerState(currentState),
         type: "command-response",
       } satisfies CommandResponseErrorMessage),
     );

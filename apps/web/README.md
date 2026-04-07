@@ -76,6 +76,7 @@ It currently provides:
 - a first host-authoritative WebRTC command relay so the paired peer can issue the existing public commands through the host browser runtime
 - authoritative public state broadcast back to the paired peer so both browsers converge from the same host-owned state
 - explicit one-seat-per-device remote ownership, with both browsers rejecting cross-seat command attempts before they reach the host runtime
+- viewer-scoped WebRTC payloads so the peer only receives its own hand and prompts in clear while the opposing viewer stays redacted
 - a generated duel HUD with a graphical phase track and compact stat pips instead of the earlier text-heavy cockpit
 - two viewer-scoped seats over that same Rust-owned state
 - a viewport-fitted SPA arena with dedicated landscape and portrait layouts
@@ -111,8 +112,8 @@ The current remote multiplayer baseline is still intentionally narrow:
 
 It is still not the final remote product shape:
 
-- private-view scoping across devices is still a future slice
 - reconnect and host-loss handling are still future slices
+- the authoritative host still sees the full runtime and therefore remains a trusted participant, not a hostile-client-secure server
 
 ## Local Two-Window Multiplayer
 
