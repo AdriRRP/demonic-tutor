@@ -4,30 +4,34 @@ This directory contains the live proposal backlog when a new release horizon is 
 
 ## Playable Horizon
 
-The current planning horizon to reach an honestly playable limited subset is:
+The current planning horizon for first honest remote play across two devices is:
 
-- `0` releases
-- `0` waves
-- `0` slices
+- `1` release horizon
+- `4` waves
+- `8` slices
 
-The current planning gate has been reached:
+The previous playable-limited gate remains reached:
 
 - after `0.8.0`, the project supports the first real best-of-one product shell for a deliberately constrained curated limited set
 
 ## Release Status
 
-The `0.8.0` horizon is now closed and released from `main`.
+The `0.8.0` limited-playable horizon is closed and released from `main`.
 
 That means:
 
 - the first deliberately constrained curated limited shell is now honestly implemented and released from `main`
-- the proposal backlog in this directory should remain empty until a new post-`0.8.0` release horizon is proposed
+- the live proposal backlog is now about remote two-device play, not about first playable limited support
 - closed `0.8.0` wave directories should not remain in the live backlog
 
 See:
 
 - [playable-horizon.md](playable-horizon.md)
+- [remote-duel-horizon.md](remote-duel-horizon.md)
 
 ## Active Proposal Waves
 
-- none
+- [wave-1-remote-pairing/](wave-1-remote-pairing/)
+- [wave-2-authoritative-transport/](wave-2-authoritative-transport/)
+- [wave-3-remote-seat-views/](wave-3-remote-seat-views/)
+- [wave-4-resilience/](wave-4-resilience/)
