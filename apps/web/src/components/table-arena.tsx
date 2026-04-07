@@ -199,6 +199,13 @@ export const TableArena: Component<TableArenaProps> = (props) => {
                     title={formatSessionRole(sessionInfo().role)}
                     value={formatSessionRole(sessionInfo().role)}
                   />
+                  <Show when={props.remotePairingState?.role}>
+                    <MetaRune
+                      icon="pair"
+                      title={props.remotePairingState?.statusLabel ?? "Remote duel channel"}
+                      value={formatRemotePairingBadge(props.remotePairingState?.phase ?? "idle")}
+                    />
+                  </Show>
                 </>
               )}
             </Show>
@@ -2635,6 +2642,25 @@ function shortRoomCode(roomId: string): string {
 
 function formatSessionRole(role: ArenaSessionInfo["role"]): string {
   return role === "peer" ? "Peer" : "Host";
+}
+
+function formatRemotePairingBadge(phase: RemotePairingState["phase"]): string {
+  switch (phase) {
+    case "connected":
+      return "Live";
+    case "reconnecting":
+      return "Rejoin";
+    case "connecting":
+      return "Linking";
+    case "offer-ready":
+      return "Offer";
+    case "answer-ready":
+      return "Answer";
+    case "failed":
+      return "Lost";
+    case "idle":
+      return "Idle";
+  }
 }
 
 function reorderCardIds(cardIds: string[], draggedCardId: string, targetCardId: string): string[] {

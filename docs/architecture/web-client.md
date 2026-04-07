@@ -137,6 +137,8 @@ That path currently proves transport only.
 
 The current Wave 2 implementation extends that path so the remote peer can issue public gameplay commands through the host-owned runtime and receive authoritative public state back after host-side changes.
 
+The current Wave 4 transport-resilience implementation extends it further so `WebRTC` interruptions surface as reconnecting transport state and the peer rehydrates from a fresh authoritative snapshot when the channel recovers.
+
 ---
 
 # Monorepo Decision
@@ -170,6 +172,7 @@ Its job today is to provide:
 - authoritative public snapshot broadcast back to the paired peer so both browsers converge from the host-owned state instead of local reconstruction
 - explicit one-seat-per-device remote session ownership, with both the peer and the host rejecting cross-seat command attempts before they can reach the runtime
 - viewer-scoped WebRTC payloads so the peer only receives its own hand and prompt surfaces in clear while the opposing viewer stays redacted
+- reconnect-aware WebRTC transport state so the peer can request a fresh authoritative snapshot after transient channel loss instead of staying stale
 - a generated duel HUD that renders the phase loop and compact seat stats through CSS/SVG primitives instead of text-heavy badges
 - two viewer-scoped seats over that same session
 - a viewport-fitted SPA arena with portrait and landscape layouts

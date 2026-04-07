@@ -18,7 +18,7 @@ The remaining proposed horizon is:
 
 - `1` release horizon
 - `1` active proposal wave
-- `2` active proposal slices
+- `1` active proposal slice
 
 The target milestone is:
 
@@ -85,7 +85,7 @@ Goal:
 
 Slices:
 
-- [detect-transport-loss-and-resync-the-remote-peer.md](wave-4-resilience/detect-transport-loss-and-resync-the-remote-peer.md)
+- [detect-transport-loss-and-resync-the-remote-peer.md](../implemented/application/detect-transport-loss-and-resync-the-remote-peer.md)
 - [end-remote-duels-honestly-when-the-host-disappears.md](wave-4-resilience/end-remote-duels-honestly-when-the-host-disappears.md)
 
 ## Out Of Scope For This Horizon

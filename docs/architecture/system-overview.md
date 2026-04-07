@@ -77,7 +77,10 @@ It is a thin Solid/Vite client that consumes the public gameplay contract throug
 WebAssembly, renders a board-first tabletop layout with two viewer-scoped seats,
 adds a small private-hand overlay per seat, can bridge one duel room across two
 same-origin browser windows through a host-authoritative local transport, and
-keeps gameplay rules inside the Rust application/domain layers.
+keeps gameplay rules inside the Rust application/domain layers. The current
+remote WebRTC path now also treats transient transport loss as a browser-session
+concern, surfacing reconnecting state and resynchronizing the peer from a fresh
+authoritative public snapshot when the channel recovers.
 
 The UI layer must **not contain business logic**.
 

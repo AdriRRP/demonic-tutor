@@ -300,6 +300,8 @@ function formatPairingPhase(phase: RemotePairingState["phase"]): string {
       return "Answer ready";
     case "connecting":
       return "Connecting";
+    case "reconnecting":
+      return "Reconnecting";
     case "connected":
       return "Connected";
     case "failed":

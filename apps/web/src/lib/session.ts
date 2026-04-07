@@ -186,6 +186,8 @@ export function attachRemoteCommandRelay(
     }
   });
 
+  void sendRemoteStateSync(session, transport, instanceId);
+
   return () => {
     unsubscribeSession();
     unsubscribeTransport();
@@ -678,10 +680,12 @@ class RemotePeerArenaSession implements ArenaSession {
   private readonly pendingRequests = new Map<string, PendingRequest>();
   private readonly transport: RemotePairingTransport;
   private readonly unsubscribeTransport: () => void;
+  private readonly unsubscribeTransportState: () => void;
   private initialStatePromise: Promise<ArenaState>;
   private resolveInitialState!: (state: ArenaState) => void;
   private rejectInitialState!: (reason?: unknown) => void;
   private stateCache: ArenaState | null = null;
+  private transportConnected = false;
 
   constructor({
     inviteUrl,
@@ -738,13 +742,14 @@ class RemotePeerArenaSession implements ArenaSession {
         pendingRequest.reject(new Error(message.error));
       }
     });
+    this.unsubscribeTransportState = this.transport.subscribeState((transportState) => {
+      const becameConnected = transportState.connected && !this.transportConnected;
+      this.transportConnected = transportState.connected;
 
-    this.transport.send(
-      JSON.stringify({
-        from: this.instanceId,
-        type: "hello",
-      } satisfies HelloMessage),
-    );
+      if (becameConnected) {
+        this.requestStateSync();
+      }
+    });
   }
 
   public subscribe(listener: SessionListener): () => void {
@@ -776,6 +781,7 @@ class RemotePeerArenaSession implements ArenaSession {
       // Ignore teardown transport failures; resilience is handled by later slices.
     }
     this.unsubscribeTransport();
+    this.unsubscribeTransportState();
   }
 
   public state(): Promise<ArenaState> {
@@ -886,6 +892,19 @@ class RemotePeerArenaSession implements ArenaSession {
         } satisfies CommandRequestMessage),
       );
     });
+  }
+
+  private requestStateSync(): void {
+    try {
+      this.transport.send(
+        JSON.stringify({
+          from: this.instanceId,
+          type: "hello",
+        } satisfies HelloMessage),
+      );
+    } catch {
+      // Ignore transient send failures while the transport is still recovering.
+    }
   }
 }
 

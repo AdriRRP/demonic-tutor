@@ -5,6 +5,7 @@ export type RemotePairingPhase =
   | "offer-ready"
   | "answer-ready"
   | "connecting"
+  | "reconnecting"
   | "connected"
   | "failed";
 
@@ -24,9 +25,11 @@ export interface RemotePairingTransport {
   role: Exclude<RemotePairingRole, null>;
   send(payload: string): void;
   subscribe(listener: RemoteTransportListener): () => void;
+  subscribeState(listener: RemoteTransportStateListener): () => void;
 }
 
 type RemoteTransportListener = (payload: string) => void;
+type RemoteTransportStateListener = (state: RemotePairingState) => void;
 
 interface SignalEnvelope {
   sdp: string;
@@ -67,6 +70,7 @@ export function createRemotePairingController(): RemotePairingController {
 class WebRtcPairingController implements RemotePairingController {
   private readonly listeners = new Set<RemotePairingListener>();
   private readonly transportListeners = new Set<RemoteTransportListener>();
+  private readonly transportStateListeners = new Set<RemoteTransportStateListener>();
   private channel: RTCDataChannel | null = null;
   private connection: RTCPeerConnection | null = null;
   private state: RemotePairingState = { ...DEFAULT_PAIRING_STATE };
@@ -114,6 +118,13 @@ class WebRtcPairingController implements RemotePairingController {
         this.transportListeners.add(listener);
         return () => {
           this.transportListeners.delete(listener);
+        };
+      },
+      subscribeState: (listener: RemoteTransportStateListener) => {
+        this.transportStateListeners.add(listener);
+        listener(this.snapshot());
+        return () => {
+          this.transportStateListeners.delete(listener);
         };
       },
     };
@@ -209,6 +220,8 @@ class WebRtcPairingController implements RemotePairingController {
     this.transportId = createRemotePairingId();
 
     connection.addEventListener("connectionstatechange", () => {
+      const wasConnected = this.state.connected || this.state.phase === "reconnecting";
+
       switch (connection.connectionState) {
         case "new":
           this.setState({
@@ -231,9 +244,11 @@ class WebRtcPairingController implements RemotePairingController {
         case "connecting":
           this.setState({
             error: null,
-            phase: "connecting",
+            phase: wasConnected ? "reconnecting" : "connecting",
             role,
-            statusLabel: "Connecting remote duel channel…",
+            statusLabel: wasConnected
+              ? "Remote duel channel interrupted. Reconnecting…"
+              : "Connecting remote duel channel…",
           });
           break;
         case "failed":
@@ -248,9 +263,10 @@ class WebRtcPairingController implements RemotePairingController {
         case "disconnected":
           this.setState({
             connected: false,
-            phase: "failed",
+            error: null,
+            phase: "reconnecting",
             role,
-            statusLabel: "Remote duel channel disconnected.",
+            statusLabel: "Remote duel channel interrupted. Reconnecting…",
           });
           break;
         case "closed":
@@ -329,6 +345,9 @@ class WebRtcPairingController implements RemotePairingController {
 
     const snapshot = this.snapshot();
     for (const listener of this.listeners) {
+      listener(snapshot);
+    }
+    for (const listener of this.transportStateListeners) {
       listener(snapshot);
     }
   }

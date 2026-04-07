@@ -8,7 +8,7 @@ The current planning horizon for first honest remote play across two devices is:
 
 - `1` release horizon
 - `1` active proposal wave
-- `2` active proposal slices
+- `1` active proposal slice
 
 The previous playable-limited gate remains reached:
 
