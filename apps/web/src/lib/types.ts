@@ -136,13 +136,21 @@ export interface ArenaViewerState {
   player_id: string;
   is_active: boolean;
   is_priority_holder: boolean;
+  mulligan_used: boolean;
   hand: ArenaHandCard[];
   legal_actions: ArenaLegalAction[];
   choice_requests: ArenaChoicePrompt[];
 }
 
+export interface ArenaPregameState {
+  starting_player_id: string;
+  current_decision_player_id: string;
+  kept_player_ids: string[];
+}
+
 export interface ArenaState {
   game: ArenaGameView;
+  pregame: ArenaPregameState | null;
   viewers: ArenaViewerState[];
   event_log: ArenaTimelineEntry[];
   last_command: ArenaCommandFeedback | null;

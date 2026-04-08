@@ -302,6 +302,9 @@ fn phase_surface_state(
     };
 
     match game.phase() {
+        Phase::Setup => {
+            return PublicSurfaceState::default();
+        }
         Phase::DeclareAttackers => {
             if active_player.id() != viewer_id {
                 return PublicSurfaceState::default();

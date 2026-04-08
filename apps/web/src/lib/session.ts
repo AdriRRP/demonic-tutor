@@ -8,6 +8,8 @@ import {
   declareAttackers,
   declareBlockers,
   discardForCleanup,
+  keepOpeningHand,
+  mulliganOpeningHand,
   passPriority,
   playLand,
   readState,
@@ -66,6 +68,8 @@ interface PresentationSyncMessage {
 
 type ArenaCommandRequest =
   | { kind: "reset" }
+  | { kind: "mulligan"; playerId: string }
+  | { kind: "keep_opening_hand"; playerId: string }
   | { kind: "pass_priority"; playerId: string }
   | { kind: "advance_turn" }
   | { kind: "concede"; playerId: string }
@@ -412,6 +416,14 @@ class HostArenaSession implements ArenaSession {
     return this.applyLocalCommand(() => resetArena(this.client));
   }
 
+  public mulligan(playerId: string): Promise<ArenaState> {
+    return this.applyLocalCommand(() => mulliganOpeningHand(this.client, playerId));
+  }
+
+  public keep_opening_hand(playerId: string): Promise<ArenaState> {
+    return this.applyLocalCommand(() => keepOpeningHand(this.client, playerId));
+  }
+
   public pass_priority(playerId: string): Promise<ArenaState> {
     return this.applyLocalCommand(() => passPriority(this.client, playerId));
   }
@@ -712,6 +724,14 @@ class PeerArenaSession implements ArenaSession {
     return this.sendCommand({ kind: "reset" });
   }
 
+  public mulligan(playerId: string): Promise<ArenaState> {
+    return this.sendCommand({ kind: "mulligan", playerId });
+  }
+
+  public keep_opening_hand(playerId: string): Promise<ArenaState> {
+    return this.sendCommand({ kind: "keep_opening_hand", playerId });
+  }
+
   public pass_priority(playerId: string): Promise<ArenaState> {
     return this.sendCommand({ kind: "pass_priority", playerId });
   }
@@ -971,6 +991,14 @@ class RemotePeerArenaSession implements ArenaSession {
     return this.sendCommand({ kind: "reset" });
   }
 
+  public mulligan(playerId: string): Promise<ArenaState> {
+    return this.sendCommand({ kind: "mulligan", playerId });
+  }
+
+  public keep_opening_hand(playerId: string): Promise<ArenaState> {
+    return this.sendCommand({ kind: "keep_opening_hand", playerId });
+  }
+
   public pass_priority(playerId: string): Promise<ArenaState> {
     return this.sendCommand({ kind: "pass_priority", playerId });
   }
@@ -1176,6 +1204,10 @@ async function runRequestedCommand(
   switch (command.kind) {
     case "reset":
       return resetArena(target);
+    case "mulligan":
+      return mulliganOpeningHand(target, command.playerId);
+    case "keep_opening_hand":
+      return keepOpeningHand(target, command.playerId);
     case "pass_priority":
       return passPriority(target, command.playerId);
     case "advance_turn":
@@ -1221,6 +1253,8 @@ function commandPlayerId(command: ArenaCommandRequest): string | null {
     case "reset":
     case "advance_turn":
       return null;
+    case "mulligan":
+    case "keep_opening_hand":
     case "pass_priority":
     case "concede":
     case "play_land":

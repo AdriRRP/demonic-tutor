@@ -1,6 +1,7 @@
 //! Exposes a playable wasm-facing two-player duel arena adapter.
 
 use {
+    rand::random,
     serde::{Deserialize, Serialize},
     wasm_bindgen::prelude::*,
 };
@@ -20,7 +21,7 @@ use crate::{
         commands::{
             ActivateAbilityCommand, AdvanceTurnCommand, CastSpellCommand, ConcedeCommand,
             DeclareAttackersCommand, DeclareBlockersCommand, DiscardForCleanupCommand, LibraryCard,
-            PassPriorityCommand, PlayLandCommand, ResolveCombatDamageCommand,
+            MulliganCommand, PassPriorityCommand, PlayLandCommand, ResolveCombatDamageCommand,
             ResolveOptionalEffectCommand, ResolvePendingHandChoiceCommand,
             ResolvePendingScryCommand, ResolvePendingSurveilCommand, TapLandCommand,
         },
@@ -37,11 +38,13 @@ pub struct WebArenaClient {
     game: Game,
     duel_setup: PublicSeededGameSetup,
     viewer_ids: Vec<PlayerId>,
+    pregame: Option<ArenaPregameController>,
 }
 
 #[derive(Serialize)]
 struct WebArenaState {
     game: WebGameView,
+    pregame: Option<WebPregameState>,
     viewers: Vec<WebViewerState>,
     event_log: Vec<WebTimelineEntry>,
     last_command: Option<WebCommandFeedback>,
@@ -52,9 +55,17 @@ struct WebViewerState {
     player_id: String,
     is_active: bool,
     is_priority_holder: bool,
+    mulligan_used: bool,
     hand: Vec<WebHandCard>,
     legal_actions: Vec<WebLegalAction>,
     choice_requests: Vec<WebChoicePrompt>,
+}
+
+#[derive(Serialize)]
+struct WebPregameState {
+    starting_player_id: String,
+    current_decision_player_id: String,
+    kept_player_ids: Vec<String>,
 }
 
 #[derive(Serialize)]
@@ -208,6 +219,13 @@ struct WebBlockerAssignmentInput {
     attacker_id: String,
 }
 
+struct ArenaPregameController {
+    starting_player_id: PlayerId,
+    decision_order: Vec<PlayerId>,
+    kept_player_ids: Vec<PlayerId>,
+    current_decision_index: usize,
+}
+
 #[wasm_bindgen]
 impl WebArenaClient {
     #[wasm_bindgen(constructor)]
@@ -223,16 +241,14 @@ impl WebArenaClient {
             .first()
             .cloned()
             .ok_or_else(|| JsValue::from_str("duel setup must include at least one player"))?;
-        let (mut game, _) = service
-            .start_seeded_public_game(duel_setup.clone(), &initial_viewer)
-            .map_err(domain_error_to_js)?;
-        advance_to_first_main(&service, &mut game)?;
+        let (game, pregame) = create_setup_duel(&service, duel_setup.clone(), &initial_viewer)?;
 
         Ok(Self {
             service,
             game,
             duel_setup,
             viewer_ids,
+            pregame: Some(pregame),
         })
     }
 
@@ -246,13 +262,47 @@ impl WebArenaClient {
             .first()
             .cloned()
             .ok_or_else(|| JsValue::from_str("duel setup must include at least one player"))?;
-        let (mut game, _) = self
-            .service
-            .start_seeded_public_game(self.duel_setup.clone(), &initial_viewer)
-            .map_err(domain_error_to_js)?;
-        advance_to_first_main(&self.service, &mut game)?;
+        let (game, pregame) =
+            create_setup_duel(&self.service, self.duel_setup.clone(), &initial_viewer)?;
         self.game = game;
+        self.pregame = Some(pregame);
         self.project_state(None)
+    }
+
+    pub fn mulligan(&mut self, player_id: &str) -> Result<JsValue, JsValue> {
+        self.ensure_pregame_decision_holder(player_id)?;
+        let player_id = PlayerId::new(player_id);
+        let event = self
+            .service
+            .mulligan(&mut self.game, MulliganCommand::new(player_id.clone()))
+            .map_err(domain_error_to_js)?;
+
+        self.project_state(Some(WebCommandFeedback {
+            applied: true,
+            message: "Mulligan applied".to_string(),
+            emitted_events: vec![format!("{} mulliganed", event.player_id.as_str())],
+        }))
+    }
+
+    pub fn keep_opening_hand(&mut self, player_id: &str) -> Result<JsValue, JsValue> {
+        self.ensure_pregame_decision_holder(player_id)?;
+        let player_id = PlayerId::new(player_id);
+        let pregame_completed = self
+            .pregame
+            .as_mut()
+            .ok_or_else(|| JsValue::from_str("pregame controller is unavailable"))?
+            .keep(&player_id)?;
+
+        if pregame_completed {
+            self.pregame = None;
+            advance_to_first_main(&self.service, &mut self.game)?;
+        }
+
+        self.project_state(Some(WebCommandFeedback {
+            applied: true,
+            message: "Opening hand kept".to_string(),
+            emitted_events: vec![format!("{} kept the opening hand", player_id.as_str())],
+        }))
     }
 
     pub fn pass_priority(&mut self, player_id: &str) -> Result<JsValue, JsValue> {
@@ -427,6 +477,10 @@ impl WebArenaClient {
 
         serde_wasm_bindgen::to_value(&WebArenaState {
             game: web_game_view(&game),
+            pregame: self
+                .pregame
+                .as_ref()
+                .and_then(ArenaPregameController::web_state),
             viewers,
             event_log: event_log.iter().map(web_timeline_entry).collect(),
             last_command,
@@ -451,6 +505,7 @@ impl WebArenaClient {
                 .game
                 .priority()
                 .is_some_and(|priority| priority.current_holder() == viewer_id),
+            mulligan_used: player.mulligan_used(),
             hand: player.hand_cards().map(web_hand_card).collect(),
             legal_actions: legal_actions(&self.game, viewer_id)
                 .iter()
@@ -461,6 +516,95 @@ impl WebArenaClient {
                 .map(web_choice_prompt)
                 .collect(),
         })
+    }
+
+    fn ensure_pregame_decision_holder(&self, player_id: &str) -> Result<(), JsValue> {
+        if *self.game.phase() != Phase::Setup {
+            return Err(JsValue::from_str(
+                "opening hand decisions are only available during Setup",
+            ));
+        }
+
+        let current_decision_player_id = self
+            .pregame
+            .as_ref()
+            .and_then(ArenaPregameController::current_decision_player_id)
+            .ok_or_else(|| JsValue::from_str("pregame decisions are already complete"))?;
+
+        if current_decision_player_id.as_str() == player_id {
+            return Ok(());
+        }
+
+        Err(JsValue::from_str(&format!(
+            "{} is waiting for {} to decide the opening hand",
+            player_id,
+            current_decision_player_id.as_str()
+        )))
+    }
+}
+
+impl ArenaPregameController {
+    fn new(player_ids: &[PlayerId]) -> Result<Self, JsValue> {
+        let mut decision_order = player_ids.to_vec();
+        if decision_order.is_empty() {
+            return Err(JsValue::from_str(
+                "pregame controller requires at least one player",
+            ));
+        }
+
+        if decision_order.len() == 2 && random::<bool>() {
+            decision_order.rotate_left(1);
+        }
+
+        Ok(Self {
+            starting_player_id: decision_order[0].clone(),
+            decision_order,
+            kept_player_ids: Vec::new(),
+            current_decision_index: 0,
+        })
+    }
+
+    fn current_decision_player_id(&self) -> Option<&PlayerId> {
+        self.decision_order.get(self.current_decision_index)
+    }
+
+    fn keep(&mut self, player_id: &PlayerId) -> Result<bool, JsValue> {
+        self.ensure_current_decision_holder(player_id)?;
+        if self.kept_player_ids.contains(player_id) {
+            return Err(JsValue::from_str(&format!(
+                "{} already kept the opening hand",
+                player_id.as_str()
+            )));
+        }
+
+        self.kept_player_ids.push(player_id.clone());
+        self.current_decision_index += 1;
+        Ok(self.current_decision_player_id().is_none())
+    }
+
+    fn web_state(&self) -> Option<WebPregameState> {
+        self.current_decision_player_id()
+            .map(|current_decision_player_id| WebPregameState {
+                starting_player_id: id_string(&self.starting_player_id),
+                current_decision_player_id: id_string(current_decision_player_id),
+                kept_player_ids: self.kept_player_ids.iter().map(id_string).collect(),
+            })
+    }
+
+    fn ensure_current_decision_holder(&self, player_id: &PlayerId) -> Result<(), JsValue> {
+        let current = self
+            .current_decision_player_id()
+            .ok_or_else(|| JsValue::from_str("pregame decisions are already complete"))?;
+
+        if current == player_id {
+            return Ok(());
+        }
+
+        Err(JsValue::from_str(&format!(
+            "{} is waiting for {} to decide the opening hand",
+            player_id.as_str(),
+            current.as_str()
+        )))
     }
 }
 
@@ -498,6 +642,39 @@ fn advance_to_first_main(
     Err(JsValue::from_str(
         "failed to prepare duel arena state before reaching FirstMain",
     ))
+}
+
+fn create_setup_duel(
+    service: &GameService<InMemoryEventStore, InMemoryEventBus>,
+    duel_setup: PublicSeededGameSetup,
+    initial_viewer: &PlayerId,
+) -> Result<(Game, ArenaPregameController), JsValue> {
+    let (mut game, _) = service
+        .start_seeded_public_game(duel_setup, initial_viewer)
+        .map_err(domain_error_to_js)?;
+    let player_ids = game
+        .players()
+        .iter()
+        .map(|player| player.id().clone())
+        .collect::<Vec<_>>();
+    let pregame = ArenaPregameController::new(&player_ids)?;
+    set_active_player(&mut game, &pregame.starting_player_id)?;
+    Ok((game, pregame))
+}
+
+fn set_active_player(game: &mut Game, player_id: &PlayerId) -> Result<(), JsValue> {
+    let active_player_index = game
+        .players()
+        .iter()
+        .position(|player| player.id() == player_id)
+        .ok_or_else(|| {
+            JsValue::from_str(&format!(
+                "failed to prepare duel arena state for {}",
+                player_id.as_str()
+            ))
+        })?;
+    game.replace_active_player_index(active_player_index);
+    Ok(())
 }
 
 fn duel_setup() -> PublicSeededGameSetup {
