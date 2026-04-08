@@ -17,8 +17,8 @@ to:
 The remaining proposed horizon is:
 
 - `1` release horizon
-- `0` active proposal waves
-- `0` active proposal slices
+- `2` active proposal waves
+- `4` active proposal slices
 
 The target milestone is:
 
@@ -84,7 +84,8 @@ That means transient transport loss now surfaces as reconnecting state with auth
 
 ## Active Wave Plan
 
-There are currently no active proposal waves in this horizon.
+- [wave-5-qr-pairing-polish/README.md](wave-5-qr-pairing-polish/README.md)
+- [wave-6-arena-pregame-polish/README.md](wave-6-arena-pregame-polish/README.md)
 
 ## Out Of Scope For This Horizon
 
