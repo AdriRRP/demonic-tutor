@@ -1,4 +1,4 @@
-import { Show, createEffect, createSignal } from "solid-js";
+import { For, Show, createEffect, createSignal } from "solid-js";
 import type { Component } from "solid-js";
 import type { RemotePairingState } from "../lib/remote-pairing";
 
@@ -12,7 +12,16 @@ interface RemotePairingModalProps {
   supported: boolean;
 }
 
-type PendingAction = "accept-offer" | "apply-answer" | "begin-hosting" | "copy-signal" | null;
+type PendingAction =
+  | "accept-offer"
+  | "apply-answer"
+  | "begin-hosting"
+  | "copy-signal"
+  | "paste-host-answer"
+  | "paste-peer-offer"
+  | null;
+
+type SignalInputTarget = "host-answer" | "peer-offer";
 
 export const RemotePairingModal: Component<RemotePairingModalProps> = (props) => {
   const [hostAnswerInput, setHostAnswerInput] = createSignal("");
@@ -66,9 +75,41 @@ export const RemotePairingModal: Component<RemotePairingModalProps> = (props) =>
     })();
   };
 
+  const pasteSignal = (target: SignalInputTarget) => {
+    if (!clipboardReadSupported()) {
+      setLocalError("This browser cannot read from the clipboard.");
+      return;
+    }
+
+    void (async () => {
+      setPendingAction(target === "host-answer" ? "paste-host-answer" : "paste-peer-offer");
+      setCopyFeedback(null);
+      setLocalError(null);
+
+      try {
+        const clipboardValue = (await navigator.clipboard.readText()).trim();
+        if (clipboardValue.length === 0) {
+          throw new Error("Clipboard is empty.");
+        }
+
+        if (target === "host-answer") {
+          setHostAnswerInput(clipboardValue);
+        } else {
+          setPeerOfferInput(clipboardValue);
+        }
+      } catch (error) {
+        setLocalError(error instanceof Error ? error.message : "Could not read the clipboard.");
+      } finally {
+        setPendingAction(null);
+      }
+    })();
+  };
+
   const statusError = () => localError() ?? props.state?.error ?? null;
   const hostSignal = () => (props.state?.role === "host" ? props.state.localSignal : "");
   const peerSignal = () => (props.state?.role === "peer" ? props.state.localSignal : "");
+  const hostSignalSummary = () => summarizeSignal(hostSignal());
+  const peerSignalSummary = () => summarizeSignal(peerSignal());
 
   return (
     <div
@@ -89,13 +130,6 @@ export const RemotePairingModal: Component<RemotePairingModalProps> = (props) =>
             <h2>Pair two browsers</h2>
           </div>
           <div class="chip-row">
-            <StatusChip
-              label={props.state ? formatPairingPhase(props.state.phase) : "Idle"}
-              tone={props.state?.connected ? "connected" : "default"}
-            />
-            <Show when={props.state?.role}>
-              {(role) => <StatusChip label={formatPairingRole(role())} tone="default" />}
-            </Show>
             <button
               class="hero-button hero-button-ghost mini-button"
               type="button"
@@ -121,10 +155,24 @@ export const RemotePairingModal: Component<RemotePairingModalProps> = (props) =>
           </div>
         </div>
 
-        <p class="remote-pairing-note">
-          Manual WebRTC pairing closes the transport handshake for the first remote-duel slice. The
-          authoritative host still owns gameplay execution until the next transport slices land.
-        </p>
+        <div class="remote-pairing-hero">
+          <div class="remote-pairing-hero-copy">
+            <p class="remote-pairing-note">
+              Pair two browsers directly with manual WebRTC signaling. The host still owns the
+              runtime, but this flow is optimized for quick copy/paste between devices instead of
+              raw transport debugging.
+            </p>
+          </div>
+          <div class="remote-pairing-hero-status">
+            <StatusChip
+              label={props.state ? formatPairingPhase(props.state.phase) : "Idle"}
+              tone={props.state?.connected ? "connected" : "default"}
+            />
+            <Show when={props.state?.role}>
+              {(role) => <StatusChip label={formatPairingRole(role())} tone="default" />}
+            </Show>
+          </div>
+        </div>
 
         <Show
           when={props.supported}
@@ -136,15 +184,24 @@ export const RemotePairingModal: Component<RemotePairingModalProps> = (props) =>
           }
         >
           <div class="remote-pairing-grid">
-            <section class="remote-pairing-panel">
+            <section
+              classList={{
+                "remote-pairing-panel": true,
+                "remote-pairing-panel-active": props.state?.role === "host",
+              }}
+            >
               <div class="remote-pairing-panel-head">
                 <p class="label">Host</p>
                 <strong>Open the room</strong>
               </div>
-              <p class="muted">
-                Generate an offer in the authoritative browser, send it to the second device, then
-                paste the remote answer here.
-              </p>
+
+              <PairingSteps
+                steps={[
+                  "Generate the host offer.",
+                  "Send it to the second device.",
+                  "Paste the returned answer here.",
+                ]}
+              />
 
               <button
                 class="hero-button"
@@ -159,6 +216,15 @@ export const RemotePairingModal: Component<RemotePairingModalProps> = (props) =>
 
               <div class="remote-pairing-field">
                 <label for="remote-host-offer">Offer payload</label>
+                <Show when={hostSignalSummary()}>
+                  {(summary) => (
+                    <SignalSummaryCard
+                      bytes={summary().bytes}
+                      kind={summary().kind}
+                      lineCount={summary().lineCount}
+                    />
+                  )}
+                </Show>
                 <textarea
                   id="remote-host-offer"
                   class="remote-pairing-textarea remote-pairing-output"
@@ -192,6 +258,20 @@ export const RemotePairingModal: Component<RemotePairingModalProps> = (props) =>
                     setHostAnswerInput(event.currentTarget.value);
                   }}
                 />
+                <div class="remote-pairing-field-actions remote-pairing-field-actions-dual">
+                  <Show when={clipboardReadSupported()}>
+                    <button
+                      class="hero-button hero-button-ghost mini-button"
+                      type="button"
+                      disabled={pendingAction() !== null}
+                      onClick={() => {
+                        pasteSignal("host-answer");
+                      }}
+                    >
+                      {pendingAction() === "paste-host-answer" ? "Reading…" : "Paste answer"}
+                    </button>
+                  </Show>
+                </div>
               </div>
 
               <button
@@ -206,15 +286,24 @@ export const RemotePairingModal: Component<RemotePairingModalProps> = (props) =>
               </button>
             </section>
 
-            <section class="remote-pairing-panel">
+            <section
+              classList={{
+                "remote-pairing-panel": true,
+                "remote-pairing-panel-active": props.state?.role === "peer",
+              }}
+            >
               <div class="remote-pairing-panel-head">
                 <p class="label">Join</p>
                 <strong>Answer the host</strong>
               </div>
-              <p class="muted">
-                Paste the host offer in the second browser, create the answer, then return that
-                answer back to the host.
-              </p>
+
+              <PairingSteps
+                steps={[
+                  "Paste the host offer from the first device.",
+                  "Generate the peer answer.",
+                  "Return the answer back to the host.",
+                ]}
+              />
 
               <div class="remote-pairing-field">
                 <label for="remote-peer-offer">Host offer</label>
@@ -227,6 +316,20 @@ export const RemotePairingModal: Component<RemotePairingModalProps> = (props) =>
                     setPeerOfferInput(event.currentTarget.value);
                   }}
                 />
+                <div class="remote-pairing-field-actions remote-pairing-field-actions-dual">
+                  <Show when={clipboardReadSupported()}>
+                    <button
+                      class="hero-button hero-button-ghost mini-button"
+                      type="button"
+                      disabled={pendingAction() !== null}
+                      onClick={() => {
+                        pasteSignal("peer-offer");
+                      }}
+                    >
+                      {pendingAction() === "paste-peer-offer" ? "Reading…" : "Paste offer"}
+                    </button>
+                  </Show>
+                </div>
               </div>
 
               <button
@@ -242,6 +345,15 @@ export const RemotePairingModal: Component<RemotePairingModalProps> = (props) =>
 
               <div class="remote-pairing-field">
                 <label for="remote-peer-answer">Answer payload</label>
+                <Show when={peerSignalSummary()}>
+                  {(summary) => (
+                    <SignalSummaryCard
+                      bytes={summary().bytes}
+                      kind={summary().kind}
+                      lineCount={summary().lineCount}
+                    />
+                  )}
+                </Show>
                 <textarea
                   id="remote-peer-answer"
                   class="remote-pairing-textarea remote-pairing-output"
@@ -281,6 +393,29 @@ export const RemotePairingModal: Component<RemotePairingModalProps> = (props) =>
   );
 };
 
+const PairingSteps: Component<{ steps: string[] }> = (props) => (
+  <ol class="remote-pairing-steps">
+    <For each={props.steps}>
+      {(step, index) => (
+        <li class="remote-pairing-step">
+          <span class="remote-pairing-step-index">{String(index() + 1)}</span>
+          <span>{step}</span>
+        </li>
+      )}
+    </For>
+  </ol>
+);
+
+const SignalSummaryCard: Component<{ kind: string; bytes: number; lineCount: number }> = (
+  props,
+) => (
+  <div class="remote-pairing-signal-summary">
+    <span class="remote-pairing-signal-chip">{props.kind}</span>
+    <span>{formatSignalBytes(props.bytes)}</span>
+    <span>{`${String(props.lineCount)} line${props.lineCount === 1 ? "" : "s"}`}</span>
+  </div>
+);
+
 const StatusChip: Component<{ label: string; tone: "connected" | "default" }> = (props) => (
   <span
     classList={{
@@ -313,4 +448,43 @@ function formatPairingPhase(phase: RemotePairingState["phase"]): string {
 
 function formatPairingRole(role: NonNullable<RemotePairingState["role"]>): string {
   return role === "host" ? "Host" : "Peer";
+}
+
+function clipboardReadSupported(): boolean {
+  return (
+    typeof navigator !== "undefined" &&
+    "clipboard" in navigator &&
+    typeof navigator.clipboard.readText === "function"
+  );
+}
+
+function summarizeSignal(
+  payload: string,
+): { kind: string; bytes: number; lineCount: number } | null {
+  if (!payload) {
+    return null;
+  }
+
+  let kind = "Signal";
+
+  try {
+    const parsedPayload = JSON.parse(payload) as { type?: unknown };
+    if (parsedPayload.type === "offer") {
+      kind = "Offer";
+    } else if (parsedPayload.type === "answer") {
+      kind = "Answer";
+    }
+  } catch {
+    kind = "Signal";
+  }
+
+  return {
+    kind,
+    bytes: new TextEncoder().encode(payload).length,
+    lineCount: payload.split("\n").length,
+  };
+}
+
+function formatSignalBytes(byteLength: number): string {
+  return `${String(Math.max(1, Math.round(byteLength / 1024)))} KB`;
 }

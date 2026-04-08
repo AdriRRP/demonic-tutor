@@ -171,6 +171,7 @@ Its job today is to provide:
 - one same-origin `BroadcastChannel` bridge so a second browser window can join that session without a backend
 - a host-authoritative browser room where only one window owns the wasm-backed engine at a time
 - a manual remote-pairing modal that can establish a direct WebRTC browser-to-browser data channel without a backend game service
+- a clipboard-first remote-pairing flow with clearer host/join steps and lighter signaling handoff between devices
 - a first host-authoritative remote command relay so the paired peer can drive the existing public command set through the host runtime
 - authoritative public snapshot broadcast back to the paired peer so both browsers converge from the host-owned state instead of local reconstruction
 - explicit one-seat-per-device remote session ownership, with both the peer and the host rejecting cross-seat command attempts before they can reach the runtime

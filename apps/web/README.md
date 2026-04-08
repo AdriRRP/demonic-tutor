@@ -73,6 +73,7 @@ It currently provides:
 - one same-origin `BroadcastChannel` bridge so a second browser window can join the same duel without a backend
 - a host-authoritative local room model where one window owns the Rust runtime and the peer window sends public commands to it
 - a manual remote-pairing modal that can establish a direct WebRTC data channel between two browsers through copy-pasted offer/answer payloads
+- a clipboard-first pairing flow on top of that modal, with clearer host/join steps and direct paste affordances for two-device setup
 - a first host-authoritative WebRTC command relay so the paired peer can issue the existing public commands through the host browser runtime
 - authoritative public state broadcast back to the paired peer so both browsers converge from the same host-owned state
 - explicit one-seat-per-device remote ownership, with both browsers rejecting cross-seat command attempts before they reach the host runtime
