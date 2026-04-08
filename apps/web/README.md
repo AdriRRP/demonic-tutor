@@ -85,7 +85,7 @@ It currently provides:
 - reconnect-aware WebRTC pairing state plus fresh authoritative resync when the remote channel recovers after a transient interruption
 - an honest ended-remote-session overlay when the host disappears, with a clean path back to pairing or a fresh local duel
 - a browser-side opening-hand setup flow that now keeps remote duels in `Setup`, picks who goes first, and relays repeated London-style mulligan plus keep-with-bottoming decisions through the host runtime
-- a viewer-scoped pregame overlay so each device sees only its own opening hand while waiting or deciding, including explicit opening-hand bottom selection directly from the visible hand fan after mulligans
+- a viewer-scoped pregame overlay with stronger seat-aware hero states so each device sees only its own opening hand while waiting, deciding, or bottoming after mulligans
 - a generated duel HUD with a graphical phase track and compact stat pips instead of the earlier text-heavy cockpit
 - two viewer-scoped seats over that same Rust-owned state
 - a viewport-fitted SPA arena with dedicated landscape and portrait layouts

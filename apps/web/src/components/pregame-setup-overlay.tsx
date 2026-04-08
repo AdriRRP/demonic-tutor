@@ -17,9 +17,13 @@ export const PregameSetupOverlay: Component<PregameSetupOverlayProps> = (props) 
   const localViewer = () =>
     props.state.viewers.find((viewer) => viewer.player_id === localSeatId()) ??
     props.state.viewers[0];
+  const opponentViewer = () =>
+    props.state.viewers.find((viewer) => viewer.player_id !== localViewer()?.player_id) ?? null;
   const localPlayerName = () =>
     formatPlayerLabel(localViewer()?.player_id ?? localSeatId() ?? "Player");
+  const opponentPlayerName = () => formatPlayerLabel(opponentViewer()?.player_id ?? "Opponent");
   const currentDecisionPlayerId = () => pregame()?.current_decision_player_id ?? null;
+  const keptPlayerIds = () => new Set(pregame()?.kept_player_ids ?? []);
   const canAct = () => {
     const viewer = localViewer();
     const current = currentDecisionPlayerId();
@@ -44,6 +48,41 @@ export const PregameSetupOverlay: Component<PregameSetupOverlayProps> = (props) 
     const selectedIds = new Set(props.selectedBottomCardIds);
     return localHandCards().filter((card) => selectedIds.has(card.card_id));
   });
+  const heroState = createMemo(() => {
+    if (canAct() && cardsToBottom() > 0) {
+      return {
+        tone: "bottoming",
+        title: `Choose ${String(cardsToBottom())} card${cardsToBottom() === 1 ? "" : "s"} to put back`,
+        body: `Mark the cards you want to place on the bottom of your library, then keep ${String(keepCount())}.`,
+        spotlight: "Selection live",
+      };
+    }
+
+    if (canAct()) {
+      return {
+        tone: "deciding",
+        title: localGoesFirst() ? "You go first" : "Opponent goes first",
+        body: "Review your opening hand and decide whether to keep it or take a mulligan.",
+        spotlight: "Your decision",
+      };
+    }
+
+    if (localGoesFirst()) {
+      return {
+        tone: "waiting",
+        title: "You are on the play",
+        body: `Your hand stays visible while ${waitingForLabel() ?? "the other player"} finishes their opening-hand choice.`,
+        spotlight: "Waiting",
+      };
+    }
+
+    return {
+      tone: "waiting",
+      title: "You are on the draw",
+      body: `Your hand stays visible while ${waitingForLabel() ?? "the other player"} finishes their opening-hand choice.`,
+      spotlight: "Waiting",
+    };
+  });
 
   const waitingForLabel = () => {
     const current = currentDecisionPlayerId();
@@ -53,37 +92,59 @@ export const PregameSetupOverlay: Component<PregameSetupOverlayProps> = (props) 
 
     return current === localSeatId() ? localPlayerName() : formatPlayerLabel(current);
   };
+  const localSeatState = createMemo(() =>
+    describePregameSeat({
+      viewerPlayerId: localViewer()?.player_id ?? null,
+      viewerName: localPlayerName(),
+      currentDecisionPlayerId: currentDecisionPlayerId(),
+      keptPlayerIds: keptPlayerIds(),
+      bottomCount: cardsToBottom(),
+      canAct: canAct(),
+      mulliganCount: mulliganCount(),
+      local: true,
+    }),
+  );
+  const opponentSeatState = createMemo(() =>
+    describePregameSeat({
+      viewerPlayerId: opponentViewer()?.player_id ?? null,
+      viewerName: opponentPlayerName(),
+      currentDecisionPlayerId: currentDecisionPlayerId(),
+      keptPlayerIds: keptPlayerIds(),
+      bottomCount:
+        currentDecisionPlayerId() === opponentViewer()?.player_id
+          ? (pregame()?.current_bottom_count ?? 0)
+          : 0,
+      canAct: false,
+      mulliganCount: opponentViewer()?.mulligan_count ?? 0,
+      local: false,
+    }),
+  );
 
   return (
     <Show when={pregame()}>
       <div class="pregame-overlay">
-        <section class="pregame-banner panel">
-          <p class="eyebrow">Opening hand</p>
-          <h2>{localGoesFirst() ? "You go first" : "Opponent goes first"}</h2>
-          <p>
-            <Show
-              when={canAct()}
-              fallback={`Waiting for ${waitingForLabel() ?? "the other player"} to choose whether to keep or mulligan.`}
-            >
-              <Show
-                when={cardsToBottom() > 0}
-                fallback="You can review your opening hand and decide whether to keep it."
-              >
-                Click {cardsToBottom()} card{cardsToBottom() === 1 ? "" : "s"} in your visible hand
-                fan to put on the bottom, then keep your opening hand.
-              </Show>
-            </Show>
-          </p>
+        <section class={`pregame-hero panel tone-${heroState().tone}`}>
+          <div class="pregame-hero-topline">
+            <p class="eyebrow">Opening hand</p>
+            <span class="pregame-hero-spotlight">{heroState().spotlight}</span>
+          </div>
+          <h2>{heroState().title}</h2>
+          <p>{heroState().body}</p>
+          <div class="pregame-seat-status-row">
+            <PregameSeatStateCard state={opponentSeatState()} />
+            <div class="pregame-seat-status-divider">VS</div>
+            <PregameSeatStateCard state={localSeatState()} />
+          </div>
         </section>
 
         <Show when={canAct() && cardsToBottom() > 0}>
-          <section class="pregame-selection-dock panel">
-            <div class="pregame-selection-copy pregame-selection-summary">
+          <section class="pregame-selection-dock panel tone-bottoming">
+            <div class="pregame-selection-copy">
               <p class="eyebrow">London mulligan</p>
-              <strong>
+              <strong class="pregame-selection-title">
                 Select {cardsToBottom()} card{cardsToBottom() === 1 ? "" : "s"} to bottom
               </strong>
-              <span>
+              <span class="pregame-selection-meter">
                 Selected {props.selectedBottomCardIds.length} / {cardsToBottom()}
               </span>
             </div>
@@ -91,8 +152,8 @@ export const PregameSetupOverlay: Component<PregameSetupOverlayProps> = (props) 
               when={selectedBottomCards().length > 0}
               fallback={
                 <p class="pregame-selection-hint">
-                  Selected cards will glow in your hand and appear here as you mark them for the
-                  bottom.
+                  The marked cards in your hand will show numbered seals as you choose what goes to
+                  the bottom.
                 </p>
               }
             >
@@ -107,11 +168,15 @@ export const PregameSetupOverlay: Component<PregameSetupOverlayProps> = (props) 
           </section>
         </Show>
 
-        <section class="pregame-action-dock panel">
+        <section class={`pregame-action-dock panel tone-${heroState().tone}`}>
           <div class="pregame-action-copy">
-            <p class="eyebrow">Opening seven</p>
-            <strong>{localHandCount()} cards ready</strong>
-            <span>Mulligans taken: {mulliganCount()}</span>
+            <p class="eyebrow">Opening hand</p>
+            <strong>{localHandCount()} cards in view</strong>
+            <span>
+              {canAct()
+                ? "Your device can act in this step."
+                : `Waiting for ${waitingForLabel() ?? "the other player"} to act.`}
+            </span>
           </div>
 
           <div class="pregame-action-buttons">
@@ -154,6 +219,72 @@ export const PregameSetupOverlay: Component<PregameSetupOverlayProps> = (props) 
     </Show>
   );
 };
+
+interface PregameSeatDescriptor {
+  label: string;
+  state: string;
+  detail: string;
+  accent: "deciding" | "waiting" | "kept";
+}
+
+const PregameSeatStateCard: Component<{ state: PregameSeatDescriptor }> = (props) => (
+  <article class={`pregame-seat-state pregameseat-${props.state.accent}`}>
+    <span class="pregame-seat-state-role">{props.state.label}</span>
+    <strong>{props.state.state}</strong>
+    <span>{props.state.detail}</span>
+  </article>
+);
+
+function describePregameSeat(input: {
+  viewerPlayerId: string | null;
+  viewerName: string;
+  currentDecisionPlayerId: string | null;
+  keptPlayerIds: Set<string>;
+  bottomCount: number;
+  canAct: boolean;
+  mulliganCount: number;
+  local: boolean;
+}): PregameSeatDescriptor {
+  if (input.viewerPlayerId !== null && input.keptPlayerIds.has(input.viewerPlayerId)) {
+    return {
+      label: input.local ? "You" : input.viewerName,
+      state: "Kept",
+      detail: `Mulligans ${String(input.mulliganCount)}`,
+      accent: "kept",
+    };
+  }
+
+  if (input.canAct) {
+    return {
+      label: input.local ? "You" : input.viewerName,
+      state: input.bottomCount > 0 ? "Bottoming" : "Deciding",
+      detail:
+        input.bottomCount > 0
+          ? `${String(input.bottomCount)} card${input.bottomCount === 1 ? "" : "s"} to choose`
+          : `Mulligans ${String(input.mulliganCount)}`,
+      accent: "deciding",
+    };
+  }
+
+  if (input.viewerPlayerId !== null && input.viewerPlayerId === input.currentDecisionPlayerId) {
+    return {
+      label: input.local ? "You" : input.viewerName,
+      state: input.bottomCount > 0 ? "Bottoming" : "Deciding",
+      detail:
+        input.bottomCount > 0
+          ? `${String(input.bottomCount)} card${input.bottomCount === 1 ? "" : "s"} to choose`
+          : `Mulligans ${String(input.mulliganCount)}`,
+      accent: "deciding",
+    };
+  }
+
+  return {
+    label: input.local ? "You" : input.viewerName,
+    state: "Waiting",
+    detail: `Mulligans ${String(input.mulliganCount)}`,
+    accent: "waiting",
+  };
+}
 
 function formatPlayerLabel(playerId: string): string {
   return playerId.replace(/[-_]/g, " ").replace(/\b\w/g, (character) => character.toUpperCase());
