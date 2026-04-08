@@ -32,6 +32,7 @@ const App: Component = () => {
   const [loading, setLoading] = createSignal(true);
   const [selectedAttackers, setSelectedAttackers] = createSignal<string[]>([]);
   const [blockerAssignments, setBlockerAssignments] = createSignal<Record<string, string>>({});
+  const [pregameBottomCardIds, setPregameBottomCardIds] = createSignal<string[]>([]);
   const [remotePairingModalOpen, setRemotePairingModalOpen] = createSignal(false);
   const [remotePairingState, setRemotePairingState] = createSignal<RemotePairingState | null>(null);
   const [remotePairingSupported, setRemotePairingSupported] = createSignal(false);
@@ -122,6 +123,29 @@ const App: Component = () => {
     if (pairing?.connected || currentSessionInfo?.role !== "peer") {
       setRemoteSessionEndedReason(null);
     }
+  });
+
+  createEffect(() => {
+    const currentState = state();
+    const localSeatId = sessionInfo()?.localSeatId ?? null;
+    const currentDecisionPlayerId = currentState?.pregame?.current_decision_player_id ?? null;
+    const requiredBottomCount = currentState?.pregame?.current_bottom_count ?? 0;
+    const localViewer =
+      currentState?.viewers.find((viewer) => viewer.player_id === localSeatId) ??
+      currentState?.viewers[0];
+    const handCardIds = new Set(localViewer?.hand.map((card) => card.card_id) ?? []);
+
+    setPregameBottomCardIds((current) => {
+      if (
+        !currentState?.pregame ||
+        localViewer?.player_id !== currentDecisionPlayerId ||
+        requiredBottomCount === 0
+      ) {
+        return [];
+      }
+
+      return current.filter((cardId) => handCardIds.has(cardId)).slice(0, requiredBottomCount);
+    });
   });
 
   async function loadArena(): Promise<void> {
@@ -250,6 +274,36 @@ const App: Component = () => {
     });
   };
 
+  const togglePregameBottomCard = (cardId: string) => {
+    const currentState = state();
+    const currentPregame = currentState?.pregame;
+    const localSeatId = sessionInfo()?.localSeatId ?? null;
+    const localViewer =
+      currentState?.viewers.find((viewer) => viewer.player_id === localSeatId) ??
+      currentState?.viewers[0];
+
+    if (
+      !currentPregame ||
+      localViewer?.player_id !== currentPregame.current_decision_player_id ||
+      currentPregame.current_bottom_count === 0 ||
+      !localViewer.hand.some((card) => card.card_id === cardId)
+    ) {
+      return;
+    }
+
+    setPregameBottomCardIds((current) => {
+      if (current.includes(cardId)) {
+        return current.filter((entry) => entry !== cardId);
+      }
+
+      if (current.length >= currentPregame.current_bottom_count) {
+        return [...current.slice(1), cardId];
+      }
+
+      return [...current, cardId];
+    });
+  };
+
   const copyInviteLink = () => {
     const inviteUrl = sessionInfo()?.inviteUrl ?? window.location.href;
     void (async () => {
@@ -351,12 +405,19 @@ const App: Component = () => {
                 selectedAttackers={selectedAttackers()}
                 sessionInfo={sessionInfo()}
                 presentationState={presentationState()}
+                pregameBottomCardIds={pregameBottomCardIds()}
                 state={resolved()}
                 onSyncBattlefieldLayout={(playerId, positions) => {
                   session()?.updateBattlefieldLayout(playerId, positions);
                 }}
+                onTogglePregameBottomCard={togglePregameBottomCard}
               />
-              <PregameSetupOverlay onRun={run} sessionInfo={sessionInfo()} state={resolved()} />
+              <PregameSetupOverlay
+                onRun={run}
+                selectedBottomCardIds={pregameBottomCardIds()}
+                sessionInfo={sessionInfo()}
+                state={resolved()}
+              />
             </>
           )}
         </Match>

@@ -31,4 +31,4 @@ It presents the repository's existing `Setup` and simplified mulligan support th
 
 ## Historical Note
 
-Later browser setup slices extended this overlay with repeated London-style mulligans and explicit bottom-card selection. This document remains the history of the first truthful viewer-scoped pregame overlay rather than the full current mulligan UX.
+Later browser setup slices extended this overlay with repeated London-style mulligans, explicit bottom-card selection, and direct bottoming from the visible hand fan. This document remains the history of the first truthful viewer-scoped pregame overlay rather than the full current mulligan UX.

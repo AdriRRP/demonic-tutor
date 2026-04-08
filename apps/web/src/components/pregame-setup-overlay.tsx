@@ -1,4 +1,4 @@
-import { For, Show, createEffect, createMemo, createSignal } from "solid-js";
+import { For, Show, createMemo } from "solid-js";
 import type { Component } from "solid-js";
 import { keepOpeningHand, mulliganOpeningHand, type ArenaCommandTarget } from "../lib/runtime";
 import type { ArenaSessionInfo } from "../lib/session";
@@ -7,11 +7,11 @@ import type { ArenaState } from "../lib/types";
 interface PregameSetupOverlayProps {
   state: ArenaState;
   sessionInfo: ArenaSessionInfo | null;
+  selectedBottomCardIds: string[];
   onRun: (operation: (current: ArenaCommandTarget) => Promise<ArenaState>) => void;
 }
 
 export const PregameSetupOverlay: Component<PregameSetupOverlayProps> = (props) => {
-  const [selectedBottomCardIds, setSelectedBottomCardIds] = createSignal<string[]>([]);
   const pregame = () => props.state.pregame;
   const localSeatId = () => props.sessionInfo?.localSeatId ?? null;
   const localViewer = () =>
@@ -39,45 +39,11 @@ export const PregameSetupOverlay: Component<PregameSetupOverlayProps> = (props) 
   const cardsToBottom = () => (canAct() ? (pregame()?.current_bottom_count ?? 0) : 0);
   const keepCount = () => Math.max(localHandCount() - cardsToBottom(), 0);
   const localHandCards = () => localViewer()?.hand ?? [];
-  const canConfirmKeep = () => selectedBottomCardIds().length === cardsToBottom();
-  const selectedBottomCardSet = createMemo(() => new Set(selectedBottomCardIds()));
-
-  createEffect(() => {
-    const availableCardIds = new Set(localHandCards().map((card) => card.card_id));
-    const requiredCount = cardsToBottom();
-    const keepSelection = canAct();
-
-    setSelectedBottomCardIds((current) => {
-      if (!keepSelection || requiredCount === 0) {
-        return [];
-      }
-
-      return current.filter((cardId) => availableCardIds.has(cardId)).slice(0, requiredCount);
-    });
+  const canConfirmKeep = () => props.selectedBottomCardIds.length === cardsToBottom();
+  const selectedBottomCards = createMemo(() => {
+    const selectedIds = new Set(props.selectedBottomCardIds);
+    return localHandCards().filter((card) => selectedIds.has(card.card_id));
   });
-
-  const toggleBottomCardSelection = (cardId: string) => {
-    if (!canAct()) {
-      return;
-    }
-
-    const requiredCount = cardsToBottom();
-    if (requiredCount === 0) {
-      return;
-    }
-
-    setSelectedBottomCardIds((current) => {
-      if (current.includes(cardId)) {
-        return current.filter((entry) => entry !== cardId);
-      }
-
-      if (current.length >= requiredCount) {
-        return [...current.slice(1), cardId];
-      }
-
-      return [...current, cardId];
-    });
-  };
 
   const waitingForLabel = () => {
     const current = currentDecisionPlayerId();
@@ -103,8 +69,8 @@ export const PregameSetupOverlay: Component<PregameSetupOverlayProps> = (props) 
                 when={cardsToBottom() > 0}
                 fallback="You can review your opening hand and decide whether to keep it."
               >
-                Choose {cardsToBottom()} card{cardsToBottom() === 1 ? "" : "s"} to put on the
-                bottom, then keep your opening hand.
+                Click {cardsToBottom()} card{cardsToBottom() === 1 ? "" : "s"} in your visible hand
+                fan to put on the bottom, then keep your opening hand.
               </Show>
             </Show>
           </p>
@@ -112,36 +78,32 @@ export const PregameSetupOverlay: Component<PregameSetupOverlayProps> = (props) 
 
         <Show when={canAct() && cardsToBottom() > 0}>
           <section class="pregame-selection-dock panel">
-            <div class="pregame-selection-copy">
+            <div class="pregame-selection-copy pregame-selection-summary">
               <p class="eyebrow">London mulligan</p>
               <strong>
                 Select {cardsToBottom()} card{cardsToBottom() === 1 ? "" : "s"} to bottom
               </strong>
               <span>
-                Selected {selectedBottomCardIds().length} / {cardsToBottom()}
+                Selected {props.selectedBottomCardIds.length} / {cardsToBottom()}
               </span>
             </div>
-            <div class="pregame-bottom-card-grid">
-              <For each={localHandCards()}>
-                {(card) => (
-                  <button
-                    classList={{
-                      "pregame-bottom-card": true,
-                      selected: selectedBottomCardSet().has(card.card_id),
-                    }}
-                    type="button"
-                    onClick={() => {
-                      toggleBottomCardSelection(card.card_id);
-                    }}
-                  >
-                    <span class="pregame-bottom-card-name">
-                      {formatCardLabel(card.definition_id)}
-                    </span>
-                    <span class="pregame-bottom-card-meta">{card.card_type}</span>
-                  </button>
-                )}
-              </For>
-            </div>
+            <Show
+              when={selectedBottomCards().length > 0}
+              fallback={
+                <p class="pregame-selection-hint">
+                  Selected cards will glow in your hand and appear here as you mark them for the
+                  bottom.
+                </p>
+              }
+            >
+              <div class="chip-row pregame-selection-chip-row">
+                <For each={selectedBottomCards()}>
+                  {(card) => (
+                    <span class="chip chip-forest">{formatCardLabel(card.definition_id)}</span>
+                  )}
+                </For>
+              </div>
+            </Show>
           </section>
         </Show>
 
@@ -178,7 +140,7 @@ export const PregameSetupOverlay: Component<PregameSetupOverlayProps> = (props) 
                       return;
                     }
                     props.onRun((current) =>
-                      keepOpeningHand(current, playerId, selectedBottomCardIds()),
+                      keepOpeningHand(current, playerId, props.selectedBottomCardIds),
                     );
                   }}
                 >

@@ -59,6 +59,8 @@ interface TableArenaProps {
     playerId: string,
     positions: Record<string, BattlefieldLayoutPoint>,
   ) => void;
+  pregameBottomCardIds: string[];
+  onTogglePregameBottomCard: (cardId: string) => void;
 }
 
 type ZoneKind = "library" | "graveyard" | "exile";
@@ -106,6 +108,10 @@ interface HandPointerDragState {
 }
 
 export const TableArena: Component<TableArenaProps> = (props) => {
+  const ignorePregameBottomToggle = (cardId: string) => {
+    void cardId;
+    return undefined;
+  };
   const bottomViewer = () =>
     props.state.viewers.find((viewer) => viewer.player_id === props.sessionInfo?.localSeatId) ??
     props.state.viewers[0];
@@ -118,6 +124,9 @@ export const TableArena: Component<TableArenaProps> = (props) => {
     const viewer = bottomViewer();
     return viewer ? findAction(viewer, "PassPriority") : undefined;
   };
+  const pregameBottomSelectionActive = () =>
+    props.state.pregame?.current_decision_player_id === bottomViewer()?.player_id &&
+    (props.state.pregame?.current_bottom_count ?? 0) > 0;
   const battlefieldLayoutFor = (playerId: string) =>
     props.presentationState.battlefield_layouts[playerId] ?? {};
   const bottomConcedeAction = () => {
@@ -396,9 +405,12 @@ export const TableArena: Component<TableArenaProps> = (props) => {
                 battlefieldLayout={battlefieldLayoutFor(viewer().player_id)}
                 inspectedCardId={inspectedCard()?.sourceCardId ?? null}
                 orientation="top"
+                pregameBottomCardIds={[]}
+                pregameBottomSelectionActive={false}
                 selectedAttackers={props.selectedAttackers}
                 viewer={viewer()}
                 draggedHandCardId={draggedCardId()}
+                onTogglePregameBottomCard={ignorePregameBottomToggle}
               />
             )}
           </Show>
@@ -433,9 +445,12 @@ export const TableArena: Component<TableArenaProps> = (props) => {
                 battlefieldLayout={battlefieldLayoutFor(viewer().player_id)}
                 inspectedCardId={inspectedCard()?.sourceCardId ?? null}
                 orientation="bottom"
+                pregameBottomCardIds={props.pregameBottomCardIds}
+                pregameBottomSelectionActive={pregameBottomSelectionActive()}
                 selectedAttackers={props.selectedAttackers}
                 viewer={viewer()}
                 draggedHandCardId={draggedCardId()}
+                onTogglePregameBottomCard={props.onTogglePregameBottomCard}
               />
             )}
           </Show>
@@ -739,6 +754,9 @@ const SeatPanel: Component<{
   onRun: (operation: (current: ArenaCommandTarget) => Promise<ArenaState>) => void;
   draggedHandCardId: string | null;
   inspectedCardId: string | null;
+  pregameBottomCardIds: string[];
+  pregameBottomSelectionActive: boolean;
+  onTogglePregameBottomCard: (cardId: string) => void;
 }> = (props) => {
   const viewerPlayer = () => findPlayer(props.game, props.viewer.player_id);
   const playLandAction = () => findAction(props.viewer, "PlayLand");
@@ -1002,7 +1020,7 @@ const SeatPanel: Component<{
   };
 
   const startHandPointerTracking = (cardId: string, startX: number, startY: number) => {
-    if (props.orientation !== "bottom") {
+    if (props.orientation !== "bottom" || props.pregameBottomSelectionActive) {
       return;
     }
 
@@ -1652,8 +1670,25 @@ const SeatPanel: Component<{
                           handPointerDrag()?.active && handPointerDrag()?.cardId === card.card_id,
                         focused: focusedHandCardId() === card.card_id,
                         selected: props.inspectedCardId === card.card_id,
+                        "pregame-bottom-selected": props.pregameBottomCardIds.includes(
+                          card.card_id,
+                        ),
+                      }}
+                      onClick={(event) => {
+                        if (!props.pregameBottomSelectionActive) {
+                          return;
+                        }
+
+                        event.preventDefault();
+                        event.stopPropagation();
+                        props.onTogglePregameBottomCard(card.card_id);
                       }}
                       onPointerDown={(event) => {
+                        if (props.pregameBottomSelectionActive) {
+                          setFocusedHandCardId(card.card_id);
+                          return;
+                        }
+
                         if (event.button !== 0) {
                           return;
                         }
@@ -1739,6 +1774,10 @@ const SeatPanel: Component<{
                         manaCostProfile={card.mana_cost_profile}
                         mode="hand"
                         onInspect={() => {
+                          if (props.pregameBottomSelectionActive) {
+                            return;
+                          }
+
                           openInspectCard(inspectFromHandCard(card));
                         }}
                         openPriority={card.can_cast_in_open_priority}
