@@ -20,7 +20,7 @@ impl Player {
             life: DEFAULT_STARTING_LIFE,
             mana: ManaPool::empty(),
             lands_played_this_turn: 0,
-            mulligan_used: false,
+            mulligan_count: 0,
         }
     }
 
@@ -76,7 +76,12 @@ impl Player {
 
     #[must_use]
     pub const fn mulligan_used(&self) -> bool {
-        self.mulligan_used
+        self.mulligan_count > 0
+    }
+
+    #[must_use]
+    pub const fn mulligan_count(&self) -> u32 {
+        self.mulligan_count
     }
 
     pub const fn adjust_life(&mut self, delta: i32) {
@@ -112,10 +117,10 @@ impl Player {
     }
 
     pub const fn use_mulligan(&mut self) {
-        self.mulligan_used = true;
+        self.mulligan_count += 1;
     }
 
     pub const fn reset_mulligan(&mut self) {
-        self.mulligan_used = false;
+        self.mulligan_count = 0;
     }
 }

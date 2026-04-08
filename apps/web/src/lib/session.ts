@@ -69,7 +69,7 @@ interface PresentationSyncMessage {
 type ArenaCommandRequest =
   | { kind: "reset" }
   | { kind: "mulligan"; playerId: string }
-  | { kind: "keep_opening_hand"; playerId: string }
+  | { kind: "keep_opening_hand"; playerId: string; bottomCardIds: string[] }
   | { kind: "pass_priority"; playerId: string }
   | { kind: "advance_turn" }
   | { kind: "concede"; playerId: string }
@@ -420,8 +420,8 @@ class HostArenaSession implements ArenaSession {
     return this.applyLocalCommand(() => mulliganOpeningHand(this.client, playerId));
   }
 
-  public keep_opening_hand(playerId: string): Promise<ArenaState> {
-    return this.applyLocalCommand(() => keepOpeningHand(this.client, playerId));
+  public keep_opening_hand(playerId: string, bottomCardIds: string[]): Promise<ArenaState> {
+    return this.applyLocalCommand(() => keepOpeningHand(this.client, playerId, bottomCardIds));
   }
 
   public pass_priority(playerId: string): Promise<ArenaState> {
@@ -728,8 +728,8 @@ class PeerArenaSession implements ArenaSession {
     return this.sendCommand({ kind: "mulligan", playerId });
   }
 
-  public keep_opening_hand(playerId: string): Promise<ArenaState> {
-    return this.sendCommand({ kind: "keep_opening_hand", playerId });
+  public keep_opening_hand(playerId: string, bottomCardIds: string[]): Promise<ArenaState> {
+    return this.sendCommand({ kind: "keep_opening_hand", playerId, bottomCardIds });
   }
 
   public pass_priority(playerId: string): Promise<ArenaState> {
@@ -995,8 +995,8 @@ class RemotePeerArenaSession implements ArenaSession {
     return this.sendCommand({ kind: "mulligan", playerId });
   }
 
-  public keep_opening_hand(playerId: string): Promise<ArenaState> {
-    return this.sendCommand({ kind: "keep_opening_hand", playerId });
+  public keep_opening_hand(playerId: string, bottomCardIds: string[]): Promise<ArenaState> {
+    return this.sendCommand({ kind: "keep_opening_hand", playerId, bottomCardIds });
   }
 
   public pass_priority(playerId: string): Promise<ArenaState> {
@@ -1207,7 +1207,7 @@ async function runRequestedCommand(
     case "mulligan":
       return mulliganOpeningHand(target, command.playerId);
     case "keep_opening_hand":
-      return keepOpeningHand(target, command.playerId);
+      return keepOpeningHand(target, command.playerId, command.bottomCardIds);
     case "pass_priority":
       return passPriority(target, command.playerId);
     case "advance_turn":

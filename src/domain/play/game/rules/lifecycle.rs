@@ -296,7 +296,6 @@ pub fn concede(
 /// # Errors
 /// Returns an error if:
 /// - The phase is not Setup
-/// - The player has already used mulligan
 /// - The player does not have enough cards in library
 pub fn mulligan(
     game_id: &GameId,
@@ -312,12 +311,6 @@ pub fn mulligan(
     }
 
     let player = super::super::helpers::find_player_mut(players, &cmd.player_id)?;
-
-    if player.mulligan_used() {
-        return Err(DomainError::Game(GameError::MulliganAlreadyUsed(
-            cmd.player_id,
-        )));
-    }
 
     if player.library_size() < OPENING_HAND_SIZE {
         return Err(DomainError::Game(GameError::NotEnoughCardsInLibrary {

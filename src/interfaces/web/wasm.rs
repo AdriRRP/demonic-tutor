@@ -55,6 +55,7 @@ struct WebViewerState {
     player_id: String,
     is_active: bool,
     is_priority_holder: bool,
+    mulligan_count: u32,
     mulligan_used: bool,
     hand: Vec<WebHandCard>,
     legal_actions: Vec<WebLegalAction>,
@@ -65,6 +66,7 @@ struct WebViewerState {
 struct WebPregameState {
     starting_player_id: String,
     current_decision_player_id: String,
+    current_bottom_count: u32,
     kept_player_ids: Vec<String>,
 }
 
@@ -284,9 +286,28 @@ impl WebArenaClient {
         }))
     }
 
-    pub fn keep_opening_hand(&mut self, player_id: &str) -> Result<JsValue, JsValue> {
+    pub fn keep_opening_hand(
+        &mut self,
+        player_id: &str,
+        bottom_card_ids: JsValue,
+    ) -> Result<JsValue, JsValue> {
         self.ensure_pregame_decision_holder(player_id)?;
         let player_id = PlayerId::new(player_id);
+        let bottom_card_ids = serde_wasm_bindgen::from_value::<Vec<String>>(bottom_card_ids)
+            .map_err(|err| {
+                JsValue::from_str(&format!(
+                    "failed to decode opening-hand bottom selection: {err}"
+                ))
+            })?
+            .into_iter()
+            .map(CardInstanceId::new)
+            .collect::<Vec<_>>();
+        let cards_to_bottom = self.required_opening_hand_bottom_count(&player_id)?;
+        if cards_to_bottom > 0 {
+            self.game
+                .bottom_opening_hand_cards(player_id.clone(), &bottom_card_ids)
+                .map_err(domain_error_to_js)?;
+        }
         let pregame_completed = self
             .pregame
             .as_mut()
@@ -301,7 +322,15 @@ impl WebArenaClient {
         self.project_state(Some(WebCommandFeedback {
             applied: true,
             message: "Opening hand kept".to_string(),
-            emitted_events: vec![format!("{} kept the opening hand", player_id.as_str())],
+            emitted_events: vec![if cards_to_bottom > 0 {
+                format!(
+                    "{} kept the opening hand and put {} card(s) on the bottom",
+                    player_id.as_str(),
+                    bottom_card_ids.len()
+                )
+            } else {
+                format!("{} kept the opening hand", player_id.as_str())
+            }],
         }))
     }
 
@@ -480,7 +509,7 @@ impl WebArenaClient {
             pregame: self
                 .pregame
                 .as_ref()
-                .and_then(ArenaPregameController::web_state),
+                .and_then(|pregame| pregame.web_state(&self.game)),
             viewers,
             event_log: event_log.iter().map(web_timeline_entry).collect(),
             last_command,
@@ -505,6 +534,7 @@ impl WebArenaClient {
                 .game
                 .priority()
                 .is_some_and(|priority| priority.current_holder() == viewer_id),
+            mulligan_count: player.mulligan_count(),
             mulligan_used: player.mulligan_used(),
             hand: player.hand_cards().map(web_hand_card).collect(),
             legal_actions: legal_actions(&self.game, viewer_id)
@@ -540,6 +570,18 @@ impl WebArenaClient {
             player_id,
             current_decision_player_id.as_str()
         )))
+    }
+
+    fn required_opening_hand_bottom_count(&self, player_id: &PlayerId) -> Result<usize, JsValue> {
+        let player = player_by_id(&self.game, player_id).ok_or_else(|| {
+            JsValue::from_str(&format!(
+                "failed to resolve opening-hand state for {}",
+                player_id.as_str()
+            ))
+        })?;
+
+        usize::try_from(player.mulligan_count())
+            .map_err(|_| JsValue::from_str("opening-hand bottom count overflowed usize"))
     }
 }
 
@@ -582,11 +624,14 @@ impl ArenaPregameController {
         Ok(self.current_decision_player_id().is_none())
     }
 
-    fn web_state(&self) -> Option<WebPregameState> {
+    fn web_state(&self, game: &Game) -> Option<WebPregameState> {
         self.current_decision_player_id()
             .map(|current_decision_player_id| WebPregameState {
                 starting_player_id: id_string(&self.starting_player_id),
                 current_decision_player_id: id_string(current_decision_player_id),
+                current_bottom_count: player_by_id(game, current_decision_player_id)
+                    .map(Player::mulligan_count)
+                    .unwrap_or_default(),
                 kept_player_ids: self.kept_player_ids.iter().map(id_string).collect(),
             })
     }

@@ -75,7 +75,7 @@ Its job is to:
 - expose a wasm-safe client API
 - translate browser calls into public commands
 - serialize public snapshots and replay data into wasm-friendly payloads
-- coordinate small browser-only pregame sequencing where the current domain model exposes `Setup` and mulligan but not a canonical "keep opening hand" command
+- coordinate small browser-only pregame sequencing where the current domain model exposes `Setup`, repeated mulligans, and opening-hand bottoming but not a canonical "keep opening hand" command
 
 It is intentionally thin.
 
@@ -181,8 +181,8 @@ Its job today is to provide:
 - viewer-scoped WebRTC payloads so the peer only receives its own hand and prompt surfaces in clear while the opposing viewer stays redacted
 - reconnect-aware WebRTC transport state so the peer can request a fresh authoritative snapshot after transient channel loss instead of staying stale
 - an honest remote-session ended state when the host disappears, keeping the last known table visible but read-only and offering a clean return path
-- a browser-side opening-hand setup controller that keeps remote duels in `Setup`, chooses a starting player, and relays simplified mulligan/keep decisions until both players are ready
-- a viewer-scoped opening-hand overlay that keeps each device on its own hand while only the active chooser can act
+- a browser-side opening-hand setup controller that keeps remote duels in `Setup`, chooses a starting player, and relays repeated London-style mulligan plus keep-with-bottoming decisions until both players are ready
+- a viewer-scoped opening-hand overlay that keeps each device on its own hand while only the active chooser can act and explicitly choose which opening-hand cards go to the bottom after mulligans
 - a generated duel HUD that renders the phase loop and compact seat stats through CSS/SVG primitives instead of text-heavy badges
 - two viewer-scoped seats over that same session
 - a viewport-fitted SPA arena with portrait and landscape layouts

@@ -252,7 +252,7 @@ pub struct Player {
     life: u32,
     mana: ManaPool,
     lands_played_this_turn: usize,
-    mulligan_used: bool,
+    mulligan_count: u32,
 }
 
 mod access;

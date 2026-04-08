@@ -136,6 +136,7 @@ export interface ArenaViewerState {
   player_id: string;
   is_active: boolean;
   is_priority_holder: boolean;
+  mulligan_count: number;
   mulligan_used: boolean;
   hand: ArenaHandCard[];
   legal_actions: ArenaLegalAction[];
@@ -145,6 +146,7 @@ export interface ArenaViewerState {
 export interface ArenaPregameState {
   starting_player_id: string;
   current_decision_player_id: string;
+  current_bottom_count: number;
   kept_player_ids: string[];
 }
 

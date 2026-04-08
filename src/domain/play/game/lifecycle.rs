@@ -4,8 +4,12 @@ use {
     super::{invariants, rules, Game},
     crate::domain::play::{
         commands::{ConcedeCommand, DealOpeningHandsCommand, MulliganCommand, StartGameCommand},
-        errors::DomainError,
-        events::{GameEnded, GameStarted, MulliganTaken, OpeningHandDealt},
+        errors::{DomainError, GameError, PhaseError},
+        events::{
+            CardMovedZone, GameEnded, GameStarted, MulliganTaken, OpeningHandDealt, ZoneType,
+        },
+        ids::{CardInstanceId, PlayerId},
+        phase::Phase,
     },
 };
 
@@ -52,6 +56,65 @@ impl Game {
             self.rebuild_card_locations_from_players();
         }
         result
+    }
+
+    /// Puts selected opening-hand cards on the bottom of the library during setup.
+    ///
+    /// # Errors
+    /// Returns an error when the game is not in `Setup`, when the selection count
+    /// does not match the current mulligan count, or when any chosen card is not
+    /// currently in that player's hand.
+    pub fn bottom_opening_hand_cards(
+        &mut self,
+        player_id: PlayerId,
+        card_ids: &[CardInstanceId],
+    ) -> Result<Vec<CardMovedZone>, DomainError> {
+        invariants::require_game_active(self.is_over())?;
+        invariants::require_no_open_priority_window(self.priority())?;
+        if !matches!(self.phase, Phase::Setup) {
+            return Err(DomainError::Phase(PhaseError::InvalidForMulligan));
+        }
+
+        let player_index =
+            crate::domain::play::game::helpers::find_player_index(&self.players, &player_id)?;
+        let player = &self.players[player_index];
+        let expected = usize::try_from(player.mulligan_count()).map_err(|_| {
+            DomainError::Game(GameError::InternalInvariantViolation(
+                "opening-hand bottom count overflowed usize".to_string(),
+            ))
+        })?;
+
+        if card_ids.len() != expected {
+            return Err(DomainError::Game(
+                GameError::InvalidOpeningHandBottomCount {
+                    player: player_id,
+                    expected,
+                    actual: card_ids.len(),
+                },
+            ));
+        }
+
+        let moved_cards = card_ids
+            .iter()
+            .map(|card_id| {
+                self.players[player_index]
+                    .move_hand_card_to_library_bottom(card_id)
+                    .ok_or_else(|| {
+                        DomainError::Game(GameError::InvalidHandCardChoice(card_id.clone()))
+                    })?;
+
+                Ok(CardMovedZone::new(
+                    self.id.clone(),
+                    self.players[player_index].id().clone(),
+                    card_id.clone(),
+                    ZoneType::Hand,
+                    ZoneType::Library,
+                ))
+            })
+            .collect::<Result<Vec<_>, DomainError>>()?;
+
+        self.rebuild_card_locations_from_players();
+        Ok(moved_cards)
     }
 
     /// Concedes the active game for one player.
@@ -154,5 +217,51 @@ mod tests {
             .expect("mulligan should succeed");
 
         assert_player_locations_match_index(&game, 0);
+    }
+
+    #[test]
+    fn mulligan_can_be_taken_multiple_times_during_setup() {
+        let mut game = build_setup_game();
+        game.deal_opening_hands(&opening_hand_command())
+            .expect("opening hands should succeed");
+
+        game.mulligan(MulliganCommand::new(PlayerId::new("player-1")))
+            .expect("first mulligan should succeed");
+        game.mulligan(MulliganCommand::new(PlayerId::new("player-1")))
+            .expect("second mulligan should succeed");
+
+        assert_eq!(game.players()[0].mulligan_count(), 2);
+        assert_eq!(game.players()[0].hand_size(), 7);
+    }
+
+    #[test]
+    fn bottom_opening_hand_cards_moves_selected_cards_to_library_bottom() {
+        let mut game = build_setup_game();
+        game.deal_opening_hands(&opening_hand_command())
+            .expect("opening hands should succeed");
+        game.mulligan(MulliganCommand::new(PlayerId::new("player-1")))
+            .expect("mulligan should succeed");
+
+        let selected = game.players()[0]
+            .hand_card_ids()
+            .into_iter()
+            .take(1)
+            .collect::<Vec<_>>();
+
+        let zone_changes = game
+            .bottom_opening_hand_cards(PlayerId::new("player-1"), &selected)
+            .expect("bottoming opening-hand cards should succeed");
+
+        assert_eq!(zone_changes.len(), 1);
+        assert_eq!(game.players()[0].hand_size(), 6);
+        assert_eq!(game.players()[0].library_size(), 8);
+        assert_player_locations_match_index(&game, 0);
+        assert!(
+            game.players()[0]
+                .hand_card_ids()
+                .iter()
+                .all(|card_id| !selected.contains(card_id)),
+            "bottomed cards should leave the hand"
+        );
     }
 }

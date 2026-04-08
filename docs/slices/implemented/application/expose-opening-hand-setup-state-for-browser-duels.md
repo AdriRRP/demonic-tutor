@@ -28,3 +28,7 @@ The remote two-device flow already had host-authoritative transport, seat scopin
 This slice does not widen core Magic rules support.
 
 It only restores truthful browser access to the already-supported `Setup` phase and the current simplified one-mulligan opening-hand flow.
+
+## Historical Note
+
+Later browser setup slices extended this restored `Setup` flow with repeated London-style mulligans and explicit opening-hand bottom selection. This document remains the history of exposing truthful `Setup`, not the full current mulligan capability.

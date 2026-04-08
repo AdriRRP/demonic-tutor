@@ -39,7 +39,7 @@ Implemented capabilities include:
 - exposing `playable_subset_version = v1` in the public game view so clients can pin against the first frozen playable contract
 - projecting the attached creature id for the current supported Aura subset in the public battlefield snapshot
 - dealing opening hands
-- mulligan support (London Mulligan - simplified)
+- London mulligan support with repeated seven-card redraws and explicit opening-hand bottoming equal to the mulligan count
 - drawing cards (auto-draw when entering `Draw`)
 - resolving explicit draw effects during main phases onto any player
 - resolving explicit draw effects that draw multiple cards one by one onto the chosen player

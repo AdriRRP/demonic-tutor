@@ -10,7 +10,7 @@ export interface ArenaCommandTarget {
   state(): MaybePromise<unknown>;
   reset(): MaybePromise<unknown>;
   mulligan(playerId: string): MaybePromise<unknown>;
-  keep_opening_hand(playerId: string): MaybePromise<unknown>;
+  keep_opening_hand(playerId: string, bottomCardIds: string[]): MaybePromise<unknown>;
   pass_priority(playerId: string): MaybePromise<unknown>;
   advance_turn(): MaybePromise<unknown>;
   concede(playerId: string): MaybePromise<unknown>;
@@ -75,8 +75,9 @@ export async function mulliganOpeningHand(
 export async function keepOpeningHand(
   client: ArenaCommandTarget,
   playerId: string,
+  bottomCardIds: string[],
 ): Promise<ArenaState> {
-  return resolveArenaState(client.keep_opening_hand(playerId));
+  return resolveArenaState(client.keep_opening_hand(playerId, bottomCardIds));
 }
 
 export async function passPriority(

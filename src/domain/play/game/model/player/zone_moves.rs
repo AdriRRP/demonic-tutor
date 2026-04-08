@@ -257,6 +257,24 @@ impl Player {
             })
     }
 
+    pub(crate) fn move_hand_handle_to_library_bottom(
+        &mut self,
+        handle: PlayerCardHandle,
+    ) -> Option<()> {
+        self.handle_is_in_zone(handle, PlayerCardZone::Hand)
+            .then_some(())
+            .and_then(|()| {
+                self.hand.remove(handle)?;
+                self.library.receive(vec![handle]);
+                self.cards.set_zone(handle, PlayerCardZone::Library)
+            })
+    }
+
+    pub fn move_hand_card_to_library_bottom(&mut self, card_id: &CardInstanceId) -> Option<()> {
+        let handle = self.handle_in_zone(card_id, PlayerCardZone::Hand)?;
+        self.move_hand_handle_to_library_bottom(handle)
+    }
+
     pub fn move_battlefield_card_to_exile(&mut self, card_id: &CardInstanceId) -> Option<()> {
         let handle = self.handle_in_zone(card_id, PlayerCardZone::Battlefield)?;
         self.move_handle_between_zones(handle, PlayerCardZone::Battlefield, PlayerCardZone::Exile)

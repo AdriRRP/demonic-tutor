@@ -96,7 +96,11 @@ pub enum GameError {
     InvalidStackObjectTarget(StackObjectId),
     InvalidHandCardChoice(CardInstanceId),
     NoAttackersDeclared,
-    MulliganAlreadyUsed(PlayerId),
+    InvalidOpeningHandBottomCount {
+        player: PlayerId,
+        expected: usize,
+        actual: usize,
+    },
     HandSizeLimitExceeded {
         player: PlayerId,
         hand_size: usize,
@@ -328,9 +332,15 @@ impl fmt::Display for GameError {
                 write!(f, "hand card choice {card_id} is not currently legal")
             }
             Self::NoAttackersDeclared => write!(f, "no attackers have been declared"),
-            Self::MulliganAlreadyUsed(pid) => {
-                write!(f, "player {} has already used mulligan", pid.as_str())
-            }
+            Self::InvalidOpeningHandBottomCount {
+                player,
+                expected,
+                actual,
+            } => write!(
+                f,
+                "player {} must put exactly {expected} opening-hand card(s) on the bottom, got {actual}",
+                player.as_str()
+            ),
             Self::HandSizeLimitExceeded {
                 player,
                 hand_size,

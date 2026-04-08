@@ -28,3 +28,7 @@ After the adapter stopped skipping `Setup`, the browser still needed an interact
 This slice does not add new Magic rules.
 
 It presents the repository's existing `Setup` and simplified mulligan support through a viewer-scoped remote-duel overlay.
+
+## Historical Note
+
+Later browser setup slices extended this overlay with repeated London-style mulligans and explicit bottom-card selection. This document remains the history of the first truthful viewer-scoped pregame overlay rather than the full current mulligan UX.

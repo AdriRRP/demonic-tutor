@@ -8,6 +8,10 @@ MulliganWithSetup
 
 Implement proper Magic mulligan sequence with Setup phase at game start, allowing players to take mulligans in turn order until all players keep their hands.
 
+## Historical Note
+
+This foundation slice introduced `Setup` and the first browser-visible mulligan corridor, but its one-mulligan simplification is no longer the full live truth. Later slices widened the current model to repeated London-style mulligans with explicit bottom-card selection before keeping.
+
 ---
 
 ## Why This Slice Exists Now

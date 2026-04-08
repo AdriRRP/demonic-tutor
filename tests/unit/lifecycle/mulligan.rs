@@ -36,7 +36,7 @@ fn mulligan_succeeds() {
 }
 
 #[test]
-fn mulligan_fails_already_used() {
+fn mulligan_can_be_taken_multiple_times_in_setup() {
     let (service, mut game) =
         setup_two_player_game("game-1", creature_library(14), creature_library(14));
 
@@ -44,12 +44,12 @@ fn mulligan_fails_already_used() {
         .mulligan(&mut game, MulliganCommand::new(PlayerId::new("player-1")))
         .unwrap();
 
-    let result = service.mulligan(&mut game, MulliganCommand::new(PlayerId::new("player-1")));
+    service
+        .mulligan(&mut game, MulliganCommand::new(PlayerId::new("player-1")))
+        .unwrap();
 
-    assert_eq!(
-        result.unwrap_err(),
-        DomainError::Game(GameError::MulliganAlreadyUsed(PlayerId::new("player-1")))
-    );
+    assert_eq!(game.players()[0].hand_size(), 7);
+    assert_eq!(game.players()[0].mulligan_count(), 2);
 }
 
 #[test]

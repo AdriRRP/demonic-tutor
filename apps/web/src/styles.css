@@ -168,6 +168,7 @@ button {
 }
 
 .pregame-banner,
+.pregame-selection-dock,
 .pregame-action-dock {
   position: absolute;
   left: 50%;
@@ -214,6 +215,86 @@ button {
   border-radius: 999px;
   background:
     linear-gradient(180deg, rgba(11, 19, 34, 0.92), rgba(11, 19, 34, 0.72)), rgba(11, 19, 34, 0.84);
+}
+
+.pregame-selection-dock {
+  bottom: clamp(17rem, 30dvh, 22rem);
+  width: min(42rem, calc(100vw - 10rem));
+  padding: 1rem 1.1rem 1.1rem;
+  border-radius: 26px;
+  background:
+    linear-gradient(180deg, rgba(11, 19, 34, 0.94), rgba(11, 19, 34, 0.76)), rgba(11, 19, 34, 0.86);
+  box-shadow:
+    0 16px 40px rgba(5, 9, 18, 0.28),
+    inset 0 0 0 1px rgba(129, 165, 255, 0.1);
+}
+
+.pregame-selection-copy {
+  display: grid;
+  gap: 0.16rem;
+}
+
+.pregame-selection-copy strong {
+  font-size: 1rem;
+}
+
+.pregame-selection-copy span {
+  color: rgba(224, 231, 245, 0.7);
+  font-size: 0.79rem;
+}
+
+.pregame-bottom-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 0.7rem;
+  margin-top: 0.9rem;
+}
+
+.pregame-bottom-card {
+  display: grid;
+  gap: 0.26rem;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid rgba(245, 199, 128, 0.16);
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02)),
+    rgba(20, 28, 42, 0.86);
+  color: rgba(238, 242, 248, 0.92);
+  text-align: left;
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background 160ms ease;
+}
+
+.pregame-bottom-card:hover {
+  transform: translateY(-1px);
+  border-color: rgba(245, 199, 128, 0.28);
+}
+
+.pregame-bottom-card.selected {
+  border-color: rgba(245, 199, 128, 0.58);
+  background:
+    radial-gradient(circle at 50% 18%, rgba(245, 199, 128, 0.18), transparent 58%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02)),
+    rgba(32, 23, 16, 0.9);
+  box-shadow:
+    0 0 18px rgba(245, 199, 128, 0.16),
+    inset 0 0 0 1px rgba(245, 199, 128, 0.2);
+}
+
+.pregame-bottom-card-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.pregame-bottom-card-meta {
+  color: rgba(224, 231, 245, 0.6);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
 }
 
 .pregame-action-copy {
