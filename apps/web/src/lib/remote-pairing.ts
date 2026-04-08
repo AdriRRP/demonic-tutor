@@ -31,11 +31,19 @@ export interface RemotePairingTransport {
 type RemoteTransportListener = (payload: string) => void;
 type RemoteTransportStateListener = (state: RemotePairingState) => void;
 
-interface SignalEnvelope {
+interface SignalEnvelopeV1 {
   sdp: string;
   type: "answer" | "offer";
   version: 1;
 }
+
+interface SignalEnvelopeV2 {
+  s: string;
+  t: "a" | "o";
+  v: 2;
+}
+
+type SignalEnvelope = SignalEnvelopeV1 | SignalEnvelopeV2;
 
 const DEFAULT_PAIRING_STATE: RemotePairingState = {
   connected: false,
@@ -390,15 +398,15 @@ function serializeSignal(description: RTCSessionDescriptionInit): string {
   }
 
   return JSON.stringify({
-    sdp: description.sdp,
-    type: description.type,
-    version: 1,
-  } satisfies SignalEnvelope);
+    s: description.sdp,
+    t: description.type === "offer" ? "o" : "a",
+    v: 2,
+  } satisfies SignalEnvelopeV2);
 }
 
 function parseSignal(
   rawPayload: string,
-  expectedType: SignalEnvelope["type"],
+  expectedType: SignalEnvelopeV1["type"],
 ): RTCSessionDescriptionInit {
   let parsedPayload: unknown;
 
@@ -410,6 +418,18 @@ function parseSignal(
 
   if (!isSignalEnvelope(parsedPayload)) {
     throw new Error("The remote signaling payload has an unsupported shape.");
+  }
+
+  if (isSignalEnvelopeV2(parsedPayload)) {
+    const normalizedType = compactSignalType(parsedPayload.t);
+    if (normalizedType !== expectedType) {
+      throw new Error(`Expected a ${expectedType} payload.`);
+    }
+
+    return {
+      sdp: parsedPayload.s,
+      type: normalizedType,
+    };
   }
 
   if (parsedPayload.type !== expectedType) {
@@ -426,6 +446,14 @@ function isSignalEnvelope(value: unknown): value is SignalEnvelope {
   return (
     typeof value === "object" &&
     value !== null &&
+    (isSignalEnvelopeV1(value) || isSignalEnvelopeV2(value))
+  );
+}
+
+function isSignalEnvelopeV1(value: unknown): value is SignalEnvelopeV1 {
+  return (
+    typeof value === "object" &&
+    value !== null &&
     "version" in value &&
     "type" in value &&
     "sdp" in value &&
@@ -433,4 +461,21 @@ function isSignalEnvelope(value: unknown): value is SignalEnvelope {
     (value.type === "offer" || value.type === "answer") &&
     typeof value.sdp === "string"
   );
+}
+
+function isSignalEnvelopeV2(value: unknown): value is SignalEnvelopeV2 {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "v" in value &&
+    "t" in value &&
+    "s" in value &&
+    value.v === 2 &&
+    (value.t === "o" || value.t === "a") &&
+    typeof value.s === "string"
+  );
+}
+
+function compactSignalType(type: SignalEnvelopeV2["t"]): SignalEnvelopeV1["type"] {
+  return type === "o" ? "offer" : "answer";
 }

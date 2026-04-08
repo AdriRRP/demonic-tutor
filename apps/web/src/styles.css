@@ -1472,6 +1472,50 @@ button {
   font-size: 0.78rem;
 }
 
+.remote-pairing-qr-card {
+  display: grid;
+  gap: 10px;
+  padding: 10px 12px 12px;
+  border: 1px solid rgba(121, 165, 255, 0.16);
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at top, rgba(120, 161, 255, 0.09), transparent 58%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.01)),
+    rgba(5, 9, 18, 0.92);
+}
+
+.remote-pairing-qr-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  color: rgba(205, 216, 239, 0.82);
+  font-size: 0.78rem;
+}
+
+.remote-pairing-qr-shell {
+  display: grid;
+  place-items: center;
+  min-height: 14rem;
+  padding: 12px;
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(245, 213, 150, 0.06), rgba(245, 213, 150, 0.015)),
+    rgba(8, 13, 24, 0.9);
+}
+
+.remote-pairing-qr-shell > svg {
+  width: min(100%, 14.5rem);
+  height: auto;
+  filter: drop-shadow(0 10px 26px rgba(4, 8, 18, 0.35))
+    drop-shadow(0 0 18px rgba(245, 213, 150, 0.1));
+}
+
+.remote-pairing-qr-shell-pending {
+  color: rgba(205, 216, 239, 0.75);
+  font-size: 0.9rem;
+}
+
 .remote-pairing-signal-chip {
   display: inline-flex;
   align-items: center;

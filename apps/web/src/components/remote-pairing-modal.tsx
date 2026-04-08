@@ -1,5 +1,6 @@
-import { For, Show, createEffect, createSignal } from "solid-js";
+import { For, Show, createEffect, createResource, createSignal } from "solid-js";
 import type { Component } from "solid-js";
+import QRCode from "qrcode";
 import type { RemotePairingState } from "../lib/remote-pairing";
 
 interface RemotePairingModalProps {
@@ -225,6 +226,9 @@ export const RemotePairingModal: Component<RemotePairingModalProps> = (props) =>
                     />
                   )}
                 </Show>
+                <Show when={hostSignal()}>
+                  {(payload) => <SignalQrCard kind="Offer QR" payload={payload()} />}
+                </Show>
                 <textarea
                   id="remote-host-offer"
                   class="remote-pairing-textarea remote-pairing-output"
@@ -354,6 +358,9 @@ export const RemotePairingModal: Component<RemotePairingModalProps> = (props) =>
                     />
                   )}
                 </Show>
+                <Show when={peerSignal()}>
+                  {(payload) => <SignalQrCard kind="Answer QR" payload={payload()} />}
+                </Show>
                 <textarea
                   id="remote-peer-answer"
                   class="remote-pairing-textarea remote-pairing-output"
@@ -415,6 +422,40 @@ const SignalSummaryCard: Component<{ kind: string; bytes: number; lineCount: num
     <span>{`${String(props.lineCount)} line${props.lineCount === 1 ? "" : "s"}`}</span>
   </div>
 );
+
+const SignalQrCard: Component<{ kind: string; payload: string }> = (props) => {
+  const [qrMarkup] = createResource(
+    () => props.payload,
+    async (payload) =>
+      QRCode.toString(payload, {
+        color: {
+          dark: "#f5d596",
+          light: "#0000",
+        },
+        errorCorrectionLevel: "L",
+        margin: 1,
+        type: "svg",
+        width: 232,
+      }),
+  );
+
+  return (
+    <div class="remote-pairing-qr-card">
+      <div class="remote-pairing-qr-head">
+        <span class="remote-pairing-signal-chip">{props.kind}</span>
+        <span>Scan on the other device or keep using copy/paste.</span>
+      </div>
+      <Show
+        when={qrMarkup()}
+        fallback={
+          <div class="remote-pairing-qr-shell remote-pairing-qr-shell-pending">Rendering QR…</div>
+        }
+      >
+        {(markup) => <div class="remote-pairing-qr-shell" innerHTML={markup()} />}
+      </Show>
+    </div>
+  );
+};
 
 const StatusChip: Component<{ label: string; tone: "connected" | "default" }> = (props) => (
   <span
