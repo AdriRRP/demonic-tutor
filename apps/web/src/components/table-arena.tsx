@@ -792,6 +792,8 @@ const SeatPanel: Component<{
     Boolean(declareAttackersAction()) || Boolean(declareBlockersAction());
   const hiddenOpponentHandCount = () =>
     props.orientation === "top" ? (viewerPlayer()?.hand_count ?? 0) : 0;
+  const pregameBottomSelectionOrder = (cardId: string) =>
+    props.pregameBottomSelectionActive ? props.pregameBottomCardIds.indexOf(cardId) + 1 : 0;
   const blockerSummary = () =>
     Object.entries(props.blockerAssignments).map(([blockerId, attackerId]) => ({
       blockerId,
@@ -1711,6 +1713,13 @@ const SeatPanel: Component<{
                           : null,
                       )}
                     >
+                      <Show when={pregameBottomSelectionOrder(card.card_id) > 0}>
+                        {(order) => (
+                          <span class="pregame-bottom-marker" aria-hidden="true">
+                            <span>{order()}</span>
+                          </span>
+                        )}
+                      </Show>
                       <GameCard
                         actions={
                           <>

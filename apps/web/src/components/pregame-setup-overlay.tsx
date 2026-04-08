@@ -1,4 +1,4 @@
-import { For, Show, createMemo } from "solid-js";
+import { Show, createMemo } from "solid-js";
 import type { Component } from "solid-js";
 import { keepOpeningHand, mulliganOpeningHand, type ArenaCommandTarget } from "../lib/runtime";
 import type { ArenaSessionInfo } from "../lib/session";
@@ -42,12 +42,7 @@ export const PregameSetupOverlay: Component<PregameSetupOverlayProps> = (props) 
   const mulliganCount = () => localViewer()?.mulligan_count ?? 0;
   const cardsToBottom = () => (canAct() ? (pregame()?.current_bottom_count ?? 0) : 0);
   const keepCount = () => Math.max(localHandCount() - cardsToBottom(), 0);
-  const localHandCards = () => localViewer()?.hand ?? [];
   const canConfirmKeep = () => props.selectedBottomCardIds.length === cardsToBottom();
-  const selectedBottomCards = createMemo(() => {
-    const selectedIds = new Set(props.selectedBottomCardIds);
-    return localHandCards().filter((card) => selectedIds.has(card.card_id));
-  });
   const heroState = createMemo(() => {
     if (canAct() && cardsToBottom() > 0) {
       return {
@@ -148,23 +143,10 @@ export const PregameSetupOverlay: Component<PregameSetupOverlayProps> = (props) 
                 Selected {props.selectedBottomCardIds.length} / {cardsToBottom()}
               </span>
             </div>
-            <Show
-              when={selectedBottomCards().length > 0}
-              fallback={
-                <p class="pregame-selection-hint">
-                  The marked cards in your hand will show numbered seals as you choose what goes to
-                  the bottom.
-                </p>
-              }
-            >
-              <div class="chip-row pregame-selection-chip-row">
-                <For each={selectedBottomCards()}>
-                  {(card) => (
-                    <span class="chip chip-forest">{formatCardLabel(card.definition_id)}</span>
-                  )}
-                </For>
-              </div>
-            </Show>
+            <p class="pregame-selection-hint">
+              The hand fan is the source of truth here: marked cards keep numbered seals directly on
+              the cards you send to the bottom.
+            </p>
           </section>
         </Show>
 
@@ -288,10 +270,4 @@ function describePregameSeat(input: {
 
 function formatPlayerLabel(playerId: string): string {
   return playerId.replace(/[-_]/g, " ").replace(/\b\w/g, (character) => character.toUpperCase());
-}
-
-function formatCardLabel(definitionId: string): string {
-  return definitionId
-    .replace(/[-_]/g, " ")
-    .replace(/\b\w/g, (character) => character.toUpperCase());
 }

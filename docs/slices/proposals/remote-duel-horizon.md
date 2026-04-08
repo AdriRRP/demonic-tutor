@@ -17,8 +17,8 @@ to:
 The remaining proposed horizon is:
 
 - `1` release horizon
-- `1` active proposal wave
-- `2` active proposal slices
+- `0` active proposal waves
+- `0` active proposal slices
 
 The target milestone is:
 
@@ -89,9 +89,16 @@ Wave 5 is now fully implemented through:
 
 That means remote pairing can now use live in-browser camera scanning and can optionally continue the obvious host or peer step immediately after a successful scan.
 
+Wave 6 is now fully implemented through:
+
+- [present-seat-aware-opening-hand-hero-states.md](../implemented/application/present-seat-aware-opening-hand-hero-states.md)
+- [mark-opening-hand-bottom-picks-directly-on-cards.md](../implemented/application/mark-opening-hand-bottom-picks-directly-on-cards.md)
+
+That means the truthful remote mulligan flow now presents stronger pregame hero states and lets the visible hand fan carry bottom-selection meaning directly through numbered markers on the chosen cards.
+
 ## Active Wave Plan
 
-- [wave-6-arena-pregame-polish/README.md](wave-6-arena-pregame-polish/README.md)
+- no active proposal waves remain in this remote-duel horizon
 
 ## Out Of Scope For This Horizon
 
