@@ -16,11 +16,16 @@ import {
   type ArenaSessionInfo,
 } from "./lib/session";
 import { readState, resetArena, type ArenaCommandTarget } from "./lib/runtime";
-import type { ArenaState } from "./lib/types";
+import type { ArenaPresentationState, ArenaState } from "./lib/types";
+
+const EMPTY_PRESENTATION_STATE: ArenaPresentationState = {
+  battlefield_layouts: {},
+};
 
 const App: Component = () => {
   const [session, setSession] = createSignal<ArenaSession | null>(null);
   const [sessionInfo, setSessionInfo] = createSignal<ArenaSessionInfo | null>(null);
+  const [presentationState, setPresentationState] = createSignal(EMPTY_PRESENTATION_STATE);
   const [state, setState] = createSignal<ArenaState | null>(null);
   const [error, setError] = createSignal<string | null>(null);
   const [loading, setLoading] = createSignal(true);
@@ -35,6 +40,7 @@ const App: Component = () => {
   let attachedRemoteHostTransportId: string | null = null;
   let detachRemoteCommandRelay: (() => void) | undefined;
   let unsubscribeSession: (() => void) | undefined;
+  let unsubscribePresentation: (() => void) | undefined;
   let unsubscribeRemotePairing: (() => void) | undefined;
 
   onMount(() => {
@@ -51,6 +57,7 @@ const App: Component = () => {
 
   onCleanup(() => {
     unsubscribeSession?.();
+    unsubscribePresentation?.();
     unsubscribeRemotePairing?.();
     detachRemoteCommandRelay?.();
     remotePairingController?.destroy();
@@ -120,10 +127,12 @@ const App: Component = () => {
     try {
       activeRemotePeerTransportId = null;
       unsubscribeSession?.();
+      unsubscribePresentation?.();
       session()?.destroy();
       setLoading(true);
       setError(null);
       setRemoteSessionEndedReason(null);
+      setPresentationState(EMPTY_PRESENTATION_STATE);
 
       const nextSession = await createArenaSession();
       const nextState = await readState(nextSession);
@@ -134,12 +143,17 @@ const App: Component = () => {
         setSessionInfo(incomingInfo);
         setState(incomingState);
       });
+      unsubscribePresentation = nextSession.subscribePresentation((incomingPresentationState) => {
+        setPresentationState(incomingPresentationState);
+      });
 
       setSession(nextSession);
       setSessionInfo(nextInfo);
+      setPresentationState(nextSession.presentation());
       setState(nextState);
     } catch (err) {
       activeRemotePeerTransportId = null;
+      setPresentationState(EMPTY_PRESENTATION_STATE);
       setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
@@ -149,10 +163,12 @@ const App: Component = () => {
   async function loadRemotePeerArena(transport: RemotePairingTransport): Promise<void> {
     try {
       unsubscribeSession?.();
+      unsubscribePresentation?.();
       session()?.destroy();
       setLoading(true);
       setError(null);
       setRemoteSessionEndedReason(null);
+      setPresentationState(EMPTY_PRESENTATION_STATE);
 
       const roomId =
         sessionInfo()?.roomId ?? new URL(window.location.href).searchParams.get("duel") ?? "remote";
@@ -169,13 +185,18 @@ const App: Component = () => {
         setSessionInfo(incomingInfo);
         setState(incomingState);
       });
+      unsubscribePresentation = nextSession.subscribePresentation((incomingPresentationState) => {
+        setPresentationState(incomingPresentationState);
+      });
 
       setSession(nextSession);
       setSessionInfo(nextInfo);
+      setPresentationState(nextSession.presentation());
       setState(nextState);
       setSelectedAttackers([]);
       setBlockerAssignments({});
     } catch (err) {
+      setPresentationState(EMPTY_PRESENTATION_STATE);
       setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
@@ -327,7 +348,11 @@ const App: Component = () => {
               remotePairingState={remotePairingState()}
               selectedAttackers={selectedAttackers()}
               sessionInfo={sessionInfo()}
+              presentationState={presentationState()}
               state={resolved()}
+              onSyncBattlefieldLayout={(playerId, positions) => {
+                session()?.updateBattlefieldLayout(playerId, positions);
+              }}
             />
           )}
         </Match>

@@ -20,15 +20,24 @@ import {
   tapManaSource,
   type ArenaCommandTarget,
 } from "./runtime";
-import type { ArenaState, BlockerAssignmentInput } from "./types";
+import type {
+  ArenaPresentationState,
+  ArenaState,
+  BattlefieldLayoutPoint,
+  BlockerAssignmentInput,
+} from "./types";
 
 const CHANNEL_PREFIX = "demonictutor-duel:";
 const ROOM_QUERY_PARAM = "duel";
 const DISCOVERY_TIMEOUT_MS = 180;
 const HOST_STARTUP_GRACE_MS = 1_200;
 const REQUEST_TIMEOUT_MS = 4_000;
+const EMPTY_PRESENTATION_STATE: ArenaPresentationState = {
+  battlefield_layouts: {},
+};
 
 type SessionListener = (state: ArenaState) => void;
+type PresentationListener = (state: ArenaPresentationState) => void;
 
 type ArenaSessionRole = "host" | "peer";
 type ArenaSessionTransport = "broadcast-channel" | "embedded" | "webrtc";
@@ -47,6 +56,12 @@ interface StateSyncMessage {
   type: "state-sync";
   from: string;
   state: ArenaState;
+}
+
+interface PresentationSyncMessage {
+  type: "presentation-sync";
+  from: string;
+  presentation: ArenaPresentationState;
 }
 
 type ArenaCommandRequest =
@@ -91,14 +106,23 @@ interface CommandResponseErrorMessage {
   state: ArenaState | null;
 }
 
+interface BattlefieldLayoutMessage {
+  type: "battlefield-layout";
+  from: string;
+  playerId: string;
+  positions: Record<string, BattlefieldLayoutPoint>;
+}
+
 type CommandResponseMessage = CommandResponseSuccessMessage | CommandResponseErrorMessage;
 
 type SessionMessage =
   | HelloMessage
   | GoodbyeMessage
   | StateSyncMessage
+  | PresentationSyncMessage
   | CommandRequestMessage
-  | CommandResponseMessage;
+  | CommandResponseMessage
+  | BattlefieldLayoutMessage;
 
 interface PendingRequest {
   reject: (reason?: unknown) => void;
@@ -129,7 +153,13 @@ export interface ArenaSessionInfo {
 export interface ArenaSession extends ArenaCommandTarget {
   destroy(): void;
   info(): ArenaSessionInfo;
+  presentation(): ArenaPresentationState;
   subscribe(listener: SessionListener): () => void;
+  subscribePresentation(listener: PresentationListener): () => void;
+  updateBattlefieldLayout(
+    playerId: string,
+    positions: Record<string, BattlefieldLayoutPoint>,
+  ): void;
 }
 
 export async function createRemotePeerSession({
@@ -165,6 +195,15 @@ export function attachRemoteCommandRelay(
       } satisfies StateSyncMessage),
     );
   });
+  const unsubscribePresentation = session.subscribePresentation((presentation) => {
+    transport.send(
+      JSON.stringify({
+        from: instanceId,
+        presentation,
+        type: "presentation-sync",
+      } satisfies PresentationSyncMessage),
+    );
+  });
 
   const unsubscribeTransport = transport.subscribe((payload) => {
     const message = parseTransportPayload(payload);
@@ -175,21 +214,28 @@ export function attachRemoteCommandRelay(
     switch (message.type) {
       case "hello":
         void sendRemoteStateSync(session, transport, instanceId);
+        sendRemotePresentationSync(session, transport, instanceId);
         break;
       case "command-request":
         void respondToRemoteCommand(session, transport, instanceId, message);
         break;
+      case "battlefield-layout":
+        void applyRemoteBattlefieldLayout(session, message.playerId, message.positions);
+        break;
       case "goodbye":
       case "state-sync":
+      case "presentation-sync":
       case "command-response":
         break;
     }
   });
 
   void sendRemoteStateSync(session, transport, instanceId);
+  sendRemotePresentationSync(session, transport, instanceId);
 
   return () => {
     unsubscribeSession();
+    unsubscribePresentation();
     unsubscribeTransport();
   };
 }
@@ -237,6 +283,7 @@ class HostArenaSession implements ArenaSession {
   private readonly infoState: ArenaSessionInfo;
   private readonly instanceId: string;
   private readonly listeners = new Set<SessionListener>();
+  private readonly presentationListeners = new Set<PresentationListener>();
   private readonly remotePeerIds = new Set<string>();
   private readonly handleMessage = (event: MessageEvent<unknown>): void => {
     const message = coerceSessionMessage(event.data);
@@ -250,6 +297,7 @@ class HostArenaSession implements ArenaSession {
         nextPeerIds.add(message.from);
         this.setRemotePeers(nextPeerIds);
         this.broadcastState();
+        this.broadcastPresentation();
         break;
       }
       case "goodbye": {
@@ -265,12 +313,17 @@ class HostArenaSession implements ArenaSession {
         void this.respondToCommand(message);
         break;
       }
+      case "battlefield-layout":
+        void applyRemoteBattlefieldLayout(this, message.playerId, message.positions);
+        break;
       case "state-sync":
+      case "presentation-sync":
       case "command-response":
         break;
     }
   };
 
+  private presentationStateCache: ArenaPresentationState = EMPTY_PRESENTATION_STATE;
   private stateCache: ArenaState;
 
   constructor({
@@ -304,12 +357,20 @@ class HostArenaSession implements ArenaSession {
     this.refreshLocalSeatId();
     this.channel?.addEventListener("message", this.handleMessage);
     this.broadcastState();
+    this.broadcastPresentation();
   }
 
   public subscribe(listener: SessionListener): () => void {
     this.listeners.add(listener);
     return () => {
       this.listeners.delete(listener);
+    };
+  }
+
+  public subscribePresentation(listener: PresentationListener): () => void {
+    this.presentationListeners.add(listener);
+    return () => {
+      this.presentationListeners.delete(listener);
     };
   }
 
@@ -328,6 +389,23 @@ class HostArenaSession implements ArenaSession {
 
   public state(): Promise<ArenaState> {
     return Promise.resolve(this.stateCache);
+  }
+
+  public presentation(): ArenaPresentationState {
+    return this.presentationStateCache;
+  }
+
+  public updateBattlefieldLayout(
+    playerId: string,
+    positions: Record<string, BattlefieldLayoutPoint>,
+  ): void {
+    this.presentationStateCache = mergeBattlefieldLayout(
+      this.presentationStateCache,
+      playerId,
+      positions,
+    );
+    this.broadcastPresentation();
+    this.notifyPresentationListeners(this.presentationStateCache);
   }
 
   public reset(): Promise<ArenaState> {
@@ -436,12 +514,26 @@ class HostArenaSession implements ArenaSession {
     }
   }
 
+  private notifyPresentationListeners(nextState: ArenaPresentationState): void {
+    for (const listener of this.presentationListeners) {
+      listener(nextState);
+    }
+  }
+
   private broadcastState(): void {
     this.channel?.postMessage({
       from: this.instanceId,
       state: this.stateCache,
       type: "state-sync",
     } satisfies StateSyncMessage);
+  }
+
+  private broadcastPresentation(): void {
+    this.channel?.postMessage({
+      from: this.instanceId,
+      presentation: this.presentationStateCache,
+      type: "presentation-sync",
+    } satisfies PresentationSyncMessage);
   }
 
   private async respondToCommand(message: CommandRequestMessage): Promise<void> {
@@ -475,6 +567,7 @@ class PeerArenaSession implements ArenaSession {
   private readonly infoState: ArenaSessionInfo;
   private readonly instanceId: string;
   private readonly listeners = new Set<SessionListener>();
+  private readonly presentationListeners = new Set<PresentationListener>();
   private readonly pendingRequests = new Map<string, PendingRequest>();
   private readonly handleMessage = (event: MessageEvent<unknown>): void => {
     const message = coerceSessionMessage(event.data);
@@ -486,6 +579,12 @@ class PeerArenaSession implements ArenaSession {
       this.stateCache = message.state;
       this.infoState.localSeatId = seatForRole(message.state, "peer");
       this.notifyListeners(message.state);
+      return;
+    }
+
+    if (message.type === "presentation-sync" && message.from === this.hostId) {
+      this.presentationStateCache = message.presentation;
+      this.notifyPresentationListeners(message.presentation);
       return;
     }
 
@@ -514,6 +613,7 @@ class PeerArenaSession implements ArenaSession {
     }
   };
 
+  private presentationStateCache: ArenaPresentationState = EMPTY_PRESENTATION_STATE;
   private stateCache: ArenaState;
 
   constructor({
@@ -556,6 +656,13 @@ class PeerArenaSession implements ArenaSession {
     };
   }
 
+  public subscribePresentation(listener: PresentationListener): () => void {
+    this.presentationListeners.add(listener);
+    return () => {
+      this.presentationListeners.delete(listener);
+    };
+  }
+
   public info(): ArenaSessionInfo {
     return { ...this.infoState };
   }
@@ -576,6 +683,29 @@ class PeerArenaSession implements ArenaSession {
 
   public state(): Promise<ArenaState> {
     return Promise.resolve(this.stateCache);
+  }
+
+  public presentation(): ArenaPresentationState {
+    return this.presentationStateCache;
+  }
+
+  public updateBattlefieldLayout(
+    playerId: string,
+    positions: Record<string, BattlefieldLayoutPoint>,
+  ): void {
+    assertPlayerMatchesBoundSeat(playerId, this.infoState.localSeatId);
+    this.presentationStateCache = mergeBattlefieldLayout(
+      this.presentationStateCache,
+      playerId,
+      positions,
+    );
+    this.notifyPresentationListeners(this.presentationStateCache);
+    this.channel.postMessage({
+      from: this.instanceId,
+      playerId,
+      positions,
+      type: "battlefield-layout",
+    } satisfies BattlefieldLayoutMessage);
   }
 
   public reset(): Promise<ArenaState> {
@@ -651,6 +781,12 @@ class PeerArenaSession implements ArenaSession {
     }
   }
 
+  private notifyPresentationListeners(nextState: ArenaPresentationState): void {
+    for (const listener of this.presentationListeners) {
+      listener(nextState);
+    }
+  }
+
   private sendCommand(command: ArenaCommandRequest): Promise<ArenaState> {
     assertCommandMatchesBoundSeat(command, this.infoState.localSeatId);
     const requestId = createSessionId();
@@ -677,6 +813,7 @@ class RemotePeerArenaSession implements ArenaSession {
   private readonly infoState: ArenaSessionInfo;
   private readonly instanceId: string;
   private readonly listeners = new Set<SessionListener>();
+  private readonly presentationListeners = new Set<PresentationListener>();
   private readonly pendingRequests = new Map<string, PendingRequest>();
   private readonly transport: RemotePairingTransport;
   private readonly unsubscribeTransport: () => void;
@@ -684,6 +821,7 @@ class RemotePeerArenaSession implements ArenaSession {
   private initialStatePromise: Promise<ArenaState>;
   private resolveInitialState!: (state: ArenaState) => void;
   private rejectInitialState!: (reason?: unknown) => void;
+  private presentationStateCache: ArenaPresentationState = EMPTY_PRESENTATION_STATE;
   private stateCache: ArenaState | null = null;
   private transportConnected = false;
 
@@ -717,6 +855,11 @@ class RemotePeerArenaSession implements ArenaSession {
 
       if (message.type === "state-sync") {
         this.commitState(message.state);
+        return;
+      }
+
+      if (message.type === "presentation-sync") {
+        this.commitPresentation(message.presentation);
         return;
       }
 
@@ -759,6 +902,13 @@ class RemotePeerArenaSession implements ArenaSession {
     };
   }
 
+  public subscribePresentation(listener: PresentationListener): () => void {
+    this.presentationListeners.add(listener);
+    return () => {
+      this.presentationListeners.delete(listener);
+    };
+  }
+
   public info(): ArenaSessionInfo {
     return { ...this.infoState };
   }
@@ -790,6 +940,31 @@ class RemotePeerArenaSession implements ArenaSession {
     }
 
     return this.initialStatePromise;
+  }
+
+  public presentation(): ArenaPresentationState {
+    return this.presentationStateCache;
+  }
+
+  public updateBattlefieldLayout(
+    playerId: string,
+    positions: Record<string, BattlefieldLayoutPoint>,
+  ): void {
+    assertPlayerMatchesBoundSeat(playerId, this.infoState.localSeatId);
+    this.presentationStateCache = mergeBattlefieldLayout(
+      this.presentationStateCache,
+      playerId,
+      positions,
+    );
+    this.notifyPresentationListeners(this.presentationStateCache);
+    this.transport.send(
+      JSON.stringify({
+        from: this.instanceId,
+        playerId,
+        positions,
+        type: "battlefield-layout",
+      } satisfies BattlefieldLayoutMessage),
+    );
   }
 
   public reset(): Promise<ArenaState> {
@@ -866,8 +1041,19 @@ class RemotePeerArenaSession implements ArenaSession {
     this.notifyListeners(nextState);
   }
 
+  private commitPresentation(nextState: ArenaPresentationState): void {
+    this.presentationStateCache = nextState;
+    this.notifyPresentationListeners(nextState);
+  }
+
   private notifyListeners(nextState: ArenaState): void {
     for (const listener of this.listeners) {
+      listener(nextState);
+    }
+  }
+
+  private notifyPresentationListeners(nextState: ArenaPresentationState): void {
+    for (const listener of this.presentationListeners) {
       listener(nextState);
     }
   }
@@ -1027,18 +1213,7 @@ function assertCommandMatchesBoundSeat(
   command: ArenaCommandRequest,
   localSeatId: string | null,
 ): void {
-  const commandSeatId = commandPlayerId(command);
-  if (commandSeatId === null) {
-    return;
-  }
-
-  if (localSeatId === null) {
-    throw new Error("This browser is not bound to a seat yet.");
-  }
-
-  if (commandSeatId !== localSeatId) {
-    throw new Error(`This browser is bound to ${localSeatId} and cannot act as ${commandSeatId}.`);
-  }
+  assertPlayerMatchesBoundSeat(commandPlayerId(command), localSeatId);
 }
 
 function commandPlayerId(command: ArenaCommandRequest): string | null {
@@ -1062,6 +1237,34 @@ function commandPlayerId(command: ArenaCommandRequest): string | null {
     case "resolve_pending_surveil":
       return command.playerId;
   }
+}
+
+function assertPlayerMatchesBoundSeat(playerId: string | null, localSeatId: string | null): void {
+  if (playerId === null) {
+    return;
+  }
+
+  if (localSeatId === null) {
+    throw new Error("This browser is not bound to a seat yet.");
+  }
+
+  if (playerId !== localSeatId) {
+    throw new Error(`This browser is bound to ${localSeatId} and cannot act as ${playerId}.`);
+  }
+}
+
+function mergeBattlefieldLayout(
+  presentationState: ArenaPresentationState,
+  playerId: string,
+  positions: Record<string, BattlefieldLayoutPoint>,
+): ArenaPresentationState {
+  return {
+    ...presentationState,
+    battlefield_layouts: {
+      ...presentationState.battlefield_layouts,
+      [playerId]: positions,
+    },
+  };
 }
 
 function projectRemotePeerState(state: ArenaState): ArenaState {
@@ -1141,6 +1344,20 @@ async function sendRemoteStateSync(
   );
 }
 
+function sendRemotePresentationSync(
+  session: ArenaSession,
+  transport: RemotePairingTransport,
+  instanceId: string,
+): void {
+  transport.send(
+    JSON.stringify({
+      from: instanceId,
+      presentation: session.presentation(),
+      type: "presentation-sync",
+    } satisfies PresentationSyncMessage),
+  );
+}
+
 async function respondToRemoteCommand(
   session: ArenaSession,
   transport: RemotePairingTransport,
@@ -1173,6 +1390,16 @@ async function respondToRemoteCommand(
       } satisfies CommandResponseErrorMessage),
     );
   }
+}
+
+async function applyRemoteBattlefieldLayout(
+  session: ArenaSession,
+  playerId: string,
+  positions: Record<string, BattlefieldLayoutPoint>,
+): Promise<void> {
+  const state = await readState(session);
+  assertPlayerMatchesBoundSeat(playerId, seatForRole(state, "peer"));
+  session.updateBattlefieldLayout(playerId, positions);
 }
 
 function samePeerSet(left: Set<string>, right: Set<string>): boolean {
@@ -1227,6 +1454,16 @@ function coerceSessionMessage(value: unknown): SessionMessage | null {
         state: value.state as ArenaState,
         type: "state-sync",
       };
+    case "presentation-sync":
+      if (!("presentation" in value)) {
+        return null;
+      }
+
+      return {
+        from: value.from,
+        presentation: value.presentation as ArenaPresentationState,
+        type: "presentation-sync",
+      };
     case "command-request":
       if (!("command" in value) || typeof value.requestId !== "string") {
         return null;
@@ -1260,6 +1497,22 @@ function coerceSessionMessage(value: unknown): SessionMessage | null {
         requestId: value.requestId,
         state: "state" in value ? (value.state as ArenaState | null) : null,
         type: "command-response",
+      };
+    case "battlefield-layout":
+      if (
+        typeof value.playerId !== "string" ||
+        !("positions" in value) ||
+        typeof value.positions !== "object" ||
+        value.positions === null
+      ) {
+        return null;
+      }
+
+      return {
+        from: value.from,
+        playerId: value.playerId,
+        positions: value.positions as Record<string, BattlefieldLayoutPoint>,
+        type: "battlefield-layout",
       };
     default:
       return null;

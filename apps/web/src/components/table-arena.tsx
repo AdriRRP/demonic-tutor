@@ -33,11 +33,13 @@ import type {
   ArenaLegalAction,
   ArenaManaCost,
   ArenaManaPool,
+  ArenaPresentationState,
   ArenaPlayerView,
   ArenaStackObject,
   ArenaState,
   ArenaTimelineEntry,
   ArenaViewerState,
+  BattlefieldLayoutPoint,
   BlockerAssignmentInput,
 } from "../lib/types";
 
@@ -46,12 +48,17 @@ interface TableArenaProps {
   onOpenRemotePairing?: (() => void) | undefined;
   remotePairingState?: RemotePairingState | null | undefined;
   state: ArenaState;
+  presentationState: ArenaPresentationState;
   sessionInfo: ArenaSessionInfo | null;
   selectedAttackers: string[];
   blockerAssignments: Record<string, string>;
   onToggleAttackerSelection: (cardId: string) => void;
   onSetBlockerAssignment: (blockerId: string, attackerId: string) => void;
   onRun: (operation: (current: ArenaCommandTarget) => Promise<ArenaState>) => void;
+  onSyncBattlefieldLayout: (
+    playerId: string,
+    positions: Record<string, BattlefieldLayoutPoint>,
+  ) => void;
 }
 
 type ZoneKind = "library" | "graveyard" | "exile";
@@ -86,11 +93,6 @@ interface InspectCardState {
   note?: string | undefined;
 }
 
-interface BattlefieldLayoutPoint {
-  x: number;
-  y: number;
-}
-
 interface FloatingDockPosition {
   x: number;
   y: number;
@@ -116,6 +118,8 @@ export const TableArena: Component<TableArenaProps> = (props) => {
     const viewer = bottomViewer();
     return viewer ? findAction(viewer, "PassPriority") : undefined;
   };
+  const battlefieldLayoutFor = (playerId: string) =>
+    props.presentationState.battlefield_layouts[playerId] ?? {};
   const bottomConcedeAction = () => {
     const viewer = bottomViewer();
     return viewer ? findAction(viewer, "Concede") : undefined;
@@ -389,6 +393,7 @@ export const TableArena: Component<TableArenaProps> = (props) => {
                 onInspectCard={setInspectedCard}
                 onOpenZoneBrowser={setZoneBrowser}
                 onDragHandCard={setDraggedCardId}
+                battlefieldLayout={battlefieldLayoutFor(viewer().player_id)}
                 inspectedCardId={inspectedCard()?.sourceCardId ?? null}
                 orientation="top"
                 selectedAttackers={props.selectedAttackers}
@@ -422,6 +427,10 @@ export const TableArena: Component<TableArenaProps> = (props) => {
                 onBattlefieldDropCard={(cardId) => {
                   playDraggedCard(viewer(), cardId);
                 }}
+                onSyncBattlefieldLayout={(positions) => {
+                  props.onSyncBattlefieldLayout(viewer().player_id, positions);
+                }}
+                battlefieldLayout={battlefieldLayoutFor(viewer().player_id)}
                 inspectedCardId={inspectedCard()?.sourceCardId ?? null}
                 orientation="bottom"
                 selectedAttackers={props.selectedAttackers}
@@ -722,7 +731,11 @@ const SeatPanel: Component<{
   onOpenZoneBrowser: (state: ZoneBrowserState) => void;
   onInspectCard: (card: InspectCardState | null) => void;
   onDragHandCard: (cardId: string | null) => void;
+  battlefieldLayout: Record<string, BattlefieldLayoutPoint>;
   onBattlefieldDropCard?: (cardId: string) => void;
+  onSyncBattlefieldLayout?:
+    | ((positions: Record<string, BattlefieldLayoutPoint>) => void)
+    | undefined;
   onRun: (operation: (current: ArenaCommandTarget) => Promise<ArenaState>) => void;
   draggedHandCardId: string | null;
   inspectedCardId: string | null;
@@ -819,17 +832,15 @@ const SeatPanel: Component<{
 
   createEffect(() => {
     const cards = orderedBattlefield();
-    setBattlefieldPositions((previous) => {
-      const next: Record<string, BattlefieldLayoutPoint> = {};
+    const layout = props.battlefieldLayout;
+    const next: Record<string, BattlefieldLayoutPoint> = {};
 
-      cards.forEach((card, index) => {
-        next[card.card_id] =
-          previous[card.card_id] ??
-          defaultBattlefieldPosition(index, cards.length, props.orientation);
-      });
-
-      return next;
+    cards.forEach((card, index) => {
+      next[card.card_id] =
+        layout[card.card_id] ?? defaultBattlefieldPosition(index, cards.length, props.orientation);
     });
+
+    setBattlefieldPositions(next);
   });
 
   createEffect(() => {
@@ -1077,11 +1088,13 @@ const SeatPanel: Component<{
 
     const nextX = clamp((clientX - rect.left) / rect.width, 0.08, 0.92);
     const nextY = clamp((clientY - rect.top) / rect.height, 0.14, 0.88);
-
-    setBattlefieldPositions((previous) => ({
-      ...previous,
+    const nextPositions = {
+      ...untrack(battlefieldPositions),
       [cardId]: { x: nextX, y: nextY },
-    }));
+    };
+
+    setBattlefieldPositions(nextPositions);
+    props.onSyncBattlefieldLayout?.(nextPositions);
   };
 
   return (

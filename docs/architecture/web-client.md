@@ -58,6 +58,7 @@ It does not reimplement gameplay rules in TypeScript.
 - layout
 - interaction flow
 - local presentation state
+- browser-shared presentation state such as synchronized battlefield layout
 - visual ordering and composition
 - browser-only concerns such as focus, gestures, and component state
 
@@ -184,7 +185,7 @@ Its job today is to provide:
 - a hidden opponent hand fan built from simplified classic-inspired generated card backs so rival hand size reads as physical cards instead of a lone counter
 - a local bottom hand fan that can be dragged onto the battlefield for simple legal plays
 - zone-aware face-up card rendering where battlefield and stack previews stay header-plus-fullart, while hand and inspect surfaces keep the fuller classic layout with mana symbols
-- a locally rearrangeable battlefield where permanents already on the table can be dragged to presentation-only positions inside the owning seat
+- a seat-owned battlefield layout where permanents already on the table can be dragged freely and now stay synchronized across paired browsers without leaking into Rust gameplay state
 - generated zone piles for library, graveyard, and exile using simplified classic-inspired CSS-built card backs and compact face-up tops
 - a left player rail that centralizes identity, life, hand count, and primary local actions instead of repeating that chrome inside the battlefield
 - a draggable mana-pool dock beside each seat avatar that only appears when mana exists and exposes the pool by color, including colorless
@@ -204,7 +205,6 @@ It is still intentionally early-stage UI:
 - optimized for interaction coverage before deep motion/polish work
 - not yet a secure remote multiplayer client
 - not yet a hostile-client-secure remote client; the authoritative host still owns the full runtime and full state
-- still keeping free battlefield layout local to each browser window until a dedicated sync slice lands
 - still using manual WebRTC signaling instead of a polished production signaling service
 
 Important constraint:

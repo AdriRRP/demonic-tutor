@@ -90,7 +90,7 @@ It currently provides:
 - a hidden opponent hand fan rendered with simplified classic-inspired generated card backs instead of text counters
 - a local bottom hand fan that can be dragged onto the battlefield for simple legal plays
 - zone-aware face-up card rendering so battlefield and stack previews read as header-plus-fullart, while hand and inspect cards keep the fuller classic layout with mana symbols
-- a locally rearrangeable battlefield so permanents already in play can be positioned freely inside the owning seat
+- a seat-owned battlefield layout so permanents already in play can be positioned freely inside the owning seat and stay synchronized across paired browser sessions
 - generated card piles for library, graveyard, and exile using simplified classic-inspired CSS-built backs and compact face-up zone tops
 - a stack dock that only appears when the stack has objects and opens a dedicated modal for detailed resolution reading
 - focused zone browsers that open on demand instead of permanently occupying the table

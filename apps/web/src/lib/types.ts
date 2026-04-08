@@ -7,6 +7,11 @@ export interface ArenaManaCost {
   green: number;
 }
 
+export interface BattlefieldLayoutPoint {
+  x: number;
+  y: number;
+}
+
 export interface ArenaCardView {
   card_id: string;
   definition_id: string;
@@ -141,6 +146,10 @@ export interface ArenaState {
   viewers: ArenaViewerState[];
   event_log: ArenaTimelineEntry[];
   last_command: ArenaCommandFeedback | null;
+}
+
+export interface ArenaPresentationState {
+  battlefield_layouts: Record<string, Record<string, BattlefieldLayoutPoint>>;
 }
 
 export interface BlockerAssignmentInput {
