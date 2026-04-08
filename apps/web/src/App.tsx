@@ -1,5 +1,6 @@
 import { Match, Show, Switch, createEffect, createSignal, onCleanup, onMount } from "solid-js";
 import type { Component } from "solid-js";
+import { PregameSetupOverlay } from "./components/pregame-setup-overlay";
 import { RemotePairingModal } from "./components/remote-pairing-modal";
 import { TableArena } from "./components/table-arena";
 import {
@@ -332,28 +333,31 @@ const App: Component = () => {
         </Match>
         <Match when={state()}>
           {(resolved) => (
-            <TableArena
-              blockerAssignments={blockerAssignments()}
-              onCopyInviteLink={copyInviteLink}
-              onOpenRemotePairing={
-                remotePairingSupported()
-                  ? () => {
-                      setRemotePairingModalOpen(true);
-                    }
-                  : undefined
-              }
-              onRun={run}
-              onSetBlockerAssignment={setBlockerAssignment}
-              onToggleAttackerSelection={toggleAttackerSelection}
-              remotePairingState={remotePairingState()}
-              selectedAttackers={selectedAttackers()}
-              sessionInfo={sessionInfo()}
-              presentationState={presentationState()}
-              state={resolved()}
-              onSyncBattlefieldLayout={(playerId, positions) => {
-                session()?.updateBattlefieldLayout(playerId, positions);
-              }}
-            />
+            <>
+              <TableArena
+                blockerAssignments={blockerAssignments()}
+                onCopyInviteLink={copyInviteLink}
+                onOpenRemotePairing={
+                  remotePairingSupported()
+                    ? () => {
+                        setRemotePairingModalOpen(true);
+                      }
+                    : undefined
+                }
+                onRun={run}
+                onSetBlockerAssignment={setBlockerAssignment}
+                onToggleAttackerSelection={toggleAttackerSelection}
+                remotePairingState={remotePairingState()}
+                selectedAttackers={selectedAttackers()}
+                sessionInfo={sessionInfo()}
+                presentationState={presentationState()}
+                state={resolved()}
+                onSyncBattlefieldLayout={(playerId, positions) => {
+                  session()?.updateBattlefieldLayout(playerId, positions);
+                }}
+              />
+              <PregameSetupOverlay onRun={run} sessionInfo={sessionInfo()} state={resolved()} />
+            </>
           )}
         </Match>
       </Switch>
