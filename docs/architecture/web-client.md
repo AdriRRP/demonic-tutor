@@ -175,6 +175,7 @@ Its job today is to provide:
 - a clipboard-first remote-pairing flow with clearer host/join steps and lighter signaling handoff between devices
 - compact versioned signaling payloads plus generated QR codes for offer/answer handoff between devices
 - native QR-image import in supported browsers so offer/answer payloads can re-enter the pairing flow without raw text transfer
+- live camera QR scanning inside the pairing modal so two devices can exchange offers and answers without leaving the browser flow
 - a first host-authoritative remote command relay so the paired peer can drive the existing public command set through the host runtime
 - authoritative public snapshot broadcast back to the paired peer so both browsers converge from the host-owned state instead of local reconstruction
 - explicit one-seat-per-device remote session ownership, with both the peer and the host rejecting cross-seat command attempts before they can reach the runtime

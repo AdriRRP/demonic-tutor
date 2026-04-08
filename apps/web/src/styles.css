@@ -1629,6 +1629,107 @@ button {
   display: none;
 }
 
+.remote-live-scan {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid rgba(121, 165, 255, 0.18);
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at top, rgba(121, 165, 255, 0.09), transparent 56%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.015)),
+    rgba(5, 9, 18, 0.92);
+}
+
+.remote-live-scan-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.remote-live-scan-head p,
+.remote-live-scan-head strong,
+.remote-live-scan-note {
+  margin: 0;
+}
+
+.remote-live-scan-head strong {
+  font-size: 0.98rem;
+}
+
+.remote-live-scan-preview {
+  position: relative;
+  overflow: hidden;
+  min-height: 18rem;
+  border: 1px solid rgba(121, 165, 255, 0.18);
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 50% 18%, rgba(255, 255, 255, 0.08), transparent 18%),
+    linear-gradient(180deg, rgba(10, 17, 30, 0.98), rgba(4, 8, 16, 0.98));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 20px 36px rgba(3, 7, 12, 0.3);
+}
+
+.remote-live-scan-video {
+  display: block;
+  width: 100%;
+  min-height: 18rem;
+  object-fit: cover;
+  background: rgba(5, 9, 18, 0.96);
+}
+
+.remote-live-scan-overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(2, 4, 10, 0.28),
+      transparent 22%,
+      transparent 78%,
+      rgba(2, 4, 10, 0.28)
+    ),
+    linear-gradient(
+      90deg,
+      rgba(2, 4, 10, 0.26),
+      transparent 16%,
+      transparent 84%,
+      rgba(2, 4, 10, 0.26)
+    );
+}
+
+.remote-live-scan-frame {
+  position: relative;
+  width: min(19rem, calc(100% - 2.5rem));
+  aspect-ratio: 1;
+  border-radius: 30px;
+  border: 1px solid rgba(245, 213, 150, 0.2);
+  box-shadow:
+    0 0 0 1px rgba(121, 165, 255, 0.12),
+    0 0 22px rgba(121, 165, 255, 0.18),
+    inset 0 0 18px rgba(121, 165, 255, 0.08);
+}
+
+.remote-live-scan-frame::before,
+.remote-live-scan-frame::after {
+  content: "";
+  position: absolute;
+  inset: 14px;
+  border-radius: 22px;
+  border: 1px dashed rgba(245, 213, 150, 0.18);
+}
+
+.remote-live-scan-note {
+  color: rgba(205, 216, 239, 0.82);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
 .remote-pairing-status {
   gap: 8px;
 }
