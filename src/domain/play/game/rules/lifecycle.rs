@@ -312,10 +312,12 @@ pub fn mulligan(
 
     let player = super::super::helpers::find_player_mut(players, &cmd.player_id)?;
 
-    if player.library_size() < OPENING_HAND_SIZE {
+    let available_after_recycle = player.library_size() + player.hand_size();
+
+    if available_after_recycle < OPENING_HAND_SIZE {
         return Err(DomainError::Game(GameError::NotEnoughCardsInLibrary {
             player: cmd.player_id,
-            available: player.library_size(),
+            available: available_after_recycle,
             requested: OPENING_HAND_SIZE,
         }));
     }

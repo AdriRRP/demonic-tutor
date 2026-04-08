@@ -1713,7 +1713,7 @@ const SeatPanel: Component<{
                           : null,
                       )}
                     >
-                      <Show when={pregameBottomSelectionOrder(card.card_id) > 0}>
+                      <Show when={pregameBottomSelectionOrder(card.card_id)}>
                         {(order) => (
                           <span class="pregame-bottom-marker" aria-hidden="true">
                             <span>{order()}</span>

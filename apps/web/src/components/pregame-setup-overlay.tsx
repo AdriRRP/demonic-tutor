@@ -43,6 +43,14 @@ export const PregameSetupOverlay: Component<PregameSetupOverlayProps> = (props) 
   const cardsToBottom = () => (canAct() ? (pregame()?.current_bottom_count ?? 0) : 0);
   const keepCount = () => Math.max(localHandCount() - cardsToBottom(), 0);
   const canConfirmKeep = () => props.selectedBottomCardIds.length === cardsToBottom();
+  const waitingForLabel = () => {
+    const current = currentDecisionPlayerId();
+    if (current === null) {
+      return null;
+    }
+
+    return current === localSeatId() ? localPlayerName() : formatPlayerLabel(current);
+  };
   const heroState = createMemo(() => {
     if (canAct() && cardsToBottom() > 0) {
       return {
@@ -78,15 +86,6 @@ export const PregameSetupOverlay: Component<PregameSetupOverlayProps> = (props) 
       spotlight: "Waiting",
     };
   });
-
-  const waitingForLabel = () => {
-    const current = currentDecisionPlayerId();
-    if (current === null) {
-      return null;
-    }
-
-    return current === localSeatId() ? localPlayerName() : formatPlayerLabel(current);
-  };
   const localSeatState = createMemo(() =>
     describePregameSeat({
       viewerPlayerId: localViewer()?.player_id ?? null,

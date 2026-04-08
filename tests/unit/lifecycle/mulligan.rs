@@ -36,6 +36,22 @@ fn mulligan_succeeds() {
 }
 
 #[test]
+fn mulligan_succeeds_when_only_returned_hand_cards_make_seven_available() {
+    let (service, mut game) =
+        setup_two_player_game("game-1", creature_library(12), creature_library(12));
+
+    assert_eq!(game.players()[0].hand_size(), 7);
+    assert_eq!(game.players()[0].library_size(), 5);
+
+    service
+        .mulligan(&mut game, MulliganCommand::new(PlayerId::new("player-1")))
+        .unwrap();
+
+    assert_eq!(game.players()[0].hand_size(), 7);
+    assert_eq!(game.players()[0].library_size(), 5);
+}
+
+#[test]
 fn mulligan_can_be_taken_multiple_times_in_setup() {
     let (service, mut game) =
         setup_two_player_game("game-1", creature_library(14), creature_library(14));
