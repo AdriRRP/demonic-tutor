@@ -2,6 +2,7 @@ import { For, Show, createEffect, createResource, createSignal } from "solid-js"
 import type { Component } from "solid-js";
 import QRCode from "qrcode";
 import type { RemotePairingState } from "../lib/remote-pairing";
+import { readQrSignalFromFile, supportsQrSignalImport } from "../lib/qr-signal-import";
 
 interface RemotePairingModalProps {
   onAcceptOffer: (offerPayload: string) => Promise<void>;
@@ -18,6 +19,8 @@ type PendingAction =
   | "apply-answer"
   | "begin-hosting"
   | "copy-signal"
+  | "import-host-answer-qr"
+  | "import-peer-offer-qr"
   | "paste-host-answer"
   | "paste-peer-offer"
   | null;
@@ -30,6 +33,8 @@ export const RemotePairingModal: Component<RemotePairingModalProps> = (props) =>
   const [localError, setLocalError] = createSignal<string | null>(null);
   const [pendingAction, setPendingAction] = createSignal<PendingAction>(null);
   const [copyFeedback, setCopyFeedback] = createSignal<string | null>(null);
+  let hostAnswerQrInput: HTMLInputElement | undefined;
+  let peerOfferQrInput: HTMLInputElement | undefined;
 
   createEffect(() => {
     const signal = props.state?.localSignal ?? "";
@@ -100,6 +105,31 @@ export const RemotePairingModal: Component<RemotePairingModalProps> = (props) =>
         }
       } catch (error) {
         setLocalError(error instanceof Error ? error.message : "Could not read the clipboard.");
+      } finally {
+        setPendingAction(null);
+      }
+    })();
+  };
+
+  const importSignalFromQr = (target: SignalInputTarget, file: File | undefined) => {
+    if (!file) {
+      return;
+    }
+
+    void (async () => {
+      setPendingAction(target === "host-answer" ? "import-host-answer-qr" : "import-peer-offer-qr");
+      setCopyFeedback(null);
+      setLocalError(null);
+
+      try {
+        const decodedPayload = await readQrSignalFromFile(file);
+        if (target === "host-answer") {
+          setHostAnswerInput(decodedPayload);
+        } else {
+          setPeerOfferInput(decodedPayload);
+        }
+      } catch (error) {
+        setLocalError(error instanceof Error ? error.message : "Could not read the selected QR.");
       } finally {
         setPendingAction(null);
       }
@@ -275,7 +305,32 @@ export const RemotePairingModal: Component<RemotePairingModalProps> = (props) =>
                       {pendingAction() === "paste-host-answer" ? "Reading…" : "Paste answer"}
                     </button>
                   </Show>
+                  <Show when={supportsQrSignalImport()}>
+                    <button
+                      class="hero-button hero-button-ghost mini-button"
+                      type="button"
+                      disabled={pendingAction() !== null}
+                      onClick={() => {
+                        hostAnswerQrInput?.click();
+                      }}
+                    >
+                      {pendingAction() === "import-host-answer-qr" ? "Scanning…" : "Import QR"}
+                    </button>
+                  </Show>
                 </div>
+                <input
+                  ref={(element) => {
+                    hostAnswerQrInput = element;
+                  }}
+                  class="remote-pairing-file-input"
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={(event) => {
+                    importSignalFromQr("host-answer", event.currentTarget.files?.[0]);
+                    event.currentTarget.value = "";
+                  }}
+                />
               </div>
 
               <button
@@ -333,7 +388,32 @@ export const RemotePairingModal: Component<RemotePairingModalProps> = (props) =>
                       {pendingAction() === "paste-peer-offer" ? "Reading…" : "Paste offer"}
                     </button>
                   </Show>
+                  <Show when={supportsQrSignalImport()}>
+                    <button
+                      class="hero-button hero-button-ghost mini-button"
+                      type="button"
+                      disabled={pendingAction() !== null}
+                      onClick={() => {
+                        peerOfferQrInput?.click();
+                      }}
+                    >
+                      {pendingAction() === "import-peer-offer-qr" ? "Scanning…" : "Import QR"}
+                    </button>
+                  </Show>
                 </div>
+                <input
+                  ref={(element) => {
+                    peerOfferQrInput = element;
+                  }}
+                  class="remote-pairing-file-input"
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={(event) => {
+                    importSignalFromQr("peer-offer", event.currentTarget.files?.[0]);
+                    event.currentTarget.value = "";
+                  }}
+                />
               </div>
 
               <button
@@ -391,6 +471,12 @@ export const RemotePairingModal: Component<RemotePairingModalProps> = (props) =>
             <p class="label">Transport status</p>
             <strong>{props.state?.statusLabel ?? "Remote pairing idle"}</strong>
           </div>
+          <Show when={supportsQrSignalImport()}>
+            <p class="remote-pairing-note-inline">
+              QR import uses native browser detection from an image or live camera capture when the
+              device offers it.
+            </p>
+          </Show>
           <Show when={statusError()}>
             {(error) => <p class="remote-pairing-error">{error()}</p>}
           </Show>

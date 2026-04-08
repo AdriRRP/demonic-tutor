@@ -1574,6 +1574,10 @@ button {
   justify-content: flex-start;
 }
 
+.remote-pairing-file-input {
+  display: none;
+}
+
 .remote-pairing-status {
   gap: 8px;
 }
@@ -1591,6 +1595,13 @@ button {
 
 .remote-pairing-error {
   color: #ffb4c1;
+  line-height: 1.45;
+}
+
+.remote-pairing-note-inline {
+  margin: 0;
+  color: rgba(205, 216, 239, 0.78);
+  font-size: 0.82rem;
   line-height: 1.45;
 }
 

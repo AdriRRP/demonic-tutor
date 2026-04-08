@@ -75,6 +75,7 @@ It currently provides:
 - a manual remote-pairing modal that can establish a direct WebRTC data channel between two browsers through copy-pasted offer/answer payloads
 - a clipboard-first pairing flow on top of that modal, with clearer host/join steps and direct paste affordances for two-device setup
 - compact signaling payloads plus generated QR codes for host offers and peer answers inside that pairing flow
+- native QR-image import in supported browsers so those signals can be brought back into the modal without pasting raw text
 - a first host-authoritative WebRTC command relay so the paired peer can issue the existing public commands through the host browser runtime
 - authoritative public state broadcast back to the paired peer so both browsers converge from the same host-owned state
 - explicit one-seat-per-device remote ownership, with both browsers rejecting cross-seat command attempts before they reach the host runtime
@@ -114,6 +115,7 @@ The current remote multiplayer baseline is still intentionally narrow:
 - it now also relays the peer's public gameplay commands through the authoritative host
 - it uses manual WebRTC signaling through a pairing modal
 - it now exposes the local signaling payload both as raw text and as a compact QR transfer surface
+- supported browsers can also import those signaling payloads back from QR images
 - it now also broadcasts authoritative public state back from the host to the peer
 - it remains honest about transport state (`idle`, `connecting`, `connected`, `failed`)
 
