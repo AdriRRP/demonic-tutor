@@ -7,8 +7,8 @@ This directory contains the live proposal backlog when a new release horizon is 
 The current planning horizon for first honest remote play across two devices is:
 
 - `1` release horizon
-- `2` active proposal waves
-- `4` active proposal slices
+- `1` active proposal wave
+- `2` active proposal slices
 
 The previous playable-limited gate remains reached:
 
@@ -31,5 +31,4 @@ See:
 
 ## Active Proposal Waves
 
-- `wave-5-qr-pairing-polish`
 - `wave-6-arena-pregame-polish`

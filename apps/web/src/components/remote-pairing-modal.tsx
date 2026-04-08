@@ -33,7 +33,12 @@ type PendingAction =
   | null;
 
 type SignalInputTarget = "host-answer" | "peer-offer";
-type LiveScanTarget = SignalInputTarget | null;
+type LiveScanMode = "fill" | "submit";
+
+interface LiveScanState {
+  target: SignalInputTarget;
+  mode: LiveScanMode;
+}
 
 export const RemotePairingModal: Component<RemotePairingModalProps> = (props) => {
   const [hostAnswerInput, setHostAnswerInput] = createSignal("");
@@ -41,7 +46,7 @@ export const RemotePairingModal: Component<RemotePairingModalProps> = (props) =>
   const [localError, setLocalError] = createSignal<string | null>(null);
   const [pendingAction, setPendingAction] = createSignal<PendingAction>(null);
   const [copyFeedback, setCopyFeedback] = createSignal<string | null>(null);
-  const [liveScanTarget, setLiveScanTarget] = createSignal<LiveScanTarget>(null);
+  const [liveScanState, setLiveScanState] = createSignal<LiveScanState | null>(null);
   const [liveScanStatus, setLiveScanStatus] = createSignal("Point the camera at the pairing QR.");
   let hostAnswerQrInput: HTMLInputElement | undefined;
   let peerOfferQrInput: HTMLInputElement | undefined;
@@ -176,7 +181,7 @@ export const RemotePairingModal: Component<RemotePairingModalProps> = (props) =>
   const hostSignalSummary = () => summarizeSignal(hostSignal());
   const peerSignalSummary = () => summarizeSignal(peerSignal());
 
-  const beginLiveScan = (target: SignalInputTarget) => {
+  const beginLiveScan = (target: SignalInputTarget, mode: LiveScanMode = "fill") => {
     if (!supportsLiveQrSignalImport()) {
       setLocalError("This browser cannot scan QR payloads from a live camera preview.");
       return;
@@ -184,11 +189,16 @@ export const RemotePairingModal: Component<RemotePairingModalProps> = (props) =>
 
     setCopyFeedback(null);
     setLocalError(null);
-    setLiveScanStatus("Requesting camera access…");
-    setLiveScanTarget(target);
+    setLiveScanStatus(
+      mode === "submit"
+        ? "Requesting camera access for scan and continue…"
+        : "Requesting camera access…",
+    );
+    setLiveScanState({ target, mode });
   };
 
-  const applyLiveScanPayload = (target: SignalInputTarget, payload: string) => {
+  const applyLiveScanPayload = (scan: LiveScanState, payload: string) => {
+    const target = scan.target;
     if (target === "host-answer") {
       setHostAnswerInput(payload);
     } else {
@@ -197,15 +207,25 @@ export const RemotePairingModal: Component<RemotePairingModalProps> = (props) =>
 
     setCopyFeedback("QR captured");
     setLocalError(null);
-    setLiveScanTarget(null);
+    setLiveScanState(null);
+
+    if (scan.mode === "submit") {
+      if (target === "host-answer") {
+        runAction("apply-answer", () => props.onApplyAnswer(payload.trim()));
+        return;
+      }
+
+      runAction("accept-offer", () => props.onAcceptOffer(payload.trim()));
+    }
   };
 
   createEffect(() => {
-    const target = liveScanTarget();
-    if (target === null) {
+    const scan = liveScanState();
+    if (scan === null) {
       stopLiveScanner();
       return;
     }
+    const { target } = scan;
 
     let scanInFlight = false;
 
@@ -222,7 +242,7 @@ export const RemotePairingModal: Component<RemotePairingModalProps> = (props) =>
           audio: false,
         });
 
-        if (liveScanTarget() !== target) {
+        if (liveScanState()?.target !== target) {
           stream.getTracks().forEach((track) => {
             track.stop();
           });
@@ -242,7 +262,7 @@ export const RemotePairingModal: Component<RemotePairingModalProps> = (props) =>
         setLiveScanStatus("Point the camera at the pairing QR.");
 
         const loop = () => {
-          if (liveScanTarget() !== target || !liveScanVideo) {
+          if (liveScanState()?.target !== target || !liveScanVideo) {
             return;
           }
 
@@ -254,14 +274,14 @@ export const RemotePairingModal: Component<RemotePairingModalProps> = (props) =>
           scanInFlight = true;
           void readQrSignalFromSource(liveScanVideo)
             .then((payload) => {
-              if (liveScanTarget() !== target) {
+              if (liveScanState()?.target !== target) {
                 return;
               }
 
-              applyLiveScanPayload(target, payload);
+              applyLiveScanPayload(scan, payload);
             })
             .catch(() => {
-              if (liveScanTarget() !== target) {
+              if (liveScanState()?.target !== target) {
                 return;
               }
 
@@ -274,7 +294,7 @@ export const RemotePairingModal: Component<RemotePairingModalProps> = (props) =>
 
         liveScanFrameId = window.requestAnimationFrame(loop);
       } catch (error) {
-        if (liveScanTarget() !== target) {
+        if (liveScanState()?.target !== target) {
           return;
         }
 
@@ -283,7 +303,7 @@ export const RemotePairingModal: Component<RemotePairingModalProps> = (props) =>
             ? error.message
             : "The live QR scanner could not access the camera.",
         );
-        setLiveScanTarget(null);
+        setLiveScanState(null);
       }
     })();
   });
@@ -311,7 +331,7 @@ export const RemotePairingModal: Component<RemotePairingModalProps> = (props) =>
               class="hero-button hero-button-ghost mini-button"
               type="button"
               onClick={() => {
-                setLiveScanTarget(null);
+                setLiveScanState(null);
                 props.onReset();
                 setHostAnswerInput("");
                 setPeerOfferInput("");
@@ -325,7 +345,7 @@ export const RemotePairingModal: Component<RemotePairingModalProps> = (props) =>
               class="hero-button hero-button-ghost mini-button"
               type="button"
               onClick={() => {
-                setLiveScanTarget(null);
+                setLiveScanState(null);
                 props.onClose();
               }}
             >
@@ -471,10 +491,22 @@ export const RemotePairingModal: Component<RemotePairingModalProps> = (props) =>
                       type="button"
                       disabled={pendingAction() !== null}
                       onClick={() => {
-                        beginLiveScan("host-answer");
+                        beginLiveScan("host-answer", "fill");
                       }}
                     >
                       Live scan
+                    </button>
+                  </Show>
+                  <Show when={supportsLiveQrSignalImport()}>
+                    <button
+                      class="hero-button mini-button"
+                      type="button"
+                      disabled={pendingAction() !== null}
+                      onClick={() => {
+                        beginLiveScan("host-answer", "submit");
+                      }}
+                    >
+                      Scan + connect
                     </button>
                   </Show>
                 </div>
@@ -566,10 +598,22 @@ export const RemotePairingModal: Component<RemotePairingModalProps> = (props) =>
                       type="button"
                       disabled={pendingAction() !== null}
                       onClick={() => {
-                        beginLiveScan("peer-offer");
+                        beginLiveScan("peer-offer", "fill");
                       }}
                     >
                       Live scan
+                    </button>
+                  </Show>
+                  <Show when={supportsLiveQrSignalImport()}>
+                    <button
+                      class="hero-button mini-button"
+                      type="button"
+                      disabled={pendingAction() !== null}
+                      onClick={() => {
+                        beginLiveScan("peer-offer", "submit");
+                      }}
+                    >
+                      Scan + answer
                     </button>
                   </Show>
                 </div>
@@ -638,21 +682,23 @@ export const RemotePairingModal: Component<RemotePairingModalProps> = (props) =>
           </div>
         </Show>
 
-        <Show when={liveScanTarget()}>
-          {(target) => (
+        <Show when={liveScanState()}>
+          {(scan) => (
             <section class="remote-live-scan panel">
               <div class="remote-live-scan-head">
                 <div>
                   <p class="label">Live QR scan</p>
                   <strong>
-                    {target() === "host-answer" ? "Scan the peer answer" : "Scan the host offer"}
+                    {scan().target === "host-answer"
+                      ? "Scan the peer answer"
+                      : "Scan the host offer"}
                   </strong>
                 </div>
                 <button
                   class="hero-button hero-button-ghost mini-button"
                   type="button"
                   onClick={() => {
-                    setLiveScanTarget(null);
+                    setLiveScanState(null);
                   }}
                 >
                   Close scanner
@@ -672,6 +718,12 @@ export const RemotePairingModal: Component<RemotePairingModalProps> = (props) =>
                   <div class="remote-live-scan-frame" />
                 </div>
               </div>
+              <Show when={scan().mode === "submit"}>
+                <p class="remote-live-scan-note remote-live-scan-note-accent">
+                  The browser will continue the next pairing step automatically as soon as the QR is
+                  recognized.
+                </p>
+              </Show>
               <p class="remote-live-scan-note">{liveScanStatus()}</p>
             </section>
           )}

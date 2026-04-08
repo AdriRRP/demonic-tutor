@@ -17,8 +17,8 @@ to:
 The remaining proposed horizon is:
 
 - `1` release horizon
-- `2` active proposal waves
-- `4` active proposal slices
+- `1` active proposal wave
+- `2` active proposal slices
 
 The target milestone is:
 
@@ -82,9 +82,15 @@ Wave 4 is now fully implemented through:
 
 That means transient transport loss now surfaces as reconnecting state with authoritative resync, and terminal host loss now ends the remote duel honestly instead of leaving a zombie peer session.
 
+Wave 5 is now fully implemented through:
+
+- [scan-live-qr-pairing-signals-from-device-cameras.md](../implemented/application/scan-live-qr-pairing-signals-from-device-cameras.md)
+- [auto-apply-live-qr-pairing-signals-in-the-browser-modal.md](../implemented/application/auto-apply-live-qr-pairing-signals-in-the-browser-modal.md)
+
+That means remote pairing can now use live in-browser camera scanning and can optionally continue the obvious host or peer step immediately after a successful scan.
+
 ## Active Wave Plan
 
-- [wave-5-qr-pairing-polish/README.md](wave-5-qr-pairing-polish/README.md)
 - [wave-6-arena-pregame-polish/README.md](wave-6-arena-pregame-polish/README.md)
 
 ## Out Of Scope For This Horizon

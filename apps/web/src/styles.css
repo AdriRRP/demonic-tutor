@@ -1730,6 +1730,10 @@ button {
   line-height: 1.45;
 }
 
+.remote-live-scan-note-accent {
+  color: rgba(245, 221, 177, 0.9);
+}
+
 .remote-pairing-status {
   gap: 8px;
 }

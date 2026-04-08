@@ -77,6 +77,7 @@ It currently provides:
 - compact signaling payloads plus generated QR codes for host offers and peer answers inside that pairing flow
 - native QR-image import in supported browsers so those signals can be brought back into the modal without pasting raw text
 - live camera QR scanning inside the pairing modal so host offers and peer answers can be captured directly from the other device
+- role-aware `scan + continue` actions so a recognized live QR can immediately answer or connect without an extra manual submit
 - a first host-authoritative WebRTC command relay so the paired peer can issue the existing public commands through the host browser runtime
 - authoritative public state broadcast back to the paired peer so both browsers converge from the same host-owned state
 - explicit one-seat-per-device remote ownership, with both browsers rejecting cross-seat command attempts before they reach the host runtime
