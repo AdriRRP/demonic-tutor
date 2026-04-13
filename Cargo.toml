@@ -13,7 +13,7 @@ authors = ["DemonicTutor Contributors"]
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-hashbrown = "0.16.1"
+hashbrown = "0.17.0"
 rand = "0.10.0"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
