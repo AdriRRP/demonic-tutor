@@ -55,6 +55,7 @@ cd apps/web
 npm install
 npm run format:check
 npm run lint
+npm run test
 npm run build
 npm run audit
 npm run deps:check
@@ -71,6 +72,7 @@ The repository expects the browser client to follow the same discipline as the R
 - exact dependency versions
 - deterministic formatting through Prettier
 - strict static analysis through ESLint + type-aware `typescript-eslint`
+- focused browser-component regression coverage through Vitest and jsdom
 - mandatory production build validation through Vite + `tsc`
 - dependency vulnerability scanning through `npm audit`
 - dependency freshness checks that fail only when installed packages drift behind the pinned manifest
