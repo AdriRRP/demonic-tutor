@@ -179,31 +179,47 @@ button {
 .pregame-hero {
   top: clamp(4.4rem, 9dvh, 6.9rem);
   width: min(52rem, calc(100vw - 14rem));
-  padding: 1rem 1.3rem 1.12rem;
-  border-radius: 28px;
-  text-align: center;
+  padding: 1.08rem 1.3rem 1.18rem;
+  border-radius: 30px;
+  overflow: hidden;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.01)),
-    radial-gradient(circle at 50% -16%, rgba(245, 199, 128, 0.16), transparent 46%),
-    rgba(8, 14, 25, 0.78);
-  backdrop-filter: blur(14px);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.015)),
+    radial-gradient(circle at 50% -20%, rgba(245, 199, 128, 0.14), transparent 42%),
+    radial-gradient(circle at 82% 12%, rgba(113, 169, 255, 0.12), transparent 32%),
+    rgba(8, 14, 25, 0.8);
+  backdrop-filter: blur(18px);
   box-shadow:
-    0 0 42px rgba(6, 11, 20, 0.34),
-    inset 0 0 0 1px rgba(240, 179, 93, 0.08);
+    0 20px 48px rgba(4, 8, 16, 0.36),
+    0 0 30px rgba(10, 18, 30, 0.22),
+    inset 0 0 0 1px rgba(240, 179, 93, 0.09);
 }
 
 .pregame-hero.tone-deciding {
   box-shadow:
-    0 0 46px rgba(10, 18, 33, 0.38),
-    0 0 28px rgba(96, 179, 255, 0.1),
-    inset 0 0 0 1px rgba(120, 190, 255, 0.13);
+    0 22px 52px rgba(6, 12, 23, 0.42),
+    0 0 34px rgba(96, 179, 255, 0.14),
+    inset 0 0 0 1px rgba(120, 190, 255, 0.16);
 }
 
 .pregame-hero.tone-bottoming {
   box-shadow:
-    0 0 46px rgba(10, 18, 33, 0.4),
-    0 0 30px rgba(245, 199, 128, 0.1),
-    inset 0 0 0 1px rgba(245, 199, 128, 0.16);
+    0 22px 52px rgba(6, 12, 23, 0.44),
+    0 0 34px rgba(245, 199, 128, 0.14),
+    inset 0 0 0 1px rgba(245, 199, 128, 0.18);
+}
+
+.pregame-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.06), transparent),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 18%);
+  mask:
+    linear-gradient(180deg, #000, transparent 82%),
+    linear-gradient(90deg, transparent, #000 16%, #000 84%, transparent);
+  opacity: 0.5;
+  pointer-events: none;
 }
 
 .pregame-hero-topline {
@@ -213,33 +229,162 @@ button {
   gap: 0.75rem;
 }
 
+.pregame-hero-ornament {
+  position: absolute;
+  top: -28px;
+  width: 164px;
+  height: 164px;
+  border-radius: 999px;
+  opacity: 0.52;
+  filter: blur(3px);
+  pointer-events: none;
+}
+
+.pregame-hero-ornament-left {
+  left: -38px;
+  background:
+    radial-gradient(circle at 60% 50%, rgba(245, 199, 128, 0.16), transparent 48%),
+    radial-gradient(circle at 48% 48%, rgba(120, 190, 255, 0.08), transparent 62%);
+}
+
+.pregame-hero-ornament-right {
+  right: -40px;
+  background:
+    radial-gradient(circle at 40% 52%, rgba(120, 190, 255, 0.16), transparent 48%),
+    radial-gradient(circle at 52% 44%, rgba(245, 199, 128, 0.08), transparent 62%);
+}
+
 .pregame-hero-spotlight {
   display: inline-flex;
   align-items: center;
   min-height: 1.6rem;
-  padding: 0 0.72rem;
+  padding: 0 0.78rem;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(242, 230, 202, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.025)),
+    rgba(13, 20, 34, 0.84);
+  color: rgba(245, 233, 206, 0.94);
   font-size: 0.72rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 10px 22px rgba(4, 8, 16, 0.18);
+}
+
+.pregame-hero-centerline {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 1rem;
+  align-items: center;
+  margin-top: 0.72rem;
+}
+
+.pregame-hero-copy {
+  display: grid;
+  gap: 0.36rem;
+  text-align: left;
+}
+
+.pregame-hero-sigil {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 4rem;
+  height: 4rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.02)),
+    rgba(10, 15, 26, 0.82);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 14px 28px rgba(4, 8, 16, 0.22);
+  color: rgba(251, 246, 233, 0.94);
+  font-size: 1.42rem;
+  line-height: 1;
+}
+
+.pregame-hero-sigil::before {
+  content: "";
+  position: absolute;
+  inset: 0.42rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  opacity: 0.86;
+}
+
+.pregame-hero-sigil.tone-deciding {
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 0 24px rgba(96, 179, 255, 0.2),
+    0 14px 28px rgba(4, 8, 16, 0.22);
+}
+
+.pregame-hero-sigil.tone-bottoming {
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 0 24px rgba(245, 199, 128, 0.22),
+    0 14px 28px rgba(4, 8, 16, 0.22);
+}
+
+.pregame-hero-sigil.tone-waiting {
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 0 20px rgba(173, 188, 225, 0.14),
+    0 14px 28px rgba(4, 8, 16, 0.22);
 }
 
 .pregame-hero h2 {
   margin: 0;
   font-family: "Trajan Pro 3", "Iowan Old Style", "Baskerville", serif;
-  font-size: clamp(1.65rem, 3vw, 2.5rem);
+  font-size: clamp(1.8rem, 3.1vw, 2.7rem);
   letter-spacing: -0.04em;
 }
 
 .pregame-hero p {
-  margin: 0.45rem auto 0;
+  margin: 0;
   max-width: 38rem;
   color: rgba(233, 239, 251, 0.78);
-  font-size: 0.93rem;
-  line-height: 1.42;
+  font-size: 0.95rem;
+  line-height: 1.48;
+}
+
+.pregame-hero-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.72rem;
+  margin-top: 0.94rem;
+}
+
+.pregame-hero-metric {
+  display: grid;
+  gap: 0.16rem;
+  padding: 0.72rem 0.82rem 0.76rem;
+  border-radius: 18px;
+  text-align: left;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.015)),
+    rgba(6, 12, 23, 0.5);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 12px 24px rgba(4, 8, 16, 0.12);
+}
+
+.pregame-hero-metric span {
+  color: rgba(255, 232, 198, 0.68);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.pregame-hero-metric strong {
+  color: rgba(248, 244, 234, 0.96);
+  font-size: 0.96rem;
+  font-weight: 700;
 }
 
 .pregame-seat-status-row {
@@ -267,7 +412,9 @@ button {
 
 .pregame-seat-state {
   display: grid;
-  gap: 0.12rem;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 0.72rem;
+  row-gap: 0.08rem;
   padding: 0.8rem 0.95rem 0.84rem;
   border-radius: 18px;
   text-align: left;
@@ -275,6 +422,23 @@ button {
     linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015)),
     rgba(7, 13, 24, 0.66);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+.pregame-seat-state-icon {
+  grid-row: 1 / span 3;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  align-self: center;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)),
+    rgba(10, 16, 29, 0.84);
+  color: rgba(249, 244, 231, 0.94);
+  font-size: 0.94rem;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
 }
 
 .pregame-seat-state-role {
@@ -312,26 +476,73 @@ button {
   bottom: clamp(10.6rem, 19dvh, 14.2rem);
   display: flex;
   align-items: center;
-  gap: 1rem;
-  min-width: min(38rem, calc(100vw - 10rem));
-  padding: 0.92rem 1.04rem;
-  border-radius: 999px;
+  gap: 0.9rem;
+  min-width: min(42rem, calc(100vw - 10rem));
+  padding: 0.92rem 1rem 0.92rem 0.98rem;
+  border-radius: 26px;
   background:
-    linear-gradient(180deg, rgba(11, 19, 34, 0.92), rgba(11, 19, 34, 0.72)), rgba(11, 19, 34, 0.84);
+    radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 0.06), transparent 22%),
+    linear-gradient(180deg, rgba(11, 19, 34, 0.96), rgba(11, 19, 34, 0.8)), rgba(11, 19, 34, 0.88);
+  overflow: hidden;
 }
 
 .pregame-action-dock.tone-deciding {
   box-shadow:
-    0 16px 34px rgba(4, 8, 15, 0.28),
-    0 0 24px rgba(96, 179, 255, 0.12),
-    inset 0 0 0 1px rgba(118, 191, 255, 0.12);
+    0 16px 34px rgba(4, 8, 15, 0.3),
+    0 0 28px rgba(96, 179, 255, 0.14),
+    inset 0 0 0 1px rgba(118, 191, 255, 0.14);
 }
 
 .pregame-action-dock.tone-bottoming {
   box-shadow:
-    0 16px 34px rgba(4, 8, 15, 0.32),
-    0 0 24px rgba(245, 199, 128, 0.12),
-    inset 0 0 0 1px rgba(245, 199, 128, 0.14);
+    0 16px 34px rgba(4, 8, 15, 0.34),
+    0 0 28px rgba(245, 199, 128, 0.15),
+    inset 0 0 0 1px rgba(245, 199, 128, 0.16);
+}
+
+.pregame-action-dock::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.06), transparent),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent 34%);
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.pregame-action-rune {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  flex: 0 0 auto;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.02)),
+    rgba(9, 14, 25, 0.9);
+  color: rgba(251, 246, 234, 0.92);
+  font-size: 1.1rem;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 12px 24px rgba(4, 8, 16, 0.18);
+}
+
+.pregame-action-rune.tone-deciding {
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 0 18px rgba(96, 179, 255, 0.18),
+    0 12px 24px rgba(4, 8, 16, 0.18);
+}
+
+.pregame-action-rune.tone-bottoming {
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 0 18px rgba(245, 199, 128, 0.18),
+    0 12px 24px rgba(4, 8, 16, 0.18);
 }
 
 .pregame-selection-dock {
@@ -339,7 +550,7 @@ button {
   width: min(42rem, calc(100vw - 10rem));
   display: grid;
   gap: 0.8rem;
-  padding: 1rem 1.1rem 1.05rem;
+  padding: 1rem 1.14rem 1.08rem;
   border-radius: 26px;
   background:
     linear-gradient(180deg, rgba(11, 19, 34, 0.94), rgba(11, 19, 34, 0.76)), rgba(11, 19, 34, 0.86);
@@ -369,6 +580,25 @@ button {
   font-size: 0.79rem;
 }
 
+.pregame-selection-progress {
+  position: relative;
+  height: 0.52rem;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.07);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+.pregame-selection-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background:
+    linear-gradient(90deg, rgba(245, 199, 128, 0.74), rgba(255, 229, 173, 0.92)),
+    rgba(245, 199, 128, 0.84);
+  box-shadow: 0 0 18px rgba(245, 199, 128, 0.3);
+}
+
 .pregame-selection-chip-row {
   align-items: center;
   min-height: 1.75rem;
@@ -388,24 +618,97 @@ button {
 }
 
 .pregame-action-copy {
+  position: relative;
+  z-index: 1;
   display: grid;
-  gap: 0.14rem;
+  gap: 0.18rem;
   min-width: 0;
+  max-width: 13rem;
 }
 
 .pregame-action-copy strong {
-  font-size: 1rem;
+  font-size: 1.04rem;
 }
 
 .pregame-action-copy span {
   color: rgba(224, 231, 245, 0.7);
-  font-size: 0.76rem;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.pregame-action-button-copy {
+  display: grid;
+  gap: 0.12rem;
+  text-align: left;
+}
+
+.pregame-action-button-copy strong {
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.pregame-action-button-copy span {
+  font-size: 0.69rem;
+  line-height: 1.1;
+  letter-spacing: 0.04em;
+  color: rgba(31, 22, 15, 0.72);
+}
+
+.hero-button-ghost .pregame-action-button-copy span {
+  color: rgba(233, 239, 251, 0.7);
+}
+
+.pregame-action-button-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 1.92rem;
+  height: 1.92rem;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  font-size: 0.95rem;
+  line-height: 1;
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.pregame-action-buttons .hero-button-ghost .pregame-action-button-icon {
+  background: rgba(96, 179, 255, 0.14);
+  color: rgba(223, 238, 255, 0.94);
+}
+
+.pregame-action-buttons .hero-button .pregame-action-button-icon {
+  background: rgba(92, 58, 21, 0.16);
+  color: rgba(71, 38, 8, 0.92);
 }
 
 .pregame-action-buttons {
+  position: relative;
+  z-index: 1;
   display: flex;
   gap: 0.7rem;
   margin-left: auto;
+}
+
+.pregame-action-buttons .hero-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.72rem;
+  min-width: 11.75rem;
+  min-height: 3.5rem;
+  justify-content: flex-start;
+  border-radius: 18px;
+  padding: 0.78rem 1rem;
+}
+
+.pregame-action-buttons .hero-button-ghost {
+  border-color: rgba(118, 191, 255, 0.22);
+  background:
+    linear-gradient(180deg, rgba(122, 181, 255, 0.12), rgba(122, 181, 255, 0.03)),
+    rgba(10, 17, 29, 0.92);
+  box-shadow:
+    inset 0 0 0 1px rgba(122, 181, 255, 0.08),
+    0 14px 26px rgba(4, 8, 16, 0.2),
+    0 0 18px rgba(96, 179, 255, 0.09);
 }
 
 .pregame-action-buttons .hero-button:disabled {
@@ -418,6 +721,22 @@ button {
   .pregame-hero {
     width: min(48rem, calc(100vw - 6rem));
     padding-inline: 1rem;
+  }
+
+  .pregame-hero-centerline {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+  }
+
+  .pregame-hero-copy,
+  .pregame-hero-metric,
+  .pregame-seat-state {
+    text-align: center;
+  }
+
+  .pregame-hero-metrics {
+    grid-template-columns: 1fr;
   }
 
   .pregame-seat-status-row {
@@ -433,6 +752,28 @@ button {
   .pregame-action-dock {
     width: min(40rem, calc(100vw - 4rem));
     min-width: 0;
+  }
+
+  .pregame-action-dock {
+    flex-direction: column;
+    align-items: stretch;
+    border-radius: 24px;
+    padding-block: 1rem;
+  }
+
+  .pregame-action-copy {
+    max-width: none;
+    text-align: center;
+  }
+
+  .pregame-action-buttons {
+    margin-left: 0;
+    justify-content: stretch;
+  }
+
+  .pregame-action-buttons .hero-button {
+    flex: 1;
+    justify-content: center;
   }
 }
 

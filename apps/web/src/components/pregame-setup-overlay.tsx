@@ -11,6 +11,13 @@ interface PregameSetupOverlayProps {
   onRun: (operation: (current: ArenaCommandTarget) => Promise<ArenaState>) => void;
 }
 
+interface PregameHeroState {
+  tone: "bottoming" | "deciding" | "waiting";
+  title: string;
+  body: string;
+  spotlight: string;
+}
+
 export const PregameSetupOverlay: Component<PregameSetupOverlayProps> = (props) => {
   const pregame = () => props.state.pregame;
   const localSeatId = () => props.sessionInfo?.localSeatId ?? null;
@@ -43,6 +50,9 @@ export const PregameSetupOverlay: Component<PregameSetupOverlayProps> = (props) 
   const cardsToBottom = () => (canAct() ? (pregame()?.current_bottom_count ?? 0) : 0);
   const keepCount = () => Math.max(localHandCount() - cardsToBottom(), 0);
   const canConfirmKeep = () => props.selectedBottomCardIds.length === cardsToBottom();
+  const selectionProgress = createMemo(() =>
+    cardsToBottom() === 0 ? 0 : props.selectedBottomCardIds.length / cardsToBottom(),
+  );
   const waitingForLabel = () => {
     const current = currentDecisionPlayerId();
     if (current === null) {
@@ -51,7 +61,7 @@ export const PregameSetupOverlay: Component<PregameSetupOverlayProps> = (props) 
 
     return current === localSeatId() ? localPlayerName() : formatPlayerLabel(current);
   };
-  const heroState = createMemo(() => {
+  const heroState = createMemo<PregameHeroState>(() => {
     if (canAct() && cardsToBottom() > 0) {
       return {
         tone: "bottoming",
@@ -118,12 +128,35 @@ export const PregameSetupOverlay: Component<PregameSetupOverlayProps> = (props) 
     <Show when={pregame()}>
       <div class="pregame-overlay">
         <section class={`pregame-hero panel tone-${heroState().tone}`}>
+          <div class="pregame-hero-ornament pregame-hero-ornament-left" aria-hidden="true" />
+          <div class="pregame-hero-ornament pregame-hero-ornament-right" aria-hidden="true" />
           <div class="pregame-hero-topline">
             <p class="eyebrow">Opening hand</p>
             <span class="pregame-hero-spotlight">{heroState().spotlight}</span>
           </div>
-          <h2>{heroState().title}</h2>
-          <p>{heroState().body}</p>
+          <div class="pregame-hero-centerline">
+            <div class={`pregame-hero-sigil tone-${heroState().tone}`} aria-hidden="true">
+              <span>{heroGlyphForTone(heroState().tone)}</span>
+            </div>
+            <div class="pregame-hero-copy">
+              <h2>{heroState().title}</h2>
+              <p>{heroState().body}</p>
+            </div>
+          </div>
+          <div class="pregame-hero-metrics">
+            <div class="pregame-hero-metric">
+              <span>Seat</span>
+              <strong>{localGoesFirst() ? "On the play" : "On the draw"}</strong>
+            </div>
+            <div class="pregame-hero-metric">
+              <span>Hand</span>
+              <strong>{localHandCount()} cards</strong>
+            </div>
+            <div class="pregame-hero-metric">
+              <span>Mulligans</span>
+              <strong>{mulliganCount()}</strong>
+            </div>
+          </div>
           <div class="pregame-seat-status-row">
             <PregameSeatStateCard state={opponentSeatState()} />
             <div class="pregame-seat-status-divider">VS</div>
@@ -142,6 +175,9 @@ export const PregameSetupOverlay: Component<PregameSetupOverlayProps> = (props) 
                 Selected {props.selectedBottomCardIds.length} / {cardsToBottom()}
               </span>
             </div>
+            <div class="pregame-selection-progress" aria-hidden="true">
+              <span style={{ width: `${String(selectionProgress() * 100)}%` }} />
+            </div>
             <p class="pregame-selection-hint">
               The hand fan is the source of truth here: marked cards keep numbered seals directly on
               the cards you send to the bottom.
@@ -150,6 +186,9 @@ export const PregameSetupOverlay: Component<PregameSetupOverlayProps> = (props) 
         </Show>
 
         <section class={`pregame-action-dock panel tone-${heroState().tone}`}>
+          <div class={`pregame-action-rune tone-${heroState().tone}`} aria-hidden="true">
+            <span>{heroGlyphForTone(heroState().tone)}</span>
+          </div>
           <div class="pregame-action-copy">
             <p class="eyebrow">Opening hand</p>
             <strong>{localHandCount()} cards in view</strong>
@@ -174,7 +213,13 @@ export const PregameSetupOverlay: Component<PregameSetupOverlayProps> = (props) 
                     props.onRun((current) => mulliganOpeningHand(current, playerId));
                   }}
                 >
-                  Mulligan
+                  <span class="pregame-action-button-icon" aria-hidden="true">
+                    ↺
+                  </span>
+                  <span class="pregame-action-button-copy">
+                    <strong>Mulligan</strong>
+                    <span>Draw a fresh seven</span>
+                  </span>
                 </button>
                 <button
                   class="hero-button"
@@ -190,7 +235,15 @@ export const PregameSetupOverlay: Component<PregameSetupOverlayProps> = (props) 
                     );
                   }}
                 >
-                  Keep {keepCount()}
+                  <span class="pregame-action-button-icon" aria-hidden="true">
+                    ✦
+                  </span>
+                  <span class="pregame-action-button-copy">
+                    <strong>Keep {keepCount()}</strong>
+                    <span>
+                      {cardsToBottom() > 0 ? "Lock in your bottom picks" : "Start the duel"}
+                    </span>
+                  </span>
                 </button>
               </>
             </Show>
@@ -210,6 +263,9 @@ interface PregameSeatDescriptor {
 
 const PregameSeatStateCard: Component<{ state: PregameSeatDescriptor }> = (props) => (
   <article class={`pregame-seat-state pregameseat-${props.state.accent}`}>
+    <span class="pregame-seat-state-icon" aria-hidden="true">
+      {seatGlyphForAccent(props.state.accent)}
+    </span>
     <span class="pregame-seat-state-role">{props.state.label}</span>
     <strong>{props.state.state}</strong>
     <span>{props.state.detail}</span>
@@ -269,4 +325,26 @@ function describePregameSeat(input: {
 
 function formatPlayerLabel(playerId: string): string {
   return playerId.replace(/[-_]/g, " ").replace(/\b\w/g, (character) => character.toUpperCase());
+}
+
+function heroGlyphForTone(tone: "bottoming" | "deciding" | "waiting"): string {
+  switch (tone) {
+    case "bottoming":
+      return "✦";
+    case "deciding":
+      return "◈";
+    case "waiting":
+      return "☾";
+  }
+}
+
+function seatGlyphForAccent(accent: PregameSeatDescriptor["accent"]): string {
+  switch (accent) {
+    case "deciding":
+      return "✦";
+    case "kept":
+      return "✓";
+    case "waiting":
+      return "◌";
+  }
 }
