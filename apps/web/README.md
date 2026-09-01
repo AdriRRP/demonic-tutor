@@ -127,6 +127,26 @@ It is still not the final remote product shape:
 - the authoritative host still sees the full runtime and therefore remains a trusted participant, not a hostile-client-secure server
 - the signaling story is still manual rather than product-grade
 
+## Local Two-Window Multiplayer
+
+The current multiplayer slice is intentionally narrow:
+
+- it is local and same-origin only
+- it does not require a backend
+- it depends on duplicating or sharing the same room URL between two browser windows
+- the host window must remain open because it owns the wasm-backed authoritative runtime
+
+Practical flow:
+
+1. open the app in one browser window
+2. copy the room link from the cockpit
+3. open that same link in a second browser window
+4. the first window becomes the host and the second becomes the peer
+
+Honesty note:
+
+- this is not hidden-information-safe remote multiplayer yet; both same-origin windows still live in a trusted local environment
+
 ## Guardrails
 
 - do not duplicate gameplay rules in TypeScript
