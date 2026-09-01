@@ -35,11 +35,9 @@ interface GameCardProps {
   highlighted?: boolean | undefined;
   selected?: boolean | undefined;
   onClick?:
-    | ((event: MouseEvent & { currentTarget: HTMLElement; target: Element }) => void)
-    | undefined;
+    ((event: MouseEvent & { currentTarget: HTMLElement; target: Element }) => void) | undefined;
   onInspect?:
-    | ((event: MouseEvent & { currentTarget: HTMLElement; target: Element }) => void)
-    | undefined;
+    ((event: MouseEvent & { currentTarget: HTMLElement; target: Element }) => void) | undefined;
 }
 
 export const GameCard: Component<GameCardProps> = (props) => {
@@ -237,8 +235,7 @@ export const GameCard: Component<GameCardProps> = (props) => {
 };
 
 type ManaCostSymbol =
-  | { kind: "generic"; value: number }
-  | { kind: "white" | "blue" | "black" | "red" | "green" };
+  { kind: "generic"; value: number } | { kind: "white" | "blue" | "black" | "red" | "green" };
 
 const ManaCostPip: Component<{ symbol: ManaCostSymbol }> = (props) => {
   if (props.symbol.kind === "generic") {

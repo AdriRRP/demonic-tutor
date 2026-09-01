@@ -1,13 +1,7 @@
 export type RemotePairingRole = "host" | "peer" | null;
 
 export type RemotePairingPhase =
-  | "idle"
-  | "offer-ready"
-  | "answer-ready"
-  | "connecting"
-  | "reconnecting"
-  | "connected"
-  | "failed";
+  "idle" | "offer-ready" | "answer-ready" | "connecting" | "reconnecting" | "connected" | "failed";
 
 export interface RemotePairingState {
   role: RemotePairingRole;

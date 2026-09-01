@@ -108,10 +108,7 @@ interface HandPointerDragState {
 }
 
 export const TableArena: Component<TableArenaProps> = (props) => {
-  const ignorePregameBottomToggle = (cardId: string) => {
-    void cardId;
-    return undefined;
-  };
+  const ignorePregameBottomToggle = () => undefined;
   const bottomViewer = () =>
     props.state.viewers.find((viewer) => viewer.player_id === props.sessionInfo?.localSeatId) ??
     props.state.viewers[0];
@@ -749,8 +746,7 @@ const SeatPanel: Component<{
   battlefieldLayout: Record<string, BattlefieldLayoutPoint>;
   onBattlefieldDropCard?: (cardId: string) => void;
   onSyncBattlefieldLayout?:
-    | ((positions: Record<string, BattlefieldLayoutPoint>) => void)
-    | undefined;
+    ((positions: Record<string, BattlefieldLayoutPoint>) => void) | undefined;
   onRun: (operation: (current: ArenaCommandTarget) => Promise<ArenaState>) => void;
   draggedHandCardId: string | null;
   inspectedCardId: string | null;
