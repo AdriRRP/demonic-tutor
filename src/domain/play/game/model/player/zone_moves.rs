@@ -400,11 +400,7 @@ impl Player {
 
     pub fn draw_one_into_hand(&mut self) -> Option<CardInstanceId> {
         let handle = self.library.draw_one()?;
-        let card_id = if let Some(card) = self.cards.get_by_handle(handle) {
-            card.id().clone()
-        } else {
-            return None;
-        };
+        let card_id = self.cards.get_by_handle(handle)?.id().clone();
         self.cards.set_zone(handle, PlayerCardZone::Hand)?;
         self.hand.receive(vec![handle]);
         Some(card_id)

@@ -58,7 +58,7 @@ impl IndexedOrderedZone {
 
         while tree_index != 0 {
             sum += self.visible_tree[tree_index];
-            let lowbit = tree_index & tree_index.wrapping_neg();
+            let lowbit = 1usize << tree_index.trailing_zeros();
             tree_index -= lowbit;
         }
 
@@ -69,7 +69,7 @@ impl IndexedOrderedZone {
         let one_based_index = self.visible_tree.len();
         self.visible_tree.push(0);
 
-        let lowbit = one_based_index & one_based_index.wrapping_neg();
+        let lowbit = 1usize << one_based_index.trailing_zeros();
         let covered_prefix = self.visible_tree_prefix_sum(one_based_index - 1);
         let previous_prefix = self.visible_tree_prefix_sum(one_based_index - lowbit);
         self.visible_tree[one_based_index] = covered_prefix - previous_prefix + 1;
@@ -116,7 +116,7 @@ impl IndexedOrderedZone {
             } else {
                 self.visible_tree[tree_index] -= delta.unsigned_abs();
             }
-            let lowbit = tree_index & tree_index.wrapping_neg();
+            let lowbit = 1usize << tree_index.trailing_zeros();
             tree_index += lowbit;
         }
     }
