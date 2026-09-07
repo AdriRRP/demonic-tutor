@@ -115,7 +115,7 @@ jobs:
         with:
           targets: wasm32-unknown-unknown
       - uses: Swatinem/rust-cache@v2
-      - uses: jetli/wasm-pack-action@v0.4.0
+      - uses: taiki-e/install-action@wasm-pack
       - name: Install web dependencies
         run: npm ci
       - name: Run web quality gate
