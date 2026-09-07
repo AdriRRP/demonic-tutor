@@ -7,6 +7,8 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  CARGO_OUTDATED_VERSION: '0.19.0'
+  CARGO_OUTDATED_SHA256: '648021f279e737e11f4be0f5967ae2a01d4d66f7a2e462a0b24ccd6dd5e6b372'
   NODE_VERSION: '22'
 
 concurrency:
@@ -20,7 +22,15 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@stable
-      - uses: taiki-e/install-action@cargo-outdated
+      - name: Install cargo-outdated
+        run: |
+          archive="${RUNNER_TEMP}/cargo-outdated.tar.gz"
+          curl --fail --location --retry 3 --silent --show-error \
+            "https://github.com/kbknapp/cargo-outdated/releases/download/v${CARGO_OUTDATED_VERSION}/cargo-outdated-${CARGO_OUTDATED_VERSION}-x86_64-unknown-linux-musl.tar.gz" \
+            --output "${archive}"
+          echo "${CARGO_OUTDATED_SHA256}  ${archive}" | sha256sum --check
+          tar -xzf "${archive}" -C "${RUNNER_TEMP}" cargo-outdated
+          echo "${RUNNER_TEMP}" >> "${GITHUB_PATH}"
       - name: Check for outdated direct Rust dependencies
         run: |
           cargo outdated --depth 1 --exit-code 1 || {
